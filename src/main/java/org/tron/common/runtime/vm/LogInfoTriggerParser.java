@@ -70,7 +70,7 @@ public class LogInfoTriggerParser {
         signMap.put(sha3, signature);
       }
     }
-
+    int index = 1;
     for (LogInfo logInfo : logInfos) {
       List<DataWord> topics = logInfo.getTopics();
       ABI.Entry entry = null;
@@ -95,7 +95,7 @@ public class LogInfoTriggerParser {
         ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
         ((ContractLogTrigger) event).setData(logInfo.getHexData());
       }
-
+      event.setUniqueId(txId + "_" + index);
       event.setTransactionId(txId);
       event.setContractAddress(contractAddress);
       event.setCallerAddress(callerAddress);
@@ -105,6 +105,7 @@ public class LogInfoTriggerParser {
       event.setTimeStamp(blockTimestamp);
 
       list.add(event);
+      index++;
     }
     return list;
   }

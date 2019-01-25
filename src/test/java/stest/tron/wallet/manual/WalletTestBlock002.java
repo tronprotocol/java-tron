@@ -58,7 +58,7 @@ public class WalletTestBlock002 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "GetBlockByNum from fullnode")
   public void testGetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -101,7 +101,7 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "GetBlockByNum from solidity")
   public void testGetBlockByNumFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -147,7 +147,7 @@ public class WalletTestBlock002 {
     logger.info("Last second test from solidity succesfully");
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "get block by id")
   public void testGetBlockById() {
 
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());

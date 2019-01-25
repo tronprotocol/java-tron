@@ -69,7 +69,7 @@ public class ContractLinkage001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Deploy contract with valid or invalid value")
   public void deployContentValue() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage001Address, 20000000000L, fromAddress,
         testKey002, blockingStubFull));

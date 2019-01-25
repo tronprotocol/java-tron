@@ -57,7 +57,7 @@ public class WalletTestBlock001 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Get now block from fullnode")
   public void testCurrentBlock() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
@@ -80,7 +80,7 @@ public class WalletTestBlock001 {
     newBlock.getTransactionsList();
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Get now block from solidity")
   public void testCurrentBlockFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());

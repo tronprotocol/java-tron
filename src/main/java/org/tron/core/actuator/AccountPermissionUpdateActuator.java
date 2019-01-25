@@ -19,7 +19,6 @@ import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
@@ -115,16 +114,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("operations size must 32");
     }
 
-    ContractType[] types = ContractType.values();
-    boolean[] types1 = new boolean[256];
-    for (ContractType type : types) {
-      if (type != ContractType.UNRECOGNIZED) {
-        types1[type.getNumber()] = true;
-      }
-    }
+    byte[] types1 = dbManager.getDynamicPropertiesStore().getAvailableContractType();
     for (int i = 0; i < 256; i++) {
       boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
-      if (b && !types1[i]) {
+      boolean t = (types1[(i / 8)] & (1 << (i % 8))) != 0;
+      if (b && !t) {
         throw new ContractValidateException(i + " isn't a validate ContractType");
       }
     }

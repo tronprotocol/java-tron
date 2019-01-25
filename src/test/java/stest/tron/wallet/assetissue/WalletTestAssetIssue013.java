@@ -81,7 +81,7 @@ public class WalletTestAssetIssue013 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Use transfer net when token owner has no enough net")
   public void testWhenNoEnoughFreeAssetNetLimitUseTransferNet() {
 
     //get account

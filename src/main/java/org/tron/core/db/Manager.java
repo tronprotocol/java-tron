@@ -1027,6 +1027,7 @@ public class Manager {
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
+          logger.info("error block info:" + newBlock);
           logger.error(throwable.getMessage(), throwable);
           khaosDb.removeBlk(block.getBlockId());
           throw throwable;

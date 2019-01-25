@@ -70,7 +70,7 @@ public class ContractScenario014 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Triple trigger in smart contract")
   public void testTripleTrigger() {
     ecKey1 = new ECKey(Utils.getRandom());
     contract014Address = ecKey1.getAddress();

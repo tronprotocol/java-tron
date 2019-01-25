@@ -79,7 +79,7 @@ public class ContractLinkage006 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Deploy contract with stack function")
   public void teststackOutByContract() {
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address, 20000000000L, fromAddress,
@@ -178,7 +178,7 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Boundary value for contract stack(63 is the largest level)")
   public void teststackOutByContract1() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
@@ -256,7 +256,7 @@ public class ContractLinkage006 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Boundary value for contract stack(Trigger 64 level can't success)")
   public void teststackOutByContract2() {
     initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"64\"";
     AccountResourceMessage resourceInfo2 = PublicMethed.getAccountResource(linkage006Address2,

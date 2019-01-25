@@ -91,7 +91,7 @@ public class WalletTestAssetIssue015 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Use transfer net when token owner has not enough bandwidth")
   public void atestWhenCreatorHasNoEnoughBandwidthUseTransferNet() {
     ecKey1 = new ECKey(Utils.getRandom());
     asset015Address = ecKey1.getAddress();
@@ -156,7 +156,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed > netCostMeasure);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Use balance when transfer has not enough net")
   public void btestWhenTransferHasNoEnoughBandwidthUseBalance() {
     Integer i = 0;
     AccountNetMessage assetTransferNet = PublicMethed
@@ -189,7 +189,7 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(beforeBalance - afterBalance > 2000);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true,description = "Transfer asset use bandwidth when freeze balance")
   public void ctestWhenFreezeBalanceUseNet() {
     Assert.assertTrue(PublicMethed.freezeBalance(transferAssetAddress,5000000,
         3,transferAssetCreateKey,blockingStubFull));

@@ -393,6 +393,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     } else {
       toStringBuff.append("txs are empty\n");
     }
+    getTransactions().forEach(transactionCapsule -> {
+      toStringBuff.append(transactionCapsule.toString());
+    });
     toStringBuff.append("]");
     return toStringBuff.toString();
   }

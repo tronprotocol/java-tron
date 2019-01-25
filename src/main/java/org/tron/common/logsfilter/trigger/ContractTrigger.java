@@ -6,6 +6,13 @@ import lombok.Setter;
 public class ContractTrigger extends Trigger {
 
   /**
+   * unique id of this trigger. $tx_id + "_" + $index
+   */
+  @Getter
+  @Setter
+  private String uniqueId;
+
+  /**
    * id of the transaction which produce this event.
    */
   @Getter

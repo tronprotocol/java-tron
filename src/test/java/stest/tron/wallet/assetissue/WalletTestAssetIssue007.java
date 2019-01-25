@@ -94,8 +94,8 @@ public class WalletTestAssetIssue007 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
-  public void testParticipateAssetIssueUseParticipaterBandwidth() {
+  @Test(enabled = true,description = "Participate asset issue use participate bandwidth")
+  public void testParticipateAssetIssueUseParticipateBandwidth() {
     Assert.assertTrue(PublicMethed
         .sendcoin(asset007Address, sendAmount, fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
