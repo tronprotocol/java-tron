@@ -24,7 +24,7 @@ public class DailyBuildReport extends TestListenerAdapter {
     StringBuilder sb = new StringBuilder("Daily Build for stest report:\n");
     String res = sb.toString();
     try {
-      Files.write((Paths.get(reportPath)),res.getBytes("utf-8"));
+      Files.write((Paths.get(reportPath)), res.getBytes("utf-8"));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -32,25 +32,24 @@ public class DailyBuildReport extends TestListenerAdapter {
 
   @Override
   public void onTestSuccess(ITestResult result) {
-    passedDescriptionList.append(result.getMethod().getDescription() + "\n");
+    passedDescriptionList.append(result.getMethod().getRealClass() + ": "
+        + result.getMethod().getDescription() + "\n");
     passedNum++;
   }
 
   @Override
   public void onTestFailure(ITestResult result) {
+    failedDescriptionList.append(result.getMethod().getRealClass() + ": "
+        + result.getMethod().getDescription() + "\n");
     failedNum++;
-    //StringBuilder sb = new StringBuilder();
-    failedDescriptionList.append(result.getMethod().getDescription() + " in "
-        + result.getMethod().getRealClass() + "\n");
   }
 
   @Override
   public void onTestSkipped(ITestResult result) {
+    skippedDescriptionList.append(result.getMethod().getRealClass() + ": "
+        + result.getMethod().getDescription() + "\n");
     skippedNum++;
-    skippedDescriptionList.append(result.getMethod().getDescription() + " in "
-        + result.getMethod().getRealClass() + "\n");
   }
-
 
 
   @Override
@@ -74,7 +73,7 @@ public class DailyBuildReport extends TestListenerAdapter {
 
     String res = sb.toString();
     try {
-      Files.write((Paths.get(reportPath)),res.getBytes("utf-8"),StandardOpenOption.APPEND);
+      Files.write((Paths.get(reportPath)), res.getBytes("utf-8"), StandardOpenOption.APPEND);
     } catch (IOException e) {
       e.printStackTrace();
     }

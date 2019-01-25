@@ -159,8 +159,9 @@ public class ContractGrammar003 {
         "getnumberForB()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById6 = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById6 = null;
     infoById6 = PublicMethed.getTransactionInfoById(txid6, blockingStubFull);
     Long returnnumber6 = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById6.get().getContractResult(0).toByteArray())));

@@ -64,6 +64,9 @@ public class ContractTrcToken051 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -77,7 +80,7 @@ public class ContractTrcToken051 {
 
 
   @Test(enabled = true)
-  public void continueRun() {
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,
@@ -85,6 +88,7 @@ public class ContractTrcToken051 {
     Assert
         .assertTrue(PublicMethed.sendcoin(user001Address, 6048000000L, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
@@ -108,6 +112,7 @@ public class ContractTrcToken051 {
     // devAddress transfer token to A
     PublicMethed.transferAsset(dev001Address, assetAccountId.toByteArray(), 101, user001Address,
         user001Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
     String contractName = "transferTokenContract";
@@ -124,6 +129,8 @@ public class ContractTrcToken051 {
     Assert
         .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     // devAddress transfer token to userAddress
     PublicMethed
         .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
@@ -166,11 +173,13 @@ public class ContractTrcToken051 {
         + "\"," + fakeassetAccountId + ",\"1\"";
     // user trigger A to transfer token to B
 
-    String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+    final String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "TransferTokenTo(address,trcToken,uint256)",
         param, false, 0, 100000000L, "0",
         0, user001Address, user001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(user001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(user001Address,
@@ -215,7 +224,9 @@ public class ContractTrcToken051 {
         user001Address, blockingStubFull);
   }
 
-
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
