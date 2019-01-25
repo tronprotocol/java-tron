@@ -63,6 +63,7 @@ public class ContractTrcToken041 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -82,7 +83,7 @@ public class ContractTrcToken041 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "msg.tokenid add 1,msg.tokenvalue add 1")
   public void deployTransferTokenContract() {
 
     Assert
@@ -209,6 +210,7 @@ public class ContractTrcToken041 {
     PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
         user001Address, blockingStubFull);
   }
+
   /**
    * constructor.
    */

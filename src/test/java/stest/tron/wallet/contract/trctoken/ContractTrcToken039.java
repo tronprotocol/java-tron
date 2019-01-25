@@ -79,7 +79,7 @@ public class ContractTrcToken039 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "deploy Proxy contract")
   public void deploy01TransferTokenContract() {
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,
@@ -157,7 +157,7 @@ public class ContractTrcToken039 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger Proxy contract use AddressA")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -268,7 +268,7 @@ public class ContractTrcToken039 {
     Assert.assertTrue(afterAssetIssueBAddress == beforeAssetIssueBAddress);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger Proxy contract use AddressB")
   public void deploy03TransferTokenContract() {
     Account info1;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(dev001Address,

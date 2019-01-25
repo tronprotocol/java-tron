@@ -86,7 +86,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type: create call  call create")
   public void testInternalTransaction013() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -190,7 +190,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction: test delegatecall ")
   public void testInternalTransaction014() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -372,7 +372,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction: Function nesting ")
   public void testInternalTransaction015() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -486,7 +486,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction: after create 80 times,suicide")
   public void testInternalTransaction016() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -658,7 +658,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction: after create 88 times,suicide")
   public void testInternalTransaction017() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -900,7 +900,7 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction: call create call")
   public void testInternalTransaction018() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

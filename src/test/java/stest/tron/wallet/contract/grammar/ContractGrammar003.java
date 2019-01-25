@@ -81,7 +81,7 @@ public class ContractGrammar003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: Complex structure")
   public void test1Grammar014() {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress3 = ecKey1.getAddress();
@@ -264,7 +264,7 @@ public class ContractGrammar003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: fallback function ")
   public void test2Grammar015() {
 
     String contractName = "executefallbackContract";
@@ -304,7 +304,7 @@ public class ContractGrammar003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammart: Permission control ")
   public void test3Grammar016() {
 
     String contractName = "dContract";
@@ -368,7 +368,7 @@ public class ContractGrammar003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammart: Structure")
   public void test4Grammar017() {
 
     String contractName = "crowdfundingContract";
@@ -414,7 +414,7 @@ public class ContractGrammar003 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: Built in function")
   public void test5Grammar018() {
 
     String contractName = "grammar18Contract";
@@ -478,7 +478,7 @@ public class ContractGrammar003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: Time unit judgment")
   public void test6Grammar019() {
 
     String contractName = "timetestContract";
@@ -499,7 +499,7 @@ public class ContractGrammar003 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: trx judgment")
   public void test7Grammar020() {
 
     String contractName = "TrxContract";

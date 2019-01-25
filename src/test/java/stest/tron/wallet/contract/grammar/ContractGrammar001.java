@@ -78,7 +78,7 @@ public class ContractGrammar001 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: support function type")
   public void test1Grammar001() {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress = ecKey1.getAddress();
@@ -121,7 +121,7 @@ public class ContractGrammar001 {
     Assert.assertTrue(returnnumber2 == 100);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: ordinary library contract")
   public void test2Grammar002() {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
@@ -157,7 +157,7 @@ public class ContractGrammar001 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: library contract")
   public void test3Grammar003() {
     String contractName = "SetContract";
     String code = Configuration.getByPath("testng.conf")
@@ -194,7 +194,7 @@ public class ContractGrammar001 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: Extended type")
   public void test4Grammar004() {
     String contractName = "searchContract";
     String code = Configuration.getByPath("testng.conf")
@@ -257,7 +257,7 @@ public class ContractGrammar001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Grammar: Solidity assembly")
   public void test5Grammar006() {
     String contractName = "infofeedContract";
     String code = Configuration.getByPath("testng.conf")
@@ -321,7 +321,7 @@ public class ContractGrammar001 {
     Optional<TransactionInfo> infoById6 = PublicMethed
         .getTransactionInfoById(txid6, blockingStubFull1);
     Assert.assertTrue(infoById6.get().getResultValue() == 0);
-    
+
     Optional<TransactionInfo> infoById8 = PublicMethed
         .getTransactionInfoById(txid8, blockingStubFull1);
     Assert.assertTrue(infoById8.get().getResultValue() == 0);

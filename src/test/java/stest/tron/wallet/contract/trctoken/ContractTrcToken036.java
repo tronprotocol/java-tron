@@ -78,7 +78,7 @@ public class ContractTrcToken036 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "deploy contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -139,7 +139,7 @@ public class ContractTrcToken036 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger transferTokenWithPure contract")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -245,7 +245,7 @@ public class ContractTrcToken036 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger transferTokenWithConstant contract")
   public void deploy03TransferTokenContract() {
     Account info1;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(dev001Address,
@@ -327,7 +327,7 @@ public class ContractTrcToken036 {
     Assert.assertEquals(user001AddressAddressBalance1, afteruser001AddressAddressBalance1);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger transferTokenWithView contract")
   public void deploy04TransferTokenContract() {
     String contractName2 = "transferTokenWithViewTest";
 
@@ -423,7 +423,7 @@ public class ContractTrcToken036 {
     Assert.assertEquals(user001AddressAddressBalance2, afteruser001AddressAddressBalance2);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger transferTokenWithNoPayable contract")
   public void deploy05TransferTokenContract() {
     String contractName3 = "transferTokenWithOutPayableTest";
     String code3 = Configuration.getByPath("testng.conf")

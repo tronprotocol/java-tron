@@ -86,7 +86,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:create create call call ")
   public void test1InternalTransaction007() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -203,7 +203,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type: call call ")
   public void test2InternalTransaction008() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -413,7 +413,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type: call call ")
   public void test3InternalTransaction009() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -589,7 +589,7 @@ public class ContractInternalTransaction002 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type: create number limition")
   public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -762,7 +762,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type: call create call call")
   public void test5InternalTransaction012() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

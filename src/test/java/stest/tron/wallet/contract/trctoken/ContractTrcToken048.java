@@ -77,7 +77,7 @@ public class ContractTrcToken048 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken msg.value msg,tokenvalue is negative number")
   public void deployTransferTokenContract() {
 
     Assert

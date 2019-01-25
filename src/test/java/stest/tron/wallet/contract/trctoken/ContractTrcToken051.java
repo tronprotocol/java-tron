@@ -64,6 +64,7 @@ public class ContractTrcToken051 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -79,7 +80,7 @@ public class ContractTrcToken051 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken to contract address tokenID is 0")
   public void deployTransferTokenContract() {
 
     Assert

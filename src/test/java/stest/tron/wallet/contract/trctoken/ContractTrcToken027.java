@@ -66,6 +66,7 @@ public class ContractTrcToken027 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -85,7 +86,7 @@ public class ContractTrcToken027 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "deploy transferToken contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -185,7 +186,7 @@ public class ContractTrcToken027 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken use right tokenID")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -295,7 +296,7 @@ public class ContractTrcToken027 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken use fake tokenID")
   public void deploy03TransferTokenContract() {
     //3. user trigger A to transfer token to B
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -392,7 +393,7 @@ public class ContractTrcToken027 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken token value not enought")
   public void deploy04TransferTokenContract() {
     //4. user trigger A to transfer token to B
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -488,7 +489,7 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress1 == afterAssetIssueCAddress2);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken ID not exist")
   public void deploy05TransferTokenContract() {
     Account infoafter2 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter2 = PublicMethed.getAccountResource(dev001Address,
@@ -585,7 +586,7 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress2 == afterAssetIssueCAddress3);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken value not enought")
   public void deploy06TransferTokenContract() {
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,
@@ -682,7 +683,7 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress3 == afterAssetIssueCAddress4);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Multistage delegatecall transferToken use right tokenID,tokenvalue")
   public void deploy07TransferTokenContract() {
     Account infoafter4 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter4 = PublicMethed.getAccountResource(dev001Address,
@@ -780,6 +781,7 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueDevAddress4 - 1 == afterAssetIssueDevAddress5);
 
   }
+
   /**
    * constructor.
    */

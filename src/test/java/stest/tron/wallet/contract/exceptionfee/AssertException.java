@@ -86,7 +86,7 @@ public class AssertException {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract Divide 0")
   public void test1DivideInt() {
     PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -154,7 +154,7 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract index out of bounds")
   public void test2FindArgsContractMinTest() {
     String contractName = "findArgsContractTest";
     String code = Configuration.getByPath("testng.conf")
@@ -216,7 +216,7 @@ public class AssertException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract Bytes array index out of bounds")
   public void test3ByteMinContract() {
     String contractName = "byteContract";
     String code = Configuration.getByPath("testng.conf")
@@ -278,7 +278,7 @@ public class AssertException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract convert too large value to enumerated type")
   public void test4Enum() {
     String contractName = "enum";
     String code = Configuration.getByPath("testng.conf")
@@ -341,7 +341,7 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract move a negative value to a binary")
   public void test5MoveRight() {
     String contractName = "moveRight";
     String code = Configuration.getByPath("testng.conf")
@@ -405,7 +405,7 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract Call an uninitialized internal function type variable")
   public void test6UninitializedContract() {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")
@@ -467,7 +467,7 @@ public class AssertException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract assert exception")
   public void test7TestAssertContract() {
     String contractName = "TestThrowsContract";
     String code = Configuration.getByPath("testng.conf")

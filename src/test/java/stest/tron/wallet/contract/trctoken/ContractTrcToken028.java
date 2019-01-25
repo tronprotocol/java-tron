@@ -63,6 +63,7 @@ public class ContractTrcToken028 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -82,7 +83,7 @@ public class ContractTrcToken028 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "deploy tokenBalanceWithSameName contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -148,7 +149,7 @@ public class ContractTrcToken028 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger tokenBalanceWithSameName")
   public void deploy02TransferTokenContract() {
     // user trigger A to transfer token to B
     Account info;
@@ -249,6 +250,7 @@ public class ContractTrcToken028 {
         .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
     Assert.assertTrue(returnnumber1 == 9);
   }
+
   /**
    * constructor.
    */
