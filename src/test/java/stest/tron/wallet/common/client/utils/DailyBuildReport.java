@@ -55,8 +55,8 @@ public class DailyBuildReport extends TestListenerAdapter {
   @Override
   public void onFinish(ITestContext testContext) {
     StringBuilder sb = new StringBuilder();
-    sb.append("Total: " + (passedNum + failedNum + skippedNum) +  "  ," + "Passed: " + passedNum
-        + "  ," + "Failed: " + failedNum + "  ," + "Skipped: " + skippedNum + "\n");
+    sb.append("Total: " + (passedNum + failedNum + skippedNum) +  ",  " + "Passed: " + passedNum
+        + ",  " + "Failed: " + failedNum + ",  " + "Skipped: " + skippedNum + "\n");
     sb.append("------------------------------------------------------------------------------\n");
     sb.append("Passed list " + "\n");
     //sb.append("Passed case List: " + "\n");
