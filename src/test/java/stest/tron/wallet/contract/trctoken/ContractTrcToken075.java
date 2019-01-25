@@ -181,7 +181,67 @@ public class ContractTrcToken075 {
     logger.info("before trigger, dev001Address has AssetId "
         + assetAccountId.toStringUtf8() + ", Count is " + devAssetBefore);
 
+    tokenId = Long.toString(100_0000);
+
     String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "getToken(trcToken)", tokenId, false, 0,
+        1000000000L, "0", 0, dev001Address, dev001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(0);
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "getToken(trcToken)", tokenId, false, 0,
+        1000000000L, "0", 0, dev001Address, dev001Key,
+        blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(-1);
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "getToken(trcToken)", tokenId, false, 0,
+        1000000000L, "0", 0, dev001Address, dev001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    tokenId = Long.toString(Long.MIN_VALUE);
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "getToken(trcToken)", tokenId, false, 0,
+        1000000000L, "0", 0, dev001Address, dev001Key,
+        blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "getTokenLongMin()", "#", false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);

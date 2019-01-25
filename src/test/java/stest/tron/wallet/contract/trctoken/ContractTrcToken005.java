@@ -81,7 +81,7 @@ public class ContractTrcToken005 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "triggerContract with exception condition")
   public void deployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -217,6 +217,7 @@ public class ContractTrcToken005 {
     logger.info("before userAssetId has AssetId "
         + tokenId + ", Count is " + userAssetId);
 
+    // not such tokenId
     tokenId = Long.toString(Long.valueOf(assetAccountId.toStringUtf8()) + 100000);
     tokenValue = 10;
     callValue = 5;
@@ -232,6 +233,7 @@ public class ContractTrcToken005 {
     Assert.assertEquals("contract validate error : No asset !",
         response.getMessage().toStringUtf8());
 
+    // not have this tokenId
     tokenId = assetAccountId.toStringUtf8();
     tokenValue = 10;
     callValue = 5;
@@ -246,6 +248,7 @@ public class ContractTrcToken005 {
     Assert.assertEquals("contract validate error : Owner no asset!",
         response.getMessage().toStringUtf8());
 
+    // tokenId is Long.MAX_VALUE
     tokenId = Long.toString(Long.MAX_VALUE);
     tokenValue = 10;
     callValue = 5;
@@ -258,6 +261,163 @@ public class ContractTrcToken005 {
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : No asset !",
+        response.getMessage().toStringUtf8());
+
+    Assert.assertTrue(PublicMethed.transferAsset(user001Address,
+        assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenValue is not enough
+    tokenId = assetAccountId.toStringUtf8();
+    tokenValue = 100;
+    callValue = 5;
+
+    response = PublicMethed
+        .triggerContractAndGetResponse(transferTokenContractAddress,
+            "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+            1000000000L, tokenId, tokenValue, user001Address, user001Key,
+            blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : assetBalance is not sufficient.",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed
+        .sendcoin(transferTokenContractAddress, 5000000, fromAddress,
+            testKey002, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenvalue is less than 0
+    tokenId = assetAccountId.toStringUtf8();
+    tokenValue = -1;
+    callValue = 5;
+
+    response = PublicMethed
+        .triggerContractAndGetResponse(transferTokenContractAddress,
+            "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+            1000000000L, tokenId, tokenValue, user001Address, user001Key,
+            blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
+        response.getMessage().toStringUtf8());
+
+    tokenId = assetAccountId.toStringUtf8();
+    tokenValue = Long.MIN_VALUE;
+    callValue = 5;
+
+    response = PublicMethed.triggerContractAndGetResponse(transferTokenContractAddress,
+        "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+        1000000000L, tokenId, tokenValue, user001Address, user001Key,
+        blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed
+        .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenId is 100_0000
+    tokenId = Long.toString(100_0000);
+    tokenValue = 10;
+    callValue = 5;
+
+    response = PublicMethed
+        .triggerContractAndGetResponse(transferTokenContractAddress,
+            "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+            1000000000L, tokenId, tokenValue, user001Address, user001Key,
+            blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    // tokenId is long.min
+    tokenId = Long.toString(Long.MIN_VALUE);
+    tokenValue = 10;
+    callValue = 5;
+
+    response = PublicMethed.triggerContractAndGetResponse(transferTokenContractAddress,
+        "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+        1000000000L, tokenId, tokenValue, user001Address, user001Key,
+        blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    // tokenId is 0
+    tokenId = Long.toString(0);
+    tokenValue = 10;
+    callValue = 5;
+
+    response = PublicMethed.triggerContractAndGetResponse(transferTokenContractAddress,
+        "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+        1000000000L, tokenId, tokenValue, user001Address, user001Key,
+        blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals(
+        "contract validate error : invalid arguments with tokenValue = 10, tokenId = 0",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed
+        .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(Long.MIN_VALUE);
+    tokenValue = 0;
+    callValue = 5;
+
+    response = PublicMethed
+        .triggerContractAndGetResponse(transferTokenContractAddress,
+            "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+            1000000000L, tokenId, tokenValue, user001Address, user001Key,
+            blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(-1);
+    tokenValue = 0;
+    callValue = 5;
+
+    response = PublicMethed.triggerContractAndGetResponse(transferTokenContractAddress,
+        "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+        1000000000L, tokenId, tokenValue, user001Address, user001Key,
+        blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(100_0000L);
+    tokenValue = 0;
+    callValue = 5;
+
+    response = PublicMethed.triggerContractAndGetResponse(transferTokenContractAddress,
+        "msgTokenValueAndTokenIdTest()", "#", false, callValue,
+        1000000000L, tokenId, tokenValue, user001Address, user001Key,
+        blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);

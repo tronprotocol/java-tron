@@ -87,7 +87,7 @@ public class ContractTrcToken018 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test
+  @Test(enabled = true, description = "transfer token to an inactived account")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -182,11 +182,7 @@ public class ContractTrcToken018 {
 
     Assert.assertEquals(Long.valueOf(100), Long.valueOf(devAssetCountBefore - devAssetCountAfter));
     Assert.assertEquals(Long.valueOf(200), contractAssetCount);
-  }
 
-
-  @Test
-  public void test02TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
             blockingStubFull), 0, 1,
@@ -197,7 +193,7 @@ public class ContractTrcToken018 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
+    accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
     long devEnergyLimitBefore = accountResource.getEnergyLimit();
     long devEnergyUsageBefore = accountResource.getEnergyUsed();
@@ -261,7 +257,7 @@ public class ContractTrcToken018 {
     Optional<Transaction> trsById = PublicMethed.getTransactionById(triggerTxid, blockingStubFull);
     long feeLimit = trsById.get().getRawData().getFeeLimit();
 
-    Optional<TransactionInfo> infoById = PublicMethed
+    infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
     Assert.assertEquals(FAILED, infoById.get().getResult());

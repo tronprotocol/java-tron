@@ -72,8 +72,8 @@ public class ContractTrcToken073 {
     PublicMethed.printAddress(dev001Key);
   }
 
-  @Test
-  public void testDeployTransferTokenContract() {
+  @Test(enabled = true, description = "get token balance with correct tokenValue and tokenId")
+  public void testTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 11000_000_000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);

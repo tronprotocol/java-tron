@@ -78,7 +78,7 @@ public class ContractTrcToken003 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "deploycontract with exception condition")
   public void deployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -197,6 +197,156 @@ public class ContractTrcToken003 {
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : No asset !",
         response.getMessage().toStringUtf8());
+
+    // the tokenValue is not enough
+    fakeTokenId = assetAccountDev.toStringUtf8();
+    fakeTokenValue = devAssetCountBefore + 100;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            fakeTokenId, fakeTokenValue, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : assetBalance is not sufficient.",
+        response.getMessage().toStringUtf8());
+
+    // tokenid is -1
+    fakeTokenId = Long.toString(-1);
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            fakeTokenId, 100, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenid is 100_0000L
+    fakeTokenId = Long.toString(100_0000L);
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            fakeTokenId, 100, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    // tokenid is Long.MIN_VALUE
+    fakeTokenId = Long.toString(Long.MIN_VALUE);
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            fakeTokenId, 100, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenid is 0
+    fakeTokenId = Long.toString(0);
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            fakeTokenId, 100, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals(
+        "contract validate error : invalid arguments with tokenValue = 100, tokenId = 0",
+        response.getMessage().toStringUtf8());
+
+    // tokenvalue is less than 0
+    fakeTokenValue = -1L;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            assetAccountDev.toStringUtf8(), fakeTokenValue, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    // tokenvalue is long.min
+    fakeTokenValue = Long.MIN_VALUE;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "",
+            maxFeeLimit, 0L, 0, 10000,
+            assetAccountDev.toStringUtf8(), fakeTokenValue, null, dev001Key,
+            dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
+        response.getMessage().toStringUtf8());
+
+    String tokenId = Long.toString(-1);
+    long tokenValue = 0;
+    long callValue = 10;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "", maxFeeLimit,
+            callValue, 0, 10000, tokenId, tokenValue,
+            null, dev001Key, dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(Long.MIN_VALUE);
+    tokenValue = 0;
+    callValue = 10;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "", maxFeeLimit,
+            callValue, 0, 10000, tokenId, tokenValue,
+            null, dev001Key, dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    tokenId = Long.toString(1000000);
+    tokenValue = 0;
+    callValue = 10;
+
+    response = PublicMethed
+        .deployContractAndGetResponse(contractName, abi, code, "", maxFeeLimit,
+            callValue, 0, 10000, tokenId, tokenValue,
+            null, dev001Key, dev001Address, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
+        response.getMessage().toStringUtf8());
+
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
