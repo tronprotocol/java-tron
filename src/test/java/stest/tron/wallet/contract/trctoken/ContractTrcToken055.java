@@ -81,8 +81,8 @@ public class ContractTrcToken055 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "tokenId is 0,"
-      + " tokenvalue is not exist, trigger Transfer contract")
+  @Test(enabled = true, description = "trigger TransferToken with 0 tokenId,"
+      + " and not existed tokenValue")
   public void triggerTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));

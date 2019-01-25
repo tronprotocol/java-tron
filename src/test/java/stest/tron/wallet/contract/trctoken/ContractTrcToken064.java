@@ -82,7 +82,8 @@ public class ContractTrcToken064 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test
+  @Test(enabled = true, description = "transferToken with 0 tokenValue and "
+      + "tokenId in exception condition, deploy transfer contract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -181,7 +182,8 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "transferToken with 0 tokenValue and "
+      + "tokenId in exception condition, deploy receiver contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
@@ -248,7 +250,8 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "transferToken with 0 tokenValue and "
+      + "tokenId in exception condition, trigger contract")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
