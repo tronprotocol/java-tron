@@ -35,7 +35,6 @@ public class DailyBuildReport extends TestListenerAdapter {
     passedDescriptionList.append(result.getMethod().getRealClass() + ": "
         + result.getMethod().getDescription() + "\n");
     passedNum++;
-    result.getMethod()
   }
 
   @Override
