@@ -304,7 +304,7 @@ public class ContractGrammar003 {
 
   }
 
-  @Test(enabled = true, description = "Grammart: Permission control ")
+  @Test(enabled = true, description = "Grammar: Permission control ")
   public void test3Grammar016() {
 
     String contractName = "dContract";
@@ -368,7 +368,7 @@ public class ContractGrammar003 {
 
   }
 
-  @Test(enabled = true, description = "Grammart: Structure")
+  @Test(enabled = true, description = "Grammar: Structure")
   public void test4Grammar017() {
 
     String contractName = "crowdfundingContract";
