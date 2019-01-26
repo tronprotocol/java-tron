@@ -87,7 +87,7 @@ public class RequireException {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Require Exception")
   public void test1TestRequireContract() {
     ecKey1 = new ECKey(Utils.getRandom());
     asset016Address = ecKey1.getAddress();
@@ -170,7 +170,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Throw Exception")
   public void test2TestThrowsContract() {
     String contractName = "TestThrowsContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"
@@ -244,7 +244,7 @@ public class RequireException {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Call Revert ")
   public void test3TestRevertContract() {
     String contractName = "TestThrowsContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f3006080604052600436"
@@ -319,7 +319,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "No payable function call value")
   public void test4noPayableContract() {
     String contractName = "noPayableContract";
     String code = "6080604052348015600f57600080fd5b5060978061001e6000396000f3006080604052600436106"
@@ -387,7 +387,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "No payable Constructor")
   public void test5noPayableConstructor() {
 
     Account info;
@@ -448,7 +448,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Transfer failed")
   public void test6transferTestContract() {
     String contractName = "transferTestContract";
     String code = "608060405234801561001057600080fd5b5060d28061001f6000396000f30060806040526004361"
@@ -521,7 +521,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "No payable fallback call value")
   public void test7payableFallbakContract() {
     String contractName = "payableFallbak";
     String code = "6080604052348015600f57600080fd5b5060fb8061001e6000396000f3006080604052600436106"
@@ -606,7 +606,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "New contract gas not enough")
   public void test8newContractGasNoenough() {
     String contractName = "ContractGasNoenough";
     String code = "60806040526040516020806100bf83398101604052516000556099806100266000396000f300608"
@@ -696,7 +696,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Message used error")
   public void test9MessageUsedErrorFeed() {
     String contractName = "MessageFeed";
     String code = "6080604052348015600f57600080fd5b50609c8061001e6000396000f300608060405260043610"
@@ -785,7 +785,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "function used error")
   public void testFunctionUsedErrorFeed() {
     String contractName = "FunctionFeed";
     String code = "6080604052348015600f57600080fd5b50608b8061001e6000396000f3006080604052600436106"
