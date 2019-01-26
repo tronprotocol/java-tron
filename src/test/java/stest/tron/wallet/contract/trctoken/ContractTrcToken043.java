@@ -61,6 +61,10 @@ public class ContractTrcToken043 {
   private byte[] user001Address = ecKey2.getAddress();
   private String user001Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
+  private ECKey ecKey3 = new ECKey(Utils.getRandom());
+  private byte[] user002Address = ecKey3.getAddress();
+  private String user002Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -87,19 +91,22 @@ public class ContractTrcToken043 {
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 5048_000_000L, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 5048_000_000L, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed.sendcoin(user002Address, 5048_000_000L, fromAddress,
+        testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
             blockingStubFull), 0, 1,
         ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
@@ -257,7 +264,10 @@ public class ContractTrcToken043 {
 
     Assert.assertTrue(PublicMethed.transferAsset(user001Address,
         assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    Assert.assertTrue(PublicMethed.transferAsset(user002Address,
+        assetAccountId.toByteArray(), 10L, dev001Address, dev001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
@@ -291,6 +301,7 @@ public class ContractTrcToken043 {
     logger.info("before trigger, resultContractAddress has AssetId "
         + assetAccountId.toStringUtf8() + ", Count is " + receiveAssetBefore);
 
+    // tokenId is 100_0000
     String tokenId = Long.toString(100_0000);
     Long tokenValue = Long.valueOf(1);
     Long callValue = Long.valueOf(0);
@@ -317,32 +328,13 @@ public class ContractTrcToken043 {
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    tokenId = Long.toString(0);
-    tokenValue = Long.valueOf(1);
-    callValue = Long.valueOf(0);
-
-    param = "\"" + Base58.encode58Check(resultContractAddress)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
-        infoById.get().getResMessage().toStringUtf8());
-
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
             blockingStubFull), 0, 1,
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    // tokenId is -1
     tokenId = Long.toString(-1);
     tokenValue = Long.valueOf(1);
     callValue = Long.valueOf(0);
@@ -369,6 +361,7 @@ public class ContractTrcToken043 {
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    // tokenId is 1
     tokenId = Long.toString(Long.MIN_VALUE);
     tokenValue = Long.valueOf(1);
     callValue = Long.valueOf(0);
@@ -381,35 +374,6 @@ public class ContractTrcToken043 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
-        infoById.get().getResMessage().toStringUtf8());
-
-    // transfer to a normal account
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    tokenId = Long.toString(100_0000);
-    tokenValue = Long.valueOf(1);
-    callValue = Long.valueOf(0);
-
-    param = "\"" + Base58.encode58Check(dev001Address)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -424,59 +388,7 @@ public class ContractTrcToken043 {
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    tokenId = Long.toString(0);
-    tokenValue = Long.valueOf(1);
-    callValue = Long.valueOf(0);
-
-    param = "\"" + Base58.encode58Check(resultContractAddress)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
-        infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    tokenId = Long.toString(-1);
-    tokenValue = Long.valueOf(1);
-    callValue = Long.valueOf(0);
-
-    param = "\"" + Base58.encode58Check(resultContractAddress)
-        + "\",\"" + tokenValue + "\"," + tokenId;
-
-    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
-        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() != 0);
-    Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
-        infoById.get().getResMessage().toStringUtf8());
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    // tokenId is long.min
     tokenId = Long.toString(Long.MIN_VALUE);
     tokenValue = Long.valueOf(1);
     callValue = Long.valueOf(0);
@@ -530,7 +442,7 @@ public class ContractTrcToken043 {
             blockingStubFull), 0, 1,
         ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
-    // tokenId is 0, account not have trx
+    // tokenId is 0, account does not have trx
     param = "\"" + Base58.encode58Check(dev001Address)
         + "\",\"" + tokenValue + "\"," + tokenId;
 
@@ -548,15 +460,16 @@ public class ContractTrcToken043 {
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
+        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
             blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethed
         .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
             blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .sendcoin(user001Address, 5000000, fromAddress, testKey002,
+        .sendcoin(user002Address, 5000000, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -570,7 +483,7 @@ public class ContractTrcToken043 {
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
         blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -583,9 +496,10 @@ public class ContractTrcToken043 {
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
+        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
             blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //tokenId is 0, transfer contract has trx, transfer to normal account
     tokenId = Long.toString(0);
@@ -597,7 +511,7 @@ public class ContractTrcToken043 {
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -608,9 +522,10 @@ public class ContractTrcToken043 {
     Assert.assertEquals("validateForSmartContract failure, not valid token id",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed
-        .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
-            blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
+            blockingStubFull), 0, 1,
+        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenid bigger than long.max, trigger to a contract
@@ -620,7 +535,7 @@ public class ContractTrcToken043 {
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenTestIDOverBigInteger(address)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -631,9 +546,10 @@ public class ContractTrcToken043 {
     Assert.assertEquals("BigInteger out of long range",
         infoById.get().getResMessage().toStringUtf8());
 
-    Assert.assertTrue(PublicMethed
-        .sendcoin(transferTokenContractAddress, 5000000, fromAddress, testKey002,
-            blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+        PublicMethed.getFreezeBalanceCount(user002Address, user002Key, 50000L,
+            blockingStubFull), 0, 1,
+        ByteString.copyFrom(user002Address), testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // tokenid bigger than long.max, trigger to a normal account
@@ -641,7 +557,7 @@ public class ContractTrcToken043 {
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenTestIDOverBigInteger(address)", param, false, callValue,
-        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user002Address, user002Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -672,6 +588,8 @@ public class ContractTrcToken043 {
         dev001Address, blockingStubFull);
     PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
         user001Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
+        user002Address, blockingStubFull);
   }
 
   /**

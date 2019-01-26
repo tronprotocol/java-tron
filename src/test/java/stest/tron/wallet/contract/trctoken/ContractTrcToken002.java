@@ -91,6 +91,7 @@ public class ContractTrcToken002 {
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 70000L,
             blockingStubFull), 0, 1,
         ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address),
         testKey002, blockingStubFull));
