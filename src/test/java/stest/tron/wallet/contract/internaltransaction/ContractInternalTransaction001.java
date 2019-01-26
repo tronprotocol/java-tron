@@ -85,7 +85,7 @@ public class ContractInternalTransaction001 {
         .getBalance()));
   }
 
-  @Test(enabled = true, description = "InternalTransaction type :create calll ")
+  @Test(enabled = true, description = "InternalTransaction type :create call ")
   public void testInternalTransaction001() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -429,7 +429,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true, description = "InternalTransaction type:create calll Nesting")
+  @Test(enabled = true, description = "InternalTransaction type:create call Nesting")
   public void testInternalTransaction005() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -539,7 +539,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true, description = "InternalTransaction type:create calll call")
+  @Test(enabled = true, description = "InternalTransaction type:create call call")
   public void testInternalTransaction006() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

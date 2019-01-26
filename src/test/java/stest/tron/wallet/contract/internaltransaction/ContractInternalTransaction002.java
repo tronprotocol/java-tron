@@ -589,7 +589,7 @@ public class ContractInternalTransaction002 {
     }
   }
 
-  @Test(enabled = true, description = "InternalTransaction type: create number limition")
+  @Test(enabled = true, description = "InternalTransaction type: create number limit")
   public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
