@@ -66,6 +66,7 @@ public class ContractTrcToken023 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -84,7 +85,7 @@ public class ContractTrcToken023 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Fallback function energy limit to prevent fallback attacks")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -164,7 +165,7 @@ public class ContractTrcToken023 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Fallback function energy used >2300")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -265,6 +266,7 @@ public class ContractTrcToken023 {
         dev001Address, blockingStubFull);
 
   }
+
   /**
    * constructor.
    */

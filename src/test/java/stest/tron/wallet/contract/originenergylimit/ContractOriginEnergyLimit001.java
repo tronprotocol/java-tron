@@ -75,7 +75,7 @@ public class ContractOriginEnergyLimit001 {
 
 
   //Origin_energy_limit001,028,029
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Origin_energy_limit: Boundary value and update test")
   public void testOrigin_energy_limit001() {
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,

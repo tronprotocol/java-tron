@@ -82,7 +82,8 @@ public class ContractTrcToken064 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue and "
+      + "tokenId in exception condition, deploy transfer contract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -181,7 +182,8 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue and "
+      + "tokenId in exception condition, deploy receiver contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
@@ -248,7 +250,8 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue and "
+      + "tokenId in exception condition, trigger contract")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -318,6 +321,117 @@ public class ContractTrcToken064 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("BigInteger out of long range",
         infoById.get().getResMessage().toStringUtf8());
+
+    String tokenId = Long.toString(Long.MIN_VALUE);
+    Long tokenValue = Long.valueOf(0);
+    callValue = Long.valueOf(0);
+
+    param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    tokenId = Long.toString(100_0000);
+    tokenValue = Long.valueOf(0);
+    callValue = Long.valueOf(0);
+
+    param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    tokenId = Long.toString(-1);
+    tokenValue = Long.valueOf(0);
+    callValue = Long.valueOf(0);
+
+    param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    tokenId = Long.toString(0);
+    tokenValue = Long.valueOf(0);
+    callValue = Long.valueOf(0);
+
+    param = "\"" + Base58.encode58Check(resultContractAddress)
+        + "\",\"" + tokenValue + "\"," + tokenId;
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+        infoById.get().getResMessage().toStringUtf8());
+
+    callValue = Long.valueOf(0);
+
+    param = "\"" + Base58.encode58Check(resultContractAddress) + "\"";
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTestValueMaxLong(address)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //transfer to a normal account
+    param = "\"" + Base58.encode58Check(dev001Address) + "\"";
+
+    triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+        "transferTokenTestValueMaxLong(address)", param, false, callValue,
+        1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
+        blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() != 0);
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     long devEnergyLimitAfter = accountResource.getEnergyLimit();

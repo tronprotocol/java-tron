@@ -85,7 +85,7 @@ public class ContractInternalTransaction001 {
         .getBalance()));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type :create call ")
   public void testInternalTransaction001() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -196,7 +196,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:call")
   public void testInternalTransaction002() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -256,7 +256,7 @@ public class ContractInternalTransaction001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:create")
   public void testInternalTransaction003() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -313,7 +313,7 @@ public class ContractInternalTransaction001 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:create call suicide")
   public void testInternalTransaction004() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -429,7 +429,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:create call Nesting")
   public void testInternalTransaction005() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -539,7 +539,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "InternalTransaction type:create call call")
   public void testInternalTransaction006() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

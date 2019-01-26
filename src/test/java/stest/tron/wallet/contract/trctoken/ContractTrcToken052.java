@@ -78,8 +78,8 @@ public class ContractTrcToken052 {
   }
 
 
-  @Test(enabled = true)
-  public void continueRun() {
+  @Test(enabled = true, description = "TransferToken to contract address tokenID is 0")
+  public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,

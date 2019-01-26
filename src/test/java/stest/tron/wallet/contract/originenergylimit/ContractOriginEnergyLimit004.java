@@ -129,7 +129,7 @@ public class ContractOriginEnergyLimit004 {
     return devMax;
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Contract use Origin_energy_limit")
   public void testOriginEnergyLimit() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1000000L, fromAddress,
         testKey002, blockingStubFull));

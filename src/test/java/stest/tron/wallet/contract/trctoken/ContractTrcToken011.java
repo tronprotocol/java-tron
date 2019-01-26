@@ -81,7 +81,7 @@ public class ContractTrcToken011 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 15048_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -180,7 +180,7 @@ public class ContractTrcToken011 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken with correct value, deploy receive contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
@@ -250,7 +250,7 @@ public class ContractTrcToken011 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken with correct value, transfer to a contract")
   public void test03TriggerContract() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -374,7 +374,7 @@ public class ContractTrcToken011 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken with correct value, get contract tokenBalance")
   public void test04TriggerTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 1000_000_000L,
         0, 1, user001Key, blockingStubFull));

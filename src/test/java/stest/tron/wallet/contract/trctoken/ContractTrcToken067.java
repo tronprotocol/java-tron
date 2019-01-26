@@ -80,7 +80,8 @@ public class ContractTrcToken067 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue, "
+      + "and not existed tokenId, deploy transfer contract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 5048_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -171,7 +172,8 @@ public class ContractTrcToken067 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue, "
+      + "and not existed tokenId, deploy receive contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
@@ -241,7 +243,8 @@ public class ContractTrcToken067 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue, "
+      + "and not existed tokenId, trigger transfer contract")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -356,7 +359,8 @@ public class ContractTrcToken067 {
         transferAssetBefore + 2L - transferAssetAfter);
   }
 
-  @Test
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue, "
+      + "and not existed tokenId, get tokenBalance")
   public void test04TriggerTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 1000_000_000L,
         0, 1, user001Key, blockingStubFull));

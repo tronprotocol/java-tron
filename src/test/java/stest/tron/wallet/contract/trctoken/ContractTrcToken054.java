@@ -78,8 +78,8 @@ public class ContractTrcToken054 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test
-  public void test01DeployTransferTokenContract() {
+  @Test(enabled = true, description = "Trigger transferToken with 0 tokenValue")
+  public void testTriggerTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,

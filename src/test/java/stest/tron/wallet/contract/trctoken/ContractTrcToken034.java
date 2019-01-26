@@ -78,7 +78,7 @@ public class ContractTrcToken034 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Deploy after transfertoken execute require contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -134,7 +134,7 @@ public class ContractTrcToken034 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger after transfertoken execute require contract")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,

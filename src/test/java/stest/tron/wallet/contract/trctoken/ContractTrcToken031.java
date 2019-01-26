@@ -77,7 +77,7 @@ public class ContractTrcToken031 {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Deploy suicide contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -136,7 +136,7 @@ public class ContractTrcToken031 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger suicide contract,toaddress is myself")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,

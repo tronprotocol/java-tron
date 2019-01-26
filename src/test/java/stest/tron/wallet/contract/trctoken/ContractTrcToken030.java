@@ -75,7 +75,7 @@ public class ContractTrcToken030 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Deploy suicide contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -140,7 +140,7 @@ public class ContractTrcToken030 {
   /**
    * constructor.
    */
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger suicide contract,toaddress is other")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,

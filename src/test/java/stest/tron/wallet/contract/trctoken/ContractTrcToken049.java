@@ -64,6 +64,7 @@ public class ContractTrcToken049 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -81,6 +82,7 @@ public class ContractTrcToken049 {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
+
   /**
    * constructor.
    */
@@ -115,7 +117,7 @@ public class ContractTrcToken049 {
     return assetAccountId;
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken to myself")
   public void deployTransferTokenContract() {
 
     Assert

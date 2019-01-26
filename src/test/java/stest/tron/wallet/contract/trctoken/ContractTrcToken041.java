@@ -29,7 +29,7 @@ public class ContractTrcToken041 {
 
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private ManagedChannel channelFull = null;
@@ -63,6 +63,7 @@ public class ContractTrcToken041 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -82,12 +83,14 @@ public class ContractTrcToken041 {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "Trigger contract msg.tokenid add 1,msg.tokenvalue add 1")
   public void deployTransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 2048000000, fromAddress,
             testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Assert
         .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
@@ -107,6 +110,7 @@ public class ContractTrcToken041 {
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply, 1,
         100, start, end, 1, description, url, 10000L,
         10000L, 1L, 1L, dev001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
@@ -209,6 +213,7 @@ public class ContractTrcToken041 {
     PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
         user001Address, blockingStubFull);
   }
+
   /**
    * constructor.
    */

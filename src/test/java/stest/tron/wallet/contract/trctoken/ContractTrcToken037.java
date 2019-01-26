@@ -77,8 +77,8 @@ public class ContractTrcToken037 {
   }
 
 
-  @Test(enabled = true)
-  public void continueRun() {
+  @Test(enabled = true, description = "Multi-level call transferToken tokenBalance")
+  public void deploy01TransferTokenContract() {
 
     Assert
         .assertTrue(PublicMethed.sendcoin(dev001Address, 4048000000L, fromAddress,

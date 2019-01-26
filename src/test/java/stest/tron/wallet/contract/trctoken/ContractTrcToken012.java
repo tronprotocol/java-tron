@@ -75,7 +75,7 @@ public class ContractTrcToken012 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 15048_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -171,7 +171,7 @@ public class ContractTrcToken012 {
   }
 
 
-  @Test(enabled = true)
+  @Test(description = "TransferToken with correct value, transfer to a normal account")
   public void test02TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -270,7 +270,7 @@ public class ContractTrcToken012 {
         transferAssetBefore + 2L - transferAssetAfter);
   }
 
-  @Test(enabled = true)
+  @Test(description = "TransferToken with correct value, get account tokenBalance")
   public void test03TriggerTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 1000_000_000L,
         0, 1, user001Key, blockingStubFull));
