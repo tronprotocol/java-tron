@@ -69,10 +69,12 @@ public class ContractLinkage001 {
 
   }
 
-  @Test(enabled = true,description = "Deploy contract with valid or invalid value")
+  @Test(enabled = true, description = "Deploy contract with valid or invalid value")
   public void deployContentValue() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage001Address, 20000000000L, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage001Address,
         blockingStubFull);
@@ -173,6 +175,8 @@ public class ContractLinkage001 {
         payableCode, "", maxFeeLimit, accountBalance, 100, null,
         linkage001Key, linkage001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
@@ -215,6 +219,8 @@ public class ContractLinkage001 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage001Address, 50000000L,
         0, 1, linkage001Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     maxFeeLimit = maxFeeLimit - 50000000L;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage001Address,

@@ -906,6 +906,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String contractName = "AAContract";
     String code = "6080604052612fea806100136000396000f3006080604052600436106100275763ffffffff60e0"
         + "60020a60003504166363f76a6a8114610029575b005b610027600160a060020a0360043581169060243"

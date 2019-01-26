@@ -92,6 +92,8 @@ public class ContractLinkage005 {
         0, linkage005Key, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
         0, 1, linkage005Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     contractName = "EnergyCost";
     code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f300608060405260"
