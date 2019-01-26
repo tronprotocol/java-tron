@@ -149,7 +149,7 @@ public class ContractTrcToken028 {
   }
 
 
-  @Test(enabled = true, description = "trigger tokenBalanceWithSameName")
+  @Test(enabled = true, description = "Trigger tokenBalanceWithSameName")
   public void deploy02TransferTokenContract() {
     // user trigger A to transfer token to B
     Account info;

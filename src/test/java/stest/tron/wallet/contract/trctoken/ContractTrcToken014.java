@@ -187,7 +187,7 @@ public class ContractTrcToken014 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with tokenId in exception condition,"
+  @Test(enabled = true, description = "TransferToken with tokenId in exception condition,"
       + " deploy receiver contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -259,7 +259,7 @@ public class ContractTrcToken014 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with tokenId in exception condition,"
+  @Test(enabled = true, description = "TransferToken with tokenId in exception condition,"
       + " transfer to contract")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.transferAsset(user001Address,

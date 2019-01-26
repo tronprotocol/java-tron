@@ -185,7 +185,7 @@ public class ContractTrcToken043 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with invalid tokenId, deploy receive contract")
+  @Test(enabled = true, description = "TransferToken with invalid tokenId, deploy receive contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 50000L,
@@ -255,7 +255,7 @@ public class ContractTrcToken043 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with invalid tokenId, transferToken")
+  @Test(enabled = true, description = "TransferToken with invalid tokenId, transferToken")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

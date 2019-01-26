@@ -182,7 +182,7 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with 0 tokenValue and "
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue and "
       + "tokenId in exception condition, deploy receiver contract")
   public void test02DeployRevContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -250,7 +250,7 @@ public class ContractTrcToken064 {
     Assert.assertEquals(Long.valueOf(100), contractAssetCount);
   }
 
-  @Test(enabled = true, description = "transferToken with 0 tokenValue and "
+  @Test(enabled = true, description = "TransferToken with 0 tokenValue and "
       + "tokenId in exception condition, trigger contract")
   public void test03TriggerContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
