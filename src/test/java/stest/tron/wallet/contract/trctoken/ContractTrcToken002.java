@@ -78,7 +78,7 @@ public class ContractTrcToken002 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "triggerContract with correct tokenValue and tokenId")
+  @Test(enabled = true, description = "TriggerContract with correct tokenValue and tokenId")
   public void deployTransferTokenContract() {
 
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 3100_000_000L, fromAddress,

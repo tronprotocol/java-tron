@@ -78,7 +78,7 @@ public class ContractTrcToken003 {
 
   }
 
-  @Test(enabled = true, description = "deployContract with exception condition")
+  @Test(enabled = true, description = "DeployContract with exception condition")
   public void deployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -346,7 +346,6 @@ public class ContractTrcToken003 {
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
     Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
-
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();

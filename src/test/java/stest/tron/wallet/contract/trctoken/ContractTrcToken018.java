@@ -87,7 +87,7 @@ public class ContractTrcToken018 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "transfer token to an inactive account")
+  @Test(enabled = true, description = "Transfer token to an inactive account")
   public void testDeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));

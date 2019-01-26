@@ -83,7 +83,7 @@ public class ContractTrcToken041 {
   }
 
 
-  @Test(enabled = true, description = "msg.tokenid add 1,msg.tokenvalue add 1")
+  @Test(enabled = true, description = "Trigger contract msg.tokenid add 1,msg.tokenvalue add 1")
   public void deployTransferTokenContract() {
 
     Assert

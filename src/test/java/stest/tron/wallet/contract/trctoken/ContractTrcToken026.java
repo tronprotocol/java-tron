@@ -83,7 +83,7 @@ public class ContractTrcToken026 {
   }
 
 
-  @Test(enabled = true, description = "deploy transferToken contract")
+  @Test(enabled = true, description = "Deploy transferToken contract")
   public void deploy01TransferTokenContract() {
 
     Assert

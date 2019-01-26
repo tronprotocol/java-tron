@@ -74,7 +74,7 @@ public class ContractTrcToken075 {
     PublicMethed.printAddress(dev001Key);
   }
 
-  @Test(enabled = true, description = "tokenBalance with exception condition")
+  @Test(enabled = true, description = "TokenBalance with exception condition")
   public void testTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 11000_000_000L, fromAddress,
         testKey002, blockingStubFull));

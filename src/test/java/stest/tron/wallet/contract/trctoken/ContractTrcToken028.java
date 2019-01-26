@@ -83,7 +83,7 @@ public class ContractTrcToken028 {
   }
 
 
-  @Test(enabled = true, description = "deploy tokenBalanceWithSameName contract")
+  @Test(enabled = true, description = "Deploy tokenBalanceWithSameName contract")
   public void deploy01TransferTokenContract() {
 
     Assert

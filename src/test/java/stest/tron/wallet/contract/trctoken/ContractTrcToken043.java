@@ -87,7 +87,7 @@ public class ContractTrcToken043 {
   }
 
 
-  @Test(enabled = true, description = "transferToken with invalid tokenId, deploy transferContract")
+  @Test(enabled = true, description = "TransferToken with invalid tokenId, deploy transferContract")
   public void test01DeployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 5048_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -566,7 +566,6 @@ public class ContractTrcToken043 {
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("BigInteger out of long range",
         infoById.get().getResMessage().toStringUtf8());
-
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
         assetAccountId, blockingStubFull);

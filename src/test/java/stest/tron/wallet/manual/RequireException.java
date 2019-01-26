@@ -785,7 +785,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true, description = "function used error")
+  @Test(enabled = true, description = "Function used error")
   public void testFunctionUsedErrorFeed() {
     String contractName = "FunctionFeed";
     String code = "6080604052348015600f57600080fd5b50608b8061001e6000396000f3006080604052600436106"

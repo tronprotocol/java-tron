@@ -81,7 +81,7 @@ public class ContractTrcToken005 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract with exception condition")
+  @Test(enabled = true, description = "TriggerContract with exception condition")
   public void deployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
