@@ -74,8 +74,8 @@ public class ContractTrcToken075 {
     PublicMethed.printAddress(dev001Key);
   }
 
-  @Test
-  public void deployTransferTokenContract() {
+  @Test(enabled = true, description = "tokenBalance with exception condition")
+  public void testTokenBalanceContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 11000_000_000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -240,7 +240,7 @@ public class ContractTrcToken075 {
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    
+
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "getTokenLongMin()", "#", false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,

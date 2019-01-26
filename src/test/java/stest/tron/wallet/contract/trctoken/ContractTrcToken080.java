@@ -73,7 +73,7 @@ public class ContractTrcToken080 {
     PublicMethed.printAddress(dev001Key);
   }
 
-  @Test(enabled = true, description = "tokenValue and tokenId are 0, deploy contract")
+  @Test(enabled = true, description = "deployContract with 0 tokenValue and tokenId")
   public void deployTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
