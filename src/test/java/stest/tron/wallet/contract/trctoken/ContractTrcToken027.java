@@ -393,7 +393,7 @@ public class ContractTrcToken027 {
   }
 
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken token value not enought")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken token value not enough")
   public void deploy04TransferTokenContract() {
     //4. user trigger A to transfer token to B
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -586,7 +586,7 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress2 == afterAssetIssueCAddress3);
   }
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken value not enought")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken value not enough")
   public void deploy06TransferTokenContract() {
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,

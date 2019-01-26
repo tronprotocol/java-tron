@@ -401,7 +401,7 @@ public class ContractTrcToken026 {
     Assert.assertTrue(afterAssetIssueCAddress == afterAssetIssueCAddress1);
   }
 
-  @Test(enabled = true, description = "Multistage call transferToken token value not enought")
+  @Test(enabled = true, description = "Multistage call transferToken token value not enough")
   public void deploy04TransferTokenContract() {
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter1 = PublicMethed.getAccountResource(dev001Address,
@@ -596,7 +596,7 @@ public class ContractTrcToken026 {
     Assert.assertTrue(afterAssetIssueCAddress2 == afterAssetIssueCAddress3);
   }
 
-  @Test(enabled = true, description = "Multistage call transferToken calltoken value not enought")
+  @Test(enabled = true, description = "Multistage call transferToken calltoken value not enough")
   public void deploy06TransferTokenContract() {
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,

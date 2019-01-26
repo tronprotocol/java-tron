@@ -75,7 +75,7 @@ public class ContractTrcToken029 {
 
   }
 
-  @Test(enabled = true, description = "deploy transferTokenithSameName contract")
+  @Test(enabled = true, description = "deploy transferTokenwithSameName contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -140,7 +140,7 @@ public class ContractTrcToken029 {
    * constructor.
    */
 
-  @Test(enabled = true, description = "trigger transferTokenithSameName")
+  @Test(enabled = true, description = "trigger transferTokenwithSameName")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
