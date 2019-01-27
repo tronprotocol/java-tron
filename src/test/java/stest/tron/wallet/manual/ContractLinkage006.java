@@ -79,7 +79,7 @@ public class ContractLinkage006 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true,description = "Deploy contract with stack function")
+  @Test(enabled = true, description = "Deploy contract with stack function")
   public void teststackOutByContract() {
 
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address, 20000000000L, fromAddress,
@@ -176,18 +176,20 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeBalance - fee - 1000L) == afterBalance);
     Assert.assertTrue((beforeNetUsed + netUsed) >= afterNetUsed);
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
+    PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
+        linkage006Address, blockingStubFull);
   }
 
-  @Test(enabled = true,description = "Boundary value for contract stack(63 is the largest level)")
+  @Test(enabled = true, description = "Boundary value for contract stack(63 is the largest level)")
   public void teststackOutByContract1() {
     Assert.assertTrue(PublicMethed.sendcoin(linkage006Address2, 20000000000L, fromAddress,
         testKey003, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage006Address2, 1000000L,
-        3, linkage006Key2, blockingStubFull));
+        0, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 1000000L,
-        3, 1, linkage006Key2, blockingStubFull));
+        0, 1, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage006Address2,
@@ -256,7 +258,8 @@ public class ContractLinkage006 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
-  @Test(enabled = true,description = "Boundary value for contract stack(Trigger 64 level can't success)")
+  @Test(enabled = true, description = "Boundary value for contract stack"
+      + "(Trigger 64 level can't success)")
   public void teststackOutByContract2() {
     initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"64\"";
     AccountResourceMessage resourceInfo2 = PublicMethed.getAccountResource(linkage006Address2,
@@ -322,8 +325,6 @@ public class ContractLinkage006 {
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     PublicMethed.unFreezeBalance(linkage006Address2, linkage006Key2, 1,
         linkage006Address2, blockingStubFull);
-    PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
-        linkage006Address, blockingStubFull);
   }
 
   /**
