@@ -23,7 +23,7 @@ matrix:
   - name: stest
     script:
     - sh tron.sh
-    - bash deploy.sh
+
 
 
 
