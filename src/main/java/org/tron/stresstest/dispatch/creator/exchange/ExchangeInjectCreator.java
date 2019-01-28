@@ -15,10 +15,10 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 @Setter
 public class ExchangeInjectCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
   private String firstTokenID = "_";
-  private String ownerAddress = commonOwnerAddress;
-  private long exchangeID = 1L;
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private long exchangeID = 153;
   private long quant = 1000000L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
   @Override
   protected Protocol.Transaction create() {

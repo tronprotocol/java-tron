@@ -34,8 +34,8 @@
         <ref bean="participateAssetIssue"/>
         <ref bean="freezeNet"/>
         <ref bean="freezeEnergy"/>
-        <ref bean="unFreezeNet"/>
-        <ref bean="unFreezeEnergy"/>
+        <!--<ref bean="unFreezeNet"/>-->
+        <!--<ref bean="unFreezeEnergy"/>-->
         <!--<ref bean="MultiSignSendCoin"/>-->
         <!--<ref bean="MultiSignTriggerContract"/>-->
         <ref bean="triggerFibonacciContractCreator"/>
@@ -99,7 +99,7 @@
   <bean id="freezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.FreezeEnergyCreator">
     <property name="name" value="freezeEnergy"/>
     <property name="begin" value="38"/>
-    <property name="end" value="45"/>
+    <property name="end" value="49"/>
   </bean>
 
   <!--<bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">-->
@@ -114,17 +114,17 @@
     <!--<property name="end" value="55"/>-->
   <!--</bean>-->
 
-  <bean id="unFreezeNet" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeNetCreator">
-    <property name="name" value="unFreezeNet"/>
-    <property name="begin" value="46"/>
-    <property name="end" value="47"/>
-  </bean>
+  <!--<bean id="unFreezeNet" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeNetCreator">-->
+    <!--<property name="name" value="unFreezeNet"/>-->
+    <!--<property name="begin" value="46"/>-->
+    <!--<property name="end" value="47"/>-->
+  <!--</bean>-->
 
-  <bean id="unFreezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeEnergyCreator">
-    <property name="name" value="unFreezeEnergy"/>
-    <property name="begin" value="48"/>
-    <property name="end" value="49"/>
-  </bean>
+  <!--<bean id="unFreezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeEnergyCreator">-->
+    <!--<property name="name" value="unFreezeEnergy"/>-->
+    <!--<property name="begin" value="48"/>-->
+    <!--<property name="end" value="49"/>-->
+  <!--</bean>-->
 
   <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
     <property name="name" value="triggerFibonacciContractCreator"/>

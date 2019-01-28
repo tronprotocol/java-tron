@@ -17,7 +17,7 @@ public class ExchangeCreateCreator extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
   private String ownerAddress = commonOwnerAddress;
-  private String firstTokenID = "1000001";
+  private String firstTokenID = "1002033";
   private long firstTokenBalance = 1L;
   private String secondTokenID = "_";
   private long secondTokenBalance = 1L;

@@ -18,9 +18,9 @@ public class NiceExchangeTransactionCreator extends AbstractTransactionCreator i
   AtomicInteger integer = new AtomicInteger(0);
 
   private String firstTokenID = "_";
-  private String secondTokenID = "1000001";
+  private String secondTokenID = "1002033";
   private String ownerAddress = commonOwnerAddress;
-  private long exchangeID = 1L;
+  private long exchangeID = 153;
   private long quant = 10L;
   private long expected = 1L;
   private String privateKey = commonOwnerPrivateKey;
