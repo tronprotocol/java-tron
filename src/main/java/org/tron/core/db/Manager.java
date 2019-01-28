@@ -216,7 +216,7 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
 
-  private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
+//  private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
 
   @Getter
   private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
@@ -225,7 +225,8 @@ public class Manager {
   @Getter
   private ForkController forkController = ForkController.instance();
 
-  private Set<String> ownerAddressSet = new HashSet<>();
+  //  private Set<String> ownerAddressSet = new HashSet<>();
+  private Set<String> beforeHaveMultSignAddressSet = new HashSet<>();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -737,29 +738,30 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    synchronized (pushTransactionQueue) {
-      pushTransactionQueue.add(trx);
+//    synchronized (pushTransactionQueue) {
+//      pushTransactionQueue.add(trx);
+//    }
+
+//    try {
+    if (!trx.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    try {
-      if (!trx.validateSignature(this)) {
-        throw new ValidateSignatureException("trans sig validate failed");
+    synchronized (this) {
+      if (!session.valid()) {
+        session.setValue(revokingStore.buildSession());
       }
 
-      synchronized (this) {
-        if (!session.valid()) {
-          session.setValue(revokingStore.buildSession());
-        }
-
-        try (ISession tmpSession = revokingStore.buildSession()) {
-          processTransaction(trx, null);
-          pendingTransactions.add(trx);
-          tmpSession.merge();
-        }
+      try (ISession tmpSession = revokingStore.buildSession()) {
+        processTransaction(trx, null);
+        pendingTransactions.add(trx);
+        tmpSession.merge();
       }
-    } finally {
-      pushTransactionQueue.remove(trx);
     }
+//    }
+//    finally {
+//      pushTransactionQueue.remove(trx);
+//    }
     return true;
   }
 
@@ -1027,19 +1029,19 @@ public class Manager {
       logger.info("save block: " + newBlock);
     }
     //clear ownerAddressSet
-    synchronized (pushTransactionQueue) {
-      if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
-        Set<String> result = new HashSet<>();
-        for (TransactionCapsule transactionCapsule : repushTransactions) {
-          filterOwnerAddress(transactionCapsule, result);
-        }
-        for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
-          filterOwnerAddress(transactionCapsule, result);
-        }
-        ownerAddressSet.clear();
-        ownerAddressSet.addAll(result);
-      }
-    }
+//    synchronized (pushTransactionQueue) {
+//      if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
+//        Set<String> result = new HashSet<>();
+//        for (TransactionCapsule transactionCapsule : repushTransactions) {
+//          filterOwnerAddress(transactionCapsule, result);
+//        }
+//        for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+//          filterOwnerAddress(transactionCapsule, result);
+//        }
+//        ownerAddressSet.clear();
+//        ownerAddressSet.addAll(result);
+//      }
+//    }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
         System.currentTimeMillis() - start,
@@ -1233,10 +1235,10 @@ public class Manager {
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
     //
-    Contract contract = trxCap.getInstance().getRawData().getContract(0);
-    if (isMultSignTransaction(trxCap.getInstance())) {
-      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
-    }
+//    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+//    if (isMultSignTransaction(trxCap.getInstance())) {
+//      ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+//    }
     return true;
   }
 
@@ -1333,8 +1335,8 @@ public class Manager {
           accountSet.add(ownerAddress);
         }
       }
-      if (ownerAddressSet.contains(ownerAddress)) {
-        trx.setVerified(false);
+      if (beforeHaveMultSignAddressSet.contains(ownerAddress)) {
+        continue;
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1379,7 +1381,9 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
     }
-
+    beforeHaveMultSignAddressSet = accountSet;
+    filterAlreadyExistAddress(iterator);
+    filterAlreadyExistAddress(repushTransactions.iterator());
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1421,14 +1425,26 @@ public class Manager {
     return null;
   }
 
-  private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
-    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
-    byte[] owner = TransactionCapsule.getOwner(contract);
-    String ownerAddress = ByteArray.toHexString(owner);
-    if (ownerAddressSet.contains(ownerAddress)) {
-      result.add(ownerAddress);
+  private void filterAlreadyExistAddress(Iterator<TransactionCapsule> iterator) {
+    while (iterator.hasNext()) {
+      TransactionCapsule trx = iterator.next();
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (beforeHaveMultSignAddressSet.contains(ownerAddress)) {
+        iterator.remove();
+      }
     }
   }
+
+//  private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
+//    Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+//    byte[] owner = TransactionCapsule.getOwner(contract);
+//    String ownerAddress = ByteArray.toHexString(owner);
+//    if (ownerAddressSet.contains(ownerAddress)) {
+//      result.add(ownerAddress);
+//    }
+//  }
 
   private boolean isMultSignTransaction(Transaction transaction) {
     Contract contract = transaction.getRawData().getContract(0);
