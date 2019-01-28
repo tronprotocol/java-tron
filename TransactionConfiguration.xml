@@ -36,8 +36,8 @@
         <ref bean="freezeEnergy"/>
         <!--<ref bean="unFreezeNet"/>-->
         <!--<ref bean="unFreezeEnergy"/>-->
-        <ref bean="MultiSignSendCoin"/>
-        <ref bean="MultiSignTriggerContract"/>
+        <!--<ref bean="MultiSignSendCoin"/>-->
+        <!--<ref bean="MultiSignTriggerContract"/>-->
         <ref bean="triggerFibonacciContractCreator"/>
         <ref bean="transferToken"/>
 
@@ -102,17 +102,17 @@
     <property name="end" value="45"/>
   </bean>
 
-  <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
-    <property name="name" value="MultiSignSendCoin"/>
-    <property name="begin" value="46"/>
-    <property name="end" value="47"/>
-  </bean>
+  <!--<bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">-->
+    <!--<property name="name" value="MultiSignSendCoin"/>-->
+    <!--<property name="begin" value="46"/>-->
+    <!--<property name="end" value="47"/>-->
+  <!--</bean>-->
 
-  <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
-    <property name="name" value="MultiSignTriggerContract"/>
-    <property name="begin" value="48"/>
-    <property name="end" value="55"/>
-  </bean>
+  <!--<bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">-->
+    <!--<property name="name" value="MultiSignTriggerContract"/>-->
+    <!--<property name="begin" value="48"/>-->
+    <!--<property name="end" value="55"/>-->
+  <!--</bean>-->
 
   <!--<bean id="unFreezeNet" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeNetCreator">-->
     <!--<property name="name" value="unFreezeNet"/>-->
@@ -128,13 +128,13 @@
 
   <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
     <property name="name" value="triggerFibonacciContractCreator"/>
-    <property name="begin" value="56"/>
-    <property name="end" value="64"/>
+    <property name="begin" value="46"/>
+    <property name="end" value="54"/>
   </bean>
 
   <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
     <property name="name" value="transferToken"/>
-    <property name="begin" value="65"/>
+    <property name="begin" value="55"/>
     <property name="end" value="99"/>
   </bean>
 
