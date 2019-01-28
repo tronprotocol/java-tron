@@ -13,6 +13,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -24,6 +25,7 @@ import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -31,6 +33,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -276,6 +279,12 @@ public class TransactionTrace {
     if (exception instanceof JVMStackOverFlowException) {
       receipt.setResult(contractResult.JVM_STACK_OVER_FLOW);
       return;
+    }
+    if (ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5)){
+      if (exception instanceof BytecodeExecutionException) {
+        receipt.setResult(contractResult.BYTECODE_EXECUTION_EXCEPTION);
+        return;
+      }
     }
     receipt.setResult(contractResult.UNKNOWN);
   }
