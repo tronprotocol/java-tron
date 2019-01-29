@@ -3,6 +3,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.DelegatedResource;
 
 @Slf4j
@@ -79,8 +80,12 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getExpireTimeForBandwidth();
   }
 
-  public long getExpireTimeForEnergy() {
-    return this.delegatedResource.getExpireTimeForBandwidth();
+  public long getExpireTimeForEnergy(Manager manager) {
+    if(manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0){
+      return this.delegatedResource.getExpireTimeForBandwidth();
+    }else {
+      return this.delegatedResource.getExpireTimeForEnergy();
+    }
   }
 
   public void setExpireTimeForBandwidth(long ExpireTime) {

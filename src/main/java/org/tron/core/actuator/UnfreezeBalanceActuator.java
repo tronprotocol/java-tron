@@ -284,7 +284,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
                     "],this should never happen");
           }
-          if (delegatedResourceCapsule.getExpireTimeForEnergy() > now) {
+          if (delegatedResourceCapsule.getExpireTimeForEnergy(dbManager) > now) {
             throw new ContractValidateException("It's not time to unfreeze.");
           }
           break;
