@@ -226,6 +226,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   private Set<String> ownerAddressSet = new HashSet<>();
+  private Set<String> beforeBlockOwnerAddressSet = new HashSet<>();
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1026,6 +1027,12 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
+    //
+    beforeBlockOwnerAddressSet.clear();
+    block.getTransactions().forEach((transactionCapsule) -> {
+      byte[] owner = TransactionCapsule.getOwner(transactionCapsule.getInstance());
+      beforeBlockOwnerAddressSet.add(ByteArray.toHexString(owner));
+    });
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
       if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
@@ -1333,8 +1340,12 @@ public class Manager {
           accountSet.add(ownerAddress);
         }
       }
-      if (ownerAddressSet.contains(ownerAddress)) {
-        trx.setVerified(false);
+      if (ownerAddressSet.contains(ownerAddress)
+          && beforeBlockOwnerAddressSet.contains(ownerAddress)) {
+        if (fromPending) {
+          iterator.remove();
+        }
+        continue;
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
@@ -1379,7 +1390,8 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
     }
-
+    filterAlreadyExistAddress(iterator);
+    filterAlreadyExistAddress(repushTransactions.iterator());
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1419,6 +1431,22 @@ public class Manager {
     }
 
     return null;
+  }
+
+  private void filterAlreadyExistAddress(Iterator<TransactionCapsule> iterator) {
+    int count = 0;
+    while (iterator.hasNext()) {
+      TransactionCapsule trx = iterator.next();
+      Contract contract = trx.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      String ownerAddress = ByteArray.toHexString(owner);
+      if (ownerAddressSet.contains(ownerAddress)
+          && beforeBlockOwnerAddressSet.contains(ownerAddress)) {
+        iterator.remove();
+        ++count;
+      }
+    }
+    logger.info("filterAlreadyExistAddress count:{}", count);
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
@@ -1768,6 +1796,7 @@ public class Manager {
       }
       return true;
     }
+
   }
 
   public void preValidateTransactionSign(BlockCapsule block)

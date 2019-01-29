@@ -356,6 +356,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
+  public static byte[] getOwner(Transaction transaction) {
+    Transaction.Contract contract = transaction.getRawData().getContract(0);
+    return getOwner(contract);
+  }
+
   // todo mv this static function to capsule util
   public static byte[] getOwner(Transaction.Contract contract) {
     ByteString owner;
