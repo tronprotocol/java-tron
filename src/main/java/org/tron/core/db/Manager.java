@@ -228,6 +228,8 @@ public class Manager {
   private Set<String> ownerAddressSet = new HashSet<>();
   private Set<String> beforeBlockOwnerAddressSet = new HashSet<>();
 
+  private Set<TransactionCapsule> transactionCapsuleSet = new HashSet<>();
+
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -748,6 +750,11 @@ public class Manager {
       }
 
       synchronized (this) {
+        if (transactionCapsuleSet.contains(trx)) {
+          pushTransactionQueue.remove(trx);
+          return false;
+        }
+
         if (!session.valid()) {
           session.setValue(revokingStore.buildSession());
         }
@@ -1036,6 +1043,7 @@ public class Manager {
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
       if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
+        transactionCapsuleSet.clear();
         Set<String> result = new HashSet<>();
         for (TransactionCapsule transactionCapsule : repushTransactions) {
           filterOwnerAddress(transactionCapsule, result);
@@ -1455,6 +1463,7 @@ public class Manager {
     String ownerAddress = ByteArray.toHexString(owner);
     if (ownerAddressSet.contains(ownerAddress)) {
       result.add(ownerAddress);
+      transactionCapsuleSet.add(transactionCapsule);
     }
   }
 
