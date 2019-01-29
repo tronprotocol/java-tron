@@ -79,8 +79,12 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getExpireTimeForBandwidth();
   }
 
-  public long getExpireTimeForEnergy() {
-    return this.delegatedResource.getExpireTimeForBandwidth();
+  public long getExpireTimeForEnergy(long allowAdaptiveEnergy) {
+    if (allowAdaptiveEnergy == 0) {
+      return this.delegatedResource.getExpireTimeForBandwidth();
+    } else {
+      return this.delegatedResource.getExpireTimeForEnergy();
+    }
   }
 
   public void setExpireTimeForBandwidth(long ExpireTime) {
