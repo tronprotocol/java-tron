@@ -226,7 +226,6 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   private Set<String> ownerAddressSet = new HashSet<>();
-  private Set<String> beforeBlockOwnerAddressSet = new HashSet<>();
 
   private Set<TransactionCapsule> transactionCapsuleSet = new HashSet<>();
 
@@ -1034,12 +1033,6 @@ public class Manager {
       }
       logger.info("save block: " + newBlock);
     }
-    //
-    beforeBlockOwnerAddressSet.clear();
-    block.getTransactions().forEach((transactionCapsule) -> {
-      byte[] owner = TransactionCapsule.getOwner(transactionCapsule.getInstance());
-      beforeBlockOwnerAddressSet.add(ByteArray.toHexString(owner));
-    });
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
       if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
@@ -1344,13 +1337,6 @@ public class Manager {
         if (isMultSignTransaction(trx.getInstance())) {
           accountSet.add(ownerAddress);
         }
-      }
-      if (ownerAddressSet.contains(ownerAddress)
-          && beforeBlockOwnerAddressSet.contains(ownerAddress)) {
-        if (fromPending) {
-          iterator.remove();
-        }
-        continue;
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
