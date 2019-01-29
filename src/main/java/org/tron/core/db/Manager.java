@@ -1045,14 +1045,11 @@ public class Manager {
       if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
         transactionCapsuleSet.clear();
         Set<String> result = new HashSet<>();
-        for (TransactionCapsule transactionCapsule : repushTransactions) {
-          filterOwnerAddress(transactionCapsule, result);
-        }
         for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
           filterOwnerAddress(transactionCapsule, result);
         }
-        ownerAddressSet.clear();
-        ownerAddressSet.addAll(result);
+        filterAlreadyExistAddress(repushTransactions.iterator(), result);
+        ownerAddressSet = result;
       }
     }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
@@ -1398,8 +1395,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
     }
-    filterAlreadyExistAddress(iterator);
-    filterAlreadyExistAddress(repushTransactions.iterator());
+
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1441,7 +1437,8 @@ public class Manager {
     return null;
   }
 
-  private void filterAlreadyExistAddress(Iterator<TransactionCapsule> iterator) {
+  private void filterAlreadyExistAddress(Iterator<TransactionCapsule> iterator,
+      Set<String> result) {
     int count = 0;
     while (iterator.hasNext()) {
       TransactionCapsule trx = iterator.next();
@@ -1449,6 +1446,8 @@ public class Manager {
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
       if (ownerAddressSet.contains(ownerAddress)) {
+        result.add(ownerAddress);
+        transactionCapsuleSet.add(trx);
         iterator.remove();
         ++count;
       }
