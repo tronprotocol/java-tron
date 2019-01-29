@@ -1448,8 +1448,7 @@ public class Manager {
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
-      if (ownerAddressSet.contains(ownerAddress)
-          && beforeBlockOwnerAddressSet.contains(ownerAddress)) {
+      if (ownerAddressSet.contains(ownerAddress)) {
         iterator.remove();
         ++count;
       }
