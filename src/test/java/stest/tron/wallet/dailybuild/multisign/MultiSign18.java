@@ -30,7 +30,7 @@ import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 public class MultiSign18 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+      .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private final String witnessKey001 = Configuration.getByPath("testng.conf")

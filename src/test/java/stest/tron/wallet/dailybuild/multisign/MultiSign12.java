@@ -33,7 +33,7 @@ public class MultiSign12 {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
-      .getString("witness.key1");
+      .getString("witness.key2");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -55,7 +55,7 @@ public class MultiSign12 {
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
-      .getStringList("fullnode.ip.list").get(1);
+      .getStringList("fullnode.ip.list").get(0);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
 
