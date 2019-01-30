@@ -95,7 +95,7 @@ public class CycleMultiSign {
   //(use no id)
   @Test(enabled = true)
   public void testMultiSignActiveAddress() {
-//循环
+    //循环
     Assert.assertTrue(PublicMethed
         .sendcoin(test001Address, 10000000000000L, fromAddress, testKey002,
             blockingStubFull));
@@ -215,7 +215,9 @@ public class CycleMultiSign {
       logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
     }
   }
-
+  /**
+   * constructor.
+   */
 
   public void addressPermission(String addKey, String accountPermissionJson) {
     PublicMethed.freezeBalanceForReceiver(test001Address,
