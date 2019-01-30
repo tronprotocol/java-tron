@@ -30,6 +30,7 @@ import org.tron.common.storage.DBSettings;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PropUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 
@@ -131,7 +132,39 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void setDBName(String name) {
   }
 
+  public boolean checkOrInitEngine() {
+    String dir =
+        Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory() + File.separator + dataBaseName;
+    String enginePath = dir + File.separator + "engine.properties";
+
+    if (FileUtil.createDirIfNotExists(dir)) {
+      if (!FileUtil.createFileIfNotExists(enginePath)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    // for the first init engine
+    String engine = PropUtil.readProperty(enginePath, "ENGINE");
+    if (engine.equals("")) {
+      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
+        return false;
+      }
+    }
+    engine = PropUtil.readProperty(enginePath, "ENGINE");
+    if (engine.equals("ROCKSDB")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public void initDB() {
+    if (!checkOrInitEngine()) {
+      logger.error("database engine do not match");
+      throw new RuntimeException("Failed to initialize database");
+    }
     initDB(DBSettings.getSettings());
   }
 

@@ -30,7 +30,7 @@ public class PropUtil {
       String value = new String(prop.getProperty(key, "").getBytes("ISO-8859-1"), "UTF-8");
       return value;
     } catch (Exception e) {
-      logger.warn("{}", e);
+      logger.error("{}", e);
       return "";
     } finally {
       if (prop != null) {
@@ -52,12 +52,12 @@ public class PropUtil {
           is = null;
         }
       } catch (Exception e) {
-        logger.warn("{}", e);
+        logger.error("{}", e);
       }
     }
   }
 
-  public static void writeProperty(String file, String key, String value) {
+  public static boolean writeProperty(String file, String key, String value) {
     FileInputStream fis = null;
     Properties properties = new Properties();
     try {
@@ -71,7 +71,9 @@ public class PropUtil {
       out.close();
     } catch (Exception e) {
       logger.warn("{}", e);
+      return false;
     }
+    return true;
   }
 
 }

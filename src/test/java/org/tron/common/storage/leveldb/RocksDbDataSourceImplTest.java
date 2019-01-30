@@ -18,7 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
+import org.tron.common.utils.PropUtil;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -42,7 +42,7 @@ public class RocksDbDataSourceImplTest {
 
   @Before
   public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-test-dbbackup.conf");
     dataSourceTest = new RocksDbDataSourceImpl(dbPath + File.separator, "test_rocksDb");
   }
 
@@ -249,5 +249,36 @@ public class RocksDbDataSourceImplTest {
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
     dataSource.resetDb();
     dataSource.closeDB();
+  }
+
+  @Test
+  public void testCheckOrInitEngine() {
+    String dir = Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory();
+    String enginePath = dir + File.separator + "test_engine" + File.separator + "engine.properties";
+    FileUtil.createDirIfNotExists(dir + File.separator + "test_engine");
+    FileUtil.createFileIfNotExists(enginePath);
+    boolean b = PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
+    Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
+        "ROCKSDB");
+
+    RocksDbDataSourceImpl dataSource;
+    dataSource = new RocksDbDataSourceImpl(dir, "test_engine");
+    dataSource.initDB();
+    Assert.assertNotNull(dataSource.getDatabase());
+    dataSource.closeDB();
+
+    dataSource = null;
+    System.gc();
+    b = PropUtil.writeProperty(enginePath, "ENGINE", "LEVELDB");
+    Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
+        "LEVELDB");
+    dataSource = new RocksDbDataSourceImpl(dir, "test_engine");
+    try {
+      dataSource.initDB();
+    } catch (Exception e) {
+      Assert.assertTrue(e.getMessage().contains("Failed to"));
+    }
+    Assert.assertNull(dataSource.getDatabase());
+    PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
   }
 }
