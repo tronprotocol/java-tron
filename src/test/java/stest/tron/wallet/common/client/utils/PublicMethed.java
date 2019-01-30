@@ -30,6 +30,7 @@ import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -3555,6 +3556,12 @@ public class PublicMethed {
       logger.info("Message = " + response.getMessage().toStringUtf8());
     }
     return response;
+  }
+
+  public static TransactionApprovedList getTransactionApprovedList(Transaction transaction,
+      WalletGrpc
+          .WalletBlockingStub blockingStubFull) {
+    return blockingStubFull.getTransactionApprovedList(transaction);
   }
 
 }
