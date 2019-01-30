@@ -339,5 +339,6 @@ def binaryRelease(taskName, jarName, mainClass) {
 artifacts {
     archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
             binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))
+            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
 }

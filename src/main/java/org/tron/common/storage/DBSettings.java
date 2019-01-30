@@ -40,7 +40,18 @@ public class DBSettings {
 
   }
 
+  public static DBSettings getDefaultSettings() {
+    DBSettings defaultSettings = new DBSettings();
+    return defaultSettings.withLevelNumber(7).withBlockSize(64).withCompactThreads(32)
+        .withCompressionTypeList("no:no:no:lz4:lz4:zstd:zstd").withTargetFileSizeBase(256)
+        .withMaxBytesForLevelMultiplier(10).withTargetFileSizeMultiplier(1).withMaxBytesForLevelBase(256).withMaxOpenFiles(-1)
+        .withEnableStatistics(false);
+  }
+
   public static DBSettings getSettings() {
+    if (settings == null) {
+      return getDefaultSettings();
+    }
     return settings;
   }
 
