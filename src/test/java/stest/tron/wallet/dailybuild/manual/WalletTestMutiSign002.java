@@ -67,7 +67,7 @@ public class WalletTestMutiSign002 {
   String manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
+  String[] ownerKeyString = new String[3];
   String accountPermissionJson = "";
 
 
@@ -149,8 +149,12 @@ public class WalletTestMutiSign002 {
     permissionKeyString[1] = manager2Key;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = exchange001Key;
+    ownerKeyString[1] = manager1Key;
+    ownerKeyString[2] = manager2Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":3,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(exchange001Key)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
@@ -163,8 +167,6 @@ public class WalletTestMutiSign002 {
     PublicMethedForMutiSign.accountPermissionUpdate(
         accountPermissionJson,exchange001Address,exchange001Key,
         blockingStubFull,ownerKeyString);
-
-    permissionKeyString[0] = exchange001Key;
 
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
@@ -198,7 +200,7 @@ public class WalletTestMutiSign002 {
         PublicMethedForMutiSign.exchangeCreate(
             assetAccountId1.toByteArray(), firstTokenInitialBalance,
             assetAccountId2.toByteArray(), secondTokenInitialBalance, exchange001Address,
-            exchange001Key, blockingStubFull,permissionKeyString));
+            exchange001Key, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     exchangeId = listExchange.get().getExchangesCount();
@@ -242,7 +244,7 @@ public class WalletTestMutiSign002 {
     Assert.assertTrue(
         PublicMethedForMutiSign.injectExchange(
             exchangeId, assetAccountId1.toByteArray(), injectBalance,
-            exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
+            exchange001Address, exchange001Key, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
@@ -295,7 +297,7 @@ public class WalletTestMutiSign002 {
     Assert.assertTrue(
         PublicMethedForMutiSign.exchangeWithdraw(
             exchangeId, assetAccountId1.toByteArray(), withdrawNum,
-            exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
+            exchange001Address, exchange001Key, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;
@@ -352,7 +354,7 @@ public class WalletTestMutiSign002 {
     Assert.assertTrue(
         PublicMethedForMutiSign
             .exchangeTransaction(exchangeId, assetAccountId1.toByteArray(), transactionNum, 1,
-                exchange001Address, exchange001Key, blockingStubFull,permissionKeyString));
+                exchange001Address, exchange001Key, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     Long afterToken1Balance = 0L;

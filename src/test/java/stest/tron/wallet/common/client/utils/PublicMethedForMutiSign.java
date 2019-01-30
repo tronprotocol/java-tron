@@ -275,6 +275,44 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
+  public static boolean participateAssetIssueWithPermissionId(byte[] to, byte[] assertName,
+      long amount, byte[] from, String priKey, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+        .newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsName = ByteString.copyFrom(assertName);
+    ByteString bsOwner = ByteString.copyFrom(from);
+    builder.setToAddress(bsTo);
+    builder.setAssetName(bsName);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+    Contract.ParticipateAssetIssueContract contract = builder.build();
+    Transaction transaction = blockingStubFull.participateAssetIssue(contract);
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+
+  /**
+   * constructor.
+   */
 
   public static Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
@@ -322,6 +360,103 @@ public class PublicMethedForMutiSign {
 
     return broadcastTransaction(transaction, blockingStubFull);
 
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Boolean freezeBalanceWithPermissionId(byte[] addRess, long freezeBalance,
+      long freezeDuration,
+      int permissionId, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull,
+      String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    byte[] address = addRess;
+    long frozenBalance = freezeBalance;
+    long frozenDuration = freezeDuration;
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Block currentBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
+    final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Account beforeFronzen = queryAccount(priKey, blockingStubFull);
+    Long beforeFrozenBalance = 0L;
+    //Long beforeBandwidth     = beforeFronzen.getBandwidth();
+    if (beforeFronzen.getFrozenCount() != 0) {
+      beforeFrozenBalance = beforeFronzen.getFrozen(0).getFrozenBalance();
+      //beforeBandwidth     = beforeFronzen.getBandwidth();
+      //logger.info(Long.toString(beforeFronzen.getBandwidth()));
+      logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
+    }
+
+    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+
+    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+        .setFrozenDuration(frozenDuration);
+
+    Contract.FreezeBalanceContract contract = builder.build();
+    Transaction transaction = blockingStubFull.freezeBalance(contract);
+
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction = null");
+      return null;
+    }
+
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+
+    transaction = TransactionUtils.setTimestamp(transaction);
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static Boolean unFreezeBalanceWithPermissionId(byte[] address, String priKey,
+      int resourceCode, byte[] receiverAddress, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
+    if (receiverAddress != null) {
+      ByteString receiverAddressBytes = ByteString.copyFrom(receiverAddress);
+      builder.setReceiverAddress(receiverAddressBytes);
+    }
+
+    Contract.UnfreezeBalanceContract contract = builder.build();
+    Transaction transaction = blockingStubFull.unfreezeBalance(contract);
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
   }
 
   /**
@@ -423,6 +558,49 @@ public class PublicMethedForMutiSign {
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
+    }
+
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+  public static boolean updateAssetWithPermissionId(byte[] address, byte[] description, byte[] url,
+      long newLimit, long newPublicLimit, String priKey, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    Contract.UpdateAssetContract.Builder builder =
+        Contract.UpdateAssetContract.newBuilder();
+    ByteString basAddreess = ByteString.copyFrom(address);
+    builder.setDescription(ByteString.copyFrom(description));
+    builder.setUrl(ByteString.copyFrom(url));
+    builder.setNewLimit(newLimit);
+    builder.setNewPublicLimit(newPublicLimit);
+    builder.setOwnerAddress(basAddreess);
+
+    Contract.UpdateAssetContract contract
+        = builder.build();
+    Transaction transaction = blockingStubFull.updateAsset(contract);
+
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      return false;
+    }
+
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
     }
 
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
@@ -621,6 +799,56 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
+  public static boolean createProposalWithPermissionId(byte[] ownerAddress, String priKey,
+      HashMap<Long, Long> parametersMap, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.ProposalCreateContract.Builder builder = Contract.ProposalCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.putAllParameters(parametersMap);
+
+    Contract.ProposalCreateContract contract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.proposalCreate(contract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+
   public static boolean approveProposal(byte[] ownerAddress, String priKey, long id,
       boolean isAddApproval, WalletGrpc.WalletBlockingStub blockingStubFull,
       String[] permissionKeyString) {
@@ -667,6 +895,57 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
+  public static boolean approveProposalWithPermission(byte[] ownerAddress, String priKey, long id,
+      boolean isAddApproval, int permissionId, WalletGrpc.WalletBlockingStub blockingStubFull,
+      String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.ProposalApproveContract.Builder builder = Contract.ProposalApproveContract
+        .newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setProposalId(id);
+    builder.setIsAddApproval(isAddApproval);
+    Contract.ProposalApproveContract contract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.proposalApprove(contract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+
   public static boolean deleteProposal(byte[] ownerAddress, String priKey, long id,
       WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -699,6 +978,56 @@ public class PublicMethedForMutiSign {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       System.out.println("Transaction is empty");
       return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static boolean deleteProposalWithPermissionId(byte[] ownerAddress, String priKey, long id,
+      int permissionId, WalletGrpc.WalletBlockingStub blockingStubFull,
+      String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setProposalId(id);
+
+    Contract.ProposalDeleteContract contract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.proposalDelete(contract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
@@ -1290,6 +1619,67 @@ public class PublicMethedForMutiSign {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       System.out.println("Transaction is empty");
       return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static boolean updateSettingWithPermissionId(byte[] contractAddress,
+      long consumeUserResourcePercent, String priKey, byte[] ownerAddress, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    UpdateSettingContract.Builder builder = UpdateSettingContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+
+    UpdateSettingContract updateSettingContract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull
+        .updateSetting(updateSettingContract);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create trx failed!");
+      if (transactionExtention != null) {
+        System.out.println("Code = " + transactionExtention.getResult().getCode());
+        System.out
+            .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      }
+      return false;
+    }
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));

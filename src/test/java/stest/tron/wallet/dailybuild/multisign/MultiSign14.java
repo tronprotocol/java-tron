@@ -33,7 +33,7 @@ public class MultiSign14 {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
-      .getString("witness.key3");
+      .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
