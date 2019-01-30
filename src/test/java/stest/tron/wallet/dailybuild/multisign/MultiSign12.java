@@ -36,8 +36,6 @@ public class MultiSign12 {
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private final String contractTRONdiceAddr = "TMYcx6eoRXnePKT1jVn25ZNeMNJ6828HWk";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -46,13 +44,13 @@ public class MultiSign12 {
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  private ECKey tmpECKey01 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr01 = tmpECKey01.getAddress();
-  private String tmpKey01 = ByteArray.toHexString(tmpECKey01.getPrivKeyBytes());
+  private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr01 = tmpEcKey01.getAddress();
+  private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
 
-  private ECKey tmpECKey02 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr02 = tmpECKey02.getAddress();
-  private String tmpKey02 = ByteArray.toHexString(tmpECKey02.getPrivKeyBytes());
+  private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr02 = tmpEcKey02.getAddress();
+  private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -79,6 +77,9 @@ public class MultiSign12 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -174,7 +175,8 @@ public class MultiSign12 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":3}]},"
-            + "\"active_permissions\":[{\"type\":-9223372036854775808,\"permission_name\":\"active0\","
+            + "\"active_permissions\":[{\"type\":-9223372036854775808,"
+            + "\"permission_name\":\"active0\","
             + "\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -195,7 +197,8 @@ public class MultiSign12 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":3}]},"
-            + "\"active_permissions\":[{\"type\":-9223372036855775828,\"permission_name\":\"active0\","
+            + "\"active_permissions\":[{\"type\":-9223372036855775828,"
+            + "\"permission_name\":\"active0\","
             + "\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -216,7 +219,8 @@ public class MultiSign12 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":3}]},"
-            + "\"active_permissions\":[{\"type\":-9223372036854775809,\"permission_name\":\"active0\","
+            + "\"active_permissions\":[{\"type\":-9223372036854775809,"
+            + "\"permission_name\":\"active0\","
             + "\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -343,7 +347,8 @@ public class MultiSign12 {
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":9223372036854775807,\"permission_name\":\"active0\","
+            + "\"active_permissions\":[{\"type\":9223372036854775807,"
+            + "\"permission_name\":\"active0\","
             + "\"threshold\":9223372036854775807,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -366,7 +371,8 @@ public class MultiSign12 {
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":9223372036854775808,\"permission_name\":\"active0\","
+            + "\"active_permissions\":[{\"type\":9223372036854775808,"
+            + "\"permission_name\":\"active0\","
             + "\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -417,13 +423,13 @@ public class MultiSign12 {
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
-
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(tmpKey02);
 
     logger.info("** update owner and active permission to two address");
     String accountPermissionJson =
@@ -446,8 +452,6 @@ public class MultiSign12 {
     ownerPermissionKeys.clear();
     ownerPermissionKeys.add(tmpKey02);
 
-    activePermissionKeys.add(tmpKey02);
-
     Assert.assertEquals(1,
         PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getActivePermissionList()));
@@ -469,7 +473,9 @@ public class MultiSign12 {
             activePermissionKeys.toArray(new String[activePermissionKeys.size()])));
   }
 
-
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {

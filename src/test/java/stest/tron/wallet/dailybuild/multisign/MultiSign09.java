@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.tron.api.GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -36,8 +35,6 @@ public class MultiSign09 {
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private final String contractTRONdiceAddr = "TMYcx6eoRXnePKT1jVn25ZNeMNJ6828HWk";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -46,13 +43,13 @@ public class MultiSign09 {
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  private ECKey tmpECKey01 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr01 = tmpECKey01.getAddress();
-  private String tmpKey01 = ByteArray.toHexString(tmpECKey01.getPrivKeyBytes());
+  private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr01 = tmpEcKey01.getAddress();
+  private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
 
-  private ECKey tmpECKey02 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr02 = tmpECKey02.getAddress();
-  private String tmpKey02 = ByteArray.toHexString(tmpECKey02.getPrivKeyBytes());
+  private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr02 = tmpEcKey02.getAddress();
+  private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -60,12 +57,6 @@ public class MultiSign09 {
       .getStringList("fullnode.ip.list").get(1);
   private long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  private static final long now = System.currentTimeMillis();
-  private static String tokenName = "testAssetIssue_" + Long.toString(now);
-  private static ByteString assetAccountId = null;
-  private static final long TotalSupply = 1000L;
-  private byte[] transferTokenContractAddress = null;
 
   private String description = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetDescription");
@@ -79,6 +70,9 @@ public class MultiSign09 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -91,12 +85,12 @@ public class MultiSign09 {
 
   @Test(enabled = true, description = "Active is no parent_id")
   public void testActiveParent01() {
-    // no parent_id
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -106,7 +100,6 @@ public class MultiSign09 {
 
     ownerPermissionKeys.add(ownerKey);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
@@ -160,10 +153,11 @@ public class MultiSign09 {
   @Test(enabled = true, description = "Active parent_id is exception condition")
   public void testActiveParent02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -359,7 +353,8 @@ public class MultiSign09 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
             + "\"active_permissions\":["
-            + "{\"parent_id\":2147483647,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "{\"parent_id\":2147483647,\"type\":2,"
+            + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
@@ -378,7 +373,8 @@ public class MultiSign09 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
             + "\"active_permissions\":["
-            + "{\"parent_id\":2147483648,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "{\"parent_id\":2147483648,\"type\":2,"
+            + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
@@ -396,7 +392,8 @@ public class MultiSign09 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
             + "\"active_permissions\":["
-            + "{\"parent_id\":-2147483648,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "{\"parent_id\":-2147483648,\"type\":2,"
+            + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
@@ -414,7 +411,8 @@ public class MultiSign09 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":3}]},"
             + "\"active_permissions\":["
-            + "{\"parent_id\":-2147483649,\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "{\"parent_id\":-2147483649,\"type\":2,"
+            + "\"permission_name\":\"active0\",\"threshold\":1,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":3},"
@@ -432,10 +430,11 @@ public class MultiSign09 {
   @Test(enabled = true, description = "Active parent_id is 0n")
   public void testActiveParent03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -494,6 +493,9 @@ public class MultiSign09 {
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

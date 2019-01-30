@@ -35,8 +35,6 @@ public class MultiSign13 {
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private final String contractTRONdiceAddr = "TMYcx6eoRXnePKT1jVn25ZNeMNJ6828HWk";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -45,13 +43,13 @@ public class MultiSign13 {
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  private ECKey tmpECKey01 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr01 = tmpECKey01.getAddress();
-  private String tmpKey01 = ByteArray.toHexString(tmpECKey01.getPrivKeyBytes());
+  private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr01 = tmpEcKey01.getAddress();
+  private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
 
-  private ECKey tmpECKey02 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr02 = tmpECKey02.getAddress();
-  private String tmpKey02 = ByteArray.toHexString(tmpECKey02.getPrivKeyBytes());
+  private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr02 = tmpEcKey02.getAddress();
+  private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -78,6 +76,9 @@ public class MultiSign13 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -107,7 +108,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness\",\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness\","
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
@@ -169,7 +171,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness12\",\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness12\","
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
@@ -232,7 +235,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"123\",\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"123\","
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
@@ -295,7 +299,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"\",\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"\","
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
@@ -457,7 +462,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"permission_name\":123,\"type\":1,\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"permission_name\":123,\"type\":1,"
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
@@ -562,6 +568,9 @@ public class MultiSign13 {
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {

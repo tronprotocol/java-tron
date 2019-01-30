@@ -35,8 +35,6 @@ public class MultiSign04 {
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private final String contractTRONdiceAddr = "TMYcx6eoRXnePKT1jVn25ZNeMNJ6828HWk";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -45,13 +43,13 @@ public class MultiSign04 {
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  private ECKey tmpECKey01 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr01 = tmpECKey01.getAddress();
-  private String tmpKey01 = ByteArray.toHexString(tmpECKey01.getPrivKeyBytes());
+  private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr01 = tmpEcKey01.getAddress();
+  private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
 
-  private ECKey tmpECKey02 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr02 = tmpECKey02.getAddress();
-  private String tmpKey02 = ByteArray.toHexString(tmpECKey02.getPrivKeyBytes());
+  private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr02 = tmpEcKey02.getAddress();
+  private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -72,6 +70,9 @@ public class MultiSign04 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -85,10 +86,11 @@ public class MultiSign04 {
   @Test(enabled = true, description = "Owner weight in exception condition")
   public void testOwnerWeight01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.printAddress(ownerKey);
@@ -367,10 +369,11 @@ public class MultiSign04 {
   @Test(enabled = true, description = "Owner weight is 1")
   public void testOwnerWeight02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -380,7 +383,6 @@ public class MultiSign04 {
 
     ownerPermissionKeys.add(ownerKey);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson = "{\"owner_permission\":{\"type\":0,"
         + ",\"threshold\":1,\"keys\":["
         + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
@@ -434,12 +436,12 @@ public class MultiSign04 {
 
   @Test(enabled = true, description = "Owner weight is Integer.MAX_VALUE")
   public void testOwnerWeight03() {
-    // weight = Integer.MAX_VALUE
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -449,7 +451,6 @@ public class MultiSign04 {
 
     ownerPermissionKeys.add(ownerKey);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson = "{\"owner_permission\":{\"type\":0,"
         + ",\"threshold\":1,\"keys\":["
         + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
@@ -506,10 +507,11 @@ public class MultiSign04 {
   @Test(enabled = true, description = "Owner weight is Long.MAX_VALUE")
   public void testOwnerWeight04() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -519,7 +521,6 @@ public class MultiSign04 {
 
     ownerPermissionKeys.add(ownerKey);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson = "{\"owner_permission\":{\"type\":0,"
         + ",\"threshold\":1,\"keys\":["
         + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
@@ -570,7 +571,9 @@ public class MultiSign04 {
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
   }
 
-
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {

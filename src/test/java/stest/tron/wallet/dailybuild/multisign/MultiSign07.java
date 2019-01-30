@@ -34,8 +34,6 @@ public class MultiSign07 {
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
 
-  private final String contractTRONdiceAddr = "TMYcx6eoRXnePKT1jVn25ZNeMNJ6828HWk";
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -44,13 +42,13 @@ public class MultiSign07 {
   private byte[] normalAddr001 = ecKey2.getAddress();
   private String normalKey001 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-  private ECKey tmpECKey01 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr01 = tmpECKey01.getAddress();
-  private String tmpKey01 = ByteArray.toHexString(tmpECKey01.getPrivKeyBytes());
+  private ECKey tmpEcKey01 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr01 = tmpEcKey01.getAddress();
+  private String tmpKey01 = ByteArray.toHexString(tmpEcKey01.getPrivKeyBytes());
 
-  private ECKey tmpECKey02 = new ECKey(Utils.getRandom());
-  private byte[] tmpAddr02 = tmpECKey02.getAddress();
-  private String tmpKey02 = ByteArray.toHexString(tmpECKey02.getPrivKeyBytes());
+  private ECKey tmpEcKey02 = new ECKey(Utils.getRandom());
+  private byte[] tmpAddr02 = tmpEcKey02.getAddress();
+  private String tmpKey02 = ByteArray.toHexString(tmpEcKey02.getPrivKeyBytes());
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -77,6 +75,9 @@ public class MultiSign07 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -87,44 +88,25 @@ public class MultiSign07 {
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
-  private List<String> getStrings(byte[] data) {
-    int index = 0;
-    List<String> ret = new ArrayList<>();
-    while (index < data.length) {
-      ret.add(byte2HexStr(data, index, 32));
-      index += 32;
-    }
-    return ret;
-  }
-
-  public static String byte2HexStr(byte[] b, int offset, int length) {
-    String stmp = "";
-    StringBuilder sb = new StringBuilder("");
-    for (int n = offset; n < offset + length && n < b.length; n++) {
-      stmp = Integer.toHexString(b[n] & 0xFF);
-      sb.append((stmp.length() == 1) ? "0" + stmp : stmp);
-    }
-    return sb.toString().toUpperCase().trim();
-  }
-
-
   @Test(enabled = true, description = "Owner permission_name is owner")
   public void testActiveName01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
@@ -159,9 +141,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
@@ -173,19 +152,21 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name is active")
   public void testActiveName02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
@@ -220,9 +201,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
@@ -233,19 +211,21 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name is activea")
   public void testActiveName03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
@@ -280,9 +260,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
@@ -293,19 +270,21 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name is \"123\"")
   public void testActiveName04() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
@@ -340,9 +319,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
@@ -353,21 +329,22 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name is \"\"")
   public void testActiveName05() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
@@ -402,9 +379,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
@@ -415,10 +389,11 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name in exception condition")
   public void testActiveName06() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -478,21 +453,22 @@ public class MultiSign07 {
   @Test(enabled = true, description = "Owner permission_name is 1.1")
   public void testActiveName07() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final byte[] ownerAddress = ecKey1.getAddress();
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    List<String> ownerPermissionKeys = new ArrayList<>();
-    List<String> activePermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
+    List<String> ownerPermissionKeys = new ArrayList<>();
+    List<String> activePermissionKeys = new ArrayList<>();
     ownerPermissionKeys.add(ownerKey);
+    activePermissionKeys.add(witnessKey001);
+    activePermissionKeys.add(tmpKey02);
 
-    logger.info("** update owner and active permission to two address");
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
@@ -526,8 +502,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-    activePermissionKeys.add(witnessKey001);
-    activePermissionKeys.add(tmpKey02);
 
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
@@ -536,7 +510,9 @@ public class MultiSign07 {
             activePermissionKeys.toArray(new String[activePermissionKeys.size()])));
   }
 
-
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
