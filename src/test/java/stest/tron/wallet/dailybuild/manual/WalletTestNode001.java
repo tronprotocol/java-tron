@@ -16,6 +16,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestNode001 {
@@ -58,17 +59,20 @@ public class WalletTestNode001 {
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+    GrpcAPI.NodeList nodeList1 = blockingStubFull1
+        .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
     Integer times = 0;
-    while (nodeList.getNodesCount() == 0 && times++ < 60) {
+    while (nodeList.getNodesCount() == 0 && times++ < 3) {
       nodeList = blockingStubFull
               .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
-      if (nodeList.getNodesCount() != 0) {
+      nodeList1 = blockingStubFull1
+          .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+      if (nodeList.getNodesCount() != 0 || nodeList1.getNodesCount() != 0) {
         break;
       }
-      nodeList = blockingStubFull1
-              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
-    Assert.assertFalse(nodeList.getNodesCount() == 0);
+    Assert.assertTrue(nodeList.getNodesCount() != 0 || nodeList1.getNodesCount() != 0);
 
     for (Integer j = 0; j < nodeList.getNodesCount(); j++) {
       Assert.assertTrue(nodeList.getNodes(j).hasAddress());
