@@ -136,24 +136,40 @@ public class BackupDbUtil {
   }
 
   private void backup(int i) throws RocksDBException {
+    String path = "";
+    if (i == DB_BACKUP_INDEX1) {
+      path = args.getDbBackupConfig().getBak1path();
+    } else if (i == DB_BACKUP_INDEX2) {
+      path = args.getDbBackupConfig().getBak2path();
+    } else {
+      throw new RuntimeException("Error backup with undefined index");
+    }
     List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
     for (RevokingDBWithCachingNewValue store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
           == org.tron.core.db2.common.RocksDB.class) {
         ((org.tron.core.db2.common.RocksDB) ((SnapshotRoot) (store.getHead().getRoot())).getDb())
-            .getDb().backup(i);
+            .getDb().backup(path);
       }
     }
   }
 
   private void deleteBackup(int i) {
+    String path = "";
+    if (i == DB_BACKUP_INDEX1) {
+      path = args.getDbBackupConfig().getBak1path();
+    } else if (i == DB_BACKUP_INDEX2) {
+      path = args.getDbBackupConfig().getBak2path();
+    } else {
+      throw new RuntimeException("Error deleteBackup with undefined index");
+    }
     List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
     for (RevokingDBWithCachingNewValue store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
           == org.tron.core.db2.common.RocksDB.class) {
         ((org.tron.core.db2.common.RocksDB) (((SnapshotRoot) (store.getHead().getRoot()))
             .getDb()))
-            .getDb().deleteDbBakPath(i);
+            .getDb().deleteDbBakPath(path);
       }
     }
   }

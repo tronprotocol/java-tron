@@ -31,7 +31,6 @@ import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 
 @Slf4j
@@ -49,10 +48,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public RocksDbDataSourceImpl(String parentName, String name) {
     this.dataBaseName = name;
-    this.parentName = Paths.get(
-        parentName,
-        Args.getInstance().getStorage().getDbDirectory()
-    ).toString();
+    this.parentName = parentName;
   }
 
   public Path getDbPath() {
@@ -133,8 +129,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public boolean checkOrInitEngine() {
-    String dir =
-        Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory() + File.separator + dataBaseName;
+    String dir = getDbPath().toString();
     String enginePath = dir + File.separator + "engine.properties";
 
     if (FileUtil.createDirIfNotExists(dir)) {
@@ -486,27 +481,11 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  // rocksdb use
-  public void backup(int i) throws RocksDBException {
-    if (i == 1) {
-      Checkpoint.create(database)
-          .createCheckpoint(Args.getInstance().getDbBackupConfig().getBak1path()
-              + this.getDBName());
-    } else {
-      Checkpoint.create(database)
-          .createCheckpoint(Args.getInstance().getDbBackupConfig().getBak2path()
-              + this.getDBName());
-    }
+  public void backup(String dir) throws RocksDBException {
+    Checkpoint.create(database).createCheckpoint(dir + this.getDBName());
   }
 
-  // rocksdb use
-  public boolean deleteDbBakPath(int i) {
-    if (i == 1) {
-      return FileUtil.deleteDir(new File(Args.getInstance().getDbBackupConfig().getBak1path()
-          + this.getDBName()));
-    } else {
-      return FileUtil.deleteDir((new File(Args.getInstance().getDbBackupConfig().getBak2path()
-          + this.getDBName())));
-    }
+  public boolean deleteDbBakPath(String dir) {
+    return FileUtil.deleteDir(new File(dir + this.getDBName()));
   }
 }
