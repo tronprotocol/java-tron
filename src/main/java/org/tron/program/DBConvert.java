@@ -4,6 +4,9 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
@@ -13,6 +16,7 @@ import org.rocksdb.BloomFilter;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 import org.tron.common.utils.FileUtil;
 
 @Slf4j
@@ -20,6 +24,27 @@ public class DBConvert {
 
   static {
     RocksDB.loadLibrary();
+  }
+
+  private String srcDir;
+  private String dstDir;
+  private String dbName;
+  private Path srcDbPath;
+  private Path dstDbPath;
+
+  private int srcDbKeyCount = 0;
+  private int dstDbKeyCount = 0;
+  private int srcDbKeySum = 0;
+  private int dstDbKeySum = 0;
+  private int srcDbValueSum = 0;
+  private int dstDbValueSum = 0;
+
+  public DBConvert(String src, String dst, String name) {
+    this.srcDir = src;
+    this.dstDir = dst;
+    this.dbName = name;
+    this.srcDbPath = Paths.get(this.srcDir, name);
+    this.dstDbPath = Paths.get(this.dstDir, name);
   }
 
   private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
@@ -35,9 +60,9 @@ public class DBConvert {
     return dbOptions;
   }
 
-  public DB newLevelDB(String dir, String dbname) throws IOException {
+  public DB newLevelDB(Path db) throws IOException {
     DB database = null;
-    File file = new File(dir + dbname);
+    File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
     try {
       database = factory.open(file, dbOptions);
@@ -61,6 +86,17 @@ public class DBConvert {
     options.setTargetFileSizeBase(256 * 1024 * 1024);
     options.setBaseBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
     options.setLevel0FileNumCompactionTrigger(4);
+    options.setCompressionPerLevel(new ArrayList<org.rocksdb.CompressionType>() {
+      {
+        add(org.rocksdb.CompressionType.NO_COMPRESSION);
+        add(org.rocksdb.CompressionType.NO_COMPRESSION);
+        add(org.rocksdb.CompressionType.NO_COMPRESSION);
+        add(org.rocksdb.CompressionType.LZ4_COMPRESSION);
+        add(org.rocksdb.CompressionType.LZ4_COMPRESSION);
+        add(org.rocksdb.CompressionType.ZSTD_COMPRESSION);
+        add(org.rocksdb.CompressionType.ZSTD_COMPRESSION);
+      }
+    });
     final BlockBasedTableConfig tableCfg;
     options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
     tableCfg.setBlockSize(64 * 1024);
@@ -71,25 +107,26 @@ public class DBConvert {
     return options;
   }
 
-  public RocksDB newRocksDB(String dir, String dbname) {
+  public RocksDB newRocksDB(Path db) {
     RocksDB database = null;
     try (Options options = newDefaultRocksDbOptions()) {
-      database = RocksDB.open(options, dir + dbname);
+      database = RocksDB.open(options, db.toString());
     } catch (Exception ignore) {
       logger.error(ignore.getMessage());
     }
     return database;
   }
 
-  public boolean convertLeveltoRocks(DB level, RocksDB rocks) {
-    int count = 0;
-
-    DBIterator iterator = level.iterator();
+  public boolean convertLevelToRocks(DB level, RocksDB rocks) {
+    // convert
+    DBIterator levelIterator = level.iterator();
     try {
-      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
-        byte[] key = iterator.peekNext().getKey();
-        byte[] value = iterator.peekNext().getValue();
-        count++;
+      for (levelIterator.seekToFirst(); levelIterator.hasNext(); levelIterator.next()) {
+        byte[] key = levelIterator.peekNext().getKey();
+        byte[] value = levelIterator.peekNext().getValue();
+        srcDbKeyCount++;
+        srcDbKeySum = byteArrayToIntWithOne(srcDbKeySum, key);
+        srcDbValueSum = byteArrayToIntWithOne(srcDbValueSum, value);
         rocks.put(key, value);
       }
     } catch (RocksDBException e) {
@@ -97,65 +134,98 @@ public class DBConvert {
       return false;
     } finally {
       try {
-        iterator.close();
+        levelIterator.close();
       } catch (IOException e1) {
         logger.error(e1.getMessage());
       }
     }
-    logger.info("covert {} items from LevelDb to RocksDb", count);
-    return true;
+
+    // check
+    try (final RocksIterator rocksIterator = rocks.newIterator()) {
+      for (rocksIterator.seekToLast(); rocksIterator.isValid(); rocksIterator.prev()) {
+        byte[] key = rocksIterator.key();
+        byte[] value = rocksIterator.value();
+        dstDbKeyCount++;
+        dstDbKeySum = byteArrayToIntWithOne(dstDbKeySum, key);
+        dstDbValueSum = byteArrayToIntWithOne(dstDbValueSum, value);
+      }
+    }
+
+    return dstDbKeyCount == srcDbKeyCount && dstDbKeySum == srcDbKeySum
+        && dstDbValueSum == srcDbValueSum;
   }
 
-  public boolean doConvert(String[] args) {
-    String levelDbDir = "";
-    String rocksDbDir = "";
+  public boolean doConvert() {
 
-    if (args.length < 2) {
-      levelDbDir = "output-directory";
-      rocksDbDir = "output-directory-rocks";
-    } else {
-      levelDbDir = args[0];
-      rocksDbDir = args[1];
-    }
-
-    String srcDir = levelDbDir + File.separator + "database" + File.separator;
-    String dstDir = rocksDbDir + File.separator + "database" + File.separator;
-
-    File levels = new File(srcDir);
-    if (!levels.exists()) {
-      System.out.println(srcDir + " not exists.");
+    File levelDbFile = srcDbPath.toFile();
+    if (!levelDbFile.exists()) {
+      System.out.println(srcDbPath.toString() + " not exists.");
       return false;
     }
 
-    File[] aa = levels.listFiles();
-    if (aa == null || aa.length == 0) {
-      return false;
-    }
-    for (File file : aa) {
-      DB level = null;
-      try {
-        level = newLevelDB(srcDir, file.getName());
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
-      FileUtil.createDirIfNotExists(dstDir + file.getName());
-
-      RocksDB rocks = null;
-      rocks = newRocksDB(dstDir, file.getName());
-
-      if (convertLeveltoRocks(level, rocks)) {
-        System.out.println("success");
-      } else {
-        System.out.println("failure");
-      }
+    DB level = null;
+    try {
+      level = newLevelDB(srcDbPath);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
 
-    return true;
+    FileUtil.createDirIfNotExists(dstDir);
+    RocksDB rocks = null;
+    rocks = newRocksDB(dstDbPath);
+
+    return convertLevelToRocks(level, rocks);
+  }
+
+  public int byteArrayToIntWithOne(int sum, byte[] b) {
+    for (byte aByte : b) {
+      sum += (int) aByte;
+    }
+    return sum;
   }
 
   public static void main(String[] args) {
-    DBConvert convert = new DBConvert();
-    convert.doConvert(args);
+    String dbSrc;
+    String dbDst;
+    if (args.length < 2) {
+      dbSrc = "output-directory/database";
+      dbDst = "output-directory-dst/database";
+    } else {
+      dbSrc = args[0];
+      dbDst = args[1];
+    }
+    File dbDirectory = new File(dbSrc);
+    if (!dbDirectory.exists()) {
+      System.out.println(dbSrc + "is not exists.");
+      return;
+    }
+    File[] files = dbDirectory.listFiles();
+    if (files == null || files.length == 0) {
+      System.out.println(dbSrc + " not contains any database.");
+      return;
+    }
+    long time = System.currentTimeMillis();
+    for (File file : files) {
+      if (!file.isDirectory()) {
+        System.out.println(file.getName() + " is not a database directory, ignore it.");
+        continue;
+      }
+      try {
+        DBConvert convert = new DBConvert(dbSrc, dbDst, file.getName());
+        if (convert.doConvert()) {
+          System.out.println(String
+              .format("Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
+                  convert.dbName,
+                  convert.srcDbKeyCount, convert.dstDbKeySum, convert.dstDbValueSum));
+        } else {
+          System.out.println(String.format("Convert database %s failure", convert.dbName));
+        }
+      } catch (Exception e) {
+        System.out.println(e.getMessage());
+        return;
+      }
+    }
+    System.out.println(String
+        .format("database convert use %d seconds total.", (System.currentTimeMillis() - time) / 1000));
   }
 }
