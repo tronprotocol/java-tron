@@ -637,7 +637,7 @@ public class VM {
          */
         case ADDRESS: {
           DataWord address = program.getContractAddress();
-          if (VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
+          if (VMConfig.improveTransferTrc10Security()) { // improve_transfer_trc10_security proposal
             address = new DataWord(address.getLast20Bytes());
           }
 
@@ -666,7 +666,7 @@ public class VM {
         case ORIGIN: {
           DataWord originAddress = program.getOriginAddress();
 
-          if (VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
+          if (VMConfig.improveTransferTrc10Security()) { //improve_transfer_trc10_security proposal
             originAddress = new DataWord(originAddress.getLast20Bytes());
           }
 
@@ -1247,7 +1247,7 @@ public class VM {
           boolean isTokenTransferMsg = false;
           if (op == CALLTOKEN) {
             tokenId = program.stackPop();
-            if (VMConfig.isVERSION_3_5_HARD_FORK()) { // 3.5 hard fork
+            if (VMConfig.improveTransferTrc10Security()) { // improve_transfer_trc10_security proposal
               isTokenTransferMsg = true;
             }
           }

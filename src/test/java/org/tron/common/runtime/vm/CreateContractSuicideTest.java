@@ -105,7 +105,7 @@ contract D {
 
 
   @Test
-  public void testAAfterVersion3_5()
+  public void testAAfterTransferTrc10SecurityProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
@@ -116,7 +116,7 @@ contract D {
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_2_2.getValue(), stats);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_5.getValue(), stats);
-    VMConfig.initVmHardFork();
+    VMConfig.initImproveTransferTrc10Security(1);
 
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
@@ -145,8 +145,9 @@ contract D {
   }
 
   @Test
-  public void testABeforeVersion3_5()
+  public void testABeforeTransferTrc10SecurityProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    VMConfig.initImproveTransferTrc10Security(0);
     byte[] address = Hex.decode(OWNER_ADDRESS);
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);

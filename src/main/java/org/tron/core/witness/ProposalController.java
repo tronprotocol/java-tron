@@ -194,6 +194,10 @@ public class ProposalController {
           }
           break;
         }
+        case (22): {
+          manager.getDynamicPropertiesStore().saveImproveTransferTrc10Security(entry.getValue());
+          break;
+        }
 
         default:
           break;
