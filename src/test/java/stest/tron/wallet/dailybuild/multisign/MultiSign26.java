@@ -79,7 +79,7 @@ public class MultiSign26 {
   }
 
 
-  @Test(enabled = true, description = "sendcoin,use acticve address to sign,"
+  @Test(enabled = true, description = "Sendcoin,use acticve address to sign,"
       + "not meet the requirements.Delete the address,broadcastTransaction.")
   public void testMultiUpdatepermissions_BeforeSign() {
     ECKey ecKey = new ECKey(Utils.getRandom());
@@ -180,7 +180,8 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Sendcoin,use acticve address to sign,"
+      + "meet the all requirements.Delete the address,broadcastTransaction.")
   public void testMultiUpdatepermissions_BeforeSign_1() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -279,7 +280,8 @@ public class MultiSign26 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "Sendcoin,use owner address to sign,"
+      + "Delete the address,broadcastTransaction.")
   public void testMultiUpdatepermissions_BeforeSign_2() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -379,7 +381,8 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "AccountPermissionUpdate transaction,"
+      + "use owner address to sign,Delete the address,broadcastTransaction.")
   public void testMultiUpdatepermissions_BeforeSign_3() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -492,7 +495,9 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description =
+      "Sendcoin,meet the all requirements.Delete the active address,"
+          + "use the address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_AfterSign_1() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -590,7 +595,9 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description =
+      "Sendcoin,not meet the requirements.Delete the active address,"
+          + "use the address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_AfterSign_2() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -691,7 +698,8 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Sendcoin,Delete the owner address,"
+      + "use the address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_AfterSign() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -783,7 +791,8 @@ public class MultiSign26 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "AccountPermissionUpdate transaction,"
+      + "Delete the owner address,use the address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_AfterSign_4() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

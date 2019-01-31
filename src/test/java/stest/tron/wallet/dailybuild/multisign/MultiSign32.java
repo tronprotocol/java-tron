@@ -78,7 +78,7 @@ public class MultiSign32 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "Dup owner address ")
   public void testMultiSignAddDupAssressOwner() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -152,7 +152,7 @@ public class MultiSign32 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Dup active address in same permissionID activelist ")
   public void testMultiSignAddDupAssressActive_1() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -227,7 +227,7 @@ public class MultiSign32 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Dup active address in different permissionID activelist ")
   public void testMultiSignAddDupAssressActive_2() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

@@ -66,8 +66,7 @@ public class MultiSign33 {
 
   }
 
-  //(use no id)
-  @Test
+  @Test(enabled = true, description = "Owner address fall back into only myself")
   public void testMultiSignOwnerAddress() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -142,7 +141,7 @@ public class MultiSign33 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Active address fall back into only myself")
   public void testMultiSignActiveAddress() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

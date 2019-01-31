@@ -71,8 +71,8 @@ public class MultiSign35 {
 
   }
 
-  //(use no id)
-  @Test
+  @Test(enabled = true, description = "Test perimissionID is "
+      + "7fff1fc0037e0000000000000000000000000000000000000000000000000000")
   public void testMultiUpdatepermissions_45() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -159,7 +159,8 @@ public class MultiSign35 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Test perimissionID is "
+      + "7fff1fc0033e0000000000000000000000000000000000000000000000000000")
   public void testMultiUpdatepermissions_46() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

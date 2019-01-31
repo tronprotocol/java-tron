@@ -144,7 +144,7 @@ public class MultiSign36 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "After sign success,delete the address")
   public void getTransactionApprovedList_02() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -237,7 +237,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "MultiSign ordinary transaction")
   public void getTransactionApprovedList_03() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -318,7 +318,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "One time sign ordinary transaction")
   public void getTransactionApprovedList_04() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -396,7 +396,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "No sign transaction")
   public void getTransactionApprovedList_05() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -468,7 +468,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "Multi-signature unfinished transaction")
   public void getTransactionApprovedList_06() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -545,7 +545,7 @@ public class MultiSign36 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "ignature not success  transaction")
   public void getTransactionApprovedList_07() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -616,7 +616,7 @@ public class MultiSign36 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "The timeout transaction")
   public void getTransactionApprovedList_08() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -695,7 +695,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "The error transaction")
   public void getTransactionApprovedList_09() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -768,7 +768,7 @@ public class MultiSign36 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "The null transaction")
   public void getTransactionApprovedList_10() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

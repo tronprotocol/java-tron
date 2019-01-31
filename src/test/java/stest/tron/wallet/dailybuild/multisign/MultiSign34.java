@@ -75,7 +75,7 @@ public class MultiSign34 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "SR witness,sendcoin, use witnessPermission address sign.")
   public void testMultiUpdatepermissions_42() {
 
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
@@ -120,7 +120,7 @@ public class MultiSign34 {
 
   }
 
-  @Test
+  @Test(enabled = true, description = "SR witness,sendcoin, use active address sign.")
   public void testMultiUpdatepermissions_43() {
 
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
@@ -152,7 +152,7 @@ public class MultiSign34 {
   }
 
 
-  @Test
+  @Test(enabled = true, description = "SR witness,sendcoin, use owner address sign.")
   public void testMultiUpdatepermissions_44() {
 
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
