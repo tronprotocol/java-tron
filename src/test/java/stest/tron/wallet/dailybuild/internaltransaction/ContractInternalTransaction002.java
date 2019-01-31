@@ -86,8 +86,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true, description = "The test1(address) function is create create call call,"
-      + "the final call is assert(1==2); The test2(address,uint256) function is call require(1==2).")
+  @Test(enabled = true, description = "Type is create create call call")
   public void test1InternalTransaction007() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -208,11 +207,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true, description = "All the function has two call."
-      + "The testtRequire2() is second call require(1==2)."
-      + "The testAssert() is first call assert(1==2)."
-      + "The testRequire() is first call require(1==2)."
-      + "The testAssert2() is second call require(1==2).")
+  @Test(enabled = true, description = "Type is call call")
   public void test2InternalTransaction008() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -422,9 +417,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true, description = "First time trigger test1(address,address,address) have one"
-      + "create,five call,one suicide.Second time trigger test1(address,address,address) only have"
-      + "create and call.")
+  @Test(enabled = true, description = "Test suicide type in internalTransaction after call")
   public void test3InternalTransaction009() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -600,7 +593,7 @@ public class ContractInternalTransaction002 {
     }
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger create type max time.")
+  @Test(enabled = true, description = "Test maxfeelimit can trigger create type max time")
   public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -773,8 +766,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true, description = "There is four internalTransaction.Three-level nesting."
-      + "Type is Call create call call.")
+  @Test(enabled = true, description = "Type is call create->call->call.Three-level nesting")
   public void test5InternalTransaction012() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

@@ -86,8 +86,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true, description = "There is four internalTransaction.Three-level nesting"
-      + "Type is Create call call create.")
+  @Test(enabled = true, description = "Three-level nesting.Type is Create call->call->create")
   public void testInternalTransaction013() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -192,9 +191,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true, description =
-      "The sendToB() function is test delegatecall. The sendToB2() function is test call. "
-          + "The sendToB3() function is test callcode.")
+  @Test(enabled = true, description = "Test delegatecall and callcode.")
   public void testInternalTransaction014() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -376,7 +373,8 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true, description = "There is six internalTransaction.Type is Create and call.")
+  @Test(enabled = true, description = "Three-level nesting.Type "
+      + "is create call->call->create call->suicide")
   public void testInternalTransaction015() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -904,8 +902,7 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time."
-      + "There is 388 internalTransaction.")
+  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
