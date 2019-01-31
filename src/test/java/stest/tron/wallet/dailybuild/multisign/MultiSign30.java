@@ -71,8 +71,8 @@ public class MultiSign30 {
 
 
   @Test(enabled = true, description =
-      "Sendcoin,use active address sign(weight< thredshold),"
-          + "Then use the address to sign(weight>=thredshold),broadcastTransaction.")
+      "Sendcoin,use active address sign(weight< threshold),"
+          + "Then use the address to sign(weight>=threshold),broadcastTransaction.")
   public void testMultiUpdatepermissions_31() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -157,8 +157,8 @@ public class MultiSign30 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use active address sign(weight< thredshold)."
-          + "Then use the address to sign(weight>=thredshold),broadcastTransaction.")
+      "Sendcoin,use active address sign(weight< threshold)."
+          + "Then use the address to sign(weight>=threshold),broadcastTransaction.")
   public void testMultiUpdatepermissions_32() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
@@ -247,8 +247,8 @@ public class MultiSign30 {
   }
 
   @Test(enabled = true, description =
-      "Sendcoin,use owner address sign(weight< thredshold),"
-          + "Then use the address to sign(weight>=thredshold),broadcastTransaction.")
+      "Sendcoin,use owner address sign(weight< threshold),"
+          + "Then use the address to sign(weight>=threshold),broadcastTransaction.")
   public void testMultiUpdatepermissions_33() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();

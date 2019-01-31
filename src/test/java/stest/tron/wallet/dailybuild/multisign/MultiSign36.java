@@ -545,7 +545,7 @@ public class MultiSign36 {
   }
 
 
-  @Test(enabled = true, description = "ignature not success  transaction")
+  @Test(enabled = true, description = "Signature not success  transaction")
   public void getTransactionApprovedList_07() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
