@@ -85,7 +85,7 @@ public class ContractInternalTransaction001 {
         .getBalance()));
   }
 
-  @Test(enabled = true, description = "InternalTransaction type :create call ")
+  @Test(enabled = true, description = "Create call two-level nesting")
   public void testInternalTransaction001() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -196,7 +196,7 @@ public class ContractInternalTransaction001 {
     }
   }
 
-  @Test(enabled = true, description = "InternalTransaction type:call")
+  @Test(enabled = true, description = "Only call")
   public void testInternalTransaction002() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -256,7 +256,7 @@ public class ContractInternalTransaction001 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction type:create")
+  @Test(enabled = true, description = "Only create")
   public void testInternalTransaction003() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -313,7 +313,9 @@ public class ContractInternalTransaction001 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction type:create call suicide")
+  @Test(enabled = true, description =
+      "The kill() function is call suicide,kill2() function is create"
+          + "call suicide")
   public void testInternalTransaction004() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
