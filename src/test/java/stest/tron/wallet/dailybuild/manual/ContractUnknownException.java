@@ -144,7 +144,7 @@ public class ContractUnknownException {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("afterenergyLimit:" + aftereenergyLimit);
-    Assert.assertThat(s, containsString("Unknown Exception"));
+    Assert.assertThat(s, containsString("REVERT opcode executed"));
 
   }
 
