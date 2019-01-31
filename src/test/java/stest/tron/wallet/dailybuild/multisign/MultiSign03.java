@@ -81,7 +81,7 @@ public class MultiSign03 {
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Owner no parent_id")
+  @Test(enabled = true, description = "Owner doesn't have parent_id")
   public void testOwnerParent01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();

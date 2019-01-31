@@ -83,7 +83,7 @@ public class MultiSign09 {
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Active is no parent_id")
+  @Test(enabled = true, description = "Active doesn't have parent_id")
   public void testActiveParent01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
@@ -427,7 +427,7 @@ public class MultiSign09 {
         response.getMessage().toStringUtf8());
   }
 
-  @Test(enabled = true, description = "Active parent_id is 0n")
+  @Test(enabled = true, description = "Active parent_id is 0")
   public void testActiveParent03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();

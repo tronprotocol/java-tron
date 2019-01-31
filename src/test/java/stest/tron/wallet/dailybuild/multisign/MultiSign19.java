@@ -222,7 +222,7 @@ public class MultiSign19 {
             blockingStubFull).getOwnerPermission()));
   }
 
-  @Test(enabled = true, description = "")
+  @Test(enabled = true, description = "Active operation include invalid contract")
   public void testActiveOperations03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();

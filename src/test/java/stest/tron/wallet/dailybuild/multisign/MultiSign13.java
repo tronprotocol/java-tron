@@ -384,7 +384,7 @@ public class MultiSign13 {
     Assert.assertTrue(ret);
   }
 
-  @Test(enabled = true, description = "Witness is no permission_name")
+  @Test(enabled = true, description = "Witness doesn't have permission_name")
   public void testWitnessName06() {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();

@@ -91,7 +91,7 @@ public class MultiSign15 {
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Witness is no parent_id")
+  @Test(enabled = true, description = "Witness doesn't have parent_id")
   public void testWitnessParent01() {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
