@@ -1185,6 +1185,10 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
+    if (trxCap.getDelaySeconds() > 0){
+      // process deferred transaction, if sender id doesn't exist, create new entry
+    }
+
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
 

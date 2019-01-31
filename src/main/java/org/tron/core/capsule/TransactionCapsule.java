@@ -107,6 +107,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
+  @Getter
+  @Setter
+  private long delaySeconds;
+
+  @Getter
+  private long senderId;
+
   /**
    * constructor TransactionCapsule.
    */

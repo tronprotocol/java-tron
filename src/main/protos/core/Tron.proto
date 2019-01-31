@@ -335,6 +335,8 @@ message Transaction {
   // only support size = 1,  repeated list here for muti-sig extension
   repeated bytes signature = 2;
   repeated Result ret = 5;
+  int64 delaySeconds = 6;
+  int64 senderId = 7;
 }
 
 message TransactionInfo {
