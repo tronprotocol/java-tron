@@ -86,7 +86,8 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true, description = "InternalTransaction type: create call  call create")
+  @Test(enabled = true, description = "There is four internalTransaction.Three-level nesting"
+      + "Type is Create call call create.")
   public void testInternalTransaction013() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -190,7 +191,10 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction: test delegatecall ")
+
+  @Test(enabled = true, description =
+      "The sendToB() function is test delegatecall. The sendToB2() function is test call. "
+          + "The sendToB3() function is test callcode.")
   public void testInternalTransaction014() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -372,7 +376,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction: Function nesting ")
+  @Test(enabled = true, description = "There is six internalTransaction.Type is Create and call.")
   public void testInternalTransaction015() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -486,7 +490,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true, description = "InternalTransaction: after create 80 times,suicide")
+  @Test(enabled = true, description = "After create 80 times,then suicide")
   public void testInternalTransaction016() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -658,7 +662,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction: after create 88 times,suicide")
+  @Test(enabled = true, description = "After create 88 times,then suicide")
   public void testInternalTransaction017() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -900,7 +904,8 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "InternalTransaction: call create call")
+  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time."
+      + "There is 388 internalTransaction.")
   public void testInternalTransaction018() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
