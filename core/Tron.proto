@@ -370,6 +370,16 @@ message TransactionInfo {
   int64 exchange_id = 21;
 }
 
+message DeferredTransaction {
+  bytes transactionId = 1;
+  int64 senderId = 2;
+  int64 publishTime = 3;
+  int64 delayUntil = 4;
+  int64 expiration = 5;
+  bytes senderAddress = 6;
+  bytes receiverAddress = 7;
+}
+
 message Transactions {
   repeated Transaction transactions = 1;
 }
