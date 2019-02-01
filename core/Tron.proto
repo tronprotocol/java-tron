@@ -336,7 +336,6 @@ message Transaction {
   repeated bytes signature = 2;
   repeated Result ret = 5;
   int64 delaySeconds = 6;
-  int64 senderId = 7;
 }
 
 message TransactionInfo {
@@ -372,12 +371,11 @@ message TransactionInfo {
 
 message DeferredTransaction {
   bytes transactionId = 1;
-  int64 senderId = 2;
-  int64 publishTime = 3;
-  int64 delayUntil = 4;
-  int64 expiration = 5;
-  bytes senderAddress = 6;
-  bytes receiverAddress = 7;
+  int64 publishTime = 2;
+  int64 delayUntil = 3;
+  int64 expiration = 4;
+  bytes senderAddress = 5;
+  bytes receiverAddress = 6;
 }
 
 message Transactions {
