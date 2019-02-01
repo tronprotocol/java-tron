@@ -768,7 +768,7 @@ public class RuntimeImpl implements Runtime {
 
   public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
     if (VMConfig.allowTvmTransferTrc10()) {
-      if (VMConfig.improveTransferTrc10Security()) { //improve_transfer_trc10_security proposal
+      if (VMConfig.allowMultiSign()) { //allowMultiSigns
         // tokenid can only be 0
         // or (MIN_TOKEN_ID, Long.Max]
         if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {

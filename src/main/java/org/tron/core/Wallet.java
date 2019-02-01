@@ -867,12 +867,6 @@ public class Wallet {
             .setKey("getAllowAdaptiveEnergy")
             .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
             .build());
-    //   IMPROVE_TRANSFER_TRC10_SECURITY, // 1, 22
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getImproveTransferTrc10Security")
-            .setValue(dbManager.getDynamicPropertiesStore().getImproveTransferTrc10Security())
-            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
