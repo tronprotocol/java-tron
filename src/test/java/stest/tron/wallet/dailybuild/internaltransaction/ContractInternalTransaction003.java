@@ -488,7 +488,7 @@ public class ContractInternalTransaction003 {
   }
 
 
-  @Test(enabled = true, description = "After create 80 times,then suicide")
+  @Test(enabled = false, description = "After create 80 times,then suicide")
   public void testInternalTransaction016() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -660,7 +660,7 @@ public class ContractInternalTransaction003 {
 
   }
 
-  @Test(enabled = true, description = "After create 88 times,then suicide")
+  @Test(enabled = false, description = "After create 88 times,then suicide")
   public void testInternalTransaction017() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -902,7 +902,7 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
+  @Test(enabled = false, description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
