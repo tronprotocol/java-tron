@@ -593,7 +593,7 @@ public class ContractInternalTransaction002 {
     }
   }
 
-  @Test(enabled = true, description = "Test maxfeelimit can trigger create type max time")
+  @Test(enabled = false, description = "Test maxfeelimit can trigger create type max time")
   public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

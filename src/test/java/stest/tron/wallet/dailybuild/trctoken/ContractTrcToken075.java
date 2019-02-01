@@ -259,6 +259,7 @@ public class ContractTrcToken075 {
         "getTokenLongMax()", "#", false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
