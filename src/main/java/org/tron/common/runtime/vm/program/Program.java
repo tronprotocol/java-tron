@@ -1419,7 +1419,7 @@ public class Program {
    * @param msg
    */
   public void checkTokenId(MessageCall msg) {
-    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+    if(VMConfig.allowMultiSign()){ //allowMultiSign proposal
       // tokenid should not get Long type overflow
       long tokenId = msg.getTokenId().sValue().longValueExact();
       // tokenId can only be 0 when isTokenTransferMsg == false
@@ -1433,7 +1433,7 @@ public class Program {
   }
 
   public boolean isTokenTransfer(MessageCall msg) {
-    if(VMConfig.isVERSION_3_5_HARD_FORK()) { //3.5 hard fork
+    if(VMConfig.allowMultiSign()) { //allowMultiSign proposal
       return msg.isTokenTransferMsg();
     }
     else {
@@ -1442,7 +1442,7 @@ public class Program {
   }
 
   public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
-    if(VMConfig.isVERSION_3_5_HARD_FORK()){ //3.5 hard fork
+    if(VMConfig.allowMultiSign()){ //allowMultiSigns proposal
       // tokenid should not get Long type overflow
       long tokenId = tokenIdDataWord.sValue().longValueExact();
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
