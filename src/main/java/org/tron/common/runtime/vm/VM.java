@@ -637,7 +637,7 @@ public class VM {
          */
         case ADDRESS: {
           DataWord address = program.getContractAddress();
-          if (VMConfig.improveTransferTrc10Security()) { // improve_transfer_trc10_security proposal
+          if (VMConfig.allowMultiSign()) { // allowMultiSigns proposal
             address = new DataWord(address.getLast20Bytes());
           }
 
@@ -666,7 +666,7 @@ public class VM {
         case ORIGIN: {
           DataWord originAddress = program.getOriginAddress();
 
-          if (VMConfig.improveTransferTrc10Security()) { //improve_transfer_trc10_security proposal
+          if (VMConfig.allowMultiSign()) { //allowMultiSign proposal
             originAddress = new DataWord(originAddress.getLast20Bytes());
           }
 
@@ -1247,7 +1247,7 @@ public class VM {
           boolean isTokenTransferMsg = false;
           if (op == CALLTOKEN) {
             tokenId = program.stackPop();
-            if (VMConfig.improveTransferTrc10Security()) { // improve_transfer_trc10_security proposal
+            if (VMConfig.allowMultiSign()) { // allowMultiSign proposal
               isTokenTransferMsg = true;
             }
           }

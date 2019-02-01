@@ -158,8 +158,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
 
-  private static final byte[] IMPROVE_TRANSFER_TRC10_SECURITY = "IMPROVE_TRANSFER_TRC10_SECURITY".getBytes();
-
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -469,12 +467,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowTvmTransferTrc10();
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
-    }
-
-    try {
-      this.getImproveTransferTrc10Security();
-    } catch (IllegalArgumentException e) {
-      this.saveImproveTransferTrc10Security(Args.getInstance().getImproveTransferTrc10Security());
     }
 
     try {
@@ -1212,19 +1204,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
-  }
-
-  public void saveImproveTransferTrc10Security(long value) {
-    this.put(IMPROVE_TRANSFER_TRC10_SECURITY,
-        new BytesCapsule(ByteArray.fromLong(value)));
-  }
-
-  public long getImproveTransferTrc10Security() {
-    return Optional.ofNullable(getUnchecked(IMPROVE_TRANSFER_TRC10_SECURITY))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found IMPROVE_TRANSFER_TRC10_SECURITY"));
   }
 
   public void saveAvailableContractType(byte[] value) {

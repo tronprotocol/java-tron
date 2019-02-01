@@ -105,7 +105,7 @@ contract D {
 
 
   @Test
-  public void testAAfterTransferTrc10SecurityProposal()
+  public void testAAfterAllowMultiSignProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
@@ -116,7 +116,7 @@ contract D {
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_2_2.getValue(), stats);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_5.getValue(), stats);
-    VMConfig.initImproveTransferTrc10Security(1);
+    VMConfig.initAllowMultiSign(1);
 
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
@@ -145,9 +145,9 @@ contract D {
   }
 
   @Test
-  public void testABeforeTransferTrc10SecurityProposal()
+  public void testABeforeAllowMultiSignProposal()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    VMConfig.initImproveTransferTrc10Security(0);
+    VMConfig.initAllowMultiSign(0);
     byte[] address = Hex.decode(OWNER_ADDRESS);
     Transaction aTrx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
