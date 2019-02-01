@@ -30,8 +30,8 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
         }
     }
 
-    public long getSenderId(){
-        return deferredTransaction.getSenderId();
+    public ByteString getTransactionId(){
+        return deferredTransaction.getTransactionId();
     }
 
     public long getPublishTime(){

@@ -1939,9 +1939,6 @@ public class Manager {
 
     deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
 
-    long senderId = transactionCapsule.getSenderId();
-    deferredTransaction.setSenderId(senderId);
-
     ByteString senderAddress = transactionCapsule.getSenderAddress();
     if (Objects.isNull(senderAddress)){
       return;
@@ -1980,7 +1977,7 @@ public class Manager {
 
 
     // Test
-    //DeferredTransactionCapsule item = this.deferredStore.getBySenderId(senderId);
+    //DeferredTransactionCapsule item = this.deferredStore.getByTransactionId(transactionId);
     //logger.info(item.toString());
   }
 }

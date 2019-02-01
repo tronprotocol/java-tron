@@ -787,10 +787,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getDelaySeconds();
   }
 
-  public long getSenderId(){
-    return this.transaction.getSenderId();
-  }
-
   public ByteString getSenderAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){

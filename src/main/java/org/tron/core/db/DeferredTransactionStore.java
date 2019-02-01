@@ -1,11 +1,11 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 
 import java.util.ArrayList;
@@ -20,15 +20,15 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
     }
 
     public void put(DeferredTransactionCapsule deferredTransactionCapsule){
-        byte[] senderId = ByteArray.fromLong(deferredTransactionCapsule.getSenderId());
-        super.put(senderId, deferredTransactionCapsule);
+        byte[] trxId = deferredTransactionCapsule.getTransactionId().toByteArray();
+        super.put(trxId, deferredTransactionCapsule);
     }
 
-    public DeferredTransactionCapsule getBySenderId(long senderId){
+    public DeferredTransactionCapsule getByTransactionId(ByteString transactionId){
         DeferredTransactionCapsule deferredTransactionCapsule = null;
 
         try{
-            byte[] key = ByteArray.fromLong(senderId);
+            byte[] key = transactionId.toByteArray();
             byte[] value = revokingDB.getUnchecked(key);
             if (ArrayUtils.isEmpty(value)) {
                 return null;
