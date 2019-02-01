@@ -107,13 +107,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
-  @Getter
-  @Setter
-  private long delaySeconds;
-
-  @Getter
-  private long senderId;
-
   /**
    * constructor TransactionCapsule.
    */
@@ -788,5 +781,31 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
+  }
+
+  public long getDeferredSeconds(){
+    return this.transaction.getDelaySeconds();
+  }
+
+  public long getSenderId(){
+    return this.transaction.getSenderId();
+  }
+
+  public ByteString getSenderAddress(){
+    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
+    if (Objects.isNull(contract)){
+      return null;
+    }
+
+    return ByteString.copyFrom(getOwner(contract));
+  }
+
+  public ByteString getToAddress(){
+    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
+    if (Objects.isNull(contract)){
+      return null;
+    }
+
+    return ByteString.copyFrom(getToAddress(contract));
   }
 }

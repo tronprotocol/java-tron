@@ -63,14 +63,8 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
@@ -104,6 +98,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -166,6 +161,9 @@ public class Manager {
   // for network
   @Autowired
   private PeersStore peersStore;
+
+  @Autowired
+  private DeferredTransactionStore deferredStore;
 
 
   @Autowired
@@ -1185,8 +1183,10 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    if (trxCap.getDelaySeconds() > 0){
+    if (trxCap.getDeferredSeconds() > 0){
       // process deferred transaction, if sender id doesn't exist, create new entry
+
+      pushScheduledTransaction(blockCap, trxCap);
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
@@ -1931,5 +1931,56 @@ public class Manager {
         }
       }
     }
+  }
+
+  private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
+
+    DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+
+    deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+
+    long senderId = transactionCapsule.getSenderId();
+    deferredTransaction.setSenderId(senderId);
+
+    ByteString senderAddress = transactionCapsule.getSenderAddress();
+    if (Objects.isNull(senderAddress)){
+      return;
+    }
+
+    ByteString toAddress = transactionCapsule.getToAddress();
+    if (Objects.isNull(toAddress)){
+      return;
+    }
+
+    deferredTransaction.setSenderAddress(senderAddress);
+    deferredTransaction.setReceiverAddress(toAddress);
+
+    // publish time
+    long publishTime = 0;
+
+    if (Objects.nonNull(blockCapsule)){
+      publishTime = blockCapsule.getTimeStamp();
+    }
+    else {
+      publishTime = System.currentTimeMillis();
+    }
+
+    deferredTransaction.setPublishTime(publishTime);
+
+    // delay until
+    long delayUntil = publishTime + transactionCapsule.getDeferredSeconds();
+    deferredTransaction.setDelayUntil(delayUntil);
+
+    // expiration
+    long expiration = delayUntil + 600; // to do add 600 do DynamicPropertiesStore
+    deferredTransaction.setExpiration(expiration);
+
+    DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
+    this.deferredStore.put(deferredTransactionCapsule);
+
+
+    // Test
+    //DeferredTransactionCapsule item = this.deferredStore.getBySenderId(senderId);
+    //logger.info(item.toString());
   }
 }
