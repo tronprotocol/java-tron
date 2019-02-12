@@ -376,6 +376,7 @@ message DeferredTransaction {
   int64 expiration = 4;
   bytes senderAddress = 5;
   bytes receiverAddress = 6;
+  Transaction transaction = 7;
 }
 
 message Transactions {
