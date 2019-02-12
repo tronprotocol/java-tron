@@ -98,6 +98,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -165,6 +166,8 @@ public class Manager {
   @Autowired
   private DeferredTransactionStore deferredStore;
 
+  @Autowired
+  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
 
   @Autowired
   private KhaosDatabase khaosDb;
@@ -1184,8 +1187,6 @@ public class Manager {
     }
 
     if (trxCap.getDeferredSeconds() > 0){
-      // process deferred transaction, if sender id doesn't exist, create new entry
-
       pushScheduledTransaction(blockCap, trxCap);
     }
 
@@ -1384,6 +1385,16 @@ public class Manager {
       }
     }
 
+    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
+        .getScheduledTransactions(blockCapsule.getTimeStamp());
+    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
+      blockCapsule.addTransaction(new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction()));
+    }
+    deferredTransactionList.forEach(trx -> {
+      getDeferredTransactionStore().removeDeferredTransactionById(trx);
+      getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
+    });
+
     session.reset();
 
     if (postponedTrxCount > 0) {
@@ -1449,6 +1460,13 @@ public class Manager {
     return this.transactionStore;
   }
 
+  public DeferredTransactionStore getDeferredTransactionStore() {
+      return this.deferredStore;
+  }
+
+  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
+      return this.deferredTransactionIdIndexStore;
+  }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
     return this.transactionHistoryStore;
@@ -1951,6 +1969,7 @@ public class Manager {
 
     deferredTransaction.setSenderAddress(senderAddress);
     deferredTransaction.setReceiverAddress(toAddress);
+    deferredTransaction.setTransaction(transactionCapsule.getInstance());
 
     // publish time
     long publishTime = 0;
@@ -1973,11 +1992,7 @@ public class Manager {
     deferredTransaction.setExpiration(expiration);
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
-    this.deferredStore.put(deferredTransactionCapsule);
-
-
-    // Test
-    //DeferredTransactionCapsule item = this.deferredStore.getByTransactionId(transactionId);
-    //logger.info(item.toString());
+    getDeferredTransactionStore().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
   }
 }

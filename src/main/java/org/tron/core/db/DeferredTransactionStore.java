@@ -1,14 +1,16 @@
 package org.tron.core.db;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.DeferredTransactionCapsule;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j(topic = "DB")
@@ -20,8 +22,18 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
     }
 
     public void put(DeferredTransactionCapsule deferredTransactionCapsule){
-        byte[] trxId = deferredTransactionCapsule.getTransactionId().toByteArray();
-        super.put(trxId, deferredTransactionCapsule);
+        super.put(deferredTransactionCapsule.getKey(), deferredTransactionCapsule);
+    }
+
+    public List<DeferredTransactionCapsule> getScheduledTransactions (long time){
+        return revokingDB.getValuesPrevious(Longs.toByteArray(time), Long.MAX_VALUE).stream()
+            .map(DeferredTransactionCapsule::new)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toList());
+    }
+
+    public void removeDeferredTransactionById(DeferredTransactionCapsule deferredTransactionCapsule) {
+        revokingDB.delete(deferredTransactionCapsule.getKey());
     }
 
     public DeferredTransactionCapsule getByTransactionId(ByteString transactionId){
@@ -42,10 +54,4 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
 
         return deferredTransactionCapsule;
     }
-
-    public List<DeferredTransactionCapsule> getScheduledTransaction(){
-        List<DeferredTransactionCapsule> deferredTransactionList = new ArrayList<>();
-        return deferredTransactionList;
-    }
-
 }

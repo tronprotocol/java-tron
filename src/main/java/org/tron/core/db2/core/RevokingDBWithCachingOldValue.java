@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -127,5 +128,10 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return dbSource.getValuesNext(key, limit);
+  }
+
+  @Override
+  public Set<byte[]> getValuesPrevious(byte[] key, long limit) {
+    return dbSource.getPrevious(key, limit, 8).values().stream().collect(Collectors.toSet());
   }
 }

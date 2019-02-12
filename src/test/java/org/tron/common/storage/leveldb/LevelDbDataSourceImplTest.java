@@ -53,13 +53,15 @@ public class LevelDbDataSourceImplTest {
   private byte[] value4 = "40000".getBytes();
   private byte[] value5 = "50000".getBytes();
   private byte[] value6 = "60000".getBytes();
+  private byte[] value7 = "70000".getBytes();
+
   private byte[] key1 = "00000001aa".getBytes();
   private byte[] key2 = "00000002aa".getBytes();
   private byte[] key3 = "00000003aa".getBytes();
   private byte[] key4 = "00000004aa".getBytes();
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
-
+  private byte[] key7 = "00000003ac".getBytes();
   @Before
   public void initDb() {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -271,5 +273,24 @@ public class LevelDbDataSourceImplTest {
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
     dataSource.resetDb();
     dataSource.closeDB();
+  }
+
+  @Test
+  public void getPrevious() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_getPrevious_key");
+    dataSource.initDB();
+    dataSource.resetDb();
+    putSomeKeyValue(dataSource);
+    dataSource.putData(key7, value7);
+
+    Map<byte[], byte[]> seekKeyLimitNext = dataSource.getPrevious(key3, Long.MAX_VALUE, 8);
+    Assert.assertEquals("getPrevious1",  4, seekKeyLimitNext.size());
+
+    seekKeyLimitNext = dataSource.getPrevious(key3, Long.MAX_VALUE, 10);
+    Assert.assertEquals("getPrevious2",  3, seekKeyLimitNext.size());
+    dataSource.resetDb();
+    dataSource.closeDB();
+
   }
 }

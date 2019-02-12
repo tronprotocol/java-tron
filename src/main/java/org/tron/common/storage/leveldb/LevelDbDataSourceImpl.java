@@ -43,6 +43,8 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -348,6 +350,36 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
       for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getPrevious(byte[] key, long limit, int precision) {
+    if (limit <= 0 || key.length < precision) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        byte[]data1 = new byte[precision];
+        byte[]data2 = new byte[precision];
+        if (entry.getKey().length < precision) {
+          continue;
+        }
+        System.arraycopy(key, 0, data1, 0, precision);
+        System.arraycopy(entry.getKey(), 0, data2, 0, precision);
+        if (ByteUtil.less(data1, data2)) {
+          break;
+        }
+        result.put(entry.getKey(), entry.getValue());
       }
       return result;
     } catch (IOException e) {
