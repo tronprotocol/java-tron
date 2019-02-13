@@ -14,21 +14,28 @@ import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Setter
 public class TriggerTimeoutContractCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String ownerAddress = commonOwnerAddress;
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
   private String contractAddress = commonContractAddress3;
   private long callValue = 0L;
   private String methodSign = "add2(uint256)";
   private boolean hex = false;
   private String param = "2100";
   private long feeLimit = 1000000000L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  public static AtomicLong queryCount = new AtomicLong();
 
   @Override
   protected Protocol.Transaction create() {
+    queryCount.incrementAndGet();
+    param = "200";
+    if (queryCount.get() % 240 == 0) {
+      param = "2100";
+    }
     byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
