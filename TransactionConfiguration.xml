@@ -27,19 +27,24 @@
     <property name="end" value="99"/>
     <property name="source">
       <list>
-        <!--<ref bean="exchangeInject"/>-->
-        <!--<ref bean="exchangeWithdraw"/>-->
-        <!--<ref bean="niceExchangeTransaction"/>-->
-        <!--<ref bean="niceTransferAssetTransaction"/>-->
-        <!--<ref bean="participateAssetIssue"/>-->
-        <!--<ref bean="freezeNet"/>-->
-        <!--<ref bean="freezeEnergy"/>-->
-        <!--<ref bean="unFreezeNet"/>-->
-        <!--<ref bean="unFreezeEnergy"/>-->
+        <ref bean="transferToken"/>
+        <ref bean="niceTransferAssetTransaction"/>
+        <ref bean="niceTransferTransaction"/>
         <ref bean="MultiSignSendCoin"/>
         <ref bean="MultiSignTriggerContract"/>
-        <!--<ref bean="triggerFibonacciContractCreator"/>-->
-        <!--<ref bean="transferToken"/>-->
+        <ref bean="participateAssetIssue"/>
+        <ref bean="freezeNet"/>
+        <ref bean="freezeEnergy"/>
+        <ref bean="exchangeInject"/>
+        <ref bean="exchangeWithdraw"/>
+        <ref bean="niceExchangeTransaction"/>
+        <ref bean="triggerFibonacciContractCreator"/>
+
+        <!--<ref bean="unFreezeNet"/>-->
+        <!--<ref bean="unFreezeEnergy"/>-->
+
+
+
 
         <!--<ref bean="accountCreateTransaction"/>-->
         <!--<ref bean="voteWitnessTransaction"/>-->
@@ -55,64 +60,88 @@
     </property>
   </bean>
 
-  <!--<bean id="exchangeInject"-->
-    <!--class="org.tron.stresstest.dispatch.creator.exchange.ExchangeInjectCreator">-->
-    <!--<property name="name" value="exchangeInject"/>-->
-    <!--<property name="begin" value="0"/>-->
-    <!--<property name="end" value="1"/>-->
-  <!--</bean>-->
+  <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
+  <property name="name" value="transferToken"/>
+  <property name="begin" value="0"/>
+  <property name="end" value="39"/>
+  </bean>
 
-  <!--<bean id="exchangeWithdraw"-->
-    <!--class="org.tron.stresstest.dispatch.creator.exchange.ExchangeWithdrawCreator">-->
-    <!--<property name="name" value="exchangeWithdraw"/>-->
-    <!--<property name="begin" value="2"/>-->
-    <!--<property name="end" value="3"/>-->
-  <!--</bean>-->
+  <bean id="niceTransferAssetTransaction"
+  class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
+  <property name="name" value="niceTransferAssetTransaction"/>
+  <property name="begin" value="40"/>
+  <property name="end" value="49"/>
+  </bean>
 
-  <!--<bean id="niceExchangeTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.exchange.NiceExchangeTransactionCreator">-->
-    <!--<property name="name" value="niceExchangeTransaction"/>-->
-    <!--<property name="begin" value="4"/>-->
-    <!--<property name="end" value="13"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="niceTransferAssetTransaction"-->
-    <!--class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">-->
-    <!--<property name="name" value="niceTransferAssetTransaction"/>-->
-    <!--<property name="begin" value="14"/>-->
-    <!--<property name="end" value="23"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="participateAssetIssue"-->
-    <!--class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">-->
-    <!--<property name="name" value="participateAssetIssue"/>-->
-    <!--<property name="begin" value="24"/>-->
-    <!--<property name="end" value="29"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="freezeNet" class="org.tron.stresstest.dispatch.creator.freeze.FreezeNetCreator">-->
-    <!--<property name="name" value="freezeNet"/>-->
-    <!--<property name="begin" value="30"/>-->
-    <!--<property name="end" value="37"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="freezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.FreezeEnergyCreator">-->
-    <!--<property name="name" value="freezeEnergy"/>-->
-    <!--<property name="begin" value="38"/>-->
-    <!--<property name="end" value="49"/>-->
-  <!--</bean>-->
+  <bean id="niceTransferTransaction"
+        class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
+    <property name="name" value="niceTransferTransaction"/>
+    <property name="begin" value="50"/>
+    <property name="end" value="59"/>
+  </bean>
 
   <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
     <property name="name" value="MultiSignSendCoin"/>
-    <property name="begin" value="0"/>
-    <property name="end" value="49"/>
+    <property name="begin" value="60"/>
+    <property name="end" value="69"/>
   </bean>
 
   <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
     <property name="name" value="MultiSignTriggerContract"/>
-    <property name="begin" value="50"/>
-    <property name="end" value="99"/>
+    <property name="begin" value="70"/>
+    <property name="end" value="79"/>
   </bean>
+
+  <bean id="participateAssetIssue"
+  class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">
+  <property name="name" value="participateAssetIssue"/>
+  <property name="begin" value="80"/>
+  <property name="end" value="83"/>
+  </bean>
+
+  <bean id="freezeNet" class="org.tron.stresstest.dispatch.creator.freeze.FreezeNetCreator">
+    <property name="name" value="freezeNet"/>
+    <property name="begin" value="84"/>
+    <property name="end" value="87"/>
+  </bean>
+
+  <bean id="freezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.FreezeEnergyCreator">
+    <property name="name" value="freezeEnergy"/>
+    <property name="begin" value="88"/>
+    <property name="end" value="91"/>
+  </bean>
+
+  <bean id="exchangeInject"
+    class="org.tron.stresstest.dispatch.creator.exchange.ExchangeInjectCreator">
+    <property name="name" value="exchangeInject"/>
+    <property name="begin" value="92"/>
+    <property name="end" value="93"/>
+  </bean>
+
+  <bean id="exchangeWithdraw"
+    class="org.tron.stresstest.dispatch.creator.exchange.ExchangeWithdrawCreator">
+    <property name="name" value="exchangeWithdraw"/>
+    <property name="begin" value="94"/>
+    <property name="end" value="95"/>
+  </bean>
+
+  <bean id="niceExchangeTransaction"
+    class="org.tron.stresstest.dispatch.creator.exchange.NiceExchangeTransactionCreator">
+    <property name="name" value="niceExchangeTransaction"/>
+    <property name="begin" value="96"/>
+    <property name="end" value="97"/>
+  </bean>
+
+  <bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">
+  <property name="name" value="triggerFibonacciContractCreator"/>
+  <property name="begin" value="98"/>
+  <property name="end" value="99"/>
+  </bean>
+
+
+
+
+
 
   <!--<bean id="unFreezeNet" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeNetCreator">-->
     <!--<property name="name" value="unFreezeNet"/>-->
@@ -126,17 +155,6 @@
     <!--<property name="end" value="49"/>-->
   <!--</bean>-->
 
-  <!--<bean id="triggerFibonacciContractCreator" class="org.tron.stresstest.dispatch.creator.contract.TriggerTimeoutContractCreator">-->
-    <!--<property name="name" value="triggerFibonacciContractCreator"/>-->
-    <!--<property name="begin" value="50"/>-->
-    <!--<property name="end" value="59"/>-->
-  <!--</bean>-->
-
-  <!--<bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">-->
-    <!--<property name="name" value="transferToken"/>-->
-    <!--<property name="begin" value="60"/>-->
-    <!--<property name="end" value="99"/>-->
-  <!--</bean>-->
 
   <!--<bean id="accountCreateTransaction"-->
     <!--class="org.tron.stresstest.dispatch.creator.account.AccountCreateTransactionCreator">-->
