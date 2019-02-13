@@ -24,7 +24,7 @@
   <bean id="mutil" parent="level1Strategy">
     <property name="name" value="mutil"/>
     <property name="begin" value="0"/>
-    <property name="end" value="99"/>
+    <property name="end" value="199"/>
     <property name="source">
       <list>
         <!--<ref bean="exchangeInject"/>-->
@@ -36,8 +36,8 @@
         <!--<ref bean="freezeEnergy"/>-->
         <!--<ref bean="unFreezeNet"/>-->
         <!--<ref bean="unFreezeEnergy"/>-->
-        <!--<ref bean="MultiSignSendCoin"/>-->
-        <!--<ref bean="MultiSignTriggerContract"/>-->
+        <ref bean="MultiSignSendCoin"/>
+        <ref bean="MultiSignTriggerContract"/>
         <!--<ref bean="triggerFibonacciContractCreator"/>-->
         <!--<ref bean="transferToken"/>-->
 
@@ -49,7 +49,7 @@
         <!--<ref bean="updateSettingTransaction"/>-->
         <!--<ref bean="exchangeCreate"/>-->
         <!--<ref bean="proposalCreator"/>-->
-        <ref bean="NiceTransferTransactionCreator"/>
+
 
       </list>
     </property>
@@ -102,17 +102,17 @@
     <!--<property name="end" value="49"/>-->
   <!--</bean>-->
 
-  <!--<bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">-->
-    <!--<property name="name" value="MultiSignSendCoin"/>-->
-    <!--<property name="begin" value="46"/>-->
-    <!--<property name="end" value="47"/>-->
-  <!--</bean>-->
+  <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
+    <property name="name" value="MultiSignSendCoin"/>
+    <property name="begin" value="0"/>
+    <property name="end" value="99"/>
+  </bean>
 
-  <!--<bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">-->
-    <!--<property name="name" value="MultiSignTriggerContract"/>-->
-    <!--<property name="begin" value="48"/>-->
-    <!--<property name="end" value="55"/>-->
-  <!--</bean>-->
+  <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
+    <property name="name" value="MultiSignTriggerContract"/>
+    <property name="begin" value="100"/>
+    <property name="end" value="199"/>
+  </bean>
 
   <!--<bean id="unFreezeNet" class="org.tron.stresstest.dispatch.creator.freeze.UnFreezeNetCreator">-->
     <!--<property name="name" value="unFreezeNet"/>-->
@@ -137,12 +137,6 @@
     <!--<property name="begin" value="60"/>-->
     <!--<property name="end" value="99"/>-->
   <!--</bean>-->
-
-
-
-
-
-
 
   <!--<bean id="accountCreateTransaction"-->
     <!--class="org.tron.stresstest.dispatch.creator.account.AccountCreateTransactionCreator">-->
@@ -196,10 +190,5 @@
   <!--<property name="end" value="99"/>-->
   <!--</bean>-->
 
-  <bean id="proposalCreator" class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
-  <property name="name" value="NiceTransferTransactionCreator"/>
-  <property name="begin" value="0"/>
-  <property name="end" value="99"/>
-  </bean>
 
 </beans>
