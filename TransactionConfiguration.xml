@@ -31,7 +31,7 @@
         <ref bean="niceTransferAssetTransaction"/>
         <ref bean="niceTransferTransaction"/>
         <ref bean="MultiSignSendCoin"/>
-        <ref bean="MultiSignTriggerContract"/>
+        <!--<ref bean="MultiSignTriggerContract"/>-->
         <ref bean="participateAssetIssue"/>
         <ref bean="freezeNet"/>
         <ref bean="freezeEnergy"/>
@@ -83,14 +83,14 @@
   <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
     <property name="name" value="MultiSignSendCoin"/>
     <property name="begin" value="60"/>
-    <property name="end" value="69"/>
-  </bean>
-
-  <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
-    <property name="name" value="MultiSignTriggerContract"/>
-    <property name="begin" value="70"/>
     <property name="end" value="79"/>
   </bean>
+
+  <!--<bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">-->
+    <!--<property name="name" value="MultiSignTriggerContract"/>-->
+    <!--<property name="begin" value="70"/>-->
+    <!--<property name="end" value="79"/>-->
+  <!--</bean>-->
 
   <bean id="participateAssetIssue"
   class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">
