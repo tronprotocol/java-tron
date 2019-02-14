@@ -92,23 +92,10 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
     if (transactionExtention == null || transaction.getRawData().getContractCount() == 0) {
+      System.err.println("******** failed to pop revokingStore.xxxxxxxxxxxx ");
 //      logger.info("transaction ==null");
       return null;
     }
-//    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
-
-    //  contract1 = contract1.toBuilder().set
-//            Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
-//            .build();
-//    Transaction.raw rawData = transaction.getRawData();
-//    Transaction.Contract contract1 = transaction.getRawData()
-//            .getContractList().get(0);
-//    contract1 = contract1.toBuilder().setPermissionId(2).build();
-//    rawData = rawData.toBuilder().clearContract().addContract(contract1).build();
-//
-//    transaction = transaction.toBuilder().setRawData(rawData).build();
-
-
     long gTime = count.incrementAndGet() + time;
     String ref = "" + gTime;
 
@@ -116,7 +103,38 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     transaction = setExpiration(transaction, gTime);
 
+    return transaction;
 
+  }
+  public Transaction createTransaction3(com.google.protobuf.Message message, org.tron.protos.Contract.TriggerSmartContract contract2,
+                                        WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString,
+                                        ContractType contractType) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder().setType(contractType).setParameter(
+                    Any.pack(message)).build());
+
+
+    GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.triggerContract(contract2);
+    Transaction transaction = transactionExtention.getTransaction();
+    Transaction.raw rawData = transaction.getRawData();
+    Transaction.Contract contract1 = transactionExtention.getTransaction().getRawData()
+            .getContractList().get(0);
+    contract1 = contract1.toBuilder().setPermissionId(2).build();
+    rawData = rawData.toBuilder().clearContract().addContract(contract1).build();
+    transaction = transaction.toBuilder().setRawData(rawData).build();
+
+    transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
+    if (transactionExtention == null || transaction.getRawData().getContractCount() == 0) {
+      System.err.println("******** failed to pop revokingStore.xxxxxxxxxxxx ");
+//      logger.info("transaction ==null");
+      return null;
+    }
+    long gTime = count.incrementAndGet() + time;
+    String ref = "" + gTime;
+
+    transaction = setReference(transaction, gTime, ByteArray.fromString(ref));
+
+    transaction = setExpiration(transaction, gTime);
 
     return transaction;
 
