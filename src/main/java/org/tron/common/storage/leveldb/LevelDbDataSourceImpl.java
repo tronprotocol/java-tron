@@ -272,6 +272,21 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
+  public Map<byte[], byte[]> getAll(long limit) {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        result.put(iterator.peekNext().getKey(), iterator.peekNext().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
   public Set<byte[]> getlatestValues(long limit) {
     if (limit <= 0) {
       return Sets.newHashSet();
@@ -369,14 +384,12 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       long i = 0;
       for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
         Entry<byte[], byte[]> entry = iterator.peekNext();
-        byte[]data1 = new byte[precision];
-        byte[]data2 = new byte[precision];
+
         if (entry.getKey().length < precision) {
           continue;
         }
-        System.arraycopy(key, 0, data1, 0, precision);
-        System.arraycopy(entry.getKey(), 0, data2, 0, precision);
-        if (ByteUtil.less(data1, data2)) {
+        if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
+            ByteUtil.parseBytes(entry.getKey(), 0, precision))) {
           break;
         }
         result.put(entry.getKey(), entry.getValue());

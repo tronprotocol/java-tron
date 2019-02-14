@@ -94,7 +94,7 @@ import org.tron.protos.Protocol.Transaction.raw;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
-
+  @Setter
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
@@ -203,6 +203,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
         .setRefBlockHash(ByteString.copyFrom(ByteArray.subArray(blockHash, 8, 16)))
         .setRefBlockBytes(ByteString.copyFrom(ByteArray.subArray(refBlockNum, 6, 8)))
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public void setReference(long blockNum) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockNum(blockNum)
         .build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
@@ -785,6 +792,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public long getDeferredSeconds(){
     return this.transaction.getDelaySeconds();
+  }
+
+
+  public void setDelaySeconds(long delaySecond) {
+    Transaction transaction = this.transaction.toBuilder().setDelaySeconds(delaySecond).build();
+    this.transaction = transaction;
   }
 
   public ByteString getSenderAddress(){

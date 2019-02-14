@@ -20,12 +20,13 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
     }
 
     public byte[] getKey() {
+        int size = Long.SIZE/Byte.SIZE;
         long DelayTime = deferredTransaction.getDelayUntil();
         byte[] delayTime =  Longs.toByteArray(DelayTime);
         byte[] trxId = deferredTransaction.getTransactionId().toByteArray();
         byte[] key = new byte[8 + trxId.length];
-        System.arraycopy(delayTime, 0, key, 0, 8);
-        System.arraycopy(trxId, 0, key, 8, trxId.length);
+        System.arraycopy(delayTime, 0, key, 0, size);
+        System.arraycopy(trxId, 0, key, size, trxId.length);
         return key;
     }
 

@@ -102,7 +102,9 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Builder;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j(topic = "DB")
@@ -1161,6 +1163,47 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
+  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+      throws ValidateSignatureException, ContractValidateException,
+      AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
+      DupTransactionException, TaposException {
+    if (trxCap == null) {
+      return false;
+    }
+    validateTapos(trxCap);
+    validateCommon(trxCap);
+
+    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+      throw new ContractSizeNotEqualToOneException(
+          "act size should be exactly 1, this is extend feature");
+    }
+    validateDup(trxCap);
+    if (!trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+
+    pushScheduledTransaction(blockCap, trxCap);
+    TransactionTrace trace = new TransactionTrace(trxCap, this);
+    trxCap.setTrxTrace(trace);
+    trxCap.setResultCode(contractResult.SUCCESS);
+    consumeBandwidth(trxCap, trace);
+    Transaction origin = trxCap.getInstance();
+    trxCap.setReference(blockCap.getNum());
+
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, blockCap, trace);
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+
+    trxCap.setTransaction(origin);
+    // if event subscribe is enabled, post contract triggers to queue
+    postContractTrigger(trace, false);
+    return true;
+  }
+
   /**
    * Process transaction.
    */
@@ -1170,6 +1213,10 @@ public class Manager {
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return false;
+    }
+
+    if (trxCap.getDeferredSeconds() > 0) {
+      return processDeferTransaction(trxCap, blockCap);
     }
 
     validateTapos(trxCap);
@@ -1184,10 +1231,6 @@ public class Manager {
 
     if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
-    }
-
-    if (trxCap.getDeferredSeconds() > 0){
-      pushScheduledTransaction(blockCap, trxCap);
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
@@ -1302,6 +1345,15 @@ public class Manager {
       return null;
     }
 
+    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
+        .getScheduledTransactions(blockCapsule.getTimeStamp());
+    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
+      TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
+      trxCapsule.setDelaySeconds(0);
+      blockCapsule.addTransaction(trxCapsule);
+    }
+
+
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
@@ -1385,17 +1437,11 @@ public class Manager {
       }
     }
 
-    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
-        .getScheduledTransactions(blockCapsule.getTimeStamp());
-    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
-      blockCapsule.addTransaction(new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction()));
-    }
+    session.reset();
     deferredTransactionList.forEach(trx -> {
       getDeferredTransactionStore().removeDeferredTransactionById(trx);
       getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
     });
-
-    session.reset();
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);

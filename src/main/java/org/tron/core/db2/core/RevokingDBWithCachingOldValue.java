@@ -132,6 +132,11 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
 
   @Override
   public Set<byte[]> getValuesPrevious(byte[] key, long limit) {
-    return dbSource.getPrevious(key, limit, 8).values().stream().collect(Collectors.toSet());
+    return dbSource.getPrevious(key, limit, Long.SIZE / Byte.SIZE).values().stream().collect(Collectors.toSet());
+  }
+
+  @Override
+  public Set<byte[]> getAllValues(long limit) {
+    return dbSource.allValues().stream().collect(Collectors.toSet());
   }
 }

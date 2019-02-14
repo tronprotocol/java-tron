@@ -29,4 +29,7 @@ public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
   
   // for deferTransaction
   Set<byte[]> getValuesPrevious(byte[] key, long limit);
+
+  // for test deferTransaction
+  Set<byte[]> getAllValues(long limit);
 }

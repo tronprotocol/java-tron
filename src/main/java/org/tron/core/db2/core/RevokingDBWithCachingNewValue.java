@@ -189,13 +189,36 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
 
-    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getPrevious(key, limit, 8).entrySet().stream()
+    int precision = Long.SIZE / Byte.SIZE;
+    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getPrevious(key, limit, precision).entrySet().stream()
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    levelDBMap.putAll(collection);
+
+    Set<byte[]> result = new HashSet<>();
+    for (WrappedByteArray p : levelDBMap.keySet()) {
+      if (ByteUtil.lessOrEquals(ByteUtil.parseBytes(p.getBytes(), 0, precision), key)) {
+        result.add(levelDBMap.get(p).getBytes());
+      }
+    }
+    return result;
+  }
+
+  // for unit test
+  @Override
+  public Set<byte[]> getAllValues(long limit){
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+
+    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll(limit).entrySet().stream()
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
         .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
     levelDBMap.putAll(collection);
 
     return levelDBMap.entrySet().stream()
-        .filter(e -> ByteUtil.lessOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
         .map(Map.Entry::getValue)
         .map(WrappedByteArray::getBytes)

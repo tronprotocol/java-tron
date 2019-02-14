@@ -27,8 +27,8 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
 
     public List<DeferredTransactionCapsule> getScheduledTransactions (long time){
         return revokingDB.getValuesPrevious(Longs.toByteArray(time), Long.MAX_VALUE).stream()
-            .map(DeferredTransactionCapsule::new)
             .filter(Objects::nonNull)
+            .map(DeferredTransactionCapsule::new)
             .collect(Collectors.toList());
     }
 
