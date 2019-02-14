@@ -1992,14 +1992,7 @@ public class Manager {
     deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
-    if (Objects.isNull(senderAddress)){
-      return;
-    }
-
     ByteString toAddress = transactionCapsule.getToAddress();
-    if (Objects.isNull(toAddress)){
-      return;
-    }
 
     deferredTransaction.setSenderAddress(senderAddress);
     deferredTransaction.setReceiverAddress(toAddress);
@@ -2007,7 +2000,6 @@ public class Manager {
 
     // publish time
     long publishTime = 0;
-
     if (Objects.nonNull(blockCapsule)){
       publishTime = blockCapsule.getTimeStamp();
     }

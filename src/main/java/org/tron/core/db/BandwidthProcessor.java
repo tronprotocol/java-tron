@@ -67,15 +67,18 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long bytesSize;
 
-    if (dbManager.getDynamicPropertiesStore().supportVM()) {
-      bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
-    } else {
-      bytesSize = trx.getSerializedSize();
-    }
+    boolean deferred = trx.getDeferredSeconds() > 0 ? true : false;
 
-    // additional bandwitdth for canceling deferred transaction, whethere that be successfully executing, failure or expiration.
-    if (trx.getDeferredSeconds() > 0)  {
+    if (deferred){
+      // additional bandwitdth for canceling deferred transaction, whethere that be successfully executing, failure or expiration.
       bytesSize = trx.getTransactionId().getBytes().length;
+    }
+    else {
+      if (dbManager.getDynamicPropertiesStore().supportVM()) {
+        bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
+      } else {
+        bytesSize = trx.getSerializedSize();
+      }
     }
 
     for (Contract contract : contracts) {
@@ -92,12 +95,12 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      if (contractCreateNewAccount(contract)) {
+      if (contractCreateNewAccount(contract) && !deferred) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract) {
+      if (contract.getType() == TransferAssetContract && !deferred) {
         if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
           continue;
         }
