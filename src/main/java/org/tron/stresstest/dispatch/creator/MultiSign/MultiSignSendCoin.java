@@ -1,6 +1,9 @@
 package org.tron.stresstest.dispatch.creator.MultiSign;
 
 import com.google.protobuf.ByteString;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -19,9 +22,17 @@ public class MultiSignSendCoin extends AbstractTransactionCreator implements Goo
     private String toAddress = commonToAddress;
     private long amount = 1L;
     private String privateKey = commonWitnessPrivateKey;
+    private ManagedChannel channelFull = null;
+    private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+    private String fullnode = "";
+
 
     @Override
     protected Protocol.Transaction create() {
+        channelFull = ManagedChannelBuilder.forTarget(fullnode)
+                .usePlaintext(true)
+                .build();
+        blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
         TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
         String[] permissionKeyString = new String[2];
 
@@ -37,9 +48,20 @@ public class MultiSignSendCoin extends AbstractTransactionCreator implements Goo
                 .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress)))
                 .setAmount(amount)
                 .build();
-        Protocol.Transaction transaction = createTransaction(contract, Protocol.Transaction.Contract.ContractType.TransferContract);
 
-        transaction = Multisign(transaction, permissionKeyString);
+        org.tron.protos.Contract.TransferContract.Builder builder = org.tron.protos.Contract.TransferContract.newBuilder();
+        ByteString bsTo = ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress));
+        ByteString bsOwner = ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress));
+        builder.setToAddress(bsTo);
+        builder.setOwnerAddress(bsOwner);
+        builder.setAmount(amount);
+
+        org.tron.protos.Contract.TransferContract contract1 = builder.build();
+        Protocol.Transaction transaction = createTransaction2(contract,contract1,blockingStubFull,permissionKeyString,Protocol.Transaction.Contract.ContractType.TransferContract);
+//        Protocol.Transaction transaction = createTransaction(contract,,Protocol.Transaction.Contract.ContractType.TransferContract);
+
+        transaction = Multisign(transaction,blockingStubFull, permissionKeyString);
+
         return transaction;
     }
 }
