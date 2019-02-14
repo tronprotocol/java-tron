@@ -2012,11 +2012,11 @@ public class Manager {
     deferredTransaction.setPublishTime(publishTime);
 
     // delay until
-    long delayUntil = publishTime + transactionCapsule.getDeferredSeconds();
+    long delayUntil = publishTime + transactionCapsule.getDeferredSeconds() * 1000;
     deferredTransaction.setDelayUntil(delayUntil);
 
     // expiration
-    long expiration = delayUntil + 600; // to do add 600 do DynamicPropertiesStore
+    long expiration = delayUntil + 600 * 1000; // to do add 600 do DynamicPropertiesStore
     deferredTransaction.setExpiration(expiration);
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
