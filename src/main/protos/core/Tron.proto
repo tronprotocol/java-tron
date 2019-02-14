@@ -66,7 +66,6 @@ message ChainParameters {
   }
 }
 
-
 /* Account */
 message Account {
   /* frozen balance */
@@ -145,10 +144,15 @@ message Account {
 
   }
   AccountResource account_resource = 26;
-
   bytes codeHash = 30;
+  repeated Permission permissions = 31;
 }
 
+
+message Key {
+  bytes address = 1;
+  int64 weight = 2;
+}
 
 message DelegatedResource {
   bytes from = 1;
@@ -164,8 +168,11 @@ message authority {
   bytes permission_name = 2;
 }
 
-message permission {
-  AccountId account = 1;
+message Permission {
+  string name = 1;
+  int64 threshold = 2;
+  string parent = 3;
+  repeated Key keys = 4;
 }
 
 // Witness
@@ -254,6 +261,10 @@ message Transaction {
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
       UpdateEnergyLimitContract = 45;
+      AccountPermissionUpdateContract = 46;
+      PermissionAddKeyContract = 47;
+      PermissionUpdateKeyContract = 48;
+      PermissionDeleteKeyContract = 49;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

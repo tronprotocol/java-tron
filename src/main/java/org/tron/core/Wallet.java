@@ -28,6 +28,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +56,10 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -103,6 +108,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
@@ -121,11 +128,13 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
@@ -384,11 +393,12 @@ public class Wallet {
 
     try {
       BlockId blockId = dbManager.getHeadBlockId();
-      if (Args.getInstance().getTrxReferenceBlock().equals("solid")){
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")) {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration = dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+      long expiration =
+          dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -447,6 +457,7 @@ public class Wallet {
 
       nodeImpl.broadcast(message);
       return null;
+
   }
 
   public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
@@ -454,6 +465,64 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
     trx.sign(privateKey);
     return trx;
+  }
+
+  public TransactionCapsule addSign(TransactionSign transactionSign)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey, dbManager.getAccountStore());
+    return trx;
+  }
+
+  public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+    Result.Builder resultBuilder = Result.newBuilder();
+    try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+      String permissionName = TransactionCapsule.getPermissionName(contract);
+      Permission permission = TransactionCapsule
+          .getPermission(account.getInstance(), permissionName);
+      tswBuilder.setPermission(permission);
+      if (trx.getSignatureCount() > 0) {
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignature(0),
+            Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+        tswBuilder.addAllApprovedList(approveList);
+        tswBuilder.setCurrentWeight(currentWeight);
+      }
+      if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
+        resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
+      } else {
+        resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
+      }
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (SignatureException signEx) {
+      resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (PermissionException permEx) {
+      resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
+      resultBuilder.setMessage(permEx.getMessage());
+    } catch (Exception ex) {
+      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+    }
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
   }
 
   public byte[] pass2Key(byte[] passPhrase) {
@@ -1014,7 +1083,6 @@ public class Wallet {
     }
     return null;
   }
-
   private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {

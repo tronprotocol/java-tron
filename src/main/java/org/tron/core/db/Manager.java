@@ -609,7 +609,7 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
-    if (!trx.validateSignature()) {
+    if (!trx.validateSignature(this.accountStore)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1021,7 +1021,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature()) {
+    if (!trxCap.validateSignature(this.accountStore)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1560,16 +1560,18 @@ public class Manager {
 
     private TransactionCapsule trx;
     private CountDownLatch countDownLatch;
+    private AccountStore accountStore;
 
-    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch) {
+    ValidateSignTask(TransactionCapsule trx, CountDownLatch countDownLatch, AccountStore accountStore) {
       this.trx = trx;
       this.countDownLatch = countDownLatch;
+      this.accountStore = accountStore;
     }
 
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature();
+        trx.validateSignature(accountStore);
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -1589,7 +1591,7 @@ public class Manager {
 
     for (TransactionCapsule transaction : block.getTransactions()) {
       Future<Boolean> future = validateSignService
-          .submit(new ValidateSignTask(transaction, countDownLatch));
+          .submit(new ValidateSignTask(transaction, countDownLatch, this.accountStore));
       futures.add(future);
     }
     countDownLatch.await();

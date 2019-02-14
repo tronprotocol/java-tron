@@ -139,6 +139,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  //Used only for multi sign
+  private static final byte[] TOTAL_SIGN_NUM = "TOTAL_SIGN_NUM".getBytes();
+
+  //Used only for multi sign, once，value is {0,1}
+  private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
+
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -152,6 +158,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
+
+    try {
+      this.getTotalSignNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalSignNum(5);
+    }
+
+    try {
+      this.getAllowMultiSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiSign(0);
+    }
 
     try {
       this.getLatestBlockHeaderTimestamp();
@@ -1180,8 +1198,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
-    this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,
+    this.put(ALLOW_CREATION_OF_CONTRACTS,
         new BytesCapsule(ByteArray.fromLong(allowCreationOfContracts)));
+  }
+
+  public void saveTotalSignNum(int num) {
+    this.put(DynamicPropertiesStore.TOTAL_SIGN_NUM,
+        new BytesCapsule(ByteArray.fromInt(num)));
+  }
+
+  public int getTotalSignNum() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SIGN_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SIGN_NUM"));
+  }
+
+  public void saveAllowMultiSign(long allowMultiSing) {
+    this.put(ALLOW_MULTI_SIGN,
+        new BytesCapsule(ByteArray.fromLong(allowMultiSing)));
+  }
+
+  public long getAllowMultiSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_SIGN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
   }
 
   public long getAllowCreationOfContracts() {

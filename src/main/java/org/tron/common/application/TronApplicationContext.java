@@ -37,7 +37,7 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
     channelManager.close();
     NodeManager nodeManager = getBean(NodeManager.class);
     nodeManager.close();
-    
+
     Manager dbManager = getBean(Manager.class);
     dbManager.stopRepushThread();
 

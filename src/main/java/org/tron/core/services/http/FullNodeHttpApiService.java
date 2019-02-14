@@ -136,6 +136,17 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
+  private AddTransactionSignServlet addTransactionSignServlet;
+  @Autowired
+  private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
+  @Autowired
+  private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
+  @Autowired
+  private PermissionAddKeyServlet permissionAddKeyServlet;
+  @Autowired
+  private PermissionDeleteKeyServlet permissionDeleteKeyServlet;
+  @Autowired
+  private PermissionUpdateKeyServlet permissionUpdateKeyServlet;
   private GetNodeInfoServlet getNodeInfoServlet;
   @Autowired
   private UpdateSettingServlet updateSettingServlet;
@@ -150,6 +161,7 @@ public class FullNodeHttpApiService implements Service {
   public void init() {
 
   }
+
   @Override
   public void init(Args args) {
   }
@@ -183,7 +195,8 @@ public class FullNodeHttpApiService implements Service {
           new ServletHolder(getAssetIssueByAccountServlet), "/getassetissuebyaccount");
       context.addServlet(new ServletHolder(getAccountNetServlet), "/getaccountnet");
       context.addServlet(new ServletHolder(getAssetIssueByNameServlet), "/getassetissuebyname");
-      context.addServlet(new ServletHolder(getAssetIssueListByNameServlet), "/getassetissuelistbyname");
+      context.addServlet(new ServletHolder(getAssetIssueListByNameServlet),
+          "/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/getassetissuebyid");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/getblockbynum");
@@ -228,6 +241,13 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(listExchangesServlet), "/listexchanges");
       context.addServlet(new ServletHolder(getChainParametersServlet), "/getchainparameters");
       context.addServlet(new ServletHolder(getAccountResourceServlet), "/getaccountresource");
+      context.addServlet(new ServletHolder(addTransactionSignServlet), "/addtransactionsign");
+      context.addServlet(new ServletHolder(getTransactionSignWeightServlet), "/getsignweight");
+      context.addServlet(new ServletHolder(accountPermissionUpdateServlet),
+          "/accountpermissionupdate");
+      context.addServlet(new ServletHolder(permissionAddKeyServlet), "/permissionaddkey");
+      context.addServlet(new ServletHolder(permissionDeleteKeyServlet), "/permissiondeletekey");
+      context.addServlet(new ServletHolder(permissionUpdateKeyServlet), "/permissionupdatekey");
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/getnodeinfo");
       context.addServlet(new ServletHolder(updateSettingServlet), "/updatesetting");
       context.addServlet(new ServletHolder(updateEnergyLimitServlet), "/updateenergylimit");
