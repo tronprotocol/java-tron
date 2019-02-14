@@ -1167,12 +1167,14 @@ public class Manager {
 
     pushScheduledTransaction(blockCap, trxCap);
 
+    transactionTrace.init(blockCap, eventPluginLoaded);
+
     trxCap.setTrxTrace(transactionTrace);
     trxCap.setResultCode(contractResult.SUCCESS);
 
     // id for first record of deferred transaction
     Transaction origin = trxCap.getInstance();
-    trxCap.setReference(blockCap.getNum());
+    trxCap.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
