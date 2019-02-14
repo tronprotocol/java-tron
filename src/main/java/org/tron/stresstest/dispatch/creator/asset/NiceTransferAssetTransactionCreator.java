@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Setter
 public class NiceTransferAssetTransactionCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String assetName = "1002033";
+  private String assetName = "1002089";
   private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
   private String toAddress = commonToAddress;
   private long amount = 1L;
@@ -28,11 +28,11 @@ public class NiceTransferAssetTransactionCreator extends AbstractTransactionCrea
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
     Contract.TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
-        .setAssetName(ByteString.copyFrom(assetName.getBytes()))
-        .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
-        .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress)))
-        .setAmount(amount)
-        .build();
+            .setAssetName(ByteString.copyFrom(assetName.getBytes()))
+            .setOwnerAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(ownerAddress)))
+            .setToAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(toAddress)))
+            .setAmount(amount)
+            .build();
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TransferAssetContract);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;

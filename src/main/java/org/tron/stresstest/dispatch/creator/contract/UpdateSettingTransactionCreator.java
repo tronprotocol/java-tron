@@ -14,12 +14,12 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 
 @Setter
 public class UpdateSettingTransactionCreator extends AbstractTransactionCreator implements
-    GoodCaseTransactonCreator {
+        GoodCaseTransactonCreator {
 
-  private String ownerAddress = commonOwnerAddress;
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
   private String contractAddress = commonContractAddress1;
   private long consumeUserResourcePercent = 100L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
   @Override
   protected Protocol.Transaction create() {
@@ -28,7 +28,7 @@ public class UpdateSettingTransactionCreator extends AbstractTransactionCreator 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     UpdateSettingContract contract = createUpdateSettingContract(ownerAddressBytes,
-        Wallet.decodeFromBase58Check(contractAddress), consumeUserResourcePercent);
+            Wallet.decodeFromBase58Check(contractAddress), consumeUserResourcePercent);
 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.UpdateSettingContract);
 

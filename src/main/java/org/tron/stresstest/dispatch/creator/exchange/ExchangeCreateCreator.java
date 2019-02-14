@@ -14,18 +14,20 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 
 @Setter
 public class ExchangeCreateCreator extends AbstractTransactionCreator implements
-    GoodCaseTransactonCreator {
+        GoodCaseTransactonCreator {
 
-  private String ownerAddress = commonOwnerAddress;
-  private String firstTokenID = "1002033";
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String firstTokenID = "1002089";
   private long firstTokenBalance = 1L;
   private String secondTokenID = "_";
   private long secondTokenBalance = 1L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
   @Override
   protected Protocol.Transaction create() {
     byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
+
+
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 

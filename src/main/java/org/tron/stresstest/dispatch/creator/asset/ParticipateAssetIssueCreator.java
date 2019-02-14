@@ -16,10 +16,10 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 public class ParticipateAssetIssueCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
   private String assetOwnerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
-  private String assetName = "1002033";
-  private String participateOwnerAddress = commonToAddress;
+  private String assetName = "1002089";
+  private String participateOwnerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   private long amount = 1L;
-  private String participateOwnerPrivateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  private String participateOwnerPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
 
   @Override
   protected Protocol.Transaction create() {

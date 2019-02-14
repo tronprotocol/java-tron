@@ -18,12 +18,12 @@ public class NiceExchangeTransactionCreator extends AbstractTransactionCreator i
   AtomicInteger integer = new AtomicInteger(0);
 
   private String firstTokenID = "_";
-  private String secondTokenID = "1002033";
-  private String ownerAddress = commonOwnerAddress;
-  private long exchangeID = 153;
-  private long quant = 10L;
+  private String secondTokenID = "1002089";
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private long exchangeID = 160;
+  private long quant = 5L;
   private long expected = 1L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
   @Override
   protected Protocol.Transaction create() {
@@ -36,7 +36,7 @@ public class NiceExchangeTransactionCreator extends AbstractTransactionCreator i
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     Contract.ExchangeTransactionContract contract = createExchangeTransactionContract(ownerAddressBytes,
-        exchangeID, tokenId, quant, expected);
+            exchangeID, tokenId, quant, expected);
 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.ExchangeTransactionContract);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));

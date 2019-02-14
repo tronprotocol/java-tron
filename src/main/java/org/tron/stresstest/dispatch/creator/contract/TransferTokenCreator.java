@@ -19,16 +19,15 @@ import org.tron.core.Wallet;
 @Setter
 public class TransferTokenCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String ownerAddress = commonOwnerAddress;
+  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
 
   private String contractAddress = commonContractAddress1;
   private long callValue = 0L;
   private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
   private boolean hex = false;
-  private String param = "\"" + commonContractAddress2 + "\",1000001,1";
-//  private String param = "\"" + Wallet.encode58Check(commonContractAddress2.getBytes()) + "\",1000001,1";
+  private String param = "\"" + commonContractAddress2 + "\",1002089,1";
   private long feeLimit = 1000000000L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
   @Override
   protected Protocol.Transaction create() {
@@ -40,8 +39,7 @@ public class TransferTokenCreator extends AbstractTransactionCreator implements 
     try {
 
       contract = triggerCallContract(
-          ownerAddressBytes, Wallet.decodeFromBase58Check(contractAddress), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
-//          ownerAddressBytes, contractAddress.getBytes(), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
+              ownerAddressBytes, Wallet.decodeFromBase58Check(contractAddress), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
     } catch (EncodingException e) {
       e.printStackTrace();
     }

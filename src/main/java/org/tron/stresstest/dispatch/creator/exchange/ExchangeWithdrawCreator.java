@@ -16,7 +16,7 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 public class ExchangeWithdrawCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
   private String firstTokenID = "_";
   private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
-  private long exchangeID = 153;
+  private long exchangeID = 160;
   private long quant = 1000000L;
   private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
 
@@ -27,7 +27,7 @@ public class ExchangeWithdrawCreator extends AbstractTransactionCreator implemen
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     Contract.ExchangeWithdrawContract contract = createExchangeWithdrawContract(ownerAddressBytes,
-        exchangeID, tokenId, quant);
+            exchangeID, tokenId, quant);
 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.ExchangeWithdrawContract);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
