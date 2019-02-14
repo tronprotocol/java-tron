@@ -73,6 +73,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       bytesSize = trx.getSerializedSize();
     }
 
+    // additional bandwitdth for canceling deferred transaction, whethere that be successfully executing, failure or expiration.
     if (trx.getDeferredSeconds() > 0)  {
       bytesSize = trx.getTransactionId().getBytes().length;
     }

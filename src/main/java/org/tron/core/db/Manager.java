@@ -1163,44 +1163,31 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
-  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
-      throws ValidateSignatureException, ContractValidateException,
-      AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TaposException {
-    if (trxCap == null) {
-      return false;
-    }
-    validateTapos(trxCap);
-    validateCommon(trxCap);
-
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
-      throw new ContractSizeNotEqualToOneException(
-          "act size should be exactly 1, this is extend feature");
-    }
-    validateDup(trxCap);
-    if (!trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
+  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace){
 
     pushScheduledTransaction(blockCap, trxCap);
-    TransactionTrace trace = new TransactionTrace(trxCap, this);
-    trxCap.setTrxTrace(trace);
+
+    trxCap.setTrxTrace(transactionTrace);
     trxCap.setResultCode(contractResult.SUCCESS);
-    consumeBandwidth(trxCap, trace);
+
+    // id for first record of deferred transaction
     Transaction origin = trxCap.getInstance();
     trxCap.setReference(blockCap.getNum());
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+            .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+                    new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, trace);
+            .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
 
     trxCap.setTransaction(origin);
-    // if event subscribe is enabled, post contract triggers to queue
-    postContractTrigger(trace, false);
+
+
+    postContractTrigger(transactionTrace, false);
+
     return true;
   }
 
@@ -1215,10 +1202,6 @@ public class Manager {
       return false;
     }
 
-    if (trxCap.getDeferredSeconds() > 0) {
-      return processDeferTransaction(trxCap, blockCap);
-    }
-
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1237,6 +1220,11 @@ public class Manager {
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
+
+    // for non deferred transaction
+    if (trxCap.getDeferredSeconds() > 0){
+      return processDeferTransaction(trxCap, blockCap, trace);
+    }
 
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
