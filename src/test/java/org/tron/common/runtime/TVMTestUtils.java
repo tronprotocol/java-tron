@@ -489,7 +489,7 @@ public class TVMTestUtils {
     }
   }
 
-  private static SmartContract.ABI jsonStr2ABI(String jsonStr) {
+  public static SmartContract.ABI jsonStr2ABI(String jsonStr) {
     if (jsonStr == null) {
       return null;
     }
@@ -545,7 +545,8 @@ public class TVMTestUtils {
           String inputType = inputItem.getAsJsonObject().get("type").getAsString();
           SmartContract.ABI.Entry.Param.Builder paramBuilder = SmartContract.ABI.Entry.Param
               .newBuilder();
-          paramBuilder.setIndexed(false);
+          JsonElement indexedObj = inputItem.getAsJsonObject().get("indexed");
+          paramBuilder.setIndexed( (indexedObj == null) ? false : indexedObj.getAsBoolean());
           paramBuilder.setName(inputName);
           paramBuilder.setType(inputType);
           entryBuilder.addInputs(paramBuilder.build());

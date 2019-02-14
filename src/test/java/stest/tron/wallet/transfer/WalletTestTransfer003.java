@@ -48,8 +48,6 @@ public class WalletTestTransfer003 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-  private static final byte[] INVAILD_ADDRESS =
-      Base58.decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
   private final Long createUseFee = 100000L;
 
@@ -65,10 +63,10 @@ public class WalletTestTransfer003 {
   private static final String name = "transaction007_" + Long.toString(now);
   private static Protocol.Transaction sendCoinTransaction;
 
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
-  private String fullnode1 = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(1);
+  private String fullnode = Configuration.getByPath("testng.conf")
+          .getStringList("fullnode.ip.list").get(0);
+  private String fullnode1 = Configuration.getByPath("testng.conf")
+          .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
@@ -81,11 +79,15 @@ public class WalletTestTransfer003 {
   byte[] newAccountAddress = ecKey2.getAddress();
   String testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-/*  @BeforeSuite
+  /*  @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }*/
+
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -110,7 +112,17 @@ public class WalletTestTransfer003 {
 
 
   @Test(enabled = true)
-  public void atestUseFeeOrNet() {
+  public void test1UseFeeOrNet() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    sendCoinAddress = ecKey1.getAddress();
+    testKeyForSendCoin = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    newAccountAddress = ecKey2.getAddress();
+    testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+
     Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
         fromAddress,testKey002,blockingStubFull));
     Long feeNum = 0L;
@@ -144,7 +156,8 @@ public class WalletTestTransfer003 {
         BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
         TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
         Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
-        logger.info("solidity block num is " + Long.toString(getTransactionById.get().getBlockNumber()));
+        logger.info("solidity block num is " + Long.toString(getTransactionById
+                .get().getBlockNumber()));
         Assert.assertTrue(getTransactionById.get().getBlockNumber() > 0);
       }
 
@@ -170,13 +183,14 @@ public class WalletTestTransfer003 {
     TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
     Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
     logger.info(getTransactionById.get().toString());
-    logger.info("when use fee, the block num is " + Long.toString(getTransactionById.get().getBlockNumber()));
+    logger.info("when use fee, the block num is " + Long.toString(getTransactionById
+            .get().getBlockNumber()));
     Assert.assertTrue(getTransactionById.get().getFee() > 0);
     Assert.assertTrue(getTransactionById.get().getBlockNumber() > 0);
   }
 
   @Test(enabled = true)
-  public void btestCreateAccountUseFee() {
+  public void test2CreateAccountUseFee() {
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     final Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("before balance " + Long.toString(beforeBalance));
@@ -203,7 +217,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void ctestInvalidGetTransactionById() {
+  public void test3InvalidGetTransactionById() {
     String txId = "";
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
@@ -221,7 +235,7 @@ public class WalletTestTransfer003 {
   }
 
   @Test(enabled = true)
-  public void dtestNoBalanceCanSend() {
+  public void test4NoBalanceCanSend() {
     Long feeNum = 0L;
     Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();
@@ -235,6 +249,9 @@ public class WalletTestTransfer003 {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -248,6 +265,9 @@ public class WalletTestTransfer003 {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -272,12 +292,18 @@ public class WalletTestTransfer003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -294,6 +320,9 @@ public class WalletTestTransfer003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+  /**
+   * constructor.
+   */
 
   public static Protocol.Transaction sendcoin(byte[] to, long amount, byte[] owner, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -329,6 +358,9 @@ public class WalletTestTransfer003 {
 
     return transaction;
   }
+  /**
+   * constructor.
+   */
 
   public Protocol.Transaction updateAccount(byte[] addressBytes, byte[] accountNameBytes,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {

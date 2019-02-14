@@ -25,18 +25,22 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
-@Slf4j
+@Slf4j(topic = "API")
 @Component
 public class WalletOnSolidity {
 
   private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(
-      Executors.newFixedThreadPool(5,
+      Executors.newFixedThreadPool(Args.getInstance().getSolidityThreads(),
           new ThreadFactoryBuilder().setNameFormat("WalletOnSolidity-%d").build()));
 
   @Autowired
@@ -46,16 +50,22 @@ public class WalletOnSolidity {
 
   public <T> T futureGet(Callable<T> callable) {
     ListenableFuture<T> future = executorService.submit(() -> {
-      dbManager.setMode(false);
-      return callable.call();
+      try {
+        dbManager.setMode(false);
+        return callable.call();
+      } catch (Exception e) {
+        logger.info("futureGet " + e.getMessage());
+        return null;
+      }
     });
 
     try {
-      return future.get();
+      return future.get(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
-
+    } catch (TimeoutException e) {
+      logger.info("futureGet time out");
     }
 
     return null;
@@ -63,16 +73,21 @@ public class WalletOnSolidity {
 
   public void futureGet(Runnable runnable) {
     ListenableFuture<?> future = executorService.submit(() -> {
-      dbManager.setMode(false);
-      runnable.run();
+      try {
+        dbManager.setMode(false);
+        runnable.run();
+      } catch (Exception e) {
+        logger.info("futureGet " + e.getMessage());
+      }
     });
 
     try {
-      future.get();
+      future.get(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException ignored) {
-
+    } catch (TimeoutException e) {
+      logger.info("futureGet time out");
     }
   }
 }

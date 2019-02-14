@@ -22,17 +22,16 @@ public class MultiSignSendCoin extends AbstractTransactionCreator implements Goo
     private String toAddress = commonToAddress;
     private long amount = 1L;
     private String privateKey = commonWitnessPrivateKey;
-    private ManagedChannel channelFull = null;
-    private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-    private String fullnode = "";
+    private String fullnode = "47.94.239.172:50051";
+    private ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build();
+    private WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
 
     @Override
     protected Protocol.Transaction create() {
-        channelFull = ManagedChannelBuilder.forTarget(fullnode)
-                .usePlaintext(true)
-                .build();
-        blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
         TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
         String[] permissionKeyString = new String[2];
 

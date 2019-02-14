@@ -18,10 +18,11 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   AccountPermissionUpdateActuator(Any contract, Manager dbManager) {
@@ -42,14 +43,89 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
     AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule account = accountStore.get(ownerAddress);
-    account.updatePermissions(accountPermissionUpdateContract.getPermissionsList());
+    account.updatePermissions(accountPermissionUpdateContract.getOwner(),
+        accountPermissionUpdateContract.getWitness(),
+        accountPermissionUpdateContract.getActivesList());
     accountStore.put(ownerAddress, account);
     result.setStatus(fee, code.SUCESS);
     return true;
   }
 
+  private boolean checkPermission(Permission permission) throws ContractValidateException {
+    if (permission.getKeysCount() > dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
+      throw new ContractValidateException("number of keys in permission should not be greater "
+          + "than " + dbManager.getDynamicPropertiesStore().getTotalSignNum());
+    }
+    if (permission.getKeysCount() == 0) {
+      throw new ContractValidateException("key's count should be greater than 0");
+    }
+    if (permission.getType() == PermissionType.Witness && permission.getKeysCount() != 1) {
+      throw new ContractValidateException("Witness permission's key count should be 1");
+    }
+    if (permission.getThreshold() <= 0) {
+      throw new ContractValidateException("permission's threshold should be greater than 0");
+    }
+    String name = permission.getPermissionName();
+    if (!StringUtils.isEmpty(name) && name.length() > 32) {
+      throw new ContractValidateException("permission's name is too long");
+    }
+    //check owner name ?
+    if (permission.getParentId() != 0) {
+      throw new ContractValidateException("permission's parent should be owner");
+    }
+
+    long weightSum = 0;
+    List<ByteString> addressList = permission.getKeysList()
+        .stream()
+        .map(x -> x.getAddress())
+        .distinct()
+        .collect(toList());
+    if (addressList.size() != permission.getKeysList().size()) {
+      throw new ContractValidateException("address should be distinct in permission " + permission.getType());
+    }
+    for (Key key : permission.getKeysList()) {
+      if (!Wallet.addressValid(key.getAddress().toByteArray())) {
+        throw new ContractValidateException("key is not a validate address");
+      }
+      if (key.getWeight() <= 0) {
+        throw new ContractValidateException("key's weight should be greater than 0");
+      }
+      try {
+        weightSum = Math.addExact(weightSum, key.getWeight());
+      } catch (ArithmeticException e) {
+        throw new ContractValidateException(e.getMessage());
+      }
+    }
+    if (weightSum < permission.getThreshold()) {
+      throw new ContractValidateException(
+          "sum of all key's weight should not be less than threshold in permission " + permission.getType());
+    }
+
+    ByteString operations = permission.getOperations();
+    if (permission.getType() != PermissionType.Active) {
+      if (!operations.isEmpty()) {
+        throw new ContractValidateException(
+            permission.getType() + " permission needn't operations");
+      }
+      return true;
+    }
+    //check operations
+    if (operations.isEmpty() || operations.size() != 32) {
+      throw new ContractValidateException("operations size must 32");
+    }
+
+    byte[] types1 = dbManager.getDynamicPropertiesStore().getAvailableContractType();
+    for (int i = 0; i < 256; i++) {
+      boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
+      boolean t = (types1[(i / 8)] & (1 << (i % 8))) != 0;
+      if (b && !t) {
+        throw new ContractValidateException(i + " isn't a validate ContractType");
+      }
+    }
+    return true;
+  }
+
   @Override
-  //need update active and owner
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
@@ -82,77 +158,53 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     if (accountCapsule == null) {
       throw new ContractValidateException("ownerAddress account does not exist");
     }
-    //Only support active and owner
-    if (accountPermissionUpdateContract.getPermissionsCount() != 2) {
-      throw new ContractValidateException("permission's count should be 2.");
+
+    if (!accountPermissionUpdateContract.hasOwner()) {
+      throw new ContractValidateException("owner permission is missed");
     }
-    boolean containOwner = false;
-    boolean containActive = false;
-    for (Permission permission : accountPermissionUpdateContract.getPermissionsList()) {
-      if (permission.getKeysCount() >= dbManager.getDynamicPropertiesStore().getTotalSignNum()) {
-        throw new ContractValidateException("number of keys in permission should not be greater "
-            + "than " + dbManager.getDynamicPropertiesStore().getTotalSignNum());
-      }
-      if (permission.getKeysCount() == 0) {
-        throw new ContractValidateException("key's count should be greater than 0");
-      }
-      if (permission.getThreshold() <= 0) {
-        throw new ContractValidateException("permission's threshold should be greater than 0");
-      }
-      if (StringUtils.isEmpty(permission.getName())) {
-        throw new ContractValidateException("permission's name should not be empty");
-      }
-      String name = permission.getName();
-      if (name.equalsIgnoreCase("owner")) {
-        containOwner = true;
-      }
-      if (name.equalsIgnoreCase("active")) {
-        containActive = true;
-      }
-      if (!name.equalsIgnoreCase("owner") && !name.equalsIgnoreCase("active")) {
-        throw new ContractValidateException("permission's name should be owner or active");
-      }
-      String parent = permission.getParent();
-      if (!parent.isEmpty() && !parent.equalsIgnoreCase("owner")) {
-        throw new ContractValidateException("permission's parent should be owner");
-      }
 
-      if (containActive && parent.isEmpty()) {
-        throw new ContractValidateException("active permission's parent should not be empty");
+    if (accountCapsule.getIsWitness()) {
+      if (!accountPermissionUpdateContract.hasWitness()) {
+        throw new ContractValidateException("witness permission is missed");
       }
-
-      long weightSum = 0;
-      List<ByteString> addressList = permission.getKeysList()
-          .stream()
-          .map(x -> x.getAddress())
-          .distinct()
-          .collect(toList());
-      if (addressList.size() != permission.getKeysList().size()) {
-        throw new ContractValidateException(
-            String.format("address should be distinct in permission %s", name));
-      }
-      for (Key key : permission.getKeysList()) {
-        if (!Wallet.addressValid(key.getAddress().toByteArray())) {
-          throw new ContractValidateException("key is not a validate address");
-        }
-        if (dbManager.getAccountStore().get(key.getAddress().toByteArray()) == null) {
-          throw new ContractValidateException("key address does not exist");
-        }
-        if (key.getWeight() <= 0) {
-          throw new ContractValidateException("key's weight should be greater than 0");
-        }
-        weightSum += key.getWeight();
-      }
-      if (weightSum < permission.getThreshold()) {
-        throw new ContractValidateException(
-            "sum of all key's weight should not be less than threshold in permission " + name);
+    } else {
+      if (accountPermissionUpdateContract.hasWitness()) {
+        throw new ContractValidateException("account isn't witness can't set witness permission");
       }
     }
-    if (!containActive) {
+
+    if (accountPermissionUpdateContract.getActivesCount() == 0) {
       throw new ContractValidateException("active permission is missed");
     }
-    if (!containOwner) {
-      throw new ContractValidateException("owner permission is missed");
+    if (accountPermissionUpdateContract.getActivesCount() > 8) {
+      throw new ContractValidateException("active permission is too many");
+    }
+
+    Permission owner = accountPermissionUpdateContract.getOwner();
+    Permission witness = accountPermissionUpdateContract.getWitness();
+    List<Permission> actives = accountPermissionUpdateContract.getActivesList();
+
+    if (owner.getType() != PermissionType.Owner) {
+      throw new ContractValidateException("owner permission type is error");
+    }
+    if (!checkPermission(owner)) {
+      return false;
+    }
+    if (accountCapsule.getIsWitness()) {
+      if (witness.getType() != PermissionType.Witness) {
+        throw new ContractValidateException("witness permission type is error");
+      }
+      if (!checkPermission(witness)) {
+        return false;
+      }
+    }
+    for (Permission permission : actives) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new ContractValidateException("active permission type is error");
+      }
+      if (!checkPermission(permission)) {
+        return false;
+      }
     }
     return true;
   }

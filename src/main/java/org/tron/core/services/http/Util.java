@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
@@ -28,9 +29,6 @@ import org.tron.protos.Contract.ExchangeTransactionContract;
 import org.tron.protos.Contract.ExchangeWithdrawContract;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.PermissionAddKeyContract;
-import org.tron.protos.Contract.PermissionDeleteKeyContract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
@@ -52,7 +50,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 
-@Slf4j
+@Slf4j(topic = "API")
 public class Util {
 
   public static String printErrorMsg(Exception e) {
@@ -134,6 +132,17 @@ public class Util {
     jsonObjectExt
         .put("transaction",
             printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction", jsonObjectExt);
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList) {
+    String string = JsonFormat.printToString(transactionApprovedList);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction",
+            printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction()));
     jsonObject.put("transaction", jsonObjectExt);
     return jsonObject.toJSONString();
   }
@@ -291,23 +300,6 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(accountPermissionUpdateContract));
             break;
-          case PermissionAddKeyContract:
-            PermissionAddKeyContract permissionAddKeyContract = contractParameter
-                .unpack(PermissionAddKeyContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(permissionAddKeyContract));
-            break;
-          case PermissionUpdateKeyContract:
-            PermissionUpdateKeyContract permissionUpdateKeyContract = contractParameter
-                .unpack(PermissionUpdateKeyContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(permissionUpdateKeyContract));
-            break;
-          case PermissionDeleteKeyContract:
-            PermissionDeleteKeyContract permissionDeleteKeyContract = contractParameter
-                .unpack(PermissionDeleteKeyContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(permissionDeleteKeyContract));
           case UpdateSettingContract:
             UpdateSettingContract updateSettingContract = contractParameter
                 .unpack(UpdateSettingContract.class);
@@ -337,6 +329,8 @@ public class Util {
     JSONObject rawData = JSONObject.parseObject(jsonTransaction.get("raw_data").toString());
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
+    String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
+    jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
@@ -543,29 +537,6 @@ public class Util {
                     AccountPermissionUpdateContractBuilder);
             any = Any.pack(AccountPermissionUpdateContractBuilder.build());
             break;
-          case "PermissionAddKeyContract":
-            PermissionAddKeyContract.Builder PermissionAddKeyContractBuilder = PermissionAddKeyContract
-                .newBuilder();
-            JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(),
-                    PermissionAddKeyContractBuilder);
-            any = Any.pack(PermissionAddKeyContractBuilder.build());
-            break;
-          case "PermissionUpdateKeyContract":
-            PermissionUpdateKeyContract.Builder PermissionUpdateKeyContractBuilder = PermissionUpdateKeyContract
-                .newBuilder();
-            JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(),
-                    PermissionUpdateKeyContractBuilder);
-            any = Any.pack(PermissionUpdateKeyContractBuilder.build());
-            break;
-          case "PermissionDeleteKeyContract":
-            PermissionDeleteKeyContract.Builder PermissionDeleteKeyContractBuilder = PermissionDeleteKeyContract
-                .newBuilder();
-            JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(),
-                    PermissionDeleteKeyContractBuilder);
-            any = Any.pack(PermissionDeleteKeyContractBuilder.build());
           case "UpdateSettingContract":
             UpdateSettingContract.Builder UpdateSettingContractBuilder = UpdateSettingContract
                 .newBuilder();

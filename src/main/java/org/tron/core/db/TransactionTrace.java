@@ -8,11 +8,13 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -98,11 +100,15 @@ public class TransactionTrace {
     return this.trxType == TRX_CONTRACT_CALL_TYPE || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
-  //pre transaction check
   public void init(BlockCapsule blockCap) {
+    init(blockCap, false);
+  }
+  //pre transaction check
+  public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
     runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
+    runtime.setEnableEventLinstener(eventPluginLoaded);
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {
@@ -213,8 +219,8 @@ public class TransactionTrace {
     }
     if (!trx.getContractRet().equals(receipt.getResult())) {
       logger.info(
-          "this tx resultCode in received block: {}\nthis tx resultCode in self: {}",
-          trx.getContractRet(), receipt.getResult());
+          "this tx id: {}, the resultCode in received block: {}, the resultCode in self: {}",
+          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(), receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }

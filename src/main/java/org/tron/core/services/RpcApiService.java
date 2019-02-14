@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -79,9 +80,6 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.PermissionAddKeyContract;
-import org.tron.protos.Contract.PermissionDeleteKeyContract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -102,7 +100,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
   private int port = Args.getInstance().getRpcPort();
@@ -715,6 +713,14 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionSignWeight> responseObserver) {
       TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getTransactionApprovedList(Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
+      TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
+      responseObserver.onNext(tal);
       responseObserver.onCompleted();
     }
 
@@ -1606,26 +1612,6 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
-    @Override
-    public void permissionAddKey(PermissionAddKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionAddKeyContract,
-          responseObserver);
-    }
-
-    @Override
-    public void permissionUpdateKey(PermissionUpdateKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionUpdateKeyContract,
-          responseObserver);
-    }
-
-    @Override
-    public void permissionDeleteKey(PermissionDeleteKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionDeleteKeyContract,
-          responseObserver);
-    }
   }
 
   @Override

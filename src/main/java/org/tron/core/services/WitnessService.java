@@ -4,6 +4,7 @@ import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +21,7 @@ import org.tron.common.backup.BackupServer;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -36,7 +38,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
 
-@Slf4j
+@Slf4j(topic = "witness")
 public class WitnessService implements Service {
 
   private static final int MIN_PARTICIPATION_RATE = Args.getInstance()
@@ -45,11 +47,14 @@ public class WitnessService implements Service {
   private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
-      .newHashMap(); //  <address,WitnessCapsule>
+      .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
   private Thread generateThread;
 
   private volatile boolean isRunning = false;
-  private Map<ByteString, byte[]> privateKeyMap = Maps.newHashMap();
+  private Map<ByteString, byte[]> privateKeyMap = Maps
+      .newHashMap();//<witnessAccountAddress,privateKey>
+  private Map<byte[], byte[]> privateKeyToAddressMap = Maps
+      .newHashMap();//<privateKey,witnessPermissionAccountAddress>
   private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private Manager manager;
@@ -151,12 +156,6 @@ public class WitnessService implements Service {
    */
   private BlockProductionCondition tryProduceBlock() throws InterruptedException {
     logger.info("Try Produce Block");
-    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
-      return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
-    }
-    if (dupWitnessCheck()) {
-      return BlockProductionCondition.DUP_WITNESS;
-    }
     long now = DateTime.now().getMillis() + 50L;
     if (this.needSyncCheck) {
       long nexSlotTime = controller.getSlotTime(1);
@@ -175,6 +174,14 @@ public class WitnessService implements Service {
       }
     }
 
+    if (!backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
+      return BlockProductionCondition.BACKUP_STATUS_IS_NOT_MASTER;
+    }
+
+    if (dupWitnessCheck()) {
+      return BlockProductionCondition.DUP_WITNESS;
+    }
+
     final int participation = this.controller.calculateParticipationRate();
     if (participation < MIN_PARTICIPATION_RATE) {
       logger.warn(
@@ -188,47 +195,48 @@ public class WitnessService implements Service {
       return BlockProductionCondition.LOW_PARTICIPATION;
     }
 
-    long slot = controller.getSlotAtTime(now);
-    logger.debug("Slot:" + slot);
-
-    if (slot == 0) {
-      logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
-          new DateTime(now),
-          new DateTime(
-              this.tronApp.getDbManager().getDynamicPropertiesStore()
-                  .getLatestBlockHeaderTimestamp()),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
-      return BlockProductionCondition.NOT_TIME_YET;
-    }
-
-    if (now < controller.getManager().getDynamicPropertiesStore().getLatestBlockHeaderTimestamp()) {
-      logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
-          new DateTime(now), new DateTime(
-              this.tronApp.getDbManager().getDynamicPropertiesStore()
-                  .getLatestBlockHeaderTimestamp()));
-      return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-    }
-
     if (!controller.activeWitnessesContain(this.getLocalWitnessStateMap().keySet())) {
       logger.info("Unelected. Elected Witnesses: {}",
           StringUtil.getAddressStringList(controller.getActiveWitnesses()));
       return BlockProductionCondition.UNELECTED;
     }
 
-    final ByteString scheduledWitness = controller.getScheduledWitness(slot);
-
-    if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
-      logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
-          ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
-          controller.getAbSlotAtTime(now));
-      return NOT_MY_TURN;
-    }
-
-    BlockCapsule block;
-
     try {
+
+      BlockCapsule block;
+
       synchronized (tronApp.getDbManager()) {
+        long slot = controller.getSlotAtTime(now);
+        logger.debug("Slot:" + slot);
+        if (slot == 0) {
+          logger.info("Not time yet,now:{},headBlockTime:{},headBlockNumber:{},headBlockId:{}",
+              new DateTime(now),
+              new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+              this.tronApp.getDbManager().getDynamicPropertiesStore().getLatestBlockHeaderHash());
+          return BlockProductionCondition.NOT_TIME_YET;
+        }
+
+        if (now < controller.getManager().getDynamicPropertiesStore()
+            .getLatestBlockHeaderTimestamp()) {
+          logger.warn("have a timestamp:{} less than or equal to the previous block:{}",
+              new DateTime(now), new DateTime(
+                  this.tronApp.getDbManager().getDynamicPropertiesStore()
+                      .getLatestBlockHeaderTimestamp()));
+          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+        }
+
+        final ByteString scheduledWitness = controller.getScheduledWitness(slot);
+
+        if (!this.getLocalWitnessStateMap().containsKey(scheduledWitness)) {
+          logger.info("It's not my turn, ScheduledWitness[{}],slot[{}],abSlot[{}],",
+              ByteArray.toHexString(scheduledWitness.toByteArray()), slot,
+              controller.getAbSlotAtTime(now));
+          return NOT_MY_TURN;
+        }
+
         long scheduledTime = controller.getSlotTime(slot);
 
         if (scheduledTime - now > PRODUCE_TIME_OUT) {
@@ -245,22 +253,23 @@ public class WitnessService implements Service {
 
         block = generateBlock(scheduledTime, scheduledWitness,
             controller.lastHeadBlockIsMaintenance());
+      }
 
-        if (block == null) {
-          logger.warn("exception when generate block");
-          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-        }
+      if (block == null) {
+        logger.warn("exception when generate block");
+        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+      }
 
-        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+      int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
 
-        if (DateTime.now().getMillis() - now
-            > ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100) {
-          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}",
-              ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100,
-              new DateTime(now), DateTime.now());
-          tronApp.getDbManager().eraseBlock();
-          return BlockProductionCondition.TIME_OUT;
-        }
+      long timeout = Math
+          .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+              ChainConstant.BLOCK_PRODUCED_INTERVAL);
+      if (DateTime.now().getMillis() - now > timeout) {
+        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+            DateTime.now());
+        tronApp.getDbManager().eraseBlock();
+        return BlockProductionCondition.TIME_OUT;
       }
 
       logger.info(
@@ -269,6 +278,7 @@ public class WitnessService implements Service {
           block.getTransactions().size(),
           new DateTime(block.getTimeStamp()),
           block.getParentHash());
+
       broadcastBlock(block);
 
       return BlockProductionCondition.PRODUCED;
@@ -278,6 +288,20 @@ public class WitnessService implements Service {
     } finally {
       controller.setGeneratingBlock(false);
     }
+  }
+
+  //Verify that the private key corresponds to the witness permission
+  public boolean validateWitnessPermission(ByteString scheduledWitness) {
+    if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+      byte[] privateKey = privateKeyMap.get(scheduledWitness);
+      byte[] witnessPermissionAddress = privateKeyToAddressMap.get(privateKey);
+      AccountCapsule witnessAccount = manager.getAccountStore()
+          .get(scheduledWitness.toByteArray());
+      if (!Arrays.equals(witnessPermissionAddress, witnessAccount.getWitnessPermissionAddress())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void broadcastBlock(BlockCapsule block) {
@@ -293,7 +317,7 @@ public class WitnessService implements Service {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
+        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance, true);
   }
 
   private boolean dupWitnessCheck() {
@@ -309,7 +333,7 @@ public class WitnessService implements Service {
     return true;
   }
 
-  public void processBlock(BlockCapsule block) {
+  public void checkDupWitness(BlockCapsule block) {
     if (block.generatedByMyself) {
       return;
     }
@@ -322,6 +346,10 @@ public class WitnessService implements Service {
       return;
     }
 
+    if (backupManager.getStatus() != BackupStatusEnum.MASTER) {
+      return;
+    }
+
     if (dupBlockCount.get() == 0) {
       dupBlockCount.set(new Random().nextInt(10));
     } else {
@@ -329,6 +357,8 @@ public class WitnessService implements Service {
     }
 
     dupBlockTime.set(System.currentTimeMillis());
+
+    logger.warn("Dup block produced: {}", block);
   }
 
   /**
@@ -336,22 +366,29 @@ public class WitnessService implements Service {
    */
   @Override
   public void init() {
-    Args.getInstance().getLocalWitnesses().getPrivateKeys().forEach(key -> {
-      byte[] privateKey = ByteArray.fromHexString(key);
-      final ECKey ecKey = ECKey.fromPrivate(privateKey);
-      byte[] address = ecKey.getAddress();
-      WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
-          .get(address);
+
+    if (Args.getInstance().getLocalWitnesses().getPrivateKeys().size() == 0) {
+      return;
+    }
+
+    byte[] privateKey = ByteArray
+        .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
+    byte[] witnessAccountAddress = Args.getInstance().getLocalWitnesses()
+        .getWitnessAccountAddress();
+    //This address does not need to have an account
+    byte[] privateKeyAccountAddress = ECKey.fromPrivate(privateKey).getAddress();
+
+    WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
+        .get(witnessAccountAddress);
       // need handle init witness
-      if (null == witnessCapsule) {
-        logger.warn("WitnessCapsule[" + address + "] is not in witnessStore");
-        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-      }
+    if (null == witnessCapsule) {
+      logger.warn("WitnessCapsule[" + witnessAccountAddress + "] is not in witnessStore");
+      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAccountAddress));
+    }
 
-      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
-      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
-    });
-
+    this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+    this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+    this.privateKeyToAddressMap.put(privateKey, privateKeyAccountAddress);
   }
 
   @Override

@@ -1,7 +1,10 @@
 package org.tron.stresstest.dispatch.creator.MultiSign;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import lombok.Setter;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -14,6 +17,7 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
+import java.util.concurrent.TimeUnit;
 
 
 @Setter
@@ -30,9 +34,15 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
     //  private String param = "\"" + Wallet.encode58Check(commonContractAddress2.getBytes()) + "\",1000001,1";
     private long feeLimit = 1000000000L;
     private String privateKey = commonOwnerPrivateKey;
+    private String fullnode = "47.94.239.172:50051";
+    private ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build();
+    private WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
     @Override
     protected Protocol.Transaction create() {
+
         byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
         TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
@@ -60,7 +70,10 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
 
         transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
 
-        transaction = Multisign(transaction, permissionKeyString);
+        transaction = Multisign(transaction,blockingStubFull, permissionKeyString);
         return transaction;
+
+
     }
+
 }

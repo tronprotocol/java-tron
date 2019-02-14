@@ -45,7 +45,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 
-@Slf4j
+@Slf4j(topic = "net")
 public class NodeDelegateImpl implements NodeDelegate {
 
   private Manager dbManager;
@@ -67,7 +67,6 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("block time error");
     }
     try {
-      dbManager.preValidateTransactionSign(block);
       dbManager.pushBlock(block);
       if (!syncMode) {
         List<TransactionCapsule> trx = null;

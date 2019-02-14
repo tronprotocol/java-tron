@@ -82,6 +82,10 @@ public class WalletTestCommittee001 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -127,6 +131,9 @@ public class WalletTestCommittee001 {
         .getPaginatedProposalList(pageMessageBuilder.build());
     Assert.assertTrue(paginatedProposalList.getProposalsCount() >= 1);
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

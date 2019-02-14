@@ -50,6 +50,10 @@ public class ContractScenario003 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contract003Key);
@@ -67,8 +71,13 @@ public class ContractScenario003 {
 
   @Test(enabled = true)
   public void deployErc223() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    contract003Address = ecKey1.getAddress();
+    contract003Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
     Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
         testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -184,6 +193,7 @@ public class ContractScenario003 {
 
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract003Key, contract003Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     logger.info(txid);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -191,7 +201,6 @@ public class ContractScenario003 {
     SmartContract smartContract = PublicMethed
         .getContract(contractAddress.toByteArray(), blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
 
@@ -211,6 +220,9 @@ public class ContractScenario003 {
     Assert.assertTrue(energyUsage == 0);
     Assert.assertTrue(balanceBefore == balanceAfter + infoById.get().getFee());
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

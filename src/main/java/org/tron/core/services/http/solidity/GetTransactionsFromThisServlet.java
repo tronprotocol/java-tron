@@ -16,7 +16,7 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionsFromThisServlet extends HttpServlet {
 
   @Autowired

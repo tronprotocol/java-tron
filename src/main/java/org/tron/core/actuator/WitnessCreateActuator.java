@@ -17,7 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class WitnessCreateActuator extends AbstractActuator {
 
   WitnessCreateActuator(final Any contract, final Manager dbManager) {
@@ -120,6 +120,9 @@ public class WitnessCreateActuator extends AbstractActuator {
     AccountCapsule accountCapsule = this.dbManager.getAccountStore()
         .get(witnessCapsule.createDbKey());
     accountCapsule.setIsWitness(true);
+    if (dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+      accountCapsule.setDefaultWitnessPermission(dbManager);
+    }
     this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     long cost = dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
     dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(), -cost);

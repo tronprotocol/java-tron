@@ -25,7 +25,7 @@ import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class UnfreezeBalanceActuator extends AbstractActuator {
 
   UnfreezeBalanceActuator(Any contract, Manager dbManager) {
@@ -284,7 +284,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                     + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
                     "],this should never happen");
           }
-          if (delegatedResourceCapsule.getExpireTimeForEnergy() > now) {
+          if (delegatedResourceCapsule.getExpireTimeForEnergy(dbManager) > now) {
             throw new ContractValidateException("It's not time to unfreeze.");
           }
           break;
