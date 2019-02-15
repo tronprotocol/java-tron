@@ -1341,9 +1341,8 @@ public class Manager {
     for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
       trxCapsule.setDelaySeconds(0);
-      blockCapsule.addTransaction(trxCapsule);
+      pendingTransactions.add(0, trxCapsule);
     }
-
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
