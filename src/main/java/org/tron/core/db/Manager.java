@@ -41,6 +41,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2026,11 +2027,13 @@ public class Manager {
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
 
-    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
-    if (Objects.isNull(deferredTransactionCapsule)){
+    byte[] key = getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(transactionId);
+    if (ArrayUtils.isEmpty(key)){
       logger.error("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
+
+    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionByKey(key);
 
     long delayUntil = deferredTransactionCapsule.getDelayUntil();
     long now = System.currentTimeMillis();

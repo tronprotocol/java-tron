@@ -35,12 +35,10 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
         revokingDB.delete(deferredTransactionCapsule.getKey());
     }
 
-    public DeferredTransactionCapsule getByTransactionId(ByteString transactionId){
+    public DeferredTransactionCapsule getByTransactionByKey(byte[] key){
         DeferredTransactionCapsule deferredTransactionCapsule = null;
-
         try{
-            byte[] key = transactionId.toByteArray();
-            byte[] value = revokingDB.getUnchecked(key);
+            byte[] value = revokingDB.get(key);
             if (ArrayUtils.isEmpty(value)) {
                 return null;
             }

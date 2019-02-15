@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,5 +22,9 @@ public class DeferredTransactionIdIndexStore extends TronStoreWithRevoking<Defer
 
   public void removeDeferredTransactionIdIndex(DeferredTransactionCapsule deferredTransactionCapsule) {
     revokingDB.delete(deferredTransactionCapsule.getTransactionId().toByteArray());
+  }
+
+  public byte[] getDeferredTransactionKeyById(ByteString transactionId) {
+    return revokingDB.getUnchecked(transactionId.toByteArray());
   }
 }
