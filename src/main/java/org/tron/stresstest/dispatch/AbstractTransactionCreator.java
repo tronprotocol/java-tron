@@ -170,7 +170,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     if (transactionExtention == null) {
       return null;
     }
-    System.out.println("Fee limit is :" + transactionExtention.getTransaction().getRawData().getFeeLimit());
+//    System.out.println("Fee limit is :" + transactionExtention.getTransaction().getRawData().getFeeLimit());
 
 
 
