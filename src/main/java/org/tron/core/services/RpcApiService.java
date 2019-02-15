@@ -1612,6 +1612,17 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
+    @Override
+    public void cancelDeferredTransaction(BytesMessage request, StreamObserver<Return> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        Return reply = wallet.cancelDeferredTransaction(id);
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   @Override

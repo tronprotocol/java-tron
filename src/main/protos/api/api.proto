@@ -616,7 +616,17 @@ service Wallet {
   }
 
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
-  };
+  }
+
+  rpc cancelDeferredTransaction (BytesMessage) returns (Return) {
+          option (google.api.http) = {
+            post: "/wallet/cancelDeferredTransaction"
+            body: "*"
+            additional_bindings {
+              get: "/wallet/cancelDeferredTransaction"
+            }
+          };
+     };
 };
 
 

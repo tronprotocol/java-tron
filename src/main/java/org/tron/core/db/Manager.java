@@ -1429,7 +1429,7 @@ public class Manager {
 
     session.reset();
     deferredTransactionList.forEach(trx -> {
-      getDeferredTransactionStore().removeDeferredTransactionById(trx);
+      getDeferredTransactionStore().removeDeferredTransaction(trx);
       getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
     });
 
@@ -2022,5 +2022,29 @@ public class Manager {
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
+  }
+
+  public boolean cancelDeferredTransaction(ByteString transactionId){
+
+    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
+    if (Objects.isNull(deferredTransactionCapsule)){
+      logger.error("cancelDeferredTransaction failed, transaction id not exists");
+      return false;
+    }
+
+    long delayUntil = deferredTransactionCapsule.getDelayUntil();
+    long now = System.currentTimeMillis();
+
+    if (now >= delayUntil){
+      logger.error("failed to cancel deferred transaction {}, it should be canceled before it expires", transactionId.toString());
+      return false;
+    }
+
+    getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule);
+
+    logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
+
+    return true;
   }
 }

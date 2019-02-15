@@ -3,7 +3,6 @@ package org.tron.core.db;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -32,7 +31,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
             .collect(Collectors.toList());
     }
 
-    public void removeDeferredTransactionById(DeferredTransactionCapsule deferredTransactionCapsule) {
+    public void removeDeferredTransaction(DeferredTransactionCapsule deferredTransactionCapsule) {
         revokingDB.delete(deferredTransactionCapsule.getKey());
     }
 

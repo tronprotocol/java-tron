@@ -1196,6 +1196,21 @@ public class Wallet {
     return null;
   }
 
+  public Return cancelDeferredTransaction(ByteString transactionId) {
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+
+    if (Objects.isNull(transactionId)) {
+      return builder.setResult(false).build();
+    }
+
+    if(dbManager.cancelDeferredTransaction(transactionId)){
+      return builder.setResult(true).build();
+    }
+    else {
+      return builder.setResult(false).build();
+    }
+  }
+
   public Proposal getProposalById(ByteString proposalId) {
     if (Objects.isNull(proposalId)) {
       return null;
