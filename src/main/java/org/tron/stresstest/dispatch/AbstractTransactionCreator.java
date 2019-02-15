@@ -49,7 +49,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
   protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
   protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
-  protected String commonfullnode = "47.94.239.172:50051";
+  protected String commonfullnode = "39.105.81.23:50051";
   protected ManagedChannel commonchannelFull = ManagedChannelBuilder.forTarget(commonfullnode)
           .usePlaintext(true)
           .build();
