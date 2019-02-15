@@ -67,7 +67,7 @@ public class TransactionGenerator {
     long count = countDownLatch.getCount();
     if (count % 10000 == 0) {
       fos.flush();
-      System.out.println("Generate transaction success ------- ------- ------- ------- ------- Remain: " + countDownLatch.getCount() + ", Pending size: " + transactions.size());
+      logger.info("Generate transaction success ------- ------- ------- ------- ------- Remain: " + countDownLatch.getCount() + ", Pending size: " + transactions.size());
     }
 
     countDownLatch.countDown();

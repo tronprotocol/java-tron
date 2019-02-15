@@ -141,7 +141,15 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       System.out.println("Result:" + Hex.toHexString(result));
       return null;
     }
-    final GrpcAPI.TransactionExtention.Builder texBuilder = GrpcAPI.TransactionExtention.newBuilder();
+      Transaction.raw rawData = transaction.getRawData();
+      Transaction.Contract contract1 = transactionExtention.getTransaction().getRawData()
+              .getContractList().get(0);
+      contract1 = contract1.toBuilder().setPermissionId(2).build();
+      rawData = rawData.toBuilder().clearContract().addContract(contract1).build();
+      transaction = transaction.toBuilder().setRawData(rawData).build();
+      transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
+
+    GrpcAPI.TransactionExtention.Builder texBuilder = GrpcAPI.TransactionExtention.newBuilder();
     Transaction.Builder transBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
             .toBuilder();
@@ -162,18 +170,12 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     if (transactionExtention == null) {
       return null;
     }
-    Transaction.raw rawData = transaction.getRawData();
-    Transaction.Contract contract1 = transactionExtention.getTransaction().getRawData()
-            .getContractList().get(0);
-    contract1 = contract1.toBuilder().setPermissionId(2).build();
-    rawData = rawData.toBuilder().clearContract().addContract(contract1).build();
-    transaction = transaction.toBuilder().setRawData(rawData).build();
-    transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
-    if (transactionExtention == null || transaction.getRawData().getContractCount() == 0) {
-      System.err.println("******** failed to pop revokingStore.xxxxxxxxxxxx ");
-//      logger.info("transaction ==null");
-      return null;
-    }
+    System.out.println("Fee limit is :" + transactionExtention.getTransaction().getRawData().getFeeLimit());
+
+
+
+
+
     long gTime = count.incrementAndGet() + time;
     String ref = "" + gTime;
 
