@@ -33,15 +33,11 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
     private long callValue = 0L;
     private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
     private boolean hex = false;
-    private String param = "\"" + commonContractAddress2 + "\",1000001,1";
+    private String param = "\"" + commonContractAddress2 + "\",1002093,1";
     //  private String param = "\"" + Wallet.encode58Check(commonContractAddress2.getBytes()) + "\",1000001,1";
     private long feeLimit = 1000000000L;
     private String privateKey = commonOwnerPrivateKey;
-    private String fullnode = "47.94.239.172:50051";
-    private ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
-            .usePlaintext(true)
-            .build();
-    private WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    private WalletGrpc.WalletBlockingStub blockingStubFull = commonblockingStubFull;
 
     @Override
     protected Protocol.Transaction create() {
@@ -72,25 +68,26 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
 
 
         Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(ownerAddress.getBytes()));
-        builder.setContractAddress(ByteString.copyFrom(contractAddress.getBytes()));
+        builder.setOwnerAddress(ByteString.copyFrom(ownerAddressBytes));
+        builder.setContractAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(contractAddress)));
         try {
         builder.setData(ByteString.copyFrom(Hex.decode(AbiUtil.parseMethod(methodSign, param, hex))));
         } catch (EncodingException e) {
             e.printStackTrace();
         }
         builder.setCallValue(callValue);
-//        builder.setTokenId(Long.parseLong("#"));
-//        builder.setCallTokenValue(0L);
+        builder.setTokenId(Long.parseLong("0"));
+        builder.setCallTokenValue(0L);
         Contract.TriggerSmartContract triggerContract = builder.build();
 
 
-        Protocol.Transaction transaction = createTransaction3(contract,triggerContract,blockingStubFull,permissionKeyString, Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
-        transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
+
+        Protocol.Transaction transaction = createTransaction3(contract,triggerContract,blockingStubFull,feeLimit, Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
+//        transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
+
 
         transaction = Multisign(transaction,blockingStubFull, permissionKeyString);
         return transaction;
-
 
     }
 

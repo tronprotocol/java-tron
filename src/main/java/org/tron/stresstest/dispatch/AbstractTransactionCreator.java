@@ -8,7 +8,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
+
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import lombok.Getter;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
@@ -45,7 +49,11 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
   protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
   protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
-
+  protected String commonfullnode = "47.94.239.172:50051";
+  protected ManagedChannel commonchannelFull = ManagedChannelBuilder.forTarget(commonfullnode)
+          .usePlaintext(true)
+          .build();
+  protected WalletGrpc.WalletBlockingStub commonblockingStubFull = WalletGrpc.newBlockingStub(commonchannelFull);
 
 
 
@@ -107,7 +115,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
   }
   public Transaction createTransaction3(com.google.protobuf.Message message, org.tron.protos.Contract.TriggerSmartContract contract2,
-                                        WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString,
+                                        WalletGrpc.WalletBlockingStub blockingStubFull,long feeLimit,
                                         ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
             Transaction.Contract.newBuilder().setType(contractType).setParameter(
@@ -115,14 +123,51 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.triggerContract(contract2);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create call trx failed!");
+      System.out.println("Code = " + transactionExtention.getResult().getCode());
+      System.out
+              .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      return null;
+    }
     Transaction transaction = transactionExtention.getTransaction();
+    if (transaction.getRetCount() != 0
+            && transactionExtention.getConstantResult(0) != null
+            && transactionExtention.getResult() != null) {
+      byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+      System.out.println("message:" + transaction.getRet(0).getRet());
+      System.out.println(":" + ByteArray
+              .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+      System.out.println("Result:" + Hex.toHexString(result));
+      return null;
+    }
+    final GrpcAPI.TransactionExtention.Builder texBuilder = GrpcAPI.TransactionExtention.newBuilder();
+    Transaction.Builder transBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
+            .toBuilder();
+    rawBuilder.setFeeLimit(feeLimit);
+    transBuilder.setRawData(rawBuilder);
+    for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
+      ByteString s = transactionExtention.getTransaction().getSignature(i);
+      transBuilder.setSignature(i, s);
+    }
+    for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
+      Transaction.Result r = transactionExtention.getTransaction().getRet(i);
+      transBuilder.setRet(i, r);
+    }
+    texBuilder.setTransaction(transBuilder);
+    texBuilder.setResult(transactionExtention.getResult());
+    texBuilder.setTxid(transactionExtention.getTxid());
+    transactionExtention = texBuilder.build();
+    if (transactionExtention == null) {
+      return null;
+    }
     Transaction.raw rawData = transaction.getRawData();
     Transaction.Contract contract1 = transactionExtention.getTransaction().getRawData()
             .getContractList().get(0);
     contract1 = contract1.toBuilder().setPermissionId(2).build();
     rawData = rawData.toBuilder().clearContract().addContract(contract1).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
-
     transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
     if (transactionExtention == null || transaction.getRawData().getContractCount() == 0) {
       System.err.println("******** failed to pop revokingStore.xxxxxxxxxxxx ");
@@ -172,9 +217,9 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   }
 
   public static Transaction Multisign(Transaction transaction,WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
-    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-    List<Contract> listContract = transaction.getRawData().getContractList();
+//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+//    List<Contract> listContract = transaction.getRawData().getContractList();
     for (int i = 0; i < priKeys.length; i += 1) {
       String priKey = priKeys[i];
       ECKey temKey = null;
@@ -318,6 +363,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(data));
     builder.setCallValue(callValue);
+    builder.setTokenId(Long.parseLong("0"));
+    builder.setCallTokenValue(0L);
     return builder.build();
   }
 
