@@ -299,6 +299,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isFetchSyncActive = false;
 
+  private long startblockNum = 0L;
+  private long endblockNum = 0L;
+
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) throws Exception {
     switch (msg.getType()) {
@@ -542,7 +545,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-      long startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+      startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
       long starttime = nowblock.getBlockHeader().getRawData().getTimestamp();
       startblockNum = startblockNum + 1L;
       logger.info("startblockNum is {}", startblockNum);
@@ -575,7 +578,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
                   .build();
           blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
           Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
-          long endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+          endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
           long endtime = nowblock.getBlockHeader().getRawData().getTimestamp();
           endblockNum = endblockNum + 1L;
           logger.info("endblockNum is {}", endblockNum);
@@ -584,11 +587,13 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             channelFull.shutdown();
           }
           //20s后关闭
-          try {
-            Thread.sleep(20000);
-            System.exit(0);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
+          if (endblockNum != startblockNum) {
+            try {
+              Thread.sleep(20000);
+              System.exit(0);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
           }
         }
 
