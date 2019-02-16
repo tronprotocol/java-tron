@@ -30,8 +30,8 @@
         <ref bean="transferToken"/>
         <ref bean="niceTransferAssetTransaction"/>
         <ref bean="niceTransferTransaction"/>
-        <ref bean="MultiSignSendCoin"/>
-        <ref bean="MultiSignTriggerContract"/>
+        <!--<ref bean="MultiSignSendCoin"/>-->
+        <!--<ref bean="MultiSignTriggerContract"/>-->
         <ref bean="participateAssetIssue"/>
         <ref bean="freezeNet"/>
         <ref bean="freezeEnergy"/>
@@ -63,34 +63,34 @@
   <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
   <property name="name" value="transferToken"/>
   <property name="begin" value="0"/>
-  <property name="end" value="39"/>
+  <property name="end" value="59"/>
   </bean>
 
   <bean id="niceTransferAssetTransaction"
   class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
   <property name="name" value="niceTransferAssetTransaction"/>
-  <property name="begin" value="40"/>
-  <property name="end" value="49"/>
+  <property name="begin" value="60"/>
+  <property name="end" value="69"/>
   </bean>
 
   <bean id="niceTransferTransaction"
         class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
     <property name="name" value="niceTransferTransaction"/>
-    <property name="begin" value="50"/>
-    <property name="end" value="59"/>
-  </bean>
-
-  <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
-    <property name="name" value="MultiSignSendCoin"/>
-    <property name="begin" value="60"/>
-    <property name="end" value="69"/>
-  </bean>
-
-  <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
-    <property name="name" value="MultiSignTriggerContract"/>
     <property name="begin" value="70"/>
     <property name="end" value="79"/>
   </bean>
+
+  <!--<bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">-->
+    <!--<property name="name" value="MultiSignSendCoin"/>-->
+    <!--<property name="begin" value="0"/>-->
+    <!--<property name="end" value="49"/>-->
+  <!--</bean>-->
+
+  <!--<bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">-->
+    <!--<property name="name" value="MultiSignTriggerContract"/>-->
+    <!--<property name="begin" value="50"/>-->
+    <!--<property name="end" value="99"/>-->
+  <!--</bean>-->
 
   <bean id="participateAssetIssue"
   class="org.tron.stresstest.dispatch.creator.asset.ParticipateAssetIssueCreator">
