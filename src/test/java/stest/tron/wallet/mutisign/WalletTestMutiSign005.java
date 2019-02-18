@@ -109,7 +109,7 @@ public class WalletTestMutiSign005 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\""
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,\""
             + "keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
@@ -128,8 +128,9 @@ public class WalletTestMutiSign005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(0L, 81000L);
-    Assert.assertTrue(PublicMethedForMutiSign.createProposal(witness001Address,witnessKey001,
-        proposalMap, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(
+        PublicMethedForMutiSign.createProposalWithPermissionId(witness001Address, witnessKey001,
+            proposalMap, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
@@ -137,13 +138,13 @@ public class WalletTestMutiSign005 {
     final Integer proposalId = listProposals.get().getProposalsCount();
     logger.info(Integer.toString(proposalId));
 
-    Assert.assertTrue(PublicMethedForMutiSign.approveProposal(
+    Assert.assertTrue(PublicMethedForMutiSign.approveProposalWithPermission(
             witness001Address,witnessKey001,proposalId,
-        true, blockingStubFull, ownerKeyString));
+        true, 0, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
-    Assert.assertTrue(PublicMethedForMutiSign.deleteProposal(
-        witness001Address, witnessKey001, proposalId, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
+        witness001Address, witnessKey001, proposalId, 2, blockingStubFull, permissionKeyString));
 
   }
   /**

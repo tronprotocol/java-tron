@@ -1038,15 +1038,17 @@ public class Manager {
     }
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
-      Set<String> result = new HashSet<>();
-      for (TransactionCapsule transactionCapsule : repushTransactions) {
-        filterOwnerAddress(transactionCapsule, result);
+      if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
+        Set<String> result = new HashSet<>();
+        for (TransactionCapsule transactionCapsule : repushTransactions) {
+          filterOwnerAddress(transactionCapsule, result);
+        }
+        for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+          filterOwnerAddress(transactionCapsule, result);
+        }
+        ownerAddressSet.clear();
+        ownerAddressSet.addAll(result);
       }
-      for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
-        filterOwnerAddress(transactionCapsule, result);
-      }
-      ownerAddressSet.clear();
-      ownerAddressSet.addAll(result);
     }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
@@ -1199,6 +1201,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     VMConfig.initVmHardFork();
+    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();

@@ -39,7 +39,7 @@ public class WalletTestMutiSign003 {
       .get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
+  String[] ownerKeyString = new String[3];
   String accountPermissionJson = "";
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -102,8 +102,12 @@ public class WalletTestMutiSign003 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     ownerKeyString[0] = ownerKey;
+    ownerKeyString[1] = manager1Key;
+    ownerKeyString[2] = manager2Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":3,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
@@ -116,34 +120,32 @@ public class WalletTestMutiSign003 {
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
 
-    permissionKeyString[0] = ownerKey;
-
     final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethedForMutiSign.createAccount(
-            ownerAddress,newAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.sendcoin(
-            newAddress,100L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalance(
-            ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString));
+        ownerAddress, newAddress, ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
+        newAddress, 100L, ownerAddress, 2, ownerKey, blockingStubFull, permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
+        ownerAddress, 1000000L, 0, 0, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
-            ownerAddress,1000000L,0,1,ownerKey,blockingStubFull,permissionKeyString));
+        ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
             ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),
-            ownerKey,blockingStubFull,permissionKeyString));
+        ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
-            ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
-            ownerAddress,ownerKey,0,newAddress,blockingStubFull,permissionKeyString));
+        ownerAddress, ownerKey, 0, null, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
+        ownerAddress, ownerKey, 0, newAddress, 2, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.updateAccount(
-            ownerAddress,updateName.getBytes(),ownerKey,blockingStubFull,permissionKeyString));
+        ownerAddress, updateName.getBytes(), ownerKey, blockingStubFull, ownerKeyString));
 
     String voteStr = Base58.encode58Check(witnessAddress);
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
     Assert.assertTrue(PublicMethedForMutiSign.voteWitness(
-            smallVoteMap, ownerAddress, ownerKey,blockingStubFull,permissionKeyString));
+        smallVoteMap, ownerAddress, ownerKey, blockingStubFull, ownerKeyString));
 
   }
 

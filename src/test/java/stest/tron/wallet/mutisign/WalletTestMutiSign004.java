@@ -50,7 +50,7 @@ public class WalletTestMutiSign004 {
   Block currentBlock;
   Long currentBlockNum;
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
+  String[] ownerKeyString = new String[2];
   String accountPermissionJson = "";
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] manager1Address = ecKey1.getAddress();
@@ -110,8 +110,10 @@ public class WalletTestMutiSign004 {
     permissionKeyString[1] = manager2Key;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = ownerKey;
+    ownerKeyString[1] = manager1Key;
     accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
@@ -123,8 +125,6 @@ public class WalletTestMutiSign004 {
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
-
-    permissionKeyString[0] = ownerKey;
 
     Random rand = new Random();
     Integer randNum = rand.nextInt(30) + 1;
@@ -138,7 +138,7 @@ public class WalletTestMutiSign004 {
             .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
     byte[] contractAddress = PublicMethedForMutiSign.deployContract(contractName,abi,code,
         "",maxFeeLimit,
-        0L, 100,null,ownerKey,ownerAddress,blockingStubFull,permissionKeyString);
+        0L, 100, null, ownerKey, ownerAddress, blockingStubFull, ownerKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
@@ -147,13 +147,13 @@ public class WalletTestMutiSign004 {
     String initParmes = "\"" + "930" + "\"";
     txid = PublicMethedForMutiSign.triggerContract(contractAddress,
           "testUseCpu(uint256)", initParmes, false,
-          0, maxFeeLimit,ownerAddress, ownerKey, blockingStubFull,permissionKeyString);
+        0, maxFeeLimit, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.getTransactionById(txid,blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
-    PublicMethedForMutiSign.updateSetting(contractAddress,50,ownerKey,
-            ownerAddress,blockingStubFull,permissionKeyString);
+    PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
+        ownerAddress, 0, blockingStubFull, ownerKeyString);
 
   }
 
