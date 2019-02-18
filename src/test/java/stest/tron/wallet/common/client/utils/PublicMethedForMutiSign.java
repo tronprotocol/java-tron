@@ -40,6 +40,7 @@ import org.tron.core.exception.CancelException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.CreateSmartContract.Builder;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
@@ -239,6 +240,49 @@ public class PublicMethedForMutiSign {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
+  /**
+   * constructor.
+   */
+  private static Transaction signTransaction(Transaction transaction,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
+    if (transaction.getRawData().getTimestamp() == 0) {
+      transaction = TransactionUtils.setTimestamp(transaction);
+    }
+
+    long currentTime = System.currentTimeMillis();//*1000000 + System.nanoTime()%1000000;
+    Transaction.Builder builder = transaction.toBuilder();
+    org.tron.protos.Protocol.Transaction.raw.Builder rowBuilder = transaction.getRawData()
+        .toBuilder();
+    rowBuilder.setTimestamp(currentTime);
+    builder.setRawData(rowBuilder.build());
+    transaction = builder.build();
+
+    for (int i = 0; i < priKeys.length; i += 1) {
+      String priKey = priKeys[i];
+      ECKey temKey = null;
+      try {
+        BigInteger priK = new BigInteger(priKey, 16);
+        temKey = ECKey.fromPrivate(priK);
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      ECKey ecKey = temKey;
+
+      transaction = TransactionUtils.sign(transaction, ecKey);
+      TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
+        break;
+      }
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
+        continue;
+      }
+    }
+    return transaction;
+  }
+
 
   /**
    * constructor.
@@ -1691,6 +1735,68 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
+
+  public static boolean updateEnergyLimitWithPermissionId(byte[] contractAddress,
+      long originEnergyLimit, String priKey, byte[] ownerAddress, int permissionId,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    UpdateEnergyLimitContract.Builder builder = UpdateEnergyLimitContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setOriginEnergyLimit(originEnergyLimit);
+
+    UpdateEnergyLimitContract updateEnergyLimitContract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull
+        .updateEnergyLimit(updateEnergyLimitContract);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create trx failed!");
+      if (transactionExtention != null) {
+        System.out.println("Code = " + transactionExtention.getResult().getCode());
+        System.out
+            .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      }
+      return false;
+    }
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+
+  /**
+   * constructor.
+   */
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
       Boolean isHex, long callValue, long feeLimit, byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
@@ -2180,17 +2286,17 @@ public class PublicMethedForMutiSign {
       permissionBuilder.setTypeValue(type);
     }
     if (json.containsKey("permission_name")) {
-      String permission_name = json.getString("permission_name");
-      permissionBuilder.setPermissionName(permission_name);
+      String permissionName = json.getString("permission_name");
+      permissionBuilder.setPermissionName(permissionName);
     }
     if (json.containsKey("threshold")) {
-//      long threshold = json.getLong("threshold");
+      //      long threshold = json.getLong("threshold");
       long threshold = Long.parseLong(json.getString("threshold"));
       permissionBuilder.setThreshold(threshold);
     }
     if (json.containsKey("parent_id")) {
-      int parent_id = json.getInteger("parent_id");
-      permissionBuilder.setParentId(parent_id);
+      int parentId = json.getInteger("parent_id");
+      permissionBuilder.setParentId(parentId);
     }
     if (json.containsKey("operations")) {
       byte[] operations = ByteArray.fromHexString(json.getString("operations"));
@@ -2203,7 +2309,7 @@ public class PublicMethedForMutiSign {
         Key.Builder keyBuilder = Key.newBuilder();
         JSONObject key = keys.getJSONObject(i);
         String address = key.getString("address");
-//        long weight = key.getLong("weight");
+        //        long weight = key.getLong("weight");
         long weight = Long.parseLong(key.getString("weight"));
         keyBuilder.setAddress(ByteString.copyFrom(WalletClient.decodeFromBase58Check(address)));
         keyBuilder.setWeight(weight);
@@ -2213,9 +2319,11 @@ public class PublicMethedForMutiSign {
     }
     return permissionBuilder.build();
   }
+
   /**
    * constructor.
    */
+
   public static boolean accountPermissionUpdate(String permissionJson, byte[] owner, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -2232,22 +2340,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -2322,45 +2430,6 @@ public class PublicMethedForMutiSign {
   }
 
 
-  private static Transaction signTransaction(Transaction transaction,
-      WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
-    if (transaction.getRawData().getTimestamp() == 0) {
-      transaction = TransactionUtils.setTimestamp(transaction);
-    }
-
-    long currentTime = System.currentTimeMillis();//*1000000 + System.nanoTime()%1000000;
-    Transaction.Builder builder = transaction.toBuilder();
-    org.tron.protos.Protocol.Transaction.raw.Builder rowBuilder = transaction.getRawData()
-        .toBuilder();
-    rowBuilder.setTimestamp(currentTime);
-    builder.setRawData(rowBuilder.build());
-    transaction = builder.build();
-
-    for (int i = 0; i < priKeys.length; i += 1) {
-      String priKey = priKeys[i];
-      ECKey temKey = null;
-      try {
-        BigInteger priK = new BigInteger(priKey, 16);
-        temKey = ECKey.fromPrivate(priK);
-      } catch (Exception ex) {
-        ex.printStackTrace();
-      }
-      ECKey ecKey = temKey;
-
-      transaction = TransactionUtils.sign(transaction, ecKey);
-      TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
-      if (weight.getResult().getCode()
-          == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
-        break;
-      }
-      if (weight.getResult().getCode()
-          == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
-        continue;
-      }
-    }
-    return transaction;
-  }
-
   /**
    * constructor.
    */
@@ -2406,6 +2475,9 @@ public class PublicMethedForMutiSign {
     return broadcastTransaction(transaction, blockingStubFull);
   }
 
+  /**
+   * constructor.
+   */
   public static void printPermissionList(List<Permission> permissionList) {
     String result = "\n";
     result += "[";
@@ -2426,6 +2498,9 @@ public class PublicMethedForMutiSign {
     System.out.println(result);
   }
 
+  /**
+   * constructor.
+   */
   public static String printPermission(Permission permission) {
     StringBuffer result = new StringBuffer();
     result.append("permission_type: ");
@@ -2460,6 +2535,9 @@ public class PublicMethedForMutiSign {
     return result.toString();
   }
 
+  /**
+   * constructor.
+   */
   public static String printKey(Key key) {
     StringBuffer result = new StringBuffer();
     result.append("address: ");
@@ -2471,6 +2549,9 @@ public class PublicMethedForMutiSign {
     return result.toString();
   }
 
+  /**
+   * constructor.
+   */
   public static String encode58Check(byte[] input) {
     byte[] hash0 = Sha256Hash.hash(input);
     byte[] hash1 = Sha256Hash.hash(hash0);
@@ -2480,6 +2561,9 @@ public class PublicMethedForMutiSign {
     return Base58.encode(inputCheck);
   }
 
+  /**
+   * constructor.
+   */
   public static Transaction sendcoinWithPermissionIdNotSign(byte[] to, long amount, byte[] owner,
       int permissionId, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
@@ -2517,12 +2601,17 @@ public class PublicMethedForMutiSign {
 
   }
 
-
+  /**
+   * constructor.
+   */
   public static TransactionSignWeight getTransactionSignWeight(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     return blockingStubFull.getTransactionSignWeight(transaction);
   }
 
+  /**
+   * constructor.
+   */
   public static Return broadcastTransaction1(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Return response = blockingStubFull.broadcastTransaction(transaction);
@@ -2530,7 +2619,9 @@ public class PublicMethedForMutiSign {
     return response;
   }
 
-
+  /**
+   * constructor.
+   */
   public static boolean accountPermissionUpdateWithPermissionId(String permissionJson, byte[] owner,
       String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId, String[] priKeys) {
@@ -2548,22 +2639,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -2641,22 +2732,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -2716,19 +2807,22 @@ public class PublicMethedForMutiSign {
     return transaction;
   }
 
-  public static Transaction setPermissionId(Transaction transaction, int permission_id)
+  /**
+   * constructor.
+   */
+  public static Transaction setPermissionId(Transaction transaction, int permissionId)
       throws CancelException {
     if (transaction.getSignatureCount() != 0
         || transaction.getRawData().getContract(0).getPermissionId() != 0) {
       return transaction;
     }
-    if (permission_id < 0) {
+    if (permissionId < 0) {
       throw new CancelException("User cancelled");
     }
-    if (permission_id != 0) {
+    if (permissionId != 0) {
       Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
       Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
-          .setPermissionId(permission_id);
+          .setPermissionId(permissionId);
       raw.clearContract();
       raw.addContract(contract);
       transaction = transaction.toBuilder().setRawData(raw).build();
@@ -2736,6 +2830,9 @@ public class PublicMethedForMutiSign {
     return transaction;
   }
 
+  /**
+   * constructor.
+   */
   public static int getActivePermissionKeyCount(List<Permission> permissionList) {
     int permissionCount = 0;
     for (Permission permission : permissionList) {
@@ -2747,7 +2844,6 @@ public class PublicMethedForMutiSign {
   /**
    * constructor.
    */
-
   public static Boolean sendcoinWithPermissionId(byte[] to, long amount, byte[] owner,
       int permissionId, String priKey,
       WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
@@ -2805,7 +2901,8 @@ public class PublicMethedForMutiSign {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness\",\"threshold\":1,\"keys\":["
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"witness\","
+            + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
@@ -2864,22 +2961,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -3045,12 +3142,12 @@ public class PublicMethedForMutiSign {
 
     long time = System.currentTimeMillis();
     AtomicLong count = new AtomicLong();
-    long gTime = count.incrementAndGet() + time;
-    String ref = "" + gTime;
+    long geTime = count.incrementAndGet() + time;
+    String ref = "" + geTime;
 
-    transaction = setReference(transaction, gTime, ByteArray.fromString(ref));
+    transaction = setReference(transaction, geTime, ByteArray.fromString(ref));
 
-    transaction = setExpiration(transaction, gTime);
+    transaction = setExpiration(transaction, geTime);
 
     return transaction;
   }

@@ -154,7 +154,9 @@ public class WalletTestMutiSign004 {
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
     PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
         ownerAddress, 0, blockingStubFull, ownerKeyString);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethedForMutiSign.updateEnergyLimitWithPermissionId(contractAddress, 37, ownerKey,
+        ownerAddress, 0, blockingStubFull, ownerKeyString);
   }
 
   /**
