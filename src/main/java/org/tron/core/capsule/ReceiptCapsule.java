@@ -1,11 +1,9 @@
 package org.tron.core.capsule;
 
-import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -46,6 +44,10 @@ public class ReceiptCapsule {
 
   public void setNetFee(long netFee) {
     this.receipt = this.receipt.toBuilder().setNetFee(netFee).build();
+  }
+
+  public void addNetFee(long netFee) {
+    this.receipt = this.receipt.toBuilder().setNetFee(getNetFee() + netFee).build();
   }
 
   public long getEnergyUsage() {
