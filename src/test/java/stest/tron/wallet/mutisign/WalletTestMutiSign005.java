@@ -21,7 +21,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
@@ -106,25 +105,32 @@ public class WalletTestMutiSign005 {
     permissionKeyString[1] = manager2Key;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = witnessKey001;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(witnessKey001)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":1}]},"
+            + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,\""
+            + "keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,witness001Address,witnessKey001,
+    PublicMethedForMutiSign.accountPermissionUpdate(
+        accountPermissionJson,witness001Address,witnessKey001,
         blockingStubFull,ownerKeyString);
-
 
     //Create a proposal
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(0L, 81000L);
-    Assert.assertTrue(PublicMethedForMutiSign.createProposal(witness001Address,witnessKey001,
-        proposalMap,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(
+        PublicMethedForMutiSign.createProposalWithPermissionId(witness001Address, witnessKey001,
+            proposalMap, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
@@ -132,11 +138,13 @@ public class WalletTestMutiSign005 {
     final Integer proposalId = listProposals.get().getProposalsCount();
     logger.info(Integer.toString(proposalId));
 
-    Assert.assertTrue(PublicMethedForMutiSign.approveProposal(witness001Address,witnessKey001,proposalId,
-        true,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.approveProposalWithPermission(
+            witness001Address,witnessKey001,proposalId,
+        true, 0, blockingStubFull, ownerKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
-    Assert.assertTrue(PublicMethedForMutiSign.deleteProposal(witness001Address,witnessKey001,proposalId,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
+        witness001Address, witnessKey001, proposalId, 2, blockingStubFull, permissionKeyString));
 
   }
   /**

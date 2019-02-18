@@ -28,9 +28,14 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Setter
   private Entry abiEntry;
 
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    contractEventTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+  }
+
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
 
+    this.contractEventTrigger.setUniqueId(log.getUniqueId());
     this.contractEventTrigger.setTransactionId(log.getTransactionId());
     this.contractEventTrigger.setContractAddress(log.getContractAddress());
     this.contractEventTrigger.setCallerAddress(log.getCallerAddress());
@@ -42,6 +47,8 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     this.topicList = log.getTopicList();
     this.data = log.getData();
     this.contractEventTrigger.setEventSignature(log.getEventSignature());
+    this.contractEventTrigger.setEventSignatureFull(log.getEventSignatureFull());
+    this.contractEventTrigger.setEventName(log.getAbiEntry().getName());
     this.abiEntry = log.getAbiEntry();
   }
 

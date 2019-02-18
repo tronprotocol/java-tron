@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter.trigger;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -44,35 +46,60 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private  long netFee;
+  private long netFee;
+
+  //contract
+  @Getter
+  @Setter
+  private String result;
+
+  @Getter
+  @Setter
+  private String contractAddress;
+
+  @Getter
+  @Setter
+  private String contractType;
+
+  @Getter
+  @Setter
+  private long feeLimit;
+
+  @Getter
+  @Setter
+  private long contractCallValue;
+
+  @Getter
+  @Setter
+  private String contractResult;
+
+  // transfer contract
+  @Getter
+  @Setter
+  private String fromAddress;
+
+  @Getter
+  @Setter
+  private String toAddress;
+
+  @Getter
+  @Setter
+  private String assetName;
+
+  @Getter
+  @Setter
+  private long assetAmount;
+
+  @Getter
+  @Setter
+  private long latestSolidifiedBlockNumber;
+
+  //internal transaction
+  @Getter
+  @Setter
+  private List<InternalTransactionPojo> internalTrananctionList;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
-  }
-
-  @Override
-  public String toString() {
-    return new StringBuilder().append("triggerName: ")
-      .append(getTriggerName())
-      .append("timestamp: ")
-      .append(timeStamp)
-      .append(", transactionId: ")
-      .append(transactionId)
-      .append(", blockHash: ")
-      .append(blockHash)
-      .append(", blockNumber: ")
-      .append(blockNumber)
-      .append(", energyUsage: ")
-      .append(energyUsage)
-      .append(", energyFee: ")
-      .append(energyFee)
-      .append(", originEnergyUsage: ")
-      .append(originEnergyUsage)
-      .append(", energyUsageTotal: ")
-      .append(energyUsageTotal)
-      .append(", netUsage: ")
-      .append(netUsage)
-      .append(", netFee: ")
-      .append(netFee).toString();
   }
 }

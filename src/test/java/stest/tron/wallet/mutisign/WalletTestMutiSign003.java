@@ -16,7 +16,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -40,7 +39,7 @@ public class WalletTestMutiSign003 {
       .get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
+  String[] ownerKeyString = new String[3];
   String accountPermissionJson = "";
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -103,34 +102,50 @@ public class WalletTestMutiSign003 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     ownerKeyString[0] = ownerKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(ownerKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
+    ownerKeyString[1] = manager1Key;
+    ownerKeyString[2] = manager2Key;
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":3,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
 
-    String updateName = Long.toString(System.currentTimeMillis());
+    final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    Assert.assertTrue(PublicMethedForMutiSign.createAccount(ownerAddress,newAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.sendcoin(newAddress,100L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(ownerAddress,1000000L,0,1,ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),ownerKey,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,newAddress,blockingStubFull,permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.updateAccount(ownerAddress,updateName.getBytes(),ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.createAccount(
+        ownerAddress, newAddress, ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
+        newAddress, 100L, ownerAddress, 2, ownerKey, blockingStubFull, permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
+        ownerAddress, 1000000L, 0, 0, ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
+        ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
+            ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),
+        ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
+        ownerAddress, ownerKey, 0, null, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
+        ownerAddress, ownerKey, 0, newAddress, 2, blockingStubFull, permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.updateAccount(
+        ownerAddress, updateName.getBytes(), ownerKey, blockingStubFull, ownerKeyString));
 
     String voteStr = Base58.encode58Check(witnessAddress);
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
-    Assert.assertTrue(PublicMethedForMutiSign.voteWitness(smallVoteMap, ownerAddress, ownerKey,blockingStubFull,permissionKeyString));
-
+    Assert.assertTrue(PublicMethedForMutiSign.voteWitness(
+        smallVoteMap, ownerAddress, ownerKey, blockingStubFull, ownerKeyString));
 
   }
 

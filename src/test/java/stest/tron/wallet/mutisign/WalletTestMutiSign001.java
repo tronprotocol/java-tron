@@ -38,11 +38,11 @@ public class WalletTestMutiSign001 {
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
-  private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+  private String fullnode = Configuration.getByPath("testng.conf")
+      .getStringList("fullnode.ip.list").get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[1];
+  String[] ownerKeyString = new String[2];
   String accountPermissionJson = "";
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -101,13 +101,19 @@ public class WalletTestMutiSign001 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     ownerKeyString[0] = ownerKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(ownerKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
+    ownerKeyString[1] = manager1Key;
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
+
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
@@ -119,7 +125,7 @@ public class WalletTestMutiSign001 {
 
     Assert.assertTrue(PublicMethedForMutiSign.createAssetIssue(ownerAddress,name,totalSupply,1,
         1,start,end,1,description,url,2000L,2000L,
-        1L,1L,ownerKey,blockingStubFull,permissionKeyString));
+        1L, 1L, ownerKey, blockingStubFull, ownerKeyString));
     logger.info(" create asset end");
   }
   /**
@@ -135,7 +141,7 @@ public class WalletTestMutiSign001 {
     assetAccountId1 = getAssetIdFromOwnerAccount.getAssetIssuedID();
     Assert.assertTrue(PublicMethedForMutiSign.transferAsset(manager1Address,
         assetAccountId1.toByteArray(), 10,ownerAddress,ownerKey,blockingStubFull,
-        permissionKeyString));
+        ownerKeyString));
   }
 
   /**
@@ -150,25 +156,29 @@ public class WalletTestMutiSign001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(participateAddress,2048000000L,fromAddress,testKey002,
         blockingStubFull));
-    PublicMethed.printAddress(participateKey);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = participateKey;
-    accountPermissionJson = "[{\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(participateKey)
-        + "\",\"weight\":2}],\"name\":\"owner\",\"threshold\":2,\"parent\":\"owner\"},"
-        + "{\"parent\":\"owner\",\"keys\":[{\"address\":\""
-        + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},{\"address\":\""
-        + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
-        + "\"threshold\":2}]";
+    ownerKeyString[1] = manager1Key;
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(participateKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,participateAddress,
         participateKey, blockingStubFull,ownerKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssue(ownerAddress,assetAccountId1
-            .toByteArray(), 10,participateAddress,participateKey,
-        blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssueWithPermissionId(ownerAddress,
+        assetAccountId1.toByteArray(), 10, participateAddress, participateKey, 0,
+        blockingStubFull, ownerKeyString));
   }
 
   /**
@@ -178,9 +188,11 @@ public class WalletTestMutiSign001 {
   @Test(enabled = true)
   public void testMutiSign4updateAssetissue() {
     url = "MutiSign001_update_url" + Long.toString(now);
+    ownerKeyString[0] = ownerKey;
     description = "MutiSign001_update_description" + Long.toString(now);
-    Assert.assertTrue(PublicMethedForMutiSign.updateAsset(ownerAddress,description.getBytes(),url
-        .getBytes(),100L,100L,ownerKey,blockingStubFull,permissionKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign
+        .updateAssetWithPermissionId(ownerAddress, description.getBytes(), url.getBytes(), 100L,
+            100L, ownerKey, 2, blockingStubFull, permissionKeyString));
   }
 
 

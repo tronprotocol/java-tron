@@ -210,6 +210,8 @@ public class Manager {
 
   private boolean isRunTriggerCapsuleProcessThread = true;
 
+  private long latestSolidifiedBlockNumber;
+
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -376,22 +378,24 @@ public class Manager {
   private Runnable repushLoop =
       () -> {
         while (isRunRepushThread) {
+          TransactionCapsule tx = null;
           try {
             if (isGeneratingBlock()) {
               TimeUnit.MILLISECONDS.sleep(10L);
               continue;
             }
-            TransactionCapsule tx = this.getRepushTransactions().poll(1, TimeUnit.SECONDS);
+            tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
             }
-          } catch (InterruptedException ex) {
-            logger.info(ex.getMessage());
-            Thread.currentThread().interrupt();
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in repush loop", throwable);
+          } finally {
+            if (tx != null) {
+              getRepushTransactions().remove(tx);
+            }
           }
         }
       };
@@ -737,7 +741,7 @@ public class Manager {
       pushTransactionQueue.add(trx);
     }
 
-    try{
+    try {
       if (!trx.validateSignature(this)) {
         throw new ValidateSignatureException("trans sig validate failed");
       }
@@ -927,7 +931,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature()) {
+        if (!block.validateSignature(this)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -1009,6 +1013,7 @@ public class Manager {
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
+
           applyBlock(newBlock);
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
@@ -1023,15 +1028,17 @@ public class Manager {
     }
     //clear ownerAddressSet
     synchronized (pushTransactionQueue) {
-      Set<String> result = new HashSet<>();
-      for (TransactionCapsule transactionCapsule : repushTransactions) {
-        filterOwnerAddress(transactionCapsule, result);
+      if (CollectionUtils.isNotEmpty(ownerAddressSet)) {
+        Set<String> result = new HashSet<>();
+        for (TransactionCapsule transactionCapsule : repushTransactions) {
+          filterOwnerAddress(transactionCapsule, result);
+        }
+        for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
+          filterOwnerAddress(transactionCapsule, result);
+        }
+        ownerAddressSet.clear();
+        ownerAddressSet.addAll(result);
       }
-      for (TransactionCapsule transactionCapsule : pushTransactionQueue) {
-        filterOwnerAddress(transactionCapsule, result);
-      }
-      ownerAddressSet.clear();
-      ownerAddressSet.addAll(result);
     }
     logger.info("pushBlock block number:{}, cost/txs:{}/{}",
         block.getNum(),
@@ -1184,6 +1191,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     VMConfig.initVmHardFork();
+    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1250,7 +1258,7 @@ public class Manager {
    */
   public synchronized BlockCapsule generateBlock(
       final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
-      Boolean lastHeadBlockIsMaintenanceBefore)
+      Boolean lastHeadBlockIsMaintenanceBefore, Boolean needCheckWitnessPermission)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
 
@@ -1283,6 +1291,12 @@ public class Manager {
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
+
+    if (needCheckWitnessPermission && !witnessService.
+        validateWitnessPermission(witnessCapsule.getAddress())) {
+      logger.warn("Witness permission is wrong");
+      return null;
+    }
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1420,10 +1434,7 @@ public class Manager {
   private boolean isMultSignTransaction(Transaction transaction) {
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
-      case AccountPermissionUpdateContract:
-      case PermissionAddKeyContract:
-      case PermissionUpdateKeyContract:
-      case PermissionDeleteKeyContract: {
+      case AccountPermissionUpdateContract: {
         return true;
       }
       default:
@@ -1544,6 +1555,7 @@ public class Manager {
     }
 
     getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
+    this.latestSolidifiedBlockNumber = latestSolidifiedBlockNum;
     logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
@@ -1844,7 +1856,9 @@ public class Manager {
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      boolean result = triggerCapsuleQueue.offer(new BlockLogTriggerCapsule(newBlock));
+      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
+      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (result == false) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
@@ -1858,8 +1872,9 @@ public class Manager {
   private void postTransactionTrigger(final TransactionCapsule trxCap,
       final BlockCapsule blockCap) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      boolean result = triggerCapsuleQueue
-          .offer(new TransactionLogTriggerCapsule(trxCap, blockCap));
+      TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
+      trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      boolean result = triggerCapsuleQueue.offer(trx);
       if (result == false) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
       }
@@ -1898,12 +1913,14 @@ public class Manager {
           ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
               (LogEventWrapper) trigger);
           contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
+          contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
         } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
             .isContractLogTriggerEnable()) {
           ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
               (ContractLogTrigger) trigger);
           contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
+          contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
         }
         if (result == false) {

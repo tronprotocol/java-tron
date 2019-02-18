@@ -28,7 +28,10 @@ public class CreateAccountActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);
-      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract, dbManager.getHeadBlockTimeStamp());
+      boolean withDefaultPermission =
+          dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
+      AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
+          dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
 
       dbManager.getAccountStore().put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 

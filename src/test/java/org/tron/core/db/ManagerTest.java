@@ -230,7 +230,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false, false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -299,7 +299,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false, false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 
@@ -396,12 +396,12 @@ public class ManagerTest {
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
     BlockCapsule blockCapsule =
-        dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, true);
+        dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, true, false);
 
     //has processed the first block of the maintenance period before starting the block
     dbManager.getWitnessStore().reset();
     dbManager.getDynamicPropertiesStore().saveStateFlag(0);
-    blockCapsule = dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, true);
+    blockCapsule = dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, true, false);
     Assert.assertTrue(blockCapsule == null);
   }
 
@@ -421,7 +421,7 @@ public class ManagerTest {
     byte[] address = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     dbManager.addWitness(ByteString.copyFrom(address));
-    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false);
+    dbManager.generateBlock(witnessCapsule, 1533529947843L, privateKey, false, false);
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
 

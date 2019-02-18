@@ -14,12 +14,16 @@ public class BlockLogTriggerCapsule extends TriggerCapsule {
   public BlockLogTriggerCapsule(BlockCapsule block) {
     blockLogTrigger = new BlockLogTrigger();
     blockLogTrigger.setBlockHash(block.getBlockId().toString());
-    blockLogTrigger.setTimeStamp(System.currentTimeMillis());
+    blockLogTrigger.setTimeStamp(block.getTimeStamp());
     blockLogTrigger.setBlockNumber(block.getNum());
     blockLogTrigger.setTransactionSize(block.getTransactions().size());
     block.getTransactions().forEach(trx ->
         blockLogTrigger.getTransactionList().add(trx.getTransactionId().toString())
     );
+  }
+
+  public void setLatestSolidifiedBlockNumber(long latestSolidifiedBlockNumber) {
+    blockLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
   @Override
