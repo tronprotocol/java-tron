@@ -86,7 +86,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true, description = "InternalTransaction type:create create call call ")
+  @Test(enabled = true, description = "Type is create create call call")
   public void test1InternalTransaction007() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -207,7 +207,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction type: call call ")
+  @Test(enabled = true, description = "Type is call call")
   public void test2InternalTransaction008() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -417,7 +417,7 @@ public class ContractInternalTransaction002 {
 
   }
 
-  @Test(enabled = true, description = "InternalTransaction type: call call ")
+  @Test(enabled = true, description = "Test suicide type in internalTransaction after call")
   public void test3InternalTransaction009() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -593,7 +593,7 @@ public class ContractInternalTransaction002 {
     }
   }
 
-  @Test(enabled = true, description = "InternalTransaction type: create number limit")
+  @Test(enabled = false, description = "Test maxfeelimit can trigger create type max time")
   public void test4InternalTransaction010() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -766,7 +766,7 @@ public class ContractInternalTransaction002 {
   }
 
 
-  @Test(enabled = true, description = "InternalTransaction type: call create call call")
+  @Test(enabled = true, description = "Type is call create->call->call.Three-level nesting")
   public void test5InternalTransaction012() {
     PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,

@@ -82,7 +82,7 @@ public class ContractGrammar002 {
   }
 
 
-  @Test(enabled = true, description = "Grammar: Interface type function")
+  @Test(enabled = true, description = "Interface type function")
   public void test1Grammar007() {
     PublicMethed
         .sendcoin(grammarAddress2, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -134,7 +134,7 @@ public class ContractGrammar002 {
     Assert.assertTrue(infoById2.get().getResultValue() == 0);
   }
 
-  @Test(enabled = true, description = "Grammar: Abstract function")
+  @Test(enabled = true, description = "Abstract function")
   public void test2Grammar008() {
     String contractName = "catContract";
     String code = Configuration.getByPath("testng.conf")
@@ -167,7 +167,7 @@ public class ContractGrammar002 {
         "6d69616f77000000000000000000000000000000000000000000000000000000");
   }
 
-  @Test(enabled = true, description = "Grammar: Gas, value test")
+  @Test(enabled = true, description = "Gas, value test")
   public void test3Grammar010() {
 
     String contractName = "catContract";
@@ -197,7 +197,7 @@ public class ContractGrammar002 {
   }
 
 
-  @Test(enabled = true, description = "Grammar: Call a named function")
+  @Test(enabled = true, description = "Call a named function")
   public void test4Grammar011() {
     String contractName = "cContract";
     String code = Configuration.getByPath("testng.conf")
@@ -231,7 +231,7 @@ public class ContractGrammar002 {
   }
 
 
-  @Test(enabled = true, description = "Grammar: Call a native function")
+  @Test(enabled = true, description = "Call a native function")
   public void test5Grammar012() {
     String contractName = "rtestContract";
     String code = Configuration.getByPath("testng.conf")
@@ -253,7 +253,7 @@ public class ContractGrammar002 {
 
   }
 
-  @Test(enabled = true, description = "Grammar: Call a Destructor function")
+  @Test(enabled = true, description = "Call a Destructor function")
   public void test6Grammar013() {
     String contractName = "executefallbackContract";
     String code = Configuration.getByPath("testng.conf")

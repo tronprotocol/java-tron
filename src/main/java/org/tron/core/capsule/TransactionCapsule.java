@@ -48,10 +48,8 @@ import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
-import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
@@ -761,12 +759,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (exception instanceof JVMStackOverFlowException) {
       this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
       return;
-    }
-    if (ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5)){
-      if (exception instanceof BytecodeExecutionException) {
-        this.setResultCode(contractResult.BYTECODE_EXECUTION_EXCEPTION);
-        return;
-      }
     }
     this.setResultCode(contractResult.UNKNOWN);
     return;
