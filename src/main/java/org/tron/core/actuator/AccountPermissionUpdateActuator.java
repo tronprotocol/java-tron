@@ -216,6 +216,6 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
 }

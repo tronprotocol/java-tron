@@ -100,6 +100,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
 
+  private static final byte[] UPDATE_ACCOUNT_PERMISSION_FEE = "UPDATE_ACCOUNT_PERMISSION_FEE"
+      .getBytes();
+
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
   private static final byte[] EXCHANGE_BALANCE_LIMIT = "EXCHANGE_BALANCE_LIMIT".getBytes();
@@ -396,6 +399,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAssetIssueFee(1024000000L);
     }
+
+    try {
+      this.getUpdateAccountPermissionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveUpdateAccountPermissionFee(100000000L);
+    }
+
 
     try {
       this.getExchangeCreateFee();
@@ -1029,6 +1039,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
+  public void saveUpdateAccountPermissionFee(long fee) {
+    this.put(UPDATE_ACCOUNT_PERMISSION_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
   public long getAssetIssueFee() {
     return Optional.ofNullable(getUnchecked(ASSET_ISSUE_FEE))
         .map(BytesCapsule::getData)
@@ -1036,6 +1051,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found ASSET_ISSUE_FEE"));
   }
+
+  public long getUpdateAccountPermissionFee() {
+    return Optional.ofNullable(getUnchecked(UPDATE_ACCOUNT_PERMISSION_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found UPDATE_ACCOUNT_PERMISSION_FEE"));
+  }
+
 
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
