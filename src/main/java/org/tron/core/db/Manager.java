@@ -1173,8 +1173,6 @@ public class Manager {
     trxCap.setTrxTrace(transactionTrace);
     trxCap.setResultCode(contractResult.SUCCESS);
 
-    // id for first record of deferred transaction
-    Transaction origin = trxCap.getInstance();
     trxCap.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
@@ -1185,10 +1183,7 @@ public class Manager {
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
             .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-
-    trxCap.setTransaction(origin);
-
-
+    
     postContractTrigger(transactionTrace, false);
 
     return true;
@@ -1215,6 +1210,11 @@ public class Manager {
 
     validateDup(trxCap);
 
+    if (trxCap.getDeferredSeconds() > 0) {
+      // set reference block to zero to ensure trans sig is right
+      trxCap.setReference(0);
+    }
+  
     if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
