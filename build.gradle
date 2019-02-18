@@ -110,6 +110,8 @@ dependencies {
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
 
+    compile "org.bitcoinj:bitcoinj-core:0.14.7"
+
     compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
 
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
