@@ -63,20 +63,20 @@
   <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
   <property name="name" value="transferToken"/>
   <property name="begin" value="0"/>
-  <property name="end" value="59"/>
+  <property name="end" value="49"/>
   </bean>
 
   <bean id="niceTransferAssetTransaction"
   class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
   <property name="name" value="niceTransferAssetTransaction"/>
-  <property name="begin" value="60"/>
-  <property name="end" value="69"/>
+  <property name="begin" value="50"/>
+  <property name="end" value="59"/>
   </bean>
 
   <bean id="niceTransferTransaction"
         class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
     <property name="name" value="niceTransferTransaction"/>
-    <property name="begin" value="70"/>
+    <property name="begin" value="60"/>
     <property name="end" value="79"/>
   </bean>
 
