@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
@@ -13,6 +15,9 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 public class ReceiptCapsule {
 
   private ResourceReceipt receipt;
+  @Getter
+  @Setter
+  private long multiSignFee;
 
   private Sha256Hash receiptAddress;
 

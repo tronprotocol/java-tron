@@ -781,7 +781,7 @@ public class Manager {
         }
       }
 
-      trace.addNetBill(fee);
+      trace.getReceipt().setMultiSignFee(fee);
     }
   }
 
