@@ -57,6 +57,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
 
 
+
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
   public Transaction createTransaction(com.google.protobuf.Message message,
@@ -80,6 +81,29 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     return transaction;
 
   }
+
+  public Transaction createTransactionForMuti(com.google.protobuf.Message message,
+      ContractType contractType) {
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            Any.pack(message)).build());
+
+    Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
+        .build();
+
+    long gTime = count.incrementAndGet() + time;
+    String ref = "" + gTime;
+
+    transaction = setReference(transaction, gTime, ByteArray.fromString(ref));
+
+    transaction = setExpiration(transaction, gTime);
+
+
+
+    return transaction;
+
+  }
+
 
   public Transaction createTransaction2(com.google.protobuf.Message message, org.tron.protos.Contract.TransferContract contract2,
                                         WalletGrpc.WalletBlockingStub blockingStubFull,String[] permissionKeyString,
@@ -217,6 +241,33 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
+
+  public static Transaction mutiSignNew(Transaction transaction, String[] permissionKeyString) {
+    for (int i = 0; i < permissionKeyString.length; i += 1) {
+      String priKey = permissionKeyString[i];
+      ECKey temKey = null;
+      try {
+        BigInteger priK = new BigInteger(priKey, 16);
+        temKey = ECKey.fromPrivate(priK);
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      ECKey ecKey = temKey;
+
+      transaction = TransactionUtils.sign(transaction, ecKey);
+/*      TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
+        break;
+      }
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
+        continue;
+      }*/
+    }
+    return transaction;
+  }
+
 
   public static Transaction Multisign(Transaction transaction,WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
 //    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
