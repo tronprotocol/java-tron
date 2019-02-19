@@ -92,6 +92,9 @@ service Wallet {
     };
   };
 
+  rpc CreateCancelDefferedTransactionContract (CancelDefferedTransactionContract) returns (TransactionExtention) {
+  };
+
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };

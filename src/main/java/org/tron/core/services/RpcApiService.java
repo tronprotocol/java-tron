@@ -1613,6 +1613,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createCancelDefferedTransactionContract(Contract.CancelDefferedTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelDefferedTransactionContract, responseObserver);
+    }
+
+    @Override
     public void cancelDeferredTransaction(BytesMessage request, StreamObserver<Return> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
