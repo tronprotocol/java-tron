@@ -1,13 +1,16 @@
 package org.tron.stresstest.dispatch.creator.contract;
 
+import com.google.protobuf.ByteString;
 import lombok.Setter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.stresstest.AbiUtil;
 import org.tron.stresstest.dispatch.AbstractTransactionCreator;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
@@ -47,7 +50,11 @@ public class TransferTokenCreator extends AbstractTransactionCreator implements 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TriggerSmartContract);
 
     transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
+    TransactionResultCapsule ret = new TransactionResultCapsule();
 
+    ret.setStatus(0, code.SUCESS);
+    transaction = transaction.toBuilder().addRet(ret.getInstance())
+        .build();
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
   }
