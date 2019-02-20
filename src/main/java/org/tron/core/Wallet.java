@@ -84,6 +84,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -1176,6 +1177,18 @@ public class Wallet {
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public Transaction getDeferredTransactionById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore().getByTransactionId(transactionId);
+
+    if (deferredTransactionCapsule != null) {
+      return deferredTransactionCapsule.getDeferredTransaction().getTransaction();
     }
     return null;
   }

@@ -99,11 +99,9 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Builder;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
@@ -2042,18 +2040,12 @@ public class Manager {
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
 
-    byte[] key = getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(transactionId);
-    if (ArrayUtils.isEmpty(key)){
+    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
+    if (Objects.isNull(deferredTransactionCapsule)){
       logger.error("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
-
-    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionByKey(key);
-    if (Objects.isNull(deferredTransactionCapsule)){
-      logger.error("failed to get deferred transaction from store");
-      return false;
-    }
-
+    
     long delayUntil = deferredTransactionCapsule.getDelayUntil();
     long now = System.currentTimeMillis();
 

@@ -1596,6 +1596,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDeferredTransactionById(BytesMessage request, StreamObserver<Transaction> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        Transaction reply = wallet.getDeferredTransactionById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getNodeInfo(EmptyMessage request, StreamObserver<NodeInfo> responseObserver) {
       try {
         responseObserver.onNext(nodeInfoService.getNodeInfo().transferToProtoEntity());
@@ -1628,6 +1641,7 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
   }
 
   @Override

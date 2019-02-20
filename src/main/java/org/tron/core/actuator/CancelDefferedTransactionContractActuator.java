@@ -6,7 +6,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -14,7 +13,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.CancelDefferedTransactionContract;
-import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -62,11 +60,7 @@ public class CancelDefferedTransactionContractActuator extends AbstractActuator 
     }
 
     ByteString trxId = cancelDefferedTransactionContract.getTransactionId();
-    byte[] key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(trxId);
-    if (ArrayUtils.isEmpty(key)) {
-      throw new ContractValidateException("No deferred transaction!");
-    }
-    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore().getByTransactionByKey(key);
+    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore().getByTransactionId(trxId);
     if (Objects.isNull(capsule)) {
       throw new ContractValidateException("No deferred transaction!");
     }

@@ -16,6 +16,8 @@ import java.util.List;
 @Component
 public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTransactionCapsule>  {
     @Autowired
+    private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
+    @Autowired
     private DeferredTransactionStore(@Value("deferred_transaction") String dbName) {
         super(dbName);
     }
@@ -35,7 +37,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
         revokingDB.delete(deferredTransactionCapsule.getKey());
     }
 
-    public DeferredTransactionCapsule getByTransactionByKey(byte[] key){
+    public DeferredTransactionCapsule getByTransactionKey(byte[] key){
         DeferredTransactionCapsule deferredTransactionCapsule = null;
         try{
             byte[] value = revokingDB.get(key);
@@ -49,6 +51,26 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
             logger.error("{}", e);
         }
 
+        return deferredTransactionCapsule;
+    }
+
+    public DeferredTransactionCapsule getByTransactionId(ByteString transactionId) {
+        DeferredTransactionCapsule deferredTransactionCapsule = null;
+        try {
+            byte[] key = deferredTransactionIdIndexStore.revokingDB.get(transactionId.toByteArray());
+            if (ArrayUtils.isEmpty(key)) {
+                return null;
+            }
+
+            byte[] value = revokingDB.get(key);
+            if (ArrayUtils.isEmpty(value)) {
+                return null;
+            }
+
+            deferredTransactionCapsule = new DeferredTransactionCapsule(value);
+        } catch (Exception e){
+            logger.error("{}", e);
+        }
         return deferredTransactionCapsule;
     }
 }
