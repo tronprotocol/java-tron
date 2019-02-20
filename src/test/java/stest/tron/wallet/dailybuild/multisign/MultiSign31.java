@@ -63,6 +63,10 @@ public class MultiSign31 {
   private ECKey ecKey5 = new ECKey(Utils.getRandom());
   byte[] test005Address = ecKey5.getAddress();
   String sendAccountKey5 = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   /**
    * constructor.
@@ -85,9 +89,9 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_34() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
-
+    long amount = updateAccountPermissionFee + 1000000;
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -95,6 +99,8 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
+    logger.info("balance:" + balance);
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -121,23 +127,32 @@ public class MultiSign31 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    logger.info("balance1:" + balance1);
+
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
+
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
     TransactionSignWeight transactionSignWeight = PublicMethedForMutiSign
         .getTransactionSignWeight(transaction1, blockingStubFull);
-    logger.info("transaction:" + transactionSignWeight);
+    logger.info("transactionSignWeight:" + transactionSignWeight);
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
-
     logger.info("returnResult1:" + returnResult1);
     Assert.assertTrue(returnResult1.getResult());
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    logger.info("balance2:" + balance2);
+
+    Assert.assertEquals(balance1 - balance2, 1L);
     Transaction transaction2 = PublicMethed
         .addTransactionSign(transaction1, sendAccountKey3, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
@@ -149,6 +164,9 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance3, balance2);
 
 
   }
@@ -160,9 +178,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_35() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -170,6 +189,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -196,12 +216,14 @@ public class MultiSign31 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -216,6 +238,10 @@ public class MultiSign31 {
             containsString("Permission denied"));
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    logger.info("balance2:" + balance2);
+    Assert.assertEquals(balance1, balance2);
 
     logger.info("returnResult1:" + returnResult1);
     Assert
@@ -242,6 +268,10 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    logger.info("balance3:" + balance3);
+    Assert.assertEquals(balance3, balance2);
 
 
   }
@@ -251,9 +281,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_36() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -261,6 +292,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -288,12 +320,14 @@ public class MultiSign31 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 0, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1, test001Address, 0, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -305,7 +339,9 @@ public class MultiSign31 {
     Assert.assertTrue(returnResult1.getResult());
 
     logger.info("returnResult1:" + returnResult1);
-
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1 - balance2, 1);
     Transaction transaction2 = PublicMethed
         .addTransactionSign(transaction1, dev001Key, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
@@ -317,6 +353,9 @@ public class MultiSign31 {
     logger.info("returnResult1:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance2, balance3);
   }
 
   @Test(enabled = true, description =
@@ -325,9 +364,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_37() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -335,6 +375,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -365,12 +406,14 @@ public class MultiSign31 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 3, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 3, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -392,9 +435,12 @@ public class MultiSign31 {
     Assert
         .assertThat(returnResult1.getMessage().toStringUtf8(),
             containsString("but it is not contained of permission"));
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1, balance2);
     //Assert.assertTrue(returnResult1.getResult());
-    Transaction transaction2 = PublicMethed
-        .addTransactionSign(transaction1, sendAccountKey3, blockingStubFull);
+    Transaction transaction2 = PublicMethedForMutiSign
+        .addTransactionSignWithPermissionId(transaction1, sendAccountKey3, 3, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
         .getTransactionSignWeight(transaction2, blockingStubFull);
     logger.info("transaction1:" + transactionSignWeight1);
@@ -410,7 +456,9 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
-
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance2, balance3);
 
   }
 
@@ -420,9 +468,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_38() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 2;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -430,6 +479,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -461,11 +511,13 @@ public class MultiSign31 {
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 3, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1, test001Address, 3, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey3, blockingStubFull);
@@ -474,8 +526,11 @@ public class MultiSign31 {
     logger.info("transaction:" + transactionSignWeight);
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
-
     logger.info("returnResult1:" + returnResult1);
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1 - balance2, 1);
+
     Transaction transaction2 = PublicMethed
         .addTransactionSign(transaction1, sendAccountKey2, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
@@ -493,7 +548,9 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
-
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance3, balance2);
 
   }
 
@@ -503,9 +560,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_39() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 2;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -513,6 +571,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -544,11 +603,13 @@ public class MultiSign31 {
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 3, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 3, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey3, blockingStubFull);
@@ -557,6 +618,9 @@ public class MultiSign31 {
     logger.info("transaction:" + transactionSignWeight);
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1 - balance2, 1L);
 
     logger.info("returnResult1:" + returnResult1);
     Assert.assertTrue(returnResult1.getResult());
@@ -578,7 +642,9 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
-
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance3, balance2);
 
   }
 
@@ -588,9 +654,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_40() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 2;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -599,6 +666,7 @@ public class MultiSign31 {
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
+    long balance = test001AddressAccount.getBalance();
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
@@ -628,12 +696,14 @@ public class MultiSign31 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 3, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 3, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey3, blockingStubFull);
@@ -648,7 +718,9 @@ public class MultiSign31 {
             containsString("Permission denied"));
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
-
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1, balance2);
     logger.info("returnResult1:" + returnResult1);
     Assert
         .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
@@ -674,7 +746,9 @@ public class MultiSign31 {
     logger.info("returnResult2:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
-
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance2, balance3);
 
   }
 
@@ -684,8 +758,10 @@ public class MultiSign31 {
   public void testMultiUpdatepermissions_41() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 2;
+
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -693,6 +769,7 @@ public class MultiSign31 {
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
@@ -721,11 +798,13 @@ public class MultiSign31 {
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 0, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 0, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -737,7 +816,9 @@ public class MultiSign31 {
     Assert.assertTrue(returnResult1.getResult());
 
     logger.info("returnResult1:" + returnResult1);
-
+    Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance2 = test001AddressAccount2.getBalance();
+    Assert.assertEquals(balance1 - balance2, 1);
     Transaction transaction2 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction1, sendAccountKey3, 2, blockingStubFull);
     TransactionSignWeight transactionSignWeight1 = PublicMethedForMutiSign
@@ -755,6 +836,9 @@ public class MultiSign31 {
     logger.info("returnResult1:" + returnResult2);
     Assert
         .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+    Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
+    long balance3 = test001AddressAccount3.getBalance();
+    Assert.assertEquals(balance3, balance2);
   }
 
   /**

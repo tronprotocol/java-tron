@@ -2791,11 +2791,14 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     ECKey ecKey = temKey;
-    try {
-      transaction = setPermissionId(transaction, permissionId);
-    } catch (CancelException e) {
-      e.printStackTrace();
-    }
+
+//      transaction = setPermissionId(transaction, permissionId);
+    Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+    Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+        .setPermissionId(permissionId);
+    raw.clearContract();
+    raw.addContract(contract);
+    transaction = transaction.toBuilder().setRawData(raw).build();
 
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
