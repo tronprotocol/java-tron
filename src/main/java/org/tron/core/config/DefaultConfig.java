@@ -21,6 +21,7 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 @Configuration
 @Import(CommonConfig.class)
 @ImportResource(locations = "file:TransactionConfiguration.xml")
+//@ImportResource(locations = "file:TransferTRX.xml")
 public class DefaultConfig {
 
   @Autowired

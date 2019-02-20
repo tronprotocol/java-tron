@@ -10,6 +10,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.stresstest.AbiUtil;
@@ -25,22 +26,33 @@ import java.util.concurrent.TimeUnit;
 
 @Setter
 public class MultiSignTriggerContract extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
-
     private String ownerAddress = "TYtZeP1Xnho7LKcgeNsTY2Xg3LTpjfF6G5";
-    private String ownerKey = "795D7F7A3120132695DFB8977CC3B7ACC9770C125EB69037F19DCA55B075C4AE";
-
+    private String[] permissionKeyString = new String[5];
     private String contractAddress = commonContractAddress1;
     private long callValue = 0L;
     private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
     private boolean hex = false;
-    private String param = "\"" + commonContractAddress2 + "\",1002107,1";
-    //  private String param = "\"" + Wallet.encode58Check(commonContractAddress2.getBytes()) + "\",1000001,1";
+    private String param = "\"" + commonContractAddress2 + "\",1002113,1";
     private long feeLimit = 1000000000L;
-    private String privateKey = commonOwnerPrivateKey;
-    private WalletGrpc.WalletBlockingStub blockingStubFull = commonblockingStubFull;
+    private String privateKey = "795D7F7A3120132695DFB8977CC3B7ACC9770C125EB69037F19DCA55B075C4AE";
 
+    //TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE
+    String manager1Key = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
+    //TWKKwLswTTcK5cp31F2bAteQrzU8cYhtU5
+    String manager2Key = "553c7b0dee17d3f5b334925f5a90fe99fb0b93d47073d69ec33eead8459d171e";
+    //TT4MHXVApKfbcq7cDLKnes9h9wLSD4eMJi
+    String manager3Key = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb8";
+    //TCw4yb4hS923FisfMsxAzQ85srXkK6RWGk
+    String manager4Key = "ff5d867c4434ac17d264afc6696e15365832d5e8000f75733ebb336d66df148d";
+    //TLYUrci5Qw5fUPho2GvFv38kAK4QSmdhhN
+    String manager5Key = "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68";
     @Override
     protected Protocol.Transaction create() {
+        permissionKeyString[0] = manager1Key;
+        permissionKeyString[1] = manager2Key;
+        permissionKeyString[2] = manager3Key;
+        permissionKeyString[3] = manager4Key;
+        permissionKeyString[4] = manager5Key;
 
         byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
@@ -51,44 +63,20 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
 
             contract = triggerCallContract(
                     ownerAddressBytes, Wallet.decodeFromBase58Check(contractAddress), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
-//          ownerAddressBytes, contractAddress.getBytes(), callValue, Hex.decode(AbiUtil.parseMethod(methodSign, param, hex)));
         } catch (EncodingException e) {
             e.printStackTrace();
         }
 
-        String[] permissionKeyString = new String[2];
+        Protocol.Transaction transaction = createTransaction(contract, Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
 
-        //TYtZeP1Xnho7LKcgeNsTY2Xg3LTpjfF6G5
-//        permissionKeyString[2] = "795D7F7A3120132695DFB8977CC3B7ACC9770C125EB69037F19DCA55B075C4AE";
-        //TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj
-        permissionKeyString[1] = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
-        //TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm
-        permissionKeyString[0] = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+        transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
+        TransactionResultCapsule ret = new TransactionResultCapsule();
 
-
-
-        Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(ownerAddressBytes));
-        builder.setContractAddress(ByteString.copyFrom(Wallet.decodeFromBase58Check(contractAddress)));
-        try {
-        builder.setData(ByteString.copyFrom(Hex.decode(AbiUtil.parseMethod(methodSign, param, hex))));
-        } catch (EncodingException e) {
-            e.printStackTrace();
-        }
-        builder.setCallValue(callValue);
-        builder.setTokenId(Long.parseLong("0"));
-        builder.setCallTokenValue(0L);
-        Contract.TriggerSmartContract triggerContract = builder.build();
-
-
-
-        Protocol.Transaction transaction = createTransaction3(contract,triggerContract,blockingStubFull,feeLimit, Protocol.Transaction.Contract.ContractType.TriggerSmartContract);
-//        transaction = transaction.toBuilder().setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
-
-
-        transaction = Multisign(transaction,blockingStubFull, permissionKeyString);
+        ret.setStatus(0, Protocol.Transaction.Result.code.SUCESS);
+        transaction = transaction.toBuilder().addRet(ret.getInstance())
+                .build();
+        //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
+        transaction = mutiSignNew(transaction, permissionKeyString);
         return transaction;
-
     }
-
 }
