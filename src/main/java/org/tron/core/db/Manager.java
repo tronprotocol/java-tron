@@ -1207,7 +1207,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getDeferredSeconds() > 0) {
+    if (trxCap.getTransactionType() == TransactionCapsule.executingTransaction) {
       // set reference block to zero to ensure trans sig is right
       trxCap.setReference(0);
     }
@@ -1222,7 +1222,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     // process deferred transaction for the first time
-    if (trxCap.getDeferredSeconds() > 0){
+    if (trxCap.getTransactionType() == TransactionCapsule.UnexecutedTransaction){
       return processDeferTransaction(trxCap, blockCap, trace);
     }
 
@@ -1370,7 +1370,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.isDefferedTransaction()){
+      if (trx.getTransactionType() == TransactionCapsule.executingTransaction){
         if (totalDeferredTransactionProcessTime >= maxDeferredTransactionProcessTime){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, maxDeferredTransactionProcessTime);
           postponedTrxCount++;
@@ -1440,7 +1440,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.isDefferedTransaction()){
+      if (trx.getTransactionType() == TransactionCapsule.executingTransaction){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
@@ -2016,8 +2016,7 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setDeferredSeconds(0);
-      trxCapsule.setDefferedTransaction(true);
+      trxCapsule.setTransactionType(TransactionCapsule.executingTransaction);
       pendingTransactions.add(0, trxCapsule);
     }
 

@@ -66,18 +66,14 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     long bytesSize = 0;
-
-    // deferred is true indicates that the deferred transaction is executed for the first time, false indicates that it is executed for the second time
-    boolean deferred = trx.getDeferredSeconds() > 0 ? true : false;
-
+    
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
       bytesSize = trx.getSerializedSize();
     }
 
-    if (trx.isDefferedTransaction()){
-      if (deferred){
+    if (trx.getTransactionType() == TransactionCapsule.UnexecutedTransaction){
         // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
         // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
         bytesSize += trx.getTransactionId().getBytes().length;
@@ -86,8 +82,9 @@ public class BandwidthProcessor extends ResourceProcessor {
         // don't charge bandwidth twice when executing deferred tranaction
         bytesSize = 0;
       }
-    }
-
+      
+    // when transaction type is equal to executingTransaction, meaning fee already charged.
+    boolean charged = trx.getTransactionType() == TransactionCapsule.executingTransaction;
     for (Contract contract : contracts) {
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
@@ -102,12 +99,12 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      if (contractCreateNewAccount(contract) && !deferred) {
+      if (contractCreateNewAccount(contract) && !charged) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract && !deferred) {
+      if (contract.getType() == TransferAssetContract && !charged) {
         if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
           continue;
         }

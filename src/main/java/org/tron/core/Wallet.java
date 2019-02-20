@@ -412,6 +412,10 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    if (trx.getDeferredSeconds() > 0) {
+      trx.setTransactionType(TransactionCapsule.UnexecutedTransaction);
+    }
+
     Message message = new TransactionMessage(signaturedTransaction);
 
     try {

@@ -106,14 +106,18 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
+  /**
+   * transactionType is 0 representing normal transaction
+   * transactionType is 1 representing Unexecuted deferred transaction
+   * transactionType is 2 representing executing deferred transaction
+   */
   @Getter
   @Setter
-  private boolean isDefferedTransaction = false;
+  private int transactionType;
 
-  @Getter
-  @Setter
-  private long deferredSeconds = 0;
-
+  public static int normalTransaction = 0;
+  public static int UnexecutedTransaction = 1;
+  public static int executingTransaction = 0;
   /**
    * constructor TransactionCapsule.
    */
@@ -803,6 +807,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return ByteString.copyFrom(getOwner(contract));
   }
 
+  public long getDeferredSeconds(){
+    return this.transaction.getRawData().getDelaySeconds();
+  }
+  
   public ByteString getToAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){
