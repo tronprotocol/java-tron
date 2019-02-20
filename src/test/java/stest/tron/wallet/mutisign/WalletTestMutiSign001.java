@@ -189,7 +189,7 @@ public class WalletTestMutiSign001 {
     ownerKeyString[0] = participateKey;
     ownerKeyString[1] = manager1Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(participateKey)
             + "\",\"weight\":1}]},"

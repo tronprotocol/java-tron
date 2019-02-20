@@ -112,7 +112,7 @@ public class WalletTestMutiSign004 {
     ownerKeyString[0] = ownerKey;
     ownerKeyString[1] = manager1Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
@@ -154,7 +154,9 @@ public class WalletTestMutiSign004 {
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
     PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
         ownerAddress, 0, blockingStubFull, ownerKeyString);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethedForMutiSign.updateEnergyLimitWithPermissionId(contractAddress, 37, ownerKey,
+        ownerAddress, 0, blockingStubFull, ownerKeyString);
   }
 
   /**

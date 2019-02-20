@@ -194,7 +194,12 @@ public class ProposalController {
           }
           break;
         }
-
+        case (22): {
+          manager.getDynamicPropertiesStore().saveUpdateAccountPermissionFee(entry.getValue());
+        }
+        case (23): {
+          manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
+        }
         default:
           break;
       }

@@ -265,6 +265,9 @@ public class AccountPermissionUpdateActuatorTest {
             AccountType.Normal);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
+    owner.setBalance(1000_000_000L);
+    dbManager.getAccountStore().put(owner.getAddress().toByteArray(), owner);
+
     ownerPermission =
         Permission.newBuilder()
             .setType(PermissionType.Owner)

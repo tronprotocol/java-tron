@@ -106,13 +106,13 @@ public class WalletTestMutiSign005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = witnessKey001;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":1}]},"
+            + "\",\"weight\":2}]},"
             + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,\""
             + "keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
             + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
@@ -140,7 +140,7 @@ public class WalletTestMutiSign005 {
 
     Assert.assertTrue(PublicMethedForMutiSign.approveProposalWithPermission(
             witness001Address,witnessKey001,proposalId,
-        true, 0, blockingStubFull, ownerKeyString));
+        true, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
     Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
