@@ -35,7 +35,10 @@ public class WalletTestMutiSign005 {
       .getString("witness.key1");
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
 
-
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -88,7 +91,8 @@ public class WalletTestMutiSign005 {
 
   @Test(enabled = true)
   public void testMutiSignForProposal() {
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,10000000L,
+    long needcoin = updateAccountPermissionFee + multiSignFee * 3;
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address, needcoin + 10000000L,
         fromAddress,testKey002,blockingStubFull));
 
     ecKey1 = new ECKey(Utils.getRandom());
@@ -100,6 +104,10 @@ public class WalletTestMutiSign005 {
     manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(witness001Address, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
@@ -146,6 +154,11 @@ public class WalletTestMutiSign005 {
     Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
         witness001Address, witnessKey001, proposalId, 2, blockingStubFull, permissionKeyString));
 
+    Long balanceAfter = PublicMethed.queryAccount(witness001Address, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+
+    Assert.assertEquals(balanceBefore - balanceAfter, needcoin);
   }
   /**
    * constructor.
