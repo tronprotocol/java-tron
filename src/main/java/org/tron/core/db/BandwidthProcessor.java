@@ -67,17 +67,24 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     long bytesSize = 0;
 
+    // deferred is true indicates that the deferred transaction is executed for the first time, false indicates that it is executed for the second time
     boolean deferred = trx.getDeferredSeconds() > 0 ? true : false;
 
-    if (deferred){
-      // additional bandwitdth for canceling deferred transaction, whethere that be successfully executing, failure or expiration.
-      bytesSize = trx.getTransactionId().getBytes().length + trx.getSerializedSize();
+    if (dbManager.getDynamicPropertiesStore().supportVM()) {
+      bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
+    } else {
+      bytesSize = trx.getSerializedSize();
     }
-    else if (!trx.isDefferedTransaction()){
-      if (dbManager.getDynamicPropertiesStore().supportVM()) {
-        bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
-      } else {
-        bytesSize = trx.getSerializedSize();
+
+    if (trx.isDefferedTransaction()){
+      if (deferred){
+        // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
+        // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
+        bytesSize += trx.getTransactionId().getBytes().length;
+      }
+      else {
+        // don't charge bandwidth twice when executing deferred tranaction
+        bytesSize = 0;
       }
     }
 

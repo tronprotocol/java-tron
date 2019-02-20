@@ -41,7 +41,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -217,6 +216,8 @@ public class Manager {
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
+
+  private long totalDeferredTransactionProcessTime = 0;
 
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
 
@@ -1335,6 +1336,11 @@ public class Manager {
       return null;
     }
 
+    final long maxDeferredTransactionProcessTime = 200; // todo could be reset by prosal.
+    long deferredTransactionBeginTime = 0;
+    long postponedDeferredTrxCount = 0;
+    totalDeferredTransactionProcessTime = 0;
+
     List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
@@ -1356,12 +1362,27 @@ public class Manager {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
+
       // check the block size
       if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
+
+      // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
+      if (trx.isDefferedTransaction()){
+        if (totalDeferredTransactionProcessTime >= maxDeferredTransactionProcessTime){
+          logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, maxDeferredTransactionProcessTime);
+          postponedTrxCount++;
+          postponedDeferredTrxCount++;
+          continue;
+        }
+        else {
+          deferredTransactionBeginTime = DateTime.now().getMillis();
+        }
+      }
+
       //
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
@@ -1418,7 +1439,12 @@ public class Manager {
       } catch (VMIllegalException e) {
         logger.warn(e.getMessage(), e);
       }
-    }
+
+      if (trx.isDefferedTransaction()){
+        long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
+        totalDeferredTransactionProcessTime += processTime;
+      }
+    } // end of while
 
     session.reset();
 
@@ -1426,6 +1452,10 @@ public class Manager {
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
+    }
+
+    if (postponedDeferredTrxCount > 0) {
+      logger.info("{} deferred transactions postponed", postponedDeferredTrxCount);
     }
 
     logger.info(
