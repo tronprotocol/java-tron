@@ -42,7 +42,7 @@ public class WalletTestMutiSign001 {
       .getStringList("fullnode.ip.list").get(0);
   ByteString assetAccountId1;
   String[] permissionKeyString = new String[2];
-  String[] ownerKeyString = new String[2];
+  String[] ownerKeyString = new String[5];
   String accountPermissionJson = "";
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -60,6 +60,18 @@ public class WalletTestMutiSign001 {
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] participateAddress = ecKey4.getAddress();
   String participateKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+  ECKey ecKey5 = new ECKey(Utils.getRandom());
+  byte[] manager3Address = ecKey5.getAddress();
+  String manager3Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+  ECKey ecKey6 = new ECKey(Utils.getRandom());
+  byte[] manager4Address = ecKey6.getAddress();
+  String manager4Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+  ECKey ecKey7 = new ECKey(Utils.getRandom());
+  byte[] manager5Address = ecKey7.getAddress();
+  String manager5Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -81,32 +93,48 @@ public class WalletTestMutiSign001 {
 
   @Test(enabled = true)
   public void testMutiSign1CreateAssetissue() {
-    ecKey1 = new ECKey(Utils.getRandom());
-    manager1Address = ecKey1.getAddress();
-    manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    manager1Key = Configuration.getByPath("testng.conf")
+        .getString("witness.key1");
+    manager1Address = PublicMethed.getFinalAddress(manager1Key);
 
-    ecKey2 = new ECKey(Utils.getRandom());
-    manager2Address = ecKey2.getAddress();
-    manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+    manager2Key = Configuration.getByPath("testng.conf")
+        .getString("witness.key2");
+    manager2Address = PublicMethed.getFinalAddress(manager2Key);
+
+    manager3Key = Configuration.getByPath("testng.conf")
+        .getString("witness.key3");
+    manager3Address = PublicMethed.getFinalAddress(manager3Key);
+
+    manager4Key = Configuration.getByPath("testng.conf")
+        .getString("witness.key4");
+    manager4Address = PublicMethed.getFinalAddress(manager4Key);
+
+    manager5Key = Configuration.getByPath("testng.conf")
+        .getString("witness.key5");
+    manager5Address = PublicMethed.getFinalAddress(manager5Key);
 
     ecKey3 = new ECKey(Utils.getRandom());
     ownerAddress = ecKey3.getAddress();
     ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
     PublicMethed.printAddress(ownerKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,2048000000L,fromAddress,testKey002,
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,12999983262505860L,fromAddress,testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    permissionKeyString[0] = manager1Key;
-    permissionKeyString[1] = manager2Key;
+    permissionKeyString[0] = Configuration.getByPath("testng.conf")
+        .getString("witness.key1");
+    permissionKeyString[1] = Configuration.getByPath("testng.conf")
+        .getString("witness.key2");
     ownerKeyString[0] = ownerKey;
-    ownerKeyString[1] = manager1Key;
+    //ownerKeyString[1] = manager2Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":5,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
-            + "\",\"weight\":1}]},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager3Key) + "\",\"weight\":1}"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager4Key) + "\",\"weight\":1}"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager5Key) + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -118,21 +146,21 @@ public class WalletTestMutiSign001 {
     PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
         blockingStubFull,ownerKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    ownerKeyString[0] = manager1Key;
+    ownerKeyString[1] = manager2Key;
+    ownerKeyString[2] = manager3Key;
+    ownerKeyString[3] = manager4Key;
+    ownerKeyString[4] = manager5Key;
 
-    Long start = System.currentTimeMillis() + 5000;
-    Long end = System.currentTimeMillis() + 1000000000;
-    logger.info("try create asset issue");
-
-    Assert.assertTrue(PublicMethedForMutiSign.createAssetIssue(ownerAddress,name,totalSupply,1,
-        1,start,end,1,description,url,2000L,2000L,
-        1L, 1L, ownerKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
+        manager2Address, 100L, ownerAddress, 0, ownerKey, blockingStubFull, ownerKeyString));
     logger.info(" create asset end");
   }
   /**
    * constructor.
    */
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testMutiSign2TransferAssetissue() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.printAddress(manager1Key);
@@ -148,7 +176,7 @@ public class WalletTestMutiSign001 {
    * constructor.
    */
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testMutiSign3ParticipateAssetissue() {
     ecKey4 = new ECKey(Utils.getRandom());
     participateAddress = ecKey4.getAddress();
@@ -185,7 +213,7 @@ public class WalletTestMutiSign001 {
    * constructor.
    */
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void testMutiSign4updateAssetissue() {
     url = "MutiSign001_update_url" + Long.toString(now);
     ownerKeyString[0] = ownerKey;
