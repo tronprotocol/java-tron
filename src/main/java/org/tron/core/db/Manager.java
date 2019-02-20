@@ -1986,7 +1986,8 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setDelaySeconds(0);
+      trxCapsule.setDeferredSeconds(0);
+      trxCapsule.setDefferedTransaction(true);
       pendingTransactions.add(0, trxCapsule);
     }
 

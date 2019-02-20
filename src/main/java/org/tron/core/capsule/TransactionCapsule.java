@@ -110,6 +110,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private boolean isDefferedTransaction = false;
 
+  @Getter
+  @Setter
+  private long deferredSeconds = 0;
 
   /**
    * constructor TransactionCapsule.
@@ -789,16 +792,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
-  }
-
-  public long getDeferredSeconds(){
-    return this.transaction.getDelaySeconds();
-  }
-
-
-  public void setDelaySeconds(long delaySecond) {
-    Transaction transaction = this.transaction.toBuilder().setDelaySeconds(delaySecond).build();
-    this.transaction = transaction;
   }
 
   public ByteString getSenderAddress(){
