@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.tron.api.GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -35,6 +36,11 @@ public class MultiSign14 {
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
+
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
@@ -81,7 +87,6 @@ public class MultiSign14 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Witness threshold is exception condition")
@@ -89,8 +94,13 @@ public class MultiSign14 {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
     PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
@@ -426,15 +436,33 @@ public class MultiSign14 {
       ret = true;
     }
     Assert.assertTrue(ret);
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore, balanceAfter);
+
+    Assert.assertTrue(PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+
   }
 
   @Test(enabled = true, description = "Witness threshold is 1")
   public void testWitnessThreshold02() {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
-    PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long needCoin = updateAccountPermissionFee * 2;
 
+    PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
+            ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
@@ -489,6 +517,14 @@ public class MultiSign14 {
 
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
+    Assert.assertTrue(PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+
   }
 
   @Test(enabled = true, description = "Witness threshold is more than sum of weight")
@@ -496,8 +532,13 @@ public class MultiSign14 {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
     PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
 
     PublicMethed.printAddress(ownerKey);
@@ -553,14 +594,32 @@ public class MultiSign14 {
     Assert.assertEquals("contract validate error : sum of all key's weight "
             + "should not be less than threshold in permission Witness",
         response.getMessage().toStringUtf8());
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore, balanceAfter);
+    Assert.assertTrue(PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
   }
 
   @Test(enabled = true, description = "Witness threshold is Long.MAX_VALUE")
   public void testWitnessThreshold04() {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
-    PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
+    long needCoin = updateAccountPermissionFee * 2;
+
+    PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
+            ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
 
@@ -615,6 +674,15 @@ public class MultiSign14 {
 
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
+    Assert.assertTrue(PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+
   }
 
   /**
