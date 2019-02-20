@@ -641,7 +641,7 @@ public class MultiSign31 {
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     Assert.assertEquals(balance3, balance2);
@@ -745,7 +745,7 @@ public class MultiSign31 {
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult2:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     Assert.assertEquals(balance2, balance3);
@@ -828,14 +828,14 @@ public class MultiSign31 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight1.getResult().getMessage(),
-            containsString("but it is not contained of permission"));
+            containsString("Signature count is 2 more than key counts of permission : 1"));
     logger.info("transaction1:" + transactionSignWeight1);
 
     Return returnResult2 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction2, blockingStubFull);
     logger.info("returnResult1:" + returnResult2);
     Assert
-        .assertThat(returnResult2.getCode().toString(), containsString("DUP_TRANSACTION_ERROR"));
+        .assertThat(returnResult2.getCode().toString(), containsString("SIGERROR"));
     Account test001AddressAccount3 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     long balance3 = test001AddressAccount3.getBalance();
     Assert.assertEquals(balance3, balance2);

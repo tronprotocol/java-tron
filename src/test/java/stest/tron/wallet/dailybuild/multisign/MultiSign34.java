@@ -35,7 +35,7 @@ public class MultiSign34 {
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private final String testWitnesses = Configuration.getByPath("testng.conf")
-      .getString("witness.key1");
+      .getString("witness.key2");
   private final byte[] witnessesKey = PublicMethed.getFinalAddress(testWitnesses);
   private ManagedChannel channelFull = null;
 
