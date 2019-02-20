@@ -51,9 +51,10 @@ public class HttpTestAccount001 {
     responseContent = HttpMethed.parseResponseContent(response);
 
     for (String str:responseContent.keySet()) {
-      System.out.println(str + ":" + responseContent.get(str));
+      logger.info(str + ":" + responseContent.get(str));
     }
-    System.out.println(responseContent.keySet());
+    logger.info("contents are" + responseContent.keySet());
+    Assert.assertTrue(responseContent.size() > 3);
   }
 
   /**
