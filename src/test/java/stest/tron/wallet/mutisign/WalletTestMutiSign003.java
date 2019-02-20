@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -16,6 +17,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -32,6 +34,10 @@ public class WalletTestMutiSign003 {
       .getString("witness.key1");
   private final byte[] witnessAddress = PublicMethed.getFinalAddress(witnessKey001);
 
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -95,9 +101,21 @@ public class WalletTestMutiSign003 {
     newAddress = ecKey4.getAddress();
     newKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,100000000L,fromAddress,testKey002,
+    long needCoin = updateAccountPermissionFee * 1 + multiSignFee * 9;
+
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needCoin + 100000000L, fromAddress, testKey002,
         blockingStubFull));
+
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
@@ -117,14 +135,34 @@ public class WalletTestMutiSign003 {
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
             + "]}]}";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
+    String txid = PublicMethedForMutiSign
+        .accountPermissionUpdateForTransactionId(accountPermissionJson, ownerAddress, ownerKey,
         blockingStubFull,ownerKeyString);
 
     final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertNotNull(txid);
+
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
+    long energyFee = infoById.get().getReceipt().getEnergyFee();
+    long netFee = infoById.get().getReceipt().getNetFee();
+    long fee = infoById.get().getFee();
+
+    logger.info("balanceAfter: " + balanceAfter);
+    logger.info("energyFee: " + energyFee);
+    logger.info("netFee: " + netFee);
+    logger.info("fee: " + fee);
+
+    Assert.assertEquals(balanceBefore - balanceAfter, fee);
+    Assert.assertEquals(fee, energyFee + netFee + updateAccountPermissionFee);
+
+    balanceBefore = balanceAfter;
 
     Assert.assertTrue(PublicMethedForMutiSign.createAccount(
         ownerAddress, newAddress, ownerKey, blockingStubFull, ownerKeyString));
+
     Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
         newAddress, 100L, ownerAddress, 2, ownerKey, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
@@ -146,6 +184,15 @@ public class WalletTestMutiSign003 {
     smallVoteMap.put(voteStr, "1");
     Assert.assertTrue(PublicMethedForMutiSign.voteWitness(
         smallVoteMap, ownerAddress, ownerKey, blockingStubFull, ownerKeyString));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, multiSignFee * 8 + 1000000 * 2 + 100);
+
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
 
   }
 
