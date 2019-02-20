@@ -1337,13 +1337,7 @@ public class Manager {
       return null;
     }
 
-    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
-        .getScheduledTransactions(blockCapsule.getTimeStamp());
-    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
-      TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setDelaySeconds(0);
-      pendingTransactions.add(0, trxCapsule);
-    }
+    List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1429,10 +1423,8 @@ public class Manager {
     }
 
     session.reset();
-    deferredTransactionList.forEach(trx -> {
-      getDeferredTransactionStore().removeDeferredTransaction(trx);
-      getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
-    });
+
+    removeScheduledTransaction(deferredTransactionList);
 
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -1774,6 +1766,8 @@ public class Manager {
     closeOneStore(delegatedResourceStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(deferredStore);
+    closeOneStore(deferredTransactionIdIndexStore);
     logger.info("******** end to close db ********");
   }
 
@@ -1988,6 +1982,27 @@ public class Manager {
     }
   }
 
+  private List<DeferredTransactionCapsule> addDeferredTransactionToPending(final BlockCapsule blockCapsule){
+    // add deferred transactions to header of pendingTransactions
+    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
+            .getScheduledTransactions(blockCapsule.getTimeStamp());
+    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
+      TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
+      trxCapsule.setDelaySeconds(0);
+      pendingTransactions.add(0, trxCapsule);
+    }
+
+    return deferredTransactionList;
+  }
+
+  private void removeScheduledTransaction(List<DeferredTransactionCapsule> deferredTransactionList){
+    // remove deferred transactions from store after they are executed
+    deferredTransactionList.forEach(trx -> {
+      getDeferredTransactionStore().removeDeferredTransaction(trx);
+      getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
+    });
+  }
+
   private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
@@ -2034,6 +2049,10 @@ public class Manager {
     }
 
     DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionByKey(key);
+    if (Objects.isNull(deferredTransactionCapsule)){
+      logger.error("failed to get deferred transaction from store");
+      return false;
+    }
 
     long delayUntil = deferredTransactionCapsule.getDelayUntil();
     long now = System.currentTimeMillis();
