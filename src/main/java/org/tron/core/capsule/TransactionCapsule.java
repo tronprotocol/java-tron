@@ -106,6 +106,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
+  @Getter
+  @Setter
+  private boolean isDefferedTransaction = false;
+
+
   /**
    * constructor TransactionCapsule.
    */

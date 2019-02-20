@@ -65,15 +65,15 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new TooBigTransactionResultException();
     }
 
-    long bytesSize;
+    long bytesSize = 0;
 
     boolean deferred = trx.getDeferredSeconds() > 0 ? true : false;
 
     if (deferred){
       // additional bandwitdth for canceling deferred transaction, whethere that be successfully executing, failure or expiration.
-      bytesSize = trx.getTransactionId().getBytes().length;
+      bytesSize = trx.getTransactionId().getBytes().length + trx.getSerializedSize();
     }
-    else {
+    else if (!trx.isDefferedTransaction()){
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
       } else {
