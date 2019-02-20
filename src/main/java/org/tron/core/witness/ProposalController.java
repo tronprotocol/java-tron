@@ -194,7 +194,14 @@ public class ProposalController {
           }
           break;
         }
-
+        case (22): {
+          manager.getDynamicPropertiesStore().saveDeferredTransactionFee(entry.getValue());
+          break;
+        }
+        case (23): {
+          manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
+          break;
+        }
         default:
           break;
       }

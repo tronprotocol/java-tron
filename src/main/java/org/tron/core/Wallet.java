@@ -883,6 +883,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getCancelDefferedTransactionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("maxDeferredTransactionProcessTime")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
+        .build());
+
     return builder.build();
   }
 

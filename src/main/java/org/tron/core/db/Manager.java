@@ -1204,14 +1204,14 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-
-    validateDup(trxCap);
-
+    
     if (trxCap.getTransactionType() == TransactionCapsule.executingTransaction) {
       // set reference block to zero to ensure trans sig is right
       trxCap.setReference(0);
     }
-  
+
+    validateDup(trxCap);
+
     if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
@@ -1334,7 +1334,6 @@ public class Manager {
       return null;
     }
 
-    final long maxDeferredTransactionProcessTime = 200; // todo the limit could be reset by prosal.
     long deferredTransactionBeginTime = 0;
     long postponedDeferredTrxCount = 0;
     long processedDeferredTrxCount = 0;
@@ -1371,8 +1370,8 @@ public class Manager {
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
       if (trx.getTransactionType() == TransactionCapsule.executingTransaction){
-        if (totalDeferredTransactionProcessTime >= maxDeferredTransactionProcessTime){
-          logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, maxDeferredTransactionProcessTime);
+        if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
+          logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
           postponedDeferredTrxCount++;
           continue;

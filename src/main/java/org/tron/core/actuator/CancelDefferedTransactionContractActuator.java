@@ -5,10 +5,8 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -80,6 +78,6 @@ public class CancelDefferedTransactionContractActuator extends AbstractActuator 
 
   @Override
   public long calcFee() {
-    return ChainConstant.TRANSFER_FEE;
+    return dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee();
   }
 }
