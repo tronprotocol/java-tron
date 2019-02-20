@@ -217,8 +217,6 @@ public class Manager {
   @Setter
   public boolean eventPluginLoaded = false;
 
-  private long totalDeferredTransactionProcessTime = 0;
-
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
 
   @Getter
@@ -1223,7 +1221,7 @@ public class Manager {
 
     consumeBandwidth(trxCap, trace);
 
-    // for non deferred transaction
+    // process deferred transaction for the first time
     if (trxCap.getDeferredSeconds() > 0){
       return processDeferTransaction(trxCap, blockCap, trace);
     }
@@ -1336,10 +1334,10 @@ public class Manager {
       return null;
     }
 
-    final long maxDeferredTransactionProcessTime = 200; // todo could be reset by prosal.
+    final long maxDeferredTransactionProcessTime = 200; // todo the limit could be reset by prosal.
     long deferredTransactionBeginTime = 0;
     long postponedDeferredTrxCount = 0;
-    totalDeferredTransactionProcessTime = 0;
+    long totalDeferredTransactionProcessTime = 0;
 
     List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
 
