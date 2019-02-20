@@ -878,6 +878,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getUpdateAccountPermissionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMultiSignFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
+        .build());
+
     return builder.build();
   }
 
