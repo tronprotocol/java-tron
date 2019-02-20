@@ -1337,6 +1337,7 @@ public class Manager {
     final long maxDeferredTransactionProcessTime = 200; // todo the limit could be reset by prosal.
     long deferredTransactionBeginTime = 0;
     long postponedDeferredTrxCount = 0;
+    long processedDeferredTrxCount = 0;
     long totalDeferredTransactionProcessTime = 0;
 
     List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
@@ -1378,6 +1379,7 @@ public class Manager {
         }
         else {
           deferredTransactionBeginTime = DateTime.now().getMillis();
+          processedDeferredTrxCount++;
         }
       }
 
@@ -1452,10 +1454,6 @@ public class Manager {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
-    if (postponedDeferredTrxCount > 0) {
-      logger.info("{} deferred transactions postponed", postponedDeferredTrxCount);
-    }
-
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
@@ -1486,6 +1484,10 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    }
+
+    if (deferredTransactionList.size() > 0){
+      logger.info("{} deferred transactions processed, {} deferred transactions postponed", processedDeferredTrxCount, postponedDeferredTrxCount);
     }
 
     return null;
