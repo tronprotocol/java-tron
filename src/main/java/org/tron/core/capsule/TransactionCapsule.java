@@ -117,7 +117,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public static int normalTransaction = 0;
   public static int UnexecutedTransaction = 1;
-  public static int executingTransaction = 0;
+  public static int executingTransaction = 2;
   /**
    * constructor TransactionCapsule.
    */
@@ -810,7 +810,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public long getDeferredSeconds(){
     return this.transaction.getRawData().getDelaySeconds();
   }
-  
+
   public ByteString getToAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){
