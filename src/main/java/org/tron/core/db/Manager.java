@@ -1204,8 +1204,8 @@ public class Manager {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
     }
-    
-    if (trxCap.getTransactionType() == TransactionCapsule.executingTransaction) {
+
+    if (trxCap.getTransactionType() == TransactionCapsule.executingDeferredTransaction) {
       // set reference block to zero to ensure trans sig is right
       trxCap.setReference(0);
     }
@@ -1222,7 +1222,7 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
 
     // process deferred transaction for the first time
-    if (trxCap.getTransactionType() == TransactionCapsule.UnexecutedTransaction){
+    if (trxCap.getTransactionType() == TransactionCapsule.UnexecutedDeferredTransaction){
       return processDeferTransaction(trxCap, blockCap, trace);
     }
 
@@ -1369,7 +1369,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.getTransactionType() == TransactionCapsule.executingTransaction){
+      if (trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction){
         if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
@@ -1439,7 +1439,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.getTransactionType() == TransactionCapsule.executingTransaction){
+      if (trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
@@ -2015,7 +2015,7 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setTransactionType(TransactionCapsule.executingTransaction);
+      trxCapsule.setTransactionType(TransactionCapsule.executingDeferredTransaction);
       pendingTransactions.add(0, trxCapsule);
     }
 

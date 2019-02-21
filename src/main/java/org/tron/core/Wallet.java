@@ -413,7 +413,7 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     if (trx.getDeferredSeconds() > 0) {
-      trx.setTransactionType(TransactionCapsule.UnexecutedTransaction);
+      trx.setTransactionType(TransactionCapsule.UnexecutedDeferredTransaction);
     }
 
     Message message = new TransactionMessage(signaturedTransaction);

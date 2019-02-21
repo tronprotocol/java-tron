@@ -73,7 +73,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       bytesSize = trx.getSerializedSize();
     }
 
-    if (trx.getTransactionType() == TransactionCapsule.UnexecutedTransaction){
+    if (trx.getTransactionType() == TransactionCapsule.UnexecutedDeferredTransaction){
         // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
         // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
         bytesSize += trx.getTransactionId().getBytes().length;
@@ -83,8 +83,8 @@ public class BandwidthProcessor extends ResourceProcessor {
         bytesSize = 0;
       }
       
-    // when transaction type is equal to executingTransaction, meaning fee already charged.
-    boolean charged = trx.getTransactionType() == TransactionCapsule.executingTransaction;
+    // when transaction type is equal to executingDeferredTransaction, meaning fee already charged.
+    boolean charged = trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction;
     for (Contract contract : contracts) {
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;

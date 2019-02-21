@@ -116,8 +116,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private int transactionType;
 
   public static int normalTransaction = 0;
-  public static int UnexecutedTransaction = 1;
-  public static int executingTransaction = 2;
+  public static int UnexecutedDeferredTransaction = 1;
+  public static int executingDeferredTransaction = 2;
   /**
    * constructor TransactionCapsule.
    */
