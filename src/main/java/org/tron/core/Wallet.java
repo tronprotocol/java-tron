@@ -397,7 +397,7 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-          dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance().getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -891,6 +891,16 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("maxDeferredTransactionProcessTime")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getUpdateAccountPermissionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMultiSignFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
         .build());
 
     return builder.build();

@@ -35,7 +35,10 @@ public class WalletTestMutiSign005 {
       .getString("witness.key1");
   private final byte[] witness001Address = PublicMethed.getFinalAddress(witnessKey001);
 
-
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   private ManagedChannel channelFull = null;
   private ManagedChannel channelSolidity = null;
@@ -88,7 +91,8 @@ public class WalletTestMutiSign005 {
 
   @Test(enabled = true)
   public void testMutiSignForProposal() {
-    Assert.assertTrue(PublicMethed.sendcoin(witness001Address,10000000L,
+    long needcoin = updateAccountPermissionFee + multiSignFee * 3;
+    Assert.assertTrue(PublicMethed.sendcoin(witness001Address, needcoin + 10000000L,
         fromAddress,testKey002,blockingStubFull));
 
     ecKey1 = new ECKey(Utils.getRandom());
@@ -101,18 +105,22 @@ public class WalletTestMutiSign005 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    Long balanceBefore = PublicMethed.queryAccount(witness001Address, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
+
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     ownerKeyString[0] = witnessKey001;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
-            + "\",\"weight\":1}]},"
+            + "\",\"weight\":2}]},"
             + "\"witness_permission\":{\"type\":1,\"permission_name\":\"owner\",\"threshold\":1,\""
             + "keys\":[{\"address\":\"" + PublicMethed.getAddressString(witnessKey001)
             + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":1,"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
@@ -140,12 +148,18 @@ public class WalletTestMutiSign005 {
 
     Assert.assertTrue(PublicMethedForMutiSign.approveProposalWithPermission(
             witness001Address,witnessKey001,proposalId,
-        true, 0, blockingStubFull, ownerKeyString));
+        true, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Delete proposal list after approve
     Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
         witness001Address, witnessKey001, proposalId, 2, blockingStubFull, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    Long balanceAfter = PublicMethed.queryAccount(witness001Address, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+
+    Assert.assertTrue(balanceBefore - balanceAfter >= needcoin);
   }
   /**
    * constructor.

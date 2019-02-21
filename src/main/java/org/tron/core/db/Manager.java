@@ -764,6 +764,27 @@ public class Manager {
     return true;
   }
 
+  public void consumeMultiSignFee(TransactionCapsule trx, TransactionTrace trace)
+      throws AccountResourceInsufficientException {
+    if (trx.getInstance().getSignatureCount() > 1) {
+      long fee = getDynamicPropertiesStore().getMultiSignFee();
+
+      List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+      for (Contract contract : contracts) {
+        byte[] address = TransactionCapsule.getOwner(contract);
+        AccountCapsule accountCapsule = getAccountStore().get(address);
+        try {
+          adjustBalance(accountCapsule, -fee);
+          adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+        } catch (BalanceInsufficientException e) {
+          throw new AccountResourceInsufficientException(
+              "Account Insufficient  balance[" + fee + "] to MultiSign");
+        }
+      }
+
+      trace.getReceipt().setMultiSignFee(fee);
+    }
+  }
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
@@ -1220,6 +1241,7 @@ public class Manager {
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
 
     // process deferred transaction for the first time
     if (trxCap.getTransactionType() == TransactionCapsule.UnexecutedDeferredTransaction){

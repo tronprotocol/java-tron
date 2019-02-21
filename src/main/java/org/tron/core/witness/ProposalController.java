@@ -195,10 +195,16 @@ public class ProposalController {
           break;
         }
         case (22): {
+          manager.getDynamicPropertiesStore().saveUpdateAccountPermissionFee(entry.getValue());
+        }
+        case (23): {
+          manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
+        }
+        case (24): {
           manager.getDynamicPropertiesStore().saveDeferredTransactionFee(entry.getValue());
           break;
         }
-        case (23): {
+        case (25): {
           manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
           break;
         }
