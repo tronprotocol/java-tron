@@ -73,8 +73,31 @@ public class HttpTestAccount001 {
     Assert.assertTrue(responseContent.size() >= 4);
   }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get accountResource by http")
+  public void getAccountResource() {
+    response = HttpMethed.getAccountReource(httpnode,fromAddress);
+    try {
+      entity = response.getEntity();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    logger.info("code is " + response.getStatusLine().getStatusCode());
+    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    responseContent = HttpMethed.parseResponseContent(response);
 
+    for (String str:responseContent.keySet()) {
+      if (str.equals("TotalEnergyLimit")) {
+        Assert.assertEquals(responseContent.get(str),50000000000000L);
+      }
+      logger.info(str + ":" + responseContent.get(str));
+    }
+    Assert.assertTrue(responseContent.size() >= 6);
+  }
 
 }
+
 
 
