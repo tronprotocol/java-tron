@@ -17,7 +17,7 @@ public class FreezeEnergyCreator extends AbstractTransactionCreator implements G
 
   private String ownerAddress = commonOwnerAddress;
   private long frozenBalance = 1000000L;
-  private long frozenDuration = 0L;
+  private long frozenDuration = 3L;
   private int resourceCode = 1;
   private String delegateAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
   private String privateKey = commonOwnerPrivateKey;
