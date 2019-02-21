@@ -38,11 +38,7 @@ public class HttpTestAccount001 {
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
     responseContent = HttpMethed.parseResponseContent(response);
-
-    for (String str:responseContent.keySet()) {
-      logger.info(str + ":" + responseContent.get(str));
-    }
-    logger.info("contents are" + responseContent.keySet());
+    HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.size() > 3);
   }
 
@@ -60,7 +56,7 @@ public class HttpTestAccount001 {
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
     responseContent = HttpMethed.parseResponseContent(response);
-
+    HttpMethed.printJsonContent(responseContent);
     for (String str:responseContent.keySet()) {
       if (str.equals("freeNetLimit")) {
         Assert.assertEquals(responseContent.get(str),5000);
@@ -68,7 +64,6 @@ public class HttpTestAccount001 {
       if (str.equals("TotalNetLimit")) {
         Assert.assertEquals(responseContent.get(str),43200000000L);
       }
-      logger.info(str + ":" + responseContent.get(str));
     }
     Assert.assertTrue(responseContent.size() >= 4);
   }
@@ -87,12 +82,11 @@ public class HttpTestAccount001 {
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
     responseContent = HttpMethed.parseResponseContent(response);
-
+    HttpMethed.printJsonContent(responseContent);
     for (String str:responseContent.keySet()) {
       if (str.equals("TotalEnergyLimit")) {
         Assert.assertEquals(responseContent.get(str),50000000000000L);
       }
-      logger.info(str + ":" + responseContent.get(str));
     }
     Assert.assertTrue(responseContent.size() >= 6);
   }

@@ -3,6 +3,7 @@ package stest.tron.wallet.common.client.utils;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import java.nio.charset.Charset;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -12,7 +13,7 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.tron.common.utils.ByteArray;
 
-
+@Slf4j
 public class HttpMethed {
   static  HttpClient httpClient = new DefaultHttpClient();
   static HttpPost httppost;
@@ -99,6 +100,27 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNowBlock(String httpNode) {
+    httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, 2000);
+    httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, 2000);
+    try {
+      String getAccountUrl = "http://" + httpNode + "/wallet/getnowblock";
+      httppost = new HttpPost(getAccountUrl);
+      httppost.setHeader("Content-type", "application/json; charset=utf-8");
+      httppost.setHeader("Connection", "Close");
+      response = httpClient.execute(httppost);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    httppost.releaseConnection();
+    return response;
+  }
+
 
   /**
    * constructor.
@@ -112,7 +134,32 @@ public class HttpMethed {
       e.printStackTrace();
       return null;
     }
-
   }
+
+  /**
+   * constructor.
+   */
+  public static JSONObject parseStringContent(String content) {
+    try {
+      JSONObject obj = JSONObject.parseObject(content);
+      return obj;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static void printJsonContent(JSONObject responseContent) {
+    logger.info("----------------------------Print JSON Start---------------------------");
+    for (String str : responseContent.keySet()) {
+      logger.info(str + ":" + responseContent.get(str));
+    }
+    logger.info("JSON content size are: " + responseContent.size());
+    logger.info("----------------------------Print JSON End-----------------------------");
+  }
+
 
 }
