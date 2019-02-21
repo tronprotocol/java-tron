@@ -91,7 +91,7 @@ public class MultiSign34 {
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, witnessesKey, 1, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 1, testWitnesses,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
@@ -113,7 +113,7 @@ public class MultiSign34 {
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-            containsString("Permission type is error"));
+            containsString("permission isn't exit"));
 
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
@@ -122,7 +122,7 @@ public class MultiSign34 {
         .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
     Assert
         .assertThat(returnResult1.getMessage().toStringUtf8(),
-            containsString("Permission type is error"));
+            containsString("permission isn't exit"));
 
   }
 
@@ -138,15 +138,22 @@ public class MultiSign34 {
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, witnessesKey, 2, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 2, testWitnesses,
             blockingStubFull);
     final Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
-
+    final TransactionSignWeight transactionSignWeight = PublicMethedForMutiSign
+        .getTransactionSignWeight(transaction1, blockingStubFull);
+    logger.info("transaction:" + transactionSignWeight);
+    Assert
+        .assertThat(transactionSignWeight.getResult().getCode().toString(),
+            containsString("PERMISSION_ERROR"));
+    Assert
+        .assertThat(transactionSignWeight.getResult().getMessage(),
+            containsString("permission isn't exit"));
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
     logger.info("returnResult1:" + returnResult1);
-    Assert.assertTrue(returnResult1.getResult());
     Account test001AddressAccount1 = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
@@ -155,8 +162,12 @@ public class MultiSign34 {
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-    Assert.assertEquals(balance - balance1, 1L);
-
+    Assert.assertEquals(balance, balance1);
+    Assert
+        .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
+    Assert
+        .assertThat(returnResult1.getMessage().toStringUtf8(),
+            containsString("permission isn't exit"));
 
   }
 
@@ -173,7 +184,7 @@ public class MultiSign34 {
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, witnessesKey, 0, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 0, testWitnesses,
             blockingStubFull);
     final Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
