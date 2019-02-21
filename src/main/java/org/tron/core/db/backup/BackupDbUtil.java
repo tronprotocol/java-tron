@@ -1,8 +1,5 @@
 package org.tron.core.db.backup;
 
-import static org.tron.core.db.backup.BackupDbUtil.STATE.BAKEDONE;
-import static org.tron.core.db.backup.BackupDbUtil.STATE.BAKEDTWO;
-
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -80,16 +77,16 @@ public class BackupDbUtil {
   private void switchBackupState() {
     switch (STATE.valueOf(getBackupState())) {
       case BAKINGONE:
-        setBackupState(BAKEDONE.getStatus());
+        setBackupState(STATE.BAKEDONE.getStatus());
         break;
       case BAKEDONE:
-        setBackupState(BAKEDTWO.getStatus());
+        setBackupState(STATE.BAKEDTWO.getStatus());
         break;
       case BAKINGTWO:
-        setBackupState(BAKEDTWO.getStatus());
+        setBackupState(STATE.BAKEDTWO.getStatus());
         break;
       case BAKEDTWO:
-        setBackupState(BAKEDONE.getStatus());
+        setBackupState(STATE.BAKEDONE.getStatus());
         break;
       default:
         break;
@@ -132,10 +129,6 @@ public class BackupDbUtil {
       }
     } catch (RocksDBException e) {
       logger.warn("backup db error");
-    }
-    STATE state = STATE.valueOf(getBackupState());
-    if (state == BAKEDONE || state == BAKEDTWO) {
-
     }
     logger.info("current block number is {}, backup all store use {} ms!", block.getNum(),
         System.currentTimeMillis() - t1);

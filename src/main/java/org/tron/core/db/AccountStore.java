@@ -33,10 +33,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
-    AccountCapsule accountCapsule = accountStateStoreTrie.getAccount(key);
-    if (accountCapsule != null) {
-      return accountCapsule;
-    }
     byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
   }
@@ -46,12 +42,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
     fastSyncCallBack.accountCallBack(key, item);
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    super.delete(key);
-    fastSyncCallBack.deleteAccount(key);
   }
 
   /**
