@@ -1404,7 +1404,6 @@ public class Manager {
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
     blockCapsule.setMerkleRoot();
-    blockCapsule.setReceiptRoot();
     blockCapsule.sign(privateKey);
 
     try {

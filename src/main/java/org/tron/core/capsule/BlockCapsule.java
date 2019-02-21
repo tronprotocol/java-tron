@@ -21,10 +21,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Vector;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -35,13 +32,10 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
-import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.trie.Trie;
-import org.tron.core.trie.TrieImpl;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
@@ -127,7 +121,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private Block block;
   public boolean generatedByMyself = false;
   private List<TransactionCapsule> transactions = new ArrayList<>();
-  private Map<Sha256Hash, TransactionInfoCapsule> transactionInfoCapsuleMap = new LinkedHashMap<>();
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
@@ -269,10 +262,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
-  public void setReceiptRoot() {
-    logger.info("calcReceiptRoot : {}", calcReceiptRoot());
-  }
-
   public void setAccountStateRoot(byte[] root) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder()
@@ -281,41 +270,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
-
-  public ByteString calcReceiptRoot() {
-    Collection<TransactionInfoCapsule> transactionInfoCapsules = this.transactionInfoCapsuleMap
-        .values();
-
-    if (CollectionUtils.isEmpty(transactionInfoCapsules)) {
-      return Sha256Hash.ZERO_HASH.getByteString();
-    }
-
-    Vector<Sha256Hash> ids = transactionInfoCapsules.stream()
-        .map(TransactionInfoCapsule::getReceiptMPTHash)
-        .collect(Collectors.toCollection(Vector::new));
-
-    Trie receiptsTrie = new TrieImpl();
-
-    for (int i = 0; i < ids.size(); i++) {
-      receiptsTrie.put(RLP.encodeInt(i), ids.get(i).getBytes());
-    }
-    return ByteString.copyFrom(receiptsTrie.getRootHash());
-  }
-
-  public static ByteString calcReceiptsTrie(List<TransactionInfoCapsule> transactionInfoCapsules) {
-    Trie receiptsTrie = new TrieImpl();
-
-    if (CollectionUtils.isEmpty(transactionInfoCapsules)) {
-      return Sha256Hash.ZERO_HASH.getByteString();
-    }
-
-    for (int i = 0; i < transactionInfoCapsules.size(); i++) {
-      receiptsTrie.put(RLP.encodeInt(i),
-          Sha256Hash.of(transactionInfoCapsules.get(i).getInstance().toByteArray()).getBytes());
-    }
-    return ByteString.copyFrom(receiptsTrie.getRootHash());
-  }
-
 
   /* only for genisis */
   public void setWitness(String witness) {
@@ -363,12 +317,6 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public long getTimeStamp() {
     return this.block.getBlockHeader().getRawData().getTimestamp();
-  }
-
-  public BlockCapsule putTransactionInfo(Sha256Hash transactionId,
-      TransactionInfoCapsule transactionInfoCapsule) {
-    transactionInfoCapsuleMap.put(transactionId, transactionInfoCapsule);
-    return this;
   }
 
   private StringBuffer toStringBuff = new StringBuffer();
