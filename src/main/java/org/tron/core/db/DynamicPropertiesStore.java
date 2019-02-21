@@ -100,6 +100,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
+  private static final byte[] DEFFERED_TRANSACTION_FEE =  "DEFFERED_TRANSACTION_FEE".getBytes();
+
   private static final byte[] CANCEL_DEFFERED_TRANSACTION_FEE = "CANCEL_DEFFERED_TRANSACTION_FEE".getBytes();
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
@@ -373,9 +375,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getDeferredTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveDeferredTransactionFee(100_00L);
+    }
+
+    try {
       this.getCancelDeferredTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveAllowSameTokenName(100_00L);
+      this.saveCancelDeferredTransactionFee(100_00L);
     }
 
     try {
@@ -912,6 +920,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveDeferredTransactionFee(long fee) {
+    this.put(DEFFERED_TRANSACTION_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getDeferredTransactionFee() {
+    return Optional.ofNullable(getUnchecked(DEFFERED_TRANSACTION_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DEFFERED_TRANSACTION_FEE"));
+  }
+
+  public void saveCancelDeferredTransactionFee(long fee) {
     this.put(CANCEL_DEFFERED_TRANSACTION_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
   }

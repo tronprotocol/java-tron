@@ -25,6 +25,10 @@ public class TransferActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
+  TransferActuator(Any contract, Manager dbManager, long delaySeconds) {
+    super(contract, dbManager, delaySeconds);
+  }
+
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     long fee = calcFee();
@@ -191,6 +195,9 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    if (super.delaySeconds > 0) {
+      return ChainConstant.TRANSFER_FEE + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    }
     return ChainConstant.TRANSFER_FEE;
   }
 
