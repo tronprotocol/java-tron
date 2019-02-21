@@ -174,6 +174,7 @@ public class WalletTestMutiSign004 {
     PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
         ownerAddress, 0, blockingStubFull, ownerKeyString);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 

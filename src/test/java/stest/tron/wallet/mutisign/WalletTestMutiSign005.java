@@ -153,12 +153,13 @@ public class WalletTestMutiSign005 {
     //Delete proposal list after approve
     Assert.assertTrue(PublicMethedForMutiSign.deleteProposalWithPermissionId(
         witness001Address, witnessKey001, proposalId, 2, blockingStubFull, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceAfter = PublicMethed.queryAccount(witness001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 
-    Assert.assertEquals(balanceBefore - balanceAfter, needcoin);
+    Assert.assertTrue(balanceBefore - balanceAfter >= needcoin);
   }
   /**
    * constructor.
