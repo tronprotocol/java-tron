@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Setter
 public class NiceTransferAssetTransactionCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String assetName = "1002113";
+  private String assetName = "1002126";
   private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
   private String toAddress = commonToAddress;
   private long amount = 1L;

@@ -47,6 +47,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   //protected String commonContractAddress2 = Wallet.encode58Check(ContractAddress2.getBytes());
   //protected String commonContractAddress3 = Wallet.encode58Check(ContractAddress3.getBytes());
   protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
+//  protected String commonContractAddress1 = "TSH8WJZusnAth7dEg7NRVtKcB1rzfUiCjL";
   protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
   protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
   protected String commonfullnode = "39.105.81.23:50051";
