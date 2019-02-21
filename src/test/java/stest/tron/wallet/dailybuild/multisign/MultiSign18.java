@@ -167,8 +167,8 @@ public class MultiSign18 {
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
-    Assert.assertTrue(PublicMethed
-        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+    PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Witness type is exception condition")
