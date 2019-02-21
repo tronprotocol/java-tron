@@ -93,7 +93,7 @@ import org.tron.protos.Protocol.Transaction.raw;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
-  @Setter
+
   private Transaction transaction;
   @Setter
   private boolean isVerified = false;
