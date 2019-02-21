@@ -44,15 +44,9 @@ public class HttpTestAccount001 {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    for (String str : responseContent.keySet()) {
-      if (str.equals("freeNetLimit")) {
-        Assert.assertEquals(responseContent.get(str), 5000);
-      }
-      if (str.equals("TotalNetLimit")) {
-        Assert.assertEquals(responseContent.get(str), 43200000000L);
-      }
-    }
-    Assert.assertTrue(responseContent.size() >= 3);
+    Assert.assertEquals(Integer.parseInt(responseContent.get("freeNetLimit").toString()),5000);
+    Assert.assertEquals(Long.parseLong(responseContent.get("TotalNetLimit").toString()),43200000000L);
+    Assert.assertTrue(responseContent.size() >= 2);
   }
 
   /**
@@ -65,11 +59,7 @@ public class HttpTestAccount001 {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    for (String str : responseContent.keySet()) {
-      if (str.equals("TotalEnergyLimit")) {
-        Assert.assertEquals(responseContent.get(str), 50000000000000L);
-      }
-    }
+    Assert.assertTrue(Long.parseLong(responseContent.get("TotalEnergyLimit").toString()) >= 50000000000L);
     Assert.assertTrue(responseContent.size() >= 3);
   }
 
