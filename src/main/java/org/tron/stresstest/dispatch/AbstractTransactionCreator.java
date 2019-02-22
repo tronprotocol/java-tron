@@ -39,15 +39,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   protected String commonToPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
   protected String commonWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
   protected String commonWitnessPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  //protected String ContractAddress1 = stressContractAddress1;
-  //protected String ContractAddress2 = stressContractAddress2;
-  //protected String ContractAddress3 = stressContractAddress3;
 
-  //protected String commonContractAddress1 = Wallet.encode58Check(ContractAddress1.getBytes());
-  //protected String commonContractAddress2 = Wallet.encode58Check(ContractAddress2.getBytes());
-  //protected String commonContractAddress3 = Wallet.encode58Check(ContractAddress3.getBytes());
   protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
-//  protected String commonContractAddress1 = "TSH8WJZusnAth7dEg7NRVtKcB1rzfUiCjL";
   protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
   protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
   protected String commonfullnode = "39.105.81.23:50051";
@@ -55,8 +48,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
           .usePlaintext(true)
           .build();
   protected WalletGrpc.WalletBlockingStub commonblockingStubFull = WalletGrpc.newBlockingStub(commonchannelFull);
-
-
+  protected String commontokenid="1002126";
+  protected long commonexchangeid=160;
 
 
   long time = System.currentTimeMillis();
@@ -126,7 +119,6 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
     if (transactionExtention == null || transaction.getRawData().getContractCount() == 0) {
       System.err.println("******** failed to pop revokingStore.xxxxxxxxxxxx ");
-//      logger.info("transaction ==null");
       return null;
     }
     long gTime = count.incrementAndGet() + time;
@@ -195,7 +187,6 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     if (transactionExtention == null) {
       return null;
     }
-//    System.out.println("Fee limit is :" + transactionExtention.getTransaction().getRawData().getFeeLimit());
 
 
 
@@ -236,7 +227,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       ECDSASignature signature = myKey.sign(hash);
       ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
       transactionBuilderSigned.addSignature(
-              bsSign);//Each contract may be signed with a different private key in the future.
+              bsSign);
     }
 
     transaction = transactionBuilderSigned.build();
@@ -256,24 +247,13 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       ECKey ecKey = temKey;
 
       transaction = TransactionUtils.sign(transaction, ecKey);
-/*      TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
-      if (weight.getResult().getCode()
-          == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
-        break;
-      }
-      if (weight.getResult().getCode()
-          == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
-        continue;
-      }*/
     }
     return transaction;
   }
 
 
   public static Transaction Multisign(Transaction transaction,WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
-//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-//    List<Contract> listContract = transaction.getRawData().getContractList();
+
     for (int i = 0; i < priKeys.length; i += 1) {
       String priKey = priKeys[i];
       ECKey temKey = null;
