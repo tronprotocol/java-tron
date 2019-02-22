@@ -47,7 +47,7 @@ message TransferContract {
   int64 amount = 3;
 }
 
-message CancelDefferedTransactionContract {
+message CancelDeferredTransactionContract {
    bytes transactionId = 1;
    bytes ownerAddress = 2;
 }
