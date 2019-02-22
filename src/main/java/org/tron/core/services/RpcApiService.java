@@ -1626,8 +1626,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createCancelDefferedTransactionContract(Contract.CancelDefferedTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.CancelDefferedTransactionContract, responseObserver);
+    public void createCancelDeferredTransactionContract(Contract.CancelDeferredTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelDeferredTransactionContract, responseObserver);
     }
 
     @Override

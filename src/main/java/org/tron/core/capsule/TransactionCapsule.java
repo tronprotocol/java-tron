@@ -61,7 +61,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.CancelDefferedTransactionContract;
+import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -478,8 +478,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
-        case CancelDefferedTransactionContract:
-          owner = contractParameter.unpack(CancelDefferedTransactionContract.class).getOwnerAddress();
+        case CancelDeferredTransactionContract:
+          owner = contractParameter.unpack(CancelDeferredTransactionContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

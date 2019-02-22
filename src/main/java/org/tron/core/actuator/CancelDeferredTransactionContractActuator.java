@@ -10,23 +10,23 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.CancelDefferedTransactionContract;
+import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
-public class CancelDefferedTransactionContractActuator extends AbstractActuator {
-  CancelDefferedTransactionContractActuator(Any contract, Manager dbManager) {
+public class CancelDeferredTransactionContractActuator extends AbstractActuator {
+  CancelDeferredTransactionContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
 
   @Override
   public boolean execute(TransactionResultCapsule capsule) throws ContractExeException {
     long fee = calcFee();
-    final CancelDefferedTransactionContract cancelDefferedTransactionContract;
+    final CancelDeferredTransactionContract cancelDeferredTransactionContract;
     // todo calculate fee
     try {
-      cancelDefferedTransactionContract = this.contract.unpack(CancelDefferedTransactionContract.class);
-      dbManager.cancelDeferredTransaction(cancelDefferedTransactionContract.getTransactionId());
+      cancelDeferredTransactionContract = this.contract.unpack(CancelDeferredTransactionContract.class);
+      dbManager.cancelDeferredTransaction(cancelDeferredTransactionContract.getTransactionId());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       capsule.setStatus(fee, code.FAILED);
@@ -43,28 +43,28 @@ public class CancelDefferedTransactionContractActuator extends AbstractActuator 
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
-    if (!this.contract.is(CancelDefferedTransactionContract.class)) {
+    if (!this.contract.is(CancelDeferredTransactionContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [CancelDefferedTransactionContract],real type[" + contract
+          "contract type error,expected type [CancelDeferredTransactionContract],real type[" + contract
               .getClass() + "]");
     }
 
-    final CancelDefferedTransactionContract cancelDefferedTransactionContract;
+    final CancelDeferredTransactionContract cancelDeferredTransactionContract;
     try {
-      cancelDefferedTransactionContract = this.contract.unpack(CancelDefferedTransactionContract.class);
+      cancelDeferredTransactionContract = this.contract.unpack(CancelDeferredTransactionContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
 
-    ByteString trxId = cancelDefferedTransactionContract.getTransactionId();
+    ByteString trxId = cancelDeferredTransactionContract.getTransactionId();
     DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore().getByTransactionId(trxId);
     if (Objects.isNull(capsule)) {
       throw new ContractValidateException("No deferred transaction!");
     }
 
     ByteString sendAddress = capsule.getSenderAddress();
-    ByteString ownerAddress = cancelDefferedTransactionContract.getOwnerAddress();
+    ByteString ownerAddress = cancelDeferredTransactionContract.getOwnerAddress();
     if (sendAddress.equals(ownerAddress) == false) {
       throw new ContractValidateException("not have right to cancel!");
     }
@@ -73,7 +73,7 @@ public class CancelDefferedTransactionContractActuator extends AbstractActuator 
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return contract.unpack(CancelDefferedTransactionContract.class).getOwnerAddress();
+    return contract.unpack(CancelDeferredTransactionContract.class).getOwnerAddress();
   }
 
   @Override

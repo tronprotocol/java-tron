@@ -87,7 +87,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
-  private static final byte[] MAX_DEFFERED_TRANSACTION_PROCESS_TIME = "MAX_DEFFERED_TRANSACTION_PROCESS_TIME".getBytes();
+  private static final byte[] MAX_DEFERRED_TRANSACTION_PROCESS_TIME = "MAX_DEFERRED_TRANSACTION_PROCESS_TIME".getBytes();
 
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
@@ -100,9 +100,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
-  private static final byte[] DEFFERED_TRANSACTION_FEE =  "DEFFERED_TRANSACTION_FEE".getBytes();
+  private static final byte[] DEFERRED_TRANSACTION_FEE =  "DEFERRED_TRANSACTION_FEE".getBytes();
 
-  private static final byte[] CANCEL_DEFFERED_TRANSACTION_FEE = "CANCEL_DEFFERED_TRANSACTION_FEE".getBytes();
+  private static final byte[] CANCEL_DEFERRED_TRANSACTION_FEE = "CANCEL_DEFERRED_TRANSACTION_FEE".getBytes();
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
 
@@ -377,13 +377,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getDeferredTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveDeferredTransactionFee(100_00L);
+      this.saveDeferredTransactionFee(100_000L); // 0.1TRX
     }
 
     try {
       this.getCancelDeferredTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveCancelDeferredTransactionFee(100_00L);
+      this.saveCancelDeferredTransactionFee(50_000L); // 0.05TRX
     }
 
     try {
@@ -683,16 +683,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveMaxDeferredTransactionProcessTime(long maxDeferredTransactionProcessTime) {
-    this.put(MAX_DEFFERED_TRANSACTION_PROCESS_TIME,
+    this.put(MAX_DEFERRED_TRANSACTION_PROCESS_TIME,
         new BytesCapsule(ByteArray.fromLong(maxDeferredTransactionProcessTime)));
   }
 
   public long getMaxDeferredTransactionProcessTime() {
-    return Optional.ofNullable(getUnchecked(MAX_DEFFERED_TRANSACTION_PROCESS_TIME))
+    return Optional.ofNullable(getUnchecked(MAX_DEFERRED_TRANSACTION_PROCESS_TIME))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found MAX_DEFFERED_TRANSACTION_PROCESS_TIME"));
+            () -> new IllegalArgumentException("not found MAX_DEFERRED_TRANSACTION_PROCESS_TIME"));
   }
 
   public void saveMaxFrozenSupplyNumber(int maxFrozenSupplyNumber) {
@@ -920,29 +920,29 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveDeferredTransactionFee(long fee) {
-    this.put(DEFFERED_TRANSACTION_FEE,
+    this.put(DEFERRED_TRANSACTION_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
   public long getDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(DEFFERED_TRANSACTION_FEE))
+    return Optional.ofNullable(getUnchecked(DEFERRED_TRANSACTION_FEE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found DEFFERED_TRANSACTION_FEE"));
+            () -> new IllegalArgumentException("not found DEFERRED_TRANSACTION_FEE"));
   }
 
   public void saveCancelDeferredTransactionFee(long fee) {
-    this.put(CANCEL_DEFFERED_TRANSACTION_FEE,
+    this.put(CANCEL_DEFERRED_TRANSACTION_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
   public long getCancelDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(CANCEL_DEFFERED_TRANSACTION_FEE))
+    return Optional.ofNullable(getUnchecked(CANCEL_DEFERRED_TRANSACTION_FEE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CANCEL_DEFFERED_TRANSACTION_FEE"));
+            () -> new IllegalArgumentException("not found CANCEL_DEFERRED_TRANSACTION_FEE"));
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {

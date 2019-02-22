@@ -2035,8 +2035,8 @@ public class Manager {
     // add deferred transactions to header of pendingTransactions
     List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
             .getScheduledTransactions(blockCapsule.getTimeStamp());
-    for (DeferredTransactionCapsule defferedTransaction : deferredTransactionList) {
-      TransactionCapsule trxCapsule = new TransactionCapsule(defferedTransaction.getDeferredTransaction().getTransaction());
+    for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
+      TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
       trxCapsule.setTransactionType(TransactionCapsule.executingDeferredTransaction);
       pendingTransactions.add(0, trxCapsule);
     }

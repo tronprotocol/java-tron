@@ -887,12 +887,12 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getDefferedTransactionFee")
+        .setKey("getDeferredTransactionFee")
         .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getCancelDefferedTransactionFee")
+        .setKey("getCancelDeferredTransactionFee")
         .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
         .build());
 
