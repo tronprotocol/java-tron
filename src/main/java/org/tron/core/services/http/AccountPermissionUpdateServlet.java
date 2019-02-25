@@ -29,6 +29,7 @@ public class AccountPermissionUpdateServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       AccountPermissionUpdateContract.Builder build = AccountPermissionUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
 

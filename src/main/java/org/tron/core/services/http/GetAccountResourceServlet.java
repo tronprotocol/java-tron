@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.db.Manager;
 
 
 @Component
@@ -22,9 +21,6 @@ public class GetAccountResourceServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
-
-  @Autowired
-  private Manager dbManager;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
@@ -50,6 +46,7 @@ public class GetAccountResourceServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       String address = jsonObject.getString("address");
       AccountResourceMessage reply = wallet

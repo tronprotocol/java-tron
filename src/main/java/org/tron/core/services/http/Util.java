@@ -17,6 +17,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -136,7 +137,8 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList) {
+  public static String printTransactionApprovedList(
+      TransactionApprovedList transactionApprovedList) {
     String string = JsonFormat.printToString(transactionApprovedList);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
@@ -575,6 +577,13 @@ public class Util {
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
       return null;
+    }
+  }
+
+  public static void checkBodySize(String body) throws Exception {
+    Args args = Args.getInstance();
+    if (body.getBytes().length > args.getMaxMessageSize()) {
+      throw new Exception("body size is too big, limit is " + args.getMaxMessageSize());
     }
   }
 }

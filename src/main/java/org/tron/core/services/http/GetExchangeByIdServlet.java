@@ -25,6 +25,7 @@ public class GetExchangeByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       long id = jsonObject.getLong("id");
       response.getWriter()
