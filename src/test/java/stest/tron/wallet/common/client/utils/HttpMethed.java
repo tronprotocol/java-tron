@@ -55,6 +55,63 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
+      Long amount, String[] managerKeys) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
+      userBaseObj2.addProperty("amount", amount);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionSignString = EntityUtils.toString(response.getEntity());
+      for (String key: managerKeys) {
+        logger.info(key);
+        transactionSignString = gettransactionsign(httpNode,transactionSignString,key);
+      }
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse accountPermissionUpdate(String httpNode, byte[] ownerAddress,
+      JsonObject ownerObject, JsonObject witnessObject, JsonObject activesObject, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/accountpermissionupdate";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.add("owner", ownerObject);
+      //userBaseObj2.add("witness", witnessObject);
+      userBaseObj2.add("actives", activesObject);
+      logger.info(userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse exchangeCreate(String httpNode, byte[] ownerAddress,
       String firstTokenId, Long firstTokenBalance,
       String secondTokenId,Long secondTokenBalance,String fromKey) {
