@@ -1,20 +1,13 @@
 package org.tron.core.services;
 
-import com.google.common.collect.Sets;
-import com.typesafe.config.Config;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.SetUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
-import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.WhitelistException;
