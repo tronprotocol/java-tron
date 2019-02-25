@@ -14,6 +14,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.WhitelistException;
+import org.tron.core.services.WhitelistService;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -115,7 +117,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     try {
-
+      WhitelistService.check(ownerAddress, toAddress);
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
@@ -132,6 +134,9 @@ public class TransferActuator extends AbstractActuator {
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    } catch (WhitelistException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage(), e);
     }
 
     return true;
@@ -168,6 +173,8 @@ public class TransferActuator extends AbstractActuator {
     }
 
     try {
+      WhitelistService.check(ownerAddress, toAddress);
+
       if (balance < amount) {
         throw new ContractValidateException(
             "Validate InternalTransfer error, balance is not sufficient.");
@@ -179,6 +186,9 @@ public class TransferActuator extends AbstractActuator {
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    } catch (WhitelistException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage(), e);
     }
 
     return true;
