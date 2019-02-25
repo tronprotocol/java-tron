@@ -1190,7 +1190,6 @@ public class Manager {
     trxCap.setTrxTrace(transactionTrace);
     trxCap.setResultCode(contractResult.SUCCESS);
 
-    logger.info("transactionStore, trxid = {}", trxCap.getTransactionId());
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
             .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1202,7 +1201,11 @@ public class Manager {
     
     postContractTrigger(transactionTrace, false);
 
-    pushScheduledTransaction(blockCap, trxCap);
+    try {
+      pushScheduledTransaction(blockCap, new TransactionCapsule(trxCap.getData()));
+    } catch (BadItemException e) {
+      e.printStackTrace();
+    }
 
     return true;
   }
@@ -1218,17 +1221,16 @@ public class Manager {
       return false;
     }
 
-    validateTapos(trxCap);
+    // no need tapos validation when processing deferred transaction at the second time.
+    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction) {
+      validateTapos(trxCap);
+    }
+
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
-    }
-
-    if (trxCap.getTransactionType() == TransactionCapsule.executingDeferredTransaction) {
-      // set reference block to zero to ensure trans sig is right
-      trxCap.setReference(0);
     }
 
     validateDup(trxCap);
@@ -2056,13 +2058,14 @@ public class Manager {
   private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
 
     // new trx id to represent the second trx record
-    logger.debug("before setReference, trxid = {}", transactionCapsule.getTransactionId());
+    logger.info("before setReference, trxid = {}", transactionCapsule.getTransactionId());
     transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
-    logger.debug("after setReference, trxid = {}", transactionCapsule.getTransactionId());
+    logger.info("after setReference, trxid = {}", transactionCapsule.getTransactionId());
 
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+    deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
     ByteString toAddress = transactionCapsule.getToAddress();
