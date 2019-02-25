@@ -29,6 +29,7 @@ public class UnFreezeBalanceServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       UnfreezeBalanceContract.Builder build = UnfreezeBalanceContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

@@ -45,6 +45,7 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
       long getNum = build.getNum();

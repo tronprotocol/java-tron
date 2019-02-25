@@ -29,6 +29,7 @@ public class CreateAssetIssueServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       AssetIssueContract.Builder build = AssetIssueContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

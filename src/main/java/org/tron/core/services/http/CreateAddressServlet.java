@@ -49,6 +49,7 @@ public class CreateAddressServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());

@@ -18,7 +18,8 @@ import org.tron.core.Wallet;
 @Slf4j(topic = "API")
 public class GetDelegatedResourceServlet extends HttpServlet {
 
-  @Autowired private Wallet wallet;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
@@ -48,6 +49,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
     try {
       String input =
           request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       DelegatedResourceMessage.Builder build = DelegatedResourceMessage.newBuilder();
       JsonFormat.merge(input, build);
       DelegatedResourceList reply =

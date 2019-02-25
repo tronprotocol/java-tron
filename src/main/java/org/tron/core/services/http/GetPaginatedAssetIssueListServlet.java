@@ -28,6 +28,7 @@ public class GetPaginatedAssetIssueListServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build);
       AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());
