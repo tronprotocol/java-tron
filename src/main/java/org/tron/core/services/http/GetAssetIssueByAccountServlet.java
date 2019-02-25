@@ -46,6 +46,7 @@ public class GetAssetIssueByAccountServlet extends HttpServlet {
     try {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
       AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());

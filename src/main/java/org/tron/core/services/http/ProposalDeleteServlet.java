@@ -29,6 +29,7 @@ public class ProposalDeleteServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       ProposalDeleteContract.Builder build = ProposalDeleteContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

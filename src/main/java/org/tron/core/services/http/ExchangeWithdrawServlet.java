@@ -25,6 +25,7 @@ public class ExchangeWithdrawServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       ExchangeWithdrawContract.Builder build = ExchangeWithdrawContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet
