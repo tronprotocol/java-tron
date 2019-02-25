@@ -1182,17 +1182,15 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
+  // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace){
-
-    pushScheduledTransaction(blockCap, trxCap);
 
     transactionTrace.init(blockCap, eventPluginLoaded);
 
     trxCap.setTrxTrace(transactionTrace);
     trxCap.setResultCode(contractResult.SUCCESS);
 
-    trxCap.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
-
+    logger.info("transactionStore, trxid = {}", trxCap.getTransactionId());
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
             .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1203,6 +1201,8 @@ public class Manager {
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
     
     postContractTrigger(transactionTrace, false);
+
+    pushScheduledTransaction(blockCap, trxCap);
 
     return true;
   }
@@ -2052,10 +2052,16 @@ public class Manager {
     });
   }
 
+  // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
   private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
 
-    DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+    // new trx id to represent the second trx record
+    logger.debug("before setReference, trxid = {}", transactionCapsule.getTransactionId());
+    transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    logger.debug("after setReference, trxid = {}", transactionCapsule.getTransactionId());
 
+
+    DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
@@ -2081,7 +2087,7 @@ public class Manager {
     deferredTransaction.setDelayUntil(delayUntil);
 
     // expiration
-    long expiration = delayUntil + 600 * 1000; // to do add 600 do DynamicPropertiesStore
+    long expiration = delayUntil + Args.getInstance().getTrxExpirationTimeInMilliseconds();
     deferredTransaction.setExpiration(expiration);
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
