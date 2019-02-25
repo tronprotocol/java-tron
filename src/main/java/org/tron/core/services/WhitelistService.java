@@ -5,12 +5,17 @@ import java.util.Map;
 import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.WhitelistException;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j
@@ -35,11 +40,23 @@ public class WhitelistService {
     });
   }
 
-  public static void check(byte[] fromAddress, byte[] toAddress) throws WhitelistException {
+  public static void check(TransactionCapsule transactionCapsule) throws WhitelistException {
+    if (MapUtils.isEmpty(whitelist)) {
+      return;
+    }
+
+    Contract contract = transactionCapsule.getInstance().getRawData().getContractList().get(0);
+    Contract.ContractType contractType = contract.getType();
+    if (contractType == ContractType.UnfreezeBalanceContract) {
+      return;
+    }
+
+    byte[] fromAddress = TransactionCapsule.getOwner(contract);
+    byte[] toAddress = TransactionCapsule.getToAddress(contract);
     WrappedByteArray from = WrappedByteArray.of(fromAddress);
     WrappedByteArray to = WrappedByteArray.of(toAddress);
     WrappedByteArray value = whitelist.get(from);
-    if (Objects.nonNull(value) && !value.equals(to)) {
+    if (Objects.nonNull(value) && (Objects.isNull(toAddress) || !value.equals(to))) {
       throw new WhitelistException("Not the specified address. "
           + "from:" + Wallet.encode58Check(fromAddress)
           + ", to:" + Wallet.encode58Check(toAddress));

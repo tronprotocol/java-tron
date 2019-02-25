@@ -925,7 +925,8 @@ public class Args {
     }
 
     return config.getObjectList("blacklist").stream()
-        .map((ConfigObject e) -> Maps.immutableEntry(e.get("from").unwrapped().toString(), e.get("to").unwrapped().toString()))
+        .map((ConfigObject e) -> Maps.immutableEntry(e.get("from").unwrapped().toString(),
+            e.get("to") == null ? null : e.get("to").unwrapped().toString()))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2));
   }
 
