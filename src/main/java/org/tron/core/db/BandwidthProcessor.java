@@ -74,14 +74,14 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     if (trx.getTransactionType() == TransactionCapsule.UnexecutedDeferredTransaction){
-        // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
-        // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
-        bytesSize += trx.getTransactionId().getBytes().length;
-      }
-      else {
-        // don't charge bandwidth twice when executing deferred tranaction
-        bytesSize = 0;
-      }
+      // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
+      // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
+      bytesSize += trx.getTransactionId().getBytes().length;
+    }
+    else if(trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction){
+      // don't charge bandwidth twice when executing deferred tranaction
+      bytesSize = 0;
+    }
       
     // when transaction type is equal to executingDeferredTransaction, meaning fee already charged.
     boolean charged = trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction;
