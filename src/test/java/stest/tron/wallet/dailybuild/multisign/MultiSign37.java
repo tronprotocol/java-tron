@@ -97,7 +97,7 @@ public class MultiSign37 {
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    final Permission witnessPermission = test001AddressAccount.getWitnessPermission();
     long balance = test001AddressAccount.getBalance();
     logger.info("balance:" + balance);
     PublicMethedForMutiSign.printPermissionList(permissionsList);
@@ -125,7 +125,7 @@ public class MultiSign37 {
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    final Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     long balance1 = test001AddressAccount1.getBalance();
     logger.info("balance1:" + balance1);
 
@@ -167,7 +167,7 @@ public class MultiSign37 {
     Assert
         .assertThat(returnResult2.getMessage().toStringUtf8(),
             containsString(
-                "validate signature error Signature count is 2 more than key counts of permission : 1"));
+                "Signature count is 2 more than key counts of permission : 1"));
     Assert.assertEquals(balance1, balance3);
   }
 
@@ -187,7 +187,7 @@ public class MultiSign37 {
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
-    Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    final Permission witnessPermission = test001AddressAccount.getWitnessPermission();
     long balance = test001AddressAccount.getBalance();
     logger.info("balance:" + balance);
     PublicMethedForMutiSign.printPermissionList(permissionsList);
@@ -215,7 +215,7 @@ public class MultiSign37 {
     Account test001AddressAccount1 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    final Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
     long balance1 = test001AddressAccount1.getBalance();
     logger.info("balance1:" + balance1);
 
