@@ -929,6 +929,7 @@ public class Args {
             e.get("from") == null ? "" : e.get("from").unwrapped().toString(),
             e.get("to") == null ? "" : e.get("to").unwrapped().toString()))
         .filter(e -> e.getKey() != null)
+        .filter(e -> e.getValue() != null)
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2));
   }
 
