@@ -85,20 +85,11 @@ public class HttpTestMutiSign001 {
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Get sign weight by http")
-  public void test2GetSignWeight() {
-
-  }
-
   /**
    * constructor.
    */
   @Test(enabled = true, description = "Add transaction sign by http")
-  public void test3AddTransactionSign() {
+  public void test2AddTransactionSign() {
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     String[] permissionKeyString = new String[2];
