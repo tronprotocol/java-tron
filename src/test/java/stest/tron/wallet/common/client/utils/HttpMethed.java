@@ -33,7 +33,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse updateAccount(String httpNode, byte[] updateAccountAddress, String accountName, String fromKey) {
+  public static HttpResponse updateAccount(String httpNode, byte[] updateAccountAddress,
+      String accountName, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/updateaccount";
       JsonObject userBaseObj2 = new JsonObject();
@@ -56,7 +57,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse updateWitness(String httpNode, byte[] witnessAddress, String updateUrl, String fromKey) {
+  public static HttpResponse updateWitness(String httpNode, byte[] witnessAddress, String updateUrl,
+      String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/updatewitness";
       JsonObject userBaseObj2 = new JsonObject();
@@ -80,7 +82,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse voteWitnessAccount(String httpNode, byte[] ownerAddress, JsonArray voteArray, String fromKey) {
+  public static HttpResponse voteWitnessAccount(String httpNode, byte[] ownerAddress,
+      JsonArray voteArray, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/votewitnessaccount";
       JsonObject userBaseObj2 = new JsonObject();

@@ -191,7 +191,7 @@ public class MultiSign19 {
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    long needCoin = updateAccountPermissionFee;
+    long needCoin = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
@@ -241,6 +241,11 @@ public class MultiSign19 {
     System.out
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
+
+    Assert.assertFalse(PublicMethedForMutiSign
+        .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,
+            blockingStubFull,
+            activePermissionKeys.toArray(new String[activePermissionKeys.size()])));
 
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
