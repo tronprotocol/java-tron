@@ -78,6 +78,83 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse createProposal(String httpNode, byte[] ownerAddress, Long proposalKey,
+      Long proposalValue, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposalcreate";
+      JsonObject userBaseObj2 = new JsonObject();
+      JsonObject proposalMap = new JsonObject();
+      proposalMap.addProperty("key",proposalKey);
+      proposalMap.addProperty("value",proposalValue);
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.add("parameters",proposalMap);
+
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse approvalProposal(String httpNode, byte[] ownerAddress,
+      Integer proposalId,Boolean isAddApproval, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposalapprove";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("proposal_id", proposalId);
+      userBaseObj2.addProperty("is_add_approval", isAddApproval);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse deleteProposal(String httpNode, byte[] ownerAddress,
+      Integer proposalId,String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposaldelete";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("proposal_id", proposalId);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
   /**
    * constructor.
@@ -597,6 +674,21 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse listProposals(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/listproposals";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getExchangeById(String httpNode, Integer exchangeId) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getexchangebyid";
@@ -610,6 +702,25 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getProposalById(String httpNode, Integer proposalId) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getproposalbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("id", proposalId);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
 
 
   /**
