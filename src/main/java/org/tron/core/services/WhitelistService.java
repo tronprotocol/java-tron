@@ -9,14 +9,17 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.WhitelistException;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+// TODO
 @Component
 @Slf4j
 public class WhitelistService {
@@ -41,6 +44,10 @@ public class WhitelistService {
   }
 
   public static void check(TransactionCapsule transactionCapsule) throws WhitelistException {
+    if (!ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+      return;
+    }
+
     if (MapUtils.isEmpty(whitelist)) {
       return;
     }
