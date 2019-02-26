@@ -90,6 +90,7 @@ import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.NodeInfo;
@@ -1596,10 +1597,10 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getDeferredTransactionById(BytesMessage request, StreamObserver<Transaction> responseObserver) {
+    public void getDeferredTransactionById(BytesMessage request, StreamObserver<DeferredTransaction> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
-        Transaction reply = wallet.getDeferredTransactionById(id);
+        DeferredTransaction reply = wallet.getDeferredTransactionById(id);
 
         responseObserver.onNext(reply);
       } else {

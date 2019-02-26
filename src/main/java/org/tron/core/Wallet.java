@@ -124,6 +124,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
@@ -1213,14 +1214,14 @@ public class Wallet {
     return null;
   }
 
-  public Transaction getDeferredTransactionById(ByteString transactionId) {
+  public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
     }
     DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore().getByTransactionId(transactionId);
 
     if (deferredTransactionCapsule != null) {
-      return deferredTransactionCapsule.getDeferredTransaction().getTransaction();
+      return deferredTransactionCapsule.getDeferredTransaction();
     }
     return null;
   }
