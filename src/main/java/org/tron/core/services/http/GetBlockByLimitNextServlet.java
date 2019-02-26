@@ -46,6 +46,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BlockLimit.Builder build = BlockLimit.newBuilder();
       JsonFormat.merge(input, build);
       long startNum = build.getStartNum();

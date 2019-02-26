@@ -1,6 +1,7 @@
 package stest.tron.wallet.common.client.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import java.nio.charset.Charset;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,81 @@ public class HttpMethed {
   static String transactionString;
   static String transactionSignString;
   static JSONObject responseContent;
+  static JSONObject signResponseContent;
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse updateAccount(String httpNode, byte[] updateAccountAddress,
+      String accountName, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/updateaccount";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("account_name", str2hex(accountName));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(updateAccountAddress));
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse updateWitness(String httpNode, byte[] witnessAddress, String updateUrl,
+      String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/updatewitness";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("update_url", str2hex(updateUrl));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(witnessAddress));
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse voteWitnessAccount(String httpNode, byte[] ownerAddress,
+      JsonArray voteArray, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/votewitnessaccount";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.add("votes", voteArray);
+      logger.info(userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
   /**
    * constructor.
@@ -51,6 +126,144 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
+      Long amount, String[] managerKeys) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
+      userBaseObj2.addProperty("amount", amount);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionSignString = EntityUtils.toString(response.getEntity());
+      HttpResponse getSignWeightResponse;
+      for (String key: managerKeys) {
+        transactionSignString = gettransactionsign(httpNode,transactionSignString,key);
+        getSignWeightResponse = getSignWeight(httpNode,transactionSignString);
+        signResponseContent = parseResponseContent(getSignWeightResponse);
+        printJsonContent(signResponseContent);
+
+      }
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createProposal(String httpNode, byte[] ownerAddress, Long proposalKey,
+      Long proposalValue, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposalcreate";
+      JsonObject userBaseObj2 = new JsonObject();
+      JsonObject proposalMap = new JsonObject();
+      proposalMap.addProperty("key",proposalKey);
+      proposalMap.addProperty("value",proposalValue);
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.add("parameters",proposalMap);
+
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse approvalProposal(String httpNode, byte[] ownerAddress,
+      Integer proposalId,Boolean isAddApproval, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposalapprove";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("proposal_id", proposalId);
+      userBaseObj2.addProperty("is_add_approval", isAddApproval);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse deleteProposal(String httpNode, byte[] ownerAddress,
+      Integer proposalId,String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/proposaldelete";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("proposal_id", proposalId);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse accountPermissionUpdate(String httpNode, byte[] ownerAddress,
+      JsonObject ownerObject, JsonObject witnessObject, JsonObject activesObject, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/accountpermissionupdate";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.add("owner", ownerObject);
+      //userBaseObj2.add("witness", witnessObject);
+      userBaseObj2.add("actives", activesObject);
+      logger.info(userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
 
   /**
    * constructor.
@@ -212,6 +425,114 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse deployContract(String httpNode, String name,String abi,String bytecode,
+      Long bandwidthLimit,Long feeLimit, Integer consumeUserResourcePercent,Long originEnergyLimit,
+      Long callValue, Integer tokenId,Long tokenValue,byte[] ownerAddress,String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      //userBaseObj2.addProperty("name", str2hex(name));
+      userBaseObj2.addProperty("name", name);
+      userBaseObj2.addProperty("abi", abi);
+      userBaseObj2.addProperty("bytecode", bytecode);
+      userBaseObj2.addProperty("bandwidth_limit", bandwidthLimit);
+      userBaseObj2.addProperty("fee_limit", feeLimit);
+      userBaseObj2.addProperty("consume_user_resource_percent", consumeUserResourcePercent);
+      userBaseObj2.addProperty("origin_energy_limit", originEnergyLimit);
+      userBaseObj2.addProperty("call_value", callValue);
+      userBaseObj2.addProperty("token_id", tokenId);
+      userBaseObj2.addProperty("tokenValue", tokenValue);
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String deployContractGetTxid(String httpNode, String name,String abi,
+      String bytecode,
+      Long bandwidthLimit,Long feeLimit, Integer consumeUserResourcePercent,Long originEnergyLimit,
+      Long callValue, Integer tokenId,Long tokenValue,byte[] ownerAddress,String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      //userBaseObj2.addProperty("name", str2hex(name));
+      userBaseObj2.addProperty("name", name);
+      userBaseObj2.addProperty("abi", abi);
+      userBaseObj2.addProperty("bytecode", bytecode);
+      userBaseObj2.addProperty("bandwidth_limit", bandwidthLimit);
+      userBaseObj2.addProperty("fee_limit", feeLimit);
+      userBaseObj2.addProperty("consume_user_resource_percent", consumeUserResourcePercent);
+      userBaseObj2.addProperty("origin_energy_limit", originEnergyLimit);
+      userBaseObj2.addProperty("call_value", callValue);
+      userBaseObj2.addProperty("token_id", tokenId);
+      userBaseObj2.addProperty("call_token_value", tokenValue);
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      logger.info(userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode,transactionString,fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseStringContent(transactionString);
+    return responseContent.getString("txID");
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static String triggerContractGetTxid(String httpNode, byte[] ownerAddress,
+      String contractAddress,String functionSelector,String parameter,Long feeLimit,
+      Long callValue, Integer tokenId,Long tokenValue,String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/triggersmartcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      userBaseObj2.addProperty("fee_limit", feeLimit);
+      userBaseObj2.addProperty("call_value", callValue);
+      userBaseObj2.addProperty("token_id", tokenId);
+      userBaseObj2.addProperty("call_token_value", tokenValue);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode,parseStringContent(transactionString)
+          .getString("transaction"),fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode,transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseStringContent(transactionSignString);
+    return responseContent.getString("txID");
+  }
+
 
   /**
    * constructor.
@@ -400,9 +721,86 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getContract(String httpNode, String contractAddress) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", contractAddress);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getSignWeight(String httpNode,String transactionSignString) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getsignweight";
+      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+          connectionTimeout);
+      httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+      httppost = new HttpPost(requestUrl);
+      httppost.setHeader("Content-type", "application/json; charset=utf-8");
+      httppost.setHeader("Connection", "Close");
+      if (transactionSignString != null) {
+        StringEntity entity = new StringEntity(transactionSignString, Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        httppost.setEntity(entity);
+      }
+      response = httpClient.execute(httppost);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    httppost.releaseConnection();
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse listExchanges(String httpNode) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/listexchanges";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse listwitnesses(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/listwitnesses";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse listProposals(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/listproposals";
       response = createConnect(requestUrl);
     } catch (Exception e) {
       e.printStackTrace();
@@ -429,6 +827,25 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse getProposalById(String httpNode, Integer proposalId) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getproposalbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("id", proposalId);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
 
   /**
    * constructor.
@@ -446,6 +863,41 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionById(String httpNode, String txid) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactionbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", txid);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getTransactionInfoById(String httpNode, String txid) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactioninfobyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", txid);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
   /**
    * constructor.

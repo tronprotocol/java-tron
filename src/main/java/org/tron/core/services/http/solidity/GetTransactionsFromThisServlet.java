@@ -26,6 +26,7 @@ public class GetTransactionsFromThisServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
     try {
       String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       AccountPaginated.Builder builder = AccountPaginated.newBuilder();
       JsonFormat.merge(input, builder);
       AccountPaginated accountPaginated = builder.build();
