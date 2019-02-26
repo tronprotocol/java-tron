@@ -596,8 +596,9 @@ public class HttpMethed {
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
       logger.info(transactionString);
+
       transactionSignString = gettransactionsign(httpNode,parseStringContent(transactionString)
-          .getString("transaction"),fromKey);
+      it st    .getString("transaction"),fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode,transactionSignString);
     } catch (Exception e) {
@@ -863,7 +864,7 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    httppost.releaseConnection();
+    //httppost.releaseConnection();
     return response;
   }
 
@@ -892,7 +893,7 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
-    httppost.releaseConnection();
+    //httppost.releaseConnection();
     return response;
   }
 
@@ -904,6 +905,21 @@ public class HttpMethed {
   public static HttpResponse listExchanges(String httpNode) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/listexchanges";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse listNodes(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/listnodes";
       response = createConnect(requestUrl);
     } catch (Exception e) {
       e.printStackTrace();
@@ -977,7 +993,22 @@ public class HttpMethed {
     return response;
   }
 
-
+  /**
+   * constructor.
+   */
+  public static HttpResponse getAssetIssueListByName(String httpNode, String name) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getassetissuelistbyname";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", str2hex(name));
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
 
   /**

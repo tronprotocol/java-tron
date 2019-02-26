@@ -192,6 +192,18 @@ public class HttpTestExchange001 {
   }
 
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get asset issue list by name by http")
+  public void test7GetAssetIssueListByName() {
+    response = HttpMethed.getAssetIssueListByName(httpnode,name);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
 
 
 

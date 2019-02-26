@@ -58,6 +58,8 @@ public class HttpTestSmartContract001 {
         2,3,description,url,1000L, 1000L,assetOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
+    HttpMethed.waitToProduceOneBlock(httpnode);
+
     response = HttpMethed.getAccount(httpnode,assetOwnerAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
