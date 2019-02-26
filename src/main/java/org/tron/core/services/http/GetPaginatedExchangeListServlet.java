@@ -28,6 +28,7 @@ public class GetPaginatedExchangeListServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build);
       ExchangeList reply = wallet.getPaginatedExchangeList(build.getOffset(), build.getLimit());

@@ -55,6 +55,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       JsonFormat.merge(contract, build);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");

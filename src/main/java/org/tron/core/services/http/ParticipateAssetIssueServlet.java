@@ -29,6 +29,7 @@ public class ParticipateAssetIssueServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       ParticipateAssetIssueContract.Builder build = ParticipateAssetIssueContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

@@ -29,6 +29,7 @@ public class UpdateAccountServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       AccountUpdateContract.Builder build = AccountUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

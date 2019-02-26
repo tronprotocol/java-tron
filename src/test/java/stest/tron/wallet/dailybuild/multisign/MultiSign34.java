@@ -81,7 +81,9 @@ public class MultiSign34 {
 
   @Test(enabled = true, description = "SR witness,sendcoin, use witnessPermission address sign.")
   public void testMultiUpdatepermissions_42() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
@@ -128,7 +130,9 @@ public class MultiSign34 {
 
   @Test(enabled = true, description = "SR witness,sendcoin, use active address sign.")
   public void testMultiUpdatepermissions_43() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
@@ -174,7 +178,9 @@ public class MultiSign34 {
 
   @Test(enabled = true, description = "SR witness,sendcoin, use owner address sign.")
   public void testMultiUpdatepermissions_44() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();

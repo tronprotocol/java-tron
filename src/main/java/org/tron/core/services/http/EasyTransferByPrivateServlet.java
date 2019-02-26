@@ -37,6 +37,7 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] privateKey = build.getPrivateKey().toByteArray();
