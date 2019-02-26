@@ -23,24 +23,24 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 @Slf4j
 public class WhitelistService {
-  private final static String TEST_FROM = "";
-  private final static String TEST_TO = "";
+  private final static String TEST_FROM = "41ceee995c01c9bb7d720f9013336363cdc7c8c4d8";
+  private final static String TEST_TO = "41216352a10649ffc3e37ba492feb0c35b3b6258e0";
   private static Map<WrappedByteArray, WrappedByteArray> whitelist = new HashMap<>();
 
   public WhitelistService() {
     // test
-//    whitelist.put(WrappedByteArray.of(ByteArray.fromHexString(TEST_FROM)),
-//        WrappedByteArray.of(ByteArray.fromHexString(TEST_TO)));
+    whitelist.put(WrappedByteArray.of(ByteArray.fromHexString(TEST_FROM)),
+        WrappedByteArray.of(ByteArray.fromHexString(TEST_TO)));
   }
 
   // TODO
   @PostConstruct
   public void loadFromConfig() {
-    Args.getInstance().getBlacklist().forEach((k, v) -> {
-      WrappedByteArray key = WrappedByteArray.of(ByteArray.fromHexString(k));
-      WrappedByteArray value = WrappedByteArray.of(ByteArray.fromHexString(v));
-      whitelist.put(key, value);
-    });
+//    Args.getInstance().getBlacklist().forEach((k, v) -> {
+//      WrappedByteArray key = WrappedByteArray.of(ByteArray.fromHexString(k));
+//      WrappedByteArray value = WrappedByteArray.of(ByteArray.fromHexString(v));
+//      whitelist.put(key, value);
+//    });
   }
 
   public static void check(TransactionCapsule transactionCapsule) throws WhitelistException {
@@ -65,8 +65,9 @@ public class WhitelistService {
     WrappedByteArray value = whitelist.get(from);
     if (Objects.nonNull(value) && (contractType != ContractType.TransferContract || !value.equals(to))) {
       throw new WhitelistException("Not the specified address. "
-          + "from:" + Wallet.encode58Check(fromAddress)
-          + ", to:" + Wallet.encode58Check(toAddress));
+          + "contractType: " + contractType
+          + ", from:" + Wallet.encode58Check(fromAddress)
+          + ", to:" + (toAddress == null ? null : Wallet.encode58Check(toAddress)));
     }
   }
 }
