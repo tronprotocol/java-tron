@@ -1195,6 +1195,10 @@ public class Manager {
             .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
                     new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
+    if (trxCap.getDeferredSeconds() > 0) {
+      trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    }
+
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
             .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
@@ -2059,7 +2063,7 @@ public class Manager {
 
     // new trx id to represent the second trx record
     logger.info("before setReference, trxid = {}", transactionCapsule.getTransactionId());
-    transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    transactionCapsule.setReference(transactionCapsule.getReferenceBlockNumber());
     logger.info("after setReference, trxid = {}", transactionCapsule.getTransactionId());
 
 

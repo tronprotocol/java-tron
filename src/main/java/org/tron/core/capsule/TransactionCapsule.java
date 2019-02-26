@@ -106,6 +106,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
+  // generateTransactionId is used to save new generating transaction in deferredTransaction
+  @Getter
+  @Setter
+  private long referenceBlockNumber;
+
   /**
    * transactionType is 0 representing normal transaction
    * transactionType is 1 representing Unexecuted deferred transaction

@@ -39,6 +39,10 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
         this.deferredTransaction = deferredTransaction;
     }
 
+    public DeferredTransactionCapsule(TransactionCapsule transactionCapsule) {
+
+    }
+
     public DeferredTransactionCapsule(byte[] data){
         try {
             this.deferredTransaction = DeferredTransaction.parseFrom(data);
