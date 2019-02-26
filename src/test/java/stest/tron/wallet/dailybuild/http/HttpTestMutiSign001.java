@@ -66,8 +66,6 @@ public class HttpTestMutiSign001 {
     keys.add(manager1Wight);
     keys.add(manager2Wight);
 
-
-
     ownerObject.addProperty("type", 0);
     ownerObject.addProperty("permission_name", "owner");
     ownerObject.addProperty("threshold", 2);
