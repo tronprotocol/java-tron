@@ -77,7 +77,6 @@ public class TriggerSmartContractServlet extends HttpServlet {
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
       trxExtBuilder.setTransaction(trx);
-      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
