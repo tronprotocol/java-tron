@@ -22,7 +22,7 @@ public class GetTransactionCountByBlockNumServlet extends HttpServlet {
     try {
       long num = Long.parseLong(request.getParameter("num"));
       long count = wallet.getTransactionCountByBlockNum(num);
-      response.getWriter().println("{\"count\": "+ count + "}");
+      response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -37,10 +37,11 @@ public class GetTransactionCountByBlockNumServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
       long count = wallet.getTransactionCountByBlockNum(build.getNum());
-      response.getWriter().println("{\"count\": "+ count + "}");
+      response.getWriter().println("{\"count\": " + count + "}");
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

@@ -29,6 +29,7 @@ public class UpdateEnergyLimitServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       UpdateEnergyLimitContract.Builder build = UpdateEnergyLimitContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

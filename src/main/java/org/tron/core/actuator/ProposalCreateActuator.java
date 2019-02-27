@@ -267,6 +267,26 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (22): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
+        }
+        break;
+      }
+      case (23): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: MULTI_SIGN_FEE");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000_000L]");
+        }
+        break;
+      }
       default:
         break;
     }
