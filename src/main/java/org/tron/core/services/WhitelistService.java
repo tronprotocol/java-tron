@@ -1,19 +1,22 @@
 package org.tron.core.services;
 
+import com.google.common.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ForkController;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
-import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.WhitelistException;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -23,14 +26,14 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 @Slf4j
 public class WhitelistService {
-  private final static String TEST_FROM = "41ceee995c01c9bb7d720f9013336363cdc7c8c4d8";
-  private final static String TEST_TO = "41216352a10649ffc3e37ba492feb0c35b3b6258e0";
   private static Map<WrappedByteArray, WrappedByteArray> whitelist = new HashMap<>();
 
   public WhitelistService() {
-    // test
-    whitelist.put(WrappedByteArray.of(ByteArray.fromHexString(TEST_FROM)),
-        WrappedByteArray.of(ByteArray.fromHexString(TEST_TO)));
+    WhitelistTestCase.testMap.forEach((k, v) -> {
+      WrappedByteArray key = WrappedByteArray.of(ByteArray.fromHexString(k));
+      WrappedByteArray value = WrappedByteArray.of(ByteArray.fromHexString(v));
+      whitelist.put(key, value);
+    });
   }
 
   // TODO
@@ -44,7 +47,7 @@ public class WhitelistService {
   }
 
   public static void check(TransactionCapsule transactionCapsule) throws WhitelistException {
-    if (!ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+    if (!ForkController.pass(ForkBlockVersionEnum.VERSION_3_5)) {
       return;
     }
 
@@ -70,4 +73,47 @@ public class WhitelistService {
           + ", to:" + (toAddress == null ? null : Wallet.encode58Check(toAddress)));
     }
   }
+
+  @Component
+  public static class ForkController {
+
+    private static final byte VERSION_UPGRADE = (byte) 1;
+
+    @Getter
+    private static Manager manager;
+
+    @Autowired
+    public void setManager(Manager manager) {
+      ForkController.manager = manager;
+    }
+
+    public static boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+      return pass(forkBlockVersionEnum.getValue());
+    }
+
+    private static synchronized boolean pass(int version) {
+      byte[] stats = manager.getDynamicPropertiesStore().statsByVersion(version);
+      return check(stats);
+    }
+
+    private static boolean check(byte[] stats) {
+      if (stats == null || stats.length == 0) {
+        return false;
+      }
+
+      int count = 0;
+      for (int i = 0; i < stats.length; i++) {
+        if (VERSION_UPGRADE == stats[i]) {
+          ++count;
+        }
+      }
+
+      if (count >= 24) {
+        return true;
+      }
+
+      return false;
+    }
+  }
+
 }
