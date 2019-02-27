@@ -38,7 +38,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -113,16 +112,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   /**
    * transactionType is 0 representing normal transaction
-   * transactionType is 1 representing Unexecuted deferred transaction
+   * transactionType is 1 representing unexecuted deferred transaction
    * transactionType is 2 representing executing deferred transaction
    */
+  public static final int NORMALTRANSACTION = 0;
+  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
+  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
+
   @Getter
   @Setter
-  private int transactionType;
-
-  public static int normalTransaction = 0;
-  public static int UnexecutedDeferredTransaction = 1;
-  public static int executingDeferredTransaction = 2;
+  private int transactionType = NORMALTRANSACTION;
   /**
    * constructor TransactionCapsule.
    */

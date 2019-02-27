@@ -1184,10 +1184,8 @@ public class Manager {
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace){
-    if (trxCap.getDeferredSeconds() > 0) {
-      trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    }
-
+    // setReferenceBlockNumber used to save the transformation relationship from old transaction id to generating transaction id
+    trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
     transactionTrace.init(blockCap, eventPluginLoaded);
 
     trxCap.setTrxTrace(transactionTrace);
@@ -1235,7 +1233,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction && !trxCap.validateSignature(this)) {
+    if (trxCap.getTransactionType() != TransactionCapsule.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1246,7 +1244,7 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
 
     // process deferred transaction for the first time
-    if (trxCap.getTransactionType() == TransactionCapsule.UnexecutedDeferredTransaction){
+    if (trxCap.getTransactionType() == TransactionCapsule.UNEXECUTEDDEFERREDTRANSACTION){
       return processDeferTransaction(trxCap, blockCap, trace);
     }
 
@@ -1392,7 +1390,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction){
+      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
         if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
@@ -1462,7 +1460,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.getTransactionType() == TransactionCapsule.executingDeferredTransaction){
+      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
@@ -2038,7 +2036,7 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setTransactionType(TransactionCapsule.executingDeferredTransaction);
+      trxCapsule.setTransactionType(TransactionCapsule.EXECUTINGDEFERREDTRANSACTION);
       pendingTransactions.add(0, trxCapsule);
     }
 

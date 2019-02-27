@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -418,7 +417,7 @@ public class Wallet {
       return builder.setResult(false).setCode(response_code.TOO_LONG_DEFERRED_TRANSACTION_DELAYTIME).build();
     }
       if (trx.getDeferredSeconds() > 0) {
-      trx.setTransactionType(TransactionCapsule.UnexecutedDeferredTransaction);
+      trx.setTransactionType(TransactionCapsule.UNEXECUTEDDEFERREDTRANSACTION);
     }
 
     Message message = new TransactionMessage(signaturedTransaction);
