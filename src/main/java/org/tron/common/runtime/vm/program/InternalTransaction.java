@@ -193,7 +193,7 @@ public class InternalTransaction {
   }
 
   public byte[] getReceiveAddress() {
-    if (sendAddress == null) {
+    if (receiveAddress == null) {
       return EMPTY_BYTE_ARRAY;
     }
     return receiveAddress.clone();
