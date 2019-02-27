@@ -25,6 +25,7 @@ public class ExchangeTransactionServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       ExchangeTransactionContract.Builder build = ExchangeTransactionContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

@@ -64,6 +64,10 @@ public class MultiSign36 {
   private ECKey ecKey5 = new ECKey(Utils.getRandom());
   byte[] test005Address = ecKey5.getAddress();
   String sendAccountKey5 = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   /**
    * constructor.
@@ -76,15 +80,16 @@ public class MultiSign36 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-
   }
 
   @Test(enabled = true, description = "MultiSign permission transaction")
   public void getTransactionApprovedList_01() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee;
+
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -117,6 +122,7 @@ public class MultiSign36 {
         .accountPermissionUpdateWithoutSign(accountPermissionJson1, test001Address, dev001Key,
             blockingStubFull,
             permissionKeyString);
+
     Transaction transaction1 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction, dev001Key, 0, blockingStubFull);
     TransactionApprovedList transactionApprovedList = PublicMethed
@@ -148,8 +154,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_02() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = 2 * updateAccountPermissionFee + 1;
+
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -192,7 +200,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction, sendAccountKey2, 2, blockingStubFull);
@@ -241,9 +249,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_03() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -285,7 +294,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -322,9 +331,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_04() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -366,7 +376,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -400,8 +410,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_05() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
+
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -443,7 +455,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
 
     TransactionApprovedList transactionApprovedList = PublicMethed
@@ -472,9 +484,9 @@ public class MultiSign36 {
   public void getTransactionApprovedList_06() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
-
+    long amount = updateAccountPermissionFee + 1;
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -516,7 +528,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -549,9 +561,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_07() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -593,7 +606,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 0, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 0, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey2, blockingStubFull);
@@ -620,9 +633,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_08() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -664,7 +678,7 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, test001Address, 0, dev001Key,
+        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 0, dev001Key,
             blockingStubFull);
 
     try {
@@ -699,9 +713,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_09() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee + 1;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -741,7 +756,7 @@ public class MultiSign36 {
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-    Transaction transaction = createFakeTransaction(test001Address, 1_000_000L, test001Address);
+    Transaction transaction = createFakeTransaction(test001Address, 1L, test001Address);
 
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, dev001Key, blockingStubFull);
@@ -772,9 +787,10 @@ public class MultiSign36 {
   public void getTransactionApprovedList_10() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
+    long amount = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(test001Address, 1000000L, fromAddress, testKey002,
+        .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Contract.AccountPermissionUpdateContract.Builder builder =

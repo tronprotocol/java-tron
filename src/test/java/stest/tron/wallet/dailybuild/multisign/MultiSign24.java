@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.multisign;
 
 import static org.tron.api.GrpcAPI.TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -38,7 +39,10 @@ public class MultiSign24 {
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witnessAddress001 = PublicMethed.getFinalAddress(witnessKey001);
-
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] ownerAddress = ecKey1.getAddress();
   private String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -96,11 +100,19 @@ public class MultiSign24 {
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
-        testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long needCoin = updateAccountPermissionFee * 2 + multiSignFee * 2;
 
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
+            ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
@@ -169,6 +181,14 @@ public class MultiSign24 {
 
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction2, blockingStubFull);
     logger.info("TransactionSignWeight info : " + txWeight);
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1000000);
+    PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
+
   }
 
   @Test(enabled = true, description = "Broadcast multi sign permission transaction")
@@ -176,11 +196,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
 
@@ -256,7 +280,10 @@ public class MultiSign24 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction2, blockingStubFull));
-
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
   @Test(enabled = true, description = "Broadcast single sign normal transaction")
@@ -264,11 +291,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
 
@@ -326,6 +357,11 @@ public class MultiSign24 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1000000);
+
   }
 
   @Test(enabled = true, description = "Broadcast not sign permission transaction")
@@ -333,11 +369,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
 
@@ -399,6 +439,10 @@ public class MultiSign24 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction, blockingStubFull));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
   @Test(enabled = true, description = "Broadcast not complete multi sign normal transaction")
@@ -406,11 +450,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
 
@@ -476,6 +524,12 @@ public class MultiSign24 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
   }
 
   @Test(enabled = true, description = "Broadcast failed transaction")
@@ -483,11 +537,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
 
@@ -542,6 +600,10 @@ public class MultiSign24 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
   @Test(enabled = true, description = "Broadcast timeout normal transaction")
@@ -549,11 +611,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     PublicMethed.printAddress(ownerKey);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -614,6 +680,12 @@ public class MultiSign24 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
   }
 
   @Test(enabled = true, description = "Broadcast empty transaction")
@@ -625,7 +697,9 @@ public class MultiSign24 {
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     PublicMethed.printAddress(ownerKey);
 
     logger.info("** created an empty transaction");
@@ -646,6 +720,10 @@ public class MultiSign24 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore, balanceAfter);
   }
 
   @Test(enabled = true, description = "Broadcast error transaction")
@@ -653,11 +731,15 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
 
@@ -714,6 +796,10 @@ public class MultiSign24 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
   /**

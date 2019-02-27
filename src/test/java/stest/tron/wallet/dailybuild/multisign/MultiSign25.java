@@ -25,6 +25,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import stest.tron.wallet.common.client.Configuration;
@@ -76,6 +77,10 @@ public class MultiSign25 {
   private static final String DEFAULT_OPERATION
       = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
 
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   @BeforeSuite
   public void beforeSuite() {
@@ -101,7 +106,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 2 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -114,6 +121,8 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     ownerPermissionKeys.add(testKey002);
     activePermissionKeys.add(ownerKey);
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
 
     String accountPermissionJson = "{\"owner_permission\":{\"type\":0,"
         + "\"permission_name\":\"owner1\",\"threshold\":2,\"keys\":["
@@ -154,7 +163,7 @@ public class MultiSign25 {
 
     logger.info("** trigger a normal transaction");
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoin2(fromAddress, 1000_000, ownerAddress, ownerKey, blockingStubFull);
+        .sendcoin2(fromAddress, 1, ownerAddress, ownerKey, blockingStubFull);
 
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction.toByteArray()));
     TransactionSignWeight txWeight = PublicMethedForMutiSign
@@ -201,14 +210,19 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertEquals("Signature count is 2 more than key counts of permission : 1",
         txWeight.getResult().getMessage());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + 2 * multiSignFee + 1);
   }
 
   @Test(enabled = true, description = "Get sign for multi sign permission transaction")
   public void test02GetSignMultiSignPermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -223,7 +237,8 @@ public class MultiSign25 {
 
     Integer[] ints = {ContractType.AccountPermissionUpdateContract_VALUE};
     String operations = PublicMethedForMutiSign.getOperations(ints);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -315,6 +330,9 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertEquals("Signature count is 2 more than key counts of permission : 1",
         txWeight.getResult().getMessage());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, 3 * updateAccountPermissionFee + multiSignFee);
   }
 
   @Test(enabled = true, description = "Get sign for single sign normal transaction")
@@ -322,7 +340,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 2 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -334,7 +354,8 @@ public class MultiSign25 {
 
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     Integer[] ints = {ContractType.TransferContract_VALUE};
     String operations = PublicMethedForMutiSign.getOperations(ints);
 
@@ -409,6 +430,9 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertThat(txWeight.getResult().getMessage(),
         containsString("but it is not contained of permission"));
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + multiSignFee);
   }
 
   @Test(enabled = true, description = "Get sign for not sign transaction")
@@ -416,7 +440,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 2 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -428,7 +454,8 @@ public class MultiSign25 {
 
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -492,6 +519,10 @@ public class MultiSign25 {
     logger.info("After broadcast TransactionSignWeight info :\n" + txWeight);
     Assert.assertEquals(NOT_ENOUGH_PERMISSION, txWeight.getResult().getCode());
     Assert.assertEquals(0, txWeight.getCurrentWeight());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
+
   }
 
   @Test(enabled = true, description = "Get sign for not complete multi sign normal transaction")
@@ -499,7 +530,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -511,7 +544,8 @@ public class MultiSign25 {
 
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -584,7 +618,9 @@ public class MultiSign25 {
     logger.info("After broadcast TransactionSignWeight info :\n" + txWeight);
     Assert.assertEquals(NOT_ENOUGH_PERMISSION, txWeight.getResult().getCode());
     Assert.assertEquals(3, txWeight.getCurrentWeight());
-
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
   }
 
   @Test(enabled = true, description = "Get sign for failed transaction")
@@ -592,7 +628,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -604,7 +642,8 @@ public class MultiSign25 {
 
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -670,6 +709,10 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertThat(txWeight.getResult().getMessage(),
         containsString("but it is not contained of permission"));
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
+
   }
 
   @Test(enabled = true, description = "Get sign for timeout normal transaction")
@@ -677,7 +720,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -689,7 +734,8 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     ownerPermissionKeys.add(testKey002);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":2,\"keys\":["
@@ -763,6 +809,9 @@ public class MultiSign25 {
     logger.info("After broadcast TransactionSignWeight info :\n" + txWeight);
     Assert.assertEquals(ENOUGH_PERMISSION, txWeight.getResult().getCode());
     Assert.assertEquals(3, txWeight.getCurrentWeight());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, updateAccountPermissionFee);
   }
 
   @Test(enabled = true, description = "Get sign for empty transaction")
@@ -770,13 +819,16 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.printAddress(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     logger.info("** created an empty transaction");
 
     Contract.AccountPermissionUpdateContract.Builder builder =
@@ -808,6 +860,9 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertEquals("class java.lang.IndexOutOfBoundsException : Index: 0",
         txWeight.getResult().getMessage());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance, balance1);
   }
 
   @Test(enabled = true, description = "Get sign for error transaction")
@@ -815,7 +870,9 @@ public class MultiSign25 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
+    long amount = 4 * updateAccountPermissionFee + 100000000;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -827,7 +884,8 @@ public class MultiSign25 {
 
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
-
+    Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":1,\"keys\":["
@@ -877,6 +935,9 @@ public class MultiSign25 {
 
     Assert
         .assertFalse(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
+    long balance1 = test001AddressAccount1.getBalance();
+    Assert.assertEquals(balance - balance1, 1 * updateAccountPermissionFee);
   }
 
   /**
