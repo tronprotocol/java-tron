@@ -28,7 +28,7 @@ public class TransferTokenCreator extends AbstractTransactionCreator implements 
   private long callValue = 0L;
   private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
   private boolean hex = false;
-//  private String param = "\"" + commonContractAddress2 + "\",1002126,1";
+//  private String param = "\"" + commonContractAddress2 + "\",1002136,1";
   private String param = "\"" + commonContractAddress2 + "\",\"" + commontokenid + "\",1";
   private long feeLimit = 1000000000L;
   private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";

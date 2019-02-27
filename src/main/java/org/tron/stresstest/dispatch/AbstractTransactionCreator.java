@@ -48,8 +48,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
           .usePlaintext(true)
           .build();
   protected WalletGrpc.WalletBlockingStub commonblockingStubFull = WalletGrpc.newBlockingStub(commonchannelFull);
-  protected String commontokenid="1002126";
-  protected long commonexchangeid=160;
+  protected String commontokenid="1002136";
+  protected long commonexchangeid=159;
 
 
   long time = System.currentTimeMillis();

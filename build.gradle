@@ -304,6 +304,14 @@ task dailyBuild(type: Test) {
     }
 }
 
+task exportTransactionConfiguration(type: Test) {
+    useTestNG {
+        suites(file('src/test/resources/export-transaction-configuration.xml'))
+        parallel 'tests'
+        threadCount 1
+    }
+}
+
 
 jacocoTestReport {
     reports {

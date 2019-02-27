@@ -32,7 +32,7 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
     private long callValue = 0L;
     private String methodSign = "TransferTokenTo(address,trcToken,uint256)";
     private boolean hex = false;
-//    private String param = "\"" + commonContractAddress2 + "\",1002126,1";
+//    private String param = "\"" + commonContractAddress2 + "\",1002136,1";
     private String param = "\"" + commonContractAddress2 + "\",\"" + commontokenid + "\",1";
 
     private long feeLimit = 1000000000L;
