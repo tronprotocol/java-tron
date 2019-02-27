@@ -46,18 +46,10 @@ public class AdvService {
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
   
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
-      .maximumSize(500_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
-
-  private Cache<Item, Message> messageCache = CacheBuilder.newBuilder()
       .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
-//  private Cache<Sha256Hash, TransactionMessage> trxCache = CacheBuilder.newBuilder()
-//      .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(50_000)
-//      .recordStats().build();
-//
-//  private Cache<Sha256Hash, BlockMessage> blockCache = CacheBuilder.newBuilder()
-//      .maximumSize(10).expireAfterWrite(60, TimeUnit.SECONDS)
-//      .recordStats().build();
+  private Cache<Item, Message> messageCache = CacheBuilder.newBuilder()
+      .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -141,7 +133,7 @@ public class AdvService {
 
   private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronProxy.getActivePeer().stream()
-        .filter(peer -> peer.isIdle() && !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
 
     if (invToFetch.isEmpty() || peers.isEmpty()) {

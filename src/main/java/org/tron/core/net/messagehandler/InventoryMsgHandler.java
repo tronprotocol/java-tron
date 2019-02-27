@@ -39,9 +39,7 @@ public class InventoryMsgHandler implements TronMsgHandler{
     for (Sha256Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
       peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-      if (!advService.addInv(item)) {
-        logger.info("This item {} from peer {} Already exist.", item, peer.getInetAddress());
-      }
+      advService.addInv(item);
     }
   }
 

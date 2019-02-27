@@ -92,8 +92,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
   private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) throws P2pException{
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
-    //todo check inv size not gt MAX_INV_FETCH_PER_PEER
-
     if (type == MessageTypes.TRX) {
       int fetchCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement
           .getCount(10);

@@ -7,7 +7,6 @@ import com.google.common.cache.CacheBuilder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel.TronState;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
@@ -194,7 +192,6 @@ public class SyncService {
 
   private void startFetchSyncBlock() {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
-//    HashSet<BlockId> request = new HashSet<>();
 
     tronProxy.getActivePeer().stream()
         .filter(peer -> peer.isNeedSyncFromPeer() && peer.isIdle())
@@ -207,7 +204,6 @@ public class SyncService {
               requestBlockIds.put(blockId, System.currentTimeMillis());
               peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
               send.get(peer).add(blockId);
-//              request.add(blockId);
               if (send.get(peer).size() >= MAX_BLOCK_FETCH_PER_PEER) {
                 break;
               }
@@ -216,16 +212,10 @@ public class SyncService {
         });
 
     send.forEach((peer, blockIds) -> {
-//      blockIds.forEach(blockId -> {
-//        requestBlockIds.put(blockId, System.currentTimeMillis());
-//        peer.getSyncBlockRequested().put(blockId, System.currentTimeMillis());
-//      });
       if (!blockIds.isEmpty()) {
         peer.sendMessage(new FetchInvDataMessage(new LinkedList<>(blockIds), InventoryType.BLOCK));
       }
     });
-
-//    send.clear();
   }
 
   private synchronized void handleSyncBlock() {

@@ -43,28 +43,24 @@ public class PeerStatusCheck {
 
     tronProxy.getActivePeer().forEach(peer -> {
 
-      final boolean[] isDisconnected = {false};
+      boolean isDisconnected = false;
 
       if (peer.isNeedSyncFromPeer() && peer.getBlockBothHaveUpdateTime() < now - blockUpdateTimeout){
         logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
-        isDisconnected[0] = true;
+        isDisconnected = true;
       }
 
-      if (!isDisconnected[0]) {
-        peer.getAdvInvRequest().values().stream()
-            .filter(time -> time < now - NetConstants.ADV_TIME_OUT)
-            .findFirst()
-            .ifPresent(time -> isDisconnected[0] = true);
+      if (!isDisconnected) {
+        isDisconnected = peer.getAdvInvRequest().values().stream()
+            .anyMatch(time -> time < now - NetConstants.ADV_TIME_OUT);
       }
 
-      if (!isDisconnected[0]) {
-        peer.getSyncBlockRequested().values().stream()
-            .filter(time -> time < now - NetConstants.SYNC_TIME_OUT)
-            .findFirst()
-            .ifPresent(time -> isDisconnected[0] = true);
+      if (!isDisconnected) {
+        isDisconnected = peer.getSyncBlockRequested().values().stream()
+            .anyMatch(time -> time < now - NetConstants.SYNC_TIME_OUT);
       }
 
-      if (isDisconnected[0]) {
+      if (isDisconnected) {
         peer.disconnect(ReasonCode.TIME_OUT);
       }
     });

@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,6 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronNetClient;
 import org.tron.core.net.TronProxy;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.TronMessage;
@@ -31,9 +29,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
   @Autowired
   private SyncService syncService;
-
-  @Setter
-  private TronNetClient tronManager;
 
   @Override
   public void processMessage (PeerConnection peer, TronMessage msg) throws P2pException {
