@@ -440,7 +440,7 @@ public class MultiSign06 {
   }
 
 
-  @Test(enabled = true, description = "Owner type is Long.MAX_VALUE")
+  @Test(enabled = true, description = "Owner type is Long.Min")
   public void testOwnerType03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
@@ -517,7 +517,6 @@ public class MultiSign06 {
 
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
-
 
   @Test(enabled = true, description = "Owner type is Long.MAX_VALUE + 1")
   public void testOwnerType04() {

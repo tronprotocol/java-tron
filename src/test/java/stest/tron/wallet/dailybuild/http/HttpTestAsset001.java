@@ -44,6 +44,8 @@ public class HttpTestAsset001 {
   private static String name = "testAssetIssue002_" + Long.toString(now);
   private static final long totalSupply = now;
   private static String assetIssueId;
+  private static String updateDescription = "Description_update_" + Long.toString(now);
+  private static String updateUrl = "Url_update_" + Long.toString(now);
 
   /**
    * constructor.
@@ -122,6 +124,31 @@ public class HttpTestAsset001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Update asset issue by http")
+  public void test6UpdateAssetIssue() {
+    response = HttpMethed.updateAssetIssue(httpnode,assetAddress,updateDescription,updateUrl,
+        290L,390L,assetKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.getAssetIssueById(httpnode,assetIssueId);
+    getAssetIssueByIdContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(getAssetIssueByIdContent);
+
+
+    Assert.assertTrue(getAssetIssueByIdContent
+        .getLong("public_free_asset_net_limit") == 390L);
+    Assert.assertTrue(getAssetIssueByIdContent
+        .getLong("free_asset_net_limit") == 290L);
+    Assert.assertTrue(getAssetIssueByIdContent
+        .getString("description").equalsIgnoreCase(HttpMethed.str2hex(updateDescription)));
+    Assert.assertTrue(getAssetIssueByIdContent
+        .getString("url").equalsIgnoreCase(HttpMethed.str2hex(updateUrl)));
   }
 
 

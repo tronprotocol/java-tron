@@ -100,6 +100,19 @@ public class HttpTestBlock001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "List nodes by http")
+  public void get6ListNodes() {
+    response = HttpMethed.listNodes(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("nodes").toString());
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
+
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     HttpMethed.disConnect();
