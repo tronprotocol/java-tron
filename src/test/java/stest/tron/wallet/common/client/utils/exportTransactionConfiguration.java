@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
@@ -12,18 +13,34 @@ import stest.tron.wallet.common.client.Configuration;
 @Slf4j
 public class exportTransactionConfiguration extends TestListenerAdapter {
 
-  private String reportPath = "TransactionConfiguration_test1.xml";
+  private String reportPath = "TransactionConfiguration_test2.xml";
   private Integer finishedNum = 0;
+  private String type2IdName;
+  private String idValue;
+
+  String[] stressTypeList = {
+      "TriggerContract(transferTokenWithSingleSign)",
+      "TransferAsset"
+  };
+
 
   @Override
   public void onStart(ITestContext context) {
-    logger.info(Configuration.getByPath("stress.conf").getString("stressType[1].TriggerContract(transferTokenWithSingleSign)"));
     beforeWrite();
-    writeRef("transferToken");
-    writeRef("niceTransferAssetTransaction");
-    writeStressContent("transferToken",10);
-    writeStressContent("niceTransferAssetTransaction",11);
   }
+
+  @Override
+  public void onTestSuccess(ITestResult result) {
+    HashMap<String, Integer> stressType = new HashMap<String, Integer>();
+    for (String key: stressTypeList) {
+      if (Configuration.getByPath("stress.conf").getInt("stressType." + key) > 0) {
+        stressType.put(Configuration.getByPath("stress.conf").getString("type2IdName." + key),
+            Configuration.getByPath("stress.conf").getInt("stressType." + key));
+      }
+    }
+    writeRef(stressType);
+  }
+
 
   @Override
   public void onFinish(ITestContext testContext) {
@@ -101,13 +118,20 @@ public class exportTransactionConfiguration extends TestListenerAdapter {
     String idName = "className." + id;
     String description = Configuration.getByPath("stress.conf")
         .getString(idName);
-    logger.info(description);
+    //logger.info(description);
     return description;
   }
 
-  public void writeRef(String id) {
+  public void writeRef(HashMap<String, Integer> stressType) {
     StringBuilder sb = new StringBuilder();
-    sb.append("<ref bean=\"" + id + "\"/>\n");
+    sb.append("  <list>\n");
+
+    for (String key : stressType.keySet()) {
+      String id = Configuration.getByPath("stress.conf").getString("type2IdName." + key);
+      sb.append("<ref bean=\"" + id + "\"/>\n");
+    }
+
+    sb.append("      </list>\n" + "    </property>\n" + "  </bean>");
 
     String res = sb.toString();
     try {

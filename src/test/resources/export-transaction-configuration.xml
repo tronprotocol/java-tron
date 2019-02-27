@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Export transaction configuration">
-  <listeners>
-    <listener class-name="stest.tron.wallet.common.client.utils.exportTransactionConfiguration"></listener>
-  </listeners>
   <test name="stress">
-    <packages>
-      <package name="stest.tron.wallet.dailybuild">
-      </package>
-    </packages>
+    <classes>
+      <class name="stest.tron.wallet.onlineStress.StressXmlAutoCreate">
+      </class>
+    </classes>
   </test>
 </suite>
