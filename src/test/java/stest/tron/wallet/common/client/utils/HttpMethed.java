@@ -598,7 +598,7 @@ public class HttpMethed {
       logger.info(transactionString);
 
       transactionSignString = gettransactionsign(httpNode,parseStringContent(transactionString)
-      it st    .getString("transaction"),fromKey);
+      .getString("transaction"),fromKey);
       logger.info(transactionSignString);
       response = broadcastTransaction(httpNode,transactionSignString);
     } catch (Exception e) {
