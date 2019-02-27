@@ -4,23 +4,33 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import lombok.extern.slf4j.Slf4j;
 import org.testng.ITestContext;
 import org.testng.ITestResult;
 import org.testng.TestListenerAdapter;
-
+import stest.tron.wallet.common.client.Configuration;
+@Slf4j
 public class exportTransactionConfiguration extends TestListenerAdapter {
 
-  private Integer passedNum = 0;
-  private Integer failedNum = 0;
-  private Integer skippedNum = 0;
-  private String reportPath;
-  StringBuilder passedDescriptionList = new StringBuilder("");
-  StringBuilder failedDescriptionList = new StringBuilder("");
-  StringBuilder skippedDescriptionList = new StringBuilder("");
+  private String reportPath = "TransactionConfiguration_test1.xml";
+  private Integer finishedNum = 0;
 
   @Override
   public void onStart(ITestContext context) {
-    reportPath = "TransactionConfiguration_test.xml";
+    logger.info(Configuration.getByPath("stress.conf").getString("stressType[1].TriggerContract(transferTokenWithSingleSign)"));
+    beforeWrite();
+    writeRef("transferToken");
+    writeRef("niceTransferAssetTransaction");
+    writeStressContent("transferToken",10);
+    writeStressContent("niceTransferAssetTransaction",11);
+  }
+
+  @Override
+  public void onFinish(ITestContext testContext) {
+    afterWrite();
+  }
+
+  public void beforeWrite() {
     StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
         + "<beans xmlns=\"http://www.springframework.org/schema/beans\"\n"
         + "  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -54,30 +64,7 @@ public class exportTransactionConfiguration extends TestListenerAdapter {
     }
   }
 
-  @Override
-  public void onTestSuccess(ITestResult result) {
-    passedDescriptionList.append(result.getMethod().getRealClass() + ": "
-        + result.getMethod().getDescription() + "\n");
-    passedNum++;
-  }
-
-  @Override
-  public void onTestFailure(ITestResult result) {
-    failedDescriptionList.append(result.getMethod().getRealClass() + ": "
-        + result.getMethod().getDescription() + "\n");
-    failedNum++;
-  }
-
-  @Override
-  public void onTestSkipped(ITestResult result) {
-    skippedDescriptionList.append(result.getMethod().getRealClass() + ": "
-        + result.getMethod().getDescription() + "\n");
-    skippedNum++;
-  }
-
-
-  @Override
-  public void onFinish(ITestContext testContext) {
+  public void afterWrite() {
     StringBuilder sb = new StringBuilder();
     sb.append("\n</beans>");
 
@@ -88,8 +75,49 @@ public class exportTransactionConfiguration extends TestListenerAdapter {
     } catch (IOException e) {
       e.printStackTrace();
     }
-
   }
+
+  public void writeStressContent(String id,Integer percentage) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<bean id=\"");
+    sb.append(id + "\"\n");
+    sb.append("class=" + getClassName(id) + "\">\n");
+    sb.append("<property name=\"name\" value=\"");
+    sb.append(id +"\"/>\n");
+    sb.append("<property name=\"begin\" value=\"" + finishedNum + "\"/>\n");
+    finishedNum = finishedNum + percentage;
+    sb.append("<property name=\"end\" value=\"" + finishedNum + "\"/>\n");
+    sb.append("  </bean>\n\n");
+
+    String res = sb.toString();
+    try {
+      Files.write((Paths.get(reportPath)), res.getBytes("utf-8"), StandardOpenOption.APPEND);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public String getClassName(String id) {
+    String idName = "className." + id;
+    String description = Configuration.getByPath("stress.conf")
+        .getString(idName);
+    logger.info(description);
+    return description;
+  }
+
+  public void writeRef(String id) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<ref bean=\"" + id + "\"/>\n");
+
+    String res = sb.toString();
+    try {
+      Files.write((Paths.get(reportPath)), res.getBytes("utf-8"), StandardOpenOption.APPEND);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+
 
 }
 

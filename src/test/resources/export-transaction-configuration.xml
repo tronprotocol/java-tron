@@ -4,7 +4,7 @@
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.exportTransactionConfiguration"></listener>
   </listeners>
-  <test name="stest">
+  <test name="stress">
     <packages>
       <package name="stest.tron.wallet.dailybuild">
       </package>
