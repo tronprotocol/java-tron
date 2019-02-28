@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Proposal;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetProposalByIdServlet extends HttpServlet {
 
   @Autowired
@@ -45,6 +45,7 @@ public class GetProposalByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       long id = jsonObject.getLong("id");
       Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));

@@ -65,6 +65,9 @@ public class WalletTestAccount004 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -120,29 +123,27 @@ public class WalletTestAccount004 {
   public void testUnFreezeBalance() {
     //Unfreeze failed when there is no freeze balance.
     //Wait to be create account
-    ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] account004Address = ecKey1.getAddress();
-    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
     Assert.assertFalse(PublicMethed.unFreezeBalance(noFrozenAddress, noFrozenBalanceTestKey,1,
         null, blockingStubFull));
     logger.info("Test unfreezebalance");
-
-
-    Account account004;
-
+    ECKey ecKey1 = new ECKey(Utils.getRandom());
+    byte[] account004Address = ecKey1.getAddress();
+    String account004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(account004Address,freezeAmount,fromAddress,testKey002,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(account004Address,freezeAmount,0,
         account004Key,blockingStubFull));
+    Account account004;
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == 0);
     Assert.assertTrue(PublicMethed.unFreezeBalance(account004Address,account004Key,0,
         null,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
     Assert.assertTrue(account004.getBalance() == freezeAmount);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account004Address,freezeAmount,0,
         1,account004Key,blockingStubFull));
     account004 = PublicMethed.queryAccount(account004Address, blockingStubFull);
@@ -156,6 +157,9 @@ public class WalletTestAccount004 {
     Assert.assertTrue(account004.getBalance() == freezeAmount);
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -166,6 +170,9 @@ public class WalletTestAccount004 {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -245,6 +252,9 @@ public class WalletTestAccount004 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -283,6 +293,9 @@ public class WalletTestAccount004 {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -307,12 +320,18 @@ public class WalletTestAccount004 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();

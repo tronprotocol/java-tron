@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class ProposalApproveServlet extends HttpServlet {
 
   @Autowired
@@ -29,6 +29,7 @@ public class ProposalApproveServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       ProposalApproveContract.Builder build = ProposalApproveContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

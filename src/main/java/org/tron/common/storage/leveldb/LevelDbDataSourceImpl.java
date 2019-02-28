@@ -47,7 +47,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.StoreIterator;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @NoArgsConstructor
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {

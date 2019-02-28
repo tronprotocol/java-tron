@@ -30,7 +30,10 @@ import org.tron.protos.Protocol.Transaction.Contract;
 public class TransactionUtils {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private final static int RESERVE_BALANCE = 10;
+  private static final  int RESERVE_BALANCE = 10;
+  /**
+   * constructor.
+   */
 
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
@@ -38,6 +41,9 @@ public class TransactionUtils {
 
     return Sha256Hash.hash(tmp.build().toByteArray());
   }
+  /**
+   * constructor.
+   */
 
   public static byte[] getOwner(Transaction.Contract contract) {
     ByteString owner;
@@ -89,6 +95,9 @@ public class TransactionUtils {
       return null;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static String getBase64FromByteString(ByteString sign) {
     byte[] r = sign.substring(0, 32).toByteArray();
@@ -107,6 +116,10 @@ public class TransactionUtils {
    * 3. check sign
    * 4. check balance
    */
+  /**
+   * constructor.
+   */
+
   public static boolean validTransaction(Transaction signedTransaction) {
     assert (signedTransaction.getSignatureCount()
         == signedTransaction.getRawData().getContractCount());
@@ -132,6 +145,9 @@ public class TransactionUtils {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
     ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
@@ -149,6 +165,9 @@ public class TransactionUtils {
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
+  /**
+   * constructor.
+   */
 
   public static Transaction setTimestamp(Transaction transaction) {
     long currentTime = System.currentTimeMillis();//*1000000 + System.nanoTime()%1000000;

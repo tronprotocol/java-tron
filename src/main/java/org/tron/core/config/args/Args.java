@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -19,7 +20,10 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -32,6 +36,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
@@ -45,7 +52,7 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
@@ -57,6 +64,10 @@ public class Args {
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
+
+  @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -98,6 +109,9 @@ public class Args {
 
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
+
+  @Parameter(names = {"--witness-address"}, description = "witness-address")
+  private String witnessAddress = "";
 
   @Parameter(names = {"--password"}, description = "password")
   private String password;
@@ -371,7 +385,7 @@ public class Args {
 
   @Getter
   @Setter
-  private String logLevel;
+  private int allowMultiSign;
 
   @Getter
   @Setter
@@ -389,12 +403,32 @@ public class Args {
   @Setter
   private int minEffectiveConnection;
 
+  @Getter
+  @Setter
+  private long blockNumForEneryLimit;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--es"})
+  private boolean eventSubscribe = false;
+
+  @Getter
+  private EventPluginConfig eventPluginConfig;
+
+  @Getter
+  private FilterQuery eventFilter;
+
+  @Getter
+  @Setter
+  private long trxExpirationTimeInMilliseconds; // (ms)
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
+    INSTANCE.witnessAddress = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
     INSTANCE.storageIndexSwitch = "";
@@ -457,6 +491,8 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowMultiSign = 0;
+    INSTANCE.trxExpirationTimeInMilliseconds = 0;
   }
 
   /**
@@ -465,8 +501,28 @@ public class Args {
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
+
+    if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    }
+
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
+      if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
+        byte[] bytes = Wallet.decodeFromBase58Check(INSTANCE.witnessAddress);
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from cmd");
+        } else {
+          INSTANCE.witnessAddress = "";
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath("localwitness")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -476,6 +532,18 @@ public class Args {
         localwitness = localwitness.subList(0, 1);
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
+
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath("localwitnesskeystore")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -568,14 +636,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -713,6 +773,9 @@ public class Args {
         config.hasPath("committee.allowCreationOfContracts") ? config
             .getInt("committee.allowCreationOfContracts") : 0;
 
+    INSTANCE.allowMultiSign =
+        config.hasPath("committee.allowMultiSign") ? config
+            .getInt("committee.allowMultiSign") : 0;
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
@@ -760,8 +823,6 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
-    INSTANCE.logLevel =
-        config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
     INSTANCE.needToUpdateAsset =
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
@@ -770,8 +831,15 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.trxExpirationTimeInMilliseconds =
+        config.hasPath("trx.expiration.timeInMilliseconds") && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
+            config.getLong("trx.expiration.timeInMilliseconds") : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
+
+    INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
+        config.getInt("enery.limit.block.num") : 4727890L;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
@@ -780,13 +848,17 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
+    INSTANCE.eventPluginConfig =
+            config.hasPath("event.subscribe")?
+                    getEventPluginConfig(config) : null;
+
+    INSTANCE.eventFilter =
+            config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
     initBackupProperty(config);
-
-
 
     logConfig();
   }
-
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
@@ -846,6 +918,21 @@ public class Args {
     return this.outputDirectory;
   }
 
+  public Map<String, String> getBlacklist() {
+    Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, Constant.TESTNET_CONF);
+    if (!config.hasPath("blacklist")) {
+      return Collections.emptyMap();
+    }
+
+    return config.getObjectList("blacklist").stream()
+        .map((ConfigObject e) -> Maps.immutableEntry(
+            e.get("from") == null ? "" : e.get("from").unwrapped().toString(),
+            e.get("to") == null ? "" : e.get("to").unwrapped().toString()))
+        .filter(e -> e.getKey() != null)
+        .filter(e -> e.getValue() != null)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2));
+  }
+
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
     if (!config.hasPath(path)) {
       return Collections.emptyList();
@@ -870,6 +957,97 @@ public class Args {
       INSTANCE.privateKey = getGeneratedNodePrivateKey();
     }
   }
+
+  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
+    EventPluginConfig eventPluginConfig = new EventPluginConfig();
+
+    if (config.hasPath("event.subscribe.path")){
+      String pluginPath = config.getString("event.subscribe.path");
+      if (StringUtils.isNotEmpty(pluginPath)){
+        eventPluginConfig.setPluginPath(pluginPath.trim());
+      }
+    }
+
+
+    if (config.hasPath("event.subscribe.server")){
+      String serverAddress = config.getString("event.subscribe.server");
+      if (StringUtils.isNotEmpty(serverAddress)){
+        eventPluginConfig.setServerAddress(serverAddress.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.dbconfig")){
+      String dbConfig = config.getString("event.subscribe.dbconfig");
+      if (StringUtils.isNotEmpty(dbConfig)){
+        eventPluginConfig.setDbConfig(dbConfig.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.topics")){
+      List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
+              .map(Args::createTriggerConfig)
+              .collect(Collectors.toCollection(ArrayList::new));
+
+      eventPluginConfig.setTriggerConfigList(triggerConfigList);
+    }
+
+    return eventPluginConfig;
+  }
+
+  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject){
+    if (Objects.isNull(triggerObject)){
+      return null;
+    }
+
+    TriggerConfig triggerConfig = new TriggerConfig();
+
+    String triggerName = triggerObject.get("triggerName").unwrapped().toString();
+    triggerConfig.setTriggerName(triggerName);
+
+    String enabled = triggerObject.get("enable").unwrapped().toString();
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true: false);
+
+    String topic = triggerObject.get("topic").unwrapped().toString();
+    triggerConfig.setTopic(topic);
+
+    return triggerConfig;
+  }
+
+  private static FilterQuery getEventFilter(final com.typesafe.config.Config config){
+    FilterQuery filter = new FilterQuery();
+    long fromBlockLong = 0,  toBlockLong = 0;
+
+    String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
+    try {
+       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setFromBlock(fromBlockLong);
+
+    String toBlock = config.getString("event.subscribe.filter.toblock").trim();
+    try {
+      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
+    } catch (Exception e){
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setToBlock(toBlockLong);
+
+    List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
+    addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
+      Collectors.toList());
+    filter.setContractAddressList(addressList);
+
+    List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
+    topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
+      Collectors.toList());
+    filter.setContractTopicList(topicList);
+
+    return filter;
+  }
+
 
   private static String getGeneratedNodePrivateKey() {
     String nodeId;

@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class BroadcastServlet extends HttpServlet {
 
   @Autowired
@@ -23,6 +23,7 @@ public class BroadcastServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       Transaction transaction = Util.packTransaction(input);
       GrpcAPI.Return retur = wallet.broadcastTransaction(transaction);
       response.getWriter().println(JsonFormat.printToString(retur));

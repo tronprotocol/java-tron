@@ -31,7 +31,7 @@ import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Getter // only for unit test
 public abstract class AbstractRevokingStore implements RevokingDatabase {
 
@@ -357,7 +357,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     }
   }
 
-  @Slf4j
+  @Slf4j(topic = "DB")
   @Getter // only for unit test
   public static class Dialog implements ISession {
 

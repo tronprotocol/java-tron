@@ -18,7 +18,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public class BandwidthProcessor extends ResourceProcessor {
 
   public BandwidthProcessor(Manager manager) {

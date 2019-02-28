@@ -14,7 +14,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetPaginatedProposalListServlet extends HttpServlet {
 
   @Autowired
@@ -28,6 +28,7 @@ public class GetPaginatedProposalListServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build);
       ProposalList reply = wallet.getPaginatedProposalList(build.getOffset(), build.getLimit());

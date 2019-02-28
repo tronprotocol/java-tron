@@ -11,7 +11,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class ListExchangesServlet extends HttpServlet {
 
   @Autowired

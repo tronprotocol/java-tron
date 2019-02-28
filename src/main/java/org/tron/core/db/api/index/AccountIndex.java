@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct;
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
-@Slf4j
+@Slf4j(topic = "DB")
 public class AccountIndex extends AbstractIndex<AccountCapsule, Account> {
 
   public static SimpleAttribute<WrappedByteArray, String> Account_ADDRESS;

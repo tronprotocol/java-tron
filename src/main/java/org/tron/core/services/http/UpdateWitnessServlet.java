@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class UpdateWitnessServlet extends HttpServlet {
 
   @Autowired
@@ -29,10 +29,11 @@ public class UpdateWitnessServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.AssetIssueContract).getInstance();
+          .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract).getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

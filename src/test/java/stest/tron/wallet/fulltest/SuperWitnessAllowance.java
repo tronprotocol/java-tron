@@ -79,6 +79,10 @@ public class SuperWitnessAllowance {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     logger.info(lowBalTest);
@@ -154,6 +158,9 @@ public class SuperWitnessAllowance {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -161,6 +168,9 @@ public class SuperWitnessAllowance {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
 
   public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
@@ -190,6 +200,9 @@ public class SuperWitnessAllowance {
     }
 
   }
+  /**
+   * constructor.
+   */
 
   public Boolean updateWitness(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
@@ -222,6 +235,9 @@ public class SuperWitnessAllowance {
 
   }
 
+  /**
+   * constructor.
+   */
 
   public Boolean sendcoin(byte[] to, long amount, byte[] owner, String priKey) {
 
@@ -257,6 +273,9 @@ public class SuperWitnessAllowance {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -289,12 +308,18 @@ public class SuperWitnessAllowance {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -311,6 +336,9 @@ public class SuperWitnessAllowance {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] addRess, String priKey) {
 

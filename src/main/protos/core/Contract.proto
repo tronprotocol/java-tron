@@ -242,3 +242,10 @@ message ExchangeTransactionContract {
   int64 quant = 4;
   int64 expected = 5;
 }
+
+message AccountPermissionUpdateContract {
+  bytes owner_address = 1;
+  Permission owner = 2;  //Empty is invalidate
+  Permission witness = 3;//Can be empty
+  repeated Permission actives = 4;//Empty is invalidate
+}
