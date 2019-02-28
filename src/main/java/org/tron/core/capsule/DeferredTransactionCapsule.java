@@ -5,9 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.DeferredTransaction;
-import org.tron.protos.Protocol.DelegatedResource;
 
 @Slf4j(topic = "capsule")
 public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransaction> {
@@ -21,8 +19,8 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
 
     public byte[] getKey() {
         int size = Long.SIZE/Byte.SIZE;
-        long DelayTime = deferredTransaction.getDelayUntil();
-        byte[] delayTime =  Longs.toByteArray(DelayTime);
+        long delayUntil = deferredTransaction.getDelayUntil();
+        byte[] delayTime =  Longs.toByteArray(delayUntil);
         byte[] trxId = deferredTransaction.getTransactionId().toByteArray();
         byte[] key = new byte[8 + trxId.length];
         System.arraycopy(delayTime, 0, key, 0, size);

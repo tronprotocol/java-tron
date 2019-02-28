@@ -2055,9 +2055,8 @@ public class Manager {
   private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
 
     // new trx id to represent the second trx record
-    logger.info("before setReference, trxid = {}", transactionCapsule.getTransactionId());
     transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
-    logger.info("after setReference, trxid = {}", transactionCapsule.getTransactionId());
+    logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
