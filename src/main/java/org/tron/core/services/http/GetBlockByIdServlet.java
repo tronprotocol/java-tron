@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetBlockByIdServlet extends HttpServlet {
 
   @Autowired
@@ -44,6 +44,7 @@ public class GetBlockByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       Block reply = wallet.getBlockById(build.getValue());

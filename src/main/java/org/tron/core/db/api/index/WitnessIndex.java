@@ -19,7 +19,7 @@ import javax.annotation.PostConstruct;
 import static com.googlecode.cqengine.query.QueryFactory.attribute;
 
 @Component
-@Slf4j
+@Slf4j(topic = "DB")
 public class WitnessIndex extends AbstractIndex<WitnessCapsule, Witness> {
 
   public static SimpleAttribute<WrappedByteArray, String> Witness_ADDRESS;

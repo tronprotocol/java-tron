@@ -13,7 +13,7 @@ import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Slf4j
+@Slf4j(topic = "DB")
 public abstract class TronDatabase<T> implements ITronChainBase<T> {
 
   protected LevelDbDataSourceImpl dbSource;

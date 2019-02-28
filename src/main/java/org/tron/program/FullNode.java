@@ -1,6 +1,9 @@
 package org.tron.program;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +20,24 @@ import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class FullNode {
+
+  public static void load (String path){
+    try{
+      File file = new File(path);
+      if (!file.exists() || !file.isFile() || !file.canRead()){
+        return;
+      }
+      LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+      JoranConfigurator configurator = new JoranConfigurator();
+      configurator.setContext(lc);
+      lc.reset();
+      configurator.doConfigure(file);
+    }catch (Exception e) {
+      logger.error(e.getMessage());
+    }
+  }
 
   /**
    * Start the FullNode.
@@ -28,8 +47,7 @@ public class FullNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
+    load (cfgArgs.getLogbackPath());
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

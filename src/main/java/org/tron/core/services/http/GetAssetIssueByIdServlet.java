@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAssetIssueByIdServlet extends HttpServlet {
 
   @Autowired
@@ -42,6 +42,7 @@ public class GetAssetIssueByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       String id = jsonObject.getString("value");
 

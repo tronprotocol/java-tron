@@ -8,15 +8,19 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
@@ -35,8 +39,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteAssetContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
@@ -47,7 +51,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 
-@Slf4j
+@Slf4j(topic = "API")
 public class Util {
 
   public static String printErrorMsg(Exception e) {
@@ -119,6 +123,29 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction()));
     }
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight) {
+    String string = JsonFormat.printToString(transactionSignWeight);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction",
+            printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction()));
+    jsonObject.put("transaction", jsonObjectExt);
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionApprovedList(
+      TransactionApprovedList transactionApprovedList) {
+    String string = JsonFormat.printToString(transactionApprovedList);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    jsonObjectExt
+        .put("transaction",
+            printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction()));
+    jsonObject.put("transaction", jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
@@ -269,6 +296,12 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(exchangeTransactionContract));
             break;
+          case AccountPermissionUpdateContract:
+            AccountPermissionUpdateContract accountPermissionUpdateContract = contractParameter
+                .unpack(AccountPermissionUpdateContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(accountPermissionUpdateContract));
+            break;
           case UpdateSettingContract:
             UpdateSettingContract updateSettingContract = contractParameter
                 .unpack(UpdateSettingContract.class);
@@ -277,7 +310,8 @@ public class Util {
           case UpdateEnergyLimitContract:
             UpdateEnergyLimitContract updateEnergyLimitContract = contractParameter
                 .unpack(UpdateEnergyLimitContract.class);
-            contractJson = JSONObject.parseObject(JsonFormat.printToString(updateEnergyLimitContract));
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
             break;
           // todo add other contract
           default:
@@ -297,6 +331,8 @@ public class Util {
     JSONObject rawData = JSONObject.parseObject(jsonTransaction.get("raw_data").toString());
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
+    String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
+    jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
@@ -495,6 +531,14 @@ public class Util {
                     ProposalDeleteContractBuilder);
             any = Any.pack(ProposalDeleteContractBuilder.build());
             break;
+          case "AccountPermissionUpdateContract":
+            AccountPermissionUpdateContract.Builder AccountPermissionUpdateContractBuilder =
+                AccountPermissionUpdateContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    AccountPermissionUpdateContractBuilder);
+            any = Any.pack(AccountPermissionUpdateContractBuilder.build());
+            break;
           case "UpdateSettingContract":
             UpdateSettingContract.Builder UpdateSettingContractBuilder = UpdateSettingContract
                 .newBuilder();
@@ -533,6 +577,13 @@ public class Util {
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
       return null;
+    }
+  }
+
+  public static void checkBodySize(String body) throws Exception {
+    Args args = Args.getInstance();
+    if (body.getBytes().length > args.getMaxMessageSize()) {
+      throw new Exception("body size is too big, limit is " + args.getMaxMessageSize());
     }
   }
 }

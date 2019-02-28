@@ -18,9 +18,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
+import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.VMConstant;
 import org.tron.common.runtime.vm.VMUtils;
@@ -61,7 +64,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
-@Slf4j(topic = "Runtime")
+@Slf4j(topic = "VM")
 public class RuntimeImpl implements Runtime {
 
   private VMConfig config = VMConfig.getInstance();
@@ -88,6 +91,10 @@ public class RuntimeImpl implements Runtime {
   private TransactionTrace trace;
   private boolean isStaticCall;
 
+  @Setter
+  private boolean enableEventLinstener;
+
+  private LogInfoTriggerParser logInfoTriggerParser;
 
   /**
    * For blockCap's trx run
@@ -313,6 +320,11 @@ public class RuntimeImpl implements Runtime {
     }
   }
 
+  private boolean isCheckTransaction() {
+    return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
+        .getWitnessSignature().isEmpty();
+  }
+
   private double getCpuLimitInUsRatio() {
 
     double cpuLimitRatio;
@@ -384,6 +396,7 @@ public class RuntimeImpl implements Runtime {
       tokenValue = contract.getCallTokenValue();
       tokenId = contract.getTokenId();
     }
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     // create vm to constructor smart contract
     try {
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -413,6 +426,8 @@ public class RuntimeImpl implements Runtime {
         energyLimit = getAccountEnergyLimitWithFloatRatio(creator, feeLimit, callValue);
       }
 
+      checkTokenValueAndId(tokenValue, tokenId);
+
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTransaction = new InternalTransaction(trx, trxType);
 
@@ -428,13 +443,21 @@ public class RuntimeImpl implements Runtime {
       this.vm = new VM(config);
       this.program = new Program(ops, programInvoke, rootInternalTransaction, config,
           this.blockCap);
-      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
+      this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
+      if (enableEventLinstener &&
+          (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+              || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+          && isCheckTransaction()) {
+        logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
+            txId, callerAddress);
+
+      }
     } catch (Exception e) {
       logger.info(e.getMessage());
       throw new ContractValidateException(e.getMessage());
     }
-
     program.getResult().setContractAddress(contractAddress);
 
     deposit.createAccount(contractAddress, newSmartContract.getName(),
@@ -445,13 +468,13 @@ public class RuntimeImpl implements Runtime {
     deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
 
     // transfer from callerAddress to contractAddress according to callValue
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
     if (VMConfig.allowTvmTransferTrc10()) {
       if (tokenValue > 0) {
-        transferToken(this.deposit, callerAddress, contractAddress, String.valueOf(tokenId), tokenValue);
+        transferToken(this.deposit, callerAddress, contractAddress, String.valueOf(tokenId),
+            tokenValue);
       }
     }
 
@@ -503,6 +526,9 @@ public class RuntimeImpl implements Runtime {
       }
     }
 
+    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+    checkTokenValueAndId(tokenValue, tokenId);
+
     byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
 
@@ -512,15 +538,14 @@ public class RuntimeImpl implements Runtime {
         throw new ContractValidateException(
             "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
       }
-      AccountCapsule caller = this.deposit.getAccount(contract.getOwnerAddress().toByteArray());
+      AccountCapsule caller = this.deposit.getAccount(callerAddress);
       long energyLimit;
       if (isCallConstant(contractAddress)) {
         isStaticCall = true;
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
-        AccountCapsule creator = this.deposit.getAccount(
-            deployedContract.getInstance()
-                .getOriginAddress().toByteArray());
+        AccountCapsule creator = this.deposit
+            .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
         energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
@@ -540,19 +565,29 @@ public class RuntimeImpl implements Runtime {
       rootInternalTransaction = new InternalTransaction(trx, trxType);
       this.program = new Program(code, programInvoke, rootInternalTransaction, config,
           this.blockCap);
-      this.program.setRootTransactionId(new TransactionCapsule(trx).getTransactionId().getBytes());
+      byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
+      this.program.setRootTransactionId(txId);
       this.program.setRootCallConstant(isCallConstant());
+
+      if (enableEventLinstener &&
+          (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+              || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+          && isCheckTransaction()) {
+        logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
+            txId, callerAddress);
+      }
     }
 
     program.getResult().setContractAddress(contractAddress);
     //transfer from callerAddress to targetAddress according to callValue
-    byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
     }
     if (VMConfig.allowTvmTransferTrc10()) {
       if (tokenValue > 0) {
-        transferToken(this.deposit, callerAddress, contractAddress, String.valueOf(tokenId), tokenValue);
+        transferToken(this.deposit, callerAddress, contractAddress, String.valueOf(tokenId),
+            tokenValue);
       }
     }
 
@@ -617,6 +652,13 @@ public class RuntimeImpl implements Runtime {
           }
         } else {
           deposit.commit();
+
+          if (logInfoTriggerParser != null) {
+            List<ContractTrigger> triggers = logInfoTriggerParser
+                .parseLogInfos(program.getResult().getLogInfoList(), this.deposit);
+            program.getResult().setTriggerList(triggers);
+          }
+
         }
       } else {
         deposit.commit();
@@ -719,6 +761,24 @@ public class RuntimeImpl implements Runtime {
 
   }
 
+  public void checkTokenValueAndId(long tokenValue, long tokenId) throws ContractValidateException {
+    if (VMConfig.allowTvmTransferTrc10()) {
+      if (VMConfig.allowMultiSign()) { //allowMultiSigns
+        // tokenid can only be 0
+        // or (MIN_TOKEN_ID, Long.Max]
+        if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
+          throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
+        }
+        // tokenid can only be 0 when tokenvalue = 0,
+        // or (MIN_TOKEN_ID, Long.Max]
+        if (tokenValue > 0 && tokenId == 0) {
+          throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+              ", tokenId = " + tokenId);
+        }
+      }
+    }
+  }
+
   public ProgramResult getResult() {
     return result;
   }
@@ -726,4 +786,5 @@ public class RuntimeImpl implements Runtime {
   public String getRuntimeError() {
     return runtimeError;
   }
+
 }

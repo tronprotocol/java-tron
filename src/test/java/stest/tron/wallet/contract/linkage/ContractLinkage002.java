@@ -49,8 +49,12 @@ public class ContractLinkage002 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
   @BeforeClass(enabled = true)
   public void beforeClass() {
+    PublicMethed.printAddress(linkage002Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -63,13 +67,10 @@ public class ContractLinkage002 {
 
   @Test(enabled = true)
   public void updateSetting() {
-    ecKey1 = new ECKey(Utils.getRandom());
-    linkage002Address = ecKey1.getAddress();
-    linkage002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    PublicMethed.printAddress(linkage002Key);
-    Account info;
     Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
         testKey002, blockingStubFull));
+    Account info;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage002Address,
@@ -298,6 +299,9 @@ public class ContractLinkage002 {
         linkage002Key, linkage002Address, blockingStubFull));
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

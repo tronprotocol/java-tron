@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.TransactionSign;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class TransactionSignServlet extends HttpServlet {
 
   @Autowired
@@ -30,6 +30,7 @@ public class TransactionSignServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       JSONObject input = JSONObject.parseObject(contract);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
       Transaction transaction = Util.packTransaction(strTransaction);

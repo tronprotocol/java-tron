@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Account;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAccountNetServlet extends HttpServlet {
 
   @Autowired
@@ -46,6 +46,7 @@ public class GetAccountNetServlet extends HttpServlet {
     try {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
       AccountNetMessage reply = wallet.getAccountNet(build.getAddress());

@@ -61,6 +61,10 @@ public class WalletTestAccount009 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(account009Key);
@@ -83,7 +87,8 @@ public class WalletTestAccount009 {
 
 
     Account account009Info = PublicMethed.queryAccount(account009Key,blockingStubFull);
-    logger.info(Long.toString(account009Info.getAccountResource().getFrozenBalanceForEnergy().getExpireTime()));
+    logger.info(Long.toString(
+            account009Info.getAccountResource().getFrozenBalanceForEnergy().getExpireTime()));
     Assert.assertTrue(account009Info.getAccountResource().getEnergyUsage() == 0);
     Assert.assertTrue(account009Info.getAccountResource().getFrozenBalanceForEnergy()
         .getExpireTime() == 0);
@@ -114,6 +119,9 @@ public class WalletTestAccount009 {
 
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

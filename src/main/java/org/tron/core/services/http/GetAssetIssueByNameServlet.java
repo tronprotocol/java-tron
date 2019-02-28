@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -16,7 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAssetIssueByNameServlet extends HttpServlet {
 
   @Autowired
@@ -47,6 +46,7 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       AssetIssueContract reply = wallet.getAssetIssueByName(build.getValue());

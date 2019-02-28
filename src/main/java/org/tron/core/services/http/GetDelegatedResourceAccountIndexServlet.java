@@ -15,10 +15,11 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
 
-  @Autowired private Wallet wallet;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
@@ -45,6 +46,7 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       DelegatedResourceAccountIndex reply =

@@ -36,7 +36,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class TransferAssetActuator extends AbstractActuator {
 
   TransferAssetActuator(Any contract, Manager dbManager) {
@@ -54,8 +54,10 @@ public class TransferAssetActuator extends AbstractActuator {
       byte[] toAddress = transferAssetContract.getToAddress().toByteArray();
       AccountCapsule toAccountCapsule = accountStore.get(toAddress);
       if (toAccountCapsule == null) {
+        boolean withDefaultPermission =
+            dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp());
+            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
         dbManager.getAccountStore().put(toAddress, toAccountCapsule);
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();

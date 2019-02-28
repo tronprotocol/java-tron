@@ -21,7 +21,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class EasyTransferByPrivateServlet extends HttpServlet {
 
   @Autowired
@@ -37,6 +37,7 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] privateKey = build.getPrivateKey().toByteArray();

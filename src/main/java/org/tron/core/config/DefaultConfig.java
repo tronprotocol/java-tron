@@ -1,8 +1,7 @@
 package org.tron.core.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -11,16 +10,16 @@ import org.springframework.context.annotation.Import;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
+import org.tron.core.db.TransactionCache;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
+@Slf4j(topic = "app")
 @Configuration
 @Import(CommonConfig.class)
 public class DefaultConfig {
-
-  private static Logger logger = LoggerFactory.getLogger("general");
 
   @Autowired
   ApplicationContext appCtx;
@@ -70,6 +69,16 @@ public class DefaultConfig {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (!isSolidityNode && dbVersion == 2) {
       return new HttpApiOnSolidityService();
+    }
+
+    return null;
+  }
+
+  @Bean
+  public TransactionCache transactionCache() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 2) {
+      return new TransactionCache("trans-cache");
     }
 
     return null;

@@ -16,7 +16,7 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
 
@@ -80,6 +80,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_AVERAGE_TIME = "TOTAL_ENERGY_AVERAGE_TIME".getBytes();
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
+    private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -98,6 +99,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
+
+  private static final byte[] UPDATE_ACCOUNT_PERMISSION_FEE = "UPDATE_ACCOUNT_PERMISSION_FEE"
+      .getBytes();
+
+  private static final byte[] MULTI_SIGN_FEE = "MULTI_SIGN_FEE"
+      .getBytes();
+
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
@@ -139,6 +147,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
       .getBytes();
 
+  //Used only for multi sign
+  private static final byte[] TOTAL_SIGN_NUM = "TOTAL_SIGN_NUM".getBytes();
+
+  //Used only for multi sign, once，value is {0,1}
+  private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
+
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -148,10 +162,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
+  private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
+  private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
+
+    try {
+      this.getTotalSignNum();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalSignNum(5);
+    }
+
+    try {
+      this.getAllowMultiSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiSign(Args.getInstance().getAllowMultiSign());
+    }
 
     try {
       this.getLatestBlockHeaderTimestamp();
@@ -376,6 +405,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getUpdateAccountPermissionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveUpdateAccountPermissionFee(100000000L);
+    }
+
+    try {
+      this.getMultiSignFee();
+    } catch (IllegalArgumentException e) {
+      this.saveMultiSignFee(1000000L);
+    }
+
+
+
+    try {
       this.getExchangeCreateFee();
     } catch (IllegalArgumentException e) {
       this.saveExchangeCreateFee(1024000000L);
@@ -448,6 +491,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAvailableContractType();
+    } catch (IllegalArgumentException e) {
+      String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
+      byte[] bytes = ByteArray.fromHexString(contractType);
+      this.saveAvailableContractType(bytes);
+    }
+
+    try {
+      this.getActiveDefaultOperations();
+    } catch (IllegalArgumentException e) {
+      String contractType = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
+      byte[] bytes = ByteArray.fromHexString(contractType);
+      this.saveActiveDefaultOperations(bytes);
+    }
+
+
+    try {
       this.getAllowSameTokenName();
     } catch (IllegalArgumentException e) {
       this.saveAllowSameTokenName(Args.getInstance().getAllowSameTokenName());
@@ -502,6 +562,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalEnergyAverageTime();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageTime(0);
+    }
+
+    try {
+      this.getBlockEnergyUsage();
+    } catch (IllegalArgumentException e) {
+      this.saveBlockEnergyUsage(0);
     }
   }
 
@@ -886,6 +952,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_AVERAGE_TIME"));
   }
 
+  public void saveBlockEnergyUsage(long blockEnergyUsage) {
+    this.put(DynamicResourceProperties.BLOCK_ENERGY_USAGE,
+        new BytesCapsule(ByteArray.fromLong(blockEnergyUsage)));
+  }
+
+  public long getBlockEnergyUsage() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.BLOCK_ENERGY_USAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BLOCK_ENERGY_USAGE"));
+  }
 
   public void saveEnergyFee(long totalEnergyFee) {
     this.put(ENERGY_FEE,
@@ -972,6 +1050,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
+  public void saveUpdateAccountPermissionFee(long fee) {
+    this.put(UPDATE_ACCOUNT_PERMISSION_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public void saveMultiSignFee(long fee) {
+    this.put(MULTI_SIGN_FEE,
+        new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+
   public long getAssetIssueFee() {
     return Optional.ofNullable(getUnchecked(ASSET_ISSUE_FEE))
         .map(BytesCapsule::getData)
@@ -979,6 +1068,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found ASSET_ISSUE_FEE"));
   }
+
+  public long getUpdateAccountPermissionFee() {
+    return Optional.ofNullable(getUnchecked(UPDATE_ACCOUNT_PERMISSION_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found UPDATE_ACCOUNT_PERMISSION_FEE"));
+  }
+
+  public long getMultiSignFee() {
+    return Optional.ofNullable(getUnchecked(MULTI_SIGN_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MULTI_SIGN_FEE"));
+  }
+
+
 
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
@@ -1149,6 +1256,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
   }
 
+  public void saveAvailableContractType(byte[] value) {
+    this.put(AVAILABLE_CONTRACT_TYPE,
+        new BytesCapsule(value));
+  }
+
+  public byte[] getAvailableContractType() {
+    return Optional.ofNullable(getUnchecked(AVAILABLE_CONTRACT_TYPE))
+        .map(BytesCapsule::getData)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found AVAILABLE_CONTRACT_TYPE"));
+  }
+
+
+  public void saveActiveDefaultOperations(byte[] value) {
+    this.put(ACTIVE_DEFAULT_OPERATIONS,
+        new BytesCapsule(value));
+  }
+
+  public byte[] getActiveDefaultOperations() {
+    return Optional.ofNullable(getUnchecked(ACTIVE_DEFAULT_OPERATIONS))
+        .map(BytesCapsule::getData)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ACTIVE_DEFAULT_OPERATIONS"));
+  }
+
+
+
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;
   }
@@ -1180,8 +1314,34 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveAllowCreationOfContracts(long allowCreationOfContracts) {
-    this.put(DynamicPropertiesStore.ALLOW_CREATION_OF_CONTRACTS,
+    this.put(ALLOW_CREATION_OF_CONTRACTS,
         new BytesCapsule(ByteArray.fromLong(allowCreationOfContracts)));
+  }
+
+  public void saveTotalSignNum(int num) {
+    this.put(DynamicPropertiesStore.TOTAL_SIGN_NUM,
+        new BytesCapsule(ByteArray.fromInt(num)));
+  }
+
+  public int getTotalSignNum() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SIGN_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toInt)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SIGN_NUM"));
+  }
+
+  public void saveAllowMultiSign(long allowMultiSing) {
+    this.put(ALLOW_MULTI_SIGN,
+        new BytesCapsule(ByteArray.fromLong(allowMultiSing)));
+  }
+
+  public long getAllowMultiSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_SIGN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
   }
 
   public long getAllowCreationOfContracts() {

@@ -63,6 +63,9 @@ public class WalletTestWitness001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -99,8 +102,9 @@ public class WalletTestWitness001 {
     //Assert.assertFalse(VoteWitness(smallVoteMap, NO_FROZEN_ADDRESS, no_frozen_balance_testKey));
 
     //Freeze balance to get vote ability.
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3L, testKey002,blockingStubFull));
-
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1200000L, 3L,
+            testKey002,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Vote failed when the vote is large than the freeze balance.
     Assert.assertFalse(voteWitness(veryLargeMap, fromAddress, testKey002));
     //Vote failed due to 0 vote.
@@ -110,11 +114,14 @@ public class WalletTestWitness001 {
     //Vote is so large, vote failed.
     Assert.assertFalse(voteWitness(wrongDropMap, fromAddress, testKey002));
 
-    //Vote success, the second latest vote is cover by the latest vote.
+    //Vote success
     Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
-    Assert.assertTrue(voteWitness(smallVoteMap, fromAddress, testKey002));
+
+
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
@@ -125,6 +132,9 @@ public class WalletTestWitness001 {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public Boolean voteWitness(HashMap<String, String> witness, byte[] addRess, String priKey) {
 
@@ -146,7 +156,7 @@ public class WalletTestWitness001 {
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
-      long count = Long.parseLong(value);
+      final long count = Long.parseLong(value);
       Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
@@ -196,6 +206,9 @@ public class WalletTestWitness001 {
     }
     return true;
   }
+  /**
+   * constructor.
+   */
 
   public Boolean freezeBalance(byte[] addRess, long freezeBalance, long freezeDuration,
       String priKey) {
@@ -288,6 +301,9 @@ public class WalletTestWitness001 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   public boolean unFreezeBalance(byte[] addRess, String priKey) {
     byte[] address = addRess;
@@ -326,6 +342,9 @@ public class WalletTestWitness001 {
     }
   }
 
+  /**
+   * constructor.
+   */
 
   public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
@@ -350,12 +369,18 @@ public class WalletTestWitness001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+  /**
+   * constructor.
+   */
 
   public Account grpcQueryAccount(byte[] address, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString addressBs = ByteString.copyFrom(address);
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+  /**
+   * constructor.
+   */
 
   public Block getBlock(long blockNum, WalletGrpc.WalletBlockingStub blockingStubFull) {
     NumberMessage.Builder builder = NumberMessage.newBuilder();
