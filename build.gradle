@@ -252,11 +252,11 @@ protobuf {
     }
 }
 
-//run {
-//    if ( project.hasProperty("appArgs") )
-//        print("get params, appArgs="+project.getProperty("appArgs"))
-//        args Eval.me(appArgs)
-//}
+run {
+    if ( project.hasProperty("appArgs") )
+        print("get params, appArgs="+project.getProperty("appArgs"))
+        args Eval.me(appArgs)
+}
 
 shadowJar {
     baseName = 'java-tron'
