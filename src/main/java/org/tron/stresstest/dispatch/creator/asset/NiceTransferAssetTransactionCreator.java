@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.asset;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.Configuration;
 import org.tron.core.Wallet;
 import org.tron.stresstest.dispatch.AbstractTransactionCreator;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
@@ -18,10 +19,10 @@ public class NiceTransferAssetTransactionCreator extends AbstractTransactionCrea
 
 //  private String assetName = "1002136";
   private String assetName = commontokenid;
-  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String ownerAddress = Configuration.getByPath("stress.conf").getString("address.assetIssueOwnerAddress");
   private String toAddress = commonToAddress;
   private long amount = 1L;
-  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  private String privateKey = Configuration.getByPath("stress.conf").getString("privateKey.assetIssueOwnerKey");
 
   @Override
   protected Protocol.Transaction create() {

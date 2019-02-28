@@ -19,14 +19,14 @@ import java.util.concurrent.atomic.AtomicLong;
 @Setter
 public class TriggerTimeoutContractCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String ownerAddress = triggerOwnerAddress;
   private String contractAddress = commonContractAddress3;
   private long callValue = 0L;
   private String methodSign = "add2(uint256)";
   private boolean hex = false;
   private String param = "2100";
   private long feeLimit = 1000000000L;
-  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  private String privateKey = triggerOwnerKey;
   public static AtomicLong queryCount = new AtomicLong();
 
   @Override

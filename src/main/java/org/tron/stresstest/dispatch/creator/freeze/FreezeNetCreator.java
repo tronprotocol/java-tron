@@ -19,7 +19,7 @@ public class FreezeNetCreator extends AbstractTransactionCreator implements Good
   private long frozenBalance = 1000000L;
   private long frozenDuration = 3L;
   private int resourceCode = 0;
-  private String delegateAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String delegateAddress = delegateResourceAddress;
   private String privateKey = commonOwnerPrivateKey;
 
   @Override

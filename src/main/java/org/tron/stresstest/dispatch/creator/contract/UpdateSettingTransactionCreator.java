@@ -16,10 +16,10 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 public class UpdateSettingTransactionCreator extends AbstractTransactionCreator implements
         GoodCaseTransactonCreator {
 
-  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String ownerAddress = triggerOwnerAddress;
   private String contractAddress = commonContractAddress1;
   private long consumeUserResourcePercent = 100L;
-  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  private String privateKey = triggerOwnerKey;
 
   @Override
   protected Protocol.Transaction create() {

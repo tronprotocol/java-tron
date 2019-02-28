@@ -17,7 +17,7 @@ public class UnFreezeNetCreator extends AbstractTransactionCreator implements Go
 
   private String ownerAddress = commonOwnerAddress;
   private int resourceCode = 0;
-  private String delegateAddress = commonToAddress;
+  private String delegateAddress = delegateResourceAddress;
   private String privateKey = commonOwnerPrivateKey;
 
   @Override

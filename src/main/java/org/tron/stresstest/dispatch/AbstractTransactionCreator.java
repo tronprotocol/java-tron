@@ -18,6 +18,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Configuration;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract.FreezeBalanceContract;
@@ -28,28 +29,44 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 import org.tron.common.utils.TransactionUtils;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.common.utils.Configuration;
 
 
 
 @Getter
 public abstract class AbstractTransactionCreator extends Level2Strategy {
-  protected String commonOwnerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
-  protected String commonOwnerPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
-  protected String commonToAddress = "TQjKWNDCLSgqUtg9vrjzZnWhhmsgNgTfmj";
-  protected String commonToPrivateKey = "76fb5f55710c7ad6a98f73dd38a732f9a69a7b3ce700a694363a50572fa2842a";
-  protected String commonWitnessAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
-  protected String commonWitnessPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
+  protected String commonOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.commonOwnerAddress");
+  protected String triggerOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.triggerOwnerAddress");
+  protected String triggerOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.triggerOwnerKey");
+  protected String commonOwnerPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.commonOwnerPrivateKey");
+  protected String commonToAddress = Configuration.getByPath("stress.conf")
+      .getString("address.commonToAddress");
+  protected String commonToPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.commonToPrivateKey");
+  protected String commonWitnessAddress = Configuration.getByPath("stress.conf")
+      .getString("address.commonWitnessAddress");
+  protected String commonWitnessPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.commonWitnessPrivateKey");
 
-  protected String commonContractAddress1 = "TYzeSFcC391njszpDz4mGkiDmEXuXwHPo8";
-  protected String commonContractAddress2 = "TV6tLh3hQthDPy9HJnyqeziXTEuALkvbGq";
-  protected String commonContractAddress3 = "TNHihYXXScd7QpkCLCYBnp1GUu4RyJT8H2";
-  protected String commonfullnode = "39.105.81.23:50051";
-  protected ManagedChannel commonchannelFull = ManagedChannelBuilder.forTarget(commonfullnode)
-          .usePlaintext(true)
-          .build();
-  protected WalletGrpc.WalletBlockingStub commonblockingStubFull = WalletGrpc.newBlockingStub(commonchannelFull);
-  protected String commontokenid="1002136";
-  protected long commonexchangeid=159;
+  protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress1");
+  protected String commonContractAddress2 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress2");
+  protected String commonContractAddress3 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress3");
+  protected String commontokenid= Configuration.getByPath("stress.conf")
+      .getString("param.commontokenid");
+  protected long commonexchangeid= Configuration.getByPath("stress.conf")
+      .getLong("param.commonexchangeid");
+
+  protected String delegateResourceAddress = Configuration.getByPath("stress.conf")
+      .getString("address.delegateResourceAddress");
+  protected String delegateResourceKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.delegateResourceKey");
 
 
   long time = System.currentTimeMillis();

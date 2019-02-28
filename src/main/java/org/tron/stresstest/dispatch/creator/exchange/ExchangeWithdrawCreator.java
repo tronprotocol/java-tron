@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.exchange;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Configuration;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
@@ -15,10 +16,10 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 @Setter
 public class ExchangeWithdrawCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
   private String firstTokenID = "_";
-  private String ownerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String ownerAddress = Configuration.getByPath("stress.conf").getString("address.exchangeOwnerAddress");
   private long exchangeID = commonexchangeid;
   private long quant = 1000000L;
-  private String privateKey = "549c7797b351e48ab1c6bb5857138b418012d97526fc2acba022357d49c93ac0";
+  private String privateKey = Configuration.getByPath("stress.conf").getString("privateKey.exchangeOwnerKey");
 
   @Override
   protected Protocol.Transaction create() {

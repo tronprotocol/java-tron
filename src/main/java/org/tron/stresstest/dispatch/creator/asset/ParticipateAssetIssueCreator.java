@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.asset;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Configuration;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
@@ -15,11 +16,11 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 @Setter
 public class ParticipateAssetIssueCreator extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
-  private String assetOwnerAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String assetOwnerAddress = Configuration.getByPath("stress.conf").getString("address.assetIssueOwnerAddress");
   private String assetName = commontokenid;
-  private String participateOwnerAddress = "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE";
+  private String participateOwnerAddress = Configuration.getByPath("stress.conf").getString("address.participateOwnerAddress");
   private long amount = 1L;
-  private String participateOwnerPrivateKey = "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04";
+  private String participateOwnerPrivateKey = Configuration.getByPath("stress.conf").getString("privateKey.participateOwnerPrivateKey");
 
   @Override
   protected Protocol.Transaction create() {

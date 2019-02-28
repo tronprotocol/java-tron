@@ -17,7 +17,7 @@ public class UnFreezeEnergyCreator extends AbstractTransactionCreator implements
 
   private String ownerAddress = commonOwnerAddress;
   private int resourceCode = 1;
-  private String delegateAddress = "TDZdB4ogHSgU1CGrun8WXaMb2QDDkvAKQm";
+  private String delegateAddress = delegateResourceAddress;
   private String privateKey = commonOwnerPrivateKey;
 
   @Override
