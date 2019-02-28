@@ -44,8 +44,6 @@ public class LogInfoTriggerParser {
     Map<String, ABI.Entry> fullMap = new HashMap<>();
     Map<String, String> signMap = new HashMap<>();
 
-    Map<byte[], ABI> abiMap = new HashMap<>();
-
     for (LogInfo logInfo : logInfos) {
 
       byte[] contractAddress = logInfo.getAddress();
