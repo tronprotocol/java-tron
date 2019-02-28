@@ -62,6 +62,8 @@ public class HttpTestExchange001 {
     response = HttpMethed.sendCoin(httpnode,fromAddress,asset2Address,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
+    HttpMethed.waitToProduceOneBlock(httpnode);
+
     //Create an asset issue
     response = HttpMethed.assetIssue(httpnode,exchangeOwnerAddress,name,name,totalSupply,1,1,
         System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
@@ -72,6 +74,8 @@ public class HttpTestExchange001 {
         2,3,description,url,1000L, 1000L,asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
+    HttpMethed.waitToProduceOneBlock(httpnode);
+
     response = HttpMethed.getAccount(httpnode,exchangeOwnerAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId1 = responseContent.getString("asset_issued_ID");
@@ -81,6 +85,8 @@ public class HttpTestExchange001 {
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId2 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
+
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.transferAsset(httpnode,asset2Address,exchangeOwnerAddress,assetIssueId2,
         10000000000L,asset2Key);
@@ -100,6 +106,7 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "List exchanges by http")
   public void test2ListExchange() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.listExchanges(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -133,6 +140,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.exchangeInject(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
         300L,exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getExchangeById(httpnode,exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterInjectBalance = responseContent.getLong("first_token_balance");
@@ -153,6 +161,7 @@ public class HttpTestExchange001 {
     response = HttpMethed.exchangeWithdraw(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
         170L,exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getExchangeById(httpnode,exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterWithdrawBalance = responseContent.getLong("first_token_balance");
@@ -169,9 +178,10 @@ public class HttpTestExchange001 {
   @Test(enabled = true, description = "Transaction exchange by http")
   public void test6TransactionExchange() {
     //Transaction exchange.
-    response = HttpMethed.exchangeTransaction(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-        100L,1L,exchangeOwnerKey);
+    response = HttpMethed.exchangeTransaction(httpnode,exchangeOwnerAddress,exchangeId,
+        assetIssueId1, 100L,1L,exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getExchangeById(httpnode,exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterTransactionBalance = responseContent.getLong("first_token_balance");
@@ -181,6 +191,18 @@ public class HttpTestExchange001 {
     Assert.assertTrue(afterTransactionBalance - beforeTransactionBalance >= 1);
   }
 
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get asset issue list by name by http")
+  public void test7GetAssetIssueListByName() {
+    response = HttpMethed.getAssetIssueListByName(httpnode,name);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
 
 
 

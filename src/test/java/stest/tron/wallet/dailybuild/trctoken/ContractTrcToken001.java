@@ -155,7 +155,8 @@ public class ContractTrcToken001 {
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
 
     if (transferTokenTxid == null || infoById.get().getResultValue() != 0) {
-      Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage());
+      Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage()
+          .toStringUtf8());
     }
 
     transferTokenContractAddress = infoById.get().getContractAddress().toByteArray();

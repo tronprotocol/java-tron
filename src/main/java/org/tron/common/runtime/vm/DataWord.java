@@ -99,7 +99,7 @@ public class DataWord implements Comparable<DataWord> {
         if (data != null){
             ret = new byte[DATAWORD_UNIT_SIZE];
             int dataSize = Math.min(data.length, DATAWORD_UNIT_SIZE);
-            System.arraycopy(data, 0, ret, DATAWORD_UNIT_SIZE - dataSize, dataSize);
+            System.arraycopy(data, 0, ret, 0, dataSize);
         }
         return ret;
     }

@@ -342,6 +342,10 @@ public class WitnessService implements Service {
       return;
     }
 
+    if (needSyncCheck) {
+      return;
+    }
+
     if (System.currentTimeMillis() - block.getTimeStamp() > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
       return;
     }
