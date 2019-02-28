@@ -50,21 +50,21 @@ public class LogInfoTriggerParser {
 
       byte[] contractAddress = logInfo.getAddress();
       String strContractAddr = ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
-      ABI abi = abiMap.get(contractAddress);
-      if (abi == null) {
-        abi = deposit.getContract(contractAddress).getInstance().getAbi();
-        abiMap.put(contractAddress, abi);
-      }
-      // calculate the sha3 of the event signature first.
-      if (abi != null && abi.getEntrysCount() > 0) {
-        for (ABI.Entry entry : abi.getEntrysList()) {
-          if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
-            continue;
+      if (signMap.get(strContractAddr) == null) {
+        ABI abi = deposit.getContract(contractAddress).getInstance().getAbi();
+        signMap.put(strContractAddr, "1"); // mark as found.
+
+        // calculate the sha3 of the event signature first.
+        if (abi != null && abi.getEntrysCount() > 0) {
+          for (ABI.Entry entry : abi.getEntrysList()) {
+            if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
+              continue;
+            }
+            String signature = getEntrySignature(entry);
+            String sha3 = Hex.toHexString(Hash.sha3(signature.getBytes()));
+            fullMap.put(strContractAddr + "_" + sha3, entry);
+            signMap.put(strContractAddr + "_" + sha3, signature);
           }
-          String signature = getEntrySignature(entry);
-          String sha3 = Hex.toHexString(Hash.sha3(signature.getBytes()));
-          fullMap.put(strContractAddr + "_" + sha3, entry);
-          signMap.put(strContractAddr + "_" + sha3, signature);
         }
       }
     }
