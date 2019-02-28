@@ -39,6 +39,7 @@ public class EasyTransferServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       EasyTransferMessage.Builder build = EasyTransferMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());
@@ -71,6 +72,8 @@ public class EasyTransferServlet extends HttpServlet {
         logger.debug("IOException: {}", ioe.getMessage());
       }
       return;
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
     }
   }
 }
