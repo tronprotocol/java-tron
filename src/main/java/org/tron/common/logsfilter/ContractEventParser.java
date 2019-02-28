@@ -171,7 +171,7 @@ public class ContractEventParser {
   private static Type basicType(String type) {
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)) {
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
-      if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
+      if ((type.startsWith("int") || type.startsWith("uint"))) {
         return Type.INT_NUMBER;
       } else if (type.equals("bool")) {
         return Type.BOOL;

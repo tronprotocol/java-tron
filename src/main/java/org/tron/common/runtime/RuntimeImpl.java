@@ -10,8 +10,9 @@ import static org.tron.common.runtime.utils.MUtil.transferToken;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
-import java.util.*;
-
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,12 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.*;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
+import org.tron.common.runtime.vm.LogInfoTriggerParser;
+import org.tron.common.runtime.vm.VM;
+import org.tron.common.runtime.vm.VMConstant;
+import org.tron.common.runtime.vm.VMUtils;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
@@ -87,6 +93,7 @@ public class RuntimeImpl implements Runtime {
 
   @Setter
   private boolean enableEventLinstener;
+
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
@@ -443,7 +450,10 @@ public class RuntimeImpl implements Runtime {
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
           || EventPluginLoader.getInstance().isContractLogTriggerEnable())
           && isCheckTransaction()){
-        logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(), txId, callerAddress);
+
+        logInfoTriggerParser = new LogInfoTriggerParser(newSmartContract.getAbi(),
+            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            callerAddress, callerAddress, callerAddress, contractAddress);
 
       }
     } catch (Exception e) {
@@ -532,11 +542,15 @@ public class RuntimeImpl implements Runtime {
       }
       AccountCapsule caller = this.deposit.getAccount(callerAddress);
       long energyLimit;
+      byte[] creatorAddress = null;
+      byte[] originAddress = null;
       if (isCallConstant(contractAddress)) {
         isStaticCall = true;
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
-        AccountCapsule creator = this.deposit.getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
+        originAddress = deployedContract.getInstance().getOriginAddress().toByteArray();
+        AccountCapsule creator = this.deposit.getAccount(originAddress);
+        creatorAddress = creator.getAddress().toByteArray();
         energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
@@ -565,7 +579,9 @@ public class RuntimeImpl implements Runtime {
               || EventPluginLoader.getInstance().isContractLogTriggerEnable())
           && isCheckTransaction()){
 
-        logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(), txId, callerAddress);
+        logInfoTriggerParser = new LogInfoTriggerParser(deployedContract.getInstance().getAbi(),
+            blockCap.getNum(), blockCap.getTimeStamp(), txId,
+            callerAddress, creatorAddress, originAddress, contractAddress);
       }
     }
 
@@ -644,7 +660,7 @@ public class RuntimeImpl implements Runtime {
           deposit.commit();
 
           if (logInfoTriggerParser != null){
-            List<ContractTrigger> triggers = logInfoTriggerParser.parseLogInfos(program.getResult().getLogInfoList(), this.deposit);
+            List<ContractTrigger> triggers = logInfoTriggerParser.parseLogInfos(program.getResult().getLogInfoList());
             program.getResult().setTriggerList(triggers);
           }
 
