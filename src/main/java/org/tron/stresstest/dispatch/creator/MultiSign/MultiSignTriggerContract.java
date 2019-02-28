@@ -24,8 +24,8 @@ import org.tron.common.utils.Configuration;
 
 @Setter
 public class MultiSignTriggerContract extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
-    private String ownerAddress = Configuration.getByPath("stress.conf")
-        .getString("address.mutiSignOwnerAddress");
+    private String ownerAddress = Configuration.getByPath("stress.conf").getString("address.mutiSignOwnerAddress");
+    private String privateKey = Configuration.getByPath("stress.conf").getString("privateKey.mutiSignOwnerKey");
     private String[] permissionKeyString = new String[5];
     private String contractAddress = Configuration.getByPath("stress.conf")
         .getString("address.commonContractAddress1");
@@ -35,7 +35,7 @@ public class MultiSignTriggerContract extends AbstractTransactionCreator impleme
     private String param = "\"" + commonContractAddress2 + "\",\"" + commontokenid + "\",1";
 
     private long feeLimit = 1000000000L;
-    private String privateKey = "795D7F7A3120132695DFB8977CC3B7ACC9770C125EB69037F19DCA55B075C4AE";
+
 
     //TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE
     String manager1Key = Configuration.getByPath("stress.conf").getString("permissioner.key1");

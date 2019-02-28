@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import stest.tron.wallet.common.client.Configuration;
 
 @Slf4j
-public class StressXmlAutoCreate {
+public class CreateStressTransactionXml {
 
   private String reportPath = "TransactionConfiguration.xml";
   private Integer finishedNum = 0;

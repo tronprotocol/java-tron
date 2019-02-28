@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="Stest" parallel="tests" thread-count="4">
-
+<suite name="Stest" parallel="tests" thread-count="1">
     <listeners>
         <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
     </listeners>
     <test name="contract scenario,committee,witness">
-
         <classes>
-            <class name="stest.tron.wallet.precondition.AssetIssueAndCreateExchange"/>
+            <class name="stest.tron.wallet.precondition.StressPrecondition"/>
+<!--            <class name="stest.tron.wallet.precondition.AssetIssueAndCreateExchange"/>
             <class name="stest.tron.wallet.precondition.CreateProposalMultiSign"/>
-            <class name="stest.tron.wallet.precondition.MultiSignUpdate"/>
-
+            <class name="stest.tron.wallet.precondition.MultiSignUpdate"/>-->
         </classes>
     </test>
 

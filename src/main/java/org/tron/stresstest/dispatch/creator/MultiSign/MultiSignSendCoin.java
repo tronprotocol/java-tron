@@ -19,7 +19,7 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 public class MultiSignSendCoin extends AbstractTransactionCreator implements GoodCaseTransactonCreator {
 
     private String ownerAddress = Configuration.getByPath("stress.conf").getString("address.mutiSignOwnerAddress");
-    private String ownerKey = "795D7F7A3120132695DFB8977CC3B7ACC9770C125EB69037F19DCA55B075C4AE";
+    private String ownerKey = Configuration.getByPath("stress.conf").getString("privateKey.mutiSignOwnerKey");
     private String toAddress = commonToAddress;
     private long amount = 1L;
     private String privateKey = commonWitnessPrivateKey;

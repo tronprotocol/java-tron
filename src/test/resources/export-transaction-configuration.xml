@@ -3,7 +3,7 @@
 <suite name="Export transaction configuration">
   <test name="stress">
     <classes>
-      <class name="stest.tron.wallet.precondition.StressXmlAutoCreate">
+      <class name="stest.tron.wallet.precondition.CreateStressTransactionXml">
       </class>
     </classes>
   </test>

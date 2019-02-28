@@ -107,9 +107,9 @@ public class CreateProposalMultiSign {
 
 
   }
+
   @Test(enabled = true)
   public void test2ApproveProposal() {
-
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(21L, 1L);
     PublicMethed.createProposal(witness001Address,witnessKey001,
@@ -141,6 +141,12 @@ public class CreateProposalMultiSign {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
+
+  }
+
+  @Test(enabled = true)
+  public void test3DeploySmartContract() {
+
 
   }
 
