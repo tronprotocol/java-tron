@@ -11,14 +11,11 @@ import static org.tron.common.runtime.utils.MUtil.transferToken;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -97,7 +94,6 @@ public class RuntimeImpl implements Runtime {
   @Setter
   private boolean enableEventLinstener;
 
-  private Map<String, ABI> abiMap = new HashMap<>();
   private LogInfoTriggerParser logInfoTriggerParser;
 
   /**
@@ -454,9 +450,6 @@ public class RuntimeImpl implements Runtime {
           (EventPluginLoader.getInstance().isContractEventTriggerEnable()
               || EventPluginLoader.getInstance().isContractLogTriggerEnable())
           && isCheckTransaction()) {
-        this.abiMap
-            .put(ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress),
-                newSmartContract.getAbi());
         logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
             txId, callerAddress);
 
@@ -662,7 +655,7 @@ public class RuntimeImpl implements Runtime {
 
           if (logInfoTriggerParser != null) {
             List<ContractTrigger> triggers = logInfoTriggerParser
-                .parseLogInfos(program.getResult().getLogInfoList(), this.abiMap, this.deposit);
+                .parseLogInfos(program.getResult().getLogInfoList(), this.deposit);
             program.getResult().setTriggerList(triggers);
           }
 

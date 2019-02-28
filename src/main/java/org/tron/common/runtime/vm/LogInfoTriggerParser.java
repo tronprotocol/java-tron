@@ -35,8 +35,7 @@ public class LogInfoTriggerParser {
 
   }
 
-  public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos, Map<String, ABI> abiMap,
-      Deposit deposit) {
+  public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos, Deposit deposit) {
 
     List<ContractTrigger> list = new LinkedList<>();
     if (logInfos == null || logInfos.size() <= 0) {
@@ -54,13 +53,13 @@ public class LogInfoTriggerParser {
       if (signMap.get(strContractAddr) != null) {
         continue;
       }
-
-      ABI abi = abiMap.get(strContractAddr);
       ContractCapsule contract = deposit.getContract(contractAddress);
-      if (abi == null) {
-        abi = (contract == null) ? null : contract.getInstance().getAbi();
+      if (contract == null) {
+        signMap.put(strContractAddr, originAddress); // mark as found.
+        continue;
       }
-      String creatorAddr = (contract == null) ? originAddress : Wallet.encode58Check(
+      ABI abi = contract.getInstance().getAbi();
+      String creatorAddr = Wallet.encode58Check(
           MUtil.convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
       signMap.put(strContractAddr, creatorAddr); // mark as found.
 
