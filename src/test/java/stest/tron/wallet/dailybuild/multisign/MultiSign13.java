@@ -1,5 +1,7 @@
 package stest.tron.wallet.dailybuild.multisign;
 
+import static org.tron.api.GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR;
+
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -700,6 +702,129 @@ public class MultiSign13 {
 
     PublicMethed
         .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
+  }
+
+  @Test(enabled = true, description = "Witness permission_name length is 32")
+  public void testWitnessName09() {
+    String ownerKey = witnessKey001;
+    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+
+    long needCoin = updateAccountPermissionFee;
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1000000, fromAddress,
+        testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
+
+    List<String> ownerPermissionKeys = new ArrayList<>();
+
+    PublicMethed.printAddress(ownerKey);
+    PublicMethed.printAddress(tmpKey02);
+
+    ownerPermissionKeys.add(ownerKey);
+
+    String accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
+            + "\",\"weight\":1}]},"
+            + "\"witness_permission\":{\"permission_name\":\"abcdefghijklmnopqrstuvwxyzabcdef\",\"type\":1,"
+            + "\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
+            + "]}]}";
+
+    Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
+        ownerAddress, ownerKey, blockingStubFull,
+        ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    ownerPermissionKeys.clear();
+    ownerPermissionKeys.add(testKey002);
+
+    Assert.assertEquals(2, PublicMethedForMutiSign.getActivePermissionKeyCount(
+        PublicMethed.queryAccount(ownerAddress, blockingStubFull).getActivePermissionList()));
+
+    Assert.assertEquals(1, PublicMethed.queryAccount(ownerAddress,
+        blockingStubFull).getOwnerPermission().getKeysCount());
+
+    PublicMethedForMutiSign.printPermissionList(PublicMethed.queryAccount(ownerAddress,
+        blockingStubFull).getActivePermissionList());
+
+    System.out
+        .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
+            blockingStubFull).getOwnerPermission()));
+
+    PublicMethedForMutiSign
+        .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+
+    Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
+  }
+
+
+  @Test(enabled = true, description = "Witness permission_name length is 33")
+  public void testWitnessName10() {
+    String ownerKey = witnessKey001;
+    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1000000, fromAddress,
+        testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
+
+    List<String> ownerPermissionKeys = new ArrayList<>();
+
+    PublicMethed.printAddress(ownerKey);
+    PublicMethed.printAddress(tmpKey02);
+
+    String accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
+            + "\",\"weight\":1}]},"
+            + "\"witness_permission\":"
+            + "{\"permission_name\":\"abcdefghijklmnopqrstuvwxyzabcdefg\",\"type\":1,"
+            + "\"threshold\":1,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active\",\"threshold\":1,"
+            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey001) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":1}"
+            + "]}]}";
+
+    GrpcAPI.Return response = PublicMethed.accountPermissionUpdateForResponse(
+        accountPermissionJson, ownerAddress, ownerKey, blockingStubFull);
+
+    Assert.assertFalse(response.getResult());
+    Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
+    Assert.assertEquals("contract validate error : permission's name is too long",
+        response.getMessage().toStringUtf8());
+
+    Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+
+    Assert.assertEquals(balanceBefore, balanceAfter);
+
   }
 
   /**

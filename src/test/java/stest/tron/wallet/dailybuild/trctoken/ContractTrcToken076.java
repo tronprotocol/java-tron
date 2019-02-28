@@ -91,6 +91,11 @@ public class ContractTrcToken076 {
         grammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.triggerContract(contractAddress,
+        "test()", "#", false,
+        0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -105,7 +110,7 @@ public class ContractTrcToken076 {
     Long returnnumber = ByteArray.toLong(ByteArray.fromHexString(ByteArray.toHexString(
         infoById.get().getContractResult(0).toByteArray())));
 
-    Assert.assertTrue(returnnumber == 0);
+    Assert.assertTrue(returnnumber == 1);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "getResult2()", "#", false,
@@ -120,7 +125,7 @@ public class ContractTrcToken076 {
     Long returnnumber2 = ByteArray.toLong(ByteArray.fromHexString(
         ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
 
-    Assert.assertTrue(returnnumber2 == 0);
+    Assert.assertTrue(returnnumber2 == 1);
   }
 
   /**

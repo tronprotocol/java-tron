@@ -106,17 +106,15 @@ public class MultiSign36 {
     permissionKeyString[0] = dev001Key;
     permissionKeyString[1] = sendAccountKey2;
 
-    String accountPermissionJson1 =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\""
-            + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
-            + ":\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":"
-            + "\"active0\",\"threshold\":1,\"operations\""
-            + ":\"0200000000000000000000000000000000000000000000000000000000000000\","
-            + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2)
-            + "\",\"weight\":1},"
-            + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
-            + "\",\"weight\":1}]}]} ";
+    String accountPermissionJson1 = "{\"owner_permission\":{\"type\":0,\"permission_name\":"
+        + "\"owner\",\"threshold\":2,\"keys\":[{\"address\":"
+        + "\"" + PublicMethed.getAddressString(dev001Key) + "\",\"weight\":1},"
+        + "{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey2) + "\",\"weight\":1}]},"
+        + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\","
+        + "\"threshold\":1,\"operations\":"
+        + "\"0200000000000000000000000000000000000000000000000000000000000000\","
+        + "\"keys\":[{\"address\":\"" + PublicMethed.getAddressString(sendAccountKey3)
+        + "\",\"weight\":1}]}]} ";
 
     Transaction transaction = PublicMethedForMutiSign
         .accountPermissionUpdateWithoutSign(accountPermissionJson1, test001Address, dev001Key,
@@ -125,15 +123,19 @@ public class MultiSign36 {
 
     Transaction transaction1 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction, dev001Key, 0, blockingStubFull);
+    Transaction transaction2 = PublicMethed
+        .addTransactionSign(transaction1, sendAccountKey2, blockingStubFull);
     TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
+        .getTransactionApprovedList(transaction2, blockingStubFull);
     logger.info("test001Address:" + Base58.encode58Check(test001Address));
     logger.info(
         "transactionApprovedList:" + Base58
             .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
     Assert.assertEquals(Base58.encode58Check(test001Address), Base58
         .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
-    Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
+    Assert.assertEquals(Base58.encode58Check(test002Address), Base58
+        .encode58Check(transactionApprovedList.getApprovedList(1).toByteArray()));
+    Assert.assertEquals(2, transactionApprovedList.getApprovedListCount());
     Assert.assertEquals(0,
         transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
             .getPermissionId());
@@ -200,14 +202,11 @@ public class MultiSign36 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
 
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 1L, test001Address, 2, dev001Key,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
     Transaction transaction1 = PublicMethedForMutiSign
         .addTransactionSignWithPermissionId(transaction, sendAccountKey2, 2, blockingStubFull);
-    TransactionApprovedList transactionApprovedList = PublicMethed
-        .getTransactionApprovedList(transaction1, blockingStubFull);
 
-    logger.info("transactionSignWeight:" + transactionApprovedList);
     String accountPermissionJson2 =
         "{\"owner_permission\":{\"type\":0,\"permission_name\""
             + ":\"owner\",\"threshold\":1,\"keys\":[{\"address\""
@@ -223,6 +222,10 @@ public class MultiSign36 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson2, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString));
+    TransactionApprovedList transactionApprovedList = PublicMethed
+        .getTransactionApprovedList(transaction1, blockingStubFull);
+
+    logger.info("transactionSignWeight:" + transactionApprovedList);
     logger.info("transactionSignWeight:" + transactionApprovedList);
     logger.info("test001Address:" + Base58.encode58Check(test001Address));
     logger.info(
@@ -616,7 +619,11 @@ public class MultiSign36 {
     logger.info("transactionSignWeight:" + transactionApprovedList);
 
     Assert.assertEquals(1, transactionApprovedList.getApprovedListCount());
-
+    Assert.assertEquals(Base58.encode58Check(test002Address), Base58
+        .encode58Check(transactionApprovedList.getApprovedList(0).toByteArray()));
+    Assert.assertEquals(0,
+        transactionApprovedList.getTransaction().getTransaction().getRawData().getContract(0)
+            .getPermissionId());
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
     Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();
