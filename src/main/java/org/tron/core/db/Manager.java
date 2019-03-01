@@ -389,6 +389,8 @@ public class Manager {
             tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(50L);
             }
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
