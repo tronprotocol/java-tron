@@ -282,8 +282,14 @@ public class StressPrecondition {
     logger.info(ByteArray.toStr(assetIssueId.toByteArray()));
     String commonContractAddress1 = Configuration.getByPath("stress.conf")
         .getString("address.commonContractAddress1");
+    String commonContractAddress2 = Configuration.getByPath("stress.conf")
+        .getString("address.commonContractAddress2");
 
     PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress2),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
     String oldTokenIdString = readWantedText("stress.conf","commontokenid");
