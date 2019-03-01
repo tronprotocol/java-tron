@@ -48,6 +48,7 @@ import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
@@ -110,18 +111,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private long referenceBlockNumber;
 
-  /**
-   * transactionType is 0 representing normal transaction
-   * transactionType is 1 representing unexecuted deferred transaction
-   * transactionType is 2 representing executing deferred transaction
-   */
-  public static final int NORMALTRANSACTION = 0;
-  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
-  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
-
   @Getter
   @Setter
-  private int transactionType = NORMALTRANSACTION;
+  private int contractType = Constant.NORMALTRANSACTION;
   /**
    * constructor TransactionCapsule.
    */

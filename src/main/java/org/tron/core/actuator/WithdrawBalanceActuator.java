@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -27,6 +28,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
+  WithdrawBalanceActuator(Any contract, Manager dbManager, int contractType) {
+    super(contract, dbManager, contractType);
+  }
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
@@ -142,6 +146,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    }
     return 0;
   }
 

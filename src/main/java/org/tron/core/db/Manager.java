@@ -1233,7 +1233,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getTransactionType() != TransactionCapsule.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
+    if (trxCap.getContractType() != Constant.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1244,7 +1244,7 @@ public class Manager {
     consumeMultiSignFee(trxCap, trace);
 
     // process deferred transaction for the first time
-    if (trxCap.getTransactionType() == TransactionCapsule.UNEXECUTEDDEFERREDTRANSACTION){
+    if (trxCap.getContractType() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
       return processDeferTransaction(trxCap, blockCap, trace);
     }
 
@@ -1390,7 +1390,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
+      if (trx.getContractType() == Constant.EXECUTINGDEFERREDTRANSACTION){
         if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
@@ -1460,7 +1460,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
+      if (trx.getContractType() == Constant.EXECUTINGDEFERREDTRANSACTION){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
@@ -2036,7 +2036,7 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setTransactionType(TransactionCapsule.EXECUTINGDEFERREDTRANSACTION);
+      trxCapsule.setContractType(Constant.EXECUTINGDEFERREDTRANSACTION);
       pendingTransactions.add(0, trxCapsule);
     }
 

@@ -7,6 +7,7 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -23,6 +24,10 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   UpdateEnergyLimitContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
+  }
+
+  UpdateEnergyLimitContractActuator(Any contract, Manager dbManager, int contractType) {
+    super(contract, dbManager, contractType);
   }
 
   @Override
@@ -119,6 +124,9 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    }
     return 0;
   }
 

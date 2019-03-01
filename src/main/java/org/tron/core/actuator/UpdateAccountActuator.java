@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -23,6 +24,9 @@ public class UpdateAccountActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
+  UpdateAccountActuator(Any contract, Manager dbManager, int contractType) {
+    super(contract, dbManager, contractType);
+  }
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
     final AccountUpdateContract accountUpdateContract;
@@ -103,6 +107,9 @@ public class UpdateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    }
     return 0;
   }
 }

@@ -59,4 +59,13 @@ public class Constant {
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
 
+
+  /**
+   * normal transaction is 0 representing normal transaction
+   * unexecuted deferred transaction is 1 representing unexecuted deferred transaction
+   * executing deferred transaction is 2 representing executing deferred transaction
+   */
+  public static final int NORMALTRANSACTION = 0;
+  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
+  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
 }

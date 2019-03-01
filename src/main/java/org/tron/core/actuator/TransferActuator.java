@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -25,8 +26,8 @@ public class TransferActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  TransferActuator(Any contract, Manager dbManager, long delaySeconds) {
-    super(contract, dbManager, delaySeconds);
+  TransferActuator(Any contract, Manager dbManager, int contractType) {
+    super(contract, dbManager, contractType);
   }
 
   @Override
@@ -195,7 +196,7 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.delaySeconds > 0) {
+    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return ChainConstant.TRANSFER_FEE + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return ChainConstant.TRANSFER_FEE;

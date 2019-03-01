@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -41,6 +42,10 @@ public class TransferAssetActuator extends AbstractActuator {
 
   TransferAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
+  }
+
+  TransferAssetActuator(Any contract, Manager dbManager, int contractType) {
+    super(contract, dbManager, contractType);
   }
 
   @Override
@@ -276,6 +281,9 @@ public class TransferAssetActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
+    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    }
     return 0;
   }
 }
