@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -19,7 +20,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -422,6 +425,10 @@ public class Args {
   @Getter
   private DbBackupConfig dbBackupConfig;
 
+  @Getter
+  @Setter
+  private long trxExpirationTimeInMilliseconds; // (ms)
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -493,6 +500,7 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowMultiSign = 0;
+    INSTANCE.trxExpirationTimeInMilliseconds = 0;
   }
 
   /**
@@ -830,6 +838,10 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.trxExpirationTimeInMilliseconds =
+        config.hasPath("trx.expiration.timeInMilliseconds") && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
+            config.getLong("trx.expiration.timeInMilliseconds") : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
 
@@ -913,6 +925,21 @@ public class Args {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+
+  public Map<String, String> getBlacklist() {
+    Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, Constant.TESTNET_CONF);
+    if (!config.hasPath("blacklist")) {
+      return Collections.emptyMap();
+    }
+
+    return config.getObjectList("blacklist").stream()
+        .map((ConfigObject e) -> Maps.immutableEntry(
+            e.get("from") == null ? "" : e.get("from").unwrapped().toString(),
+            e.get("to") == null ? "" : e.get("to").unwrapped().toString()))
+        .filter(e -> e.getKey() != null)
+        .filter(e -> e.getValue() != null)
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2));
   }
 
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {

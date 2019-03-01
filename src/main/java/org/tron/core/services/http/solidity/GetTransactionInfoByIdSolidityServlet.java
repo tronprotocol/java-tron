@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
+import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
 
 
@@ -50,6 +50,7 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());

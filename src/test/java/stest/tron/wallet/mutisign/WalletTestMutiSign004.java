@@ -1,5 +1,6 @@
 package stest.tron.wallet.mutisign;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -31,6 +32,10 @@ public class WalletTestMutiSign004 {
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -102,9 +107,23 @@ public class WalletTestMutiSign004 {
     ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
     PublicMethed.printAddress(ownerKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,100000000L,fromAddress,testKey002,
+    long needcoin = updateAccountPermissionFee + multiSignFee * 3;
+
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needcoin + 100000000L, fromAddress, testKey002,
         blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 1, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
 
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
@@ -112,7 +131,7 @@ public class WalletTestMutiSign004 {
     ownerKeyString[0] = ownerKey;
     ownerKeyString[1] = manager1Key;
     accountPermissionJson =
-        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
             + "\",\"weight\":1}]},"
@@ -155,6 +174,16 @@ public class WalletTestMutiSign004 {
     PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
         ownerAddress, 0, blockingStubFull, ownerKeyString);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
+    logger.info("balanceAfter: " + balanceAfter);
+
+    Assert.assertEquals(balanceBefore - balanceAfter, needcoin);
+
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, ownerAddress, blockingStubFull));
   }
 
   /**

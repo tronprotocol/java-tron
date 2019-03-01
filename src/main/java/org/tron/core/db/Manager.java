@@ -103,6 +103,8 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.WhitelistException;
+import org.tron.core.services.WhitelistService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -394,6 +396,8 @@ public class Manager {
             tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(50L);
             }
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
@@ -772,6 +776,27 @@ public class Manager {
     return true;
   }
 
+  public void consumeMultiSignFee(TransactionCapsule trx, TransactionTrace trace)
+      throws AccountResourceInsufficientException {
+    if (trx.getInstance().getSignatureCount() > 1) {
+      long fee = getDynamicPropertiesStore().getMultiSignFee();
+
+      List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+      for (Contract contract : contracts) {
+        byte[] address = TransactionCapsule.getOwner(contract);
+        AccountCapsule accountCapsule = getAccountStore().get(address);
+        try {
+          adjustBalance(accountCapsule, -fee);
+          adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+        } catch (BalanceInsufficientException e) {
+          throw new AccountResourceInsufficientException(
+              "Account Insufficient  balance[" + fee + "] to MultiSign");
+        }
+      }
+
+      trace.getReceipt().setMultiSignFee(fee);
+    }
+  }
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
@@ -1195,10 +1220,18 @@ public class Manager {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
+    try {
+      WhitelistService.check(trxCap);
+    } catch (WhitelistException e) {
+      logger.debug(e.getMessage());
+      throw new ContractValidateException(e.getMessage(), e);
+    }
+
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
+    consumeMultiSignFee(trxCap, trace);
 
     VMConfig.initVmHardFork();
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());

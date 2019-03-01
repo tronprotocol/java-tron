@@ -35,7 +35,7 @@ public class MultiSign34 {
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private final String testWitnesses = Configuration.getByPath("testng.conf")
-      .getString("witness.key1");
+      .getString("witness.key2");
   private final byte[] witnessesKey = PublicMethed.getFinalAddress(testWitnesses);
   private ManagedChannel channelFull = null;
 
@@ -59,6 +59,10 @@ public class MultiSign34 {
   private ECKey ecKey5 = new ECKey(Utils.getRandom());
   byte[] test005Address = ecKey5.getAddress();
   String sendAccountKey5 = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+  private long multiSignFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.multiSignFee");
+  private long updateAccountPermissionFee = Configuration.getByPath("testng.conf")
+      .getLong("defaultParameter.updateAccountPermissionFee");
 
   /**
    * constructor.
@@ -77,16 +81,19 @@ public class MultiSign34 {
 
   @Test(enabled = true, description = "SR witness,sendcoin, use witnessPermission address sign.")
   public void testMultiUpdatepermissions_42() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, witnessesKey, 1, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 1, testWitnesses,
             blockingStubFull);
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
@@ -97,17 +104,18 @@ public class MultiSign34 {
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
+    Assert.assertEquals(balance, balance1);
     logger.info("transaction:" + transactionSignWeight);
     Assert
         .assertThat(transactionSignWeight.getResult().getCode().toString(),
             containsString("PERMISSION_ERROR"));
     Assert
         .assertThat(transactionSignWeight.getResult().getMessage(),
-            containsString("Permission type is error"));
+            containsString("permission isn't exit"));
 
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
@@ -116,69 +124,89 @@ public class MultiSign34 {
         .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
     Assert
         .assertThat(returnResult1.getMessage().toStringUtf8(),
-            containsString("Permission type is error"));
+            containsString("permission isn't exit"));
 
   }
 
   @Test(enabled = true, description = "SR witness,sendcoin, use active address sign.")
   public void testMultiUpdatepermissions_43() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, witnessesKey, 2, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 2, testWitnesses,
             blockingStubFull);
     final Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
+    final TransactionSignWeight transactionSignWeight = PublicMethedForMutiSign
+        .getTransactionSignWeight(transaction1, blockingStubFull);
+    logger.info("transaction:" + transactionSignWeight);
+    Assert
+        .assertThat(transactionSignWeight.getResult().getCode().toString(),
+            containsString("PERMISSION_ERROR"));
+    Assert
+        .assertThat(transactionSignWeight.getResult().getMessage(),
+            containsString("permission isn't exit"));
+    Return returnResult1 = PublicMethedForMutiSign
+        .broadcastTransaction1(transaction1, blockingStubFull);
+    logger.info("returnResult1:" + returnResult1);
     Account test001AddressAccount1 = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
     Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
     Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList1);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
-    Return returnResult1 = PublicMethedForMutiSign
-        .broadcastTransaction1(transaction1, blockingStubFull);
-    logger.info("returnResult1:" + returnResult1);
-    Assert.assertTrue(returnResult1.getResult());
-
+    Assert.assertEquals(balance, balance1);
+    Assert
+        .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));
+    Assert
+        .assertThat(returnResult1.getMessage().toStringUtf8(),
+            containsString("permission isn't exit"));
 
   }
 
 
   @Test(enabled = true, description = "SR witness,sendcoin, use owner address sign.")
   public void testMultiUpdatepermissions_44() {
-
+    Assert.assertTrue(PublicMethed
+        .sendcoin(witnessesKey, 1000000000, fromAddress, testKey002,
+            blockingStubFull));
     Account test001AddressAccount = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
     Permission ownerPermission = test001AddressAccount.getOwnerPermission();
     Permission witnessPermission = test001AddressAccount.getWitnessPermission();
+    long balance = test001AddressAccount.getBalance();
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     Transaction transaction = PublicMethedForMutiSign
-        .sendcoinWithPermissionIdNotSign(test005Address, 100L, witnessesKey, 0, testWitnesses,
+        .sendcoinWithPermissionIdNotSign(fromAddress, 1L, witnessesKey, 0, testWitnesses,
             blockingStubFull);
     final Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, testWitnesses, blockingStubFull);
-    Account test001AddressAccount1 = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
-    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
-    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
-    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
-    PublicMethedForMutiSign.printPermissionList(permissionsList1);
-    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
-    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
-
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
     logger.info("returnResult1:" + returnResult1);
     Assert.assertTrue(returnResult1.getResult());
+    Account test001AddressAccount1 = PublicMethed.queryAccount(witnessesKey, blockingStubFull);
+    List<Permission> permissionsList1 = test001AddressAccount1.getActivePermissionList();
+    Permission ownerPermission1 = test001AddressAccount1.getOwnerPermission();
+    Permission witnessPermission1 = test001AddressAccount1.getWitnessPermission();
+    long balance1 = test001AddressAccount1.getBalance();
+    PublicMethedForMutiSign.printPermissionList(permissionsList1);
+    logger.info(PublicMethedForMutiSign.printPermission(ownerPermission1));
+    logger.info(PublicMethedForMutiSign.printPermission(witnessPermission1));
+    Assert.assertEquals(balance - balance1, 1);
 
 
   }

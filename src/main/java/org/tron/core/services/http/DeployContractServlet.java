@@ -35,6 +35,7 @@ public class DeployContractServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
       JSONObject jsonObject = JSONObject.parseObject(contract);
       byte[] ownerAddress = ByteArray.fromHexString(jsonObject.getString("owner_address"));
