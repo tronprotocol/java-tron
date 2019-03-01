@@ -189,7 +189,7 @@ public class WalletTestMutiSign003 {
 
     balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
-    Assert.assertEquals(balanceBefore - balanceAfter, multiSignFee * 8 + 1000000 * 2 + 100);
+    Assert.assertEquals(balanceBefore - balanceAfter, multiSignFee * 9 + 1000000 + 100);
 
     Assert.assertTrue(
         PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
