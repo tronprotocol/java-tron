@@ -57,7 +57,7 @@ public class StressPrecondition {
   protected String commonWitnessPrivateKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.commonWitnessPrivateKey");
 
-  protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
+/*  protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress1");
   protected String commonContractAddress2 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress2");
@@ -66,7 +66,7 @@ public class StressPrecondition {
   protected String commontokenid = Configuration.getByPath("stress.conf")
       .getString("param.commontokenid");
   protected long commonexchangeid = Configuration.getByPath("stress.conf")
-      .getLong("param.commonexchangeid");
+      .getLong("param.commonexchangeid");*/
 
   protected String delegateResourceAddress = Configuration.getByPath("stress.conf")
       .getString("address.delegateResourceAddress");
@@ -114,6 +114,10 @@ public class StressPrecondition {
       .get(0);
   ByteString assetIssueId;
   Optional<ExchangeList> listExchange;
+  byte[] commonContractAddress1;
+  byte[] commonContractAddress2;
+  byte[] commonContractAddress3;
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -206,7 +210,7 @@ public class StressPrecondition {
     String contractName = "tokenTest";
     String code = "608060405260e2806100126000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416633be9ece781146043575b600080fd5b606873ffffffffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b60405173ffffffffffffffffffffffffffffffffffffffff84169082156108fc029083908590600081818185878a8ad094505050505015801560b0573d6000803e3d6000fd5b505050505600a165627a7a72305820d7ac1a3b49eeff286b7f2402b93047e60deb6dba47f4f889d921dbcb3bb81f8a0029";
     String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},{\"name\":\"id\",\"type\":\"trcToken\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TransferTokenTo\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
-    byte[] commonContractAddress1 = PublicMethed
+    commonContractAddress1 = PublicMethed
         .deployContract(contractName, abi, code, "", 1000000000L,
             0L, 100, 10000, "0",
             0, null, triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey),
@@ -220,6 +224,7 @@ public class StressPrecondition {
     logger.info("newAddress " + newAddress);
     replacAddressInConfig("stress.conf",oldAddress,newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
   }
 
   @Test(enabled = true)
@@ -227,7 +232,7 @@ public class StressPrecondition {
     String contractName = "BTest";
     String code = "60806040526000805560c5806100166000396000f30060806040526004361060485763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166362548c7b8114604a578063890eba68146050575b005b6048608c565b348015605b57600080fd5b50d38015606757600080fd5b50d28015607357600080fd5b50607a6093565b60408051918252519081900360200190f35b6001600055565b600054815600a165627a7a723058204c4f1bb8eca0c4f1678cc7cc1179e03d99da2a980e6792feebe4d55c89c022830029";
     String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"setFlag\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"flag\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"}]";
-    byte[] commonContractAddress2 = PublicMethed
+    commonContractAddress2 = PublicMethed
         .deployContract(contractName, abi, code, "", 1000000000L,
             0L, 100, 10000, "0",
             0, null, triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey),
@@ -248,7 +253,7 @@ public class StressPrecondition {
     String contractName = "TestSStore";
     String code = "608060405234801561001057600080fd5b5061045c806100206000396000f30060806040526004361061006d576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806304c58438146100725780634f2be91f1461009f578063812db772146100b657806393cd5755146100e3578063d1cd64e914610189575b600080fd5b34801561007e57600080fd5b5061009d600480360381019080803590602001909291905050506101a0565b005b3480156100ab57600080fd5b506100b4610230565b005b3480156100c257600080fd5b506100e1600480360381019080803590602001909291905050506102a2565b005b3480156100ef57600080fd5b5061010e600480360381019080803590602001909291905050506102c3565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561014e578082015181840152602081019050610133565b50505050905090810190601f16801561017b5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34801561019557600080fd5b5061019e61037e565b005b6000600190505b8181101561022c5760008060018154018082558091505090600182039060005260206000200160006040805190810160405280600881526020017f31323334353637380000000000000000000000000000000000000000000000008152509091909150908051906020019061021d92919061038b565b505080806001019150506101a7565b5050565b60008060018154018082558091505090600182039060005260206000200160006040805190810160405280600881526020017f61626364656667680000000000000000000000000000000000000000000000008152509091909150908051906020019061029e92919061038b565b5050565b6000600190505b81811115156102bf5780806001019150506102a9565b5050565b6000818154811015156102d257fe5b906000526020600020016000915090508054600181600116156101000203166002900480601f0160208091040260200160405190810160405280929190818152602001828054600181600116156101000203166002900480156103765780601f1061034b57610100808354040283529160200191610376565b820191906000526020600020905b81548152906001019060200180831161035957829003601f168201915b505050505081565b6000808060010191505050565b828054600181600116156101000203166002900490600052602060002090601f016020900481019282601f106103cc57805160ff19168380011785556103fa565b828001600101855582156103fa579182015b828111156103f95782518255916020019190600101906103de565b5b509050610407919061040b565b5090565b61042d91905b80821115610429576000816000905550600101610411565b5090565b905600a165627a7a7230582087d9880a135295a17100f63b8941457f4369204d3ccc9ce4a1abf99820eb68480029";
     String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"add2\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"add\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"fori2\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"args\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fori\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    byte[] commonContractAddress3 = PublicMethed
+    commonContractAddress3 = PublicMethed
         .deployContract(contractName, abi, code, "", 1000000000L,
             0L, 100, 10000, "0",
             0, null, triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey),
@@ -279,16 +284,12 @@ public class StressPrecondition {
 
     assetIssueId = PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID();
 
-    logger.info(ByteArray.toStr(assetIssueId.toByteArray()));
-    String commonContractAddress1 = Configuration.getByPath("stress.conf")
-        .getString("address.commonContractAddress1");
-    String commonContractAddress2 = Configuration.getByPath("stress.conf")
-        .getString("address.commonContractAddress2");
+    //PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
 
-    PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-
+    logger.info("commonContractAddress1 is " + commonContractAddress1);
+    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress2),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
 
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
