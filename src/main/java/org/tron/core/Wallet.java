@@ -417,7 +417,7 @@ public class Wallet {
       return builder.setResult(false).setCode(response_code.TOO_LONG_DEFERRED_TRANSACTION_DELAYTIME).build();
     }
       if (trx.getDeferredSeconds() > 0) {
-      trx.setContractType(Constant.UNEXECUTEDDEFERREDTRANSACTION);
+      trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     }
 
     Message message = new TransactionMessage(signaturedTransaction);

@@ -29,8 +29,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ExchangeWithdrawActuator(final Any contract, final Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  ExchangeWithdrawActuator(final Any contract, final Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -243,7 +243,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return 0;

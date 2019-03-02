@@ -31,8 +31,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  AccountPermissionUpdateActuator(Any contract, Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  AccountPermissionUpdateActuator(Any contract, Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -232,7 +232,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();

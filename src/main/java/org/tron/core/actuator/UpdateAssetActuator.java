@@ -25,8 +25,8 @@ public class UpdateAssetActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  UpdateAssetActuator(Any contract, Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  UpdateAssetActuator(Any contract, Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -165,7 +165,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return 0;

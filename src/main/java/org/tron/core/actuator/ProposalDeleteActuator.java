@@ -30,8 +30,8 @@ public class ProposalDeleteActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ProposalDeleteActuator(final Any contract, final Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  ProposalDeleteActuator(final Any contract, final Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -143,7 +143,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return 0;

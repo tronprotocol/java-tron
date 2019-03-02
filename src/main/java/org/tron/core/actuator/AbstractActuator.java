@@ -8,7 +8,7 @@ public abstract class AbstractActuator implements Actuator {
 
   protected Any contract;
   protected Manager dbManager;
-  protected int contractType;
+  protected int deferredStage;
 
   public Deposit getDeposit() {
     return deposit;
@@ -28,6 +28,6 @@ public abstract class AbstractActuator implements Actuator {
   AbstractActuator(Any contract, Manager dbManager, int actuatorType) {
     this.contract = contract;
     this.dbManager = dbManager;
-    this.contractType = actuatorType;
+    this.deferredStage = actuatorType;
   }
 }

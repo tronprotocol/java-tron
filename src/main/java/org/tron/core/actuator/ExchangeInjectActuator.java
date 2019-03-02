@@ -28,8 +28,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ExchangeInjectActuator(final Any contract, final Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  ExchangeInjectActuator(final Any contract, final Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -244,7 +244,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return 0;

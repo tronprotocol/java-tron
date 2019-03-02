@@ -33,8 +33,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  UnfreezeBalanceActuator(Any contract, Manager dbManager, int contractType) {
-    super(contract, dbManager, contractType);
+  UnfreezeBalanceActuator(Any contract, Manager dbManager, int deferredStage) {
+    super(contract, dbManager, deferredStage);
   }
 
   @Override
@@ -339,7 +339,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.contractType == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
     }
     return 0;

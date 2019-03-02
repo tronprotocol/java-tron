@@ -113,7 +113,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   @Getter
   @Setter
-  private int contractType = Constant.NORMALTRANSACTION;
+  private int deferredStage = Constant.NORMALTRANSACTION;
   /**
    * constructor TransactionCapsule.
    */
