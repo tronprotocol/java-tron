@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Stest" parallel="tests" thread-count="4">
+
+  <listeners>
+    <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
+  </listeners>
+
+ <test name="manual">
+   <packages>
+     <package name="stest.tron.wallet.dailybuild.manual">
+     </package>
+     </packages>
+   </test>
+
+   <test name="assetissue">
+     <packages>
+       <package name="stest.tron.wallet.dailybuild.assetissue">
+       </package>
+     </packages>
+   </test>
+
+   <test name="Contract internalTransaction">
+     <packages>
+       <package name="stest.tron.wallet.contract.internalTransaction">
+       </package>
+     </packages>
+   </test>
+
+    <test name="contract grammar,exceptionfee">
+      <packages>
+          <package name="stest.tron.wallet.dailybuild.grammar">
+          </package>
+          <package name="stest.tron.wallet.dailybuild.exceptionfee">
+          </package>
+      </packages>
+    </test>
+
+</suite>

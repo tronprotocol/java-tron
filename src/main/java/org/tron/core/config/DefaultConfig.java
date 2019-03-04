@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.ImportResource;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
@@ -19,6 +20,8 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 @Slf4j(topic = "app")
 @Configuration
 @Import(CommonConfig.class)
+@ImportResource(locations = "file:TransactionConfiguration.xml")
+//@ImportResource(locations = "file:TransferTRX.xml")
 public class DefaultConfig {
 
   @Autowired

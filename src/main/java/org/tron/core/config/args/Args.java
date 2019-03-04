@@ -66,8 +66,17 @@ public class Args {
   private String outputDirectory = "output-directory";
 
   @Getter
+
+  @Parameter(names = {"--stress-count"})
+  private int stressCount = 100;
+
+  @Getter
+  @Parameter(names = {"--stress-tps"})
+  private int stressTps = 1;
+
   @Parameter(names = {"--log-config"})
   private String logbackPath = "";
+
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -87,6 +96,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--debug"})
   private boolean debug = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--generate"})
+  private boolean generate = false;
 
   @Getter
   @Setter
@@ -424,6 +438,8 @@ public class Args {
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
+    INSTANCE.stressCount = 100;
+    INSTANCE.stressTps = 1;
     INSTANCE.help = false;
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();

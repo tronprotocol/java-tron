@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Export transaction configuration">
+  <test name="stress">
+    <classes>
+      <class name="stest.tron.wallet.precondition.CreateStressTransactionXml">
+      </class>
+    </classes>
+  </test>
+</suite>
