@@ -17,5 +17,5 @@ jobs:
     - run:
         name: Download jar
         command:
-          echo "Please copy following cmd to download .jar file"
-          echo "curl -# -O http://60.205.215.34/Daily_Build_Task_Report"
+          - echo "Please copy following cmd to download .jar file"
+          - echo "curl -# -O http://60.205.215.34/Daily_Build_Task_Report"
