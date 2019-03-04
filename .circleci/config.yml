@@ -16,4 +16,6 @@ jobs:
         command: curl http://60.205.215.34/Daily_Build_Task_Report
     - run:
         name: Download jar
-        command: ./gradlew build -x test
+        command:
+          echo "Please copy following cmd to download .jar file"
+          echo "curl -# -O http://60.205.215.34/Daily_Build_Task_Report"
