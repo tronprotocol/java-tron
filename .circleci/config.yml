@@ -5,9 +5,15 @@ jobs:
       only:
       - master
       - develop
+      - addinCircleCI
     docker:
     - image: circleci/openjdk:8-jdk-browsers
     working_directory: ~/java-tron
     steps:
     - checkout
-    - run: curl http://60.205.215.34/Daily_Build_Task_Report
+    - run:
+        name: Daily Build Report
+        command: curl http://60.205.215.34/Daily_Build_Task_Report
+    - run:
+        name: Download jar
+        command: echo "Download jar"
