@@ -38,6 +38,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -550,8 +551,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static boolean validateSignature(Transaction transaction,
-      byte[] hash, AccountStore accountStore)
+      byte[] hash, Manager manager)
       throws PermissionException, SignatureException, SignatureFormatException {
+    AccountStore accountStore = manager.getAccountStore();
     Transaction.Contract contract = transaction.getRawData().getContractList().get(0);
     int permissionId = contract.getPermissionId();
     byte[] owner = getOwner(contract);
@@ -562,7 +564,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         permission = AccountCapsule.getDefaultPermission(ByteString.copyFrom(owner));
       }
       if (permissionId == 2) {
-        permission = AccountCapsule.createDefaultActivePermission(ByteString.copyFrom(owner));
+        permission = AccountCapsule
+            .createDefaultActivePermission(ByteString.copyFrom(owner), manager);
       }
     } else {
       permission = account.getPermissionById(permissionId);
@@ -604,7 +607,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     byte[] hash = this.getRawHash().getBytes();
     try {
-      if (!validateSignature(this.transaction, hash, manager.getAccountStore())) {
+      if (!validateSignature(this.transaction, hash, manager)) {
         isVerified = false;
         throw new ValidateSignatureException("sig error");
       }

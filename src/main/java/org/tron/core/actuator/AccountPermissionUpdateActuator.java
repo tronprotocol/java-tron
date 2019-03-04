@@ -13,13 +13,13 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 
@@ -36,19 +36,29 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     final AccountPermissionUpdateContract accountPermissionUpdateContract;
     try {
       accountPermissionUpdateContract = contract.unpack(AccountPermissionUpdateContract.class);
+
+      byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
+      AccountStore accountStore = dbManager.getAccountStore();
+      AccountCapsule account = accountStore.get(ownerAddress);
+      account.updatePermissions(accountPermissionUpdateContract.getOwner(),
+          accountPermissionUpdateContract.getWitness(),
+          accountPermissionUpdateContract.getActivesList());
+      accountStore.put(ownerAddress, account);
+
+      dbManager.adjustBalance(ownerAddress, -fee);
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+
+      result.setStatus(fee, code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      result.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       result.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-    byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
-    AccountStore accountStore = dbManager.getAccountStore();
-    AccountCapsule account = accountStore.get(ownerAddress);
-    account.updatePermissions(accountPermissionUpdateContract.getOwner(),
-        accountPermissionUpdateContract.getWitness(),
-        accountPermissionUpdateContract.getActivesList());
-    accountStore.put(ownerAddress, account);
-    result.setStatus(fee, code.SUCESS);
+
     return true;
   }
 
@@ -115,16 +125,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException("operations size must 32");
     }
 
-    ContractType[] types = ContractType.values();
-    boolean[] types1 = new boolean[256];
-    for (ContractType type : types) {
-      if (type != ContractType.UNRECOGNIZED) {
-        types1[type.getNumber()] = true;
-      }
-    }
+    byte[] types1 = dbManager.getDynamicPropertiesStore().getAvailableContractType();
     for (int i = 0; i < 256; i++) {
       boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
-      if (b && !types1[i]) {
+      boolean t = (types1[(i / 8)] & (1 << (i % 8))) != 0;
+      if (b && !t) {
         throw new ContractValidateException(i + " isn't a validate ContractType");
       }
     }
@@ -222,6 +227,6 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
 }

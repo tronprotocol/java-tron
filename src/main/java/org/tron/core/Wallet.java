@@ -396,7 +396,7 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-          dbManager.getHeadBlockTimeStamp() + Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance().getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -878,6 +878,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getTotalEnergyAverageUsage())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getUpdateAccountPermissionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getMultiSignFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
+        .build());
+
     return builder.build();
   }
 
@@ -1291,6 +1301,8 @@ public class Wallet {
       Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       VMConfig.initVmHardFork();
+      VMConfig.initAllowTvmTransferTrc10(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+      VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
       runtime.execute();
       runtime.go();
       runtime.finalization();

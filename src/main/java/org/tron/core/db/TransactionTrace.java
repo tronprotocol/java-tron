@@ -130,6 +130,10 @@ public class TransactionTrace {
     receipt.setNetFee(netFee);
   }
 
+  public void addNetBill(long netFee) {
+    receipt.addNetFee(netFee);
+  }
+
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  VM execute  */

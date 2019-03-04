@@ -13,7 +13,6 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
 @Slf4j(topic = "API")
@@ -46,6 +45,7 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       AssetIssueList reply = wallet.getAssetIssueListByName(build.getValue());

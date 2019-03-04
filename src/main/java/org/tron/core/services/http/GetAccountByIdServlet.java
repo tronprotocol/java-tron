@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 
 @Component
@@ -64,6 +63,7 @@ public class GetAccountByIdServlet extends HttpServlet {
     try {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
 

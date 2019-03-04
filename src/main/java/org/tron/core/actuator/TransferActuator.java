@@ -14,6 +14,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.WhitelistException;
+import org.tron.core.services.WhitelistService;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -40,7 +42,7 @@ public class TransferActuator extends AbstractActuator {
         boolean withDefaultPermission =
             dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp(),withDefaultPermission);
+            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
         dbManager.getAccountStore().put(toAddress, toAccount);
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
@@ -115,7 +117,6 @@ public class TransferActuator extends AbstractActuator {
     }
 
     try {
-
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();

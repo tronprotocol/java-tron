@@ -247,17 +247,6 @@ public class WitnessService implements Service {
           return BlockProductionCondition.NO_PRIVATE_KEY;
         }
 
-        //Verify that the private key corresponds to the witness permission
-        if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
-          byte[] privateKey = privateKeyMap.get(scheduledWitness);
-          byte[] witnessPermissionAddress = privateKeyToAddressMap.get(privateKey);
-          AccountCapsule witnessAccount = manager.getAccountStore()
-              .get(scheduledWitness.toByteArray());
-          if (!Arrays.equals(witnessPermissionAddress, witnessAccount.getWitnessPermissionAddress())) {
-            return BlockProductionCondition.WITNESS_PERMISSION_ERROR;
-          }
-        }
-
         controller.getManager().lastHeadBlockIsMaintenance();
 
         controller.setGeneratingBlock(true);
@@ -301,6 +290,20 @@ public class WitnessService implements Service {
     }
   }
 
+  //Verify that the private key corresponds to the witness permission
+  public boolean validateWitnessPermission(ByteString scheduledWitness) {
+    if (manager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
+      byte[] privateKey = privateKeyMap.get(scheduledWitness);
+      byte[] witnessPermissionAddress = privateKeyToAddressMap.get(privateKey);
+      AccountCapsule witnessAccount = manager.getAccountStore()
+          .get(scheduledWitness.toByteArray());
+      if (!Arrays.equals(witnessPermissionAddress, witnessAccount.getWitnessPermissionAddress())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private void broadcastBlock(BlockCapsule block) {
     try {
       tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
@@ -314,7 +317,7 @@ public class WitnessService implements Service {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
     return tronApp.getDbManager().generateBlock(this.localWitnessStateMap.get(witnessAddress), when,
-        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance);
+        this.privateKeyMap.get(witnessAddress), lastHeadBlockIsMaintenance, true);
   }
 
   private boolean dupWitnessCheck() {
@@ -332,6 +335,10 @@ public class WitnessService implements Service {
 
   public void checkDupWitness(BlockCapsule block) {
     if (block.generatedByMyself) {
+      return;
+    }
+
+    if (needSyncCheck) {
       return;
     }
 

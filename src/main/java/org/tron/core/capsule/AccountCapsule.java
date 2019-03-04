@@ -19,7 +19,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "capsule")
@@ -88,10 +86,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime,
-      boolean withDefaultPermission) {
+      boolean withDefaultPermission, Manager manager) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
-      Permission active = createDefaultActivePermission(contract.getAccountAddress());
+      Permission active = createDefaultActivePermission(contract.getAccountAddress(), manager);
 
       this.account = Account.newBuilder()
           .setType(contract.getType())
@@ -146,10 +144,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(ByteString address,
       AccountType accountType, long createTime,
-      boolean withDefaultPermission) {
+      boolean withDefaultPermission, Manager manager) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(address);
-      Permission active = createDefaultActivePermission(address);
+      Permission active = createDefaultActivePermission(address, manager);
 
       this.account = Account.newBuilder()
           .setType(accountType)
@@ -210,16 +208,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
 
-  private static ByteString getActiveDefaultOperations() {
-    ContractType[] types = ContractType.values();
-    byte[] operations = new byte[32];
-    for (ContractType type : types) {
-      if (type != ContractType.AccountPermissionUpdateContract
-          && type != ContractType.UNRECOGNIZED) {
-        operations[type.getNumber() / 8] |= (1 << type.getNumber() % 8);
-      }
-    }
-    return ByteString.copyFrom(operations);
+  private static ByteString getActiveDefaultOperations(Manager manager) {
+    return ByteString.copyFrom(manager.getDynamicPropertiesStore().getActiveDefaultOperations());
   }
 
   public static Permission createDefaultOwnerPermission(ByteString address) {
@@ -238,7 +228,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return owner.build();
   }
 
-  public static Permission createDefaultActivePermission(ByteString address) {
+  public static Permission createDefaultActivePermission(ByteString address, Manager manager) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -249,7 +239,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     active.setPermissionName("active");
     active.setThreshold(1);
     active.setParentId(0);
-    active.setOperations(getActiveDefaultOperations());
+    active.setOperations(getActiveDefaultOperations(manager));
     active.addKeys(key);
 
     return active.build();
@@ -271,7 +261,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return active.build();
   }
 
-  public void setDefaultWitnessPermission() {
+  public void setDefaultWitnessPermission(Manager manager) {
     Account.Builder builder = this.account.toBuilder();
     Permission witness = createDefaultWitnessPermission(this.getAddress());
     if (!this.account.hasOwnerPermission()) {
@@ -279,7 +269,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       builder.setOwnerPermission(owner);
     }
     if (this.account.getActivePermissionCount() == 0) {
-      Permission active = createDefaultActivePermission(this.getAddress());
+      Permission active = createDefaultActivePermission(this.getAddress(), manager);
       builder.addActivePermission(active);
     }
     this.account = builder.setWitnessPermission(witness).build();
@@ -996,163 +986,4 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
-  public void permissionAddKey(Key addKey, int id) {
-    if (id == 1) {
-      return;
-    }
-    if (id == 0) {
-      Permission.Builder ownerPermission;
-      if (this.account.hasOwnerPermission()) {
-        ownerPermission = this.account.getOwnerPermission().toBuilder();
-      } else {
-        ownerPermission = getDefaultPermission(this.getAddress()).toBuilder();
-        if (addKey.getAddress().equals(this.getAddress())) {
-          ownerPermission.clearKeys();
-        }
-      }
-      ownerPermission.addKeys(addKey);
-
-      Permission witness = null;
-      if (this.getIsWitness()) {
-        if (this.account.hasWitnessPermission()) {
-          witness = this.account.getWitnessPermission();
-        } else {
-          witness = createDefaultWitnessPermission(this.getAddress());
-        }
-      }
-
-      List<Permission> actives = null;
-      if (this.account.getActivePermissionCount() > 0) {
-        actives = this.account.getActivePermissionList();
-      } else {
-        actives = new ArrayList<>();
-        actives.add(createDefaultActivePermission(this.getAddress()));
-      }
-
-      updatePermissions(ownerPermission.build(), witness, actives);
-    } else {
-      if (this.account.getActivePermissionCount() == 0) {
-        return;
-      }
-      List<Permission> actives = new ArrayList<>();
-      for (Permission permission : this.account.getActivePermissionList()) {
-        if (id == permission.getId()) {
-          permission = permission.toBuilder().addKeys(addKey).build();
-        }
-        actives.add(permission);
-      }
-      this.account = this.account.toBuilder()
-          .clearActivePermission()
-          .addAllActivePermission(actives)
-          .build();
-    }
-  }
-
-  public void permissionUpdateKey(Key updateKey, int id) {
-    if (id == 1) {
-      return;
-    }
-    if (id == 0) {
-      Permission.Builder ownerPermission;
-      if (this.account.hasOwnerPermission()) {
-        ownerPermission = this.account.getOwnerPermission().toBuilder();
-      } else {
-        ownerPermission = getDefaultPermission(this.getAddress()).toBuilder();
-      }
-
-      List<Key> keys = ownerPermission.getKeysList();
-      ownerPermission.clearKeys();
-      for (Key key : keys) {
-        if (key.getAddress().equals(updateKey.getAddress())) {
-          ownerPermission.addKeys(updateKey);
-        } else {
-          ownerPermission.addKeys(key);
-        }
-      }
-
-      Permission witness = null;
-      if (this.getIsWitness()) {
-        if (this.account.hasWitnessPermission()) {
-          witness = this.account.getWitnessPermission();
-        } else {
-          witness = createDefaultWitnessPermission(this.getAddress());
-        }
-      }
-
-      List<Permission> actives = null;
-      if (this.account.getActivePermissionCount() > 0) {
-        actives = this.account.getActivePermissionList();
-      } else {
-        actives = new ArrayList<>();
-        actives.add(createDefaultActivePermission(this.getAddress()));
-      }
-
-      updatePermissions(ownerPermission.build(), witness, actives);
-    } else {
-      if (this.account.getActivePermissionCount() == 0) {
-        return;
-      }
-      List<Permission> actives = new ArrayList<>();
-      for (Permission permission : this.account.getActivePermissionList()) {
-        if (id == permission.getId()) {
-          List<Key> keys = new ArrayList<>();
-          for (Key key : permission.getKeysList()) {
-            if (key.getAddress().equals(updateKey.getAddress())) {
-              keys.add(updateKey);
-            } else {
-              keys.add(key);
-            }
-          }
-          permission = permission.toBuilder().clearKeys().addAllKeys(keys).build();
-        }
-        actives.add(permission);
-      }
-      this.account = this.account.toBuilder()
-          .clearActivePermission()
-          .addAllActivePermission(actives)
-          .build();
-    }
-  }
-
-  public void permissionDeleteKey(ByteString deleteAddress, int id) {
-    if (id == 1) {
-      return;
-    }
-    if (id == 0) {
-      if (!this.account.hasOwnerPermission()) {
-        return;
-      }
-      Permission.Builder ownerPermission = this.account.getOwnerPermission().toBuilder();
-      List<Key> keys = ownerPermission.getKeysList();
-      ownerPermission.clearKeys();
-      for (Key key : keys) {
-        if (!key.getAddress().equals(deleteAddress)) {
-          ownerPermission.addKeys(key);
-        }
-      }
-
-      this.account = this.account.toBuilder().setOwnerPermission(ownerPermission).build();
-    } else {
-      if (this.account.getActivePermissionCount() == 0) {
-        return;
-      }
-      List<Permission> actives = new ArrayList<>();
-      for (Permission permission : this.account.getActivePermissionList()) {
-        if (id == permission.getId()) {
-          List<Key> keys = new ArrayList<>();
-          for (Key key : permission.getKeysList()) {
-            if (!key.getAddress().equals(deleteAddress)) {
-              keys.add(key);
-            }
-          }
-          permission = permission.toBuilder().clearKeys().addAllKeys(keys).build();
-        }
-        actives.add(permission);
-      }
-      this.account = this.account.toBuilder()
-          .clearActivePermission()
-          .addAllActivePermission(actives)
-          .build();
-    }
-  }
 }

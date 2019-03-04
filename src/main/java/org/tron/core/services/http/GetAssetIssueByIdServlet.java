@@ -42,6 +42,7 @@ public class GetAssetIssueByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       String id = jsonObject.getString("value");
 
