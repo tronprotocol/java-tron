@@ -64,6 +64,10 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
     }
 
     ByteString sendAddress = capsule.getSenderAddress();
+    if (Objects.isNull(sendAddress)) {
+      throw new ContractValidateException("send address is null!");
+    }
+    
     ByteString ownerAddress = cancelDeferredTransactionContract.getOwnerAddress();
     if (sendAddress.equals(ownerAddress) == false) {
       throw new ContractValidateException("not have right to cancel!");
