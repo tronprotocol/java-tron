@@ -1390,7 +1390,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.getDeferredStage() == Constant.NORMALTRANSACTION){
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
         if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
@@ -1460,7 +1460,7 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION){
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
