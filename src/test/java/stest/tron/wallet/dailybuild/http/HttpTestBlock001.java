@@ -113,6 +113,42 @@ public class HttpTestBlock001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "get next maintenance time by http")
+  public void get7NextMaintaenanceTime() {
+    response = HttpMethed.getNextmaintenanceTime(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertFalse(responseContent.get("num").toString().isEmpty());
+  }
+
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "get chain parameter by http")
+  public void get8ChainParameter() {
+    response = HttpMethed.getChainParameter(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("chainParameter").toString());
+    Assert.assertTrue(jsonArray.size() >= 26);
+
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "get Node Info by http")
+  public void get9NodeInfo() {
+    response = HttpMethed.getNodeInfo(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertFalse(responseContent.get("configNodeInfo").toString().isEmpty());
+
+  }
+  /**
+   * constructor.
+   */
   @AfterClass
   public void shutdown() throws InterruptedException {
     HttpMethed.disConnect();

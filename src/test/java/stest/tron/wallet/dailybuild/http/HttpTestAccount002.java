@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -123,8 +124,35 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "Get Delegated Resource by http")
+  public void test6GetDelegatedResource() {
+    response = HttpMethed.getDelegatedResource(httpnode,freezeBalanceAddress,receiverResourceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
+    Assert.assertTrue(jsonArray.size() >= 1);
+    Assert.assertEquals(jsonArray.getJSONObject(0).getLong("frozen_balance_for_bandwidth"),frozenBalance);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get Delegated Resource Account Index by http")
+  public void test7GetDelegatedResourceAccountIndex() {
+    response = HttpMethed.getDelegatedResourceAccountIndex(httpnode,freezeBalanceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
+    String Address = responseContent.getJSONArray("toAccounts").get(0).toString();
+
+    Assert.assertEquals(Address,ByteArray.toHexString(receiverResourceAddress));
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "UnFreezeBalance with bandwidth for others by http")
-  public void test6UnFreezebalanceOfBandwidthForOthers() {
+  public void test8UnFreezebalanceOfBandwidthForOthers() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
@@ -140,7 +168,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "FreezeBalance with energy for others by http")
-  public void test7FreezebalanceOfEnergyForOthers() {
+  public void test9FreezebalanceOfEnergyForOthers() {
     response = HttpMethed.sendCoin(httpnode,fromAddress,receiverResourceAddress,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
@@ -158,7 +186,7 @@ public class HttpTestAccount002 {
    * constructor.
    */
   @Test(enabled = true, description = "UnFreezeBalance with energy for others by http")
-  public void test8UnFreezebalanceOfEnergyForOthers() {
+  public void test9UnFreezebalanceOfEnergyForOthers() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 

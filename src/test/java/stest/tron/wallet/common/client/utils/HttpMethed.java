@@ -932,6 +932,52 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getNextmaintenanceTime(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getChainParameter(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNodeInfo(String httpNode) {
+      try {
+          String requestUrl = "http://" + httpNode + "/wallet/getnodeinfo";
+          response = createConnect(requestUrl);
+      } catch (Exception e) {
+          e.printStackTrace();
+          httppost.releaseConnection();
+          return null;
+      }
+      return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse listwitnesses(String httpNode) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/listwitnesses";
@@ -1247,6 +1293,40 @@ public class HttpMethed {
     return response;
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse getDelegatedResource(String httpNode,byte[] fromAddress,byte[] toAddress) {
+      try {
+          String requestUrl = "http://" + httpNode + "/wallet/getdelegatedresource";
+          JsonObject userBaseObj2 = new JsonObject();
+          userBaseObj2.addProperty("fromAddress", ByteArray.toHexString(fromAddress));
+          userBaseObj2.addProperty("toAddress", ByteArray.toHexString(toAddress));
+          response = createConnect(requestUrl,userBaseObj2);
+      } catch (Exception e) {
+          e.printStackTrace();
+          httppost.releaseConnection();
+          return null;
+      }
+      return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getDelegatedResourceAccountIndex(String httpNode,byte[] queryAddress) {
+      try {
+          String requestUrl = "http://" + httpNode + "/wallet/getdelegatedresourceaccountindex";
+          JsonObject userBaseObj2 = new JsonObject();
+          userBaseObj2.addProperty("value", ByteArray.toHexString(queryAddress));
+          response = createConnect(requestUrl,userBaseObj2);
+      } catch (Exception e) {
+          e.printStackTrace();
+          httppost.releaseConnection();
+          return null;
+      }
+      return response;
+  }
 
   /**
    * constructor.
