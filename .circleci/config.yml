@@ -17,5 +17,8 @@ jobs:
     - run:
         name: Download Links
         command: |
-          echo "Please visit following website to download java-tron.jar file"
-          echo "http://60.205.215.34/Daily_Build"
+          echo "Please visit following website to download java-tron.jar"
+          echo "http://60.205.215.34/Daily_Build/java-tron.jar"
+
+          echo "The following compressed package is provided for user to try"
+          echo "http://60.205.215.34/Daily_Build/ava-tron.tar.gz"
