@@ -19,7 +19,7 @@ jobs:
         command: |
           echo "Please visit following website to download java-tron.jar on browsers"
           echo "http://60.205.215.34/Daily_Build/java-tron.jar"
-          echo "The following compressed package is provided for user to try. Please use Linux OS to Download"
+          echo "The following compressed package is provided for user to start your own Fullnode. Please use Linux OS to Download"
           echo "curl -# -O http://60.205.215.34/Daily_Build/java-tron.tar.gz"
           echo "To unzip file use the command below"
           echo "tar -xzvf java-tron.tar.gz"
