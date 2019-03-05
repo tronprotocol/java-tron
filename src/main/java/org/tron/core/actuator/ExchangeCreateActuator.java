@@ -216,8 +216,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getExchangeCreateFee() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
-          (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+      return dbManager.getDynamicPropertiesStore().getExchangeCreateFee() + calcDeferredFee();
     }
     return dbManager.getDynamicPropertiesStore().getExchangeCreateFee();
   }

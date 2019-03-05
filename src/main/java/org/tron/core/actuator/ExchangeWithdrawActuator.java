@@ -244,8 +244,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
-          (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+      return calcDeferredFee();
     }
     return 0;
   }

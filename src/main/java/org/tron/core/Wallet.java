@@ -416,7 +416,7 @@ public class Wallet {
     if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS) {
       return builder.setResult(false).setCode(response_code.TOO_LONG_DEFERRED_TRANSACTION_DELAYTIME).build();
     }
-      if (trx.getDeferredSeconds() > 0) {
+    if (trx.getDeferredSeconds() > 0) {
       trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     }
 

@@ -198,8 +198,7 @@ public class TransferActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return ChainConstant.TRANSFER_FEE + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee()
-          *  (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+      return ChainConstant.TRANSFER_FEE + calcDeferredFee();
     }
     return ChainConstant.TRANSFER_FEE;
   }

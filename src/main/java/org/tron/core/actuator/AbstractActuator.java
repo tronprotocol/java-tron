@@ -18,6 +18,11 @@ public abstract class AbstractActuator implements Actuator {
     this.deposit = deposit;
   }
 
+  public long calcDeferredFee() {
+    return dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
+        (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+  }
+
   protected Deposit deposit;
 
   AbstractActuator(Any contract, Manager dbManager) {

@@ -123,8 +123,7 @@ public class CreateAccountActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() +
-          dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *  (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+      return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() + calcDeferredFee();
     }
     return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
   }

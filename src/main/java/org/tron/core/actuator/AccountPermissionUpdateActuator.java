@@ -233,8 +233,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
-          (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+      return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee() + calcDeferredFee();
     }
     return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }

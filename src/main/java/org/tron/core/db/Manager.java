@@ -1479,7 +1479,7 @@ public class Manager {
 
     removeScheduledTransaction(deferredTransactionList);
 
-    if (postponedTrxCount > 0) {
+    if (processedDeferredTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
