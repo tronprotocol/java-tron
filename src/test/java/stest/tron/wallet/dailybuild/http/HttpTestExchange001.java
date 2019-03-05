@@ -59,6 +59,7 @@ public class HttpTestExchange001 {
   public void test1CreateExchange() {
     response = HttpMethed.sendCoin(httpnode, fromAddress, exchangeOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
@@ -69,6 +70,7 @@ public class HttpTestExchange001 {
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
         2, 3, description, url, 1000L, 1000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.assetIssue(httpnode, asset2Address, name, name, totalSupply, 1, 1,
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
         2, 3, description, url, 1000L, 1000L, asset2Key);

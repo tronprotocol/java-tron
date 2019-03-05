@@ -12,6 +12,7 @@ import stest.tron.wallet.common.client.utils.HttpMethed;
 
 @Slf4j
 public class HttpTestBlock001 {
+
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
@@ -27,7 +28,7 @@ public class HttpTestBlock001 {
   public void get1NowBlock() {
     response = HttpMethed.getNowBlock(httpnode);
     logger.info("code is " + response.getStatusLine().getStatusCode());
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     blockContent = responseContent;
     blockId = responseContent.get("blockID").toString();
@@ -50,10 +51,10 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "Get block by num by http")
   public void get2BlockByNum() {
-    response = HttpMethed.getBlockByNum(httpnode,currentBlockNum);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    response = HttpMethed.getBlockByNum(httpnode, currentBlockNum);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
-    Assert.assertEquals(responseContent,blockContent);
+    Assert.assertEquals(responseContent, blockContent);
 
   }
 
@@ -62,13 +63,13 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "GetBlockByLimitNext by http")
   public void get3BlockByLimitNext() {
-    response = HttpMethed.getBlockByLimitNext(httpnode,currentBlockNum - 10, currentBlockNum);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    response = HttpMethed.getBlockByLimitNext(httpnode, currentBlockNum - 10, currentBlockNum);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     logger.info(responseContent.get("block").toString());
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("block").toString());
-    Assert.assertEquals(jsonArray.size(),10);
+    Assert.assertEquals(jsonArray.size(), 10);
   }
 
   /**
@@ -76,13 +77,13 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "GetBlockByLastNum by http")
   public void get4BlockByLastNum() {
-    response = HttpMethed.getBlockByLastNum(httpnode,8);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    response = HttpMethed.getBlockByLastNum(httpnode, 8);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     logger.info(responseContent.get("block").toString());
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("block").toString());
-    Assert.assertEquals(jsonArray.size(),8);
+    Assert.assertEquals(jsonArray.size(), 8);
   }
 
   /**
@@ -90,11 +91,11 @@ public class HttpTestBlock001 {
    */
   @Test(enabled = true, description = "GetBlockById by http")
   public void get5BlockById() {
-    response = HttpMethed.getBlockById(httpnode,blockId);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    response = HttpMethed.getBlockById(httpnode, blockId);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(blockId,responseContent.get("blockID").toString());
+    Assert.assertEquals(blockId, responseContent.get("blockID").toString());
   }
 
   /**
@@ -105,7 +106,6 @@ public class HttpTestBlock001 {
     response = HttpMethed.listNodes(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertFalse(responseContent.get("nodes").toString().isEmpty());
   }
 
 
@@ -145,6 +145,7 @@ public class HttpTestBlock001 {
     Assert.assertFalse(responseContent.get("configNodeInfo").toString().isEmpty());
 
   }
+
   /**
    * constructor.
    */

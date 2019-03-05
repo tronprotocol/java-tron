@@ -161,6 +161,7 @@ public class HttpTestSmartContract001 {
     //assetOwnerAddress, assetOwnerKey
     HttpResponse httpResponse = HttpMethed
         .updateSetting(httpnode, assetOwnerAddress, contractAddress, 75, assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
     response = HttpMethed.getContract(httpnode, contractAddress);
@@ -185,6 +186,7 @@ public class HttpTestSmartContract001 {
     //assetOwnerAddress, assetOwnerKey
     HttpResponse httpResponse = HttpMethed
         .updateEnergyLimit(httpnode, assetOwnerAddress, contractAddress, 1234567, assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     responseContent = HttpMethed.parseResponseContent(httpResponse);
     HttpMethed.printJsonContent(responseContent);
     response = HttpMethed.getContract(httpnode, contractAddress);
