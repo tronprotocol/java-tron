@@ -105,8 +105,7 @@ public class HttpTestBlock001 {
     response = HttpMethed.listNodes(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("nodes").toString());
-    Assert.assertTrue(jsonArray.size() >= 2);
+    Assert.assertFalse(responseContent.get("nodes").toString().isEmpty());
   }
 
 
