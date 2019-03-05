@@ -34,9 +34,26 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return deductDeferredFee(ret);
+    }
+
     long fee = calcFee();
     try {
       TransferContract transferContract = contract.unpack(TransferContract.class);
+      if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION){
+        byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
+        try {
+          dbManager.adjustBalance(ownerAddress, -fee);
+          dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+        } catch (BalanceInsufficientException e) {
+          logger.debug(e.getMessage(), e);
+          ret.setStatus(fee, code.FAILED);
+          throw new ContractExeException(e.getMessage());
+        }
+        return true;
+      }
+
       long amount = transferContract.getAmount();
       byte[] toAddress = transferContract.getToAddress().toByteArray();
       byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();

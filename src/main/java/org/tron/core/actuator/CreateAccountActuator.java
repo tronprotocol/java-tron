@@ -30,6 +30,10 @@ public class CreateAccountActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return deductDeferredFee(ret);
+    }
+
     long fee = calcFee();
     try {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);

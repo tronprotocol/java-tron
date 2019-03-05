@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;

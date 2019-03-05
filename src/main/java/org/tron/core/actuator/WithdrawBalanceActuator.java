@@ -34,6 +34,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return deductDeferredFee(ret);
+    }
     long fee = calcFee();
     final WithdrawBalanceContract withdrawBalanceContract;
     try {

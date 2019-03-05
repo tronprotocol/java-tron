@@ -37,6 +37,9 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule result) throws ContractExeException {
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return deductDeferredFee(result);
+    }
     long fee = calcFee();
     final AccountPermissionUpdateContract accountPermissionUpdateContract;
     try {

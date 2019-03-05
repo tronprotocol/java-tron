@@ -12,6 +12,7 @@ import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
@@ -29,8 +30,12 @@ public class UpdateAccountActuator extends AbstractActuator {
   }
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    final AccountUpdateContract accountUpdateContract;
     final long fee = calcFee();
+    final AccountUpdateContract accountUpdateContract;
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return deductDeferredFee(ret);
+    }
+
     try {
       accountUpdateContract = contract.unpack(AccountUpdateContract.class);
     } catch (InvalidProtocolBufferException e) {
