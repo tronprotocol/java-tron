@@ -430,9 +430,12 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertThat(txWeight.getResult().getMessage(),
         containsString("but it is not contained of permission"));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
     long balance1 = test001AddressAccount1.getBalance();
-    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + multiSignFee);
+    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + 1000_000);
   }
 
   @Test(enabled = true, description = "Get sign for not sign transaction")
