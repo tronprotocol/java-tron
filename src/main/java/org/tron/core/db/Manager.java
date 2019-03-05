@@ -1185,14 +1185,9 @@ public class Manager {
   }
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
-  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace)
-      throws ContractValidateException, VMIllegalException, ContractExeException {
+  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace) {
     // setReferenceBlockNumber used to save the transformation relationship from old transaction id to generating transaction id
     trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    transactionTrace.init(blockCap, eventPluginLoaded);
-
-    trxCap.setTrxTrace(transactionTrace);
-    trxCap.setResultCode(contractResult.SUCCESS);
 
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
@@ -1203,13 +1198,6 @@ public class Manager {
             .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
     postContractTrigger(transactionTrace, false);
-
-    VMConfig.initVmHardFork();
-    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    transactionTrace.init(blockCap, eventPluginLoaded);
-    transactionTrace.checkIsConstant();
-    transactionTrace.exec();
 
     try {
       pushScheduledTransaction(blockCap, new TransactionCapsule(trxCap.getData()));
@@ -1254,15 +1242,8 @@ public class Manager {
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
-    trxCap.setTrxTrace(trace);
-
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
-
-    // process deferred transaction for the first time
-    if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
-      return processDeferTransaction(trxCap, blockCap, trace);
-    }
 
     VMConfig.initVmHardFork();
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
@@ -1270,6 +1251,12 @@ public class Manager {
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
+    trxCap.setTrxTrace(trace);
+
+    // process deferred transaction for the first time
+    if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
+      return processDeferTransaction(trxCap, blockCap, trace);
+    }
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();

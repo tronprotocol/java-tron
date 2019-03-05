@@ -36,6 +36,7 @@ public abstract class AbstractActuator implements Actuator {
       byte[] ownerAddress = getOwnerAddress().toByteArray();
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
