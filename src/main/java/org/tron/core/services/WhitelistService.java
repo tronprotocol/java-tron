@@ -67,10 +67,7 @@ public class WhitelistService {
     WrappedByteArray to = WrappedByteArray.of(toAddress);
     WrappedByteArray value = whitelist.get(from);
     if (Objects.nonNull(value) && (contractType != ContractType.TransferContract || !value.equals(to))) {
-      throw new WhitelistException("Not the specified address. "
-          + "contractType: " + contractType
-          + ", from:" + Wallet.encode58Check(fromAddress)
-          + ", to:" + (toAddress == null ? null : Wallet.encode58Check(toAddress)));
+      throw new WhitelistException();
     }
   }
 

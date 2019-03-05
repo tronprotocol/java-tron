@@ -267,7 +267,7 @@ public class MultiSign37 {
   public void testMultiUpdatepermissions_49() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     byte[] test001Address = ecKey.getAddress();
-    long amount = updateAccountPermissionFee + 1000000;
+    long amount = updateAccountPermissionFee + multiSignFee + 1000000;
     Assert.assertTrue(PublicMethed
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
