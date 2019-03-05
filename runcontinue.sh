@@ -1,4 +1,4 @@
-DATE=$(date "+%Y-%m-%d_%H:%M:%S")
+DATE=`$(date "+%Y-%m-%d_%H:%M:%S")`
 echo "Build on `$DATE` (CST), UTC +8"
 echo "Please visit following website to download java-tron.jar on browsers"
 echo "--- http://60.205.215.34/Daily_Build/java-tron.jar"
