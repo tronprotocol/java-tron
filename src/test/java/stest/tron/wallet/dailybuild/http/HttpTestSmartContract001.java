@@ -159,11 +159,11 @@ public class HttpTestSmartContract001 {
   public void test4UpdateSetting() {
 
     //assetOwnerAddress, assetOwnerKey
-    HttpResponse httpResponse = HttpMethed
+    response = HttpMethed
         .updateSetting(httpnode, assetOwnerAddress, contractAddress, 75, assetOwnerKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    responseContent = HttpMethed.parseResponseContent(httpResponse);
-    HttpMethed.printJsonContent(responseContent);
+    responseContent = HttpMethed.parseResponseContent(response);
     response = HttpMethed.getContract(httpnode, contractAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -180,15 +180,15 @@ public class HttpTestSmartContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "updateEnergyLimit contract by http")
-  public void test5UpdateSetting() {
+  @Test(enabled = true, description = "UpdateEnergyLimit contract by http")
+  public void test5UpdateEnergyLimit() {
 
     //assetOwnerAddress, assetOwnerKey
-    HttpResponse httpResponse = HttpMethed
+    response = HttpMethed
         .updateEnergyLimit(httpnode, assetOwnerAddress, contractAddress, 1234567, assetOwnerKey);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    responseContent = HttpMethed.parseResponseContent(httpResponse);
-    HttpMethed.printJsonContent(responseContent);
+    responseContent = HttpMethed.parseResponseContent(response);
     response = HttpMethed.getContract(httpnode, contractAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
