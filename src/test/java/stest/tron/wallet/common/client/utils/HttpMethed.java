@@ -934,7 +934,7 @@ public class HttpMethed {
    */
   public static HttpResponse getNextmaintenanceTime(String httpNode) {
     try {
-      String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
+      String requestUrl = "http://" + httpNode + "/wallet/getnextmaintenancetime";
       response = createConnect(requestUrl);
     } catch (Exception e) {
       e.printStackTrace();
