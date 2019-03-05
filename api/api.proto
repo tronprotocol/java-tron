@@ -557,6 +557,12 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
+  rpc EasyTransferAsset (EasyTransferAssetMessage) returns (EasyTransferResponse) {
+  };
+  //Warning: do not invoke this interface provided by others.
+  rpc EasyTransferAssetByPrivate (EasyTransferAssetByPrivateMessage) returns (EasyTransferResponse) {
+  };
+  //Warning: do not invoke this interface provided by others.
   rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
     option (google.api.http) = {
       post: "/wallet/easytransfer"
@@ -957,10 +963,24 @@ message EasyTransferMessage {
   int64 amount = 3;
 }
 
+message EasyTransferAssetMessage {
+  bytes passPhrase = 1;
+  bytes toAddress = 2;
+  string assetId = 3;
+  int64 amount = 4;
+}
+
 message EasyTransferByPrivateMessage {
   bytes privateKey = 1;
   bytes toAddress = 2;
   int64 amount = 3;
+}
+
+message EasyTransferAssetByPrivateMessage {
+  bytes privateKey = 1;
+  bytes toAddress = 2;
+  string assetId = 3;
+  int64 amount = 4;
 }
 
 message EasyTransferResponse {
