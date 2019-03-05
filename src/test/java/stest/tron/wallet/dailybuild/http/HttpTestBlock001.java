@@ -118,6 +118,7 @@ public class HttpTestBlock001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("num").toString().isEmpty());
+    Assert.assertTrue(responseContent.getLong("num") >= System.currentTimeMillis());
   }
 
 
@@ -131,7 +132,14 @@ public class HttpTestBlock001 {
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("chainParameter").toString());
     Assert.assertTrue(jsonArray.size() >= 26);
-
+    Boolean exsistDelegated = false;
+    for (int i = 0;i < jsonArray.size();i++) {
+      if (jsonArray.getJSONObject(i).getString("key").equals("getAllowDelegateResource")) {
+        exsistDelegated = true;
+        Assert.assertTrue(jsonArray.getJSONObject(i).getString("value").equals("1"));
+      }
+    }
+    Assert.assertTrue(exsistDelegated);
   }
 
   /**
@@ -143,7 +151,7 @@ public class HttpTestBlock001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("configNodeInfo").toString().isEmpty());
-
+    Assert.assertTrue(responseContent.getString("configNodeInfo").contains("\"dbVersion\":2"));
   }
 
   /**

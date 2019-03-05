@@ -131,6 +131,8 @@ public class HttpTestAccount002 {
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
     Assert.assertTrue(jsonArray.size() >= 1);
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("from"),ByteArray.toHexString(freezeBalanceAddress));
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("to"),ByteArray.toHexString(receiverResourceAddress));
     Assert.assertEquals(jsonArray.getJSONObject(0).getLong("frozen_balance_for_bandwidth"),frozenBalance);
   }
 
@@ -144,7 +146,6 @@ public class HttpTestAccount002 {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
     String Address = responseContent.getJSONArray("toAccounts").get(0).toString();
-
     Assert.assertEquals(Address,ByteArray.toHexString(receiverResourceAddress));
   }
 
