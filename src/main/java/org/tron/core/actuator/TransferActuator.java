@@ -26,7 +26,7 @@ public class TransferActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  TransferActuator(Any contract, Manager dbManager, int deferredStage) {
+  TransferActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
     super(contract, dbManager, deferredStage);
   }
 
@@ -196,8 +196,9 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return ChainConstant.TRANSFER_FEE + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return ChainConstant.TRANSFER_FEE + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee()
+          *  (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
     }
     return ChainConstant.TRANSFER_FEE;
   }

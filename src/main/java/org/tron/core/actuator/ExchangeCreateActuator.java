@@ -26,7 +26,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ExchangeCreateActuator(final Any contract, final Manager dbManager, int deferredStage) {
+  ExchangeCreateActuator(final Any contract, final Manager dbManager, DeferredStage deferredStage) {
     super(contract, dbManager, deferredStage);
   }
 
@@ -215,8 +215,9 @@ public class ExchangeCreateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getExchangeCreateFee() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return dbManager.getDynamicPropertiesStore().getExchangeCreateFee() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
+          (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
     }
     return dbManager.getDynamicPropertiesStore().getExchangeCreateFee();
   }

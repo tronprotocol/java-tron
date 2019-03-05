@@ -26,7 +26,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  UpdateEnergyLimitContractActuator(Any contract, Manager dbManager, int deferredStage) {
+  UpdateEnergyLimitContractActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
     super(contract, dbManager, deferredStage);
   }
 
@@ -124,8 +124,9 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return 0 + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *
+          (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
     }
     return 0;
   }

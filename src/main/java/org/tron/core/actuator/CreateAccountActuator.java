@@ -23,7 +23,7 @@ public class CreateAccountActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  CreateAccountActuator(Any contract, Manager dbManager, int deferredStage) {
+  CreateAccountActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
     super(contract, dbManager, deferredStage);
   }
 
@@ -122,8 +122,9 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (super.deferredStage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() + dbManager.getDynamicPropertiesStore().getDeferredTransactionFee();
+    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract() +
+          dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() *  (deferredStage.delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
     }
     return dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
   }
