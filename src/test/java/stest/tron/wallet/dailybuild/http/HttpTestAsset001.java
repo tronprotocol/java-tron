@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -52,19 +53,20 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "Create asset issue by http")
   public void test1CreateAssetIssue() {
-    response = HttpMethed.sendCoin(httpnode,fromAddress,assetAddress,amount,testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, assetAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
-    response = HttpMethed.sendCoin(httpnode,fromAddress,participateAddress,10000000L,testKey002);
+    response = HttpMethed
+        .sendCoin(httpnode, fromAddress, participateAddress, 10000000L, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
     //Create an asset issue
-    response = HttpMethed.assetIssue(httpnode,assetAddress,name,name,totalSupply,1,1,
-        System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
-        2,3,description,url,1000L, 1000L,assetKey);
+    response = HttpMethed.assetIssue(httpnode, assetAddress, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
+        2, 3, description, url, 1000L, 1000L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
-    response = HttpMethed.getAccount(httpnode,assetAddress);
+    response = HttpMethed.getAccount(httpnode, assetAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
@@ -79,7 +81,7 @@ public class HttpTestAsset001 {
   @Test(enabled = true, description = "GetAssetIssueById by http")
   public void test2GetAssetIssueById() {
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getAssetIssueById(httpnode,assetIssueId);
+    response = HttpMethed.getAssetIssueById(httpnode, assetIssueId);
     getAssetIssueByIdContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByIdContent);
     Assert.assertTrue(totalSupply == getAssetIssueByIdContent.getLong("total_supply"));
@@ -90,7 +92,7 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "GetAssetIssueByName by http")
   public void test3GetAssetIssueByName() {
-    response = HttpMethed.getAssetIssueByName(httpnode,name);
+    response = HttpMethed.getAssetIssueByName(httpnode, name);
     getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByNameContent);
   }
@@ -100,11 +102,11 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "TransferAsset by http")
   public void test4TransferAsset() {
-    response = HttpMethed.transferAsset(httpnode,assetAddress,participateAddress,assetIssueId,
-        100L,assetKey);
+    response = HttpMethed.transferAsset(httpnode, assetAddress, participateAddress, assetIssueId,
+        100L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
-    response = HttpMethed.getAccount(httpnode,participateAddress);
+    response = HttpMethed.getAccount(httpnode, participateAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(!responseContent.getString("assetV2").isEmpty());
@@ -116,11 +118,11 @@ public class HttpTestAsset001 {
   @Test(enabled = true, description = "Participate asset issue by http")
   public void test5ParticipateAssetIssue() {
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.participateAssetIssue(httpnode,assetAddress,participateAddress,
-        assetIssueId,1000L,participateKey);
+    response = HttpMethed.participateAssetIssue(httpnode, assetAddress, participateAddress,
+        assetIssueId, 1000L, participateKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
-    response = HttpMethed.getAccount(httpnode,participateAddress);
+    response = HttpMethed.getAccount(httpnode, participateAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
@@ -131,15 +133,14 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "Update asset issue by http")
   public void test6UpdateAssetIssue() {
-    response = HttpMethed.updateAssetIssue(httpnode,assetAddress,updateDescription,updateUrl,
-        290L,390L,assetKey);
+    response = HttpMethed.updateAssetIssue(httpnode, assetAddress, updateDescription, updateUrl,
+        290L, 390L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getAssetIssueById(httpnode,assetIssueId);
+    response = HttpMethed.getAssetIssueById(httpnode, assetIssueId);
     getAssetIssueByIdContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByIdContent);
-
 
     Assert.assertTrue(getAssetIssueByIdContent
         .getLong("public_free_asset_net_limit") == 390L);
@@ -149,6 +150,37 @@ public class HttpTestAsset001 {
         .getString("description").equalsIgnoreCase(HttpMethed.str2hex(updateDescription)));
     Assert.assertTrue(getAssetIssueByIdContent
         .getString("url").equalsIgnoreCase(HttpMethed.str2hex(updateUrl)));
+  }
+
+
+  /**
+   * * constructor. *
+   */
+  @Test(enabled = true, description = "Get asset issue list by http")
+  public void test7GetAssetissueList() {
+
+    response = HttpMethed.getAssetissueList(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("assetIssue"));
+    Assert.assertTrue(jsonArray.size() >= 1);
+  }
+
+
+  /**
+   * * constructor. *
+   */
+  @Test(enabled = true, description = "Get paginated asset issue list by http")
+  public void test8GetPaginatedAssetissueList() {
+    response = HttpMethed.getPaginatedAssetissueList(httpnode, 0, 1);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("assetIssue"));
+    Assert.assertTrue(jsonArray.size() == 1);
   }
 
 
