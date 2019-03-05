@@ -14,8 +14,7 @@ jobs:
     - test1:
         run:
           name: Daily Build Report
-          command: |
-          curl http://60.205.215.34/Daily_Build_Task_Report
+          command: curl http://60.205.215.34/Daily_Build_Task_Report
           exit 1
 
     - test2:
