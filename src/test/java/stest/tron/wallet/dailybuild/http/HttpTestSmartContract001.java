@@ -22,7 +22,7 @@ public class HttpTestSmartContract001 {
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(1);
+      .get(0);
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] assetOwnerAddress = ecKey2.getAddress();
@@ -48,6 +48,7 @@ public class HttpTestSmartContract001 {
   @Test(enabled = true, description = "Deploy smart contract by http")
   public void test1DeployContract() {
     PublicMethed.printAddress(assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
