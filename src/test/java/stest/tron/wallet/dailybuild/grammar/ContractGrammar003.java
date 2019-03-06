@@ -86,10 +86,10 @@ public class ContractGrammar003 {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress3 = ecKey1.getAddress();
     testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-    PublicMethed
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "aContract";
     String code = Configuration.getByPath("testng.conf")
