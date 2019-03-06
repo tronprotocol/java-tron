@@ -306,7 +306,7 @@ public class TransactionTrace {
       return false;
     }
 
-    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySeconds / (24 * 60 * 60) + 1);
 
     try {
       dbManager.adjustBalance(ownerAddress, -fee);

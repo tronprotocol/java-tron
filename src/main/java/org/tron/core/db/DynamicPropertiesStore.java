@@ -257,7 +257,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getMaxDeferredTransactionProcessTime();
     } catch (IllegalArgumentException e) {
-      this.saveMaxDeferredTransactionProcessTime(200);
+      this.saveMaxDeferredTransactionProcessTime(100);
     }
 
     try {

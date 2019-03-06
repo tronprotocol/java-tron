@@ -1218,7 +1218,6 @@ public class Manager {
       return false;
     }
 
-    // no need tapos validation when processing deferred transaction at the second time.
     validateTapos(trxCap);
     validateCommon(trxCap);
 

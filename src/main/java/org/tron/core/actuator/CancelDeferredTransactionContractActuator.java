@@ -23,7 +23,6 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
   public boolean execute(TransactionResultCapsule capsule) throws ContractExeException {
     long fee = calcFee();
     final CancelDeferredTransactionContract cancelDeferredTransactionContract;
-    // todo calculate fee
     try {
       cancelDeferredTransactionContract = this.contract.unpack(CancelDeferredTransactionContract.class);
       dbManager.cancelDeferredTransaction(cancelDeferredTransactionContract.getTransactionId());
