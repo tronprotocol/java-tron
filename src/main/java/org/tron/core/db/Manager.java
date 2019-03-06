@@ -2057,7 +2057,7 @@ public class Manager {
   }
 
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
-  private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
+  public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
 
     // new trx id to represent the second trx record
     transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());

@@ -807,6 +807,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRawData().getDelaySeconds();
   }
 
+  public void setDeferredSeconds(long delaySeconds) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setDelaySeconds(delaySeconds)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
   public ByteString getToAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){
