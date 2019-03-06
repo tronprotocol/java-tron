@@ -13,8 +13,7 @@ jobs:
     - checkout
     - run:
         name: Daily Build Report
-        command: |
-        sh runcontinue.sh
+        command: sh runcontinue.sh
 
 
     - run:
