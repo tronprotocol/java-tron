@@ -22,4 +22,3 @@ else
     echo "To unzip file use the command below"
     echo "--- tar -xzvf java-tron.tar.gz"
 fi
-
