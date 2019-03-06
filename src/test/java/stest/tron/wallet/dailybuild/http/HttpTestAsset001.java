@@ -55,17 +55,17 @@ public class HttpTestAsset001 {
   public void test1CreateAssetIssue() {
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed
         .sendCoin(httpnode, fromAddress, participateAddress, 10000000L, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     //Create an asset issue
     response = HttpMethed.assetIssue(httpnode, assetAddress, name, name, totalSupply, 1, 1,
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
         2, 3, description, url, 1000L, 1000L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, assetAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -105,7 +105,7 @@ public class HttpTestAsset001 {
     response = HttpMethed.transferAsset(httpnode, assetAddress, participateAddress, assetIssueId,
         100L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, participateAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -121,7 +121,7 @@ public class HttpTestAsset001 {
     response = HttpMethed.participateAssetIssue(httpnode, assetAddress, participateAddress,
         assetIssueId, 1000L, participateKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, participateAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -136,7 +136,6 @@ public class HttpTestAsset001 {
     response = HttpMethed.updateAssetIssue(httpnode, assetAddress, updateDescription, updateUrl,
         290L, 390L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAssetIssueById(httpnode, assetIssueId);
     getAssetIssueByIdContent = HttpMethed.parseResponseContent(response);

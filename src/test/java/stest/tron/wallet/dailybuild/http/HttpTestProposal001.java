@@ -19,7 +19,7 @@ public class HttpTestProposal001 {
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private String httpnode = Configuration.getByPath("testng.conf")
-      .getStringList("httpnode.ip.list").get(1);
+      .getStringList("httpnode.ip.list").get(0);
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -37,6 +37,7 @@ public class HttpTestProposal001 {
    */
   @Test(enabled = true, description = "Create proposal by http")
   public void test1CreateProposal() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -76,7 +77,7 @@ public class HttpTestProposal001 {
     response = HttpMethed.approvalProposal(httpnode, witness1Address, proposalId,
         true, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.approvalProposal(httpnode, witness2Address, proposalId,
         true, witnessKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
