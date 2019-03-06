@@ -287,9 +287,16 @@ public class StressPrecondition {
     //PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
 
     logger.info("commonContractAddress1 is " + commonContractAddress1);
-    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
 
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
