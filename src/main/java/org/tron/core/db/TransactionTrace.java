@@ -8,6 +8,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
@@ -27,11 +28,8 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
-import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.actuator.ActuatorConstant;
+import org.tron.core.capsule.*;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -63,6 +61,10 @@ public class TransactionTrace {
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  @Getter
+  @Setter
+  private int deferredStage = 0;
 
   public enum TimeResultType {
     NORMAL,
@@ -295,5 +297,26 @@ public class TransactionTrace {
 
   public Runtime getRuntime() {
     return runtime;
+  }
+
+  public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule){
+    byte[] ownerAddress = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+    if (ArrayUtils.isEmpty(ownerAddress)){
+      logger.error("empty owner address");
+      return false;
+    }
+
+    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySeconds / ActuatorConstant.SECONDS_EACH_DAY + 1);
+
+    try {
+      dbManager.adjustBalance(ownerAddress, -fee);
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      resultCapsule.setStatus(fee, Transaction.Result.code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      e.printStackTrace();
+      resultCapsule.setStatus(fee, Transaction.Result.code.FAILED);
+    }
+
+    return true;
   }
 }

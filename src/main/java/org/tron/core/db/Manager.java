@@ -104,7 +104,6 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j(topic = "DB")
@@ -1250,6 +1249,8 @@ public class Manager {
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+    trace.setDeferredStage(trxCap.getDeferredStage());
+
     trace.exec();
     trxCap.setTrxTrace(trace);
 
