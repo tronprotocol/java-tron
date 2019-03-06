@@ -23,7 +23,7 @@ public class HttpTestAccount002 {
   private JSONObject responseContent;
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
-      .get(0);
+      .get(1);
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] freezeBalanceAddress = ecKey1.getAddress();
@@ -96,9 +96,9 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "UnFreezeBalance for energy by http")
   public void test4UnFreezebalanceForEnergy() {
-    HttpMethed.waitToProduceOneBlock(httpnode);
-    berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
+    berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     //UnFreeze balance for energy
     response = HttpMethed.unFreezeBalance(httpnode,freezeBalanceAddress,1,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
