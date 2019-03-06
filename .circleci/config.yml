@@ -13,9 +13,11 @@ jobs:
     - checkout
     - run:
         name: Daily Build Report
-        command: curl http://60.205.215.34/Daily_Build_Task_Report
+        command: |
+        curl http://60.205.215.34/Daily_Build_Task_Report
+        sh runcontinue.sh
 
 
     - run:
         name: Download Links
-        command: sh runcontinue.sh
+        command: sh DownloadLinks.sh
