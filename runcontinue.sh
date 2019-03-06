@@ -8,5 +8,5 @@ echo "PassFlag is: $PassFlag"
 if [$PassFlag == ""]; then
     exit 0
 else
-    exit 2
+    exit 1
 fi
