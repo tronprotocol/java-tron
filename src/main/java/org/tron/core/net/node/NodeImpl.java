@@ -569,8 +569,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     while (spread.size() > 0 && getActivePeer().size() > 0) {
       logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
 
-        if (advObjToSpread.size()  < 3 * spread.size()) {
-          ManagedChannel channelFull = null;
+        if (advObjToSpread.size()  < spread.size()) {
+          logger.info("Stress task end.");
+          System.exit(0);
+
+/*          ManagedChannel channelFull = null;
           WalletGrpc.WalletBlockingStub blockingStubFull = null;
           String fullnode = "47.94.239.172:50051";
           channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -594,7 +597,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             } catch (InterruptedException e) {
               e.printStackTrace();
             }
-          }
+          }*/
         }
 
       InvToSend sendPackage = new InvToSend();
