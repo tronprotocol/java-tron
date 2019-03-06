@@ -21,6 +21,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -47,6 +48,9 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
@@ -544,5 +548,39 @@ public class ManagerTest {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
+  }
+
+  @Test
+  public void testPushScheduledTransaction() {
+    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
+        BlockHeader.newBuilder().setRawData(raw.newBuilder().setTimestamp(System.currentTimeMillis()).setParentHash(ByteString.copyFrom(
+            ByteArray
+                .fromHexString("0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
+        )).build());
+
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    blockCapsule.getTimeStamp();
+
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    trx.setDeferredSeconds(100);
+    trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
+    dbManager.pushScheduledTransaction(blockCapsule, trx);
+    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore()
+        .getByTransactionId(trx.getTransactionId().getByteString());
+    Assert.assertNotNull(capsule);
+    dbManager.cancelDeferredTransaction(trx.getTransactionId().getByteString());
+    capsule = dbManager.getDeferredTransactionStore()
+        .getByTransactionId(trx.getTransactionId().getByteString());
+    Assert.assertNull(capsule);
+  }
+
+  @Test
+  public void testCancelDeferredTransaction() {
+
   }
 }

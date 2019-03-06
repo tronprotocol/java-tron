@@ -274,9 +274,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public Map<byte[], byte[]> getAll(long limit) {
     resetDbLock.readLock().lock();
+    long i = 0;
     try (DBIterator iterator = database.iterator()) {
       Map<byte[], byte[]> result = new HashMap<>();
-      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+      for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
         result.put(iterator.peekNext().getKey(), iterator.peekNext().getValue());
       }
       return result;
