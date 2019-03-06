@@ -127,6 +127,7 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "DContract";
     String code1 = "6080604052610172806100136000396000f300608060405260043610603e5763ffffffff7c0"
         + "100000000000000000000000000000000000000000000000000000000600035041663ab5ed150811460"
