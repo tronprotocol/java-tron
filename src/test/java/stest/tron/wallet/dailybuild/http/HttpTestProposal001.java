@@ -39,6 +39,14 @@ public class HttpTestProposal001 {
   public void test1CreateProposal() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
+    if (!HttpMethed.verificationResult(response)) {
+      HttpMethed.waitToProduceOneBlock(httpnode);
+      response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
+    }
+    if (!HttpMethed.verificationResult(response)) {
+      HttpMethed.waitToProduceOneBlock(httpnode);
+      response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
+    }
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
   }
