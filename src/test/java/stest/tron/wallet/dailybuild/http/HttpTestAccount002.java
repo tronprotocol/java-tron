@@ -47,12 +47,15 @@ public class HttpTestAccount002 {
     //Send trx to test account
     response = HttpMethed.sendCoin(httpnode,fromAddress,freezeBalanceAddress,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
+
 
     //Freeze balance
     response = HttpMethed.freezeBalance(httpnode,freezeBalanceAddress,frozenBalance,0,
         0,freezeBalanceKey);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(),200);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(berforeBalance - afterBalance == frozenBalance);
   }
@@ -62,12 +65,12 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "UnFreezeBalance for bandwidth by http")
   public void test2UnFreezebalanceForBandwidth() {
-    HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
     //UnFreeze balance for bandwidth
     response = HttpMethed.unFreezeBalance(httpnode,freezeBalanceAddress,0,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
   }
@@ -83,6 +86,7 @@ public class HttpTestAccount002 {
     response = HttpMethed.freezeBalance(httpnode,freezeBalanceAddress,frozenBalance,0,
         1,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(berforeBalance - afterBalance == frozenBalance);
   }
@@ -98,7 +102,7 @@ public class HttpTestAccount002 {
     //UnFreeze balance for energy
     response = HttpMethed.unFreezeBalance(httpnode,freezeBalanceAddress,1,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
   }
@@ -110,13 +114,14 @@ public class HttpTestAccount002 {
   public void test5FreezebalanceOfBandwidthForOthers() {
     response = HttpMethed.sendCoin(httpnode,fromAddress,receiverResourceAddress,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
     //Freeze balance with bandwidth for others
     response = HttpMethed.freezeBalance(httpnode,freezeBalanceAddress,frozenBalance,0,
         0,receiverResourceAddress,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(berforeBalance - afterBalance == frozenBalance);
   }
@@ -165,6 +170,7 @@ public class HttpTestAccount002 {
     response = HttpMethed.unFreezeBalance(httpnode,freezeBalanceAddress,0,
         receiverResourceAddress,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
   }
@@ -176,13 +182,14 @@ public class HttpTestAccount002 {
   public void test9FreezebalanceOfEnergyForOthers() {
     response = HttpMethed.sendCoin(httpnode,fromAddress,receiverResourceAddress,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
     //Freeze balance with energy for others
     response = HttpMethed.freezeBalance(httpnode,freezeBalanceAddress,frozenBalance,0,
         1,receiverResourceAddress,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(berforeBalance - afterBalance == frozenBalance);
   }
@@ -192,13 +199,13 @@ public class HttpTestAccount002 {
    */
   @Test(enabled = true, description = "UnFreezeBalance with energy for others by http")
   public void test9UnFreezebalanceOfEnergyForOthers() {
-    HttpMethed.waitToProduceOneBlock(httpnode);
     berforeBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
 
     //UnFreeze balance with energy for others
     response = HttpMethed.unFreezeBalance(httpnode,freezeBalanceAddress,1,
         receiverResourceAddress,freezeBalanceKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
     afterBalance = HttpMethed.getBalance(httpnode,freezeBalanceAddress);
     Assert.assertTrue(afterBalance - berforeBalance == frozenBalance);
   }

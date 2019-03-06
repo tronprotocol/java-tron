@@ -50,7 +50,7 @@ public class HttpTestSmartContract001 {
     PublicMethed.printAddress(assetOwnerKey);
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     //Create an asset issue
     response = HttpMethed.assetIssue(httpnode, assetOwnerAddress, name, name, totalSupply, 1, 1,
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,

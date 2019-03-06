@@ -39,14 +39,6 @@ public class HttpTestProposal001 {
   public void test1CreateProposal() {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
-    if (!HttpMethed.verificationResult(response)) {
-      HttpMethed.waitToProduceOneBlock(httpnode);
-      response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
-    }
-    if (!HttpMethed.verificationResult(response)) {
-      HttpMethed.waitToProduceOneBlock(httpnode);
-      response = HttpMethed.createProposal(httpnode, witness1Address, 21L, 1L, witnessKey001);
-    }
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
   }
@@ -75,7 +67,6 @@ public class HttpTestProposal001 {
     Assert.assertTrue(responseContent.getInteger("proposal_id") == proposalId);
     Assert.assertEquals(responseContent.getString("proposer_address"),
         ByteArray.toHexString(witness1Address));
-    HttpMethed.waitToProduceOneBlock(httpnode);
   }
 
   /**
@@ -86,7 +77,7 @@ public class HttpTestProposal001 {
     response = HttpMethed.approvalProposal(httpnode, witness1Address, proposalId,
         true, witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.approvalProposal(httpnode, witness2Address, proposalId,
         true, witnessKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));

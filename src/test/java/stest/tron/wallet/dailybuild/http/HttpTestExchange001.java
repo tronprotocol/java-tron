@@ -62,7 +62,6 @@ public class HttpTestExchange001 {
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Create an asset issue
@@ -75,7 +74,6 @@ public class HttpTestExchange001 {
         System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
         2, 3, description, url, 1000L, 1000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.getAccount(httpnode, exchangeOwnerAddress);
@@ -88,19 +86,18 @@ public class HttpTestExchange001 {
     assetIssueId2 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
 
-    HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed
         .transferAsset(httpnode, asset2Address, exchangeOwnerAddress, assetIssueId2,
             10000000000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Create exchange.
     response = HttpMethed.exchangeCreate(httpnode, exchangeOwnerAddress, assetIssueId1,
         1000000L, assetIssueId2, 1000000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
   }
 
@@ -109,7 +106,6 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "List exchanges by http")
   public void test2ListExchange() {
-    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.listExchanges(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
