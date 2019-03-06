@@ -1,6 +1,6 @@
-#PassFlag=`curl -s http://60.205.215.34/Daily_Build_Task_Report | grep "Failed: 0"`
+PassFlag=`curl -s http://60.205.215.34/Daily_Build_Task_Report | grep "Failed: 0"`
 
-if [`curl -s http://60.205.215.34/Daily_Build_Task_Report | grep "Failed: 0"` == ""]; then
+if [$PassFlag == ""]; then
     echo "Daily Build Stest Fail"
     echo "To view Daily Replay and Stress Test logs please visit website below on browsers"
     echo "--- http://60.205.215.34/latestReplayLog"
