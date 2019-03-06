@@ -21,7 +21,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -41,15 +40,8 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ParticipateAssetIssueActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
     long fee = calcFee();
     try {
       final ParticipateAssetIssueContract participateAssetIssueContract =
@@ -204,9 +196,6 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return calcDeferredFee();
-    }
     return 0;
   }
 }

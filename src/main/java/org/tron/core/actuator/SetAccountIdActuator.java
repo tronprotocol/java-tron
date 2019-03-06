@@ -4,7 +4,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -24,15 +23,8 @@ public class SetAccountIdActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  SetAccountIdActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
     final SetAccountIdContract setAccountIdContract;
     final long fee = calcFee();
     try {
@@ -106,9 +98,6 @@ public class SetAccountIdActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return calcDeferredFee();
-    }
     return 0;
   }
 }

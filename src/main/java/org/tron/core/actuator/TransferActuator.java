@@ -6,7 +6,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -15,8 +14,6 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.WhitelistException;
-import org.tron.core.services.WhitelistService;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -28,32 +25,11 @@ public class TransferActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  TransferActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
-
     long fee = calcFee();
     try {
       TransferContract transferContract = contract.unpack(TransferContract.class);
-      if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION){
-        byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
-        try {
-          dbManager.adjustBalance(ownerAddress, -fee);
-          dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
-        } catch (BalanceInsufficientException e) {
-          logger.debug(e.getMessage(), e);
-          ret.setStatus(fee, code.FAILED);
-          throw new ContractExeException(e.getMessage());
-        }
-        return true;
-      }
-
       long amount = transferContract.getAmount();
       byte[] toAddress = transferContract.getToAddress().toByteArray();
       byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
@@ -214,9 +190,6 @@ public class TransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return ChainConstant.TRANSFER_FEE + calcDeferredFee();
-    }
     return ChainConstant.TRANSFER_FEE;
   }
 

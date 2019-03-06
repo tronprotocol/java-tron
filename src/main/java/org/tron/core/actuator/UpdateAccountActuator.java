@@ -4,7 +4,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -12,7 +11,6 @@ import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountIndexStore;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.AccountUpdateContract;
@@ -25,17 +23,10 @@ public class UpdateAccountActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  UpdateAccountActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    final long fee = calcFee();
     final AccountUpdateContract accountUpdateContract;
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
-
+    final long fee = calcFee();
     try {
       accountUpdateContract = contract.unpack(AccountUpdateContract.class);
     } catch (InvalidProtocolBufferException e) {
@@ -112,9 +103,6 @@ public class UpdateAccountActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return calcDeferredFee();
-    }
     return 0;
   }
 }

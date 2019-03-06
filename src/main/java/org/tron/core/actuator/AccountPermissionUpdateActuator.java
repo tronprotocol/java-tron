@@ -8,7 +8,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -31,15 +30,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  AccountPermissionUpdateActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule result) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(result);
-    }
     long fee = calcFee();
     final AccountPermissionUpdateContract accountPermissionUpdateContract;
     try {
@@ -235,9 +227,6 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee() + calcDeferredFee();
-    }
     return dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
   }
 }

@@ -25,7 +25,7 @@ public class ActuatorFactory {
    * create actuator.
    */
   public static List<Actuator> createActuator(TransactionCapsule transactionCapsule,
-      Manager manager) {
+                                              Manager manager) {
     List<Actuator> actuatorList = Lists.newArrayList();
     if (null == transactionCapsule || null == transactionCapsule.getInstance()) {
       logger.info("transactionCapsule or Transaction is null");
@@ -35,19 +35,18 @@ public class ActuatorFactory {
     Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     rawData.getContractList()
-        .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager,
-            new DeferredStage(transactionCapsule.getDeferredStage(), transactionCapsule.getDeferredSeconds()))));
+            .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     return actuatorList;
   }
 
-  private static Actuator getActuatorByContract(Contract contract, Manager manager, DeferredStage deferredStage) {
+  private static Actuator getActuatorByContract(Contract contract, Manager manager) {
     switch (contract.getType()) {
       case AccountUpdateContract:
-        return new UpdateAccountActuator(contract.getParameter(), manager, deferredStage);
+        return new UpdateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
-        return new TransferActuator(contract.getParameter(), manager, deferredStage);
+        return new TransferActuator(contract.getParameter(), manager);
       case TransferAssetContract:
-        return new TransferAssetActuator(contract.getParameter(), manager, deferredStage);
+        return new TransferAssetActuator(contract.getParameter(), manager);
       case VoteAssetContract:
         break;
       case VoteWitnessContract:
@@ -55,31 +54,31 @@ public class ActuatorFactory {
       case WitnessCreateContract:
         return new WitnessCreateActuator(contract.getParameter(), manager);
       case AccountCreateContract:
-        return new CreateAccountActuator(contract.getParameter(), manager, deferredStage);
+        return new CreateAccountActuator(contract.getParameter(), manager);
       case AssetIssueContract:
         return new AssetIssueActuator(contract.getParameter(), manager);
       case UnfreezeAssetContract:
-        return new UnfreezeAssetActuator(contract.getParameter(), manager, deferredStage);
+        return new UnfreezeAssetActuator(contract.getParameter(), manager);
       case WitnessUpdateContract:
         return new WitnessUpdateActuator(contract.getParameter(), manager);
       case ParticipateAssetIssueContract:
-        return new ParticipateAssetIssueActuator(contract.getParameter(), manager, deferredStage);
+        return new ParticipateAssetIssueActuator(contract.getParameter(), manager);
       case FreezeBalanceContract:
-        return new FreezeBalanceActuator(contract.getParameter(), manager, deferredStage);
+        return new FreezeBalanceActuator(contract.getParameter(), manager);
       case UnfreezeBalanceContract:
-        return new UnfreezeBalanceActuator(contract.getParameter(), manager, deferredStage);
+        return new UnfreezeBalanceActuator(contract.getParameter(), manager);
       case WithdrawBalanceContract:
-        return new WithdrawBalanceActuator(contract.getParameter(), manager, deferredStage);
+        return new WithdrawBalanceActuator(contract.getParameter(), manager);
       case UpdateAssetContract:
-        return new UpdateAssetActuator(contract.getParameter(), manager, deferredStage);
+        return new UpdateAssetActuator(contract.getParameter(), manager);
       case ProposalCreateContract:
-        return new ProposalCreateActuator(contract.getParameter(), manager, deferredStage);
+        return new ProposalCreateActuator(contract.getParameter(), manager);
       case ProposalApproveContract:
-        return new ProposalApproveActuator(contract.getParameter(), manager, deferredStage);
+        return new ProposalApproveActuator(contract.getParameter(), manager);
       case ProposalDeleteContract:
-        return new ProposalDeleteActuator(contract.getParameter(), manager, deferredStage);
+        return new ProposalDeleteActuator(contract.getParameter(), manager);
       case SetAccountIdContract:
-        return new SetAccountIdActuator(contract.getParameter(), manager, deferredStage);
+        return new SetAccountIdActuator(contract.getParameter(), manager);
 //      case BuyStorageContract:
 //        return new BuyStorageActuator(contract.getParameter(), manager);
 //      case BuyStorageBytesContract:
@@ -87,19 +86,19 @@ public class ActuatorFactory {
 //      case SellStorageContract:
 //        return new SellStorageActuator(contract.getParameter(), manager);
       case UpdateSettingContract:
-        return new UpdateSettingContractActuator(contract.getParameter(), manager, deferredStage);
+        return new UpdateSettingContractActuator(contract.getParameter(), manager);
       case UpdateEnergyLimitContract:
-        return new UpdateEnergyLimitContractActuator(contract.getParameter(), manager, deferredStage);
+        return new UpdateEnergyLimitContractActuator(contract.getParameter(), manager);
       case ExchangeCreateContract:
-        return new ExchangeCreateActuator(contract.getParameter(), manager, deferredStage);
+        return new ExchangeCreateActuator(contract.getParameter(), manager);
       case ExchangeInjectContract:
-        return new ExchangeInjectActuator(contract.getParameter(), manager, deferredStage);
+        return new ExchangeInjectActuator(contract.getParameter(), manager);
       case ExchangeWithdrawContract:
-        return new ExchangeWithdrawActuator(contract.getParameter(), manager, deferredStage);
+        return new ExchangeWithdrawActuator(contract.getParameter(), manager);
       case ExchangeTransactionContract:
-        return new ExchangeTransactionActuator(contract.getParameter(), manager, deferredStage);
+        return new ExchangeTransactionActuator(contract.getParameter(), manager);
       case AccountPermissionUpdateContract:
-        return new AccountPermissionUpdateActuator(contract.getParameter(), manager, deferredStage);
+        return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
       case CancelDeferredTransactionContract:
         return new CancelDeferredTransactionContractActuator(contract.getParameter(), manager);
       default:

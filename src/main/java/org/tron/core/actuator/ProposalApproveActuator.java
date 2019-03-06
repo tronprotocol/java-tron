@@ -12,7 +12,6 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -31,15 +30,8 @@ public class ProposalApproveActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  ProposalApproveActuator(final Any contract, final Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
     long fee = calcFee();
     try {
       final ProposalApproveContract proposalApproveContract =
@@ -173,9 +165,6 @@ public class ProposalApproveActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return calcDeferredFee();
-    }
     return 0;
   }
 

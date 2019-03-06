@@ -7,7 +7,6 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -26,15 +25,8 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
-  UpdateEnergyLimitContractActuator(Any contract, Manager dbManager, DeferredStage deferredStage) {
-    super(contract, dbManager, deferredStage);
-  }
-
   @Override
   public boolean execute(TransactionResultCapsule ret) throws ContractExeException {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return deductDeferredFee(ret);
-    }
     long fee = calcFee();
     try {
       UpdateEnergyLimitContract usContract = contract
@@ -127,9 +119,6 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    if (deferredStage.stage == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return calcDeferredFee();
-    }
     return 0;
   }
 
