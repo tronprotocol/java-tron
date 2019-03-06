@@ -2057,14 +2057,15 @@ public class Manager {
 
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
   public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
-
+    Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
     // new trx id to represent the second trx record
     transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
-    deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+    // save original transactionId in order to query deferred transaction
+    deferredTransaction.setTransactionId(originalTransactionId.getByteString());
     deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
