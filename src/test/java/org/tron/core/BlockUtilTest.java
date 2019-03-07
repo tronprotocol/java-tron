@@ -73,6 +73,5 @@ public class BlockUtilTest {
     Assert.assertFalse(BlockUtil.isParentOf(blockCapsule1, blockCapsule2));
     Assert.assertEquals(true, BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
     Assert.assertTrue(BlockUtil.isParentOf(blockCapsule2, blockCapsule3));
-
   }
 }
