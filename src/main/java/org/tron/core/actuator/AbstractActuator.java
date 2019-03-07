@@ -1,10 +1,11 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
-@Slf4j(topic = "actuator")
+import org.tron.core.exception.ContractExeException;
+
 public abstract class AbstractActuator implements Actuator {
 
   protected Any contract;

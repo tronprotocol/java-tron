@@ -409,7 +409,7 @@ public class Manager {
   private Runnable getDeferredTransactionLoop =
       () -> {
           while (isRungetDeferredTransactionThread) {
-            List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending();
+            addDeferredTransactionToPending();
             try {
               TimeUnit.SECONDS.sleep(3);
             } catch (InterruptedException e) {
@@ -1275,7 +1275,6 @@ public class Manager {
     trace.setDeferredStage(trxCap.getDeferredStage());
 
     trace.exec();
-    trxCap.setTrxTrace(trace);
 
     // process deferred transaction for the first time
     if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
@@ -2070,14 +2069,6 @@ public class Manager {
     return deferredTransactionList;
   }
 
-  private void removeScheduledTransaction(List<DeferredTransactionCapsule> deferredTransactionList){
-    // remove deferred transactions from store after they are executed
-    deferredTransactionList.forEach(trx -> {
-      getDeferredTransactionStore().removeDeferredTransaction(trx);
-      getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
-    });
-  }
-
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
   public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
     Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
@@ -2126,7 +2117,7 @@ public class Manager {
 
     DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
-      logger.error("cancelDeferredTransaction failed, transaction id not exists");
+      logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
     
@@ -2134,7 +2125,7 @@ public class Manager {
     long now = System.currentTimeMillis();
 
     if (now >= delayUntil){
-      logger.error("failed to cancel deferred transaction {}, it should be canceled before it expires", transactionId.toString());
+      logger.info("failed to cancel deferred transaction {}, it should be canceled before it expires", transactionId.toString());
       return false;
     }
 
