@@ -38,7 +38,8 @@ public class CreateStressTransactionXml {
       "deployContract",
       "updateSetting",
       "exchangeCreate",
-      "proposalCreate"
+      "proposalCreate",
+      "updateEnergyLimit"
   };
 
   @BeforeClass

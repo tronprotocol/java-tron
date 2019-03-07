@@ -1,5 +1,6 @@
 package org.tron.stresstest.dispatch.creator.contract;
 
+import java.util.Random;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -16,10 +17,10 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 public class UpdateEnergyLimitCreator extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
-  private String ownerAddress = commonOwnerAddress;
-  private String contractAddress;
-  private long originEnergyLimit = 11111111111111L;
-  private String privateKey = commonOwnerPrivateKey;
+  private String ownerAddress = triggerOwnerAddress;
+  private String commonContractAddress = commonContractAddress1;
+  private long originEnergyLimit = new Random().nextInt(1000000000) + 1;
+  private String privateKey = triggerOwnerKey;
 
   @Override
   protected Protocol.Transaction create() {
@@ -28,7 +29,7 @@ public class UpdateEnergyLimitCreator extends AbstractTransactionCreator impleme
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
     UpdateEnergyLimitContract contract = createUpdateEnergyLimitContract(ownerAddressBytes,
-        Wallet.decodeFromBase58Check(contractAddress), originEnergyLimit);
+        Wallet.decodeFromBase58Check(commonContractAddress), originEnergyLimit);
 
     Protocol.Transaction transaction = createTransaction(contract, ContractType.UpdateEnergyLimitContract);
 
