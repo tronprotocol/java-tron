@@ -84,9 +84,10 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Interface type function")
   public void test1Grammar007() {
-    PublicMethed
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress2, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "dougContract";
     String code = Configuration.getByPath("testng.conf")
