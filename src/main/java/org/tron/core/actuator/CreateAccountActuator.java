@@ -24,7 +24,7 @@ public class CreateAccountActuator extends AbstractActuator {
 
   @Override
   public boolean execute(TransactionResultCapsule ret)
-          throws ContractExeException {
+      throws ContractExeException {
     long fee = calcFee();
     try {
       AccountCreateContract accountCreateContract = contract.unpack(AccountCreateContract.class);

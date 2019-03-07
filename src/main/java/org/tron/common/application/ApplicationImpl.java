@@ -68,6 +68,7 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
+    //p2pNode.shutDown();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
@@ -125,6 +126,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
+    logger.info("******** begin to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
   }
 
