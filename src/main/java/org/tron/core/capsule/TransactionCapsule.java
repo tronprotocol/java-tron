@@ -649,6 +649,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return getRawHash();
   }
 
+
   @Override
   public byte[] getData() {
     return this.transaction.toByteArray();

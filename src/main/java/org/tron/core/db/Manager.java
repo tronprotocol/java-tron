@@ -206,11 +206,15 @@ public class Manager {
 
   private Thread repushThread;
 
+  private Thread getDeferredTransactionThread;
+
   private Thread triggerCapsuleProcessThread;
 
   private boolean isRunRepushThread = true;
 
   private boolean isRunTriggerCapsuleProcessThread = true;
+
+  private boolean isRungetDeferredTransactionThread = true;
 
   private long latestSolidifiedBlockNumber;
 
@@ -402,6 +406,19 @@ public class Manager {
         }
       };
 
+  private Runnable getDeferredTransactionLoop =
+      () -> {
+          while (isRungetDeferredTransactionThread) {
+            List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending();
+            try {
+              TimeUnit.SECONDS.sleep(3);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+
+          }
+      };
+
   private Runnable triggerCapsuleProcessLoop =
       () -> {
         while (isRunTriggerCapsuleProcessThread) {
@@ -427,6 +444,10 @@ public class Manager {
 
   public void stopRepushTriggerThread() {
     isRunTriggerCapsuleProcessThread = false;
+  }
+
+  public void stopGetDeferredTransactionThread() {
+    isRungetDeferredTransactionThread = false;
   }
 
   @PostConstruct
@@ -470,7 +491,8 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     repushThread = new Thread(repushLoop);
     repushThread.start();
-
+    getDeferredTransactionThread = new Thread(getDeferredTransactionLoop);
+    getDeferredTransactionThread.start();
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
@@ -1298,6 +1320,10 @@ public class Manager {
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
+
+    if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+        cancelDeferredTransaction(trxCap.getTransactionId().getByteString());
+    }
     return true;
   }
 
@@ -1362,8 +1388,6 @@ public class Manager {
     long postponedDeferredTrxCount = 0;
     long processedDeferredTrxCount = 0;
     long totalDeferredTransactionProcessTime = 0;
-
-    List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1470,9 +1494,6 @@ public class Manager {
     } // end of while
 
     session.reset();
-
-    removeScheduledTransaction(deferredTransactionList);
-
     if (processedDeferredTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
@@ -2034,10 +2055,10 @@ public class Manager {
     }
   }
 
-  private List<DeferredTransactionCapsule> addDeferredTransactionToPending(final BlockCapsule blockCapsule){
+  private List<DeferredTransactionCapsule> addDeferredTransactionToPending(){
     // add deferred transactions to header of pendingTransactions
     List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
-            .getScheduledTransactions(blockCapsule.getTimeStamp());
+            .getScheduledTransactions(System.currentTimeMillis());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
       trxCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
