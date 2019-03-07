@@ -13,9 +13,9 @@ import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.InventoryMsgHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHadler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
-import org.tron.core.net.service.AdvService;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
+import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -104,6 +104,7 @@ public class TronNetService {
   private void processException (PeerConnection peer, TronMessage msg, Exception ex) {
 
     ReasonCode code = null;
+    boolean exceptionPrintFlag = false;
     if (ex instanceof P2pException) {
       TypeEnum type = ((P2pException) ex).getType();
       switch (type) {
@@ -112,6 +113,7 @@ public class TronNetService {
           break;
         case BAD_BLOCK:
           code = ReasonCode.BAD_BLOCK;
+          exceptionPrintFlag = true;
           break;
         case NO_SUCH_MESSAGE:
         case MESSAGE_WITH_WRONG_LENGTH:
@@ -128,11 +130,17 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Process {} from peer {} failed, reason: ", peer.getInetAddress(), msg.getType(), type.getDesc(), ex);
-    }else {
-      logger.error("Process {} from peer {} failed.", peer.getInetAddress(), msg.getType(), ex);
+    } else {
+      exceptionPrintFlag = true;
       code = ReasonCode.UNKNOWN;
     }
+
+    if (exceptionPrintFlag) {
+      logger.error("Message {} /n process failed from peer {}.", msg, peer.getInetAddress(), ex);
+    } else {
+      logger.error("Message {} /n process failed from peer {}, reason: {}.", msg, peer.getInetAddress(), ex.getMessage());
+    }
+
     peer.disconnect(code);
   }
 }
