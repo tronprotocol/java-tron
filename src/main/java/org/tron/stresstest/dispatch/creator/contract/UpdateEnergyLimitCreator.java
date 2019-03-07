@@ -19,11 +19,11 @@ public class UpdateEnergyLimitCreator extends AbstractTransactionCreator impleme
 
   private String ownerAddress = triggerOwnerAddress;
   private String commonContractAddress = commonContractAddress1;
-  private long originEnergyLimit = new Random().nextInt(1000000000) + 1;
   private String privateKey = triggerOwnerKey;
 
   @Override
   protected Protocol.Transaction create() {
+    long originEnergyLimit = new Random().nextInt(1000000000) + 1;
     byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
