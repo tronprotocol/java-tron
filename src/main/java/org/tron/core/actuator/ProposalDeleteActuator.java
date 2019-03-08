@@ -38,9 +38,6 @@ public class ProposalDeleteActuator extends AbstractActuator {
       ProposalCapsule proposalCapsule = (Objects.isNull(deposit)) ? dbManager.getProposalStore().
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId())) :
           deposit.getProposalCapsule(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
-      if (proposalCapsule == null) {
-        throw new ItemNotFoundException();
-      }
       proposalCapsule.setState(State.CANCELED);
       if (Objects.isNull(deposit)) {
         dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
@@ -111,9 +108,6 @@ public class ProposalDeleteActuator extends AbstractActuator {
       proposalCapsule = Objects.isNull(getDeposit()) ? dbManager.getProposalStore().
           get(ByteArray.fromLong(contract.getProposalId())) :
           deposit.getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
-      if (proposalCapsule == null) {
-        throw new ItemNotFoundException();
-      }
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);

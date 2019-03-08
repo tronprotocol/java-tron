@@ -16,7 +16,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -39,7 +38,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.db.Manager;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.net.node.override.HandshakeHandlerTest;
 import org.tron.core.net.node.override.PeerClientTest;
 import org.tron.core.net.node.override.TronChannelInitializerTest;
@@ -346,7 +344,7 @@ public class GetBlockChainSummaryTest {
     handshakeHandlerTest.close();
     appT.shutdownServices();
     appT.shutdown();
-    RevokingStoreRocks.releaseInstance();
+
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

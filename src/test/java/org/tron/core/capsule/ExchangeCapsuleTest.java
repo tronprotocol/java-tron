@@ -96,9 +96,6 @@ public class ExchangeCapsuleTest {
     ExchangeCapsule exchangeCapsule;
     try {
       exchangeCapsule = dbManager.getExchangeStore().get(key);
-      if (exchangeCapsule == null) {
-        throw new ItemNotFoundException();
-      }
       exchangeCapsule.setBalance(sellBalance, buyBalance);
 
       long sellQuant = 1_000_000L;

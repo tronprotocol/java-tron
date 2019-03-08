@@ -41,9 +41,6 @@ public class ProposalApproveActuator extends AbstractActuator {
               .get(ByteArray.fromLong(proposalApproveContract.getProposalId())) :
               getDeposit().getProposalCapsule(ByteArray.fromLong(proposalApproveContract
                   .getProposalId()));
-      if (proposalCapsule == null) {
-        throw new ItemNotFoundException();
-      }
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
         proposalCapsule.addApproval(committeeAddress);
@@ -130,9 +127,6 @@ public class ProposalApproveActuator extends AbstractActuator {
       proposalCapsule = Objects.isNull(getDeposit()) ? dbManager.getProposalStore().
           get(ByteArray.fromLong(contract.getProposalId())) :
           getDeposit().getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
-      if (proposalCapsule == null) {
-        throw new ItemNotFoundException();
-      }
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);

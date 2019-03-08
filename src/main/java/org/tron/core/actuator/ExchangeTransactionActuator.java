@@ -37,9 +37,6 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().
           get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
-      if (exchangeCapsule == null) {
-        throw new ItemNotFoundException();
-      }
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -131,9 +128,6 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     try {
       exchangeCapsule = dbManager.getExchangeStoreFinal().
             get(ByteArray.fromLong(contract.getExchangeId()));
-      if (exchangeCapsule == null) {
-        throw new ItemNotFoundException();
-      }
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");
     }

@@ -13,7 +13,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db.TransactionCache;
-import org.tron.core.db.RevokingStoreRocks;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;

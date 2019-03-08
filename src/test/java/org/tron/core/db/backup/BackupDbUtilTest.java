@@ -10,7 +10,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.rocksdb.RocksDB;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.config.DefaultConfig;

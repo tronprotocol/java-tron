@@ -49,10 +49,6 @@ public enum MessageTypes {
 
   DISCOVER_PEERS(0x33),
 
-  GET_NODE_DATA(0x34),
-
-  NODE_DATA(0x35),
-
   LAST(0xFF);
 
   private final int type;

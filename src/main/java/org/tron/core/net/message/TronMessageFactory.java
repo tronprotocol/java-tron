@@ -52,10 +52,6 @@ public class TronMessageFactory extends MessageFactory {
         return new FetchBlockHeadersMessage(packed);
       case TRX_INVENTORY:
         return new TransactionInventoryMessage(packed);
-      case GET_NODE_DATA:
-        return new GetNodeDataMessage(packed);
-      case NODE_DATA:
-        return new NodeDataMessage(packed);
       default:
         throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
             receivedTypes.toString() + ", len=" + packed.length);

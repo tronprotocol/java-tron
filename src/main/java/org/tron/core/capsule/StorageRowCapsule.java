@@ -20,13 +20,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 
 
 @Slf4j(topic = "capsule")
 public class StorageRowCapsule implements ProtoCapsule<byte[]> {
-
   @Getter
   private byte[] rowValue;
   @Setter
@@ -72,11 +70,6 @@ public class StorageRowCapsule implements ProtoCapsule<byte[]> {
   @Override
   public byte[] getData() {
     return this.rowValue;
-  }
-
-  public byte[] getAllData() {
-    return (ByteArray.toHexString(this.rowKey) + "|" + ByteArray.toHexString(this.rowValue))
-        .getBytes();
   }
 
   @Override

@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -133,12 +132,6 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
         .addAllLog(logs)
         .build();
   }
-
-  public Sha256Hash getReceiptMPTHash() {
-    byte[] transReceiptBytes = this.transactionInfo.toByteArray();
-    return Sha256Hash.of(transReceiptBytes);
-  }
-
 
   @Override
   public byte[] getData() {

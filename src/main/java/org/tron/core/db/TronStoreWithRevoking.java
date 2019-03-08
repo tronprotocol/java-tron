@@ -23,7 +23,6 @@ import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
-import org.tron.core.db2.core.RevokingRocksDBWithCachingOldValue;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
