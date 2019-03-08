@@ -9,9 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +27,7 @@ public class PropUtil {
       String value = new String(prop.getProperty(key, "").getBytes("ISO-8859-1"), "UTF-8");
       return value;
     } catch (Exception e) {
-      logger.warn("{}", e);
+      logger.error("{}", e);
       return "";
     } finally {
       if (prop != null) {
@@ -52,12 +49,12 @@ public class PropUtil {
           is = null;
         }
       } catch (Exception e) {
-        logger.warn("{}", e);
+        logger.error("{}", e);
       }
     }
   }
 
-  public static void writeProperty(String file, String key, String value) {
+  public static boolean writeProperty(String file, String key, String value) {
     FileInputStream fis = null;
     Properties properties = new Properties();
     try {
@@ -71,7 +68,9 @@ public class PropUtil {
       out.close();
     } catch (Exception e) {
       logger.warn("{}", e);
+      return false;
     }
+    return true;
   }
 
 }

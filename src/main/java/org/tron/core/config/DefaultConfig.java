@@ -2,6 +2,7 @@ package org.tron.core.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
+import org.rocksdb.RocksDB;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,10 @@ import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidit
 @Configuration
 @Import(CommonConfig.class)
 public class DefaultConfig {
+
+  static {
+    RocksDB.loadLibrary();
+  }
 
   @Autowired
   ApplicationContext appCtx;
@@ -53,8 +58,6 @@ public class DefaultConfig {
         revokingDatabase = RevokingStore.getInstance();
       } else if (dbVersion == 2) {
         revokingDatabase = new SnapshotManager();
-      } else if (dbVersion == 3) {
-        revokingDatabase = RevokingStoreRocks.getInstance();
       } else {
         throw new RuntimeException("db version is error.");
       }

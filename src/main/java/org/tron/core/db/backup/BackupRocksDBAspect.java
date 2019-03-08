@@ -11,7 +11,6 @@ import org.tron.core.capsule.BlockCapsule;
 @Slf4j
 @Aspect
 public class BackupRocksDBAspect {
-
   @Autowired
   private BackupDbUtil util;
 

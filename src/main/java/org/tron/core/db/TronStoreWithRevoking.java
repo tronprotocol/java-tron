@@ -18,6 +18,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
@@ -43,12 +45,15 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   protected TronStoreWithRevoking(String dbName) {
     this.dbName = dbName;
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    String dbEngine = Args.getInstance().getStorage().getDbEngine();
     if (dbVersion == 1) {
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
     } else if (dbVersion == 2) {
-      this.revokingDB = new RevokingDBWithCachingNewValue(dbName);
-    } else if (dbVersion == 3) {
-      this.revokingDB = new RevokingRocksDBWithCachingOldValue(dbName);
+      if (dbEngine.toUpperCase().equals("LEVELDB")) {
+        this.revokingDB = new RevokingDBWithCachingNewValue(dbName, LevelDB.class);
+      } else if (dbEngine.toUpperCase().equals("ROCKSDB")) {
+        this.revokingDB = new RevokingDBWithCachingNewValue(dbName, RocksDB.class);
+      }
     } else {
       throw new RuntimeException("db version is error.");
     }

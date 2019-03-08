@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
-import org.rocksdb.CompressionType;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
@@ -28,14 +27,15 @@ import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
 import org.tron.common.storage.DBSettings;
-import org.tron.common.storage.DbSourceInterRocks;
+import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.config.args.Args;
+import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 
 @Slf4j
 @NoArgsConstructor
-public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
+public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {
 
   private String dataBaseName;
@@ -44,16 +44,11 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   private String parentName;
   ReadOptions readOpts;
 
-  DBSettings settings = DBSettings.DEFAULT;
-
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
   public RocksDbDataSourceImpl(String parentName, String name) {
     this.dataBaseName = name;
-    this.parentName = Paths.get(
-        parentName,
-        Args.getInstance().getStorage().getDbDirectory()
-    ).toString();
+    this.parentName = parentName;
   }
 
   public Path getDbPath() {
@@ -133,12 +128,42 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   public void setDBName(String name) {
   }
 
+  public boolean checkOrInitEngine() {
+    String dir = getDbPath().toString();
+    String enginePath = dir + File.separator + "engine.properties";
+
+    if (FileUtil.createDirIfNotExists(dir)) {
+      if (!FileUtil.createFileIfNotExists(enginePath)) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+
+    // for the first init engine
+    String engine = PropUtil.readProperty(enginePath, "ENGINE");
+    if (engine.equals("")) {
+      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
+        return false;
+      }
+    }
+    engine = PropUtil.readProperty(enginePath, "ENGINE");
+    if (engine.equals("ROCKSDB")) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public void initDB() {
-    initDB(DBSettings.DEFAULT);
+    if (!checkOrInitEngine()) {
+      logger.error("database engine do not match");
+      throw new RuntimeException("Failed to initialize database");
+    }
+    initDB(DBSettings.getSettings());
   }
 
   public void initDB(DBSettings settings) {
-    this.settings = settings;
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {
@@ -153,19 +178,29 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
         // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
 
         // general options
-        options.setStatistics(new Statistics());
-        options.setStatsDumpPeriodSec(60);
+        if (settings.isEnableStatistics()) {
+          options.setStatistics(new Statistics());
+          options.setStatsDumpPeriodSec(60);
+        }
         options.setCreateIfMissing(true);
-        options.setCompressionType(CompressionType.LZ4_COMPRESSION);
-        options.setBottommostCompressionType(CompressionType.ZSTD_COMPRESSION);
+        options.setIncreaseParallelism(1);
         options.setLevelCompactionDynamicLevelBytes(true);
         options.setMaxOpenFiles(settings.getMaxOpenFiles());
-        options.setIncreaseParallelism(settings.getMaxThreads());
-        options.setMaxBackgroundCompactions(8);
+
+        // general options supported user config
+        options.setNumLevels(settings.getLevelNumber());
+        options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
+        options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
+        options.setMaxBackgroundCompactions(settings.getCompactThreads());
+        options.setCompressionPerLevel(settings.getCompressionTypeList());
+        options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
+        options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
+        options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
+
         // table options
         final BlockBasedTableConfig tableCfg;
         options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
-        tableCfg.setBlockSize(16 * 1024);
+        tableCfg.setBlockSize(settings.getBlockSize());
         tableCfg.setBlockCacheSize(32 * 1024 * 1024);
         tableCfg.setCacheIndexAndFilterBlocks(true);
         tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
@@ -220,13 +255,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void putData(byte[] key, byte[] value, WriteOptions writeOpt) {
+  public void putData(byte[] key, byte[] value, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      database.put(writeOpt, key, value);
+      database.put(optionsWrapper.rocks, key, value);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -266,13 +301,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void deleteData(byte[] key, WriteOptions writeOpt) {
+  public void deleteData(byte[] key, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      database.delete(writeOpt, key);
+      database.delete(optionsWrapper.rocks, key);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -343,13 +378,13 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
   }
 
   @Override
-  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptions writeOptions) {
+  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper optionsWrapper) {
     if (quitIfNotAlive()) {
       return;
     }
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, writeOptions);
+      updateByBatchInner(rows, optionsWrapper.rocks);
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);
@@ -446,27 +481,11 @@ public class RocksDbDataSourceImpl implements DbSourceInterRocks<byte[]>,
     }
   }
 
-  // rocksdb use
-  public void backup(int i) throws RocksDBException {
-    if (i == 1) {
-      Checkpoint.create(database)
-          .createCheckpoint(Args.getInstance().getDbBackupConfig().getBak1path()
-              + this.getDBName());
-    } else {
-      Checkpoint.create(database)
-          .createCheckpoint(Args.getInstance().getDbBackupConfig().getBak2path()
-              + this.getDBName());
-    }
+  public void backup(String dir) throws RocksDBException {
+    Checkpoint.create(database).createCheckpoint(dir + this.getDBName());
   }
 
-  // rocksdb use
-  public boolean deleteDbBakPath(int i) {
-    if (i == 1) {
-      return FileUtil.deleteDir(new File(Args.getInstance().getDbBackupConfig().getBak1path()
-          + this.getDBName()));
-    } else {
-      return FileUtil.deleteDir((new File(Args.getInstance().getDbBackupConfig().getBak2path()
-          + this.getDBName())));
-    }
+  public boolean deleteDbBakPath(String dir) {
+    return FileUtil.deleteDir(new File(dir + this.getDBName()));
   }
 }
