@@ -2108,7 +2108,7 @@ public class Manager {
     }
 
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
 
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 
