@@ -411,10 +411,6 @@ public class Args {
 
   @Getter
   @Setter
-  @Parameter(names = {"-f", "--fast"})
-  private volatile boolean isFastSync;
-  @Getter
-  @Setter
   private int minEffectiveConnection;
 
   @Getter
@@ -451,7 +447,6 @@ public class Args {
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
     INSTANCE.storageIndexSwitch = "";
-    INSTANCE.isFastSync = false;
 
     // FIXME: INSTANCE.storage maybe null ?
     if (INSTANCE.storage != null) {

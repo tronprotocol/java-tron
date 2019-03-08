@@ -1527,20 +1527,18 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
-    if (!Args.getInstance().isFastSync()) {
-      try {
-        fastSyncCallBack.preExecute(block);
-        for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-          transactionCapsule.setBlockNum(block.getNum());
-          if (block.generatedByMyself) {
-            transactionCapsule.setVerified(true);
-          }
-          processTransaction(transactionCapsule, block);
+    try {
+      fastSyncCallBack.preExecute(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        transactionCapsule.setBlockNum(block.getNum());
+        if (block.generatedByMyself) {
+          transactionCapsule.setVerified(true);
         }
-        fastSyncCallBack.executePushFinish();
-      } finally {
-        fastSyncCallBack.exceptionFinish();
+        processTransaction(transactionCapsule, block);
       }
+      fastSyncCallBack.executePushFinish();
+    } finally {
+      fastSyncCallBack.exceptionFinish();
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
