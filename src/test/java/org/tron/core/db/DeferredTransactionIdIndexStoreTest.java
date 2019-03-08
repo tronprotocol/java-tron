@@ -73,27 +73,7 @@ public class DeferredTransactionIdIndexStoreTest {
     Assert.assertNull("remove deferred transacion id index",
         deferredTransactionIdIndexStore.getDeferredTransactionKeyById(deferredTransactionCapsule.getTransactionId()));
   }
-
-  @Test
-  public void GetDeferredTransactionIdIndexTest() {
-    final DeferredTransactionIdIndexStore deferredTransactionIdIndexStore = dbManager.getDeferredTransactionIdIndexStore();
-
-    // save in database with block number
-    TransferContract tc =
-        TransferContract.newBuilder()
-            .setAmount(10)
-            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
-            .setToAddress(ByteString.copyFromUtf8("bbb"))
-            .build();
-    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-    DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
-        buildDeferredTransaction(trx.getInstance()));
-    deferredTransactionIdIndexStore.put(deferredTransactionCapsule);
-
-    Assert.assertNotNull("Get deferred transacion id index",
-        deferredTransactionIdIndexStore.getDeferredTransactionKeyById(deferredTransactionCapsule.getTransactionId()));
-  }
-
+  
   private static DeferredTransaction buildDeferredTransaction(Transaction transaction) {
     Builder rawData = transaction.getRawData().toBuilder().setDelaySeconds(86400);
     transaction = transaction.toBuilder().setRawData(rawData).build();

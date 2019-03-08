@@ -385,6 +385,8 @@ public class WalletTest {
 
   @Test
   public void getDeferredTransactionById() {
+    deferredTransaction = getBuildDeferredTransaction(transaction6);
+    addDeferredTransactionToStore(deferredTransaction);
     DeferredTransaction getDeferredTransactionById = wallet.getDeferredTransactionById(
         ByteString.copyFrom(new DeferredTransactionCapsule(deferredTransaction).getTransactionId().toByteArray()));
     Assert.assertEquals("getDeferredTransactionById", deferredTransaction, getDeferredTransactionById);
@@ -392,6 +394,8 @@ public class WalletTest {
 
   @Test
   public void cancelDeferredTransaction() {
+    deferredTransaction = getBuildDeferredTransaction(transaction6);
+    addDeferredTransactionToStore(deferredTransaction);
     DeferredTransaction getdeferredTransactionById = wallet.getDeferredTransactionById(
         ByteString.copyFrom(new DeferredTransactionCapsule(deferredTransaction).getTransactionId().toByteArray()));
     Assert.assertNotNull("cancelDeferredTransaction",getdeferredTransactionById);
