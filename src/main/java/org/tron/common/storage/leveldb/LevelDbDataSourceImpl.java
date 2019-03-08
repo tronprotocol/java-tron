@@ -303,22 +303,6 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
   }
 
-  public Map<byte[], byte[]> getAll(long limit) {
-    resetDbLock.readLock().lock();
-    long i = 0;
-    try (DBIterator iterator = database.iterator()) {
-      Map<byte[], byte[]> result = new HashMap<>();
-      for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
-        result.put(iterator.peekNext().getKey(), iterator.peekNext().getValue());
-      }
-      return result;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
   public Set<byte[]> getlatestValues(long limit) {
     if (limit <= 0) {
       return Sets.newHashSet();

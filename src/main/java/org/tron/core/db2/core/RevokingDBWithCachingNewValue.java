@@ -194,25 +194,4 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
     return result;
   }
-
-  // for unit test
-  @Override
-  public Set<byte[]> getAllValues(long limit){
-    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
-    if (head.getPrevious() != null) {
-      ((SnapshotImpl) head).collect(collection);
-    }
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
-
-    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll(limit).entrySet().stream()
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
-    levelDBMap.putAll(collection);
-
-    return levelDBMap.entrySet().stream()
-        .limit(limit)
-        .map(Map.Entry::getValue)
-        .map(WrappedByteArray::getBytes)
-        .collect(Collectors.toSet());
-  }
 }
