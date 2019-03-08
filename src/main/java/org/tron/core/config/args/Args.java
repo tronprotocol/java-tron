@@ -625,6 +625,11 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
+    if (INSTANCE.storage.getDbEngine().toUpperCase().equals("ROCKSDB")
+        && INSTANCE.storage.getDbVersion() == 1) {
+      throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
+    }
+
     INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
         .filter(StringUtils::isNotEmpty)
         .map(Boolean::valueOf)
@@ -848,8 +853,10 @@ public class Args {
         config.getString("trx.reference.block") : "head";
 
     INSTANCE.trxExpirationTimeInMilliseconds =
-        config.hasPath("trx.expiration.timeInMilliseconds") && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
-            config.getLong("trx.expiration.timeInMilliseconds") : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+        config.hasPath("trx.expiration.timeInMilliseconds")
+            && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
+            config.getLong("trx.expiration.timeInMilliseconds")
+            : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
 
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
@@ -872,8 +879,10 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
-    initRocksDbBackupProperty(config);
-    initRocksDbSettings(config);
+    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+      initRocksDbBackupProperty(config);
+      initRocksDbSettings(config);
+    }
 
     logConfig();
   }
@@ -1156,43 +1165,37 @@ public class Args {
 
   private static void initRocksDbSettings(Config config) {
     String prefix = "storage.dbSettings.";
+    int levelNumber = config.hasPath(prefix + "levelNumber")
+        ? config.getInt(prefix + "levelNumber") : 7;
+    int compactThreads = config.hasPath(prefix + "compactThreads")
+        ? config.getInt(prefix + "compactThreads")
+        : max(Runtime.getRuntime().availableProcessors(), 1);
+    int blocksize = config.hasPath(prefix + "blocksize")
+        ? config.getInt(prefix + "blocksize") : 16;
+    long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
+        ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
+    double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
+        ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
+    String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
+        ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
+    int level0FileNumCompactionTrigger =
+        config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
+            .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
+    long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
+        .getLong(prefix + "targetFileSizeBase") : 64;
+    int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
+        .getInt(prefix + "targetFileSizeMultiplier") : 1;
 
-    if (Args.getInstance().getStorage().getDbEngine().equals("ROCKSDB")) {
-      int levelNumber = config.hasPath(prefix + "levelNumber")
-          ? config.getInt(prefix + "levelNumber") : 7;
-      int compactThreads = config.hasPath(prefix + "compactThreads")
-          ? config.getInt(prefix + "compactThreads")
-          : max(Runtime.getRuntime().availableProcessors(), 1);
-      int blocksize = config.hasPath(prefix + "blocksize")
-          ? config.getInt(prefix + "blocksize") : 16;
-      long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
-          ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
-      double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
-          ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
-      String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
-          ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
-      int level0FileNumCompactionTrigger =
-          config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
-              .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
-      long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
-          .getLong(prefix + "targetFileSizeBase") : 64;
-      int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
-          .getInt(prefix + "targetFileSizeMultiplier") : 1;
-
-      INSTANCE.rocksDBCustomSettings = DBSettings
-          .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
-              maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
-              targetFileSizeBase, targetFileSizeMultiplier);
-      DBSettings.loggingSettings();
-    }
+    INSTANCE.rocksDBCustomSettings = DBSettings
+        .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
+            maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
+            targetFileSizeBase, targetFileSizeMultiplier);
+    DBSettings.loggingSettings();
   }
 
   private static void initRocksDbBackupProperty(Config config) {
-    boolean enable = false;
-    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
-      enable =
-          config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
-    }
+    boolean enable =
+        config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
     String propPath = config.hasPath("storage.backup.propPath")
         ? config.getString("storage.backup.propPath") : "prop.properties";
     String bak1path = config.hasPath("storage.backup.bak1path")

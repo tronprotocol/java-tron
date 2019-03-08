@@ -167,7 +167,6 @@ public class Manager {
   @Autowired
   private PeersStore peersStore;
 
-
   @Autowired
   private KhaosDatabase khaosDb;
 
