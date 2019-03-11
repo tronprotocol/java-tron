@@ -551,7 +551,7 @@ public class ManagerTest {
   }
 
   @Test
-  public void testPushScheduledTransaction() {
+  public void testPushScheduledTransaction() throws BadItemException {
     BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
         BlockHeader.newBuilder().setRawData(raw.newBuilder().setTimestamp(System.currentTimeMillis()).setParentHash(ByteString.copyFrom(
             ByteArray
@@ -569,7 +569,7 @@ public class ManagerTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     trx.setDeferredSeconds(100);
     trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    dbManager.pushScheduledTransaction(blockCapsule, trx);
+    dbManager.pushScheduledTransaction(blockCapsule,  new TransactionCapsule(trx.getData()));
     DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore()
         .getByTransactionId(trx.getTransactionId().getByteString());
     Assert.assertNotNull(capsule);

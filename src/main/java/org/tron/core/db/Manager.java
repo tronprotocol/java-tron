@@ -1184,9 +1184,6 @@ public class Manager {
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace) {
-    // setReferenceBlockNumber used to save the transformation relationship from old transaction id to generating transaction id
-    trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
             .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1300,7 +1297,9 @@ public class Manager {
     }
 
     if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-        cancelDeferredTransaction(trxCap.getTransactionId().getByteString());
+      TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
+      oldTrxCap.generateOldDeferredTransactionId();
+      cancelDeferredTransaction(oldTrxCap.getTransactionId().getByteString());
     }
     return true;
   }
@@ -2051,7 +2050,7 @@ public class Manager {
   public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
     Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
     // new trx id to represent the second trx record
-    transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    transactionCapsule.generateNewDeferredTransactionId();
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
 
@@ -2096,14 +2095,6 @@ public class Manager {
     DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
       logger.info("cancelDeferredTransaction failed, transaction id not exists");
-      return false;
-    }
-    
-    long delayUntil = deferredTransactionCapsule.getDelayUntil();
-    long now = System.currentTimeMillis();
-
-    if (now >= delayUntil){
-      logger.info("failed to cancel deferred transaction {}, it should be canceled before it expires", transactionId.toString());
       return false;
     }
 

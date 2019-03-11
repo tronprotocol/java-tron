@@ -107,13 +107,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private TransactionTrace trxTrace;
 
   // generateTransactionId is used to save new generating transaction in deferredTransaction
-  @Getter
-  @Setter
-  private long referenceBlockNumber;
+  private long referenceBlockNumber = -1;
 
   @Getter
   @Setter
   private int deferredStage = Constant.NORMALTRANSACTION;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -214,9 +213,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
-  public void setReference(long blockNum) {
+  // only used for deferred_transaction
+  // getting new transactionId for deferredTransaction
+  public void generateNewDeferredTransactionId() {
+    if (referenceBlockNumber == -1) {
+      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
+    }
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
-        .setRefBlockNum(blockNum)
+        .setRefBlockNum(referenceBlockNumber + 1)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public void generateOldDeferredTransactionId() {
+    if (referenceBlockNumber == -1) {
+      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
+    }
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockNum(referenceBlockNumber - 1)
         .build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }

@@ -1224,6 +1224,21 @@ public class Wallet {
       return deferredTransactionCapsule.getDeferredTransaction();
     }
 
+    TransactionCapsule transactionCapsule = dbManager.getTransactionStore().getUnchecked(transactionId.toByteArray());
+
+    if (Objects.nonNull(transactionCapsule)) {
+      transactionCapsule.generateNewDeferredTransactionId();
+      TransactionCapsule generateTransaction = dbManager.getTransactionStore()
+          .getUnchecked(transactionCapsule.getTransactionId().getBytes());
+      if (Objects.nonNull(generateTransaction)) {
+        DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+        deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+        deferredTransaction.setSenderAddress(transactionCapsule.getSenderAddress());
+        deferredTransaction.setReceiverAddress(transactionCapsule.getToAddress());
+        deferredTransaction.setTransaction(transactionCapsule.getInstance());
+        return deferredTransaction.build();
+      }
+    }
     return null;
   }
 
