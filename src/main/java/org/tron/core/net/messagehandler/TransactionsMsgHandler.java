@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.message.TransactionsMessage;
 import org.tron.core.net.message.TronMessage;
@@ -31,7 +31,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 public class TransactionsMsgHandler implements TronMsgHandler {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private AdvService advService;
@@ -129,7 +129,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       return;
     }
     try {
-      tronProxy.pushTransaction(trx.getTransactionCapsule());
+      tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
       advService.broadcast(trx);
     }catch (P2pException e) {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",

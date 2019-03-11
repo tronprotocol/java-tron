@@ -1,40 +1,27 @@
 package org.tron.core.net.messagehandler;
 
-import com.google.common.collect.Iterables;
-import com.google.common.primitives.Longs;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.discover.node.statistics.MessageCount;
-import org.tron.common.overlay.server.Channel.TronState;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.exception.StoreException;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.ChainInventoryMessage;
-import org.tron.core.net.message.FetchInvDataMessage;
-import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j
 @Component
 public class SyncBlockChainMsgHadler implements TronMsgHandler {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
@@ -53,12 +40,12 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
       peer.setNeedSyncFromUs(false);
     }else {
       peer.setNeedSyncFromUs(true);
-      remainNum = tronProxy.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
+      remainNum = tronNetDelegate.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
 //
 //    if (!peer.isNeedSyncFromPeer()
-//        && !tronProxy.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
-//        && tronProxy.canChainRevoke(summaryChainIds.get(0).getNum())) {
+//        && !tronNetDelegate.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+//        && tronNetDelegate.canChainRevoke(summaryChainIds.get(0).getNum())) {
 //      //startSyncWithPeer(peer);
 //    }
 
@@ -74,11 +61,11 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
     }
 
     BlockId firstId = blockIds.get(0);
-    if (!tronProxy.containBlockInMainChain(firstId)){
+    if (!tronNetDelegate.containBlockInMainChain(firstId)){
       throw new P2pException(TypeEnum.BAD_MESSAGE, "No first block:" + firstId.getString());
     }
 
-    long headNum = tronProxy.getHeadBlockId().getNum();
+    long headNum = tronNetDelegate.getHeadBlockId().getNum();
     if (firstId.getNum() > headNum){
       throw new P2pException(TypeEnum.BAD_MESSAGE, "First blockNum:" + firstId.getNum() +" gt my head BlockNum:" + headNum);
     }
@@ -94,17 +81,17 @@ public class SyncBlockChainMsgHadler implements TronMsgHandler {
 
     BlockId unForkId = null;
     for (int i = blockIds.size() - 1; i >= 0; i--){
-      if (tronProxy.containBlockInMainChain(blockIds.get(i))){
+      if (tronNetDelegate.containBlockInMainChain(blockIds.get(i))){
         unForkId = blockIds.get(i);
         break;
       }
     }
 
-    long len = Math.min(tronProxy.getHeadBlockId().getNum(), unForkId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM);
+    long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(), unForkId.getNum() + NodeConstant.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> ids = new LinkedList<>();
     for (long i = unForkId.getNum(); i <= len; i++) {
-      BlockId id = tronProxy.getBlockIdByNum(i);
+      BlockId id = tronNetDelegate.getBlockIdByNum(i);
       ids.add(id);
     }
     return ids;

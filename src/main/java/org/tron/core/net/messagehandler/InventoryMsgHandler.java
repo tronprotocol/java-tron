@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.InventoryMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class InventoryMsgHandler implements TronMsgHandler{
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private AdvService advService;

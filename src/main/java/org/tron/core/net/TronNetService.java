@@ -3,6 +3,7 @@ package org.tron.core.net;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -72,7 +73,11 @@ public class TronNetService {
     logger.info("TronNetService closed successfully.");
   }
 
-  public void onMessage(PeerConnection peer, TronMessage msg) {
+  public void broadcast(Message msg) {
+    advService.broadcast(msg);
+  }
+
+  protected void onMessage(PeerConnection peer, TronMessage msg) {
     try {
       switch (msg.getType()) {
         case SYNC_BLOCK_CHAIN:
@@ -102,9 +107,9 @@ public class TronNetService {
   }
 
   private void processException (PeerConnection peer, TronMessage msg, Exception ex) {
-
     ReasonCode code = null;
     boolean exceptionPrintFlag = false;
+
     if (ex instanceof P2pException) {
       TypeEnum type = ((P2pException) ex).getType();
       switch (type) {

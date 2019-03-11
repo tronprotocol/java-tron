@@ -45,7 +45,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
 @Component
-public class TronProxy {
+public class TronNetDelegate {
 
   @Autowired
   private SyncPool syncPool;

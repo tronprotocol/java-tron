@@ -25,7 +25,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.InventoryMessage;
@@ -39,7 +39,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class AdvService {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
@@ -123,7 +123,7 @@ public class AdvService {
   public void onDisconnect (PeerConnection peer) {
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
-        if (tronProxy.getActivePeer().stream()
+        if (tronNetDelegate.getActivePeer().stream()
             .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)){
           invToFetch.put(item, System.currentTimeMillis());
         }
@@ -132,7 +132,7 @@ public class AdvService {
   }
 
   private void consumerInvToFetch() {
-    Collection<PeerConnection> peers = tronProxy.getActivePeer().stream()
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
 
@@ -173,7 +173,7 @@ public class AdvService {
       invToSpread.clear();
     }
 
-    tronProxy.getActivePeer().stream()
+    tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .forEach(peer -> spread.entrySet().stream()
             .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)

@@ -25,8 +25,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronNetClient;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.SyncBlockChainMessage;
@@ -39,10 +38,7 @@ import org.tron.protos.Protocol.ReasonCode;
 public class SyncService {
 
   @Autowired
-  private TronProxy tronProxy;
-
-  @Autowired
-  private TronNetClient tronManager;
+  private TronNetDelegate tronNetDelegate;
 
   private Map<BlockMessage, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
@@ -95,7 +91,7 @@ public class SyncService {
     peer.setNeedSyncFromPeer(true);
     peer.getSyncBlockToFetch().clear();
     peer.setRemainNum(0);
-    peer.setBlockBothHave(tronProxy.getGenesisBlockId());
+    peer.setBlockBothHave(tronNetDelegate.getGenesisBlockId());
     syncNext(peer);
   }
 
@@ -145,18 +141,18 @@ public class SyncService {
     List<BlockId> blockIds = new ArrayList<>(peer.getSyncBlockToFetch());
     LinkedList<BlockId> forkList = new LinkedList<>();
     LinkedList<BlockId> summary = new LinkedList<>();
-    long syncBeginNumber = tronProxy.getSyncBeginNumber();
+    long syncBeginNumber = tronNetDelegate.getSyncBeginNumber();
     long low = syncBeginNumber < 0 ? 0 : syncBeginNumber;
     long highNoFork;
     long high;
 
     if (beginBlockId.getNum() == 0){
-      highNoFork = high = tronProxy.getHeadBlockId().getNum();
+      highNoFork = high = tronNetDelegate.getHeadBlockId().getNum();
     }else {
-      if (tronProxy.containBlockInMainChain(beginBlockId)) {
+      if (tronNetDelegate.containBlockInMainChain(beginBlockId)) {
         highNoFork = high = beginBlockId.getNum();
       } else {
-        forkList = tronProxy.getBlockChainHashesOnFork(beginBlockId);
+        forkList = tronNetDelegate.getBlockChainHashesOnFork(beginBlockId);
         if (forkList.isEmpty()) {
           throw new P2pException(TypeEnum.SYNC_FAILED, "can't find blockId: " + beginBlockId.getString());
         }
@@ -178,7 +174,7 @@ public class SyncService {
     
     while (low <= realHigh) {
       if (low <= highNoFork) {
-        summary.offer(tronProxy.getBlockIdByNum(low));
+        summary.offer(tronNetDelegate.getBlockIdByNum(low));
       } else if (low <= high) {
         summary.offer(forkList.get((int) (low - highNoFork - 1)));
       } else {
@@ -193,7 +189,7 @@ public class SyncService {
   private void startFetchSyncBlock() {
     HashMap<PeerConnection, List<BlockId>> send = new HashMap<>();
 
-    tronProxy.getActivePeer().stream()
+    tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isNeedSyncFromPeer() && peer.isIdle())
         .forEach(peer -> {
           if (!send.containsKey(peer)) {
@@ -238,7 +234,7 @@ public class SyncService {
           return;
         }
         final boolean[] isFound = {false};
-        tronProxy.getActivePeer().stream()
+        tronNetDelegate.getActivePeer().stream()
             .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
             .forEach(peer -> {
               peer.getSyncBlockToFetch().pop();
@@ -258,12 +254,12 @@ public class SyncService {
     boolean flag = true;
     BlockId blockId = block.getBlockId();
     try {
-      tronProxy.processBlock(block);
+      tronNetDelegate.processBlock(block);
     } catch (Exception e) {
       logger.error("Process sync block {} failed.", blockId.getString(), e);
       flag = false;
     }
-    for (PeerConnection peer: tronProxy.getActivePeer()) {
+    for (PeerConnection peer: tronNetDelegate.getActivePeer()) {
       if (peer.getSyncBlockInProcess().remove(blockId)) {
         if (flag){
           peer.setBlockBothHave(blockId);

@@ -14,7 +14,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.ChainInventoryMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -25,7 +25,7 @@ import org.tron.core.net.service.SyncService;
 public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private SyncService syncService;
@@ -43,7 +43,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
-    if (blockIdWeGet.size() == 1 && tronProxy.containBlock(blockIdWeGet.peek())) {
+    if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
       peer.setNeedSyncFromPeer(false);
       return;
     }
@@ -60,8 +60,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
     peer.setRemainNum(chainInventoryMessage.getRemainNum());
     peer.getSyncBlockToFetch().addAll(blockIdWeGet);
 
-    synchronized (tronProxy.getBlockLock()) {
-      while (!peer.getSyncBlockToFetch().isEmpty() && tronProxy.containBlock(peer.getSyncBlockToFetch().peek())) {
+    synchronized (tronNetDelegate.getBlockLock()) {
+      while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
+          .containBlock(peer.getSyncBlockToFetch().peek())) {
         BlockId blockId = peer.getSyncBlockToFetch().pop();
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
       }
@@ -111,9 +112,10 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
           + ", peer: " + blockIds.get(0).getString());
     }
 
-    if (tronProxy.getHeadBlockId().getNum() > 0) {
-      long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - tronProxy.getBlockTime(tronProxy.getSolidBlockId());
-      long maxFutureNum = maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronProxy.getSolidBlockId().getNum();
+    if (tronNetDelegate.getHeadBlockId().getNum() > 0) {
+      long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - tronNetDelegate
+          .getBlockTime(tronNetDelegate.getSolidBlockId());
+      long maxFutureNum = maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
       if (lastNum + msg.getRemainNum() > maxFutureNum) {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "lastNum: " + lastNum + " + remainNum: "

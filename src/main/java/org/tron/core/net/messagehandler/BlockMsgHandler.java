@@ -10,8 +10,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronNetClient;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
@@ -26,7 +25,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 public class BlockMsgHandler implements TronMsgHandler {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private TronNetClient tronManager;
@@ -77,14 +76,15 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private void processBlock(PeerConnection peer,  BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
-    if (!tronProxy.containBlock(block.getParentBlockId())) {
-      logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(), peer.getInetAddress(), tronProxy.getHeadBlockId().getString());
+    if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
+      logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(), peer.getInetAddress(), tronNetDelegate
+          .getHeadBlockId().getString());
       syncService.startSync(peer);
       return;
     }
-    tronProxy.processBlock(block);
+    tronNetDelegate.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
-    tronProxy.getActivePeer().forEach(p -> {
+    tronNetDelegate.getActivePeer().forEach(p -> {
       if (p.getAdvInvReceive().getIfPresent(blockId) != null) {
         p.setBlockBothHave(blockId);
       }

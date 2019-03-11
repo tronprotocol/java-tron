@@ -21,22 +21,15 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.client.PeerClient;
-import org.tron.common.overlay.server.ChannelManager;
-import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-import org.tron.core.net.TronProxy;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.WitnessService;
 
 @Slf4j
 public abstract class BaseNet {
@@ -50,7 +43,7 @@ public abstract class BaseNet {
 
   private RpcApiService rpcApiService;
   private Application appT;
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   private ExecutorService executorService = Executors.newFixedThreadPool(1);
 
@@ -79,12 +72,12 @@ public abstract class BaseNet {
         appT.initServices(cfgArgs);
         appT.startServices();
         appT.startup();
-        tronProxy = context.getBean(TronProxy.class);
+        tronNetDelegate = context.getBean(TronNetDelegate.class);
         rpcApiService.blockUntilShutdown();
       }
     });
     int tryTimes = 0;
-    while (++tryTimes < 100 && tronProxy == null) {
+    while (++tryTimes < 100 && tronNetDelegate == null) {
       Thread.sleep(3000);
     }
   }
@@ -115,7 +108,7 @@ public abstract class BaseNet {
 
   @After
   public void destroy() {
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronProxy, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }

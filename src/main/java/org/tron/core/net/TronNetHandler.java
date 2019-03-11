@@ -13,7 +13,7 @@ import org.tron.core.net.peer.PeerConnection;
 
 @Component
 @Scope("prototype")
-public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
+public class TronNetHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   protected PeerConnection peer;
 
@@ -23,7 +23,7 @@ public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
   private TronNetService tronNetService;
 
 //  @Autowired
-//  private TronHandler (final ApplicationContext ctx){
+//  private TronNetHandler (final ApplicationContext ctx){
 //    tronNetService = ctx.getBean(TronNetService.class);
 //  }
 

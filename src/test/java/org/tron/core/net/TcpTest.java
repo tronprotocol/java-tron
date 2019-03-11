@@ -14,11 +14,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -47,7 +44,7 @@ public class TcpTest {
   private ChannelManager channelManager;
   private Manager manager;
   private SyncPool pool;
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   private int tryTimes = 10;
   private int sleepTime = 1000;
@@ -59,7 +56,7 @@ public class TcpTest {
     channelManager = context.getBean(ChannelManager.class);
     manager = context.getBean(Manager.class);
     pool = context.getBean(SyncPool.class);
-    tronProxy = context.getBean(TronProxy.class);
+    tronNetDelegate = context.getBean(TronNetDelegate.class);
   }
 
   private enum TestType {
@@ -214,7 +211,7 @@ public class TcpTest {
     finish = false;
     channel.close();
     Thread.sleep(sleepTime);
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronProxy, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
@@ -234,7 +231,7 @@ public class TcpTest {
   private void clearConnect(Channel channel) throws InterruptedException {
     channel.close();
     Thread.sleep(sleepTime);
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronProxy, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }

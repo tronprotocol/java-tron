@@ -13,7 +13,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
 import org.tron.core.net.message.MessageTypes;
@@ -33,7 +33,7 @@ import org.tron.protos.Protocol.Transaction;
 public class FetchInvDataMsgHandler implements TronMsgHandler {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private SyncService syncService;
@@ -60,7 +60,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
       Message message = advService.getMessage(item);
       if (message == null) {
         try {
-          message = tronProxy.getData(hash, type);
+          message = tronNetDelegate.getData(hash, type);
         } catch (Exception e) {
           logger.error("Fetch item {} failed. reason: {}", item, hash, e.getMessage());
           peer.disconnect(ReasonCode.FETCH_FAIL);

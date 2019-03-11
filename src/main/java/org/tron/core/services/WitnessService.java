@@ -34,7 +34,7 @@ import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.net.TronNetClient;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
@@ -68,7 +68,7 @@ public class WitnessService implements Service {
 
   private BackupServer backupServer;
 
-  private TronNetClient tronNetClient;
+  private TronNetService tronNetService;
 
   private AtomicInteger dupBlockCount = new AtomicInteger(0);
   private AtomicLong dupBlockTime = new AtomicLong(0);
@@ -83,7 +83,7 @@ public class WitnessService implements Service {
     this.context = context;
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
-    tronNetClient = context.getBean(TronNetClient.class);
+    tronNetService = context.getBean(TronNetService.class);
     generateThread = new Thread(scheduleProductionLoop);
     manager = tronApp.getDbManager();
     manager.setWitnessService(this);
@@ -310,7 +310,7 @@ public class WitnessService implements Service {
 
   private void broadcastBlock(BlockCapsule block) {
     try {
-      tronNetClient.broadcast(new BlockMessage(block.getData()));
+      tronNetService.broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
       throw new RuntimeException("BroadcastBlock error");
     }

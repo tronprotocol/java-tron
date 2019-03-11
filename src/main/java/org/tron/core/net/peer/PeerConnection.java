@@ -24,7 +24,7 @@ import org.tron.common.overlay.server.Channel;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.net.TronProxy;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 
@@ -34,7 +34,7 @@ import org.tron.core.net.service.SyncService;
 public class PeerConnection extends Channel {
 
   @Autowired
-  private TronProxy tronProxy;
+  private TronNetDelegate tronNetDelegate;
 
   @Autowired
   private SyncService syncService;
@@ -131,7 +131,7 @@ public class PeerConnection extends Channel {
   }
 
   public void onConnectPeer() {
-    if (getHelloMessage().getHeadBlockId().getNum() > tronProxy.getHeadBlockId().getNum()) {
+    if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
       setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
