@@ -624,6 +624,8 @@ public enum OpCode {
      */
     STATICCALL(0xfa, 6, 1, OpCode.Tier.SpecialTier, CallFlags.Call, CallFlags.Static),
 
+    CREATE2(0xf5, 4, 1, OpCode.Tier.SpecialTier),
+
     /**
      * (0xfd) The `REVERT` instruction will stop execution, roll back all state changes done so far
      * and provide a pointer to a memory section, which can be interpreted as an error code or message.

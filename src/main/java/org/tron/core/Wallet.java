@@ -75,6 +75,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.actuator.Actuator;
@@ -279,6 +280,13 @@ public class Wallet {
 
   }
 
+  // for `CREATE2`
+  public static byte[] generateContractAddress2(byte[] address, byte[] code, byte[] salt) {
+    byte[] mergedData = ByteUtil.merge(address, code, salt);
+    return Hash.sha3omit12(mergedData);
+  }
+
+  // for `CREATE`
   public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
     byte[] nonceBytes = Longs.toByteArray(nonce);
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];

@@ -239,6 +239,13 @@ public class VM {
           energyCost = energyCosts.getCREATE() + calcMemEnergy(energyCosts, oldMemSize,
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
           break;
+        case CREATE2:
+          DataWord codeSize = stack.get(stack.size() - 3);
+          energyCost = energyCosts.getCREATE() +
+              calcMemEnergy(energyCosts, oldMemSize,
+                  memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op) +
+              VMUtils.getSizeInWords(codeSize.longValueSafe()) * energyCosts.getSHA3_WORD();
+          break;
         case LOG0:
         case LOG1:
         case LOG2:
@@ -1244,6 +1251,18 @@ public class VM {
           DataWord inSize = program.stackPop();
           program.createContract(value, inOffset, inSize);
 
+          program.step();
+        }
+        break;
+        case CREATE2: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+          DataWord value = program.stackPop();
+          DataWord inOffset = program.stackPop();
+          DataWord inSize = program.stackPop();
+          DataWord salt = program.stackPop();
+          program.createContract2(value, inOffset, inSize, salt);
           program.step();
         }
         break;
