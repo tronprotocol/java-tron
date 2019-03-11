@@ -233,7 +233,6 @@ public class SyncService {
 
       blockWaitToProcess.forEach((msg, peerConnection) -> {
         if (peerConnection.isDisconnect()) {
-          logger.warn("Peer {} is disconnect, drop block {}", peerConnection.getInetAddress(), msg.getBlockId().getString());
           blockWaitToProcess.remove(msg);
           invalid(msg.getBlockId());
           return;

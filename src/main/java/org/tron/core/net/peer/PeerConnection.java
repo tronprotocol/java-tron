@@ -182,7 +182,7 @@ public class PeerConnection extends Channel {
 ////
     return String.format(
         "Peer %s: [ %18s, ping %6s ms]-----------\n"
-            + "connect time: %d\n"
+            + "connect time: %ds\n"
             + "last know block num: %s\n"
             + "needSyncFromPeer:%b\n"
             + "needSyncFromUs:%b\n"

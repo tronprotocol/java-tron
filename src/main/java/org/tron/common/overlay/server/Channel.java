@@ -151,7 +151,10 @@ public class Channel {
     this.isDisconnect = true;
     channelManager.processDisconnect(this, reason);
     DisconnectMessage msg = new DisconnectMessage(reason);
-    logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Send to {} online-time {}s, {}",
+        ctx.channel().remoteAddress(),
+        (System.currentTimeMillis() - startTime) / 1000,
+        msg);
     getNodeStatistics().nodeDisconnectedLocal(reason);
     ctx.writeAndFlush(msg.getSendData()).addListener(future -> close());
   }
