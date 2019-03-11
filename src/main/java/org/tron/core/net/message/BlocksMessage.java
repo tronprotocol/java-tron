@@ -11,11 +11,11 @@ public class BlocksMessage extends TronMessage {
 
   public BlocksMessage(byte[] data) throws Exception {
     this.type = MessageTypes.BLOCKS.asByte();
-    this.data = data;
     Items items = Items.parseFrom(data);
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }
+    this.data = items.toByteArray();
   }
 
   public List<Block> getBlocks() {

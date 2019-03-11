@@ -20,8 +20,8 @@ public class TransactionsMessage extends TronMessage {
 
   public TransactionsMessage(byte[] data) throws Exception {
     this.type = MessageTypes.TRXS.asByte();
-    this.data = data;
     this.transactions = Protocol.Transactions.parseFrom(data);
+    this.data = transactions.toByteArray();
   }
 
   public Protocol.Transactions getTransactions() {

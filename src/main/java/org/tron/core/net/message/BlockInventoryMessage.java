@@ -14,8 +14,8 @@ public class BlockInventoryMessage extends TronMessage {
 
   public BlockInventoryMessage(byte[] data) throws Exception {
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
-    this.data = data;
     this.blockInventory = Protocol.BlockInventory.parseFrom(data);
+    this.data = blockInventory.toByteArray();
   }
 
   @Override
