@@ -28,9 +28,6 @@ public class BlockMsgHandler implements TronMsgHandler {
   private TronNetDelegate tronNetDelegate;
 
   @Autowired
-  private TronNetClient tronManager;
-
-  @Autowired
   private AdvService advService;
 
   @Autowired

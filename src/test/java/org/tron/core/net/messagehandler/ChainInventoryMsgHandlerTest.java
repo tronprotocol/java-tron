@@ -15,12 +15,12 @@ import org.tron.core.net.peer.PeerConnection;
 public class ChainInventoryMsgHandlerTest {
 
   ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
+  PeerConnection peer = new PeerConnection();
   ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0l);
   List<BlockId> blockIds = new ArrayList<>();
-  PeerConnection peer = new PeerConnection();
 
   @Test
-  public void test() {
+  public void testProcessMessage() {
     try {
       handler.processMessage(peer, msg);
     }catch (P2pException e) {

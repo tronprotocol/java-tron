@@ -43,7 +43,7 @@ public interface Parameter {
 
     long GRPC_IDLE_TIME_OUT = 60000L;
     long ADV_TIME_OUT = 20000L;
-    long SYNC_TIME_OUT = 5000L;
+    long SYNC_TIME_OUT = 20000L;
     long HEAD_NUM_MAX_DELTA = 1000L;
     long HEAD_NUM_CHECK_TIME = 60000L;
     int MAX_INVENTORY_SIZE_IN_MINUTES = 2;

@@ -18,7 +18,7 @@ import org.tron.core.net.peer.PeerConnection;
 
 @Slf4j
 @Component
-public class SyncBlockChainMsgHadler implements TronMsgHandler {
+public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;

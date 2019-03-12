@@ -32,12 +32,34 @@ public class UdpTest {
 
   private NodeManager nodeManager;
   private int port = Args.getInstance().getNodeListenPort();
+  private volatile boolean finishFlag = false;
+  private long timeOut = 30_000;
 
   public UdpTest(TronApplicationContext context) {
     nodeManager = context.getBean(NodeManager.class);
   }
 
   public void test() throws Exception {
+    Thread thread = new Thread(() -> {
+      try {
+        discover();
+      } catch (Exception e) {
+        logger.info("Discover test failed.", e);
+      }
+    });
+    thread.start();
+
+    long time = System.currentTimeMillis();
+    while (!finishFlag && System.currentTimeMillis() - time < timeOut) {
+      Thread.sleep(1000);
+    }
+    if (!finishFlag) {
+      thread.interrupt();
+      Assert.assertTrue(false);
+    }
+  }
+
+  public void discover() throws Exception {
 
     InetAddress server = InetAddress.getByName("127.0.0.1");
 
@@ -82,9 +104,7 @@ public class UdpTest {
     boolean findNodeFlag = false;
     boolean neighborsFlag = false;
     while (true) {
-      System.out.println("pingFlag：" + pingFlag + "pongFlag：" + pongFlag + "findNodeFlag：" + findNodeFlag + "neighborsFlag：" + neighborsFlag  );
       socket.receive(packet);
-      System.out.println("wwww");
       byte[] bytes = Arrays.copyOfRange(data, 0, packet.getLength());
       Message msg = Message.parse(bytes);
       Assert.assertTrue(Arrays.equals(msg.getFrom().getId(), nodeManager.getPublicHomeNode().getId()));
@@ -112,6 +132,8 @@ public class UdpTest {
     Assert.assertTrue(nodeManager.getTable().getAllNodes().size() == 1);
 
     socket.close();
+
+    finishFlag = true;
   }
 }
 

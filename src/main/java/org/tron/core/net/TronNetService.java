@@ -12,7 +12,7 @@ import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.FetchInvDataMsgHandler;
 import org.tron.core.net.messagehandler.InventoryMsgHandler;
-import org.tron.core.net.messagehandler.SyncBlockChainMsgHadler;
+import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
@@ -37,7 +37,7 @@ public class TronNetService {
   private PeerStatusCheck peerStatusCheck;
 
   @Autowired
-  private SyncBlockChainMsgHadler syncBlockChainMsgHadler;
+  private SyncBlockChainMsgHandler syncBlockChainMsgHandler;
 
   @Autowired
   private ChainInventoryMsgHandler chainInventoryMsgHandler;
@@ -81,7 +81,7 @@ public class TronNetService {
     try {
       switch (msg.getType()) {
         case SYNC_BLOCK_CHAIN:
-          syncBlockChainMsgHadler.processMessage(peer, msg);
+          syncBlockChainMsgHandler.processMessage(peer, msg);
           break;
         case BLOCK_CHAIN_INVENTORY:
           chainInventoryMsgHandler.processMessage(peer, msg);
