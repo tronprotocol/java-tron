@@ -1,8 +1,11 @@
 package org.tron.common.zksnark.sapling;
 
+import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.common.zksnark.sapling.zip32.SaplingExtendedSpendingKey;
 
 public class KeyStore {
+
+  static HDSeed seed;
 
   static mapSaplingIncomingViewingKeys;//k:addr,v:ivk
   static mapSaplingFullViewingKeys;//k:ivk,v:fvk

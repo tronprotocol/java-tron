@@ -1,5 +1,7 @@
 package org.tron.common.zksnark.sapling.address;
 
+import org.tron.common.utils.ByteArray;
+
 public class ExpandedSpendingKey {
 
   uint256 ask;//the spend authorizing key
@@ -17,5 +19,9 @@ public class ExpandedSpendingKey {
     librustzcash_ask_to_ak(ask.begin(), ak.begin());
     librustzcash_nsk_to_nk(nsk.begin(), nk.begin());
     return FullViewingKey(ak, nk, ovk);
+  }
+
+  public static ExpandedSpendingKey decode(ByteArray m_bytes) {
+
   }
 }

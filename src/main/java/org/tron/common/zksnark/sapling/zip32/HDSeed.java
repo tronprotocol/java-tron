@@ -1,13 +1,16 @@
 package org.tron.common.zksnark.sapling.zip32;
 
 import java.util.List;
+import lombok.Getter;
 
 public class HDSeed {
 
-  RawHDSeed seed;
+  @Getter
+  public RawHDSeed seed;
 
   public class RawHDSeed {
 
-    List data;
+    @Getter
+    public List data;
   }
 }

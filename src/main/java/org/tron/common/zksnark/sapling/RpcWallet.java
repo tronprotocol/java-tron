@@ -3,6 +3,9 @@ package org.tron.common.zksnark.sapling;
 import org.tron.common.zksnark.sapling.Wallet.SaplingNoteEntry;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.transaction.SendManyRecipient;
+import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
+import org.tron.common.zksnark.sapling.zip32.HDSeed;
+import org.tron.common.zksnark.sapling.zip32.SaplingExtendedSpendingKey;
 
 public class RpcWallet {
 
@@ -31,6 +34,20 @@ public class RpcWallet {
   public void z_getnewaddress(const UniValue&params, bool fHelp) {
     //seed
     //AccountCounter
+
+    // Create new metadata
+    long nCreationTime = System.currentTimeMillis();
+    CKeyMetadata metadata = new CKeyMetadata(nCreationTime);
+
+    // Try to get the seed
+    HDSeed seed = KeyStore.seed;
+    if (seed == null) {
+      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
+    }
+
+    SaplingExtendedSpendingKey m = SaplingExtendedSpendingKey.Master(seed);
+    int bip44CoinType = Params.BIP44CoinType;
+
   }
 
   public void z_sendmany() {

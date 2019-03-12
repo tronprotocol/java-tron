@@ -1,29 +1,34 @@
 package org.tron.common.zksnark.sapling.zip32;
 
+import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.sapling.Librustzcash;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
+import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
 
 public class SaplingExtendedSpendingKey {
 
-  uint8_t depth;
-  uint32_t parentFVKTag;
-  uint32_t childIndex;
-  uint256 chaincode;
+
+  public static int ZIP32_XSK_SIZE = 169;//byte
+
+  int depth;//8bit
+  int parentFVKTag;//32bit
+  int childIndex;//32bit
+  ByteArray chaincode;//256bit
   ExpandedSpendingKey expsk;
-  uint256 dk;
+  uint256 dk;//256bit
 
   //HD钱包生成地址
-  static SaplingExtendedSpendingKey Master(const HDSeed&seed) {
-    auto rawSeed = seed.RawSeed();
-    CSerializeData m_bytes (ZIP32_XSK_SIZE);
-    librustzcash_zip32_xsk_master(
-        rawSeed.data(),
-        rawSeed.size(),
-        reinterpret_cast < char*>(m_bytes.data()));
+  public static SaplingExtendedSpendingKey Master(HDSeed seed) {
+    RawHDSeed rawSeed = seed.getSeed();
+    //todo:数据返回
+    ByteArray m_bytes = new ByteArray();// size = ZIP32_XSK_SIZE
+    Librustzcash.librustzcash_zip32_xsk_master(
+        rawSeed.getData(),
+        rawSeed.getData().size(),
+        m_bytes);
 
-    CDataStream ss (m_bytes, SER_NETWORK, PROTOCOL_VERSION);
-    SaplingExtendedSpendingKey xsk_m;
-    ss >> xsk_m;
+    SaplingExtendedSpendingKey xsk_m = decode(m_bytes);
     return xsk_m;
   }
 
@@ -58,4 +63,10 @@ public class SaplingExtendedSpendingKey {
   PaymentAddress DefaultAddress() {
     return ToXFVK().DefaultAddress();
   }
+
+  public static SaplingExtendedSpendingKey decode(ByteArray m_bytes) {
+
+  }
+
+
 }
