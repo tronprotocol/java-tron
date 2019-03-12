@@ -22,6 +22,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.SourceInter;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
@@ -41,7 +42,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private boolean disabled = true;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
-  private WriteOptions writeOptions = new WriteOptions()
+  private WriteOptionsWrapper writeOptionsWrapper = WriteOptionsWrapper.getInstance()
       .sync(Args.getInstance().getStorage().isDbSync());
   private List<LevelDbDataSourceImpl> dbs = new ArrayList<>();
 
@@ -97,10 +98,10 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
         if (realValue != null) {
-          dbMap.get(db).putData(realKey, realValue, new WriteOptions()
+          dbMap.get(db).putData(realKey, realValue, WriteOptionsWrapper.getInstance()
               .sync(Args.getInstance().getStorage().isDbSync()));
         } else {
-          dbMap.get(db).deleteData(realKey, new WriteOptions()
+          dbMap.get(db).deleteData(realKey, WriteOptionsWrapper.getInstance()
               .sync(Args.getInstance().getStorage().isDbSync()));
         }
       }
@@ -255,15 +256,15 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   @Override
   public synchronized void pop() {
-    prune(writeOptions);
+    prune(writeOptionsWrapper);
   }
 
   @Override
   public synchronized void fastPop() {
-    prune(new WriteOptions());
+    prune(WriteOptionsWrapper.getInstance());
   }
 
-  private synchronized void prune(WriteOptions options) {
+  private synchronized void prune(WriteOptionsWrapper optionsWrapper) {
     if (activeDialog != 0) {
       throw new RevokingStoreIllegalStateException("activeDialog has to be equal 0");
     }
@@ -276,9 +277,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, options));
-      state.newIds.forEach(e -> e.database.deleteData(e.key, options));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v, options));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
+      state.newIds.forEach(e -> e.database.deleteData(e.key, optionsWrapper));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
       stack.pollLast();
     } finally {
       disabled = false;

@@ -357,6 +357,7 @@ public class MultiSign24 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);

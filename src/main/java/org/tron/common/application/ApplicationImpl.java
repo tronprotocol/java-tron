@@ -96,6 +96,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
+    logger.info("******** begin to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
   }
 

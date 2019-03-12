@@ -16,6 +16,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -27,12 +28,6 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   @Getter
   private String dbName;
   private Class<? extends DB> clz;
-
-  public RevokingDBWithCachingNewValue(String dbName) {
-    this.dbName = dbName;
-    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    mode.set(true);
-  }
 
   public RevokingDBWithCachingNewValue(String dbName, Class<? extends DB> clz) {
     this.dbName = dbName;
@@ -74,11 +69,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public synchronized void reset() {
     head().reset();
     head().close();
-    if (clz == null) {
-      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    } else {
-      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
-    }
+    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
   }
 
   @Override
@@ -142,7 +133,11 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
 
     if (snapshot.getPrevious() == null && tmp != 0) {
-      result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+        result.addAll(((LevelDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+        result.addAll(((RocksDB) ((SnapshotRoot) snapshot).db).getDb().getlatestValues(tmp));
+      }
     }
 
     return result;
@@ -161,9 +156,17 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
 
-    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    }
 
     levelDBMap.putAll(collection);
 

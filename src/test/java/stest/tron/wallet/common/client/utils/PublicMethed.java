@@ -3085,6 +3085,7 @@ public class PublicMethed {
    */
   public static long getFreezeBalanceCount(byte[] accountAddress, String ecKey, Long targetEnergy,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    //Precision change as the entire network freezes
     AccountResourceMessage resourceInfo = getAccountResource(accountAddress,
         blockingStubFull);
 
@@ -3564,4 +3565,46 @@ public class PublicMethed {
     return blockingStubFull.getTransactionApprovedList(transaction);
   }
 
+  /**
+   * constructor.
+   */
+  public static long getFreezeBalanceNetCount(byte[] accountAddress, String ecKey, Long targetNet,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    //Precision change as the entire network freezes
+    AccountResourceMessage resourceInfo = getAccountResource(accountAddress,
+        blockingStubFull);
+
+    Account info = queryAccount(accountAddress, blockingStubFull);
+
+    Account getAccount = queryAccount(ecKey, blockingStubFull);
+
+    long balance = info.getBalance();
+    long totalNetLimit = resourceInfo.getTotalNetLimit();
+    long totalNetWeight = resourceInfo.getTotalNetWeight();
+    long netUsed = resourceInfo.getNetUsed();
+    long netLimit = resourceInfo.getNetLimit();
+
+    if (netUsed > netLimit) {
+      targetNet = netUsed - netLimit + targetNet;
+    }
+
+    if (totalNetWeight == 0) {
+      return 1000_000L;
+    }
+
+    // totalNetLimit / (totalNetWeight + needBalance) = needNet / needBalance
+    final BigInteger totalNetWeightBi = BigInteger.valueOf(totalNetWeight);
+    long needBalance = totalNetWeightBi.multiply(BigInteger.valueOf(1_000_000))
+        .multiply(BigInteger.valueOf(targetNet))
+        .divide(BigInteger.valueOf(totalNetLimit - targetNet)).longValue();
+
+    logger.info("getFreezeBalanceNetCount, needBalance: " + needBalance);
+
+    if (needBalance < 1000000L) {
+      needBalance = 1000000L;
+      logger.info(
+          "getFreezeBalanceNetCount, needBalance less than 1 TRX, modify to: " + needBalance);
+    }
+    return needBalance;
+  }
 }

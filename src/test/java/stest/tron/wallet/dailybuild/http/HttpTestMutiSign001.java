@@ -53,7 +53,7 @@ public class HttpTestMutiSign001 {
     PublicMethed.printAddress(ownerKey);
     response = HttpMethed.sendCoin(httpnode,fromAddress,ownerAddress,amount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     manager1Wight.addProperty("address",ByteArray.toHexString(manager1Address));
     manager1Wight.addProperty("weight",1);
 
