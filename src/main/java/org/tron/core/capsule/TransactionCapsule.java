@@ -225,7 +225,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
-  public void generateOldDeferredTransactionId() {
+  public void getOriginDeferredTransaction() {
     if (referenceBlockNumber == -1) {
       referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
     }
@@ -630,6 +630,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (isVerified == true) {
       return true;
     }
+
+    Transaction originalTransaction = null;
+    if (this.transaction.getRawData().getDelaySeconds() != 0
+        && this.transaction.getRawData().getRefBlockNum() != 0) {
+      originalTransaction = this.transaction;
+      this.getOriginDeferredTransaction();
+    }
+
     if (this.transaction.getSignatureCount() <= 0
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
@@ -653,6 +661,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (SignatureFormatException e) {
       isVerified = false;
       throw new ValidateSignatureException(e.getMessage());
+    }
+
+    if (Objects.nonNull(originalTransaction)) {
+      this.transaction = originalTransaction;
     }
 
     isVerified = true;

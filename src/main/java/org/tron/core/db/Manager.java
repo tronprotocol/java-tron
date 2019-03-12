@@ -1224,7 +1224,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
+    if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1298,7 +1298,7 @@ public class Manager {
 
     if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
-      oldTrxCap.generateOldDeferredTransactionId();
+      oldTrxCap.getOriginDeferredTransaction();
       cancelDeferredTransaction(oldTrxCap.getTransactionId().getByteString());
     }
     return true;
