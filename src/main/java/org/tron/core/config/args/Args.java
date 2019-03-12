@@ -962,9 +962,15 @@ public class Args {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
     boolean useNativeQueue = false;
-    if (config.hasPath("event.subscribe.useNativeQueue")){
-      useNativeQueue = config.getBoolean("event.subscribe.useNativeQueue");
+    int bindPort = 0;
+    if (config.hasPath("event.subscribe.native.useNativeQueue")){
+      useNativeQueue = config.getBoolean("event.subscribe.native.useNativeQueue");
+
+      if(config.hasPath("event.subscribe.native.bindport")){
+        bindPort = config.getInt("event.subscribe.native.bindport");
+      }
       eventPluginConfig.setUseNativeQueue(useNativeQueue);
+      eventPluginConfig.setBindPort(bindPort);
     }
 
     // use event plugin

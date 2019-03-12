@@ -61,7 +61,7 @@ public class EventPluginLoader {
   private boolean launchNativeQueue(EventPluginConfig config){
     boolean success = false;
 
-    NativeMessageQueue.getInstance().start();
+    NativeMessageQueue.getInstance().start(config.getBindPort());
 
     if (Objects.isNull(triggerConfigList)){
       logger.error("trigger config is null");

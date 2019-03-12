@@ -28,6 +28,10 @@ public class EventPluginConfig {
   @Setter
   private boolean useNativeQueue;
 
+  @Getter
+  @Setter
+  private int bindPort;
+
 
   @Getter
   @Setter
@@ -38,6 +42,7 @@ public class EventPluginConfig {
     serverAddress = "";
     dbConfig = "";
     useNativeQueue = false;
+    bindPort = 0;
     triggerConfigList = new ArrayList<>();
   }
 }
