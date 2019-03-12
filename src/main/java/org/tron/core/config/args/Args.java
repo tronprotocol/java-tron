@@ -961,27 +961,37 @@ public class Args {
   private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
-    if (config.hasPath("event.subscribe.path")){
-      String pluginPath = config.getString("event.subscribe.path");
-      if (StringUtils.isNotEmpty(pluginPath)){
-        eventPluginConfig.setPluginPath(pluginPath.trim());
+    boolean useNativeQueue = false;
+    if (config.hasPath("event.subscribe.useNativeQueue")){
+      useNativeQueue = config.getBoolean("event.subscribe.useNativeQueue");
+      eventPluginConfig.setUseNativeQueue(useNativeQueue);
+    }
+
+    // use event plugin
+    if (!useNativeQueue){
+      if (config.hasPath("event.subscribe.path")){
+        String pluginPath = config.getString("event.subscribe.path");
+        if (StringUtils.isNotEmpty(pluginPath)){
+          eventPluginConfig.setPluginPath(pluginPath.trim());
+        }
+      }
+
+
+      if (config.hasPath("event.subscribe.server")){
+        String serverAddress = config.getString("event.subscribe.server");
+        if (StringUtils.isNotEmpty(serverAddress)){
+          eventPluginConfig.setServerAddress(serverAddress.trim());
+        }
+      }
+
+      if (config.hasPath("event.subscribe.dbconfig")){
+        String dbConfig = config.getString("event.subscribe.dbconfig");
+        if (StringUtils.isNotEmpty(dbConfig)){
+          eventPluginConfig.setDbConfig(dbConfig.trim());
+        }
       }
     }
 
-
-    if (config.hasPath("event.subscribe.server")){
-      String serverAddress = config.getString("event.subscribe.server");
-      if (StringUtils.isNotEmpty(serverAddress)){
-        eventPluginConfig.setServerAddress(serverAddress.trim());
-      }
-    }
-
-    if (config.hasPath("event.subscribe.dbconfig")){
-      String dbConfig = config.getString("event.subscribe.dbconfig");
-      if (StringUtils.isNotEmpty(dbConfig)){
-        eventPluginConfig.setDbConfig(dbConfig.trim());
-      }
-    }
 
     if (config.hasPath("event.subscribe.topics")){
       List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()

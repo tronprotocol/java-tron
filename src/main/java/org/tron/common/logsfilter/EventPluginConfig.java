@@ -24,6 +24,10 @@ public class EventPluginConfig {
   @Setter
   private String dbConfig;
 
+  @Getter
+  @Setter
+  private boolean useNativeQueue;
+
 
   @Getter
   @Setter
@@ -33,6 +37,7 @@ public class EventPluginConfig {
     pluginPath = "";
     serverAddress = "";
     dbConfig = "";
+    useNativeQueue = false;
     triggerConfigList = new ArrayList<>();
   }
 }

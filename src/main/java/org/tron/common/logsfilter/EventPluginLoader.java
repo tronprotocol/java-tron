@@ -16,7 +16,6 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
-import org.tron.common.utils.StringUtil;
 
 @Slf4j
 public class EventPluginLoader {
@@ -56,17 +55,26 @@ public class EventPluginLoader {
     return instance;
   }
 
-  public boolean start(EventPluginConfig config) {
+  private boolean launchNativeQueue(EventPluginConfig config){
     boolean success = false;
 
-    if (Objects.isNull(config)) {
+    if (Objects.isNull(triggerConfigList)){
+      logger.error("trigger config is null");
       return success;
     }
 
+    triggerConfigList.forEach(triggerConfig -> {
+      setSingleTriggerConfig(triggerConfig, false);
+    });
+
+    return true;
+  }
+
+  private boolean launchEventPlugin(EventPluginConfig config){
+    boolean success = false;
     // parsing subscribe config from config.conf
     String pluginPath = config.getPluginPath();
     this.serverAddress = config.getServerAddress();
-    this.triggerConfigList = config.getTriggerConfigList();
     this.dbConfig = config.getDbConfig();
 
     if (!startPlugin(pluginPath)) {
@@ -83,6 +91,22 @@ public class EventPluginLoader {
     return true;
   }
 
+  public boolean start(EventPluginConfig config) {
+    boolean success = false;
+
+    if (Objects.isNull(config)) {
+      return success;
+    }
+
+    this.triggerConfigList = config.getTriggerConfigList();
+
+    if (config.isUseNativeQueue()){
+      return launchNativeQueue(config);
+    }
+
+    return launchEventPlugin(config);
+  }
+
   private void setPluginConfig() {
 
     if (Objects.isNull(eventListeners)) {
@@ -96,39 +120,58 @@ public class EventPluginLoader {
     eventListeners.forEach(listener -> listener.setDBConfig(this.dbConfig));
 
     triggerConfigList.forEach(triggerConfig -> {
-      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          blockLogTriggerEnable = true;
-        } else {
-          blockLogTriggerEnable = false;
-        }
+      setSingleTriggerConfig(triggerConfig, true);
+    });
+  }
+
+  private void setSingleTriggerConfig(TriggerConfig triggerConfig, boolean useEventPlugin){
+    if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        blockLogTriggerEnable = true;
+      } else {
+        blockLogTriggerEnable = false;
+      }
+
+      if (useEventPlugin){
         setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          transactionLogTriggerEnable = true;
-        } else {
-          transactionLogTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        transactionLogTriggerEnable = true;
+      } else {
+        transactionLogTriggerEnable = false;
+      }
+
+      if (useEventPlugin){
         setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          contractEventTriggerEnable = true;
-        } else {
-          contractEventTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        contractEventTriggerEnable = true;
+      } else {
+        contractEventTriggerEnable = false;
+      }
+
+      if (useEventPlugin){
         setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          contractLogTriggerEnable = true;
-        } else {
-          contractLogTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        contractLogTriggerEnable = true;
+      } else {
+        contractLogTriggerEnable = false;
+      }
+
+      if (useEventPlugin){
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
-    });
+    }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {
