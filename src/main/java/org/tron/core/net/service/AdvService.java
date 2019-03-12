@@ -48,8 +48,11 @@ public class AdvService {
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
       .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
-  private Cache<Item, Message> messageCache = CacheBuilder.newBuilder()
+  private Cache<Item, Message> trxCache = CacheBuilder.newBuilder()
       .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+
+  private Cache<Item, Message> blockCache = CacheBuilder.newBuilder()
+      .maximumSize(10).expireAfterWrite(1, TimeUnit.MINUTES).recordStats().build();
 
   private ScheduledExecutorService spreadExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -85,16 +88,28 @@ public class AdvService {
     if (invToFetchCache.getIfPresent(item) != null) {
       return false;
     }
-    if (messageCache.getIfPresent(item) != null) {
-      return false;
+
+    if (item.getType().equals(InventoryType.TRX)) {
+      if (trxCache.getIfPresent(item) != null) {
+        return false;
+      }
+    } else {
+      if (blockCache.getIfPresent(item) != null) {
+        return false;
+      }
     }
+
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.put(item, System.currentTimeMillis());
     return true;
   }
 
   public Message getMessage (Item item) {
-    return messageCache.getIfPresent(item);
+    if (item.getType().equals(InventoryType.TRX)) {
+      return trxCache.getIfPresent(item);
+    } else {
+      return blockCache.getIfPresent(item);
+    }
   }
 
   public void broadcast(Message msg) {
@@ -106,15 +121,16 @@ public class AdvService {
       blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->
         invToSpread.remove(transactionCapsule.getTransactionId())
       );
+      blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
+      trxCache.put(item, msg);
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
     }
-    messageCache.put(item, msg);
     synchronized (invToSpread) {
       invToSpread.put(item, System.currentTimeMillis());
     }
