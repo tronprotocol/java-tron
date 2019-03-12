@@ -98,7 +98,7 @@ public class AsyncRPCOperation_sendmany {
     vector<Wallet.SaplingNoteEntry> saplingEntries;
     {
       LOCK2(cs_main, pwalletMain -> cs_wallet);
-      pwalletMain -> GetFilteredNotes(sproutEntries, saplingEntries, fromaddress_, mindepth_);
+      Wallet.GetFilteredNotes(sproutEntries, saplingEntries, fromaddress_, mindepth_);
     }
 
     for (auto entry : saplingEntries) {

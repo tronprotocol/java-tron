@@ -10,8 +10,6 @@ public class RpcWallet {
 //  { "wallet",             "z_getnewaddress",          &z_getnewaddress,          true  },
 //  { "wallet",             "z_sendmany",               &z_sendmany,               false },
 //  { "wallet",             "z_importkey",              &z_importkey,              true  },
-//  { "wallet",             "z_importviewingkey",       &z_importviewingkey,       true  },//和z_importkey类似
-//  { "wallet",             "z_importwallet",           &z_importwallet,           true  },
 
   //查询
 //  { "wallet",             "z_listunspent",            &z_listunspent,            false },
@@ -27,10 +25,12 @@ public class RpcWallet {
 //  { "wallet",             "z_exportkey",              &z_exportkey,              true  },
 //  { "wallet",             "z_exportviewingkey",       &z_exportviewingkey,       true  },
 //  { "wallet",             "z_exportwallet",           &z_exportwallet,           true  },
+//  { "wallet",             "z_importwallet",           &z_importwallet,           true  },
 
 
   public void z_getnewaddress(const UniValue&params, bool fHelp) {
-
+    //seed
+    //AccountCounter
   }
 
   public void z_sendmany() {
@@ -42,6 +42,13 @@ public class RpcWallet {
     sendmany.main_impl();
   }
 
+  //扫描交易，获得address相关的note
+  UniValue z_importkey(const UniValue&params, bool fHelp) {
+    // We want to scan for transactions and notes
+    if (fRescan) {
+      Wallet.ScanForWalletTransactions(chainActive[nRescanHeight], true);
+    }
+  }
 
   //reindex/rescan to find  the old transactions.应该有接口，直接扫描过去的交易
   //这里的received，是从本地存储的note中过滤，不是从fullnode里查。
@@ -60,13 +67,6 @@ public class RpcWallet {
     }
   }
 
-  //扫描交易，获得address相关的note
-  UniValue z_importkey(const UniValue&params, bool fHelp) {
-    // We want to scan for transactions and notes
-    if (fRescan) {
-      Wallet.ScanForWalletTransactions(chainActive[nRescanHeight], true);
-    }
-  }
 
   /**
    * 解密交易相关的信息 RPC call to generate a payment disclosure

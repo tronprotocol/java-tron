@@ -1,7 +1,11 @@
 package org.tron.common.zksnark.sapling;
 
+import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.address.SpendingKey;
 import org.tron.common.zksnark.sapling.note.BaseNote.SaplingNote;
+import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintext;
+import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.SaplingOutPoint;
+import org.tron.common.zksnark.sapling.transaction.OutputDescription;
 
 public class Wallet {
 
@@ -57,7 +61,59 @@ public class Wallet {
       CTransaction &tx) const
 
   {
+    // Protocol Spec: 4.19 Block Chain Scanning (Sapling)
+    for (uint32_t i = 0; i < tx.vShieldedOutput.size(); ++i) {
+        const OutputDescription output = tx.vShieldedOutput[i];
+      for (auto it = mapSaplingFullViewingKeys.begin(); it != mapSaplingFullViewingKeys.end();
+          ++it) {
+        SaplingIncomingViewingKey ivk = it -> first;
+        //使用ivk对output进行解密
+        auto result = SaplingNotePlaintext::decrypt
+        (output.encCiphertext, ivk, output.ephemeralKey, output.cm);·
+        if (!result) {
+          continue;
+        }
 
+
+      }
+
+      bool HaveSpendingKeyForPaymentAddress::
+
+      operator() (const libzcash::SaplingPaymentAddress & zaddr)const
+
+      {
+        libzcash::SaplingIncomingViewingKey ivk;
+        libzcash::SaplingFullViewingKey fvk;
+
+        //zaddr -> ivk,ivk->fvk,fvk
+
+        return m_wallet -> GetSaplingIncomingViewingKey(zaddr, ivk) &&
+            m_wallet -> GetSaplingFullViewingKey(ivk, fvk) &&
+                m_wallet -> HaveSaplingSpendingKey(fvk);
+      }
+
+    }
   }
 
+  public static void GetFilteredNotes(
+      std::vector<SaplingNoteEntry>&saplingEntries,
+      std::set<PaymentAddress>&filterAddresses,
+      int minDepth,
+      int maxDepth,
+      bool ignoreSpent,
+      bool requireSpendingKey,
+      bool ignoreLocked) {
+
+    for (auto & pair :wtx.mapSaplingNoteData){
+      SaplingOutPoint op = pair.first;
+      SaplingNoteData nd = pair.second;
+
+      //每次都需要解密过程？
+      auto maybe_pt = SaplingNotePlaintext::decrypt (
+          wtx.vShieldedOutput[op.n].encCiphertext,
+          nd.ivk,
+          wtx.vShieldedOutput[op.n].ephemeralKey,
+          wtx.vShieldedOutput[op.n].cm);
+    }
+  }
 }
