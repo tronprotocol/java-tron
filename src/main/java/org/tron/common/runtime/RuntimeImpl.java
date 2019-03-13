@@ -21,6 +21,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
@@ -465,7 +466,8 @@ public class RuntimeImpl implements Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
-    deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
+//    byte[] precompiledCode = ProgramPrecompile.getCode(code);
+//    deposit.saveCode(contractAddress, precompiledCode);
 
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
@@ -530,6 +532,8 @@ public class RuntimeImpl implements Runtime {
     checkTokenValueAndId(tokenValue, tokenId);
 
     byte[] code = this.deposit.getCode(contractAddress);
+    logger.info("ysc " + " contract:" + Wallet.encode58Check(contractAddress));
+    logger.info("ysc " + " code:" + Hex.toHexString(code));
     if (isNotEmpty(code)) {
 
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -634,6 +638,7 @@ public class RuntimeImpl implements Runtime {
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
+            deposit.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
           }
         }
 
