@@ -42,7 +42,7 @@ public class WireTrafficStats implements Runnable {
 
   public WireTrafficStats() {
     executor = Executors.newSingleThreadScheduledExecutor(
-        new ThreadFactoryBuilder().setNameFormat("WireTrafficStats-%d").build());
+        new ThreadFactoryBuilder().setNameFormat("WireTrafficStats-%d.").build());
     executor.scheduleAtFixedRate(this, 10, 10, TimeUnit.SECONDS);
   }
 
