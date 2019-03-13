@@ -42,7 +42,7 @@ public class PeerConnection extends Channel {
   @Autowired
   private AdvService advService;
 
-  private int invCacheSize = 500_000;
+  private int invCacheSize = 100_000;
 
   @Setter
   @Getter
@@ -111,16 +111,6 @@ public class PeerConnection extends Channel {
   @Setter
   @Getter
   private boolean needSyncFromUs;
-
-  private void removeIterator(Iterator<Entry<Item, Long>> iterator, long oldestTimestamp) {
-    while (iterator.hasNext()) {
-      Map.Entry entry = iterator.next();
-      Long ts = (Long) entry.getValue();
-      if (ts < oldestTimestamp) {
-        iterator.remove();
-      }
-    }
-  }
 
   public boolean isIdle() {
     return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;

@@ -93,16 +93,16 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     if (type == MessageTypes.TRX) {
+      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
+          throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
+        }
+      }
       int fetchCount = peer.getNodeStatistics().messageStatistics.tronInTrxFetchInvDataElement
           .getCount(10);
       int maxCount = advService.getTrxCount().getCount(60);
       if (fetchCount > maxCount) {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "maxCount: " + maxCount + ", fetchCount: " + fetchCount);
-      }
-      for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
-        if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
-          throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: {}" + hash);
-        }
       }
     } else {
       boolean isAdv = true;

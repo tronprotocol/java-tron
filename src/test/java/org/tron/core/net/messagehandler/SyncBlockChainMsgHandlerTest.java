@@ -8,8 +8,8 @@ import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.peer.PeerConnection;
 
 public class SyncBlockChainMsgHandlerTest {
-  SyncBlockChainMsgHandler handler = new SyncBlockChainMsgHandler();
-  PeerConnection peer = new PeerConnection();
+  private SyncBlockChainMsgHandler handler = new SyncBlockChainMsgHandler();
+  private PeerConnection peer = new PeerConnection();
 
   @Test
   public void testProcessMessage() {

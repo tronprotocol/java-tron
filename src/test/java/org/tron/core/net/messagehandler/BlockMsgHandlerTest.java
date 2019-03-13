@@ -15,10 +15,10 @@ import org.tron.protos.Protocol.Transaction;
 
 public class BlockMsgHandlerTest {
 
-  BlockMsgHandler handler = new BlockMsgHandler();
-  PeerConnection peer = new PeerConnection();
-  BlockCapsule blockCapsule;
-  BlockMessage msg;
+  private BlockMsgHandler handler = new BlockMsgHandler();
+  private PeerConnection peer = new PeerConnection();
+  private BlockCapsule blockCapsule;
+  private BlockMessage msg;
 
   @Test
   public void testProcessMessage() {

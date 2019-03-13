@@ -14,10 +14,10 @@ import org.tron.core.net.peer.PeerConnection;
 
 public class ChainInventoryMsgHandlerTest {
 
-  ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
-  PeerConnection peer = new PeerConnection();
-  ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0l);
-  List<BlockId> blockIds = new ArrayList<>();
+  private ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
+  private PeerConnection peer = new PeerConnection();
+  private ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0l);
+  private List<BlockId> blockIds = new ArrayList<>();
 
   @Test
   public void testProcessMessage() {
