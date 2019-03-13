@@ -116,6 +116,8 @@ dependencies {
 
     compile "org.iq80.leveldb:leveldb:0.7"
 
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
+
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
 
     compile "org.apache.commons:commons-collections4:4.0"
@@ -340,5 +342,6 @@ def binaryRelease(taskName, jarName, mainClass) {
 artifacts {
     archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
             binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))
+            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
 }

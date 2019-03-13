@@ -142,6 +142,7 @@ public class ContractLinkage006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
+    contractAddress = infoById.get().getContractAddress().toByteArray();
     Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
     Long fee = infoById.get().getFee();
     Long energyFee = infoById.get().getReceipt().getEnergyFee();
@@ -191,7 +192,6 @@ public class ContractLinkage006 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address2, 1000000L,
         0, 1, linkage006Key2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    contractAddress = infoById.get().getContractAddress().toByteArray();
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(linkage006Address2,
         blockingStubFull);
     Account info1 = PublicMethed.queryAccount(linkage006Address2, blockingStubFull);
