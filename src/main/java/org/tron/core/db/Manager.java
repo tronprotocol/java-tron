@@ -116,7 +116,11 @@ public class Manager {
   @Autowired
   private TransactionStore transactionStore;
   @Autowired(required = false)
-  private TransactionCache transactionCache;
+  public TransactionCache transactionCache;
+  @Autowired(required = false)
+  private DeferredTransactionCache deferredTransactionCache;
+  @Autowired(required = false)
+  private DeferredTransactionIdIndexCache deferredTransactionIdIndexCache;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -163,12 +167,6 @@ public class Manager {
   // for network
   @Autowired
   private PeersStore peersStore;
-
-  @Autowired
-  private DeferredTransactionStore deferredStore;
-
-  @Autowired
-  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
 
   @Autowired
   private KhaosDatabase khaosDb;
@@ -1540,12 +1538,12 @@ public class Manager {
     return this.transactionStore;
   }
 
-  public DeferredTransactionStore getDeferredTransactionStore() {
-      return this.deferredStore;
+  public DeferredTransactionCache getDeferredTransactionCache() {
+      return this.deferredTransactionCache;
   }
 
-  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
-      return this.deferredTransactionIdIndexStore;
+  public DeferredTransactionIdIndexCache getDeferredTransactionIdIndexCache() {
+      return this.deferredTransactionIdIndexCache;
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
@@ -1817,8 +1815,6 @@ public class Manager {
     closeOneStore(delegatedResourceStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
-    closeOneStore(deferredStore);
-    closeOneStore(deferredTransactionIdIndexStore);
     logger.info("******** end to close db ********");
   }
 
@@ -2035,7 +2031,7 @@ public class Manager {
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule){
     // add deferred transactions to header of pendingTransactions
-    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
+    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionCache()
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
@@ -2085,20 +2081,20 @@ public class Manager {
     deferredTransaction.setExpiration(expiration);
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
-    getDeferredTransactionStore().put(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
+    getDeferredTransactionCache().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
 
-    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
+    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionCache().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
       logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
 
-    getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
+    getDeferredTransactionCache().removeDeferredTransaction(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexCache().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
 
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 

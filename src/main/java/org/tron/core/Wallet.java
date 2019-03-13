@@ -1215,7 +1215,7 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore().getByTransactionId(transactionId);
+    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionCache().getByTransactionId(transactionId);
 
     if (deferredTransactionCapsule != null) {
       return deferredTransactionCapsule.getDeferredTransaction();

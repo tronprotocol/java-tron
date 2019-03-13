@@ -24,4 +24,5 @@ public class TransactionCache extends TronStoreWithRevoking<BytesCapsule> {
   public TransactionCache(@Value("trans-cache") String dbName) {
     super(dbName, TxCacheDB.class);
   }
+
 }

@@ -59,6 +59,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
@@ -168,14 +169,16 @@ public class WalletTest {
 
   private static void addDeferredTransactionToStore(DeferredTransaction deferredTransaction) {
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
-    manager.getDeferredTransactionIdIndexStore()
+    manager.getDeferredTransactionIdIndexCache()
         .put(deferredTransactionCapsule);
-    manager.getDeferredTransactionStore()
+    manager.getDeferredTransactionCache()
         .put(deferredTransactionCapsule);
   }
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    Builder rawData = transaction.getRawData().toBuilder().setDelaySeconds(100);
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().getDeferredStage().toBuilder()
+        .setDelaySeconds(86400).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);

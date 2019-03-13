@@ -25,6 +25,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -72,8 +73,8 @@ public class CancelDeferredTransactionContractActuatorTest {
     initDeferredTransaction();
     deferredTransaction = getBuildDeferredTransaction(transaction);
     deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
-    dbManager.getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
-    dbManager.getDeferredTransactionStore().put(deferredTransactionCapsule);
+    dbManager.getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
+    dbManager.getDeferredTransactionCache().put(deferredTransactionCapsule);
   }
 
   private static void initDeferredTransaction() {
@@ -97,7 +98,9 @@ public class CancelDeferredTransactionContractActuatorTest {
   }
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    Builder rawData = transaction.getRawData().toBuilder().setDelaySeconds(100);
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().getDeferredStage().toBuilder()
+        .setDelaySeconds(86400).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
@@ -149,13 +152,13 @@ public class CancelDeferredTransactionContractActuatorTest {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
         getOwnerAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     Assert.assertNotNull("perfect cancel deferred transaction", key);
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+      key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
       Assert.assertNull("perfect cancel deferred transaction", key);
 
     } catch (ContractValidateException e) {
@@ -170,7 +173,7 @@ public class CancelDeferredTransactionContractActuatorTest {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
         getToAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     try {
       actuator.validate();
 

@@ -570,11 +570,11 @@ public class ManagerTest {
     trx.setDeferredSeconds(100);
     trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     dbManager.pushScheduledTransaction(blockCapsule,  new TransactionCapsule(trx.getData()));
-    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore()
+    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionCache()
         .getByTransactionId(trx.getTransactionId().getByteString());
     Assert.assertNotNull(capsule);
     dbManager.cancelDeferredTransaction(trx.getTransactionId().getByteString());
-    capsule = dbManager.getDeferredTransactionStore()
+    capsule = dbManager.getDeferredTransactionCache()
         .getByTransactionId(trx.getTransactionId().getByteString());
     Assert.assertNull(capsule);
   }

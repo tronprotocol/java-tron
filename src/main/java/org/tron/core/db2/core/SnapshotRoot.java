@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.DeferredTransactionCacheDB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
@@ -30,7 +31,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
         DB<byte[], byte[]> db = (DB<byte[], byte[]>) constructor
             .newInstance((Object) parentName, (Object) name);
         this.db = db;
-      } else if (clz == TxCacheDB.class) {
+      } else if (clz == TxCacheDB.class || clz == DeferredTransactionCacheDB.class) {
         @SuppressWarnings("unchecked")
         DB<byte[], byte[]> db = (DB<byte[], byte[]>) clz.newInstance();
         this.db = db;
