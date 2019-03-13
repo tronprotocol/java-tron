@@ -236,6 +236,11 @@ message ResourceReceipt {
   Transaction.Result.contractResult result = 7;
 }
 
+message DeferredStage {
+  int64 delaySeconds = 1;
+  int32 stage = 2;
+}
+
 message Transaction {
   message Contract {
     enum ContractType {
@@ -329,7 +334,7 @@ message Transaction {
     bytes scripts = 12;
     int64 timestamp = 14;
     int64 fee_limit = 18;
-    int64 delaySeconds = 19;
+    DeferredStage deferredStage = 19;
   }
 
   raw raw_data = 1;
