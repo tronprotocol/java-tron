@@ -358,3 +358,6 @@ Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md)
 * [TRON Protocol](https://github.com/tronprotocol/protocol)
 * [Wallet Client](https://github.com/tronprotocol/wallet-cli)
 * [Wallet Web](https://github.com/tronprotocol/wallet-web)
+
+[![Build Status](https://travis-ci.org/4admin2root/myhomework.svg?branch=master)](https://travis-ci.org/4admin2root/myhomework)
+[![Quality Gate](https://sonarcloud.io/api/badges/gate?key=spring.boot:cloud-simple-helloworld)](https://sonarcloud.io/dashboard/index/spring.boot:cloud-simple-helloworld)
