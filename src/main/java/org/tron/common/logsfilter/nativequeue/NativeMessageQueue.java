@@ -6,7 +6,7 @@ import org.zeromq.ZMQ;
 import java.util.Objects;
 
 public class NativeMessageQueue {
-  ZMQ.Context context = null;
+  ZContext context = null;
   private ZMQ.Socket publisher = null;
   private static NativeMessageQueue instance;
   private static final int DEFAULT_BIND_PORT = 5555;
@@ -21,17 +21,22 @@ public class NativeMessageQueue {
       return instance;
   }
 
-  public void start(int bindPort) {
-    try (ZContext ctx = new ZContext()) {
-      ZMQ.Socket publisher = ctx.createSocket(SocketType.PUB);
+  public boolean start(int bindPort) {
+    context = new ZContext();
+    publisher = context.createSocket(SocketType.PUB);
 
-      if (bindPort == 0) {
-        bindPort = DEFAULT_BIND_PORT;
-      }
-
-      String bindAddress = String.format("tcp://*:%d", bindPort);
-      publisher.bind(bindAddress);
+    if (Objects.isNull(publisher)){
+      return false;
     }
+
+    if (bindPort == 0) {
+      bindPort = DEFAULT_BIND_PORT;
+    }
+
+    String bindAddress = String.format("tcp://*:%d", bindPort);
+    publisher.bind(bindAddress);
+
+    return true;
   }
 
   public void stop(){
@@ -40,12 +45,12 @@ public class NativeMessageQueue {
       }
 
       if (Objects.nonNull(context)){
-          context.term();
+          context.close();
       }
   }
 
   public void publishTrigger(String data, String topic){
-    if (Objects.isNull(publisher)) {
+    if (Objects.isNull(publisher) || Objects.isNull(context.isClosed()) || context.isClosed()) {
       return;
     }
 
