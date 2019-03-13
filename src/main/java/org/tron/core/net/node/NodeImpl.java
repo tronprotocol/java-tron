@@ -344,7 +344,11 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       synchronized (advObjToSpread) {
         advObjToSpread.put(msg.getMessageId(), type);
       }
+<<<<<<< HEAD
     }catch (Exception e) {
+=======
+    } catch (Exception e) {
+>>>>>>> 35e3d19c0283424e4ea83558c23773bb465e034d
       logger.error("Broadcast message failed, type: {}, reason: {}", msg.getType(), e.getMessage());
     }
   }
