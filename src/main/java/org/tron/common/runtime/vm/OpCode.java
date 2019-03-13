@@ -130,6 +130,18 @@ public enum OpCode {
      * (0x1a) Retrieve single byte from word
      */
     BYTE(0x1a, 2, 1, OpCode.Tier.VeryLowTier),
+    /**
+     * (0x1b) Shift left
+     */
+    SHL(0x1b, 2, 1, OpCode.Tier.VeryLowTier),
+    /**
+     * (0x1c) Logical shift right
+     */
+    SHR(0x1c, 2, 1, OpCode.Tier.VeryLowTier),
+    /**
+     * (0x1d) Arithmetic shift right
+     */
+    SAR(0x1d, 2, 1, OpCode.Tier.VeryLowTier),
 
     /*  Cryptographic Operations    */
 
