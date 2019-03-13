@@ -1298,7 +1298,7 @@ public class Manager {
 
     if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
-      oldTrxCap.getOriginDeferredTransaction();
+      oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
       cancelDeferredTransaction(oldTrxCap.getTransactionId().getByteString());
     }
     return true;
@@ -2039,7 +2039,6 @@ public class Manager {
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
       pendingTransactions.add(0, trxCapsule);
     }
 
@@ -2050,7 +2049,7 @@ public class Manager {
   public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
     Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
     // new trx id to represent the second trx record
-    transactionCapsule.generateNewDeferredTransactionId();
+    transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
 

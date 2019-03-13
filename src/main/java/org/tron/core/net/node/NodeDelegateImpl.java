@@ -122,9 +122,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
-    if (trx.getDeferredSeconds() > 0) {
-      trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    }
     
     try {
       dbManager.pushTransaction(trx);

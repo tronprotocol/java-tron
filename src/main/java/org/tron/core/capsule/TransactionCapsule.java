@@ -82,6 +82,7 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -105,13 +106,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private TransactionTrace trxTrace;
-
-  // generateTransactionId is used to save new generating transaction in deferredTransaction
-  private long referenceBlockNumber = -1;
-
-  @Getter
-  @Setter
-  private int deferredStage = Constant.NORMALTRANSACTION;
 
   /**
    * constructor TransactionCapsule.
@@ -209,28 +203,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
         .setRefBlockHash(ByteString.copyFrom(ByteArray.subArray(blockHash, 8, 16)))
         .setRefBlockBytes(ByteString.copyFrom(ByteArray.subArray(refBlockNum, 6, 8)))
-        .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  // only used for deferred_transaction
-  // getting new transactionId for deferredTransaction
-  public void generateNewDeferredTransactionId() {
-    if (referenceBlockNumber == -1) {
-      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
-    }
-    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
-        .setRefBlockNum(referenceBlockNumber + 1)
-        .build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public void getOriginDeferredTransaction() {
-    if (referenceBlockNumber == -1) {
-      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
-    }
-    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
-        .setRefBlockNum(referenceBlockNumber - 1)
         .build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
@@ -632,10 +604,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
 
     Transaction originalTransaction = null;
-    if (this.transaction.getRawData().getDelaySeconds() != 0
-        && this.transaction.getRawData().getRefBlockNum() != 0) {
+    if (getDeferredSeconds() > 0 && getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       originalTransaction = this.transaction;
-      this.getOriginDeferredTransaction();
+      this.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     }
 
     if (this.transaction.getSignatureCount() <= 0
@@ -830,15 +801,27 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public long getDeferredSeconds(){
-    return this.transaction.getRawData().getDelaySeconds();
+    return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
   }
 
   public void setDeferredSeconds(long delaySeconds) {
-    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
-        .setDelaySeconds(delaySeconds)
-        .build();
+    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
+
+  public void setDeferredStage(int stage) {
+    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setStage(stage).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public int getDeferredStage() {
+    return this.transaction.getRawData().getDeferredStage().getStage();
+  }
+
   public ByteString getToAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){

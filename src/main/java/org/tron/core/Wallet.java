@@ -416,9 +416,6 @@ public class Wallet {
     if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS) {
       return builder.setResult(false).setCode(response_code.TOO_LONG_DEFERRED_TRANSACTION_DELAYTIME).build();
     }
-    if (trx.getDeferredSeconds() > 0) {
-      trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    }
 
     Message message = new TransactionMessage(signaturedTransaction);
 
@@ -1227,7 +1224,7 @@ public class Wallet {
     TransactionCapsule transactionCapsule = dbManager.getTransactionStore().getUnchecked(transactionId.toByteArray());
 
     if (Objects.nonNull(transactionCapsule)) {
-      transactionCapsule.generateNewDeferredTransactionId();
+      transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
       TransactionCapsule generateTransaction = dbManager.getTransactionStore()
           .getUnchecked(transactionCapsule.getTransactionId().getBytes());
       if (Objects.nonNull(generateTransaction)) {
