@@ -1,8 +1,8 @@
 package org.tron.common.logsfilter.nativequeue;
 
 import org.zeromq.SocketType;
+import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-
 import java.util.Objects;
 
 public class NativeMessageQueue {
@@ -10,7 +10,6 @@ public class NativeMessageQueue {
   private ZMQ.Socket publisher = null;
   private static NativeMessageQueue instance;
   private static final int DEFAULT_BIND_PORT = 5555;
-  private int bindPort = 0;
   public static NativeMessageQueue getInstance() {
       if (Objects.isNull(instance)) {
           synchronized (NativeMessageQueue.class) {
@@ -22,16 +21,17 @@ public class NativeMessageQueue {
       return instance;
   }
 
-  public void start(int bindPort){
-      context = ZMQ.context(1);
-      publisher = context.socket(SocketType.PUB);
+  public void start(int bindPort) {
+    try (ZContext ctx = new ZContext()) {
+      ZMQ.Socket publisher = ctx.createSocket(SocketType.PUB);
 
-      if (bindPort == 0){
+      if (bindPort == 0) {
         bindPort = DEFAULT_BIND_PORT;
       }
 
       String bindAddress = String.format("tcp://*:%d", bindPort);
       publisher.bind(bindAddress);
+    }
   }
 
   public void stop(){
