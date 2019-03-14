@@ -25,6 +25,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -97,7 +98,9 @@ public class CancelDeferredTransactionContractActuatorTest {
   }
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    Builder rawData = transaction.getRawData().toBuilder().setDelaySeconds(100);
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(100).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);

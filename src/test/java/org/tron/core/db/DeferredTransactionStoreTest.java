@@ -14,6 +14,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -75,7 +76,9 @@ public class DeferredTransactionStoreTest {
   }
 
   private static DeferredTransaction buildDeferredTransaction(Transaction transaction) {
-    Builder rawData = transaction.getRawData().toBuilder().setDelaySeconds(86400);
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(86400).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);

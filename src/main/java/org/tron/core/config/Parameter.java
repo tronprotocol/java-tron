@@ -123,7 +123,7 @@ public interface Parameter {
     ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7),
-    VERSIONB_4_0(8);
+    VERSION_4_0(8);
     @Getter
     private int value;
 
