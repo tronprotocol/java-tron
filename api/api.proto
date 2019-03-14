@@ -604,6 +604,16 @@ service Wallet {
     };
   }
 
+  rpc GetDeferredTransactionInfoById (BytesMessage) returns (TransactionInfo) {
+      option (google.api.http) = {
+        post: "/wallet/getdeferredtransactioninfobyid"
+        body: "*"
+        additional_bindings {
+          get: "/wallet/getdeferredtransactioninfobyid"
+        }
+      };
+    }
+
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
     option (google.api.http) = {
       post: "/wallet/accountpermissionupdate"
@@ -759,6 +769,17 @@ service WalletSolidity {
       }
     };
   }
+
+  rpc GetDeferredTransactionInfoById (BytesMessage) returns (TransactionInfo) {
+    option (google.api.http) = {
+      post: "/walletsolidity/getdeferredtransactioninfobyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/getdeferredtransactioninfobyid"
+      }
+    };
+  }
+
   //Warning: do not invoke this interface provided by others.
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
     option (google.api.http) = {
