@@ -27,6 +27,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private TransactionSignServlet transactionSignServlet;
   @Autowired
+  private TransactionSetDelaySecondsServlet transactionSetDelaySecondsServlet;
+  @Autowired
   private UpdateAccountServlet updateAccountServlet;
   @Autowired
   private VoteWitnessAccountServlet voteWitnessAccountServlet;
@@ -184,6 +186,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
       context.addServlet(new ServletHolder(transactionSignServlet), "/gettransactionsign");
+      context.addServlet(new ServletHolder(transactionSetDelaySecondsServlet), "/settransactiondeferredseconds");
       context.addServlet(new ServletHolder(updateAccountServlet), "/updateaccount");
       context.addServlet(new ServletHolder(voteWitnessAccountServlet), "/votewitnessaccount");
       context.addServlet(new ServletHolder(createAssetIssueServlet), "/createassetissue");
