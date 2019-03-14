@@ -565,7 +565,7 @@ public class PublicMethed {
       return false;
     }
 
-    Long afterBlockNum = 0L;
+    /*    Long afterBlockNum = 0L;
 
     while (afterBlockNum < beforeBlockNum) {
       Protocol.Block currentBlock1 = blockingStubFull.getNowBlock(GrpcAPI
@@ -578,7 +578,7 @@ public class PublicMethed {
     logger.info(Long.toString(afterFronzen.getFrozen(0).getFrozenBalance()));
     logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen"
         + afterFrozenBalance.toString());
-    Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);
+    Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);*/
     return true;
   }
 
