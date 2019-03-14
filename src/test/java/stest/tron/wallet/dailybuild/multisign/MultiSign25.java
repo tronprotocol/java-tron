@@ -122,7 +122,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(testKey002);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
 
     String accountPermissionJson = "{\"owner_permission\":{\"type\":0,"
         + "\"permission_name\":\"owner1\",\"threshold\":2,\"keys\":["
@@ -202,7 +202,7 @@ public class MultiSign25 {
 
     PublicMethedForMutiSign
         .recoverAccountPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction2.toByteArray()));
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction2, blockingStubFull);
     logger.info("After recover permission TransactionSignWeight info :\n" + txWeight);
@@ -238,7 +238,7 @@ public class MultiSign25 {
     Integer[] ints = {ContractType.AccountPermissionUpdateContract_VALUE};
     String operations = PublicMethedForMutiSign.getOperations(ints);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -355,7 +355,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     Integer[] ints = {ContractType.TransferContract_VALUE};
     String operations = PublicMethedForMutiSign.getOperations(ints);
 
@@ -414,7 +414,7 @@ public class MultiSign25 {
     Assert.assertEquals(3, txWeight.getCurrentWeight());
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction1, blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction1.toByteArray()));
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction1, blockingStubFull);
     logger.info("After broadcast TransactionSignWeight info :\n" + txWeight);
@@ -423,6 +423,7 @@ public class MultiSign25 {
 
     PublicMethedForMutiSign
         .recoverAccountPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction1.toByteArray()));
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction1, blockingStubFull);
     logger.info("After recover permission TransactionSignWeight info :\n" + txWeight);
@@ -430,9 +431,12 @@ public class MultiSign25 {
     Assert.assertEquals(0, txWeight.getCurrentWeight());
     Assert.assertThat(txWeight.getResult().getMessage(),
         containsString("but it is not contained of permission"));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
     long balance1 = test001AddressAccount1.getBalance();
-    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + multiSignFee);
+    Assert.assertEquals(balance - balance1, 2 * updateAccountPermissionFee + 1000_000);
   }
 
   @Test(enabled = true, description = "Get sign for not sign transaction")
@@ -455,7 +459,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -545,7 +549,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -643,7 +647,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":5,\"keys\":["
@@ -735,7 +739,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(testKey002);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":2,\"keys\":["
@@ -828,7 +832,7 @@ public class MultiSign25 {
 
     PublicMethed.printAddress(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     logger.info("** created an empty transaction");
 
     Contract.AccountPermissionUpdateContract.Builder builder =
@@ -885,7 +889,7 @@ public class MultiSign25 {
     ownerPermissionKeys.add(ownerKey);
     activePermissionKeys.add(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
-    long balance = test001AddressAccount.getBalance();
+    final long balance = test001AddressAccount.getBalance();
     String accountPermissionJson =
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner1\","
             + "\"threshold\":1,\"keys\":["

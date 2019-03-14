@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
@@ -320,7 +321,7 @@ public class SnapshotManager implements RevokingDatabase {
     tmpLevelDbDataSource.updateByBatch(batch.entrySet().stream()
             .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
             .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
-        new WriteOptions().sync(Args.getInstance().getStorage().isDbSync()));
+        WriteOptionsWrapper.getInstance().sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   private void deleteCheckPoint() {
@@ -331,7 +332,7 @@ public class SnapshotManager implements RevokingDatabase {
      }
    }
 
-   tmpLevelDbDataSource.updateByBatch(hmap,  new WriteOptions()
+   tmpLevelDbDataSource.updateByBatch(hmap,  WriteOptionsWrapper.getInstance()
        .sync(Args.getInstance().getStorage().isDbSync()));
   }
 
