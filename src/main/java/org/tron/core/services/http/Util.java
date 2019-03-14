@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -343,6 +344,13 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
+
+    if (Objects.nonNull(transaction.getRawData().getDeferredStage()) &&
+        transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
+      jsonTransaction.put("delaySeconds", transaction.getRawData().getDeferredStage().getDelaySeconds());
+      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
+    }
+
     return jsonTransaction;
   }
 

@@ -806,7 +806,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public void setDeferredSeconds(long delaySeconds) {
     DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds).build();
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds).setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
     Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
