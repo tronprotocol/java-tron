@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.solidity.GetDeferredTransactionInfoByIdSolidityServlet;
 
 @Component
 @Slf4j(topic = "API")
@@ -76,7 +77,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdServlet getTransactionByIdServlet;
   @Autowired
+  private GetDeferredTransactionByIdServlet getDeferredTransactionByIdServlet;
+  @Autowired
   private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
+  @Autowired
+  private GetDeferredTransactionInfoByIdServlet getDeferredTransactionInfoByIdServlet;
   @Autowired
   private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
   @Autowired
@@ -206,8 +211,11 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+      context.addServlet(new ServletHolder(getDeferredTransactionByIdServlet),"/getdeferredtransactionbyid");
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
+      context.addServlet(
+          new ServletHolder(getDeferredTransactionInfoByIdServlet), "getdeferredtransactioninfobyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
           "/gettransactioncountbyblocknum");

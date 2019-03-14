@@ -1255,6 +1255,27 @@ public class Wallet {
     return null;
   }
 
+  public TransactionInfo getDeferredTransactionInfoById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    try {
+      TransactionCapsule transactionCapsule = dbManager.getTransactionStore().getUnchecked(transactionId.toByteArray());
+      if (Objects.nonNull(transactionCapsule)) {
+        transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+        TransactionInfoCapsule transactionInfo = dbManager.getTransactionHistoryStore()
+            .get(transactionId.toByteArray());
+        if (Objects.nonNull(transactionInfo)) {
+          return transactionInfo.getInstance();
+        }
+      }
+
+    } catch (StoreException e) {
+    }
+
+    return null;
+  }
+
   public Return cancelDeferredTransaction(ByteString transactionId) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
 

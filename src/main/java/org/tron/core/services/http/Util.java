@@ -47,6 +47,7 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
@@ -159,6 +160,13 @@ public class Util {
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
     return Hash.sha3omit12(combined);
+  }
+
+  public static String printDeferredTransactionToJSON(DeferredTransaction deferredTransaction) {
+    String string = JsonFormat.printToString(deferredTransaction);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    jsonObject.put("transaction", printTransactionToJSON(deferredTransaction.getTransaction()));
+    return jsonObject.toJSONString();
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction) {
