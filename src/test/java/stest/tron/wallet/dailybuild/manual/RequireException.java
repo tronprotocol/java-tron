@@ -94,9 +94,10 @@ public class RequireException {
     testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
-    PublicMethed
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
 
     String contractName = "TestRequireContract";
     String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"

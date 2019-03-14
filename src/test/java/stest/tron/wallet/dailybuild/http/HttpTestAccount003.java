@@ -60,13 +60,12 @@ public class HttpTestAccount003 {
   public void test1UpdateAccount() {
     response = HttpMethed.sendCoin(httpnode, fromAddress, updateAccountAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.updateAccount(httpnode, updateAccountAddress,updateAccountName,
         updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.getAccount(httpnode, updateAccountAddress);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -86,7 +85,7 @@ public class HttpTestAccount003 {
     response = HttpMethed.freezeBalance(httpnode,updateAccountAddress,40000000L,0,
         0,updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     voteElement.addProperty("vote_address",ByteArray.toHexString(witness1Address));
     voteElement.addProperty("vote_count",11);
     voteKeys.add(voteElement);
@@ -100,7 +99,7 @@ public class HttpTestAccount003 {
     response = HttpMethed.voteWitnessAccount(httpnode,updateAccountAddress,voteKeys,
         updateAccountKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, updateAccountAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -126,7 +125,6 @@ public class HttpTestAccount003 {
   public void test4UpdateWitness() {
     response = HttpMethed.updateWitness(httpnode,witness1Address,updateUrl,witnessKey001);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.listwitnesses(httpnode);
@@ -144,7 +142,7 @@ public class HttpTestAccount003 {
     PublicMethed.printAddress(newAccountKey);
     response = HttpMethed.createAccount(httpnode,fromAddress,newAccountAddress,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.getAccount(httpnode, newAccountAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -158,9 +156,8 @@ public class HttpTestAccount003 {
   public void test6CreateWitness() {
     response = HttpMethed.sendCoin(httpnode,fromAddress,newAccountAddress,createWitnessAmount,testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
-    PublicMethed.printAddress(newAccountKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
+    PublicMethed.printAddress(newAccountKey);
 
     response = HttpMethed.createWitness(httpnode,newAccountAddress,updateUrl);
     responseContent = HttpMethed.parseResponseContent(response);

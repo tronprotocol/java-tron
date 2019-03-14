@@ -57,47 +57,47 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "Create asset issue by http")
   public void test1CreateExchange() {
-    response = HttpMethed.sendCoin(httpnode,fromAddress,exchangeOwnerAddress,amount,testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, exchangeOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-    response = HttpMethed.sendCoin(httpnode,fromAddress,asset2Address,amount,testKey002);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Create an asset issue
-    response = HttpMethed.assetIssue(httpnode,exchangeOwnerAddress,name,name,totalSupply,1,1,
-        System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
-        2,3,description,url,1000L, 1000L,exchangeOwnerKey);
+    response = HttpMethed.assetIssue(httpnode, exchangeOwnerAddress, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
+        2, 3, description, url, 1000L, 1000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-    response = HttpMethed.assetIssue(httpnode,asset2Address,name,name,totalSupply,1,1,
-        System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
-        2,3,description,url,1000L, 1000L,asset2Key);
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed.assetIssue(httpnode, asset2Address, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
+        2, 3, description, url, 1000L, 1000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
-    response = HttpMethed.getAccount(httpnode,exchangeOwnerAddress);
+    response = HttpMethed.getAccount(httpnode, exchangeOwnerAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId1 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId1) > 1000000);
 
-    response = HttpMethed.getAccount(httpnode,asset2Address);
+    response = HttpMethed.getAccount(httpnode, asset2Address);
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId2 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
 
-    HttpMethed.waitToProduceOneBlock(httpnode);
 
-    response = HttpMethed.transferAsset(httpnode,asset2Address,exchangeOwnerAddress,assetIssueId2,
-        10000000000L,asset2Key);
+    response = HttpMethed
+        .transferAsset(httpnode, asset2Address, exchangeOwnerAddress, assetIssueId2,
+            10000000000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Create exchange.
-    response = HttpMethed.exchangeCreate(httpnode,exchangeOwnerAddress,assetIssueId1,
-        1000000L,assetIssueId2,1000000L,exchangeOwnerKey);
+    response = HttpMethed.exchangeCreate(httpnode, exchangeOwnerAddress, assetIssueId1,
+        1000000L, assetIssueId2, 1000000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
   }
 
@@ -106,7 +106,6 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "List exchanges by http")
   public void test2ListExchange() {
-    HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.listExchanges(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -120,7 +119,7 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "GetExchangeById by http")
   public void test3GetExchangeById() {
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
@@ -137,14 +136,14 @@ public class HttpTestExchange001 {
   @Test(enabled = true, description = "Inject exchange by http")
   public void test4InjectExchange() {
     //Inject exchange.
-    response = HttpMethed.exchangeInject(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-        300L,exchangeOwnerKey);
+    response = HttpMethed.exchangeInject(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId1,
+        300L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterInjectBalance = responseContent.getLong("first_token_balance");
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     logger.info("afterInjectBalance" + afterInjectBalance);
@@ -158,14 +157,15 @@ public class HttpTestExchange001 {
   @Test(enabled = true, description = "Withdraw exchange by http")
   public void test5WithdrawExchange() {
     //Withdraw exchange.
-    response = HttpMethed.exchangeWithdraw(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-        170L,exchangeOwnerKey);
+    response = HttpMethed
+        .exchangeWithdraw(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId1,
+            170L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterWithdrawBalance = responseContent.getLong("first_token_balance");
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(beforeWithdrawBalance - afterWithdrawBalance == 170L);
@@ -178,14 +178,14 @@ public class HttpTestExchange001 {
   @Test(enabled = true, description = "Transaction exchange by http")
   public void test6TransactionExchange() {
     //Transaction exchange.
-    response = HttpMethed.exchangeTransaction(httpnode,exchangeOwnerAddress,exchangeId,
-        assetIssueId1, 100L,1L,exchangeOwnerKey);
+    response = HttpMethed.exchangeTransaction(httpnode, exchangeOwnerAddress, exchangeId,
+        assetIssueId1, 100L, 1L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     afterTransactionBalance = responseContent.getLong("first_token_balance");
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(afterTransactionBalance - beforeTransactionBalance >= 1);
@@ -197,14 +197,27 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "Get asset issue list by name by http")
   public void test7GetAssetIssueListByName() {
-    response = HttpMethed.getAssetIssueListByName(httpnode,name);
+    response = HttpMethed.getAssetIssueListByName(httpnode, name);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
     Assert.assertTrue(jsonArray.size() >= 2);
   }
 
+  /**
+   * * constructor. *
+   */
+  @Test(enabled = true, description = "Get paginated exchange list by http")
+  public void test8GetPaginatedExchangeList() {
 
+    response = HttpMethed.getPaginatedExchangeList(httpnode, 0, 1);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("exchanges"));
+    Assert.assertTrue(jsonArray.size() == 1);
+  }
 
 
   /**
