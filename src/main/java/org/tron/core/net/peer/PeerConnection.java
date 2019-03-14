@@ -120,7 +120,7 @@ public class PeerConnection extends Channel {
     msgQueue.sendMessage(message);
   }
 
-  public void onConnectPeer() {
+  public void onConnect() {
     if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
       setTronState(TronState.SYNCING);
       syncService.startSync(this);
@@ -129,7 +129,7 @@ public class PeerConnection extends Channel {
     }
   }
 
-  public void onDisconnectPeer() {
+  public void onDisconnect() {
     syncService.onDisconnect(this);
     advService.onDisconnect(this);
     advInvReceive.cleanUp();

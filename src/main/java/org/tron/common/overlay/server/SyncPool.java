@@ -123,12 +123,6 @@ public class SyncPool {
     });
   }
 
-  // for test only
-  public void addActivePeers(PeerConnection p) {
-    activePeers.add(p);
-  }
-
-
   synchronized void logActivePeers() {
 
     logger.info("-------- active connect channel {}", activePeersCount.get());
@@ -178,7 +172,7 @@ public class SyncPool {
       }
       activePeers.add(peerConnection);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-      peerConnection.onConnectPeer();
+      peerConnection.onConnect();
     }
   }
 
@@ -191,7 +185,7 @@ public class SyncPool {
         activePeersCount.decrementAndGet();
       }
       activePeers.remove(peerConnection);
-      peerConnection.onDisconnectPeer();
+      peerConnection.onDisconnect();
     }
   }
 
