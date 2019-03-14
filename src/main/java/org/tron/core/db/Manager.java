@@ -1267,7 +1267,7 @@ public class Manager {
 
 
   /**
-   * Get the block id from the number.
+   * Get  the block id from the number.
    */
   public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
     return this.blockIndexStore.get(num);
