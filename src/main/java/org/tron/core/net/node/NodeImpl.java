@@ -648,7 +648,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           final boolean[] isFound = {false};
           getActivePeer().stream()
               .filter(
-                  peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch().peek()
+                  peer -> !peer.getSyncBlockToFetch().isEmpty() && peer.getSyncBlockToFetch()
+                      .peek()
                       .equals(msg.getBlockId()))
               .forEach(peer -> {
                 peer.getSyncBlockToFetch().pop();
@@ -665,7 +666,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
           }
         }
       });
-
     }
   }
 
@@ -1432,18 +1432,37 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
   }
 
+  private void shutdownExecutor(ExecutorService exec, String name) {
+    exec.shutdown();
+    try {
+      if (!exec.awaitTermination(10, TimeUnit.SECONDS)) {
+        exec.shutdownNow();
+      }
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } finally {
+      if (!exec.isTerminated()) {
+        logger.warn("fail to shutdown {} ", name);
+      } else {
+        logger.info("success to shutdown {} ", name);
+      }
+    }
+  }
+
   public void shutDown() {
-    logExecutor.shutdown();
-    trxsHandlePool.shutdown();
-    disconnectInactiveExecutor.shutdown();
-    cleanInventoryExecutor.shutdown();
-    broadPool.shutdown();
+    logger.info("begin shutdown nodeimpl");
+    shutdownExecutor(logExecutor, "logExecutor");
+    shutdownExecutor(trxsHandlePool, "trxsHandlePool");
+    shutdownExecutor(disconnectInactiveExecutor, "disconnectInactiveExecutor");
+    shutdownExecutor(cleanInventoryExecutor, "cleanInventoryExecutor");
+    shutdownExecutor(broadPool, "broadPool");
+    shutdownExecutor(fetchSyncBlocksExecutor, "fetchSyncBlocksExecutor");
+    shutdownExecutor(handleSyncBlockExecutor, "handleSyncBlockExecutor");
     loopSyncBlockChain.shutdown();
     loopFetchBlocks.shutdown();
     loopAdvertiseInv.shutdown();
-    fetchSyncBlocksExecutor.shutdown();
-    handleSyncBlockExecutor.shutdown();
   }
+
 
   private void disconnectPeer(PeerConnection peer, ReasonCode reason) {
     peer.setSyncFlag(false);

@@ -40,6 +40,7 @@ public class HttpTestSendCoin001 {
     public void test1SendCoin() {
         response = HttpMethed.sendCoin(httpnode, fromAddress, receiverAddress, amount, testKey002);
         Assert.assertTrue(HttpMethed.verificationResult(response));
+        HttpMethed.waitToProduceOneBlock(httpnode);
         Assert.assertEquals(HttpMethed.getBalance(httpnode, receiverAddress), amount);
     }
 

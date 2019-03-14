@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
@@ -13,7 +14,7 @@ import org.tron.core.db.common.iterator.DBIterator;
 public class LevelDB implements DB<byte[], byte[]>, Flusher {
   @Getter
   private LevelDbDataSourceImpl db;
-  private WriteOptions writeOptions = new WriteOptions()
+  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
       .sync(Args.getInstance().getStorage().isDbSync());
 
   public LevelDB(String parentName, String name) {
