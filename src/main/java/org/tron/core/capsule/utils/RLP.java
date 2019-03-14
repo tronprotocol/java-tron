@@ -42,6 +42,10 @@ import org.tron.common.utils.Value;
  * this article, "string" will be used as a synonym for "a certain number of bytes of binary data";
  * no special encodings are used and no knowledge about the content of the strings is implied.
  * <p>
+ * See: https://github.com/ethereum/wiki/wiki/%5BEnglish%5D-RLP
+ *
+ * @author Roman Mandeleil
+ * @since 01.04.2014
  */
 public class RLP {
 
