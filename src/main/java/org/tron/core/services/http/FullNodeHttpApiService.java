@@ -218,7 +218,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(
-          new ServletHolder(getDeferredTransactionInfoByIdServlet), "getdeferredtransactioninfobyid");
+          new ServletHolder(getDeferredTransactionInfoByIdServlet), "/getdeferredtransactioninfobyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
           "/gettransactioncountbyblocknum");

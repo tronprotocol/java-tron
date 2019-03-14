@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -122,7 +121,6 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
-    
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
