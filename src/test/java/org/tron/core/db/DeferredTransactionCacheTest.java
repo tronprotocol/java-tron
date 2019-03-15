@@ -94,6 +94,8 @@ public class DeferredTransactionCacheTest {
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
         buildDeferredTransaction(trx.getInstance()));
     deferredTransactionCache.put(deferredTransactionCapsule);
+
+
     deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
 
     dbManager.getDeferredTransactionCache().getScheduledTransactions(System.currentTimeMillis());

@@ -1363,7 +1363,7 @@ public class Manager {
     long postponedDeferredTrxCount = 0;
     long processedDeferredTrxCount = 0;
     long totalDeferredTransactionProcessTime = 0;
-    addDeferredTransactionToPending(blockCapsule);
+    //addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();

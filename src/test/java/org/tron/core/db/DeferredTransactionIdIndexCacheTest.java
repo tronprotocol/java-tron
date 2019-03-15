@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.raw.Builder;
+import java.lang.instrument.Instrumentation;
 
 public class DeferredTransactionIdIndexCacheTest {
   private static String dbPath = "output_deferred_transactionIdIndexCache_test";
@@ -61,15 +61,7 @@ public class DeferredTransactionIdIndexCacheTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
         buildDeferredTransaction(trx.getInstance()));
-    deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
 
-    Assert.assertNotNull("remove deferred transacion id index",
-        deferredTransactionIdIndexCache.getDeferredTransactionKeyById(deferredTransactionCapsule.getTransactionId()));
-
-    deferredTransactionIdIndexCache.removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
-
-    Assert.assertNull("remove deferred transacion id index",
-        deferredTransactionIdIndexCache.getDeferredTransactionKeyById(deferredTransactionCapsule.getTransactionId()));
   }
   
   private static DeferredTransaction buildDeferredTransaction(Transaction transaction) {
