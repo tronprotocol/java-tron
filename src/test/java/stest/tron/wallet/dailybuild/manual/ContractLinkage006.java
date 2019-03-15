@@ -139,7 +139,6 @@ public class ContractLinkage006 {
         "", maxFeeLimit, 1000L, 100, null, linkage006Key,
         linkage006Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
@@ -216,7 +215,7 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal1 = infoById1.get().getReceipt().getEnergyUsageTotal();
@@ -261,6 +260,7 @@ public class ContractLinkage006 {
   @Test(enabled = true, description = "Boundary value for contract stack"
       + "(Trigger 64 level can't success)")
   public void teststackOutByContract2() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"64\"";
     AccountResourceMessage resourceInfo2 = PublicMethed.getAccountResource(linkage006Address2,
         blockingStubFull);
@@ -284,7 +284,7 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         1000, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     Long energyUsageTotal2 = infoById2.get().getReceipt().getEnergyUsageTotal();
