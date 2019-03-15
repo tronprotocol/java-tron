@@ -130,8 +130,7 @@ public class FileUtil {
     if (!file.exists()) {
       try {
         file.createNewFile();
-      } catch (IOException e) {
-        e.printStackTrace();
+      } catch (Exception e) {
         return false;
       }
     }

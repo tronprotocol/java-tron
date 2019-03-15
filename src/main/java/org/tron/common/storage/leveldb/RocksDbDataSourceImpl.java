@@ -482,7 +482,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public void backup(String dir) throws RocksDBException {
-    Checkpoint.create(database).createCheckpoint(dir + this.getDBName());
+    Checkpoint cp = Checkpoint.create(database);
+    cp.createCheckpoint(dir + this.getDBName());
   }
 
   public boolean deleteDbBakPath(String dir) {
