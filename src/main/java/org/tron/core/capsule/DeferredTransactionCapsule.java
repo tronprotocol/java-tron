@@ -30,7 +30,7 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
 
     @Override
     public DeferredTransaction getInstance() {
-        return null;
+        return deferredTransaction;
     }
 
     public DeferredTransactionCapsule(DeferredTransaction deferredTransaction){
