@@ -98,8 +98,8 @@ public class CancelDeferredTransactionContractActuatorTest {
   }
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    DeferredStage deferredStage = transaction.getRawData().toBuilder().getDeferredStage().toBuilder()
-        .setDelaySeconds(86400).build();
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(100).build();
     Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();

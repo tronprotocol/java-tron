@@ -18,9 +18,11 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
@@ -161,6 +163,17 @@ public class TransactionUtil {
 
     return true;
   }
+
+  public static Transaction setTransactionDelaySeconds(Transaction transaction, long delaySeconds) {
+    if (delaySeconds <= 0) return transaction;
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
+        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
+
   /**
    * Get sender.
    */

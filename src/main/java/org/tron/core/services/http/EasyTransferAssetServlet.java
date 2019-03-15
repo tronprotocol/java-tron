@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -53,6 +54,13 @@ public class EasyTransferAssetServlet extends HttpServlet {
       TransactionCapsule transactionCapsule;
       transactionCapsule = wallet
           .createTransactionCapsule(builder.build(), ContractType.TransferAssetContract);
+
+      JSONObject jsonObject = JSONObject.parseObject(input);
+      long delaySeconds = jsonObject.getLong("delaySeconds");
+      if (delaySeconds > 0) {
+        transactionCapsule.setDeferredSeconds(delaySeconds);
+      }
+
       transactionCapsule.sign(privateKey);
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());

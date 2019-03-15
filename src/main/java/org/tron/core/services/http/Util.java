@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -47,6 +48,7 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
@@ -159,6 +161,13 @@ public class Util {
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
     return Hash.sha3omit12(combined);
+  }
+
+  public static String printDeferredTransactionToJSON(DeferredTransaction deferredTransaction) {
+    String string = JsonFormat.printToString(deferredTransaction);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    jsonObject.put("transaction", printTransactionToJSON(deferredTransaction.getTransaction()));
+    return jsonObject.toJSONString();
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction) {
@@ -335,6 +344,13 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
+
+    if (Objects.nonNull(transaction.getRawData().getDeferredStage()) &&
+        transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
+      jsonTransaction.put("delaySeconds", transaction.getRawData().getDeferredStage().getDelaySeconds());
+      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
+    }
+
     return jsonTransaction;
   }
 

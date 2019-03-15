@@ -19,6 +19,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -67,6 +68,11 @@ public class TriggerSmartContractServlet extends HttpServlet {
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+
+      long delaySeconds = jsonObject.getLong("delaySeconds");
+      if (delaySeconds > 0) {
+        trxCap.setDeferredSeconds(delaySeconds);
+      }
 
       Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
       Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();

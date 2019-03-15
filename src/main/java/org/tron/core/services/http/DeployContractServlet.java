@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
@@ -84,7 +86,14 @@ public class DeployContractServlet extends HttpServlet {
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
-      response.getWriter().println(Util.printTransaction(txBuilder.build()));
+
+      long delaySeconds = jsonObject.getLong("delaySeconds");
+      Transaction transaction = txBuilder.build();
+      if (delaySeconds > 0) {
+        transaction = TransactionUtil.setTransactionDelaySeconds(txBuilder.build(), delaySeconds);
+      }
+
+      response.getWriter().println(Util.printTransaction(transaction));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

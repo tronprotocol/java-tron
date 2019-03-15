@@ -478,6 +478,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDeferredTransactionInfoById(BytesMessage request,
+        StreamObserver<TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       ECKey ecKey = new ECKey(Utils.getRandom());
