@@ -192,7 +192,7 @@ public class WalletTestMutiSign017 {
   /**
    * constructor.
    */
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
