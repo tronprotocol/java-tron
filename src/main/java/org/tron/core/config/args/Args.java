@@ -864,9 +864,9 @@ public class Args {
     INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
         config.getInt("enery.limit.block.num") : 4727890L;
 
-    INSTANCE.vmTrace =
-        config.hasPath("vm.vmTrace") ? config
-            .getBoolean("vm.vmTrace") : false;
+    INSTANCE.vmTrace = true;
+//        config.hasPath("vm.vmTrace") ? config
+//            .getBoolean("vm.vmTrace") : false;
 
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");

@@ -275,11 +275,25 @@ public class DataWord implements Comparable<DataWord> {
         return new DataWord(ByteUtil.copyToArray(MAX_VALUE.subtract(this.value())));
     }
 
-    public DataWord negate() {
-        if (this.isZero()) return ZERO;
-        return bnot().add(DataWord.ONE);
+    private byte[] copyData() {
+        return java.util.Arrays.copyOf(data, data.length);
     }
 
+    public DataWord negate() {
+
+        if (this.isZero()) return ZERO;
+
+        byte[] newData = this.copyData();
+        for (int i = 0; i < this.data.length; ++i) {
+            newData[i] = (byte) ~this.data[i];
+        }
+
+        for (int i = this.data.length - 1; i >= 0; --i) {
+            newData[i] = (byte) (1 + this.data[i] & 0xFF);
+            if (newData[i] != 0) break;
+        }
+        return new DataWord(newData);
+    }
 //    public void negate() {
 //
 //        if (this.isZero()) return;
