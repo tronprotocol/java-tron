@@ -89,9 +89,6 @@ import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.PermissionAddKeyContract;
-import org.tron.protos.Contract.PermissionDeleteKeyContract;
-import org.tron.protos.Contract.PermissionUpdateKeyContract;
 import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -1685,12 +1682,6 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
-    @Override
-    public void permissionAddKey(PermissionAddKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionAddKeyContract,
-          responseObserver);
-    }
 
     @Override
     public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
@@ -1835,19 +1826,7 @@ public class RpcApiService implements Service {
       }
         responseObserver.onCompleted();
     }
-    @Override
-    public void permissionUpdateKey(PermissionUpdateKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionUpdateKeyContract,
-          responseObserver);
-    }
 
-    @Override
-    public void permissionDeleteKey(PermissionDeleteKeyContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.PermissionDeleteKeyContract,
-          responseObserver);
-    }
   }
 
   @Override

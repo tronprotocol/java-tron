@@ -48,9 +48,11 @@ public class ZkV0TransferActuator extends AbstractActuator {
         long vToPub = zkContract.getVToPub();
         // if account with to_address does not exist, create it first.
         AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress.toByteArray());
+        boolean withDefaultPermission =
+            dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         if (toAccount == null) {
           toAccount = new AccountCapsule(toAddress, AccountType.Normal,
-              dbManager.getHeadBlockTimeStamp());
+              dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
           dbManager.getAccountStore().put(toAddress.toByteArray(), toAccount);
         }
         dbManager.adjustBalance(toAccount, vToPub);
