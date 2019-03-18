@@ -1,12 +1,7 @@
 package org.tron.common.storage;
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.CompressionType;
 
 @Slf4j
 public class DBSettings {
@@ -28,8 +23,6 @@ public class DBSettings {
   @Getter
   private int level0FileNumCompactionTrigger;
   @Getter
-  private List<CompressionType> compressionTypeList;
-  @Getter
   private long targetFileSizeBase;
   @Getter
   private int targetFileSizeMultiplier;
@@ -43,9 +36,8 @@ public class DBSettings {
   public static DBSettings getDefaultSettings() {
     DBSettings defaultSettings = new DBSettings();
     return defaultSettings.withLevelNumber(7).withBlockSize(64).withCompactThreads(32)
-        .withCompressionTypeList("no:no:no:lz4:lz4:zstd:zstd").withTargetFileSizeBase(256)
-        .withMaxBytesForLevelMultiplier(10).withTargetFileSizeMultiplier(1).withMaxBytesForLevelBase(256).withMaxOpenFiles(-1)
-        .withEnableStatistics(false);
+        .withTargetFileSizeBase(256).withMaxBytesForLevelMultiplier(10).withTargetFileSizeMultiplier(1)
+        .withMaxBytesForLevelBase(256).withMaxOpenFiles(-1).withEnableStatistics(false);
   }
 
   public static DBSettings getSettings() {
@@ -57,8 +49,8 @@ public class DBSettings {
 
   public static DBSettings initCustomSettings(int levelNumber, int compactThreads, int blocksize,
       long maxBytesForLevelBase,
-      double maxBytesForLevelMultiplier, String compressionStr,
-      int level0FileNumCompactionTrigger, long targetFileSizeBase, int targetFileSizeMultiplier) {
+      double maxBytesForLevelMultiplier, int level0FileNumCompactionTrigger, long targetFileSizeBase,
+      int targetFileSizeMultiplier) {
     settings = new DBSettings()
         .withMaxOpenFiles(-1)
         .withEnableStatistics(false)
@@ -67,7 +59,6 @@ public class DBSettings {
         .withBlockSize(blocksize)
         .withMaxBytesForLevelBase(maxBytesForLevelBase)
         .withMaxBytesForLevelMultiplier(maxBytesForLevelMultiplier)
-        .withCompressionTypeList(compressionStr)
         .withLevel0FileNumCompactionTrigger(level0FileNumCompactionTrigger)
         .withTargetFileSizeBase(targetFileSizeBase)
         .withTargetFileSizeMultiplier(targetFileSizeMultiplier);
@@ -102,24 +93,6 @@ public class DBSettings {
 
   public DBSettings withLevel0FileNumCompactionTrigger(int level0FileNumCompactionTrigger) {
     this.level0FileNumCompactionTrigger = level0FileNumCompactionTrigger;
-    return this;
-  }
-
-  public DBSettings withCompressionTypeList(String compressionTypeListString) {
-    List<String> compressionTypeStringList = Arrays.asList(compressionTypeListString.split(":"));
-    List<CompressionType> compressionTypeList = new ArrayList<>();
-    for (String str : compressionTypeStringList) {
-      if (str.equals("no")) {
-        compressionTypeList.add(CompressionType.NO_COMPRESSION);
-      } else if (str.equals("lz4")) {
-        compressionTypeList.add(CompressionType.LZ4_COMPRESSION);
-      } else if (str.equals("zstd")) {
-        compressionTypeList.add(CompressionType.ZSTD_COMPRESSION);
-      } else if (str.equals("zlib")) {
-        compressionTypeList.add(CompressionType.ZLIB_COMPRESSION);
-      }
-    }
-    this.compressionTypeList = compressionTypeList;
     return this;
   }
 

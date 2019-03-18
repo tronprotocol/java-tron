@@ -192,7 +192,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
         options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
         options.setMaxBackgroundCompactions(settings.getCompactThreads());
-        options.setCompressionPerLevel(settings.getCompressionTypeList());
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
@@ -482,7 +481,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public void backup(String dir) throws RocksDBException {
-    Checkpoint.create(database).createCheckpoint(dir + this.getDBName());
+    Checkpoint cp = Checkpoint.create(database);
+    cp.createCheckpoint(dir + this.getDBName());
   }
 
   public boolean deleteDbBakPath(String dir) {

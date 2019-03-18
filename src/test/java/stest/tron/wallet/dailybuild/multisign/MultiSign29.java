@@ -396,6 +396,7 @@ public class MultiSign29 {
 
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction2, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info("returnResult1:" + returnResult1);
     Assert
         .assertThat(returnResult1.getCode().toString(), containsString("SIGERROR"));

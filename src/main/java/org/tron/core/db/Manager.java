@@ -95,8 +95,6 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.exception.WhitelistException;
-import org.tron.core.services.WhitelistService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -391,6 +389,8 @@ public class Manager {
             tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
+            } else {
+              TimeUnit.MILLISECONDS.sleep(50L);
             }
           } catch (Exception ex) {
             logger.error("unknown exception happened in repush loop", ex);
@@ -1241,13 +1241,6 @@ public class Manager {
 
     if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
-    }
-
-    try {
-      WhitelistService.check(trxCap);
-    } catch (WhitelistException e) {
-      logger.debug(e.getMessage());
-      throw new ContractValidateException(e.getMessage(), e);
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
