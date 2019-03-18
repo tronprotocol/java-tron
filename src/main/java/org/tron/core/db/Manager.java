@@ -1840,6 +1840,8 @@ public class Manager {
     closeOneStore(delegatedResourceStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(deferredTransactionStore);
+    closeOneStore(deferredTransactionIdIndexCache);
     logger.info("******** end to close db ********");
   }
 
