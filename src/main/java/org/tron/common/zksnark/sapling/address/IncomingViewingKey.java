@@ -1,18 +1,25 @@
 package org.tron.common.zksnark.sapling.address;
 
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import org.tron.common.zksnark.sapling.Librustzcash;
+
 //Decryption using an Incoming Viewing Key
 //ivk
+@AllArgsConstructor
 public class IncomingViewingKey {
+
+  byte[] value;//256
   // class IncomingViewingKey : public uint256 {
 
   //To create a new diversied payment address given an incoming viewing key ivk, repeatedly pick a diversier d uniformly at random
-  optional<PaymentAddress> address(diversifier_t d) {
-    uint256 pk_d;
-    if (librustzcash_check_diversifier(d.data())) {
-      librustzcash_ivk_to_pkd(this->begin(), d.data(), pk_d.begin());
-      return PaymentAddress(d, pk_d);
+  Optional<PaymentAddress> address(DiversifierT d) {
+    byte[] pkD = null;//256
+    if (Librustzcash.librustzcashCheckDiversifier(d.getData())) {
+      Librustzcash.librustzcashIvkToPkd(value, d.getData(), pkD);
+      return Optional.of(new PaymentAddress(d, pkD));
     } else {
-      return boost::none;
+      return Optional.empty();
     }
   }
 }

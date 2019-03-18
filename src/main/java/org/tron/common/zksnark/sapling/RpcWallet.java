@@ -1,11 +1,16 @@
 package org.tron.common.zksnark.sapling;
 
+import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
+
+import java.util.List;
 import org.tron.common.zksnark.sapling.Wallet.SaplingNoteEntry;
+import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.transaction.SendManyRecipient;
+import org.tron.common.zksnark.sapling.transaction.Recipient;
+import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
+import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
-import org.tron.common.zksnark.sapling.zip32.SaplingExtendedSpendingKey;
 
 public class RpcWallet {
 
@@ -31,7 +36,7 @@ public class RpcWallet {
 //  { "wallet",             "z_importwallet",           &z_importwallet,           true  },
 
 
-  public void z_getnewaddress(const UniValue&params, bool fHelp) {
+  public void z_getnewaddress() {
     //seed
     //AccountCounter
 
@@ -45,18 +50,76 @@ public class RpcWallet {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
     }
 
-    SaplingExtendedSpendingKey m = SaplingExtendedSpendingKey.Master(seed);
+    ExtendedSpendingKey m = ExtendedSpendingKey.Master(seed);
     int bip44CoinType = Params.BIP44CoinType;
 
+    // We use a fixed keypath scheme of m/32'/coin_type'/account'
+    // Derive m/32'
+    ExtendedSpendingKey m_32h = m.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
+    // Derive m/32'/coin_type'
+    ExtendedSpendingKey m_32h_cth = m_32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+
+    // Derive account key at next index, skip keys already known to the wallet
+    ExtendedSpendingKey xsk = null;
+
+    while (xsk == null || KeyStore.HaveSaplingSpendingKey(xsk.getExpsk().full_viewing_key())) {
+      //这里使用累加器，生成d账户
+      xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+      metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
+      metadata.seedFp = HdChain.seedFp;
+      // Increment childkey index
+      HdChain.saplingAccountCounter++;
+    }
+
+    // Update the chain model in the database
+//    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
+//      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
+
+    IncomingViewingKey ivk = xsk.getExpsk().full_viewing_key().in_viewing_key();
+    Wallet.mapSaplingZKeyMetadata.put(ivk, metadata);
+
+    PaymentAddress addr = xsk.DefaultAddress();
+    if (!Wallet.AddSaplingZKey(xsk, addr)) {
+      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
+    }
+    // return default sapling payment address.
+
+    System.out.println(KeyIo.EncodePaymentAddress(addr);
   }
 
   public void z_sendmany() {
-
     String fromAddress = "";
-    vector<SendManyRecipient> z_outputs_;
-    AsyncRPCOperation_sendmany sendmany =
-        new AsyncRPCOperation_sendmany(fromAddress, z_outputs_);
+    String taddr = "";
+    PaymentAddress zaddr;
+    if (isValidTAddress(fromAddress)) {
+      //todo
+      taddr = "";
+    } else if (isValidShieldAddress(fromAddress)) {
+      zaddr = KeyIo.DecodePaymentAddress(fromAddress);
+      if (!Wallet.HaveSpendingKeyForPaymentAddress(zaddr)) {
+        throw new RuntimeException("");
+      }
+    } else {
+      throw new RuntimeException("unknown address type ");
+    }
+
+    //todo：支持多个输出？
+    List<Recipient> t_outputs_ = null;
+    List<Recipient> z_outputs_ = null;
+    ShieldSendCoin sendmany =
+        new ShieldSendCoin(fromAddress, t_outputs_, z_outputs_);
     sendmany.main_impl();
+  }
+
+
+  //todo:
+  private boolean isValidTAddress(String address) {
+    return true;
+  }
+
+  //todo:
+  private boolean isValidShieldAddress(String address) {
+    return true;
   }
 
   //扫描交易，获得address相关的note

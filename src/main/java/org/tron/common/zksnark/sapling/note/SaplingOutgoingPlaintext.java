@@ -5,18 +5,18 @@ import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingOutPlaintex
 
 public class SaplingOutgoingPlaintext {
 
-  uint256 pk_d;
-  uint256 esk;
+  byte[] pk_d;
+  byte[] esk;
 
 
   boost::
 
   optional<SaplingOutgoingPlaintext> decrypt(
     const SaplingOutCiphertext &ciphertext,
-    const uint256&ovk,
-    const uint256&cv,
-    const uint256&cm,
-    const uint256&epk
+    const byte[]&ovk,
+    const byte[]&cv,
+    const byte[]&cm,
+    const byte[]&epk
   ) {
     auto pt = AttemptSaplingOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt) {
@@ -37,9 +37,9 @@ public class SaplingOutgoingPlaintext {
 
 
   SaplingOutCiphertext encrypt(
-        const uint256&ovk,
-        const uint256&cv,
-        const uint256&cm,
+        const byte[]&ovk,
+        const byte[]&cv,
+        const byte[]&cm,
       SaplingNoteEncryption&enc
   ) const
 

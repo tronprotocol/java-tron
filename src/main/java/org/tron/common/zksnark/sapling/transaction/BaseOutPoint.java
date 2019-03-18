@@ -16,7 +16,7 @@ public class BaseOutPoint {
     return (hash.IsNull() && n == (uint32_t) - 1);
   }
 
-  public class SaplingOutPoint extends BaseOutPoint {
+  public class OutPoint extends BaseOutPoint {
 
   }
 }

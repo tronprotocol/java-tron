@@ -1,14 +1,18 @@
 package org.tron.common.zksnark.sapling.address;
 
+import java.util.Optional;
+import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.utils.PRF;
 
 
+@AllArgsConstructor
 public class SpendingKey {
+  public byte[] value;
   // class SpendingKey : public uint256 {
 
   static SpendingKey random() {
     while (true) {
-      SpendingKey sk = SpendingKey(random_uint256());
+      SpendingKey sk = new SpendingKey(randomUint256());
       if (sk.full_viewing_key().is_valid()) {
         return sk;
       }
@@ -16,7 +20,7 @@ public class SpendingKey {
   }
 
   ExpandedSpendingKey expanded_spending_key() {
-    return ExpandedSpendingKey(PRF.PRF_ask( * this),PRF.PRF_nsk( * this),PRF.PRF_ovk( * this))
+    return new ExpandedSpendingKey(PRF.prfAsk( this),PRF.prfNsk(  this),PRF.prfOvk(this));
   }
 
   FullViewingKey full_viewing_key() {
@@ -26,10 +30,20 @@ public class SpendingKey {
 
   // Can derive  addr from default diversifier
   PaymentAddress default_address() {
-    // Iterates within default_diversifier to ensure a valid address is returned
-    auto addrOpt = full_viewing_key().in_viewing_key().address(default_diversifier( * this));
-    assert (addrOpt != boost::none);
-    return addrOpt.value();
+    // Iterates within defaultDiversifier to ensure a valid address is returned
+    Optional<PaymentAddress> addrOpt = full_viewing_key().in_viewing_key().address(
+        defaultDiversifier(  this));
+//    assert (addrOpt != boost::none);
+    return addrOpt.get();
+  }
+
+  //todo
+  private DiversifierT defaultDiversifier(SpendingKey spendingKey){
+    return null;
+  }
+  //todo
+  static private byte[] randomUint256(){
+    return null;
   }
 
 

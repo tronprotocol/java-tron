@@ -1,8 +1,12 @@
 package org.tron.common.zksnark.sapling;
 
+import java.util.List;
+import lombok.AllArgsConstructor;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.sapling.Wallet.SaplingWitness;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.note.BaseNote.SaplingNote;
+import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintext;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
 import org.tron.common.zksnark.sapling.note.SaplingNoteEncryption;
@@ -13,19 +17,16 @@ import org.tron.common.zksnark.sapling.transaction.SpendDescription;
 public class TransactionBuilder {
 
   int nHeight;
-    const CKeyStore*keystore;
+  CKeyStore keystore;
   CMutableTransaction mtx;
   CAmount fee = 10000;
 
-  std::
-  vector<SpendDescriptionInfo> spends;
-  std::
-  vector<OutputDescriptionInfo> outputs;
-  std::
-  vector<TransparentInputInfo> tIns;
+  List<SpendDescriptionInfo> spends;
+  List<OutputDescriptionInfo> outputs;
+  List<TransparentInputInfo> tIns;
 
-  boost::optional<std::pair<uint256, PaymentAddress>>zChangeAddr;
-  boost::
+  optional<pair<byte[], PaymentAddress>> zChangeAddr;
+   
   optional<CTxDestination> tChangeAddr;
 
 
@@ -33,23 +34,23 @@ public class TransactionBuilder {
   // previously-added Sapling spends.
   void AddSaplingSpend(
       ExpandedSpendingKey expsk,
-      SaplingNote note,
-      uint256 anchor,
+      Note note,
+      byte[] anchor,
       SaplingWitness witness) {
-    spends.emplace_back(expsk, note, anchor, witness);
-    mtx.valueBalance += note.value();
+    spends.add(new SpendDescriptionInfo(expsk, note, anchor, witness));
+    mtx.valueBalance += note.value;
 
   }
 
 
   void AddSaplingOutput(
-      uint256 ovk,
+      byte[] ovk,
       PaymentAddress to,
-      CAmount value,
-      Array<char, ZC_MEMO_SIZE> memo= {
+      long value,
+      byte[] memo) {
     {
-      auto note = libzcash::SaplingNote (to, value);
-      outputs.emplace_back(ovk, note, memo);
+      Note note = new Note(to, value);
+      outputs.add(new OutputDescriptionInfo(ovk, note, memo));
       mtx.valueBalance -= value;
     }
   });
@@ -59,7 +60,7 @@ public class TransactionBuilder {
 
   void AddTransparentOutput(CTxDestination&to, CAmount value);
 
-  void SendChangeTo(PaymentAddress changeAddr, uint256 ovk);
+  void SendChangeTo(PaymentAddress changeAddr, byte[] ovk);
 
   void SendChangeTo(CTxDestination&changeAddr);
 
@@ -69,21 +70,23 @@ public class TransactionBuilder {
     // Sapling spends and outputs
     //
 
-    auto ctx = librustzcash_sapling_proving_ctx_init();
+    ProvingContext ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
-      auto cm = spend.note.cm();
-      auto nf = spend.note.nullifier(
+      byte[] cm = spend.note.cm();
+      byte[] nf = spend.note.nullifier(
           spend.expsk.full_viewing_key(), spend.witness.position());
+
+      ByteArray.isEmpty();
       if (!cm || !nf) {
-        librustzcash_sapling_proving_ctx_free(ctx);
+        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         return TransactionBuilderResult("Spend is invalid");
       }
 
       CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
       ss << spend.witness.path();
-      std::vector < unsigned char>witness(ss.begin(), ss.end());
+      vector<unsigned char>witness(ss.begin(), ss.end());
 
       SpendDescription sdesc;
       if (!librustzcash_sapling_spend_proof(
@@ -157,22 +160,30 @@ public class TransactionBuilder {
 
   public class SpendDescriptionInfo {
 
-    ExpandedSpendingKey expsk;
+    public ExpandedSpendingKey expsk;
 
-    SaplingNote note;
-    uint256 alpha;
-    uint256 anchor;
-    SaplingWitness witness;
+    public Note note;
+    public byte[] alpha;
+    public byte[] anchor;
+    public SaplingWitness witness;
+
+    public SpendDescriptionInfo(ExpandedSpendingKey expsk, Note note, byte[] anchor,
+        SaplingWitness witness) {
+      this.expsk = expsk;
+      this.note = note;
+      this.anchor = anchor;
+      this.witness = witness;
+    }
 
   }
 
-
+  @AllArgsConstructor
   public class OutputDescriptionInfo {
 
-    uint256 ovk;
+    public byte[] ovk;
 
-    SaplingNote note;
-    Array<char, ZC_MEMO_SIZE> memo;
+    public Note note;
+    public byte[] memo;//256
   }
 
   class TransactionBuilderResult {

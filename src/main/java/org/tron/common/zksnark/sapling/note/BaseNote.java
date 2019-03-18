@@ -1,59 +1,51 @@
 package org.tron.common.zksnark.sapling.note;
 
+import lombok.AllArgsConstructor;
+import org.tron.common.zksnark.sapling.Librustzcash;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
-import org.tron.common.zksnark.sapling.address.diversifier_t;
+import org.tron.common.zksnark.sapling.address.PaymentAddress;
+import org.tron.common.zksnark.sapling.address.DiversifierT;
 
 public class BaseNote {
 
-  uint64_t value_ = 0;
+  public long value = 0;
 
-  public class SaplingNote extends BaseNote {
+  @AllArgsConstructor
+  public static class Note extends BaseNote {
 
-    diversifier_t d;
-    uint256 pk_d;
-    uint256 r;
+    public DiversifierT d;
+    public byte[] pk_d; // 256
+    public byte[] r; // 256
 
-// Call librustzcash to compute the commitment
-    boost::
+    // Construct and populate Sapling note for a given payment address and value.
+    public Note(PaymentAddress address, long value) {
+      this.value = value;
+      d = address.getD();
+      pk_d = address.getPkD();
+      Librustzcash.librustzcashSaplingGenerateR(r);
+    }
 
-    optional<uint256> cm() const
-
-    {
-      uint256 result;
-      if (!librustzcash_sapling_compute_cm(
-          d.data(),
-          pk_d.begin(),
-          value(),
-          r.begin(),
-          result.begin()
-      )) {
-        return boost::none;
+    // Call librustzcash to compute the commitment
+    public byte[] cm() {
+      byte[] result = null;
+      if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pk_d, value, r, result)) {
+        return null;
       }
 
       return result;
     }
 
-// Call librustzcash to compute the nullifier
-    boost::
+    // Call librustzcash to compute the nullifier
 
-    optional<uint256> nullifier(const FullViewingKey&vk, const uint64_t position) const
+    // position 64
+    public byte[] nullifier(FullViewingKey vk, long position) {
+      byte[] ak = vk.getAk();
+      byte[] nk = vk.getNk();
 
-    {
-      auto ak = vk.ak;
-      auto nk = vk.nk;
-
-      uint256 result;
-      if (!librustzcash_sapling_compute_nf(
-          d.data(),
-          pk_d.begin(),
-          value(),
-          r.begin(),
-          ak.begin(),
-          nk.begin(),
-          position,
-          result.begin()
-      )) {
-        return boost::none;
+      byte[] result = null; // 256
+      if (!Librustzcash.librustzcashSaplingComputeNf(
+          d.getData(), pk_d, value, r, ak, nk, position, result)) {
+        return null;
       }
 
       return result;

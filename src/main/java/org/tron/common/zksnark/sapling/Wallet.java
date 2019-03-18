@@ -1,43 +1,56 @@
 package org.tron.common.zksnark.sapling;
 
+import static org.tron.common.zksnark.sapling.KeyStore.GetSaplingFullViewingKey;
+import static org.tron.common.zksnark.sapling.KeyStore.GetSaplingIncomingViewingKey;
+import static org.tron.common.zksnark.sapling.KeyStore.HaveSaplingSpendingKey;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import org.tron.common.zksnark.sapling.address.FullViewingKey;
+import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.address.SpendingKey;
-import org.tron.common.zksnark.sapling.note.BaseNote.SaplingNote;
+import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintext;
-import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.SaplingOutPoint;
+import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.transaction.OutputDescription;
+import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
+import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
 public class Wallet {
+
+
+  public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata;
 
   /**
    * Sapling note, its location in a transaction, and number of confirmations.
    */
   public class SaplingNoteEntry {
 
-    SaplingOutPoint op;
-    SaplingPaymentAddress address;
-    SaplingNote note;
-    std::array<unsigned char,ZC_MEMO_SIZE>memo;
+    OutPoint op;
+    PaymentAddress address;
+    Note note;
+    char[] memo;//ZC_MEMO_SIZE
     int confirmations;
   }
 
-  ;
+  public class SaplingWitness {
 
-  public class GetSpendingKeyForPaymentAddress :public boost::static_visitor<boost::optional<libzcash::SpendingKey>>
-
-  {
-    private:
-    CWallet * m_wallet;
-    public:
-    GetSpendingKeyForPaymentAddress(CWallet * wallet) :m_wallet(wallet) {
+    //todo:新增
+    public long position() {
+    }
   }
 
-    boost::optional < libzcash::SpendingKey > operator() (const
-    libzcash::SproutPaymentAddress & zaddr) const;
-    boost::optional < libzcash::SpendingKey > operator() (const
-    libzcash::SaplingPaymentAddress & zaddr) const;
-    boost::optional < libzcash::SpendingKey > operator() (const libzcash::InvalidEncoding & no) const
-    ;
+  public static void GetSaplingNoteWitnesses(List<OutPoint> ops,
+      List<Optional<SaplingWitness>> witnesses, byte[] anchor) {
+
+  }
+
+  public static ExtendedSpendingKey GetSpendingKeyForPaymentAddress(PaymentAddress zaddr) {
+    ExtendedSpendingKey extskOut = null;
+    KeyStore.GetSaplingExtendedSpendingKey(zaddr, extskOut);
+    return extskOut;
   }
 
 
@@ -77,35 +90,30 @@ public class Wallet {
 
       }
 
-      bool HaveSpendingKeyForPaymentAddress::
-
-      operator() (const libzcash::SaplingPaymentAddress & zaddr)const
-
-      {
-        libzcash::SaplingIncomingViewingKey ivk;
-        libzcash::SaplingFullViewingKey fvk;
-
-        //zaddr -> ivk,ivk->fvk,fvk
-
-        return m_wallet -> GetSaplingIncomingViewingKey(zaddr, ivk) &&
-            m_wallet -> GetSaplingFullViewingKey(ivk, fvk) &&
-                m_wallet -> HaveSaplingSpendingKey(fvk);
-      }
 
     }
   }
 
+  public static boolean HaveSpendingKeyForPaymentAddress(PaymentAddress addr) {
+    IncomingViewingKey ivk = null;
+    FullViewingKey fvk = null;
+
+    //zaddr -> ivk,ivk->fvk,fvk
+
+    return GetSaplingIncomingViewingKey(addr, ivk) &&
+        GetSaplingFullViewingKey(ivk, fvk) &&
+        HaveSaplingSpendingKey(fvk);
+  }
+
   public static void GetFilteredNotes(
-      std::vector<SaplingNoteEntry>&saplingEntries,
-      std::set<PaymentAddress>&filterAddresses,
-      int minDepth,
-      int maxDepth,
-      bool ignoreSpent,
-      bool requireSpendingKey,
-      bool ignoreLocked) {
+      List<SaplingNoteEntry> saplingEntries,
+      Set<PaymentAddress> filterAddresses,
+      boolean ignoreSpent,
+      boolean requireSpendingKey,
+      boolean ignoreLocked) {
 
     for (auto & pair :wtx.mapSaplingNoteData){
-      SaplingOutPoint op = pair.first;
+      OutPoint op = pair.first;
       SaplingNoteData nd = pair.second;
 
       //每次都需要解密过程？
@@ -115,5 +123,27 @@ public class Wallet {
           wtx.vShieldedOutput[op.n].ephemeralKey,
           wtx.vShieldedOutput[op.n].cm);
     }
+  }
+
+  // Add spending key to keystore
+  public static boolean AddSaplingZKey(
+      ExtendedSpendingKey sk,
+      PaymentAddress defaultAddr) {
+    AssertLockHeld(cs_wallet); // mapSaplingZKeyMetadata
+
+    if (!CCryptoKeyStore::AddSaplingSpendingKey (sk, defaultAddr)){
+      return false;
+    }
+
+    if (!fFileBacked) {
+      return true;
+    }
+
+    if (!IsCrypted()) {
+      auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
+      return CWalletDB(strWalletFile).WriteSaplingZKey(ivk, sk, mapSaplingZKeyMetadata[ivk]);
+    }
+
+    return true;
   }
 }

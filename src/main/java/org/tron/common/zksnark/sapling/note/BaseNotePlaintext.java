@@ -1,7 +1,7 @@
 package org.tron.common.zksnark.sapling.note;
 
-import org.tron.common.zksnark.sapling.address.diversifier_t;
-import org.tron.common.zksnark.sapling.note.BaseNote.SaplingNote;
+import org.tron.common.zksnark.sapling.address.DiversifierT;
+import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncCiphertext;
 import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncPlaintext;
 
@@ -20,11 +20,11 @@ public class BaseNotePlaintext {
 
   public class SaplingNotePlaintext extends BaseNotePlaintext {
 
-    diversifier_t d;
-    uint256 rcm;
+    DiversifierT d;
+    byte[] rcm;
 
 
-    optional<SaplingNote> SaplingNotePlaintext::
+    optional<Note> SaplingNotePlaintext::
 
     note(const SaplingIncomingViewingKey&ivk) const
 
@@ -42,9 +42,9 @@ public class BaseNotePlaintext {
 
     optional<SaplingNotePlaintext> decrypt(
     const SaplingEncCiphertext &ciphertext,
-    const uint256 &ivk,
-    const uint256 &epk,
-    const uint256 &cmu
+    const byte[] &ivk,
+    const byte[] &epk,
+    const byte[] &cmu
     ) {
       auto pt = AttemptSaplingEncDecryption(ciphertext, ivk, epk);
       if (!pt) {
@@ -60,12 +60,12 @@ public class BaseNotePlaintext {
 
       assert (ss.size() == 0);
 
-      uint256 pk_d;
+      byte[] pk_d;
       if (!librustzcash_ivk_to_pkd(ivk.begin(), ret.d.data(), pk_d.begin())) {
         return boost::none;
       }
 
-      uint256 cmu_expected;
+      byte[] cmu_expected;
       if (!librustzcash_sapling_compute_cm(
           ret.d.data(),
           pk_d.begin(),
@@ -87,10 +87,10 @@ public class BaseNotePlaintext {
 
     optional<SaplingNotePlaintext> decrypt(
     const SaplingEncCiphertext &ciphertext,
-    const uint256 &epk,
-    const uint256 &esk,
-    const uint256 &pk_d,
-    const uint256 &cmu
+    const byte[] &epk,
+    const byte[] &esk,
+    const byte[] &pk_d,
+    const byte[] &cmu
     ) {
       auto pt = AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
       if (!pt) {
@@ -104,7 +104,7 @@ public class BaseNotePlaintext {
       SaplingNotePlaintext ret;
       ss >> ret;
 
-      uint256 cmu_expected;
+      byte[] cmu_expected;
       if (!librustzcash_sapling_compute_cm(
           ret.d.data(),
           pk_d.begin(),
@@ -126,7 +126,7 @@ public class BaseNotePlaintext {
 
     boost::
 
-    optional<SaplingNotePlaintextEncryptionResult> encrypt(const uint256&pk_d) const
+    optional<SaplingNotePlaintextEncryptionResult> encrypt(const byte[]&pk_d) const
 
     {
       // Get the encryptor

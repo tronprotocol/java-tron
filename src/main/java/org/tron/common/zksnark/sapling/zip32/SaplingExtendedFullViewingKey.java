@@ -8,10 +8,10 @@ public class SaplingExtendedFullViewingKey {
   uint8_t depth;
   uint32_t parentFVKTag;
   uint32_t childIndex;
-  uint256 chaincode;
+  byte[] chaincode;
 
   FullViewingKey fvk;
-  uint256 dk;
+  byte[] dk;
 
   boost::
 
@@ -52,7 +52,7 @@ public class SaplingExtendedFullViewingKey {
         j.begin(), j_ret.begin(),
         reinterpret_cast < char*>(addr_bytes.data()))){
       CDataStream ss_addr (addr_bytes, SER_NETWORK, PROTOCOL_VERSION);
-      SaplingPaymentAddress addr;
+      PaymentAddress addr;
       ss_addr >> addr;
       return std::make_pair (j_ret, addr);
     } else{
