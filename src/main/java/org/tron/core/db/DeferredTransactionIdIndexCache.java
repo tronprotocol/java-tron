@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.db.common.WrappedByteArray;
-  import org.tron.core.db2.common.DeferredTransactionIdIndexCacheDB;
+import org.tron.core.db2.common.DeferredTransactionIdIndexCacheDB;
 
 @Slf4j(topic = "DB")
 public class DeferredTransactionIdIndexCache extends TronStoreWithRevoking<BytesCapsule>{

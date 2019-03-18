@@ -2,24 +2,25 @@ package org.tron.core.db2.common;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.DBIterator;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.db.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
 public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
-  private Map<Key, byte[]> db = new HashMap<>();
+  private Map<Key, byte[]> db = new TreeMap<Key, byte[]>(new Comparator<Key>() {
+    @Override
+    public int compare(Key o1, Key o2) {
+      return ByteUtil.compare(o1.getBytes(), o2.getBytes());
+    }
+  });
 
   int size = 0;
 
