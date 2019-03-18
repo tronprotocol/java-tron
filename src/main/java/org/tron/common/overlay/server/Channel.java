@@ -22,6 +22,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -164,17 +165,15 @@ public class Channel {
     while (baseThrowable.getCause() != null) {
       baseThrowable = baseThrowable.getCause();
     }
-    String errMsg = throwable.getMessage();
     SocketAddress address = ctx.channel().remoteAddress();
-    if (throwable instanceof ReadTimeoutException) {
-      logger.error("Read timeout, {}", address);
+    if (throwable instanceof ReadTimeoutException ||
+        throwable instanceof IOException) {
+      logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
-      logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(),
-          baseThrowable.getMessage(), address);
-    } else if (errMsg != null && errMsg.contains("Connection reset by peer")) {
-      logger.error("{}, {}", errMsg, address);
+      logger.warn("Close peer {}, type: {}, info: {}",
+          address,((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
     } else {
-      logger.error("exception caught, {}", address, throwable);
+      logger.error("Close peer {}, exception caught", address, throwable);
     }
     close();
   }
@@ -220,10 +219,6 @@ public class Channel {
     this.inetSocketAddress = ctx == null ? null : (InetSocketAddress) ctx.channel().remoteAddress();
   }
 
-  public ChannelHandlerContext getChannelHandlerContext() {
-    return this.ctx;
-  }
-
   public InetAddress getInetAddress() {
     return ctx == null ? null : ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
   }
@@ -245,20 +240,12 @@ public class Channel {
     logger.info("Peer {} status change to {}.", inetSocketAddress, tronState);
   }
 
-  public TronState getTronState() {
-    return tronState;
-  }
-
   public boolean isActive() {
     return isActive;
   }
 
   public boolean isDisconnect() {
     return isDisconnect;
-  }
-
-  public boolean isProtocolsInitialized() {
-    return tronState.ordinal() > TronState.INIT.ordinal();
   }
 
   public boolean isTrustPeer() {
