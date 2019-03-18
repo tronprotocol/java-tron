@@ -30,7 +30,7 @@ public class StorageTest {
   private static Storage storage;
 
   static {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, "config-test-storagetest.conf");
     storage = Args.getInstance().getStorage();
   }
 
