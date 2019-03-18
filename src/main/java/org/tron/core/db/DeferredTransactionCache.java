@@ -13,9 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DeferredTransactionCacheDB;
 
-@Slf4j(topic = "capsule")
+@Slf4j(topic = "DB")
 public class DeferredTransactionCache extends TronStoreWithRevoking<BytesCapsule>  {
   @Autowired
   public DeferredTransactionCache(@Value("deferred-transaction-cache") String dbName) {
@@ -27,6 +28,10 @@ public class DeferredTransactionCache extends TronStoreWithRevoking<BytesCapsule
 
   public void put(DeferredTransactionCapsule deferredTransactionCapsule) {
     super.put(deferredTransactionCapsule.getKey(), new BytesCapsule(deferredTransactionCapsule.getData()));
+  }
+
+  public void put(WrappedByteArray key, WrappedByteArray value){
+    super.put(key.getBytes(), new BytesCapsule(value.getBytes()));
   }
 
   public DeferredTransactionCapsule getByTransactionId(ByteString transactionId) {
