@@ -9,8 +9,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.rocksdb.RocksDB;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.config.DefaultConfig;
@@ -28,6 +29,7 @@ public class BackupDbUtilTest {
   }
 
   public TronApplicationContext context;
+  public Application AppT = null;
   public BackupDbUtil dbBackupUtil;
   public Manager dbManager;
   public ManagerForTest mng_test;
@@ -50,6 +52,7 @@ public class BackupDbUtilTest {
     );
 
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);
     dbBackupUtil = context.getBean(BackupDbUtil.class);
     mng_test = new ManagerForTest(dbManager);
@@ -67,8 +70,13 @@ public class BackupDbUtilTest {
 
   @After
   public void after() {
-    FileUtil.deleteDir(new File(dbPath));
-    //SnapshotManager.releaseInstance();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    if (FileUtil.deleteDir(new File(dbPath))) {
+      logger.info("Release resources successful.");
+    } else {
+      logger.info("Release resources failure.");
+    }
   }
 
   @Test
