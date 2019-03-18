@@ -12,9 +12,7 @@ import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
-import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintext;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
-import org.tron.common.zksnark.sapling.transaction.OutputDescription;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
@@ -37,7 +35,7 @@ public class Wallet {
 
   public class SaplingWitness {
 
-    //todo:新增
+    //todo:
     public long position() {
       return 0L;
     }
@@ -81,7 +79,6 @@ public class Wallet {
 //      for (auto it = mapSaplingFullViewingKeys.begin(); it != mapSaplingFullViewingKeys.end();
 //          ++it) {
 //        SaplingIncomingViewingKey ivk = it -> first;
-//        //使用ivk对output进行解密
 //        auto result = SaplingNotePlaintext::decrypt
 //        (output.encCiphertext, ivk, output.ephemeralKey, output.cm);·
 //        if (!result) {

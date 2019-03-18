@@ -2,17 +2,10 @@ package org.tron.common.zksnark.sapling;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.sapling.Wallet.SaplingWitness;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
-import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintext;
-import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
-import org.tron.common.zksnark.sapling.note.SaplingNoteEncryption;
-import org.tron.common.zksnark.sapling.note.SaplingOutgoingPlaintext;
-import org.tron.common.zksnark.sapling.transaction.OutputDescription;
-import org.tron.common.zksnark.sapling.transaction.SpendDescription;
 
 public class TransactionBuilder {
 
@@ -175,5 +168,7 @@ public class TransactionBuilder {
     public byte[] memo; // 256
   }
 
-  class TransactionBuilderResult {}
+  class TransactionBuilderResult {
+
+  }
 }

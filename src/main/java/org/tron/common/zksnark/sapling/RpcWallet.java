@@ -3,7 +3,6 @@ package org.tron.common.zksnark.sapling;
 import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import java.util.List;
-import org.tron.common.zksnark.sapling.Wallet.SaplingNoteEntry;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
