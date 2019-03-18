@@ -1,12 +1,7 @@
 package org.tron.common.storage;
 
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.CompressionType;
 
 @Slf4j
 public class DBSettings {
