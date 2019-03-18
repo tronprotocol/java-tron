@@ -192,7 +192,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
         options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
         options.setMaxBackgroundCompactions(settings.getCompactThreads());
-        options.setCompressionPerLevel(settings.getCompressionTypeList());
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
