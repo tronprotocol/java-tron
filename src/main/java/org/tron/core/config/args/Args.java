@@ -1176,8 +1176,6 @@ public class Args {
         ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
     double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
         ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
-    String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
-        ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
     int level0FileNumCompactionTrigger =
         config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
             .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
@@ -1188,7 +1186,7 @@ public class Args {
 
     INSTANCE.rocksDBCustomSettings = DBSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
-            maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
+            maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
             targetFileSizeBase, targetFileSizeMultiplier);
     DBSettings.loggingSettings();
   }
