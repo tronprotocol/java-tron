@@ -107,7 +107,7 @@ public class DefaultConfig {
     if (dbVersion == 2) {
       return new DeferredTransactionCache("deferred-transaction-cache");
     }
-
+    logger.info("use dbversion 2(not deferred transaction cache)");
     return null;
   }
 
@@ -117,7 +117,7 @@ public class DefaultConfig {
     if (dbVersion == 2) {
       return new DeferredTransactionIdIndexCache("deferred-transaction-id-index-cache");
     }
-
+    logger.info("use dbversion 2(not deferred transaction id index cache)");
     return null;
   }
 
