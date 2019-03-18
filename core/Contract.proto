@@ -102,7 +102,7 @@ message IncrementalMerkleTree {
   repeated SHA256Compress parents = 3;
 }
 
-message IncrementalMerkleWitness {
+message IncrementalMerkleVoucher {
   IncrementalMerkleTree tree = 1;
   repeated SHA256Compress filled = 2;
   IncrementalMerkleTree cursor = 3;
@@ -111,9 +111,9 @@ message IncrementalMerkleWitness {
   OutputPoint output_point = 10;
 }
 
-message IncrementalMerkleWitnessInfo {
-  IncrementalMerkleWitness witness1 = 1;
-  IncrementalMerkleWitness witness2 = 2;
+message IncrementalMerkleVoucherInfo {
+  IncrementalMerkleVoucher voucher1 = 1;
+  IncrementalMerkleVoucher voucher2 = 2;
   int32 block_num = 3;
 }
 
