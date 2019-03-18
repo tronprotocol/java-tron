@@ -1,5 +1,6 @@
 package org.tron.core.db2.core;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -11,6 +12,7 @@ import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -133,5 +135,13 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesPrevious(byte[] key, long limit) {
     return dbSource.getPrevious(key, limit, Long.SIZE / Byte.SIZE).values().stream().collect(Collectors.toSet());
+  }
+
+  public  Map<WrappedByteArray, WrappedByteArray> getAllValues() {
+    Map<WrappedByteArray, WrappedByteArray> result = new HashMap<>();
+    dbSource.getAll().forEach((key, value) -> {
+      result.put(WrappedByteArray.of(key), WrappedByteArray.of(value));
+    });
+    return result;
   }
 }

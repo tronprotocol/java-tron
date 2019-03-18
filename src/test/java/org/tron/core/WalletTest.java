@@ -169,17 +169,16 @@ public class WalletTest {
 
   private static void addDeferredTransactionToStore(DeferredTransaction deferredTransaction) {
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
-    manager.getDeferredTransactionIdIndexStore()
+    manager.getDeferredTransactionIdIndexCache()
         .put(deferredTransactionCapsule);
-    manager.getDeferredTransactionStore()
+    manager.getDeferredTransactionCache()
         .put(deferredTransactionCapsule);
   }
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    DeferredStage deferredStage = transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(100).build();
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().getDeferredStage().toBuilder()
+        .setDelaySeconds(86400).build();
     Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
-    transaction = transaction.toBuilder().setRawData(rawData).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);

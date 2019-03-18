@@ -116,7 +116,15 @@ public class Manager {
   @Autowired
   private TransactionStore transactionStore;
   @Autowired(required = false)
-  private TransactionCache transactionCache;
+  public TransactionCache transactionCache;
+  @Autowired(required = false)
+  private DeferredTransactionCache deferredTransactionCache;
+  @Autowired(required = false)
+  private DeferredTransactionIdIndexCache deferredTransactionIdIndexCache;
+  @Autowired
+  private DeferredTransactionStore deferredTransactionStore;
+  @Autowired
+  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -163,12 +171,6 @@ public class Manager {
   // for network
   @Autowired
   private PeersStore peersStore;
-
-  @Autowired
-  private DeferredTransactionStore deferredStore;
-
-  @Autowired
-  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
 
   @Autowired
   private KhaosDatabase khaosDb;
@@ -606,6 +608,19 @@ public class Manager {
             throw new IllegalStateException("init txs cache error.");
           }
         })));
+
+    futures.add(service.submit(() -> {
+      getDeferredTransactionStore().revokingDB.getAllValues().forEach((key, value) -> {
+        getDeferredTransactionCache().put(key, value);
+      });
+    }));
+
+    futures.add(service.submit(() -> {
+      getDeferredTransactionIdIndexStore().revokingDB.getAllValues().forEach((key, value) -> {
+        getDeferredTransactionIdIndexCache().put(key, value);
+      });
+    }));
+
     ListenableFuture<?> future = Futures.allAsList(futures);
     try {
       future.get();
@@ -1540,16 +1555,24 @@ public class Manager {
     return this.transactionStore;
   }
 
-  public DeferredTransactionStore getDeferredTransactionStore() {
-      return this.deferredStore;
+  public DeferredTransactionCache getDeferredTransactionCache() {
+      return this.deferredTransactionCache;
   }
 
-  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
-      return this.deferredTransactionIdIndexStore;
+  public DeferredTransactionIdIndexCache getDeferredTransactionIdIndexCache() {
+      return this.deferredTransactionIdIndexCache;
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
     return this.transactionHistoryStore;
+  }
+
+  public DeferredTransactionStore getDeferredTransactionStore() {
+    return this.deferredTransactionStore;
+  }
+
+  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
+    return this.deferredTransactionIdIndexStore;
   }
 
   public BlockStore getBlockStore() {
@@ -1817,8 +1840,8 @@ public class Manager {
     closeOneStore(delegatedResourceStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
-    closeOneStore(deferredStore);
-    closeOneStore(deferredTransactionIdIndexStore);
+    closeOneStore(deferredTransactionStore);
+    closeOneStore(deferredTransactionIdIndexCache);
     logger.info("******** end to close db ********");
   }
 
@@ -2035,7 +2058,7 @@ public class Manager {
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule){
     // add deferred transactions to header of pendingTransactions
-    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
+    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionCache()
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
@@ -2052,6 +2075,12 @@ public class Manager {
     transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
+    Long deferredTransactionMaxSize = this.dynamicPropertiesStore.getDeferredTransactionOccupySpace();
+    if (deferredTransactionMaxSize + transactionCapsule.getData().length
+        > Constant.MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE) {
+      logger.info("deferred transaction over limit, the size is " + deferredTransactionMaxSize + " bytes");
+      return;
+    }
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     // save original transactionId in order to query deferred transaction
@@ -2085,20 +2114,31 @@ public class Manager {
     deferredTransaction.setExpiration(expiration);
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction.build());
-    getDeferredTransactionStore().put(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
+    Optional.ofNullable(getDeferredTransactionCache())
+        .ifPresent(t -> t.put(deferredTransactionCapsule));
+
+    Optional.ofNullable(getDeferredTransactionIdIndexCache())
+        .ifPresent(t -> t.put(deferredTransactionCapsule));
+
+    getDeferredTransactionCache().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
+
+    this.dynamicPropertiesStore.saveDeferredTransactionFee(deferredTransactionMaxSize + transactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
 
-    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
+    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionCache().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
       logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
 
+    getDeferredTransactionCache().removeDeferredTransaction(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexCache().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
+
 
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 

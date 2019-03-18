@@ -73,8 +73,8 @@ public class CancelDeferredTransactionContractActuatorTest {
     initDeferredTransaction();
     deferredTransaction = getBuildDeferredTransaction(transaction);
     deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
-    dbManager.getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
-    dbManager.getDeferredTransactionStore().put(deferredTransactionCapsule);
+    dbManager.getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
+    dbManager.getDeferredTransactionCache().put(deferredTransactionCapsule);
   }
 
   private static void initDeferredTransaction() {
@@ -152,13 +152,13 @@ public class CancelDeferredTransactionContractActuatorTest {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
         getOwnerAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     Assert.assertNotNull("perfect cancel deferred transaction", key);
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+      key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
       Assert.assertNull("perfect cancel deferred transaction", key);
 
     } catch (ContractValidateException e) {
@@ -173,7 +173,7 @@ public class CancelDeferredTransactionContractActuatorTest {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
         getToAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexStore().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     try {
       actuator.validate();
 

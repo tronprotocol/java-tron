@@ -14,9 +14,9 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.DeferredTransactionCacheDB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
-import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -181,8 +181,8 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
 
     int precision = Long.SIZE / Byte.SIZE;
-    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getPrevious(key, limit, precision).entrySet().stream()
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+    ((DeferredTransactionCacheDB) ((SnapshotRoot) head.getRoot()).db).getPrevious(key, limit, precision)
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue())))
         .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
     levelDBMap.putAll(collection);
 
@@ -193,5 +193,18 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       }
     }
     return result;
+  }
+
+  public Map<WrappedByteArray, WrappedByteArray> getAllValues() {
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll().entrySet().stream()
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
+        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    levelDBMap.putAll(collection);
+    return levelDBMap;
   }
 }
