@@ -1,5 +1,7 @@
 package org.tron.core.config.args;
 
+import static java.lang.Math.max;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -20,6 +22,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -32,7 +35,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginConfig;
+import org.tron.common.logsfilter.FilterQuery;
+import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.storage.DBSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -40,12 +47,13 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import org.tron.program.Version;
 
-@Slf4j
+@Slf4j(topic = "app")
 @NoArgsConstructor
 @Component
 public class Args {
@@ -57,6 +65,10 @@ public class Args {
 
   @Parameter(names = {"-d", "--output-directory"}, description = "Directory")
   private String outputDirectory = "output-directory";
+
+  @Getter
+  @Parameter(names = {"--log-config"})
+  private String logbackPath = "";
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -99,6 +111,9 @@ public class Args {
   @Parameter(names = {"-p", "--private-key"}, description = "private-key")
   private String privateKey = "";
 
+  @Parameter(names = {"--witness-address"}, description = "witness-address")
+  private String witnessAddress = "";
+
   @Parameter(names = {"--password"}, description = "password")
   private String password;
 
@@ -108,7 +123,12 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
-  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  @Parameter(names = {
+      "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
+  private String storageDbEngine = "";
+
+  @Parameter(names = {
+      "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
@@ -117,7 +137,8 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
-  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  @Parameter(names = {
+      "--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
@@ -200,7 +221,7 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-//  @Getter
+  //  @Getter
 //  @Setter
 //  private long syncNodeCount;
   @Getter
@@ -375,10 +396,6 @@ public class Args {
 
   @Getter
   @Setter
-  private String logLevel;
-
-  @Getter
-  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -396,12 +413,38 @@ public class Args {
   @Setter
   private long allowZKSnarkTransaction; //committee parameter
 
+  @Getter
+  @Setter
+  private long blockNumForEneryLimit;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--es"})
+  private boolean eventSubscribe = false;
+
+  @Getter
+  private EventPluginConfig eventPluginConfig;
+
+  @Getter
+  private FilterQuery eventFilter;
+
+  @Getter
+  @Setter
+  private long trxExpirationTimeInMilliseconds; // (ms)
+
+  @Getter
+  private DbBackupConfig dbBackupConfig;
+
+  @Getter
+  private DBSettings rocksDBCustomSettings;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
     INSTANCE.witness = false;
     INSTANCE.seedNodes = new ArrayList<>();
     INSTANCE.privateKey = "";
+    INSTANCE.witnessAddress = "";
     INSTANCE.storageDbDirectory = "";
     INSTANCE.storageIndexDirectory = "";
     INSTANCE.storageIndexSwitch = "";
@@ -466,6 +509,7 @@ public class Args {
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowZKSnarkTransaction = 0;
     INSTANCE.allowMultiSign = 0;
+    INSTANCE.trxExpirationTimeInMilliseconds = 0;
   }
 
   /**
@@ -474,8 +518,28 @@ public class Args {
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
+
+    if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
+    } else {
+      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
+    }
+
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
+      if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
+        byte[] bytes = Wallet.decodeFromBase58Check(INSTANCE.witnessAddress);
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from cmd");
+        } else {
+          INSTANCE.witnessAddress = "";
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
     } else if (config.hasPath("localwitness")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -485,6 +549,18 @@ public class Args {
         localwitness = localwitness.subList(0, 1);
       }
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
+
       logger.debug("Got privateKey from config.conf");
     } else if (config.hasPath("localwitnesskeystore")) {
       INSTANCE.localWitnesses = new LocalWitnesses();
@@ -549,10 +625,19 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbEngine(Optional.ofNullable(INSTANCE.storageDbEngine)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getDbEngineFromConfig(config)));
+
+    if (INSTANCE.storage.getDbEngine().toUpperCase().equals("ROCKSDB")
+        && INSTANCE.storage.getDbVersion() == 1) {
+      throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
+    }
+
     INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
-      .filter(StringUtils::isNotEmpty)
-      .map(Boolean::valueOf)
-      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+        .filter(StringUtils::isNotEmpty)
+        .map(Boolean::valueOf)
+        .orElse(Storage.getDbVersionSyncFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
@@ -566,10 +651,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
-    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
-      .filter(StringUtils::isNotEmpty)
-      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
-
+    INSTANCE.storage
+        .setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -577,14 +662,6 @@ public class Args {
     INSTANCE.seedNode.setIpList(Optional.ofNullable(INSTANCE.seedNodes)
         .filter(seedNode -> 0 != seedNode.size())
         .orElse(config.getStringList("seed.node.ip.list")));
-
-    if (config.hasPath("net.type") && "mainnet".equalsIgnoreCase(config.getString("net.type"))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
-    }
 
     if (config.hasPath("genesis.block")) {
       INSTANCE.genesisBlock = new GenesisBlock();
@@ -687,6 +764,12 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+    if (INSTANCE.blockProducedTimeOut < 30) {
+      INSTANCE.blockProducedTimeOut = 30;
+    }
+    if (INSTANCE.blockProducedTimeOut > 100) {
+      INSTANCE.blockProducedTimeOut = 100;
+    }
 
     INSTANCE.netMaxTrxPerSecond = config.hasPath("node.netMaxTrxPerSecond") ?
         config.getInt("node.netMaxTrxPerSecond") : NetConstants.NET_MAX_TRX_PER_SECOND;
@@ -766,37 +849,51 @@ public class Args {
         config.getLong("node.receiveTcpMinDataLength") : 2048;
     INSTANCE.isOpenFullTcpDisconnect = config.hasPath("node.isOpenFullTcpDisconnect") && config
         .getBoolean("node.isOpenFullTcpDisconnect");
-    INSTANCE.logLevel =
-        config.hasPath("log.level.root") ? config.getString("log.level.root") : "INFO";
     INSTANCE.needToUpdateAsset =
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
             : true;
-
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.trxExpirationTimeInMilliseconds =
+        config.hasPath("trx.expiration.timeInMilliseconds")
+            && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
+            config.getLong("trx.expiration.timeInMilliseconds")
+            : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
+
+    INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
+        config.getInt("enery.limit.block.num") : 4727890L;
 
     INSTANCE.vmTrace =
         config.hasPath("vm.vmTrace") ? config
             .getBoolean("vm.vmTrace") : false;
 
     INSTANCE.saveInternalTx =
-        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
+        config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
     INSTANCE.allowZKSnarkTransaction =
-            config.hasPath("committee.allowZKSnarkTransaction") ? config
-                    .getInt("committee.allowZKSnarkTransaction") : 0;
+        config.hasPath("committee.allowZKSnarkTransaction") ? config
+            .getInt("committee.allowZKSnarkTransaction") : 0;
+
+    INSTANCE.eventPluginConfig =
+        config.hasPath("event.subscribe") ?
+            getEventPluginConfig(config) : null;
+
+    INSTANCE.eventFilter =
+        config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
-
-
+    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+      initRocksDbBackupProperty(config);
+      initRocksDbSettings(config);
+    }
 
     logConfig();
   }
-
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
     return config.getObjectList("genesis.block.witnesses").stream()
@@ -880,6 +977,97 @@ public class Args {
       INSTANCE.privateKey = getGeneratedNodePrivateKey();
     }
   }
+
+  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
+    EventPluginConfig eventPluginConfig = new EventPluginConfig();
+
+    if (config.hasPath("event.subscribe.path")) {
+      String pluginPath = config.getString("event.subscribe.path");
+      if (StringUtils.isNotEmpty(pluginPath)) {
+        eventPluginConfig.setPluginPath(pluginPath.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.server")) {
+      String serverAddress = config.getString("event.subscribe.server");
+      if (StringUtils.isNotEmpty(serverAddress)) {
+        eventPluginConfig.setServerAddress(serverAddress.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.dbconfig")) {
+      String dbConfig = config.getString("event.subscribe.dbconfig");
+      if (StringUtils.isNotEmpty(dbConfig)) {
+        eventPluginConfig.setDbConfig(dbConfig.trim());
+      }
+    }
+
+    if (config.hasPath("event.subscribe.topics")) {
+      List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics")
+          .stream()
+          .map(Args::createTriggerConfig)
+          .collect(Collectors.toCollection(ArrayList::new));
+
+      eventPluginConfig.setTriggerConfigList(triggerConfigList);
+    }
+
+    return eventPluginConfig;
+  }
+
+  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
+    if (Objects.isNull(triggerObject)) {
+      return null;
+    }
+
+    TriggerConfig triggerConfig = new TriggerConfig();
+
+    String triggerName = triggerObject.get("triggerName").unwrapped().toString();
+    triggerConfig.setTriggerName(triggerName);
+
+    String enabled = triggerObject.get("enable").unwrapped().toString();
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true : false);
+
+    String topic = triggerObject.get("topic").unwrapped().toString();
+    triggerConfig.setTopic(topic);
+
+    return triggerConfig;
+  }
+
+  private static FilterQuery getEventFilter(final com.typesafe.config.Config config) {
+    FilterQuery filter = new FilterQuery();
+    long fromBlockLong = 0, toBlockLong = 0;
+
+    String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
+    try {
+      fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+    } catch (Exception e) {
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setFromBlock(fromBlockLong);
+
+    String toBlock = config.getString("event.subscribe.filter.toblock").trim();
+    try {
+      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
+    } catch (Exception e) {
+      logger.error("{}", e);
+      return null;
+    }
+    filter.setToBlock(toBlockLong);
+
+    List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
+    addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
+        Collectors.toList());
+    filter.setContractAddressList(addressList);
+
+    List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
+    topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
+        Collectors.toList());
+    filter.setContractTopicList(topicList);
+
+    return filter;
+  }
+
 
   private static String getGeneratedNodePrivateKey() {
     String nodeId;
@@ -982,6 +1170,53 @@ public class Args {
     return 5.0;
   }
 
+
+  private static void initRocksDbSettings(Config config) {
+    String prefix = "storage.dbSettings.";
+    int levelNumber = config.hasPath(prefix + "levelNumber")
+        ? config.getInt(prefix + "levelNumber") : 7;
+    int compactThreads = config.hasPath(prefix + "compactThreads")
+        ? config.getInt(prefix + "compactThreads")
+        : max(Runtime.getRuntime().availableProcessors(), 1);
+    int blocksize = config.hasPath(prefix + "blocksize")
+        ? config.getInt(prefix + "blocksize") : 16;
+    long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
+        ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
+    double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
+        ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
+    String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
+        ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
+    int level0FileNumCompactionTrigger =
+        config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
+            .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
+    long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
+        .getLong(prefix + "targetFileSizeBase") : 64;
+    int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
+        .getInt(prefix + "targetFileSizeMultiplier") : 1;
+
+    INSTANCE.rocksDBCustomSettings = DBSettings
+        .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
+            maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
+            targetFileSizeBase, targetFileSizeMultiplier);
+    DBSettings.loggingSettings();
+  }
+
+  private static void initRocksDbBackupProperty(Config config) {
+    boolean enable =
+        config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
+    String propPath = config.hasPath("storage.backup.propPath")
+        ? config.getString("storage.backup.propPath") : "prop.properties";
+    String bak1path = config.hasPath("storage.backup.bak1path")
+        ? config.getString("storage.backup.bak1path") : "bak1/database/";
+    String bak2path = config.hasPath("storage.backup.bak2path")
+        ? config.getString("storage.backup.bak2path") : "bak2/database/";
+    int frequency = config.hasPath("storage.backup.frequency")
+        ? config.getInt("storage.backup.frequency") : 10000;
+    INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
+        .initArgs(enable, propPath, bak1path, bak2path, frequency);
+  }
+
+
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")
         ? config.getInt("node.backup.priority") : 0;
@@ -1014,6 +1249,7 @@ public class Args {
     logger.info("Code version : {}", Version.getVersion());
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
+    logger.info("DB engine : {}", args.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
   }

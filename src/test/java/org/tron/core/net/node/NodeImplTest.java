@@ -1,6 +1,11 @@
 package org.tron.core.net.node;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.protobuf.ByteString;
+import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -27,12 +32,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-
-import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 
 @Slf4j
@@ -86,7 +85,7 @@ public class NodeImplTest {
   }
 
   @Test
-  public void testAdvBlockMessage() throws Exception{
+  public void testAdvBlockMessage() throws Exception {
     PeerConnection peer = new PeerConnection();
     BlockCapsule genesisBlockCapsule = BlockUtil.newGenesisBlockCapsule();
 
@@ -112,7 +111,8 @@ public class NodeImplTest {
     blockCapsule.sign(
         ByteArray.fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey()));
     BlockMessage blockMessage = new BlockMessage(blockCapsule);
-    peer.getAdvObjWeRequested().put(new Item(blockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
+    peer.getAdvObjWeRequested()
+        .put(new Item(blockMessage.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
     nodeImpl.onMessage(peer, blockMessage);
     Assert.assertEquals(peer.getAdvObjWeRequested().size(), 0);
   }
@@ -194,7 +194,7 @@ public class NodeImplTest {
   }
 
   @AfterClass
-  public static void destroy(){
+  public static void destroy() {
     Args.clearParam();
     context.destroy();
     appT.shutdownServices();

@@ -15,7 +15,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class WithdrawBalanceServlet extends HttpServlet {
 
   @Autowired
@@ -29,6 +29,7 @@ public class WithdrawBalanceServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       WithdrawBalanceContract.Builder build = WithdrawBalanceContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

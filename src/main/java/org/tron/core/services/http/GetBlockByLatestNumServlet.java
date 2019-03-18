@@ -13,7 +13,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetBlockByLatestNumServlet extends HttpServlet {
 
   @Autowired
@@ -45,6 +45,7 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build);
       long getNum = build.getNum();

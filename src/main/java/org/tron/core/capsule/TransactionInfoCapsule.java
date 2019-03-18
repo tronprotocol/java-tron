@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 import org.tron.protos.Protocol.TransactionInfo.code;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
   private TransactionInfo transactionInfo;
@@ -157,7 +157,8 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     builder.setId(ByteString.copyFrom(trxCap.getTransactionId().getBytes()));
     ProgramResult programResult = trace.getRuntimeResult();
     long fee =
-        programResult.getRet().getFee() + traceReceipt.getEnergyFee() + traceReceipt.getNetFee();
+        programResult.getRet().getFee() + traceReceipt.getEnergyFee()
+            + traceReceipt.getNetFee() + traceReceipt.getMultiSignFee();
     ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
     ByteString ContractAddress = ByteString.copyFrom(programResult.getContractAddress());
 

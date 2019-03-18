@@ -24,7 +24,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 
 
-@Slf4j(topic = "ProgramPrecompile")
+@Slf4j(topic = "VM")
 /**
  * Created by Anton Nashatyrev on 06.02.2017.
  */

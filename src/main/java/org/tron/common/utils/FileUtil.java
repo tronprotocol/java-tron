@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Slf4j(topic = "utils")
 public class FileUtil {
 
   public static List<String> recursiveList(String path) throws IOException {
@@ -123,5 +123,25 @@ public class FileUtil {
       }
     }
     return dir.delete();
+  }
+
+  public static boolean createFileIfNotExists(String filepath) {
+    File file = new File(filepath);
+    if (!file.exists()) {
+      try {
+        file.createNewFile();
+      } catch (Exception e) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean createDirIfNotExists(String dirPath) {
+    File dir = new File(dirPath);
+    if (!dir.exists()) {
+      return dir.mkdirs();
+    }
+    return true;
   }
 }

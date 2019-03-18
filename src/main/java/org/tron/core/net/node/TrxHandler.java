@@ -20,7 +20,7 @@ import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class TrxHandler {
 

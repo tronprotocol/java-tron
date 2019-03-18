@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class CreateAddressServlet extends HttpServlet {
 
   @Autowired
@@ -49,6 +49,7 @@ public class CreateAddressServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());

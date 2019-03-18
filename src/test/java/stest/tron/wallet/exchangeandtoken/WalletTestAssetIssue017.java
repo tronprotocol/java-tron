@@ -31,7 +31,6 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestAssetIssue017 {
-
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
@@ -42,9 +41,9 @@ public class WalletTestAssetIssue017 {
 
   private static long start;
   private static long end;
-  private static long now = System.currentTimeMillis();
+  private static  long now = System.currentTimeMillis();
   private static String name = "AssetIssue017_" + Long.toString(now);
-  private static long totalSupply = now;
+  private static  long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;
 
@@ -76,6 +75,10 @@ public class WalletTestAssetIssue017 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
+  /**
+   * constructor.
+   */
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -124,6 +127,7 @@ public class WalletTestAssetIssue017 {
     for (Integer i = 0; i < assetIssueListPaginated.get().getAssetIssueCount(); i++) {
       Assert.assertTrue(assetIssueListPaginated.get().getAssetIssue(i).getTotalSupply() > 0);
     }
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
   }
 
   @Test(enabled = true)
@@ -165,7 +169,6 @@ public class WalletTestAssetIssue017 {
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
 
     //offset is 0, limit is 50.
-
     offset = 0;
     limit = 50;
     pageMessageBuilder = PaginatedMessage.newBuilder();
@@ -187,12 +190,12 @@ public class WalletTestAssetIssue017 {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(offset);
     pageMessageBuilder.setLimit(limit);
-
+    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
+        blockingStubSolidity));
     AssetIssueList assetIssueList = blockingStubSolidity
         .getPaginatedAssetIssueList(pageMessageBuilder.build());
     Optional<AssetIssueList> assetIssueListPaginated = Optional.ofNullable(assetIssueList);
-    Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
-        blockingStubSolidity));
+
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
     for (Integer i = 0; i < assetIssueListPaginated.get().getAssetIssueCount(); i++) {
@@ -250,6 +253,7 @@ public class WalletTestAssetIssue017 {
     logger.info(Long.toString(assetIssueListPaginated.get().getAssetIssueCount()));
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() >= 1);
 
+
     //offset is -1, limit is 100.
     offset = -1;
     limit = 100;
@@ -263,6 +267,9 @@ public class WalletTestAssetIssue017 {
     Assert.assertTrue(assetIssueListPaginated.get().getAssetIssueCount() == 0);
   }
 
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
@@ -273,6 +280,9 @@ public class WalletTestAssetIssue017 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Boolean createAssetIssue(byte[] address, String name, Long totalSupply,
       Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
@@ -328,6 +338,9 @@ public class WalletTestAssetIssue017 {
       return false;
     }
   }
+  /**
+   * constructor.
+   */
 
   public static Protocol.Transaction signTransaction(ECKey ecKey,
       Protocol.Transaction transaction) {

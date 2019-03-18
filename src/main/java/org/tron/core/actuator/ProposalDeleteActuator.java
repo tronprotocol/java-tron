@@ -22,7 +22,7 @@ import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
-@Slf4j
+@Slf4j(topic = "actuator")
 public class ProposalDeleteActuator extends AbstractActuator {
 
   ProposalDeleteActuator(final Any contract, final Manager dbManager) {

@@ -43,7 +43,7 @@ public class WalletTestAssetIssue018 {
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+      .get(1);
 
   //get account
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -77,28 +77,26 @@ public class WalletTestAssetIssue018 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    PublicMethed.printAddress(assetAccount1Key);
+    PublicMethed.printAddress(assetAccount2Key);
+    PublicMethed.printAddress(assetAccount3Key);
+    PublicMethed.printAddress(assetAccount4Key);
+    PublicMethed.printAddress(assetAccount5Key);
+    PublicMethed.printAddress(assetAccount6Key);
   }
 
   @Test(enabled = true)
-  public void testAssetIssueNameBelow32Char() {
-    //get account
-    ecKey1 = new ECKey(Utils.getRandom());
-    assetAccount1Address = ecKey1.getAddress();
-    assetAccount1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
-    ecKey2 = new ECKey(Utils.getRandom());
-    assetAccount2Address = ecKey2.getAddress();
-    assetAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-    ecKey3 = new ECKey(Utils.getRandom());
-    assetAccount3Address = ecKey3.getAddress();
-    assetAccount3Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+  public void test1AssetIssueNameBelow32Char() {
 
     ecKey4 = new ECKey(Utils.getRandom());
     assetAccount4Address = ecKey4.getAddress();
@@ -113,12 +111,7 @@ public class WalletTestAssetIssue018 {
     assetAccount6Address = ecKey6.getAddress();
     assetAccount6Key = ByteArray.toHexString(ecKey6.getPrivKeyBytes());
 
-    PublicMethed.printAddress(assetAccount1Key);
-    PublicMethed.printAddress(assetAccount2Key);
-    PublicMethed.printAddress(assetAccount3Key);
-    PublicMethed.printAddress(assetAccount4Key);
-    PublicMethed.printAddress(assetAccount5Key);
-    PublicMethed.printAddress(assetAccount6Key);
+
 
     Assert.assertTrue(PublicMethed.sendcoin(assetAccount4Address,2048000000,fromAddress,
         testKey002,blockingStubFull));
@@ -151,7 +144,19 @@ public class WalletTestAssetIssue018 {
   }
 
   @Test(enabled = true)
-  public void testSameAssetissueName() {
+  public void test2SameAssetissueName() {
+    //get account
+    ecKey1 = new ECKey(Utils.getRandom());
+    assetAccount1Address = ecKey1.getAddress();
+    assetAccount1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    assetAccount2Address = ecKey2.getAddress();
+    assetAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    ecKey3 = new ECKey(Utils.getRandom());
+    assetAccount3Address = ecKey3.getAddress();
+    assetAccount3Key = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
@@ -162,7 +167,7 @@ public class WalletTestAssetIssue018 {
         testKey002,blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(assetAccount3Address,2048000000,fromAddress,
         testKey002,blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create 3 the same name token.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -180,7 +185,7 @@ public class WalletTestAssetIssue018 {
         name, totalSupply, 3, 3, start, end, 3, description, url,
         4000L,4000L, 3L,3L,assetAccount3Key,blockingStubFull));
 
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get asset issue by name
     String asset1Name = name;
     ByteString assetNameBs = ByteString.copyFrom(asset1Name.getBytes());
@@ -204,24 +209,23 @@ public class WalletTestAssetIssue018 {
     getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount3Key,blockingStubFull);
     ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Transfer asset issue.
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id.toByteArray(),
-        1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id
+                    .toByteArray(), 1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address,assetAccount2Id.toByteArray(),
-        2L,assetAccount2Address,assetAccount2Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address,assetAccount2Id
+                    .toByteArray(), 2L,assetAccount2Address,assetAccount2Key,blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address,assetAccount3Id.toByteArray(),
-        3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address,assetAccount3Id
+                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
-    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id.toByteArray(),
-        3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id
+                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
 
-    try {
-      Thread.sleep(5000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Participate asset issue.
     Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount3Address,assetAccount3Id
@@ -238,6 +242,9 @@ public class WalletTestAssetIssue018 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {

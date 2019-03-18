@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 

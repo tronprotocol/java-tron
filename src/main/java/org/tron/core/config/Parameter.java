@@ -14,7 +14,7 @@ public interface Parameter {
     int BLOCK_SIZE = 2_000_000;
     int BLOCK_PRODUCED_INTERVAL = 3000; //ms,produce block period, must be divisible by 60. millisecond
     long CLOCK_MAX_DELAY = 3600000; // 3600 * 1000 ms
-    int BLOCK_PRODUCED_TIME_OUT = 75; // 75%
+    int BLOCK_PRODUCED_TIME_OUT = 50; // 50%
     long PRECISION = 1000_000;
     long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     long MS_PER_DAY = 24 * 3600 * 1000L;
@@ -92,9 +92,13 @@ public interface Parameter {
     TOTAL_ENERGY_LIMIT, // 50,000,000,000, 17
     ALLOW_TVM_TRANSFER_TRC10, // 1, 18
     TOTAL_CURRENT_ENERGY_LIMIT, // 50,000,000,000, 19
+    ALLOW_MULTI_SIGN, // 1, 20
+    ALLOW_ADAPTIVE_ENERGY, // 1, 21
+    UPDATE_ACCOUNT_PERMISSION_FEE, // 100, 22
+    MULTI_SIGN_FEE, // 1, 23
 //    ALLOW_ADAPTIVE_ENERGY,
-    ALLOW_ZKSNARK_TRANSACTION, // 1, 22
-    ZKSNARK_TRANSACTION_FEE, // sun, 23
+    ALLOW_ZKSNARK_TRANSACTION, // 1, 24
+    ZKSNARK_TRANSACTION_FEE, // sun, 25
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -116,8 +120,9 @@ public interface Parameter {
   }
 
   enum ForkBlockVersionEnum {
+    ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
-    MULTI_SIGN(7);
+    VERSION_3_5(7);
     @Getter
     private int value;
 

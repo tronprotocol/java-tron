@@ -60,6 +60,10 @@ public class TestTransferTokenInContract {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass(enabled = true)
   public void beforeClass() {
 
@@ -77,6 +81,9 @@ public class TestTransferTokenInContract {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
+  /**
+   * constructor.
+   */
 
   public ByteString createAssetissue(byte[] devAddress, String devKey, String tokenName) {
 
@@ -108,7 +115,7 @@ public class TestTransferTokenInContract {
     return assetAccountId;
   }
 
-  @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
+  @Test(enabled = true, threadPoolSize = 2, invocationCount = 2)
   public void continueRun() {
 
     ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -128,10 +135,10 @@ public class TestTransferTokenInContract {
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
-        3, 1, dev001Key, blockingStubFull));
+        0, 1, dev001Key, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
-        3, 1, user001Key, blockingStubFull));
+        0, 1, user001Key, blockingStubFull));
 
     String tokenName = "testAI_" + randomInt(10000, 90000);
     ByteString tokenId = createAssetissue(user001Address, user001Key, tokenName);
@@ -205,12 +212,24 @@ public class TestTransferTokenInContract {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
 
-    while (true) {
+    for (int i = 0; i < 1000000000000L; i++) {
+      logger.info("** This is " + i + "times --------------------------------------------");
       count.getAndAdd(4);
       if (count.get() % 500 == 0) {
         long cost = (System.currentTimeMillis() - startTime) / 1000;
         logger.info("Count:" + count.get() + ", cost:" + cost
             + ", avg:" + count.get() / cost + ", errCount:" + errorCount);
+      }
+      PublicMethed.freezeBalanceForReceiver(user001Address,
+          PublicMethed.getFreezeBalanceCount(user001Address,
+              user001Key, 300000L, blockingStubFull), 0,
+          1, ByteString.copyFrom(fromAddress), testKey002, blockingStubFull);
+      PublicMethed.freezeBalanceForReceiver(user001Address, 10_000_000L,
+          0, 0, ByteString.copyFrom(fromAddress), testKey002, blockingStubFull);
+      try {
+        Thread.sleep(3000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
       // user trigger A to transfer token to B
       String param =
@@ -266,7 +285,7 @@ public class TestTransferTokenInContract {
         errorCount.incrementAndGet();
       }
 
-      triggerTxid = PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
+      PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
           "#", false, 0, 1000000000L, user001Address,
           user001Key, blockingStubFull);
 
@@ -285,11 +304,19 @@ public class TestTransferTokenInContract {
         errorCount.incrementAndGet();
       }
 
-      triggerTxid = PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
+      PublicMethed.triggerContract(tokenBalanceContractAddress, "balance()",
           "#", false, 0, 1000000000L, user001Address,
           user001Key, blockingStubFull);
+
+      PublicMethed.unFreezeBalance(fromAddress, user001Key, 1,
+          user001Address, blockingStubFull);
+      PublicMethed.unFreezeBalance(fromAddress, user001Key, 0,
+          user001Address, blockingStubFull);
     }
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {

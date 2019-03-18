@@ -26,7 +26,7 @@ package org.tron.common.utils;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
+@Slf4j(topic = "utils")
 public class RandomGenerator<T> {
   private static long RANDOM_GENERATOR_NUMBER = 2685821657736338717L;
 

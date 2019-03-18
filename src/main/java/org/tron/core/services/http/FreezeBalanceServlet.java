@@ -15,20 +15,17 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class FreezeBalanceServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
 
-  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-
-  }
-
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       FreezeBalanceContract.Builder build = FreezeBalanceContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet

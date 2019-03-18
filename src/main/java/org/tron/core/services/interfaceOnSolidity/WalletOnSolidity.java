@@ -35,7 +35,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 
-@Slf4j
+@Slf4j(topic = "API")
 @Component
 public class WalletOnSolidity {
 

@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Transaction;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionSignWeightServlet extends HttpServlet {
 
   @Autowired
@@ -28,6 +28,7 @@ public class GetTransactionSignWeightServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       Transaction transaction = Util.packTransaction(input);
       TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
       if (reply != null) {

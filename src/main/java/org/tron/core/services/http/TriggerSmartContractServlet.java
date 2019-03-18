@@ -26,7 +26,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class TriggerSmartContractServlet extends HttpServlet {
 
   @Autowired
@@ -55,6 +55,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(contract);
       JsonFormat.merge(contract, build);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
@@ -76,7 +77,6 @@ public class TriggerSmartContractServlet extends HttpServlet {
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
       trxExtBuilder.setTransaction(trx);
-      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)

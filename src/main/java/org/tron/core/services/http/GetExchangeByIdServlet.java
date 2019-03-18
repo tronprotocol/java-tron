@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetExchangeByIdServlet extends HttpServlet {
 
   @Autowired
@@ -25,6 +25,7 @@ public class GetExchangeByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       long id = jsonObject.getLong("id");
       response.getWriter()

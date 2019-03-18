@@ -5,15 +5,16 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
 
-public class LevelDB implements DB<byte[], byte[]> {
+public class LevelDB implements DB<byte[], byte[]>, Flusher {
   @Getter
   private LevelDbDataSourceImpl db;
-  private WriteOptions writeOptions = new WriteOptions()
+  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
       .sync(Args.getInstance().getStorage().isDbSync());
 
   public LevelDB(String parentName, String name) {
@@ -51,6 +52,7 @@ public class LevelDB implements DB<byte[], byte[]> {
     return db.iterator();
   }
 
+  @Override
   public void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
@@ -59,10 +61,11 @@ public class LevelDB implements DB<byte[], byte[]> {
 //    db.reOpen();
   }
 
+  @Override
   public void close() {
     db.closeDB();
   }
-
+  @Override
   public void reset() {
     db.resetDb();
   }

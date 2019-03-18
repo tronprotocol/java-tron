@@ -28,7 +28,7 @@ import org.tron.protos.Protocol.Transaction;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-@Slf4j
+@Slf4j(topic = "capsule")
 public class ContractCapsule implements ProtoCapsule<SmartContract> {
 
   private SmartContract smartContract;

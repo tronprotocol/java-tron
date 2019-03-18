@@ -16,7 +16,7 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionsToThisServlet extends HttpServlet {
 
   @Autowired
@@ -26,6 +26,7 @@ public class GetTransactionsToThisServlet extends HttpServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
     try {
       String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       AccountPaginated.Builder builder = AccountPaginated.newBuilder();
       JsonFormat.merge(input, builder);
       AccountPaginated accountPaginated = builder.build();

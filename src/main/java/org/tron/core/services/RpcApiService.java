@@ -35,6 +35,8 @@ import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
 import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -47,6 +49,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionListExtention;
@@ -111,7 +114,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
   private int port = Args.getInstance().getRpcPort();
@@ -734,6 +737,14 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getTransactionApprovedList(Transaction req,
+        StreamObserver<TransactionApprovedList> responseObserver) {
+      TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
+      responseObserver.onNext(tal);
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
       byte[] address = wallet.createAdresss(req.getValue().toByteArray());
@@ -775,6 +786,39 @@ public class RpcApiService implements Service {
       return responseBuild.build();
     }
 
+    private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
+        String assetId, long amount) {
+      TransactionCapsule transactionCapsule;
+      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
+      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+      try {
+        ECKey ecKey = ECKey.fromPrivate(privateKey);
+        byte[] owner = ecKey.getAddress();
+        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
+        builder.setOwnerAddress(ByteString.copyFrom(owner));
+        builder.setToAddress(toAddress);
+        builder.setAssetName(ByteString.copyFrom(assetId.getBytes()));
+        builder.setAmount(amount);
+        transactionCapsule = createTransactionCapsule(builder.build(),
+            ContractType.TransferAssetContract);
+        transactionCapsule.sign(privateKey);
+        GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+        responseBuild.setTransaction(transactionCapsule.getInstance());
+        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
+        responseBuild.setResult(retur);
+      } catch (ContractValidateException e) {
+        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      } catch (Exception e) {
+        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        responseBuild.setResult(returnBuilder.build());
+      }
+
+      return responseBuild.build();
+    }
+
     @Override
     public void easyTransfer(EasyTransferMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
@@ -785,10 +829,30 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void easyTransferAsset(EasyTransferAssetMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
+      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
+          req.getAssetId(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
         StreamObserver<EasyTransferResponse> responseObserver) {
       byte[] privateKey = req.getPrivateKey().toByteArray();
       EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
+      responseObserver.onNext(response);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void easyTransferAssetByPrivate(EasyTransferAssetByPrivateMessage req,
+        StreamObserver<EasyTransferResponse> responseObserver) {
+      byte[] privateKey = req.getPrivateKey().toByteArray();
+      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
+          req.getAssetId(), req.getAmount());
       responseObserver.onNext(response);
       responseObserver.onCompleted();
     }

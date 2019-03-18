@@ -58,8 +58,12 @@ public class MessageCall {
   private DataWord outDataSize;
 
   private DataWord tokenId;
+
+  private boolean isTokenTransferMsg;
+
   public MessageCall(OpCode type, DataWord energy, DataWord codeAddress,
-      DataWord endowment, DataWord inDataOffs, DataWord inDataSize, DataWord tokenId) {
+      DataWord endowment, DataWord inDataOffs, DataWord inDataSize, DataWord tokenId,
+      boolean isTokenTransferMsg) {
     this.type = type;
     this.energy = energy;
     this.codeAddress = codeAddress;
@@ -67,12 +71,13 @@ public class MessageCall {
     this.inDataOffs = inDataOffs;
     this.inDataSize = inDataSize;
     this.tokenId = tokenId;
+    this.isTokenTransferMsg = isTokenTransferMsg;
   }
 
   public MessageCall(OpCode type, DataWord energy, DataWord codeAddress,
       DataWord endowment, DataWord inDataOffs, DataWord inDataSize,
-      DataWord outDataOffs, DataWord outDataSize, DataWord tokenId) {
-    this(type, energy, codeAddress, endowment, inDataOffs, inDataSize, tokenId);
+      DataWord outDataOffs, DataWord outDataSize, DataWord tokenId, boolean isTokenTransferMsg) {
+    this(type, energy, codeAddress, endowment, inDataOffs, inDataSize, tokenId, isTokenTransferMsg);
     this.outDataOffs = outDataOffs;
     this.outDataSize = outDataSize;
   }
@@ -109,7 +114,7 @@ public class MessageCall {
     return outDataSize;
   }
 
-  public DataWord getTokenId() {
-    return tokenId;
-  }
+  public DataWord getTokenId() { return tokenId; }
+
+  public boolean isTokenTransferMsg() {return isTokenTransferMsg;}
 }

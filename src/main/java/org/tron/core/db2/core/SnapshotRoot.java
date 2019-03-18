@@ -2,7 +2,8 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.lang.ref.WeakReference;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,15 +11,36 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.TxCacheDB;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Getter
   private Snapshot solidity;
 
-  public SnapshotRoot(String parentName, String name) {
-    db = new LevelDB(parentName, name);
+  public SnapshotRoot(String parentName, String name, Class<? extends DB> clz) {
+    try {
+      if (clz == LevelDB.class || clz == RocksDB.class) {
+        Constructor constructor = clz.getConstructor(String.class, String.class);
+        @SuppressWarnings("unchecked")
+        DB<byte[], byte[]> db = (DB<byte[], byte[]>) constructor
+            .newInstance((Object) parentName, (Object) name);
+        this.db = db;
+      } else if (clz == TxCacheDB.class) {
+        @SuppressWarnings("unchecked")
+        DB<byte[], byte[]> db = (DB<byte[], byte[]>) clz.newInstance();
+        this.db = db;
+      } else {
+        throw new IllegalArgumentException();
+      }
+    } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+      throw new IllegalArgumentException();
+    }
+
     solidity = this;
   }
 
@@ -39,13 +61,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public void merge(Snapshot from) {
-    LevelDB levelDB = (LevelDB) db;
     SnapshotImpl snapshot = (SnapshotImpl) from;
     Map<WrappedByteArray, WrappedByteArray> batch = Streams.stream(snapshot.db)
         .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()),
             WrappedByteArray.of(e.getValue().getBytes())))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    levelDB.flush(batch);
+    ((Flusher) db).flush(batch);
   }
 
   public void merge(List<Snapshot> snapshots) {
@@ -57,7 +78,8 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
               WrappedByteArray.of(e.getValue().getBytes())))
           .forEach(e -> batch.put(e.getKey(), e.getValue()));
     }
-    ((LevelDB) db).flush(batch);
+
+    ((Flusher) db).flush(batch);
   }
 
   @Override
@@ -71,18 +93,18 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return db.iterator();
   }
 
   @Override
   public void close() {
-    ((LevelDB) db).close();
+    ((Flusher) db).close();
   }
 
   @Override
   public void reset() {
-    ((LevelDB) db).reset();
+    ((Flusher) db).reset();
   }
 
   @Override

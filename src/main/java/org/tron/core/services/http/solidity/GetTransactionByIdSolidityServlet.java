@@ -12,13 +12,12 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionByIdSolidityServlet extends HttpServlet {
 
   @Autowired
@@ -48,6 +47,7 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       Transaction reply = wallet.getTransactionById(build.build().getValue());

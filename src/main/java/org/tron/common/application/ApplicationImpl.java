@@ -3,6 +3,7 @@ package org.tron.common.application;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -11,7 +12,7 @@ import org.tron.core.net.node.NodeDelegate;
 import org.tron.core.net.node.NodeDelegateImpl;
 import org.tron.core.net.node.NodeImpl;
 
-@Slf4j
+@Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 
@@ -67,12 +68,15 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
+    //p2pNode.shutDown();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
     closeConnection();
     dbManager.stopRepushThread();
+    dbManager.stopRepushTriggerThread();
+    EventPluginLoader.getInstance().stopPlugin();
     logger.info("******** end to shutdown ********");
   }
 
@@ -121,6 +125,7 @@ public class ApplicationImpl implements Application {
   }
 
   private void closeRevokingStore() {
+    logger.info("******** begin to closeRevokingStore ********");
     dbManager.getRevokingStore().shutdown();
   }
 

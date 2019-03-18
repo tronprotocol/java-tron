@@ -17,7 +17,7 @@ import org.tron.protos.Protocol.Account;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetAccountServlet extends HttpServlet {
 
   @Autowired
@@ -68,6 +68,7 @@ public class GetAccountServlet extends HttpServlet {
     try {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build);
 

@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetTransactionByIdServlet extends HttpServlet {
 
   @Autowired
@@ -45,6 +45,7 @@ public class GetTransactionByIdServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
       Transaction reply = wallet.getTransactionById(build.getValue());

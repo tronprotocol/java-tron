@@ -556,6 +556,12 @@ service Wallet {
     };
   };
   //Warning: do not invoke this interface provided by others.
+  rpc EasyTransferAsset (EasyTransferAssetMessage) returns (EasyTransferResponse) {
+  };
+  //Warning: do not invoke this interface provided by others.
+  rpc EasyTransferAssetByPrivate (EasyTransferAssetByPrivateMessage) returns (EasyTransferResponse) {
+  };
+  //Warning: do not invoke this interface provided by others.
   rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
     option (google.api.http) = {
       post: "/wallet/easytransfer"
@@ -638,41 +644,16 @@ service Wallet {
     };
   }
 
-  rpc PermissionAddKey (PermissionAddKeyContract) returns (TransactionExtention) {
-    option (google.api.http) = {
-      post: "/wallet/permissionaddkey"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/permissionaddkey"
-      }
-    };
-  }
-
-  rpc PermissionUpdateKey (PermissionUpdateKeyContract) returns (TransactionExtention) {
-    option (google.api.http) = {
-      post: "/wallet/permissionupdatekey"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/permissionupdatekey"
-      }
-    };
-  }
-
-  rpc PermissionDeleteKey (PermissionDeleteKeyContract) returns (TransactionExtention) {
-    option (google.api.http) = {
-      post: "/wallet/permissiondeletekey"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/permissiondeletekey"
-      }
-    };
-  }
 
   rpc AddSign (TransactionSign) returns (TransactionExtention) {
 
   }
 
   rpc GetTransactionSignWeight (Transaction) returns (TransactionSignWeight) {
+
+  }
+
+  rpc GetTransactionApprovedList(Transaction) returns (TransactionApprovedList) {
 
   }
 
@@ -1002,10 +983,24 @@ message EasyTransferMessage {
   int64 amount = 3;
 }
 
+message EasyTransferAssetMessage {
+  bytes passPhrase = 1;
+  bytes toAddress = 2;
+  string assetId = 3;
+  int64 amount = 4;
+}
+
 message EasyTransferByPrivateMessage {
   bytes privateKey = 1;
   bytes toAddress = 2;
   int64 amount = 3;
+}
+
+message EasyTransferAssetByPrivateMessage {
+  bytes privateKey = 1;
+  bytes toAddress = 2;
+  string assetId = 3;
+  int64 amount = 4;
 }
 
 message EasyTransferResponse {
@@ -1062,6 +1057,23 @@ message TransactionSignWeight {
   Permission permission = 1;
   repeated bytes approved_list = 2;
   int64 current_weight = 3;
+  Result result = 4;
+  TransactionExtention transaction = 5;
+}
+
+message TransactionApprovedList {
+  message Result {
+    enum response_code {
+      SUCCESS = 0;
+      SIGNATURE_FORMAT_ERROR = 1;
+      COMPUTE_ADDRESS_ERROR = 2;
+      OTHER_ERROR = 20;
+    }
+    response_code code = 1;
+    string message = 2;
+  }
+
+  repeated bytes approved_list = 2;
   Result result = 4;
   TransactionExtention transaction = 5;
 }

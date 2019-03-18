@@ -16,7 +16,7 @@ import org.tron.core.Wallet;
 
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class ValidateAddressServlet extends HttpServlet {
 
   private String validAddress(String input) {
@@ -71,10 +71,11 @@ public class ValidateAddressServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       JSONObject jsonAddress = JSON.parseObject(input);
       response.getWriter().println(validAddress(jsonAddress.getString("address")));
-    } catch (IOException e) {
-      logger.debug("IOException: {}", e.getMessage());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
     }
   }
 }

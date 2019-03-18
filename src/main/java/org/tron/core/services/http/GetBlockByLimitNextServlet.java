@@ -13,7 +13,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.core.Wallet;
 
 @Component
-@Slf4j
+@Slf4j(topic = "API")
 public class GetBlockByLimitNextServlet extends HttpServlet {
 
   @Autowired
@@ -46,6 +46,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
       BlockLimit.Builder build = BlockLimit.newBuilder();
       JsonFormat.merge(input, build);
       long startNum = build.getStartNum();

@@ -27,7 +27,7 @@ import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 
-@Slf4j
+@Slf4j(topic = "app")
 public class SolidityNode {
 
   private Manager dbManager;
@@ -175,9 +175,6 @@ public class SolidityNode {
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
-    ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger)LoggerFactory
-        .getLogger(Logger.ROOT_LOGGER_NAME);
-    root.setLevel(Level.toLevel(cfgArgs.getLogLevel()));
 
     if (StringUtils.isEmpty(cfgArgs.getTrustNodeAddr())) {
       logger.error("Trust node not set.");

@@ -56,6 +56,10 @@ public class WalletTestTransfer007 {
 
 
 
+  /**
+   * constructor.
+   */
+
   @BeforeClass
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -76,7 +80,8 @@ public class WalletTestTransfer007 {
     /*    channelSolidityInFullnode = ManagedChannelBuilder.forTarget(solidityInFullnode)
         .usePlaintext(true)
         .build();
-    blockingStubSolidityInFullnode = WalletSolidityGrpc.newBlockingStub(channelSolidityInFullnode);*/
+    blockingStubSolidityInFullnode = WalletSolidityGrpc.newBlockingStub(channelSolidityInFullnode);
+    */
   }
 
 
@@ -96,17 +101,17 @@ public class WalletTestTransfer007 {
   public void testSendCoin2() {
     String transactionId = PublicMethed.sendcoinGetTransactionId(sendAccountAddress, 90000000000L,
         fromAddress, testKey002, blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
-    //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidityInFullnode);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<Transaction> infoById = PublicMethed
-        .getTransactionById(transactionId, blockingStubSolidity);
+        .getTransactionById(transactionId, blockingStubFull);
     Long timestamptis = PublicMethed.printTransactionRow(infoById.get().getRawData());
     Long timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
         .getRawData().getTimestamp();
     Assert.assertTrue(timestamptis >= timestampBlockOne);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
 
-    infoById = PublicMethed.getTransactionById(transactionId, blockingStubFull);
+    infoById = PublicMethed.getTransactionById(transactionId, blockingStubSolidity);
     timestamptis = PublicMethed.printTransactionRow(infoById.get().getRawData());
     timestampBlockOne = PublicMethed.getBlock(1, blockingStubFull).getBlockHeader()
         .getRawData().getTimestamp();
@@ -128,6 +133,9 @@ public class WalletTestTransfer007 {
 
 
   }
+  /**
+   * constructor.
+   */
 
   @AfterClass
   public void shutdown() throws InterruptedException {
