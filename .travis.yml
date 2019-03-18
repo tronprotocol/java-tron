@@ -24,13 +24,9 @@ matrix:
 
 
   - name: stest
-    branches:
-      only:
-        - master
-        - develop
-      script:
-      - sh tron.sh
-      - bash deploy.sh
+    script:
+    - sh tron.sh
+    - bash deploy.sh
 
 
 
