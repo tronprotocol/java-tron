@@ -1,13 +1,7 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
-
-import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.io.File;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -24,7 +18,6 @@ import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.raw.Builder;
 
 public class DeferredTransactionCacheTest {
   private static String dbPath = "output_deferred_transactionCache_test";

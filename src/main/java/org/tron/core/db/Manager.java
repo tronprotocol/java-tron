@@ -2073,10 +2073,10 @@ public class Manager {
     transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
-
-    if (this.dynamicPropertiesStore.getDeferredTransactionOccupySpace() + transactionCapsule.getData().length
+    Long deferredTransactionMaxSize = this.dynamicPropertiesStore.getDeferredTransactionOccupySpace();
+    if (deferredTransactionMaxSize + transactionCapsule.getData().length
         > Constant.MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE) {
-      logger.error("too many deferred transaction, the size is " + this.dynamicPropertiesStore.getDeferredTransactionOccupySpace() + " bytes");
+      logger.info("deferred transaction over limit, the size is " + deferredTransactionMaxSize + " bytes");
       return;
     }
 
@@ -2120,6 +2120,8 @@ public class Manager {
 
     getDeferredTransactionCache().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
+
+    this.dynamicPropertiesStore.saveDeferredTransactionFee(deferredTransactionMaxSize + transactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
