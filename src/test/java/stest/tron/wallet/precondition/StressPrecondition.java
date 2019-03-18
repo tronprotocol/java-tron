@@ -3,11 +3,17 @@ package stest.tron.wallet.precondition;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.io.BufferedReader;
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -16,30 +22,18 @@ import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Configuration;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.ChainParameters;
-import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.CharArrayWriter;
-import java.io.InputStreamReader;
 import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
 public class StressPrecondition {
+
   protected String commonOwnerAddress = Configuration.getByPath("stress.conf")
       .getString("address.commonOwnerAddress");
   protected String triggerOwnerAddress = Configuration.getByPath("stress.conf")
@@ -73,14 +67,22 @@ public class StressPrecondition {
   protected String delegateResourceKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.delegateResourceKey");
 
-  protected String assetIssueOwnerAddress = Configuration.getByPath("stress.conf").getString("address.assetIssueOwnerAddress");
-  protected String assetIssueOwnerKey = Configuration.getByPath("stress.conf").getString("privateKey.assetIssueOwnerKey");
-  protected String participateOwnerAddress = Configuration.getByPath("stress.conf").getString("address.participateOwnerAddress");
-  protected String participateOwnerPrivateKey = Configuration.getByPath("stress.conf").getString("privateKey.participateOwnerPrivateKey");
-  protected String exchangeOwnerAddress = Configuration.getByPath("stress.conf").getString("address.exchangeOwnerAddress");
-  protected String exchangeOwnerKey = Configuration.getByPath("stress.conf").getString("privateKey.exchangeOwnerKey");
-  private String mutiSignOwnerAddress = Configuration.getByPath("stress.conf").getString("address.mutiSignOwnerAddress");
-  private String mutiSignOwnerKey = Configuration.getByPath("stress.conf").getString("privateKey.mutiSignOwnerKey");
+  protected String assetIssueOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.assetIssueOwnerAddress");
+  protected String assetIssueOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.assetIssueOwnerKey");
+  protected String participateOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.participateOwnerAddress");
+  protected String participateOwnerPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.participateOwnerPrivateKey");
+  protected String exchangeOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.exchangeOwnerAddress");
+  protected String exchangeOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.exchangeOwnerKey");
+  private String mutiSignOwnerAddress = Configuration.getByPath("stress.conf")
+      .getString("address.mutiSignOwnerAddress");
+  private String mutiSignOwnerKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.mutiSignOwnerKey");
 
   Long firstTokenInitialBalance = 500000000L;
   Long secondTokenInitialBalance = 500000000L;
@@ -110,7 +112,8 @@ public class StressPrecondition {
   private String oldAddress;
   private String newAddress;
   private String newContractAddress;
-  private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf").getStringList("fullnode.ip.list")
+  private String fullnode = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
+      .getStringList("fullnode.ip.list")
       .get(0);
   ByteString assetIssueId;
   Optional<ExchangeList> listExchange;
@@ -137,7 +140,7 @@ public class StressPrecondition {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test1CreateProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -154,27 +157,27 @@ public class StressPrecondition {
     }
 
     if (!proposalMap.isEmpty()) {
-      PublicMethed.createProposal(witness001Address,witnessKey001,
-          proposalMap,blockingStubFull);
+      PublicMethed.createProposal(witness001Address, witnessKey001,
+          proposalMap, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-      Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
+      Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
       final Integer proposalId = listProposals.get().getProposalsCount();
-      PublicMethed.approveProposal(witness001Address,witnessKey001,proposalId,
-          true,blockingStubFull);
+      PublicMethed.approveProposal(witness001Address, witnessKey001, proposalId,
+          true, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness002Address,witnessKey002,proposalId,
-          true,blockingStubFull);
+      PublicMethed.approveProposal(witness002Address, witnessKey002, proposalId,
+          true, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness003Address,witnessKey003,proposalId,
-          true,blockingStubFull);
+      PublicMethed.approveProposal(witness003Address, witnessKey003, proposalId,
+          true, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness004Address,witnessKey004,proposalId,
-          true,blockingStubFull);
+      PublicMethed.approveProposal(witness004Address, witnessKey004, proposalId,
+          true, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness005Address,witnessKey005,proposalId,
-          true,blockingStubFull);
+      PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
+          true, blockingStubFull);
       try {
         Thread.sleep(700000);
       } catch (InterruptedException e) {
@@ -192,16 +195,30 @@ public class StressPrecondition {
     sendCoinToStressAccount(participateOwnerPrivateKey);
     sendCoinToStressAccount(exchangeOwnerKey);
     sendCoinToStressAccount(mutiSignOwnerKey);
-    logger.info("commonOwnerAddress " + PublicMethed.queryAccount(commonOwnerPrivateKey,blockingStubFull).getBalance());
-    logger.info("triggerOwnerAddress " + PublicMethed.queryAccount(triggerOwnerKey,blockingStubFull).getBalance());
-    logger.info("commonToAddress " + PublicMethed.queryAccount(commonToPrivateKey,blockingStubFull).getBalance());
-    logger.info("assetIssueOwnerAddress " + PublicMethed.queryAccount(assetIssueOwnerKey,blockingStubFull).getBalance());
-    logger.info("participateOwnerAddress " + PublicMethed.queryAccount(participateOwnerPrivateKey,blockingStubFull).getBalance());
-    logger.info("exchangeOwnerKey " + PublicMethed.queryAccount(exchangeOwnerKey,blockingStubFull).getBalance());
-    logger.info("mutiSignOwnerKey " + PublicMethed.queryAccount(mutiSignOwnerKey,blockingStubFull).getBalance());
-    PublicMethed.freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey),50000000000000L,3,1,triggerOwnerKey,blockingStubFull);
+    logger.info(
+        "commonOwnerAddress " + PublicMethed.queryAccount(commonOwnerPrivateKey, blockingStubFull)
+            .getBalance());
+    logger.info(
+        "triggerOwnerAddress " + PublicMethed.queryAccount(triggerOwnerKey, blockingStubFull)
+            .getBalance());
+    logger.info("commonToAddress " + PublicMethed.queryAccount(commonToPrivateKey, blockingStubFull)
+        .getBalance());
+    logger.info(
+        "assetIssueOwnerAddress " + PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull)
+            .getBalance());
+    logger.info("participateOwnerAddress " + PublicMethed
+        .queryAccount(participateOwnerPrivateKey, blockingStubFull).getBalance());
+    logger.info("exchangeOwnerKey " + PublicMethed.queryAccount(exchangeOwnerKey, blockingStubFull)
+        .getBalance());
+    logger.info("mutiSignOwnerKey " + PublicMethed.queryAccount(mutiSignOwnerKey, blockingStubFull)
+        .getBalance());
+    PublicMethed
+        .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey), 50000000000000L, 3,
+            1, triggerOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey),50000000000000L,3,0,triggerOwnerKey,blockingStubFull);
+    PublicMethed
+        .freezeBalanceGetEnergy(PublicMethed.getFinalAddress(triggerOwnerKey), 50000000000000L, 3,
+            0, triggerOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
@@ -218,11 +235,11 @@ public class StressPrecondition {
 
     newContractAddress = WalletClient.encode58Check(commonContractAddress1);
 
-    oldAddress = readWantedText("stress.conf","commonContractAddress1");
+    oldAddress = readWantedText("stress.conf", "commonContractAddress1");
     newAddress = "  commonContractAddress1 = " + newContractAddress;
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
-    replacAddressInConfig("stress.conf",oldAddress,newAddress);
+    replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
   }
@@ -240,11 +257,11 @@ public class StressPrecondition {
 
     newContractAddress = WalletClient.encode58Check(commonContractAddress2);
 
-    oldAddress = readWantedText("stress.conf","commonContractAddress2");
+    oldAddress = readWantedText("stress.conf", "commonContractAddress2");
     newAddress = "  commonContractAddress2 = " + newContractAddress;
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
-    replacAddressInConfig("stress.conf",oldAddress,newAddress);
+    replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
@@ -261,20 +278,22 @@ public class StressPrecondition {
 
     newContractAddress = WalletClient.encode58Check(commonContractAddress3);
 
-    oldAddress = readWantedText("stress.conf","commonContractAddress3");
+    oldAddress = readWantedText("stress.conf", "commonContractAddress3");
     newAddress = "  commonContractAddress3 = " + newContractAddress;
     logger.info("oldAddress " + oldAddress);
     logger.info("newAddress " + newAddress);
-    replacAddressInConfig("stress.conf",oldAddress,newAddress);
+    replacAddressInConfig("stress.conf", oldAddress, newAddress);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true)
   public void test6CreateToken() {
-    if (PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID().isEmpty()) {
+    if (PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID()
+        .isEmpty()) {
       Long start = System.currentTimeMillis() + 20000;
       Long end = System.currentTimeMillis() + 1000000000;
-      PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(assetIssueOwnerKey), "xxd", 50000000000000L,
+      PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(assetIssueOwnerKey), "xxd",
+          50000000000000L,
           1, 1, start, end, 1, "wwwwww", "wwwwwwww", 100000L,
           100000L, 1L, 1L, assetIssueOwnerKey, blockingStubFull);
       logger.info("createAssetIssue");
@@ -282,29 +301,37 @@ public class StressPrecondition {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
-    assetIssueId = PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID();
+    assetIssueId = PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull)
+        .getAssetIssuedID();
 
     //PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
 
     logger.info("commonContractAddress1 is " + commonContractAddress1);
-    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2,assetIssueId.toByteArray(),300000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-
+    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
+    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+        PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
-    String oldTokenIdString = readWantedText("stress.conf","commontokenid");
+    String oldTokenIdString = readWantedText("stress.conf", "commontokenid");
     logger.info("oldTokenIdString " + oldTokenIdString);
     String newTokenIdInConfig = "commontokenid = " + newTokenId;
     logger.info("newTokenIdInConfig " + newTokenIdInConfig);
-    replacAddressInConfig("stress.conf",oldTokenIdString,newTokenIdInConfig);
+    replacAddressInConfig("stress.conf", oldTokenIdString, newTokenIdInConfig);
   }
 
   @Test(enabled = true)
@@ -315,26 +342,27 @@ public class StressPrecondition {
 
     for (Integer i = 0; i < listExchange.get().getExchangesCount(); i++) {
       if (ByteArray.toHexString(listExchange.get().getExchanges(i)
-          .getCreatorAddress().toByteArray()).equalsIgnoreCase(ByteArray.toHexString(PublicMethed.getFinalAddress(exchangeOwnerKey)))) {
+          .getCreatorAddress().toByteArray()).equalsIgnoreCase(
+          ByteArray.toHexString(PublicMethed.getFinalAddress(exchangeOwnerKey)))) {
         logger.info("id is " + listExchange.get().getExchanges(i).getExchangeId());
         exchangeId = listExchange.get().getExchanges(i).getExchangeId();
         break;
       }
     }
 
-
     if (exchangeId == 0L) {
       String trx = "_";
       byte[] b = trx.getBytes();
-      PublicMethed.exchangeCreate(assetIssueId.toByteArray(),firstTokenInitialBalance,
-          b,secondTokenInitialBalance,PublicMethed.getFinalAddress(exchangeOwnerKey),
-          exchangeOwnerKey,blockingStubFull);
+      PublicMethed.exchangeCreate(assetIssueId.toByteArray(), firstTokenInitialBalance,
+          b, secondTokenInitialBalance, PublicMethed.getFinalAddress(exchangeOwnerKey),
+          exchangeOwnerKey, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       listExchange = PublicMethed.getExchangeList(blockingStubFull);
       for (Integer i = 0; i < listExchange.get().getExchangesCount(); i++) {
         if (ByteArray.toHexString(listExchange.get().getExchanges(i)
-            .getCreatorAddress().toByteArray()).equalsIgnoreCase(ByteArray.toHexString(PublicMethed.getFinalAddress(exchangeOwnerKey)))) {
+            .getCreatorAddress().toByteArray()).equalsIgnoreCase(
+            ByteArray.toHexString(PublicMethed.getFinalAddress(exchangeOwnerKey)))) {
           logger.info("id is " + listExchange.get().getExchanges(i).getExchangeId());
           exchangeId = listExchange.get().getExchanges(i).getExchangeId();
           break;
@@ -343,11 +371,11 @@ public class StressPrecondition {
     }
 
     String newExchangeId = "" + exchangeId;
-    String oldExchangeIdString = readWantedText("stress.conf","commonexchangeid");
+    String oldExchangeIdString = readWantedText("stress.conf", "commonexchangeid");
     logger.info("oldExchangeIdString " + oldExchangeIdString);
     String newTokenIdInConfig = "commonexchangeid = " + newExchangeId;
     logger.info("newTokenIdInConfig " + newTokenIdInConfig);
-    replacAddressInConfig("stress.conf",oldExchangeIdString,newTokenIdInConfig);
+    replacAddressInConfig("stress.conf", oldExchangeIdString, newTokenIdInConfig);
   }
 
 
@@ -369,7 +397,8 @@ public class StressPrecondition {
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey002) + "\",\"weight\":1}"
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey003) + "\",\"weight\":1}"
             + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey004) + "\",\"weight\":1}"
-            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey005) + "\",\"weight\":1}]},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(witnessKey005)
+            + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
@@ -378,11 +407,11 @@ public class StressPrecondition {
             + "]}]}";
 
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,PublicMethed.getFinalAddress(mutiSignOwnerKey),mutiSignOwnerKey,
-        blockingStubFull,ownerKeyString);
+    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
+        PublicMethed.getFinalAddress(mutiSignOwnerKey), mutiSignOwnerKey,
+        blockingStubFull, ownerKeyString);
 
   }
-
 
 
   /**
@@ -397,8 +426,9 @@ public class StressPrecondition {
   }
 
   public void sendCoinToStressAccount(String key) {
-    if (PublicMethed.queryAccount(key,blockingStubFull).getBalance() <= 498879998803847L) {
-      PublicMethed.sendcoin(PublicMethed.getFinalAddress(key),998879998803847L,witness004Address,witnessKey004,blockingStubFull);
+    if (PublicMethed.queryAccount(key, blockingStubFull).getBalance() <= 498879998803847L) {
+      PublicMethed.sendcoin(PublicMethed.getFinalAddress(key), 998879998803847L, witness004Address,
+          witnessKey004, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
   }
@@ -447,8 +477,6 @@ public class StressPrecondition {
     }
     return "";
   }
-
-
 
 
 }
