@@ -1275,7 +1275,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionCountByBlocknumFromSolidity(String httpSolidityNode, long blocknum) {
+  public static HttpResponse getTransactionCountByBlocknumFromSolidity(String httpSolidityNode,
+      long blocknum) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/gettransactioncountbyblocknum";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1482,12 +1483,11 @@ public class HttpMethed {
     }
   }
 
-
   /**
    * constructor.
    */
-  public static void waitToProduceOneBlockFromSolidity(String httpSolidityNode) {
-    response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
+  public static void waitToProduceOneBlockFromSolidity(String httpNode, String httpSolidityNode) {
+    response = HttpMethed.getNowBlock(httpNode);
     responseContent = HttpMethed.parseResponseContent(response);
     responseContent = HttpMethed.parseStringContent(responseContent.get("block_header").toString());
     responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
@@ -1721,15 +1721,15 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getAssetIssueListFromSolidity(String httpSolidityNode) {
-      try {
-        String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getassetissuelist";
-        response = createConnect(requestUrl);
-      } catch (Exception e) {
-        e.printStackTrace();
-        httppost.releaseConnection();
-        return null;
-      }
-      return response;
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getassetissuelist";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
   }
 
   /**

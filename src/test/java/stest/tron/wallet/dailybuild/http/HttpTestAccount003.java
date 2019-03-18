@@ -26,6 +26,7 @@ public class HttpTestAccount003 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
   private final String witnessKey001 = Configuration.getByPath("testng.conf")
       .getString("witness.key1");
   private final byte[] witness1Address = PublicMethed.getFinalAddress(witnessKey001);
@@ -112,6 +113,18 @@ public class HttpTestAccount003 {
   @Test(enabled = true, description = "List witnesses by http")
   public void test3ListWitness() {
     response = HttpMethed.listwitnesses(httpnode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("witnesses"));
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "List witnesses from solidity by http")
+  public void test3ListWitnessFromSolidity() {
+    response = HttpMethed.listwitnessesFromSolidity(httpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("witnesses"));
