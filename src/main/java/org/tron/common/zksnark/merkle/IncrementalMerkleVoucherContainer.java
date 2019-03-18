@@ -6,18 +6,18 @@ import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.SHA256Compress;
 
-public class IncrementalMerkleWitnessContainer {
+public class IncrementalMerkleVoucherContainer {
 
   public static Integer DEPTH = IncrementalMerkleTreeContainer.DEPTH;
 
-  private IncrementalMerkleWitnessCapsule witnessCapsule;
+  private IncrementalMerkleVoucherCapsule witnessCapsule;
 
-  public IncrementalMerkleWitnessContainer(IncrementalMerkleWitnessCapsule witnessCapsule) {
+  public IncrementalMerkleVoucherContainer(IncrementalMerkleVoucherCapsule witnessCapsule) {
     this.witnessCapsule = witnessCapsule;
   }
 
-  public IncrementalMerkleWitnessContainer(IncrementalMerkleTreeContainer tree) {
-    this.witnessCapsule = new IncrementalMerkleWitnessCapsule();
+  public IncrementalMerkleVoucherContainer(IncrementalMerkleTreeContainer tree) {
+    this.witnessCapsule = new IncrementalMerkleVoucherCapsule();
     this.witnessCapsule.setTree(tree.getTreeCapsule());
   }
 
@@ -70,7 +70,7 @@ public class IncrementalMerkleWitnessContainer {
     }
   }
 
-  public IncrementalMerkleWitnessCapsule getWitnessCapsule() {
+  public IncrementalMerkleVoucherCapsule getVoucherCapsule() {
     return witnessCapsule;
   }
 
@@ -86,7 +86,7 @@ public class IncrementalMerkleWitnessContainer {
     return witnessCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
 
-  public byte[] getMerkleWitnessKey() {
+  public byte[] getMerkleVoucherKey() {
     OutputPoint outputPoint = witnessCapsule.getOutputPoint();
 
     if (outputPoint.getHash().isEmpty()) {

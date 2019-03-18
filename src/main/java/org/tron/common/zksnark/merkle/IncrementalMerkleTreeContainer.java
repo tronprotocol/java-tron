@@ -291,8 +291,8 @@ public class IncrementalMerkleTreeContainer {
     return root().getContent().toByteArray();
   }
 
-  public IncrementalMerkleWitnessContainer toWitness() {
-    return new IncrementalMerkleWitnessContainer(this);
+  public IncrementalMerkleVoucherContainer toVoucher() {
+    return new IncrementalMerkleVoucherContainer(this);
   }
 
   public static SHA256Compress emptyRoot() {

@@ -11,70 +11,69 @@ public class KeyStore {
 
   static HDSeed seed;
 
-  static Map<FullViewingKey, ExtendedSpendingKey> mapSaplingSpendingKeys; // k:fvk,v:sk
-  static Map<IncomingViewingKey, FullViewingKey> mapSaplingFullViewingKeys; // k:ivk,v:fvk
-  static Map<PaymentAddress, IncomingViewingKey> mapSaplingIncomingViewingKeys; // k:addr,v:ivk
+  static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys;
+  static Map<IncomingViewingKey, FullViewingKey> mapFullViewingKeys;
+  static Map<PaymentAddress, IncomingViewingKey> mapIncomingViewingKeys;
 
-  public static boolean HaveSaplingSpendingKey(FullViewingKey fvk) {
+  public static boolean haveSpendingKey(FullViewingKey fvk) {
     boolean result;
     {
-      result = (mapSaplingSpendingKeys.get(fvk) != null);
+      result = (mapSpendingKeys.get(fvk) != null);
     }
     return result;
   }
 
-  public static boolean AddSaplingSpendingKey(ExtendedSpendingKey sk, PaymentAddress defaultAddr) {
+  public static boolean AddSpendingKey(ExtendedSpendingKey sk, PaymentAddress defaultAddr) {
     FullViewingKey fvk = sk.getExpsk().full_viewing_key();
 
     // if SaplingFullViewingKey is not in SaplingFullViewingKeyMap, add it
-    if (!AddSaplingFullViewingKey(fvk, defaultAddr)) {
+    if (!addFullViewingKey(fvk, defaultAddr)) {
       return false;
     }
 
-    mapSaplingSpendingKeys.put(fvk, sk);
+    mapSpendingKeys.put(fvk, sk);
 
     return true;
   }
 
-  public static boolean AddSaplingFullViewingKey(FullViewingKey fvk, PaymentAddress defaultAddr) {
+  public static boolean addFullViewingKey(FullViewingKey fvk, PaymentAddress defaultAddr) {
     IncomingViewingKey ivk = fvk.in_viewing_key();
-    mapSaplingFullViewingKeys.put(ivk, fvk);
+    mapFullViewingKeys.put(ivk, fvk);
 
-    return AddSaplingIncomingViewingKey(ivk, defaultAddr);
+    return addIncomingViewingKey(ivk, defaultAddr);
   }
 
   // This function updates the wallet's internal address->ivk map.
   // If we add an address that is already in the map, the map will
   // remain unchanged as each address only has one ivk.
-  public static boolean AddSaplingIncomingViewingKey(IncomingViewingKey ivk, PaymentAddress addr) {
+  public static boolean addIncomingViewingKey(IncomingViewingKey ivk, PaymentAddress addr) {
 
-    // Add addr -> SaplingIncomingViewing to SaplingIncomingViewingKeyMap
-    mapSaplingIncomingViewingKeys.put(addr, ivk);
+    mapIncomingViewingKeys.put(addr, ivk);
 
     return true;
   }
 
-  public static boolean HaveSaplingFullViewingKey(IncomingViewingKey ivk) {
-    return mapSaplingFullViewingKeys.get(ivk) != null;
+  public static boolean haveFullViewingKey(IncomingViewingKey ivk) {
+    return mapFullViewingKeys.get(ivk) != null;
   }
 
-  public static boolean HaveSaplingIncomingViewingKey(PaymentAddress addr) {
-    return mapSaplingIncomingViewingKeys.get(addr) != null;
+  public static boolean haveIncomingViewingKey(PaymentAddress addr) {
+    return mapIncomingViewingKeys.get(addr) != null;
   }
 
-  public static boolean GetSaplingFullViewingKey(IncomingViewingKey ivk, FullViewingKey fvkOut) {
+  public static boolean getFullViewingKey(IncomingViewingKey ivk, FullViewingKey fvkOut) {
 
-    fvkOut = mapSaplingFullViewingKeys.get(ivk);
+    fvkOut = mapFullViewingKeys.get(ivk);
     if (fvkOut == null) {
       return false;
     }
     return true;
   }
 
-  public static boolean GetSaplingIncomingViewingKey(
+  public static boolean getIncomingViewingKey(
       PaymentAddress addr, IncomingViewingKey ivkOut) {
 
-    ivkOut = mapSaplingIncomingViewingKeys.get(addr);
+    ivkOut = mapIncomingViewingKeys.get(addr);
 
     if (ivkOut == null) {
       return false;
@@ -82,22 +81,22 @@ public class KeyStore {
     return true;
   }
 
-  public static boolean GetSaplingSpendingKey(FullViewingKey fvk, ExtendedSpendingKey skOut) {
-    skOut = mapSaplingSpendingKeys.get(fvk);
+  public static boolean getSpendingKey(FullViewingKey fvk, ExtendedSpendingKey skOut) {
+    skOut = mapSpendingKeys.get(fvk);
     if (skOut == null) {
       return false;
     }
     return false;
   }
 
-  public static boolean GetSaplingExtendedSpendingKey(
+  public static boolean getExtendedSpendingKey(
       PaymentAddress addr, ExtendedSpendingKey extskOut) {
 
     IncomingViewingKey ivk = null;
     FullViewingKey fvk = null;
 
-    return GetSaplingIncomingViewingKey(addr, ivk)
-        & GetSaplingFullViewingKey(ivk, fvk)
-        & GetSaplingSpendingKey(fvk, extskOut);
+    return getIncomingViewingKey(addr, ivk)
+        & getFullViewingKey(ivk, fvk)
+        & getSpendingKey(fvk, extskOut);
   }
 }

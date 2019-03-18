@@ -6,7 +6,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.SHA256CompressCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer.OutputPointUtil;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer.OutputPointUtil;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.SHA256Compress;
 
@@ -97,28 +97,28 @@ public class MerkleContainer {
 
     tree = saveCmIntoMerkleTree(tree, cm1);
 
-    IncrementalMerkleWitnessContainer witnessContainer1 =
-        tree.getTreeCapsule().deepCopy().toMerkleTreeContainer().toWitness();
+    IncrementalMerkleVoucherContainer voucherContainer1 =
+        tree.getTreeCapsule().deepCopy().toMerkleTreeContainer().toVoucher();
 
     tree = saveCmIntoMerkleTree(tree, cm2);
 
-    witnessContainer1 = saveCmIntoMerkleWitness(witnessContainer1, cm2);
+    voucherContainer1 = saveCmIntoMerkleVoucher(voucherContainer1, cm2);
 
-    IncrementalMerkleWitnessContainer witnessContainer2 = tree.toWitness();
+    IncrementalMerkleVoucherContainer coucherContainer2 = tree.toVoucher();
 
-    witnessContainer1.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 0);
-    putMerkleWitnessIntoStore(
-        witnessContainer1.getMerkleWitnessKey(), witnessContainer1.getWitnessCapsule());
-    witnessContainer2.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
-    putMerkleWitnessIntoStore(
-        witnessContainer2.getMerkleWitnessKey(), witnessContainer2.getWitnessCapsule());
+    voucherContainer1.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 0);
+    putMerkleVoucherIntoStore(
+        voucherContainer1.getMerkleVoucherKey(), voucherContainer1.getVoucherCapsule());
+    coucherContainer2.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
+    putMerkleVoucherIntoStore(
+        coucherContainer2.getMerkleVoucherKey(), coucherContainer2.getVoucherCapsule());
 
     putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
     return tree;
   }
 
-  public IncrementalMerkleWitnessContainer saveCmIntoMerkleWitness(
-      IncrementalMerkleWitnessContainer tree, byte[] cm) {
+  public IncrementalMerkleVoucherContainer saveCmIntoMerkleVoucher(
+      IncrementalMerkleVoucherContainer tree, byte[] cm) {
     SHA256CompressCapsule sha256CompressCapsule1 = new SHA256CompressCapsule();
     sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
     tree.append(sha256CompressCapsule1.getInstance());
@@ -130,8 +130,8 @@ public class MerkleContainer {
     this.manager.getMerkleTreeStore().put(key, capsule);
   }
 
-  public void putMerkleWitnessIntoStore(byte[] key, IncrementalMerkleWitnessCapsule capsule) {
-    this.manager.getMerkleWitnessStore().put(key, capsule);
+  public void putMerkleVoucherIntoStore(byte[] key, IncrementalMerkleVoucherCapsule capsule) {
+    this.manager.getMerkleVoucherStore().put(key, capsule);
   }
 
   public MerklePath merklePath(byte[] rt) {
@@ -140,7 +140,7 @@ public class MerkleContainer {
     return tree.path();
   }
 
-  public IncrementalMerkleWitnessCapsule getWitness(byte[] hash, int index) {
-    return this.manager.getMerkleWitnessStore().get(OutputPointUtil.outputPointToKey(hash, index));
+  public IncrementalMerkleVoucherCapsule getVoucher(byte[] hash, int index) {
+    return this.manager.getMerkleVoucherStore().get(OutputPointUtil.outputPointToKey(hash, index));
   }
 }

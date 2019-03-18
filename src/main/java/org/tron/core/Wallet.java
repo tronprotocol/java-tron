@@ -83,8 +83,8 @@ import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.common.zksnark.ShieldAddressGenerator;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -1343,8 +1343,8 @@ public class Wallet {
       return null;
     }
 
-    IncrementalMerkleWitnessCapsule merkleWitnessCapsule =
-        dbManager.getMerkleContainer().getWitness(hash, index);
+    IncrementalMerkleVoucherCapsule merkleWitnessCapsule =
+        dbManager.getMerkleContainer().getVoucher(hash, index);
 
     if (merkleWitnessCapsule != null) {
       logger.info("getMerkleTreeWitness");
@@ -1367,7 +1367,7 @@ public class Wallet {
   }
 
   //in:outPoint,out:blockNumber
-  private IncrementalMerkleWitnessContainer createWitness(OutputPoint outPoint, Long blockNumber)
+  private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
     ByteString txId = outPoint.getHash();
@@ -1380,7 +1380,7 @@ public class Wallet {
     //Get the block of blockNum
     BlockCapsule block = dbManager.getBlockByNum(blockNumber);
 
-    IncrementalMerkleWitnessContainer witness = null;
+    IncrementalMerkleVoucherContainer witness = null;
 
     //get the witness in three parts
     boolean found = false;
@@ -1412,13 +1412,13 @@ public class Wallet {
           if (outPoint.getIndex() == 0) {
             tree.append(cm1);
             witness = tree.getTreeCapsule().deepCopy()
-                .toMerkleTreeContainer().toWitness();
+                .toMerkleTreeContainer().toVoucher();
             witness.append(cm2);
           } else {
             tree.append(cm1);
             tree.append(cm2);
             witness = tree.getTreeCapsule().deepCopy()
-                .toMerkleTreeContainer().toWitness();
+                .toMerkleTreeContainer().toVoucher();
           }
 
         } else {
@@ -1439,7 +1439,7 @@ public class Wallet {
 
   }
 
-  private void updateBothWitness(List<IncrementalMerkleWitnessContainer> witnessList, long large,
+  private void updateBothWitness(List<IncrementalMerkleVoucherContainer> witnessList, long large,
       int synBlockNum)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
@@ -1484,11 +1484,11 @@ public class Wallet {
   }
 
 
-  private void updateLowWitness(IncrementalMerkleWitnessContainer witness1, long blockNum1,
-      IncrementalMerkleWitnessContainer witness2, long blockNum2)
+  private void updateLowWitness(IncrementalMerkleVoucherContainer witness1, long blockNum1,
+      IncrementalMerkleVoucherContainer witness2, long blockNum2)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    IncrementalMerkleWitnessContainer witness;
+    IncrementalMerkleVoucherContainer witness;
     long start;
     long end;
     if (blockNum1 < blockNum2) {
@@ -1533,8 +1533,8 @@ public class Wallet {
     IncrementalMerkleWitnessInfo.Builder result = IncrementalMerkleWitnessInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
 
-    IncrementalMerkleWitnessContainer witness1 = null;
-    IncrementalMerkleWitnessContainer witness2 = null;
+    IncrementalMerkleVoucherContainer witness1 = null;
+    IncrementalMerkleVoucherContainer witness2 = null;
 
 
     int synBlockNum = request.getBlockNum();
@@ -1558,7 +1558,7 @@ public class Wallet {
       if (synBlockNum != 0) {
         long large = Math.max(blockNum1, blockNum2) + 1;
         //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        List<IncrementalMerkleVoucherContainer> list = new ArrayList<>();
         list.add(witness1);
         list.add(witness2);
         updateBothWitness(list, large, synBlockNum);
@@ -1574,7 +1574,7 @@ public class Wallet {
 
       if (synBlockNum != 0) {
         //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        List<IncrementalMerkleVoucherContainer> list = new ArrayList<>();
         list.add(witness1);
         updateBothWitness(list, blockNum1, synBlockNum);
       }
@@ -1589,20 +1589,20 @@ public class Wallet {
 
       if (synBlockNum != 0) {
         //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-        List<IncrementalMerkleWitnessContainer> list = new ArrayList<>();
+        List<IncrementalMerkleVoucherContainer> list = new ArrayList<>();
         list.add(witness2);
         updateBothWitness(list, blockNum2, synBlockNum);
       }
     }
 
     if (witness1 != null) {
-      witness1.getWitnessCapsule().resetRt();
-      result.setWitness1(witness1.getWitnessCapsule().getInstance());
+      witness1.getVoucherCapsule().resetRt();
+      result.setWitness1(witness1.getVoucherCapsule().getInstance());
     }
 
     if (witness2 != null) {
-      witness2.getWitnessCapsule().resetRt();
-      result.setWitness2(witness2.getWitnessCapsule().getInstance());
+      witness2.getVoucherCapsule().resetRt();
+      result.setWitness2(witness2.getVoucherCapsule().getInstance());
     }
 
     return result.build();

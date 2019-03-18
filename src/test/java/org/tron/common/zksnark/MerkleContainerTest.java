@@ -15,8 +15,8 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.merkle.MerklePath;
 import org.tron.core.Constant;
@@ -91,7 +91,7 @@ public class MerkleContainerTest {
 
     tree.append(a);
     tree.append(b);
-    IncrementalMerkleWitnessContainer witness1 = tree.toWitness();
+    IncrementalMerkleVoucherContainer witness1 = tree.toVoucher();
     witness1.append(c);
 
     System.out.println(ByteArray.toHexString(witness1.root().getContent().toByteArray()));
@@ -133,10 +133,10 @@ public class MerkleContainerTest {
 
     Assert.assertEquals("0100000000",
         ByteArray.toHexString(
-            merkleContainer.getWitness(hash, 0).toMerkleWitnessContainer().getMerkleWitnessKey()));
+            merkleContainer.getVoucher(hash, 0).toMerkleVoucherContainer().getMerkleVoucherKey()));
     Assert.assertEquals("0100000001",
         ByteArray.toHexString(
-            merkleContainer.getWitness(hash, 1).toMerkleWitnessContainer().getMerkleWitnessKey()));
+            merkleContainer.getVoucher(hash, 1).toMerkleVoucherContainer().getMerkleVoucherKey()));
 
     //path
     MerklePath path = tree.path();
@@ -146,7 +146,7 @@ public class MerkleContainerTest {
 
     //todo:need to check witness
     //witness test
-    IncrementalMerkleWitnessContainer witness = tree.toWitness();
+    IncrementalMerkleVoucherContainer witness = tree.toVoucher();
     //witness
     witness.append(a);
     Assert.assertEquals(true, path.getIndex().get(1));
@@ -157,11 +157,11 @@ public class MerkleContainerTest {
     witness.element();
     witness.path();
 
-    witness.getWitnessCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
+    witness.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
 
     //save
     merkleContainer
-        .putMerkleWitnessIntoStore(witness.getMerkleWitnessKey(), witness.getWitnessCapsule());
+        .putMerkleVoucherIntoStore(witness.getMerkleVoucherKey(), witness.getVoucherCapsule());
 
     IncrementalMerkleTreeContainer bestMerkleRoot = merkleContainer.getBestMerkle();
     Assert.assertEquals(1, bestMerkleRoot.size());
@@ -360,19 +360,19 @@ public class MerkleContainerTest {
 //    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
     Assert.assertEquals(0, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getIndex());
 //    Assert
-//        .assertEquals(13, new IncrementalMerkleWitnessCapsule(merkleTreeWitnessInfo.getWitness1()).
-//            toMerkleWitnessContainer().size());
+//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1()).
+//            toMerkleVoucherContainer().size());
 //    Assert
-//        .assertEquals(13, new IncrementalMerkleWitnessCapsule(merkleTreeWitnessInfo.getWitness2()).
-//            toMerkleWitnessContainer().size());
+//        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness2()).
+//            toMerkleVoucherContainer().size());
 
-    IncrementalMerkleWitnessCapsule capsule1 = new IncrementalMerkleWitnessCapsule(
+    IncrementalMerkleVoucherCapsule capsule1 = new IncrementalMerkleVoucherCapsule(
         merkleTreeWitnessInfo.getWitness1());
-    capsule1.toMerkleWitnessContainer().printSize();
+    capsule1.toMerkleVoucherContainer().printSize();
 
-    IncrementalMerkleWitnessCapsule capsule2 = new IncrementalMerkleWitnessCapsule(
+    IncrementalMerkleVoucherCapsule capsule2 = new IncrementalMerkleVoucherCapsule(
         merkleTreeWitnessInfo.getWitness2());
-    capsule2.toMerkleWitnessContainer().printSize();
+    capsule2.toMerkleVoucherContainer().printSize();
 
     System.out
         .println("kkkkkk" + ByteArray
@@ -398,7 +398,7 @@ public class MerkleContainerTest {
         SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         tree.toMerkleTreeContainer().append(c);
       }
-      IncrementalMerkleWitnessContainer witnessa = tree.toMerkleTreeContainer().toWitness();
+      IncrementalMerkleVoucherContainer witnessa = tree.toMerkleTreeContainer().toVoucher();
       for (int j = i; j <= b; j++) {
         byte[] bytes = new byte[32];
         bytes[0] = (byte) j;
@@ -413,7 +413,7 @@ public class MerkleContainerTest {
         SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         tree.toMerkleTreeContainer().append(c);
       }
-      IncrementalMerkleWitnessContainer witnessb = tree.toMerkleTreeContainer().toWitness();
+      IncrementalMerkleVoucherContainer witnessb = tree.toMerkleTreeContainer().toVoucher();
 
       byte[] roota = witnessa.root().getContent().toByteArray();
       byte[] rootb = witnessb.root().getContent().toByteArray();
