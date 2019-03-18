@@ -72,6 +72,7 @@ public class BackupDbUtilTest {
   public void after() {
     AppT.shutdownServices();
     AppT.shutdown();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
