@@ -1380,7 +1380,7 @@ public class Manager {
     long postponedDeferredTrxCount = 0;
     long processedDeferredTrxCount = 0;
     long totalDeferredTransactionProcessTime = 0;
-    //addDeferredTransactionToPending(blockCapsule);
+    addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -2073,6 +2073,12 @@ public class Manager {
     transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
+
+    if (this.dynamicPropertiesStore.getDeferredTransactionOccupySpace() + transactionCapsule.getData().length
+        > Constant.MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE) {
+      logger.error("too many deferred transaction, the size is " + this.dynamicPropertiesStore.getDeferredTransactionOccupySpace() + " bytes");
+      return;
+    }
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     // save original transactionId in order to query deferred transaction
