@@ -43,7 +43,6 @@ import org.tron.common.crypto.eddsa.EdDSAEngine;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -87,7 +86,6 @@ import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -338,7 +336,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -588,7 +586,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
