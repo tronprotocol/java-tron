@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.sapling.note;
 
+import java.util.Optional;
 import org.tron.common.zksnark.sapling.address.DiversifierT;
 import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncCiphertext;
 import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncPlaintext;
@@ -14,25 +15,19 @@ public class SaplingNoteEncryption {
   // Ephemeral secret key
   byte[] esk;
 
-  bool already_encrypted_enc;
-  bool already_encrypted_out;
+  boolean already_encrypted_enc;
+  boolean already_encrypted_out;
 
+  public static Optional<SaplingNoteEncryption> FromDiversifier(DiversifierT d) {
+    return null;
+  }
 
-  static boost::
-
-  optional<SaplingNoteEncryption> FromDiversifier(DiversifierT d);
-
-  boost::
-
-  optional<SaplingEncCiphertext> encrypt_to_recipient(
-        const byte[] &pk_d,
-        const SaplingEncPlaintext &message
-  );
+  Optional<SaplingEncCiphertext> encrypt_to_recipient(byte[] pk_d, SaplingEncPlaintext message) {
+    return null;
+  }
 
   SaplingOutCiphertext encrypt_to_ourselves(
-        const byte[] &ovk,
-        const byte[] &cv,
-        const byte[] &cm,
-        const SaplingOutPlaintext &message
-  );
+      byte[] ovk, byte[] cv, byte[] cm, SaplingOutPlaintext message) {
+    return null;
+  }
 }

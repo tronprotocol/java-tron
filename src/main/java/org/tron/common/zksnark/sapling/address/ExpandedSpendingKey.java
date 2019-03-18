@@ -1,30 +1,35 @@
 package org.tron.common.zksnark.sapling.address;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.sapling.Librustzcash;
 
+@AllArgsConstructor
 public class ExpandedSpendingKey {
 
   @Setter
   @Getter
-  byte[] ask;//the spend authorizing key,256
+  byte[] ask; // the spend authorizing key,256
   @Setter
   @Getter
-  byte[] nsk;//the proof authorizing key (ak, nsk),256
-  //Let ovk be an outgoing viewing key that is intended to be able to decrypt this payment
+  byte[] nsk; // the proof authorizing key (ak, nsk),256
+  // Let ovk be an outgoing viewing key that is intended to be able to decrypt this payment
   @Setter
   @Getter
-  byte[] ovk;//the outgoing viewing key,256
+  byte[] ovk; // the outgoing viewing key,256
 
   // A note is spent by proving knowledge of (p, ak, nsk) in zero knowledge while
   // publically disclosing its nf, allowing nf to be used to prevent double-spending.
 
+  public ExpandedSpendingKey() {
+  }
+
   public FullViewingKey full_viewing_key() {
 
-    byte[] ak = Librustzcash.librustzcashAskToAk(ask);//256
-    byte[] nk = Librustzcash.librustzcashNskToNk(nsk);//256
+    byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
+    byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
     return new FullViewingKey(ak, nk, ovk);
   }

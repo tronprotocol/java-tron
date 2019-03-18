@@ -10,42 +10,37 @@ import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
 
 public class ExtendedSpendingKey {
 
-
-  public static int ZIP32_XSK_SIZE = 169;//byte
+  public static int ZIP32_XSK_SIZE = 169; // byte
   public static int ZIP32_HARDENED_KEY_LIMIT = 0x80000000;
   public static int ZIP32_XFVK_SIZE = 169;
 
   public static int ZC_MEMO_SIZE = 512;
 
-
   @Setter
   @Getter
-  byte[] depth;//8bit
+  byte[] depth; // 8bit
   @Setter
   @Getter
-  byte[] parentFVKTag;//32bit
+  byte[] parentFVKTag; // 32bit
   @Setter
   @Getter
-  byte[] childIndex;//32bit
+  byte[] childIndex; // 32bit
   @Setter
   @Getter
-  byte[] chaincode;//256bit
+  byte[] chaincode; // 256bit
   @Setter
   @Getter
   ExpandedSpendingKey expsk;
   @Setter
   @Getter
-  byte[] dk;//256bit
+  byte[] dk; // 256bit
 
-  //HD钱包生成地址
+  // HD钱包生成地址
   public static ExtendedSpendingKey Master(HDSeed seed) {
     RawHDSeed rawSeed = seed.getSeed();
 
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
-    Librustzcash.librustzcashZip32XskMaster(
-        rawSeed.getData(),
-        rawSeed.getData().size(),
-        m_bytes);
+    Librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().size(), m_bytes);
 
     ExtendedSpendingKey xsk_m = decode(m_bytes);
     return xsk_m;
@@ -55,16 +50,13 @@ public class ExtendedSpendingKey {
     byte[] p_bytes = encode();
 
     byte[] i_bytes = new byte[ZIP32_XSK_SIZE];
-    Librustzcash.librustzcashZip32XskDerive(
-        p_bytes,
-        i,
-        i_bytes);
+    Librustzcash.librustzcashZip32XskDerive(p_bytes, i, i_bytes);
 
     return ExtendedSpendingKey.decode(i_bytes);
   }
 
   SaplingExtendedFullViewingKey ToXFVK() {
-    SaplingExtendedFullViewingKey ret;
+    SaplingExtendedFullViewingKey ret = new SaplingExtendedFullViewingKey();
     ret.depth = depth;
     ret.parentFVKTag = parentFVKTag;
     ret.childIndex = childIndex;
@@ -75,7 +67,8 @@ public class ExtendedSpendingKey {
   }
 
   public PaymentAddress DefaultAddress() {
-    return ToXFVK().DefaultAddress();
+    //    return ToXFVK().DefaultAddress();
+    return null;
   }
 
   public static ExtendedSpendingKey decode(byte[] m_bytes) {
@@ -88,12 +81,12 @@ public class ExtendedSpendingKey {
     byte[] expsk = ByteArray.subArray(m_bytes, 41, 137);
     byte[] dk = ByteArray.subArray(m_bytes, 137, 169);
 
-    key.setDepth(depth);//8bit
-    key.setParentFVKTag(parentFVKTag);//32bit
-    key.setChildIndex(childIndex);//32bit
-    key.setChaincode(chaincode);//256bit
-    key.setExpsk(ExpandedSpendingKey.decode(expsk));//expsk
-    key.setDk(dk);//256bit
+    key.setDepth(depth); // 8bit
+    key.setParentFVKTag(parentFVKTag); // 32bit
+    key.setChildIndex(childIndex); // 32bit
+    key.setChaincode(chaincode); // 256bit
+    key.setExpsk(ExpandedSpendingKey.decode(expsk)); // expsk
+    key.setDk(dk); // 256bit
 
     return key;
   }
@@ -111,5 +104,4 @@ public class ExtendedSpendingKey {
 
     return m_bytes;
   }
-
 }

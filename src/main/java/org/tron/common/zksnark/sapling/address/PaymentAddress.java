@@ -7,13 +7,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class PaymentAddress {
 
-  //diversified payment address addrd = (d, pkd)
+  // diversified payment address addrd = (d, pkd)
   @Setter
   @Getter
   DiversifierT d;
   @Setter
   @Getter
-  byte[] pkD;//256
+  byte[] pkD; // 256
 
   public byte[] encode() {
 
@@ -23,6 +23,4 @@ public class PaymentAddress {
     System.arraycopy(pkD, 0, mBytes, 1, 32);
     return mBytes;
   }
-
-
 }

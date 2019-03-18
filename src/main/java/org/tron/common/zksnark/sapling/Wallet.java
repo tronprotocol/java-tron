@@ -39,6 +39,7 @@ public class Wallet {
 
     //todo:新增
     public long position() {
+      return 0L;
     }
   }
 
@@ -53,46 +54,46 @@ public class Wallet {
     return extskOut;
   }
 
-
-  public static int ScanForWalletTransactions(CBlockIndex*pindexStart, bool fUpdate) {
-
-    BOOST_FOREACH(CTransaction & tx, block.vtx)
-    {
-      if (AddToWalletIfInvolvingMe(tx, & block,fUpdate)){
-      myTxHashes.push_back(tx.GetHash());
-      ret++;
-    }
-    }
-  }
-
-  public static bool AddToWalletIfInvolvingMe(const CTransaction&tx, const CBlock*pblock,
-      bool fUpdate) {
-    auto saplingNoteDataAndAddressesToAdd = FindMySaplingNotes(tx);
-  }
-
-  public static pair<mapSaplingNoteData_t, SaplingIncomingViewingKeyMap> FindMySaplingNotes(const
-      CTransaction &tx) const
-
-  {
-    // Protocol Spec: 4.19 Block Chain Scanning (Sapling)
-    for (uint32_t i = 0; i < tx.vShieldedOutput.size(); ++i) {
-        const OutputDescription output = tx.vShieldedOutput[i];
-      for (auto it = mapSaplingFullViewingKeys.begin(); it != mapSaplingFullViewingKeys.end();
-          ++it) {
-        SaplingIncomingViewingKey ivk = it -> first;
-        //使用ivk对output进行解密
-        auto result = SaplingNotePlaintext::decrypt
-        (output.encCiphertext, ivk, output.ephemeralKey, output.cm);·
-        if (!result) {
-          continue;
-        }
-
-
-      }
-
-
-    }
-  }
+//
+//  public static int ScanForWalletTransactions(CBlockIndex*pindexStart, bool fUpdate) {
+//
+//    BOOST_FOREACH(CTransaction & tx, block.vtx)
+//    {
+//      if (AddToWalletIfInvolvingMe(tx, & block,fUpdate)){
+//      myTxHashes.push_back(tx.GetHash());
+//      ret++;
+//    }
+//    }
+//  }
+//
+//  public static bool AddToWalletIfInvolvingMe(const CTransaction&tx, const CBlock*pblock,
+//      bool fUpdate) {
+//    auto saplingNoteDataAndAddressesToAdd = FindMySaplingNotes(tx);
+//  }
+//
+//  public static pair<mapSaplingNoteData_t, SaplingIncomingViewingKeyMap> FindMySaplingNotes(const
+//      CTransaction &tx) const
+//
+//  {
+//    // Protocol Spec: 4.19 Block Chain Scanning (Sapling)
+//    for (uint32_t i = 0; i < tx.vShieldedOutput.size(); ++i) {
+//        const OutputDescription output = tx.vShieldedOutput[i];
+//      for (auto it = mapSaplingFullViewingKeys.begin(); it != mapSaplingFullViewingKeys.end();
+//          ++it) {
+//        SaplingIncomingViewingKey ivk = it -> first;
+//        //使用ivk对output进行解密
+//        auto result = SaplingNotePlaintext::decrypt
+//        (output.encCiphertext, ivk, output.ephemeralKey, output.cm);·
+//        if (!result) {
+//          continue;
+//        }
+//
+//
+//      }
+//
+//
+//    }
+//  }
 
   public static boolean HaveSpendingKeyForPaymentAddress(PaymentAddress addr) {
     IncomingViewingKey ivk = null;
@@ -112,37 +113,37 @@ public class Wallet {
       boolean requireSpendingKey,
       boolean ignoreLocked) {
 
-    for (auto & pair :wtx.mapSaplingNoteData){
-      OutPoint op = pair.first;
-      SaplingNoteData nd = pair.second;
+//    for (auto & pair :wtx.mapSaplingNoteData){
+//      OutPoint op = pair.first;
+//      SaplingNoteData nd = pair.second;
+//
+//      auto maybe_pt = SaplingNotePlaintext::decrypt (
+//          wtx.vShieldedOutput[op.n].encCiphertext,
+//          nd.ivk,
+//          wtx.vShieldedOutput[op.n].ephemeralKey,
+//          wtx.vShieldedOutput[op.n].cm);
+//    }
 
-      //每次都需要解密过程？
-      auto maybe_pt = SaplingNotePlaintext::decrypt (
-          wtx.vShieldedOutput[op.n].encCiphertext,
-          nd.ivk,
-          wtx.vShieldedOutput[op.n].ephemeralKey,
-          wtx.vShieldedOutput[op.n].cm);
-    }
   }
 
   // Add spending key to keystore
   public static boolean AddSaplingZKey(
       ExtendedSpendingKey sk,
       PaymentAddress defaultAddr) {
-    AssertLockHeld(cs_wallet); // mapSaplingZKeyMetadata
-
-    if (!CCryptoKeyStore::AddSaplingSpendingKey (sk, defaultAddr)){
-      return false;
-    }
-
-    if (!fFileBacked) {
-      return true;
-    }
-
-    if (!IsCrypted()) {
-      auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
-      return CWalletDB(strWalletFile).WriteSaplingZKey(ivk, sk, mapSaplingZKeyMetadata[ivk]);
-    }
+    //    AssertLockHeld(cs_wallet); // mapSaplingZKeyMetadata
+    //
+    //    if (!CCryptoKeyStore::AddSaplingSpendingKey (sk, defaultAddr)){
+    //      return false;
+    //    }
+    //
+    //    if (!fFileBacked) {
+    //      return true;
+    //    }
+    //
+    //    if (!IsCrypted()) {
+    //      auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
+    //      return CWalletDB(strWalletFile).WriteSaplingZKey(ivk, sk, mapSaplingZKeyMetadata[ivk]);
+    //    }
 
     return true;
   }

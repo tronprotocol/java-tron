@@ -2,9 +2,9 @@ package org.tron.common.zksnark.sapling.note;
 
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.Librustzcash;
+import org.tron.common.zksnark.sapling.address.DiversifierT;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.address.DiversifierT;
 
 public class BaseNote {
 
@@ -17,12 +17,18 @@ public class BaseNote {
     public byte[] pk_d; // 256
     public byte[] r; // 256
 
-    // Construct and populate Sapling note for a given payment address and value.
     public Note(PaymentAddress address, long value) {
       this.value = value;
       d = address.getD();
       pk_d = address.getPkD();
       Librustzcash.librustzcashSaplingGenerateR(r);
+    }
+
+    public Note(DiversifierT d, byte[] pk_d, long value, byte[] r) {
+      this.d = d;
+      this.pk_d = pk_d;
+      this.value = value;
+      this.r = r;
     }
 
     // Call librustzcash to compute the commitment

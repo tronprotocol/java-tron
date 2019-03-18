@@ -1,19 +1,20 @@
 package org.tron.common.zksnark.sapling.transaction;
 
+import org.tron.common.utils.ByteArray;
+
 public class BaseOutPoint {
 
-  uint256 hash;
-  uint32_t n;
+  byte[] hash; // 256
+  Integer n; //
 
   void SetNull() {
-    hash.SetNull();
-    n = (uint32_t) - 1;
+    hash = new byte[256];
+    //    n = (uint32_t) - 1;
   }
 
-  bool IsNull() const
+  boolean IsNull() {
 
-  {
-    return (hash.IsNull() && n == (uint32_t) - 1);
+    return ByteArray.isEmpty(hash);
   }
 
   public class OutPoint extends BaseOutPoint {

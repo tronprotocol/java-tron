@@ -14,12 +14,10 @@ import org.tron.common.zksnark.sapling.zip32.HDSeed;
 
 public class RpcWallet {
 
-  //功能
-//  { "wallet",             "z_getnewaddress",          &z_getnewaddress,          true  },
+//  { "wallet",             "z_getnewaddress",           z_getnewaddress,          true  },
 //  { "wallet",             "z_sendmany",               &z_sendmany,               false },
 //  { "wallet",             "z_importkey",              &z_importkey,              true  },
 
-  //查询
 //  { "wallet",             "z_listunspent",            &z_listunspent,            false },
 //  { "wallet",             "z_getbalance",             &z_getbalance,             false },
 //  { "wallet",             "z_gettotalbalance",        &z_gettotalbalance,        false },
@@ -28,7 +26,6 @@ public class RpcWallet {
 //  { "disclosure",         "z_getpaymentdisclosure",   &z_getpaymentdisclosure,   true  },
 //  { "disclosure",         "z_validatepaymentdisclosure", &z_validatepaymentdisclosure, true }
 
-  //其他
 //  { "wallet",             "z_mergetoaddress",         &z_mergetoaddress,         false },
 //  { "wallet",             "z_exportkey",              &z_exportkey,              true  },
 //  { "wallet",             "z_exportviewingkey",       &z_exportviewingkey,       true  },
@@ -63,7 +60,7 @@ public class RpcWallet {
     ExtendedSpendingKey xsk = null;
 
     while (xsk == null || KeyStore.HaveSaplingSpendingKey(xsk.getExpsk().full_viewing_key())) {
-      //这里使用累加器，生成d账户
+      //
       xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
       metadata.seedFp = HdChain.seedFp;
@@ -84,7 +81,7 @@ public class RpcWallet {
     }
     // return default sapling payment address.
 
-    System.out.println(KeyIo.EncodePaymentAddress(addr);
+    System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
   public void z_sendmany() {
@@ -103,7 +100,7 @@ public class RpcWallet {
       throw new RuntimeException("unknown address type ");
     }
 
-    //todo：支持多个输出？
+    //todo：
     List<Recipient> t_outputs_ = null;
     List<Recipient> z_outputs_ = null;
     ShieldSendCoin sendmany =
@@ -122,45 +119,41 @@ public class RpcWallet {
     return true;
   }
 
-  //扫描交易，获得address相关的note
-  UniValue z_importkey(const UniValue&params, bool fHelp) {
-    // We want to scan for transactions and notes
-    if (fRescan) {
-      Wallet.ScanForWalletTransactions(chainActive[nRescanHeight], true);
-    }
-  }
+//  UniValue z_importkey(  UniValue params, boolean fHelp) {
+//    // We want to scan for transactions and notes
+//    if (fRescan) {
+//      Wallet.ScanForWalletTransactions(chainActive[nRescanHeight], true);
+//    }
+//  }
 
-  //reindex/rescan to find  the old transactions.应该有接口，直接扫描过去的交易
-  //这里的received，是从本地存储的note中过滤，不是从fullnode里查。
-  //tron，需要另写一个receive方法，指定交易id，解析获得note。
-  UniValue z_listreceivedbyaddress(const UniValue&params, bool fHelp) {
+//  void z_listreceivedbyaddress(  UniValue params, booleanean fHelp) {
 
-    vector<SaplingNoteEntry> saplingEntries;
-    pwalletMain -> GetFilteredNotes(sproutEntries, saplingEntries, fromaddress, nMinDepth, false,
-        false);
-
-    set<pair<PaymentAddress, uint256>> nullifierSet;
-    auto hasSpendingKey = boost::apply_visitor (HaveSpendingKeyForPaymentAddress(pwalletMain), zaddr)
-    ;
-    if (hasSpendingKey) {
-      nullifierSet = pwalletMain -> GetNullifiersForAddresses({zaddr});
-    }
-  }
+//    vector<SaplingNoteEntry> saplingEntries;
+//    pwalletMain -> GetFilteredNotes(sproutEntries, saplingEntries, fromaddress, nMinDepth, false,
+//        false);
+//
+//    set<pair<PaymentAddress, uint256>> nullifierSet;
+//    auto hasSpendingKey = boost::apply_visitor (HaveSpendingKeyForPaymentAddress(pwalletMain), zaddr)
+//    ;
+//    if (hasSpendingKey) {
+//      nullifierSet = pwalletMain -> GetNullifiersForAddresses({zaddr});
+//    }
+//  }
 
 
   /**
-   * 解密交易相关的信息 RPC call to generate a payment disclosure
+   *   RPC call to generate a payment disclosure
    */
-  UniValue z_getpaymentdisclosure(const UniValue&params, bool fHelp) {
-
-    PaymentDisclosure pd (wtx.joinSplitPubKey, key, info, msg );
-  }
+//  UniValue z_getpaymentdisclosure(  UniValue params, boolean fHelp) {
+//
+//    PaymentDisclosure pd (wtx.joinSplitPubKey, key, info, msg );
+//  }
 
   /**
-   * 校验解密信息正确性 RPC call to validate a payment disclosure data blob.
+   *   RPC call to validate a payment disclosure data blob.
    */
-  UniValue z_validatepaymentdisclosure(const UniValue&params, bool fHelp) {
-
-  }
+//  UniValue z_validatepaymentdisclosure(  UniValue params, boolean fHelp) {
+//
+//  }
 
 }

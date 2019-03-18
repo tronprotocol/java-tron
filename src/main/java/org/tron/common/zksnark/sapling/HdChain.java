@@ -4,5 +4,5 @@ public class HdChain {
 
   public static int saplingAccountCounter;
 
-  public static byte[] seedFp;//256
+  public static byte[] seedFp; // 256
 }

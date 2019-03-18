@@ -1,56 +1,44 @@
 package org.tron.common.zksnark.sapling.note;
 
+import java.util.Optional;
 import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingOutCiphertext;
-import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingOutPlaintext;
 
 public class SaplingOutgoingPlaintext {
 
   byte[] pk_d;
   byte[] esk;
 
-
-  boost::
-
-  optional<SaplingOutgoingPlaintext> decrypt(
-    const SaplingOutCiphertext &ciphertext,
-    const byte[]&ovk,
-    const byte[]&cv,
-    const byte[]&cm,
-    const byte[]&epk
-  ) {
-    auto pt = AttemptSaplingOutDecryption(ciphertext, ovk, cv, cm, epk);
-    if (!pt) {
-      return boost::none;
-    }
-
-    // Deserialize from the plaintext
-    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
-    ss << pt.get();
-
-    SaplingOutgoingPlaintext ret;
-    ss >> ret;
-
-    assert (ss.size() == 0);
-
-    return ret;
+  Optional<SaplingOutgoingPlaintext> decrypt(
+      SaplingOutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
+    //    Optional<SaplingOutPlaintext> pt = NoteEncryption.AttemptSaplingOutDecryption(ciphertext,
+    // ovk, cv, cm, epk);
+    //    if (!pt.isPresent()) {
+    //      return  none;
+    //    }
+    //
+    //    // Deserialize from the plaintext
+    //    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
+    //    ss << pt.get();
+    //
+    //    SaplingOutgoingPlaintext ret;
+    //    ss >> ret;
+    //
+    //    assert (ss.size() == 0);
+    //
+    //    return ret;
+    return null;
   }
 
+  SaplingOutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
 
-  SaplingOutCiphertext encrypt(
-        const byte[]&ovk,
-        const byte[]&cv,
-        const byte[]&cm,
-      SaplingNoteEncryption&enc
-  ) const
-
-  {
-    // Create the plaintext
-    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
-    ss << ( * this);
-    SaplingOutPlaintext pt;
-    assert (pt.size() == ss.size());
-    memcpy( & pt[0], &ss[0], pt.size());
-
-    return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
+    //    // Create the plaintext
+    //    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
+    //    ss << ( * this);
+    //    SaplingOutPlaintext pt;
+    //    assert (pt.size() == ss.size());
+    //    memcpy(pt[0], ss[0], pt.size());
+    //
+    //    return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
+    return null;
   }
 }

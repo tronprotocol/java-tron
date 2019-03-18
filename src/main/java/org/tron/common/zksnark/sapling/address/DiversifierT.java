@@ -9,7 +9,7 @@ public class DiversifierT {
 
   @Setter
   @Getter
-  byte[] data;//ZC_DIVERSIFIER_SIZE
+  byte[] data; // ZC_DIVERSIFIER_SIZE
 
-  //typedef array<char, ZC_DIVERSIFIER_SIZE> DiversifierT;
+  // typedef array<char, ZC_DIVERSIFIER_SIZE> DiversifierT;
 }

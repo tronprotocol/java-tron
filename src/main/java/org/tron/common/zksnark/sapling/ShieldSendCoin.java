@@ -30,12 +30,12 @@ public class ShieldSendCoin {
 
   public ShieldSendCoin(String fromAddress, List<Recipient> tOutputs,
       List<Recipient> zOutputs) {
-    if () {
+//    if () {
       PaymentAddress address = KeyIo.DecodePaymentAddress(fromAddress);
       //to look up spendingkey from walletDB
       spendingkey = Wallet.GetSpendingKeyForPaymentAddress(address);
       isfromzaddr_ = true;
-    }
+//    }
 
   }
 
@@ -63,9 +63,9 @@ public class ShieldSendCoin {
       ops.add(t.op);
       notes.add(t.note);
       sum += t.note.value;
-      if (sum >= targetAmount) {
-        break;
-      }
+//      if (sum >= targetAmount) {
+//        break;
+//      }
     }
 
     // Fetch Sapling anchor and witnesses
@@ -73,7 +73,6 @@ public class ShieldSendCoin {
     List<Optional<SaplingWitness>> witnesses = null;
 
     Wallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
-
 
     // Add Sapling spends
     for (int i = 0; i < notes.size(); i++) {
@@ -108,12 +107,13 @@ public class ShieldSendCoin {
 
     // Send the transaction
     //...
+    return null;
   }
 
   void find_unspent_notes() {
     List<Wallet.SaplingNoteEntry> saplingEntries = null;
     {
-      Wallet.GetFilteredNotes(saplingEntries, fromaddress_ );
+//      Wallet.GetFilteredNotes(saplingEntries, fromAddress);
     }
 
     for (SaplingNoteEntry entry : saplingEntries) {
