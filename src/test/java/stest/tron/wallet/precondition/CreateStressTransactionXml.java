@@ -39,7 +39,9 @@ public class CreateStressTransactionXml {
       "updateSetting",
       "exchangeCreate",
       "proposalCreate",
-      "updateEnergyLimit"
+      "updateEnergyLimit",
+      "triggerTimeoutContractCreatorMulti",
+
   };
 
   @BeforeClass
@@ -52,7 +54,7 @@ public class CreateStressTransactionXml {
   @Test(enabled = true)
   public void createStressTransactionXml() {
     HashMap<String, Integer> stressType = new HashMap<String, Integer>();
-    for (String key: stressTypeList) {
+    for (String key : stressTypeList) {
       try {
         if (Configuration.getByPath("stress.conf").getInt("stressType." + key) > 0) {
           stressType.put(Configuration.getByPath("stress.conf").getString("type2IdName." + key),
@@ -113,7 +115,6 @@ public class CreateStressTransactionXml {
     StringBuilder sb = new StringBuilder();
     sb.append("\n</beans>");
 
-
     String res = sb.toString();
     try {
       Files.write((Paths.get(reportPath)), res.getBytes("utf-8"), StandardOpenOption.APPEND);
@@ -125,7 +126,8 @@ public class CreateStressTransactionXml {
   public void writeDetail(HashMap<String, Integer> stressType) {
     StringBuilder sb = new StringBuilder();
     for (String key : stressType.keySet()) {
-      sb.append("<bean id=\"" + key + "\" class=\"" + Configuration.getByPath("stress.conf").getString("className." + key) + "\">\n");
+      sb.append("<bean id=\"" + key + "\" class=\"" + Configuration.getByPath("stress.conf")
+          .getString("className." + key) + "\">\n");
       sb.append("<property name=\"name\" value=\"" + key + "\"/>\n");
       sb.append("<property name=\"begin\" value=\"" + finishedNum + "\"/>\n");
       finishedNum = finishedNum + stressType.get(key) - 1;
@@ -161,7 +163,6 @@ public class CreateStressTransactionXml {
       e.printStackTrace();
     }
   }
-
 
 
 }
