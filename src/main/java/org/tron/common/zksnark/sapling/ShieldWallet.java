@@ -16,7 +16,7 @@ import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
-public class Wallet {
+public class ShieldWallet {
 
 
   public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata;

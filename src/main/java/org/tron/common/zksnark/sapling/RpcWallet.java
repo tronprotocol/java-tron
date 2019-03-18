@@ -72,10 +72,10 @@ public class RpcWallet {
 //      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
 
     IncomingViewingKey ivk = xsk.getExpsk().full_viewing_key().in_viewing_key();
-    Wallet.mapSaplingZKeyMetadata.put(ivk, metadata);
+    ShieldWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
 
     PaymentAddress addr = xsk.DefaultAddress();
-    if (!Wallet.AddSaplingZKey(xsk, addr)) {
+    if (!ShieldWallet.AddSaplingZKey(xsk, addr)) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
     }
     // return default sapling payment address.
@@ -83,16 +83,18 @@ public class RpcWallet {
     System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
-  public void z_sendmany() {
+  public void sendShieldCoin() {
     String fromAddress = "";
-    String taddr = "";
+    String tAddr = "";
+    boolean fromTAddress = false;
+    boolean fromShieldAddress = false;
     PaymentAddress zaddr;
     if (isValidTAddress(fromAddress)) {
       //todo
-      taddr = "";
+      tAddr = "";
     } else if (isValidShieldAddress(fromAddress)) {
       zaddr = KeyIo.DecodePaymentAddress(fromAddress);
-      if (!Wallet.HaveSpendingKeyForPaymentAddress(zaddr)) {
+      if (!ShieldWallet.HaveSpendingKeyForPaymentAddress(zaddr)) {
         throw new RuntimeException("");
       }
     } else {
