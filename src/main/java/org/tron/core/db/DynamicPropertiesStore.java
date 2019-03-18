@@ -533,7 +533,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getDeferredTransactionOccupySpace();
     } catch (IllegalArgumentException e) {
-      this.saveDeferredTransactionFee(0);
+      this.saveDeferredTransactionOccupySpace(0);
     }
 
     try {
@@ -1342,9 +1342,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(value));
   }
 
-  public void saveDeferredTransactionOccupySpace(byte[] value) {
+  public void saveDeferredTransactionOccupySpace(long value) {
     this.put(DEFERRED_TRANSACTION_OCCUPY_SPACE,
-        new BytesCapsule(value));
+        new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public byte[] getActiveDefaultOperations() {
