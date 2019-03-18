@@ -2,38 +2,37 @@ package org.tron.core.db2.common;
 
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.TreeMap;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.DBIterator;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.db.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
-public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
+public class DeferredTransactionIdIndexCacheDB implements DB<byte[], byte[]>, Flusher {
   private Map<Key, byte[]> db = new HashMap<>();
 
   int size = 0;
 
   @Override
   public synchronized  byte[] get(byte[] key) {
+
     return db.get(Key.of(key));
   }
 
   @Override
   public synchronized  void put(byte[] key, byte[] value) {
-    if (key == null || value == null) {
+    if (key == null || value == null ) {
       logger.error("put deferred transaction {} failed, too many pending.");
       return;
     }
+
     size ++;
     db.put(Key.copyOf(key), value);
   }
@@ -76,19 +75,5 @@ public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
   @Override
   public void reset() {
     db.clear();
-  }
-
-  public List<byte[]> getPrevious(byte[] key, long limit, int precision) {
-    List<byte[]>  result = new ArrayList<>();
-    for (Map.Entry<Key, byte[]> entry : db.entrySet()) {
-      if (ByteUtil.lessOrEquals(ByteUtil.parseBytes(entry.getKey().getBytes(), 0, precision), key)) {
-        result.add(entry.getValue());
-        limit --;
-      } else {
-        break;
-      }
-      if (limit <= 0) break;
-    }
-    return result;
   }
 }

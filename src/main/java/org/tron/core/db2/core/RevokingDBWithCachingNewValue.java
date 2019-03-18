@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -190,21 +191,18 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     if (head.getPrevious() != null) {
       ((SnapshotImpl) head).collect(collection);
     }
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
 
     int precision = Long.SIZE / Byte.SIZE;
-    ((DeferredTransactionCacheDB) ((SnapshotRoot) head.getRoot()).db).getPrevious(key, limit, precision)
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey().getBytes()), WrappedByteArray.of(e.getValue())))
-        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
-    levelDBMap.putAll(collection);
-
     Set<byte[]> result = new HashSet<>();
-    for (WrappedByteArray p : levelDBMap.keySet()) {
+    for (WrappedByteArray p : collection.keySet()) {
       if (ByteUtil.lessOrEquals(ByteUtil.parseBytes(p.getBytes(), 0, precision), key)) {
-        result.add(levelDBMap.get(p).getBytes());
+        result.add(collection.get(p).getBytes());
       }
     }
-    return result;
+    List<byte[]> list = ((DeferredTransactionCacheDB) ((SnapshotRoot) head.getRoot()).db).getPrevious(key, limit, precision);
+    result.addAll(list);
+
+    return result.stream().limit(limit).collect(Collectors.toSet());
   }
 
   public Map<WrappedByteArray, WrappedByteArray> getAllValues() {

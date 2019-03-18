@@ -7,14 +7,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.db.common.WrappedByteArray;
-import org.tron.core.db2.common.DeferredTransactionCacheDB;
+  import org.tron.core.db2.common.DeferredTransactionIdIndexCacheDB;
 
 @Slf4j(topic = "DB")
 public class DeferredTransactionIdIndexCache extends TronStoreWithRevoking<BytesCapsule>{
 
   @Autowired
   public DeferredTransactionIdIndexCache(@Value("deferred-transactionid-index-cache") String dbName) {
-    super(dbName, DeferredTransactionCacheDB.class);
+    super(dbName, DeferredTransactionIdIndexCacheDB.class);
   }
 
   public void put(DeferredTransactionCapsule deferredTransactionCapsule) {

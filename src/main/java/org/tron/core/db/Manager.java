@@ -630,6 +630,7 @@ public class Manager {
     } catch (ExecutionException e) {
       logger.info(e.getMessage());
     }
+
     logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
         transactionCache.size(),
         blockCount.get(),
