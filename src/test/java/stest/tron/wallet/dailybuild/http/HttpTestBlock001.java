@@ -17,6 +17,7 @@ public class HttpTestBlock001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
   private Integer currentBlockNum;
   private JSONObject blockContent;
   private String blockId;
@@ -49,9 +50,46 @@ public class HttpTestBlock001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "Get now block from solidity by http")
+  public void get1NowBlockFromSolidity() {
+    response = HttpMethed.getNowBlockFromSolidity(httpSoliditynode);
+    logger.info("code is " + response.getStatusLine().getStatusCode());
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    blockContent = responseContent;
+    blockId = responseContent.get("blockID").toString();
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() >= 2);
+    responseContent = HttpMethed.parseStringContent(responseContent.get("block_header").toString());
+    Assert.assertTrue(responseContent.size() >= 2);
+    Assert.assertFalse(responseContent.get("witness_signature").toString().isEmpty());
+    HttpMethed.printJsonContent(responseContent);
+    responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(Integer.parseInt(responseContent.get("number").toString()) > 0);
+    currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
+    Assert.assertTrue(Long.parseLong(responseContent.get("timestamp").toString()) > 1550724114000L);
+    Assert.assertFalse(responseContent.get("witness_address").toString().isEmpty());
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Get block by num by http")
   public void get2BlockByNum() {
     response = HttpMethed.getBlockByNum(httpnode, currentBlockNum);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    Assert.assertEquals(responseContent, blockContent);
+
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get block by num from solidity by http")
+  public void get2BlockByNumFromSolidity() {
+    response = HttpMethed.getBlockByNumFromSolidity(httpSoliditynode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     Assert.assertEquals(responseContent, blockContent);
@@ -152,6 +190,19 @@ public class HttpTestBlock001 {
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("configNodeInfo").toString().isEmpty());
     Assert.assertTrue(responseContent.getString("configNodeInfo").contains("\"dbVersion\":2"));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get transaction count by blocknum from solidity by http")
+  public void getTransactionCountByBlocknumFromSolidity() {
+    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpSoliditynode, currentBlockNum);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() == 1);
+    Assert.assertTrue(Integer.parseInt(responseContent.get("count").toString()) >= 0);
   }
 
   /**

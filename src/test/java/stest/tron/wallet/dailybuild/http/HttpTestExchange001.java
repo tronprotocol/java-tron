@@ -24,6 +24,7 @@ public class HttpTestExchange001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(1);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] exchangeOwnerAddress = ecKey1.getAddress();
@@ -117,9 +118,38 @@ public class HttpTestExchange001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "List exchanges from solidity by http")
+  public void test2ListExchangeFromSolidity() {
+    response = HttpMethed.listExchangesFromSolidity(httpSoliditynode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.getString("exchanges"));
+    Assert.assertTrue(jsonArray.size() >= 1);
+    exchangeId = jsonArray.size();
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "GetExchangeById by http")
   public void test3GetExchangeById() {
     response = HttpMethed.getExchangeById(httpnode, exchangeId);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
+    Assert.assertEquals(responseContent.getString("creator_address"),
+        ByteArray.toHexString(exchangeOwnerAddress));
+    beforeInjectBalance = responseContent.getLong("first_token_balance");
+
+    logger.info("beforeInjectBalance" + beforeInjectBalance);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetExchangeById from solidity by http")
+  public void test3GetExchangeByIdFromSolidity() {
+    response = HttpMethed.getExchangeByIdFromSolidity(httpSoliditynode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(responseContent.getInteger("exchange_id") == exchangeId);
@@ -198,6 +228,18 @@ public class HttpTestExchange001 {
   @Test(enabled = true, description = "Get asset issue list by name by http")
   public void test7GetAssetIssueListByName() {
     response = HttpMethed.getAssetIssueListByName(httpnode, name);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());
+    Assert.assertTrue(jsonArray.size() >= 2);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get asset issue list by name from solidity by http")
+  public void test7GetAssetIssueListByNameFromSolidity() {
+    response = HttpMethed.getAssetIssueListByNameFromSolidity(httpSoliditynode, name);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("assetIssue").toString());

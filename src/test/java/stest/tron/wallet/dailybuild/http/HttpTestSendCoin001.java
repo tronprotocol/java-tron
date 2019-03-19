@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.http;
 
+import com.alibaba.fastjson.JSONArray;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 
@@ -26,6 +27,8 @@ public class HttpTestSendCoin001 {
     private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
     private String httpnode = Configuration.getByPath("testng.conf")
         .getStringList("httpnode.ip.list").get(1);
+    private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
+            .get(2);
     ECKey ecKey1= new ECKey(Utils.getRandom());
     byte[] receiverAddress = ecKey1.getAddress();
     String receiverKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -44,7 +47,60 @@ public class HttpTestSendCoin001 {
         Assert.assertEquals(HttpMethed.getBalance(httpnode, receiverAddress), amount);
     }
 
+    /**
+     * constructor.
+     */
+    @Test(enabled = true, description = "Get transaction by id from solidity by http")
+    public void test2getTransactionByIdFromSolidity() {
+        String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
+        HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
 
+        response = HttpMethed.getTransactionByIdFromSolidity(httpSoliditynode, txid);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        String retString = responseContent.getString("ret");
+        JSONArray array = JSONArray.parseArray(retString);
+        Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString("contractRet"), "SUCCESS");
+        Assert.assertTrue(responseContent.size() > 4);
+    }
+
+    /**
+     * constructor.
+     */
+    @Test(enabled = true, description = "Get transaction info by id from solidity by http")
+    public void test3getTransactionInfoByIdFromSolidity() {
+        String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount, testKey002);
+        HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
+
+        response = HttpMethed.getTransactionInfoByIdFromSolidity(httpSoliditynode, txid);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        Assert.assertTrue(responseContent.size() > 4);
+    }
+
+    /**
+     * constructor.
+     */
+    @Test(enabled = true, description = "Get transactions from this from solidity by http")
+    public void test4getTransactionsFromThisFromSolidity() {
+        response = HttpMethed.getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0,100);
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        Assert.assertTrue(responseContent.size() == 1);
+    }
+
+    /**
+     * constructor.
+     */
+    @Test(enabled = true, description = "Get transactions to this from solidity by http")
+    public void test5getTransactionsToThisFromSolidity() {
+        response = HttpMethed.getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0,100);
+        Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        Assert.assertTrue(responseContent.size() == 1);
+    }
 
     /**
      * constructor.

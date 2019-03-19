@@ -24,6 +24,7 @@ public class HttpTestAccount002 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(1);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] freezeBalanceAddress = ecKey1.getAddress();
@@ -148,9 +149,41 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "Get Delegated Resource from solidity by http")
+  public void test6GetDelegatedResourceFromSolidity() {
+    response = HttpMethed.getDelegatedResourceFromSolidity(
+      httpSoliditynode,freezeBalanceAddress,receiverResourceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("delegatedResource").toString());
+    Assert.assertTrue(jsonArray.size() >= 1);
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("from"),
+            ByteArray.toHexString(freezeBalanceAddress));
+    Assert.assertEquals(jsonArray.getJSONObject(0).getString("to"),
+            ByteArray.toHexString(receiverResourceAddress));
+    Assert.assertEquals(jsonArray.getJSONObject(0).getLong("frozen_balance_for_bandwidth"),
+            frozenBalance);
+  }
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "Get Delegated Resource Account Index by http")
   public void test7GetDelegatedResourceAccountIndex() {
     response = HttpMethed.getDelegatedResourceAccountIndex(httpnode,freezeBalanceAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
+    String toAddress = responseContent.getJSONArray("toAccounts").get(0).toString();
+    Assert.assertEquals(toAddress,ByteArray.toHexString(receiverResourceAddress));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
+  public void test7GetDelegatedResourceAccountIndexFromSolidity() {
+    response = HttpMethed.getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode,freezeBalanceAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertFalse(responseContent.get("toAccounts").toString().isEmpty());
