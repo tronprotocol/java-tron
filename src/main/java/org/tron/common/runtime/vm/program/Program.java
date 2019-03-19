@@ -1172,7 +1172,7 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
-    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] senderAddress = convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
     byte[] contractAddress = Wallet.generateContractAddress2(senderAddress, programCode, salt.getData());

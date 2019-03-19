@@ -39,6 +39,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -70,6 +71,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -284,6 +286,11 @@ public class Wallet {
   public static byte[] generateContractAddress2(byte[] address, byte[] code, byte[] salt) {
     byte[] mergedData = ByteUtil.merge(address, code, salt);
     return Hash.sha3omit12(mergedData);
+  }
+
+  // for test
+  public static byte[] generateContractAddress2(byte[] address, byte[] code, long salt) {
+    return generateContractAddress2(address, code, new DataWord(salt).getData());
   }
 
   // for `CREATE`
