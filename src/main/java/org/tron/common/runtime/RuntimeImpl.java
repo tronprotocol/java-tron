@@ -466,6 +466,7 @@ public class RuntimeImpl implements Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
+    // TODO add hardfork
 //    byte[] precompiledCode = ProgramPrecompile.getCode(code);
 //    deposit.saveCode(contractAddress, precompiledCode);
 
@@ -532,8 +533,6 @@ public class RuntimeImpl implements Runtime {
     checkTokenValueAndId(tokenValue, tokenId);
 
     byte[] code = this.deposit.getCode(contractAddress);
-    logger.info("ysc " + " contract:" + Wallet.encode58Check(contractAddress));
-    logger.info("ysc " + " code:" + Hex.toHexString(code));
     if (isNotEmpty(code)) {
 
       long feeLimit = trx.getRawData().getFeeLimit();
@@ -638,6 +637,7 @@ public class RuntimeImpl implements Runtime {
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
+            // TODO add hardfork
             deposit.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
           }
         }
