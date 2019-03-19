@@ -1,4 +1,5 @@
 #!/bin/bash
+if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
 stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
 stest_server=""
 docker_num_in_67=`ssh -p 22008 -t java-tron@47.94.231.67 'docker ps -a | wc -l'`
@@ -29,7 +30,7 @@ fi
 
 change_branch_CMD="sed -i '1c branch_name_in_CI=$TRAVIS_BRANCH' /data/workspace/docker_workspace/do_stest.sh"
 
-if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
+
   echo "Init the docker stest env"
   echo "'$stest_server' is stest server this time"
   ssh java-tron@$stest_server -p 22008 $change_branch_CMD
