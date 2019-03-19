@@ -736,6 +736,7 @@ public class PublicMethed {
       Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
         logger.info("transaction ==null");
+        continue;
       }
       transaction = signTransaction(ecKey, transaction);
       GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
@@ -747,7 +748,7 @@ public class PublicMethed {
         return true;
       }
       try {
-        Thread.sleep(3100);
+        Thread.sleep(500);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
