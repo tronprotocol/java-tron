@@ -3002,8 +3002,19 @@ public class PublicMethedForMutiSign {
    */
   public static Return broadcastTransaction1(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     return response;
   }
 

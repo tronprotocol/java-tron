@@ -86,7 +86,7 @@ public class ContractUnknownException {
         .getBalance()));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger selfdestruct method")
   public void testGrammar001() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
@@ -149,7 +149,7 @@ public class ContractUnknownException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger revert method")
   public void testGrammar002() {
     PublicMethed
         .sendcoin(grammarAddress2, 100000000L, testNetAccountAddress, testNetAccountKey,
@@ -217,7 +217,7 @@ public class ContractUnknownException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger assert method")
   public void testGrammar003() {
     PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -283,7 +283,7 @@ public class ContractUnknownException {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger require method")
   public void testGrammar004() {
     PublicMethed
         .sendcoin(grammarAddress4, 100000000000L, testNetAccountAddress, testNetAccountKey,
