@@ -48,7 +48,7 @@ public class HttpTestSendCoin001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get transaction by id from solidity by http")
+  @Test(enabled = true, description = "Get transaction by id from solidity by http")
   public void test2GetTransactionByIdFromSolidity() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
@@ -67,7 +67,7 @@ public class HttpTestSendCoin001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get transaction info by id from solidity by http")
+  @Test(enabled = true, description = "Get transaction info by id from solidity by http")
   public void test3GetTransactionInfoByIdFromSolidity() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);

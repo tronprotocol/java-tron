@@ -150,8 +150,9 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get Delegated Resource from solidity by http")
+  @Test(enabled = true, description = "Get Delegated Resource from solidity by http")
   public void test07GetDelegatedResourceFromSolidity() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     response = HttpMethed.getDelegatedResourceFromSolidity(
       httpSoliditynode,freezeBalanceAddress,receiverResourceAddress);
@@ -183,7 +184,7 @@ public class HttpTestAccount002 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get Delegated Resource Account Index from solidity by http")
+  @Test(enabled = true, description = "Get Delegated Resource Account Index from solidity by http")
   public void test09GetDelegatedResourceAccountIndexFromSolidity() {
     response = HttpMethed.getDelegatedResourceAccountIndexFromSolidity(httpSoliditynode,
         freezeBalanceAddress);
