@@ -40,7 +40,7 @@ public class ExtendedSpendingKey {
     RawHDSeed rawSeed = seed.getSeed();
 
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
-    Librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().size(), m_bytes);
+    Librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().length, m_bytes);
 
     ExtendedSpendingKey xsk_m = decode(m_bytes);
     return xsk_m;

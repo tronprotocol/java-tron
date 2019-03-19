@@ -9,7 +9,7 @@ import org.tron.common.zksnark.sapling.zip32.HDSeed;
 
 public class KeyStore {
 
-  static HDSeed seed;
+  static HDSeed seed = new HDSeed();
 
   static Map<FullViewingKey, ExtendedSpendingKey> mapSaplingSpendingKeys; // k:fvk,v:sk
   static Map<IncomingViewingKey, FullViewingKey> mapSaplingFullViewingKeys; // k:ivk,v:fvk

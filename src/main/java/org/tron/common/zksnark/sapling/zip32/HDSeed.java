@@ -8,9 +8,9 @@ public class HDSeed {
   @Getter
   public RawHDSeed seed;
 
-  public class RawHDSeed {
+  public static class RawHDSeed {
 
     @Getter
-    public List data;
+    public byte[] data ;
   }
 }
