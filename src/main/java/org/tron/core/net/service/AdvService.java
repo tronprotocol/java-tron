@@ -118,9 +118,11 @@ public class AdvService {
       BlockMessage blockMsg = (BlockMessage) msg;
       item = new Item(blockMsg.getMessageId(), InventoryType.BLOCK);
       logger.info("Ready to broadcast block {}", blockMsg.getBlockId().getString());
-      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->
-        invToSpread.remove(transactionCapsule.getTransactionId())
-      );
+      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->{
+        Sha256Hash tid = transactionCapsule.getTransactionId();
+        invToSpread.remove(tid);
+        invToFetchCache.put(new Item(tid, InventoryType.TRX), System.currentTimeMillis());
+      });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
       TransactionMessage trxMsg = (TransactionMessage) msg;
@@ -142,6 +144,8 @@ public class AdvService {
         if (tronNetDelegate.getActivePeer().stream()
             .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)){
           invToFetch.put(item, System.currentTimeMillis());
+        } else {
+          invToFetchCache.invalidate(item);
         }
       });
     }
@@ -162,6 +166,7 @@ public class AdvService {
       if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
         logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(), item.getHash());
         invToFetch.remove(item);
+        invToFetchCache.invalidate(item);
         return;
       }
       peers.stream()
