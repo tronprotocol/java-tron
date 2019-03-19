@@ -601,7 +601,7 @@ public class MultiSign26 {
         .accountPermissionUpdateWithPermissionId(accountPermissionJson2, test001Address, dev001Key,
             blockingStubFull, 0,
             permissionKeyString1));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList2 = test001AddressAccount2.getActivePermissionList();
     Permission ownerPermission2 = test001AddressAccount2.getOwnerPermission();

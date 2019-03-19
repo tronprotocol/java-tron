@@ -88,7 +88,6 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = true, description = "Type is create create call call")
   public void test1InternalTransaction007() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -158,6 +157,7 @@ public class ContractInternalTransaction002 {
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertNotNull(infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     int transactionsCount = infoById.get().getInternalTransactionsCount();
     Assert.assertEquals(4, transactionsCount);
