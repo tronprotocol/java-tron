@@ -17,7 +17,8 @@ public class HttpTestBlock001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
-  private String httpSoliditynode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list").get(2);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
   private Integer currentBlockNum;
   private JSONObject blockContent;
   private String blockId;
@@ -26,7 +27,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get now block by http")
-  public void get1NowBlock() {
+  public void get01NowBlock() {
     response = HttpMethed.getNowBlock(httpnode);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -51,7 +52,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get now block from solidity by http")
-  public void get1NowBlockFromSolidity() {
+  public void get02NowBlockFromSolidity() {
     response = HttpMethed.getNowBlockFromSolidity(httpSoliditynode);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -76,7 +77,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get block by num by http")
-  public void get2BlockByNum() {
+  public void get03BlockByNum() {
     response = HttpMethed.getBlockByNum(httpnode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -88,7 +89,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get block by num from solidity by http")
-  public void get2BlockByNumFromSolidity() {
+  public void get04BlockByNumFromSolidity() {
     response = HttpMethed.getBlockByNumFromSolidity(httpSoliditynode, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -100,7 +101,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetBlockByLimitNext by http")
-  public void get3BlockByLimitNext() {
+  public void get05BlockByLimitNext() {
     response = HttpMethed.getBlockByLimitNext(httpnode, currentBlockNum - 10, currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -114,7 +115,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetBlockByLastNum by http")
-  public void get4BlockByLastNum() {
+  public void get06BlockByLastNum() {
     response = HttpMethed.getBlockByLastNum(httpnode, 8);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -128,7 +129,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "GetBlockById by http")
-  public void get5BlockById() {
+  public void get07BlockById() {
     response = HttpMethed.getBlockById(httpnode, blockId);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -140,7 +141,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "List nodes by http")
-  public void get6ListNodes() {
+  public void get08ListNodes() {
     response = HttpMethed.listNodes(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -151,7 +152,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get next maintenance time by http")
-  public void get7NextMaintaenanceTime() {
+  public void get09NextMaintaenanceTime() {
     response = HttpMethed.getNextmaintenanceTime(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -164,7 +165,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get chain parameter by http")
-  public void get8ChainParameter() {
+  public void get10ChainParameter() {
     response = HttpMethed.getChainParameter(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -184,7 +185,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get Node Info by http")
-  public void get9NodeInfo() {
+  public void get11NodeInfo() {
     response = HttpMethed.getNodeInfo(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -196,8 +197,9 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get transaction count by blocknum from solidity by http")
-  public void getTransactionCountByBlocknumFromSolidity() {
-    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpSoliditynode, currentBlockNum);
+  public void get12TransactionCountByBlocknumFromSolidity() {
+    response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpSoliditynode,
+        currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
