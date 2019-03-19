@@ -86,7 +86,6 @@ public class ContractGrammar003 {
     ecKey1 = new ECKey(Utils.getRandom());
     grammarAddress3 = ecKey1.getAddress();
     testKeyForGrammarAddress3 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

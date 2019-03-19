@@ -99,7 +99,6 @@ public class MultiSign24 {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     final byte[] ownerAddress = ecKey1.getAddress();
     final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee * 2;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,

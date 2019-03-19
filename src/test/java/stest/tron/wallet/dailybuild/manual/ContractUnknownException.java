@@ -88,7 +88,6 @@ public class ContractUnknownException {
 
   @Test(enabled = true, description = "trigger selfdestruct method")
   public void testGrammar001() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
