@@ -126,7 +126,7 @@ public class AdvService {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
-      trxCache.put(item, msg);
+      trxCache.put(item, new TransactionMessage(((TransactionMessage) msg).getTransactionCapsule().getInstance()));
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
