@@ -18,7 +18,7 @@ import org.tron.core.db2.common.DeferredTransactionCacheDB;
 
 @Slf4j(topic = "DB")
 public class DeferredTransactionCache extends TronStoreWithRevoking<BytesCapsule>  {
-  @Autowired
+  @Autowired(required = false)
   public DeferredTransactionCache(@Value("deferred-transaction-cache") String dbName) {
     super(dbName, DeferredTransactionCacheDB.class);
   }

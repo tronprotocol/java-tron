@@ -31,8 +31,12 @@ public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public synchronized  void put(byte[] key, byte[] value) {
-    if (key == null || value == null) {
-      logger.error("put deferred transaction {} failed, too many pending.");
+    if (key == null) {
+      logger.error("put deferred transaction {} failed, key is null.");
+      return;
+    }
+    if (value == null) {
+      remove(key);
       return;
     }
     size ++;

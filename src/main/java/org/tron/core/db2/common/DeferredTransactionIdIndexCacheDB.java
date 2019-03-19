@@ -28,8 +28,13 @@ public class DeferredTransactionIdIndexCacheDB implements DB<byte[], byte[]>, Fl
 
   @Override
   public synchronized  void put(byte[] key, byte[] value) {
-    if (key == null || value == null ) {
-      logger.error("put deferred transaction {} failed, too many pending.");
+    if (key == null) {
+      logger.error("put deferred transaction  {} failed, key is null.");
+      return;
+    }
+
+    if (value == null) {
+      remove(key);
       return;
     }
 

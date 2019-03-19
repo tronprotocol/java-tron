@@ -12,7 +12,7 @@ import org.tron.core.db2.common.DeferredTransactionIdIndexCacheDB;
 @Slf4j(topic = "DB")
 public class DeferredTransactionIdIndexCache extends TronStoreWithRevoking<BytesCapsule>{
 
-  @Autowired
+  @Autowired(required = false)
   public DeferredTransactionIdIndexCache(@Value("deferred-transactionid-index-cache") String dbName) {
     super(dbName, DeferredTransactionIdIndexCacheDB.class);
   }
