@@ -63,7 +63,7 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeStore;
-import org.tron.common.zksnark.merkle.IncrementalMerkleWitnessStore;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherStore;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
@@ -172,7 +172,7 @@ public class Manager {
   private IncrementalMerkleTreeStore merkleTreeStore;
   @Autowired
   @Getter
-  private IncrementalMerkleWitnessStore merkleWitnessStore;
+  private IncrementalMerkleVoucherStore merkleVoucherStore;
 
   // for network
   @Autowired
@@ -1774,7 +1774,7 @@ public class Manager {
     closeOneStore(exchangeV2Store);
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
-    closeOneStore(merkleWitnessStore);
+    closeOneStore(merkleVoucherStore);
     logger.info("******** end to close db ********");
   }
 

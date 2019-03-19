@@ -617,10 +617,10 @@ service Wallet {
   rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
   }
 
-  rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleWitness) {
+  rpc GetMerkleTreeWitness (OutputPoint) returns (IncrementalMerkleVoucher) {
   }
 
-  rpc GetMerkleTreeWitnessInfo (OutputPointInfo) returns (IncrementalMerkleWitnessInfo) {
+  rpc GetMerkleTreeWitnessInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
   }
 
   rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {

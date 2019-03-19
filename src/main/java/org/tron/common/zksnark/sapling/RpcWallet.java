@@ -10,6 +10,7 @@ import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
+import org.tron.core.Wallet;
 
 public class RpcWallet {
 
@@ -32,7 +33,7 @@ public class RpcWallet {
 //  { "wallet",             "z_importwallet",           &z_importwallet,           true  },
 
 
-  public void z_getnewaddress() {
+  public void getNewAddress() {
     //seed
     //AccountCounter
 
@@ -58,7 +59,7 @@ public class RpcWallet {
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
-    while (xsk == null || KeyStore.HaveSaplingSpendingKey(xsk.getExpsk().full_viewing_key())) {
+    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().full_viewing_key())) {
       //
       xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
@@ -72,10 +73,10 @@ public class RpcWallet {
 //      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
 
     IncomingViewingKey ivk = xsk.getExpsk().full_viewing_key().in_viewing_key();
-    Wallet.mapSaplingZKeyMetadata.put(ivk, metadata);
+    ShieldWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
 
     PaymentAddress addr = xsk.DefaultAddress();
-    if (!Wallet.AddSaplingZKey(xsk, addr)) {
+    if (!ShieldWallet.AddSaplingZKey(xsk, addr)) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
     }
     // return default sapling payment address.
@@ -83,20 +84,25 @@ public class RpcWallet {
     System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
-  public void z_sendmany() {
+  public void sendCoinShield() {
     String fromAddress = "";
-    String taddr = "";
-    PaymentAddress zaddr;
-    if (isValidTAddress(fromAddress)) {
-      //todo
-      taddr = "";
-    } else if (isValidShieldAddress(fromAddress)) {
-      zaddr = KeyIo.DecodePaymentAddress(fromAddress);
-      if (!Wallet.HaveSpendingKeyForPaymentAddress(zaddr)) {
-        throw new RuntimeException("");
-      }
+
+    boolean fromTAddress = false;
+    boolean fromShieldAddress = false;
+    PaymentAddress shieldAddr;
+
+    byte[] tAddressBytes = Wallet.decodeFromBase58Check(fromAddress);
+    if (tAddressBytes != null) {
+      fromTAddress = true;
     } else {
-      throw new RuntimeException("unknown address type ");
+      shieldAddr = KeyIo.DecodePaymentAddress(fromAddress);
+      if (shieldAddr == null) {
+        throw new RuntimeException("unknown address type ");
+      }
+      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldAddr)) {
+        throw new RuntimeException(
+            "From address does not belong to this wallet, spending key not found.");
+      }
     }
 
     //todo：
@@ -108,15 +114,6 @@ public class RpcWallet {
   }
 
 
-  //todo:
-  private boolean isValidTAddress(String address) {
-    return true;
-  }
-
-  //todo:
-  private boolean isValidShieldAddress(String address) {
-    return true;
-  }
 
 //  UniValue z_importkey(  UniValue params, boolean fHelp) {
 //    // We want to scan for transactions and notes
@@ -132,7 +129,7 @@ public class RpcWallet {
 //        false);
 //
 //    set<pair<PaymentAddress, uint256>> nullifierSet;
-//    auto hasSpendingKey = boost::apply_visitor (HaveSpendingKeyForPaymentAddress(pwalletMain), zaddr)
+//    auto hasSpendingKey = boost::apply_visitor (haveSpendingKeyForPaymentAddress(pwalletMain), zaddr)
 //    ;
 //    if (hasSpendingKey) {
 //      nullifierSet = pwalletMain -> GetNullifiersForAddresses({zaddr});

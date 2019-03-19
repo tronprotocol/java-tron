@@ -1,8 +1,8 @@
 package org.tron.common.zksnark.sapling;
 
-import static org.tron.common.zksnark.sapling.KeyStore.GetSaplingFullViewingKey;
-import static org.tron.common.zksnark.sapling.KeyStore.GetSaplingIncomingViewingKey;
-import static org.tron.common.zksnark.sapling.KeyStore.HaveSaplingSpendingKey;
+import static org.tron.common.zksnark.sapling.KeyStore.getFullViewingKey;
+import static org.tron.common.zksnark.sapling.KeyStore.getIncomingViewingKey;
+import static org.tron.common.zksnark.sapling.KeyStore.haveSpendingKey;
 
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,7 @@ import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
-public class Wallet {
+public class ShieldWallet {
 
 
   public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata;
@@ -48,7 +48,7 @@ public class Wallet {
 
   public static ExtendedSpendingKey GetSpendingKeyForPaymentAddress(PaymentAddress zaddr) {
     ExtendedSpendingKey extskOut = null;
-    KeyStore.GetSaplingExtendedSpendingKey(zaddr, extskOut);
+    KeyStore.getExtendedSpendingKey(zaddr, extskOut);
     return extskOut;
   }
 
@@ -76,7 +76,7 @@ public class Wallet {
 //    // Protocol Spec: 4.19 Block Chain Scanning (Sapling)
 //    for (uint32_t i = 0; i < tx.vShieldedOutput.size(); ++i) {
 //        const OutputDescription output = tx.vShieldedOutput[i];
-//      for (auto it = mapSaplingFullViewingKeys.begin(); it != mapSaplingFullViewingKeys.end();
+//      for (auto it = mapFullViewingKeys.begin(); it != mapFullViewingKeys.end();
 //          ++it) {
 //        SaplingIncomingViewingKey ivk = it -> first;
 //        auto result = SaplingNotePlaintext::decrypt
@@ -92,15 +92,13 @@ public class Wallet {
 //    }
 //  }
 
-  public static boolean HaveSpendingKeyForPaymentAddress(PaymentAddress addr) {
+  public static boolean haveSpendingKeyForPaymentAddress(PaymentAddress addr) {
     IncomingViewingKey ivk = null;
     FullViewingKey fvk = null;
 
-    //zaddr -> ivk,ivk->fvk,fvk
-
-    return GetSaplingIncomingViewingKey(addr, ivk) &&
-        GetSaplingFullViewingKey(ivk, fvk) &&
-        HaveSaplingSpendingKey(fvk);
+    return getIncomingViewingKey(addr, ivk) &&
+        getFullViewingKey(ivk, fvk) &&
+        haveSpendingKey(fvk);
   }
 
   public static void GetFilteredNotes(

@@ -4,9 +4,9 @@ import com.google.common.collect.Lists;
 import java.util.List;
 import java.util.Optional;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingNoteEntry;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingWitness;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
-import org.tron.common.zksnark.sapling.Wallet.SaplingNoteEntry;
-import org.tron.common.zksnark.sapling.Wallet.SaplingWitness;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
@@ -17,23 +17,23 @@ import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
 public class ShieldSendCoin {
 
-  ExtendedSpendingKey spendingkey;
+  private ExtendedSpendingKey spendingkey;
 
-  String fromAddress;
-  List<Recipient> t_outputs_;
-  List<Recipient> z_outputs_;
-  List<SaplingNoteEntry> z_sapling_inputs_;
+  private String fromAddress;
+  private List<Recipient> t_outputs_;
+  private List<Recipient> z_outputs_;
+  private List<SaplingNoteEntry> z_sapling_inputs_;
 
-  TransactionBuilder builder_;
+  private TransactionBuilder builder_;
 
-  boolean isfromzaddr_;
+  private boolean isfromzaddr_;
 
   public ShieldSendCoin(String fromAddress, List<Recipient> tOutputs,
       List<Recipient> zOutputs) {
 //    if () {
       PaymentAddress address = KeyIo.DecodePaymentAddress(fromAddress);
       //to look up spendingkey from walletDB
-      spendingkey = Wallet.GetSpendingKeyForPaymentAddress(address);
+    spendingkey = ShieldWallet.GetSpendingKeyForPaymentAddress(address);
       isfromzaddr_ = true;
 //    }
 
@@ -72,7 +72,7 @@ public class ShieldSendCoin {
     byte[] anchor = null;
     List<Optional<SaplingWitness>> witnesses = null;
 
-    Wallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
+    ShieldWallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
 
     // Add Sapling spends
     for (int i = 0; i < notes.size(); i++) {
@@ -111,7 +111,7 @@ public class ShieldSendCoin {
   }
 
   void find_unspent_notes() {
-    List<Wallet.SaplingNoteEntry> saplingEntries = null;
+    List<ShieldWallet.SaplingNoteEntry> saplingEntries = null;
     {
 //      Wallet.GetFilteredNotes(saplingEntries, fromAddress);
     }

@@ -7,17 +7,17 @@ import org.springframework.stereotype.Component;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Component
-public class IncrementalMerkleWitnessStore
-    extends TronStoreWithRevoking<IncrementalMerkleWitnessCapsule> {
+public class IncrementalMerkleVoucherStore
+    extends TronStoreWithRevoking<IncrementalMerkleVoucherCapsule> {
 
   @Autowired
-  public IncrementalMerkleWitnessStore(@Value("IncrementalMerkleWitness") String dbName) {
+  public IncrementalMerkleVoucherStore(@Value("IncrementalMerkleVoucher") String dbName) {
     super(dbName);
   }
 
   @Override
-  public IncrementalMerkleWitnessCapsule get(byte[] key) {
+  public IncrementalMerkleVoucherCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new IncrementalMerkleWitnessCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : new IncrementalMerkleVoucherCapsule(value);
   }
 }

@@ -2,7 +2,7 @@ package org.tron.common.zksnark.sapling;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.tron.common.zksnark.sapling.Wallet.SaplingWitness;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingWitness;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
