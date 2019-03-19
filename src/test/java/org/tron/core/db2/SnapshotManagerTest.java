@@ -14,6 +14,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.CheckTmpStore;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestSnapshotManager;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
@@ -40,10 +41,7 @@ public class SnapshotManagerTest {
     revokingDatabase.enable();
     tronDatabase = new TestRevokingTronStore("testSnapshotManager-test");
     revokingDatabase.add(tronDatabase.getRevokingDB());
-    LevelDbDataSourceImpl tmpLevelDbDataSource  =
-      new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("testSnapshotManager-tmp"), "testSnapshotManagerTmp");
-    tmpLevelDbDataSource.initDB();
-    revokingDatabase.setTmpLevelDbDataSource(tmpLevelDbDataSource);
+    revokingDatabase.setCheckTmpStore(context.getBean(CheckTmpStore.class));
   }
 
   @After
@@ -54,7 +52,7 @@ public class SnapshotManagerTest {
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
-    revokingDatabase.getTmpLevelDbDataSource().closeDB();
+    revokingDatabase.getCheckTmpStore().getDbSource().closeDB();
     tronDatabase.close();
   }
 

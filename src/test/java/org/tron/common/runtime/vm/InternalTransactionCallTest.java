@@ -40,6 +40,7 @@ public class InternalTransactionCallTest {
    */
   @Before
   public void init() {
+    Args.clearParam();
     Args.setParam(new String[]{"--output-directory", dbPath, "--support-constant", "--debug"},
         Constant.TEST_CONF);
 
@@ -301,13 +302,14 @@ public class InternalTransactionCallTest {
    */
   @After
   public  void destroy() {
-    Args.clearParam();
+    context.destroy();
     AppT.shutdown();
+    Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.warn("Release resources failure.");
     }
-    context.destroy();
+
   }
 }

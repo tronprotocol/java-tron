@@ -2,6 +2,7 @@ package org.tron.core.db.backup;
 
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,10 @@ public class BackupDbUtil {
 
   @Getter
   private static final int DB_BACKUP_STATE_DEFAULT = 11;
+
+  @Setter
+  @Getter
+  private long lastBackupHeight = 0;
 
   public enum STATE {
     BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
@@ -94,10 +99,28 @@ public class BackupDbUtil {
     }
   }
 
-  public void doBackup(BlockCapsule block) {
+  public boolean canDoBackup(BlockCapsule block) {
+    //not reach frequency
     if (block.getNum() % args.getDbBackupConfig().getFrequency() != 0) {
+      //backup pause because of conflict with produce, so remedy it.
+      if (block.getNum() - getLastBackupHeight() >= args.getDbBackupConfig().getFrequency()) {
+        logger
+            .debug("block height: {}, lastbackupheight: {}", block.getNum(), getLastBackupHeight());
+        setLastBackupHeight(block.getNum());
+        return true;
+      }
+      return false;
+    } else { //reach frequency
+      setLastBackupHeight(block.getNum());
+      return true;
+    }
+  }
+
+  public void doBackup(BlockCapsule block) {
+    if (!canDoBackup(block)) {
       return;
     }
+
     long t1 = System.currentTimeMillis();
     try {
       switch (STATE.valueOf(getBackupState())) {
@@ -129,7 +152,7 @@ public class BackupDbUtil {
           logger.warn("invalid backup state");
       }
     } catch (RocksDBException e) {
-      logger.warn("backup db error");
+      logger.warn("backup db error:" + e);
     }
     logger.info("current block number is {}, backup all store use {} ms!", block.getNum(),
         System.currentTimeMillis() - t1);

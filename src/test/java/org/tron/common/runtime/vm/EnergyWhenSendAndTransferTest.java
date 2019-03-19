@@ -266,10 +266,10 @@ public class EnergyWhenSendAndTransferTest {
    */
   @After
   public void destroy() {
-    Args.clearParam();
     AppT.shutdownServices();
     AppT.shutdown();
     context.destroy();
+    Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
