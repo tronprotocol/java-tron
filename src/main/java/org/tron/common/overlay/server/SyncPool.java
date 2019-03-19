@@ -100,14 +100,14 @@ public class SyncPool {
       } catch (Throwable t) {
         logger.error("Exception in sync worker", t);
       }
-    }, 30000, 3600, TimeUnit.MILLISECONDS);
+    }, 1000, 3600, TimeUnit.MILLISECONDS);
 
     logExecutor.scheduleWithFixedDelay(() -> {
       try {
         logActivePeers();
       } catch (Throwable t) {
       }
-    }, 30, 10, TimeUnit.SECONDS);
+    }, 1, 10, TimeUnit.SECONDS);
   }
 
   private void fillUp() {

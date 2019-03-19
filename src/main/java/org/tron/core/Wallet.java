@@ -405,6 +405,9 @@ public class Wallet {
     return trx;
   }
 
+  @Autowired
+  private NodeImpl nodeImpl;
+
   /**
    * Broadcast a transaction.
    */
@@ -413,7 +416,6 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     Message message = new TransactionMessage(signaturedTransaction);
 
-    try {
       if (minEffectiveConnection != 0) {
         if (p2pNode.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -434,78 +436,27 @@ public class Wallet {
               .setMessage(ByteString.copyFromUtf8(info))
               .build();
         }
+        if (p2pNode.getActivePeer().isEmpty()) {
+          logger.info("Broadcast transaction failed, no connection.");
+          return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+              .setMessage(ByteString.copyFromUtf8("no connection"))
+              .build();
+        }
+        if (!p2pNode.getActivePeer().stream()
+            .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+            .findFirst()
+            .isPresent()) {
+          logger.info("Broadcast transaction failed, no effective connection.");
+          return builder.setResult(false).setCode(response_code.OTHER_ERROR)
+              .setMessage(ByteString.copyFromUtf8("no effective connection"))
+              .build();
+        }
       }
 
-      if (dbManager.isTooManyPending()) {
-        logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-      }
 
-      if (dbManager.isGeneratingBlock()) {
-        logger
-            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
-      }
+      nodeImpl.broadcast(message);
+      return null;
 
-      if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} failed, is already exist.", trx.getTransactionId());
-        return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
-      } else {
-        dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
-      }
-      if (dbManager.getDynamicPropertiesStore().supportVM()) {
-        trx.resetResult();
-      }
-      dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
-      logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
-      return builder.setResult(true).setCode(response_code.SUCCESS).build();
-    } catch (ValidateSignatureException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.SIGERROR)
-          .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
-          .build();
-    } catch (ContractValidateException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
-          .build();
-    } catch (ContractExeException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
-          .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
-          .build();
-    } catch (AccountResourceInsufficientException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
-          .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
-          .build();
-    } catch (DupTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("dup transaction"))
-          .build();
-    } catch (TaposException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
-          .setMessage(ByteString.copyFromUtf8("Tapos check error"))
-          .build();
-    } catch (TooBigTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
-          .build();
-    } catch (TransactionExpirationException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
-          .setMessage(ByteString.copyFromUtf8("transaction expired"))
-          .build();
-    } catch (Exception e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
-      return builder.setResult(false).setCode(response_code.OTHER_ERROR)
-          .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
-          .build();
-    }
   }
 
   public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
@@ -1343,8 +1294,6 @@ public class Wallet {
     }
     return null;
   }
-
-
   private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {

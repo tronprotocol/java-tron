@@ -254,12 +254,11 @@ protobuf {
     }
 }
 
-run {
-    if (project.hasProperty('witness')) {
-        standardInput = System.in
-        args = ['--witness']
-    }
-}
+//run {
+//if ( project.hasProperty("appArgs") )
+//        print("get params, appArgs="+project.getProperty("appArgs"))
+ //       args Eval.me(appArgs)
+//}
 
 shadowJar {
     baseName = 'java-tron'
@@ -302,6 +301,14 @@ task stest(type: Test) {
 task dailyBuild(type: Test) {
     useTestNG {
         suites(file('src/test/resources/daily-build.xml'))
+        parallel 'tests'
+        threadCount 1
+    }
+}
+
+task exportTransactionConfiguration(type: Test) {
+    useTestNG {
+        suites(file('src/test/resources/export-transaction-configuration.xml'))
         parallel 'tests'
         threadCount 1
     }

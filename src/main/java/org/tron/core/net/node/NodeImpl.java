@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -27,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javafx.util.Pair;
@@ -35,6 +37,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.crypto.Hash;
+import org.tron.common.crypto.SymmEncoder;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -76,7 +80,14 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j(topic = "net")
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import org.tron.api.GrpcAPI;
+import org.tron.api.WalletGrpc;
+import org.tron.protos.Protocol.Block;
+
+
+@Slf4j
 @Component
 public class NodeImpl extends PeerConnectionDelegate implements Node {
 
@@ -91,8 +102,10 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private MessageCount trxCount = new MessageCount();
 
+  private long TPS = 0;
+
   private Cache<Sha256Hash, TransactionMessage> TrxCache = CacheBuilder.newBuilder()
-      .maximumSize(50_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(50_000)
+      .maximumSize(100_000_000).expireAfterWrite(1, TimeUnit.HOURS).initialCapacity(100_000_000)
       .recordStats().build();
 
   private Cache<Sha256Hash, BlockMessage> BlockCache = CacheBuilder.newBuilder()
@@ -190,6 +203,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
             }
             peer.sendMessage(new InventoryMessage(value, key));
+            logger.info("SPREAD send inv to peer {} size: {}", peer.getInetAddress(), value.size());
           }));
     }
 
@@ -285,6 +299,9 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private volatile boolean isFetchSyncActive = false;
 
+  private long startblockNum = 0L;
+  private long endblockNum = 0L;
+
   @Override
   public void onMessage(PeerConnection peer, TronMessage msg) throws Exception {
     switch (msg.getType()) {
@@ -304,7 +321,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
         onHandleChainInventoryMessage(peer, (ChainInventoryMessage) msg);
         break;
       case INVENTORY:
-        onHandleInventoryMessage(peer, (InventoryMessage) msg);
+        //onHandleInventoryMessage(peer, (InventoryMessage) msg);
         break;
       default:
         throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "msg type: " + msg.getType());
@@ -327,25 +344,38 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     this.pool = pool;
   }
 
+  private AtomicLong count = new AtomicLong(0);
+  private long time = System.currentTimeMillis();
+  private long lastTime = System.currentTimeMillis();
+  private int  counter1 = 0;
+  private int  counter2 = 0;
+
   public void broadcast(Message msg) {
-    try {
-      InventoryType type;
-      if (msg instanceof BlockMessage) {
-        logger.info("Ready to broadcast block {}", ((BlockMessage) msg).getBlockId());
-        freshBlockId.offer(((BlockMessage) msg).getBlockId());
-        BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
-        type = InventoryType.BLOCK;
-      } else if (msg instanceof TransactionMessage) {
-        TrxCache.put(msg.getMessageId(), new TransactionMessage(msg.getData()));
-        type = InventoryType.TRX;
-      } else {
-        return;
+    InventoryType type;
+    if (msg instanceof BlockMessage) {
+      logger.info("Ready to broadcast block {}", ((BlockMessage) msg).getBlockId());
+      freshBlockId.offer(((BlockMessage) msg).getBlockId());
+      BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
+      type = InventoryType.BLOCK;
+    } else if (msg instanceof TransactionMessage) {
+      TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
+      type = InventoryType.TRX;
+      long currentTime = System.currentTimeMillis();
+      if (currentTime - lastTime > 10 * 1000){
+        time = currentTime;
+        lastTime = currentTime;
+        count.set(0);
       }
-      synchronized (advObjToSpread) {
-        advObjToSpread.put(msg.getMessageId(), type);
+      long cost = (System.currentTimeMillis() - time) / 1000;
+      if (count.incrementAndGet() % 1000 == 0 && cost > 0) {
+        logger.info("SPREAD count: {}, cost: {}s, Tps: {}, advObjToSpreadSize: {}",
+            count.get(), cost, count.get() / cost, advObjToSpread.size());
       }
-    } catch (Exception e) {
-      logger.error("Broadcast message failed, type: {}, reason: {}", msg.getType(), e.getMessage());
+    } else {
+      return;
+    }
+    synchronized (advObjToSpread) {
+      advObjToSpread.put(msg.getMessageId(), type);
     }
   }
 
@@ -498,37 +528,93 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void consumerAdvObjToSpread() {
+    TPS = Args.getInstance().getStressTps();
+
+    long starTime = System.currentTimeMillis();
     if (advObjToSpread.isEmpty()) {
-      try {
-        Thread.sleep(100);
-        return;
-      } catch (InterruptedException e) {
-        logger.debug(e.getMessage(), e);
+      return;
+    }
+    logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
+    if (counter1 == 0) {
+      counter1 = 1;
+      ManagedChannel channelFull = null;
+      WalletGrpc.WalletBlockingStub blockingStubFull = null;
+      String fullnode = "47.94.239.172:50051";
+      channelFull = ManagedChannelBuilder.forTarget(fullnode)
+              .usePlaintext(true)
+              .build();
+      blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+      Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+      startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+      long starttime = nowblock.getBlockHeader().getRawData().getTimestamp();
+      startblockNum = startblockNum + 1L;
+      logger.info("startblockNum is {}", startblockNum);
+      logger.info("starttime is {}", starttime);
+      if (channelFull != null) {
+        channelFull.shutdown();
       }
     }
-    InvToSend sendPackage = new InvToSend();
-    HashMap<Sha256Hash, InventoryType> spread = new HashMap<>();
+    ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
+    AtomicInteger invCount = new AtomicInteger(0);
     synchronized (advObjToSpread) {
-      spread.putAll(advObjToSpread);
-      advObjToSpread.clear();
-    }
-    for (InventoryType type : spread.values()) {
-      if (type == InventoryType.TRX) {
-        trxCount.add();
+      for (Entry<Sha256Hash, InventoryType> entry: advObjToSpread.entrySet()) {
+        if (invCount.getAndIncrement() >= TPS){
+          break;
+        }
+        spread.put(entry.getKey(), entry.getValue());
+        advObjToSpread.remove(entry.getKey());
       }
     }
-    getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromUs())
-        .forEach(peer ->
-            spread.entrySet().stream()
-                .filter(idToSpread ->
-                    !peer.getAdvObjSpreadToUs().containsKey(idToSpread.getKey())
-                        && !peer.getAdvObjWeSpread().containsKey(idToSpread.getKey()))
-                .forEach(idToSpread -> {
-                  peer.getAdvObjWeSpread().put(idToSpread.getKey(), Time.getCurrentMillis());
-                  sendPackage.add(idToSpread, peer);
-                }));
-    sendPackage.sendInv();
+    int n = 0;
+    while (spread.size() > 0 && getActivePeer().size() > 0) {
+      logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
+
+        if (advObjToSpread.size()  < spread.size()) {
+          logger.info("Stress task end.");
+          System.exit(0);
+
+/*          ManagedChannel channelFull = null;
+          WalletGrpc.WalletBlockingStub blockingStubFull = null;
+          String fullnode = "47.94.239.172:50051";
+          channelFull = ManagedChannelBuilder.forTarget(fullnode)
+                  .usePlaintext(true)
+                  .build();
+          blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+          Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+          endblockNum = nowblock.getBlockHeader().getRawData().getNumber();
+          long endtime = nowblock.getBlockHeader().getRawData().getTimestamp();
+          endblockNum = endblockNum + 1L;
+          logger.info("endblockNum is {}", endblockNum);
+          logger.info("endtime is {}", endtime);
+          if (channelFull != null) {
+            channelFull.shutdown();
+          }
+          //20s后关闭
+          if (endblockNum != startblockNum) {
+            try {
+              Thread.sleep(20000);
+              System.exit(0);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
+          }*/
+        }
+
+      InvToSend sendPackage = new InvToSend();
+      spread.entrySet().forEach(id -> getActivePeer().stream()
+            .filter(peer -> sendPackage.getSize(peer) < 1000)
+            .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
+            .findFirst().ifPresent(peer ->{
+          sendPackage.add(id, peer);
+          spread.remove(id.getKey());
+        }));
+      sendPackage.sendInv();
+    }
+    long cost = System.currentTimeMillis() - starTime;
+    logger.info("SPREAD finish one spread cost: {}ms", cost);
+    if (cost < 1000){
+      try { Thread.sleep(1000 - cost); } catch (Exception e) {}
+    }
   }
 
   private synchronized void handleSyncBlock() {
@@ -607,6 +693,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     ));
 
     logger.info(sb.toString());
+
   }
 
   public synchronized void disconnectInactive() {
@@ -998,11 +1085,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   private void onHandleFetchDataMessage(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg) {
 
-    if (!checkFetchInvDataMsg(peer, fetchInvDataMsg)) {
-      disconnectPeer(peer, ReasonCode.BAD_PROTOCOL);
-      return;
-    }
-
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
     BlockCapsule block = null;
     List<Protocol.Transaction> transactions = Lists.newArrayList();
@@ -1318,13 +1400,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
   @Override
   public void onConnectPeer(PeerConnection peer) {
-    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()) {
-      peer.setTronState(TronState.SYNCING);
-      startSyncWithPeer(peer);
-    } else {
-      peer.setTronState(TronState.SYNC_COMPLETED);
-    }
+//    if (peer.getHelloMessage().getHeadBlockId().getNum() > del.getHeadBlockId().getNum()) {
+//      peer.setTronState(TronState.SYNCING);
+//      startSyncWithPeer(peer);
+//    } else {
+//      peer.setTronState(TronState.SYNC_COMPLETED);
+//    }
   }
+
 
   @Override
   public void onDisconnectPeer(PeerConnection peer) {
@@ -1385,6 +1468,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     peer.setSyncFlag(false);
     peer.disconnect(reason);
   }
+
+  public int getAdvObjToSpreadSize() {
+    return advObjToSpread.size();
+  }
+
+
 
 }
 

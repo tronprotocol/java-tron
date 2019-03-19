@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:context="http://www.springframework.org/schema/context"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd">
+
+  <context:component-scan base-package="org.tron"/>
+
+  <bean id="creatorCounter" class="org.tron.stresstest.dispatch.creator.CreatorCounter"></bean>
+
+  <bean id="dispatcher" class="org.tron.stresstest.dispatch.strategy.Dispatcher">
+    <property name="source">
+      <list>
+        <ref bean="asset"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="level1Strategy" class="org.tron.stresstest.dispatch.strategy.Level1Strategy"/>
+
+  <bean id="asset" parent="level1Strategy">
+    <property name="name" value="asset"/>
+    <property name="begin" value="0"/>
+    <property name="end" value="99"/>
+    <property name="source">
+      <list>
+        <ref bean="assetIssueTransaction"/>
+      </list>
+    </property>
+  </bean>
+
+  <bean id="assetIssueTransaction"
+    class="org.tron.stresstest.dispatch.creator.asset.AssetIssueTransactionCreator">
+    <property name="name" value="assetIssueTransaction"/>
+    <property name="begin" value="0"/>
+    <property name="end" value="99"/>
+  </bean>
+
+</beans>

@@ -1193,8 +1193,8 @@ public class Manager {
       return false;
     }
 
-    validateTapos(trxCap);
-    validateCommon(trxCap);
+    //validateTapos(trxCap);
+    //validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
