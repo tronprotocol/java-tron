@@ -1,5 +1,6 @@
 package org.tron.core.net.messagehandler;
 
+import com.googlecode.cqengine.query.simple.In;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -128,6 +129,12 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       logger.warn("Peer {} is disconnect, drop trx {}", peer.getInetAddress(), trx.getMessageId());
       return;
     }
+
+    if (advService.getMessage(new Item(trx.getMessageId(), InventoryType.TRX)) != null) {
+      logger.warn("Trx {} from {} is exit, drop it.", trx.getMessageId(), peer.getInetAddress());
+      return;
+    }
+
     try {
       tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
       advService.broadcast(trx);

@@ -121,7 +121,7 @@ public class AdvService {
       blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->{
         Sha256Hash tid = transactionCapsule.getTransactionId();
         invToSpread.remove(tid);
-        invToFetchCache.put(new Item(tid, InventoryType.TRX), System.currentTimeMillis());
+        trxCache.put(new Item(tid, InventoryType.TRX), new TransactionMessage(transactionCapsule.getInstance()));
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
