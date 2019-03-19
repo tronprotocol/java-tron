@@ -122,7 +122,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   private void handleTransaction (PeerConnection peer, TransactionMessage trx) {
     if (peer.isDisconnect()) {
-      logger.warn("Drop trx {} from {}, peer is disconnect.", peer.getInetAddress(), trx.getMessageId());
+      logger.warn("Drop trx {} from {}, peer is disconnect.", trx.getMessageId(), peer.getInetAddress());
       return;
     }
 
