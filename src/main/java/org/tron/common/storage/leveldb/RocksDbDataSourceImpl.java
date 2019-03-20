@@ -116,7 +116,19 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public long getTotal() throws RuntimeException {
-    return 0;
+    if (quitIfNotAlive()) {
+      return 0;
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iterator = database.newIterator()) {
+      long total = 0;
+      for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
+        total++;
+      }
+      return total;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override
