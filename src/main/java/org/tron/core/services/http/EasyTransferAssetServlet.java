@@ -56,8 +56,8 @@ public class EasyTransferAssetServlet extends HttpServlet {
           .createTransactionCapsule(builder.build(), ContractType.TransferAssetContract);
 
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long delaySeconds = jsonObject.getLong("delaySeconds");
-      if (delaySeconds > 0) {
+      if (jsonObject.containsKey("delaySeconds")) {
+        long delaySeconds = jsonObject.getLong("delaySeconds");
         transactionCapsule.setDeferredSeconds(delaySeconds);
       }
 

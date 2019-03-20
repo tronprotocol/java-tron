@@ -36,8 +36,9 @@ public class CreateAccountServlet extends HttpServlet {
           .getInstance();
 
       JSONObject input = JSONObject.parseObject(contract);
-      long delaySeconds = input.getLong("delaySeconds");
-      if (delaySeconds > 0) {
+
+      if (input.containsKey("delaySeconds")) {
+        long delaySeconds = input.getLong("delaySeconds");
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 
