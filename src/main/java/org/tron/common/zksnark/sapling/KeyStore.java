@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.sapling;
 
+import java.util.HashMap;
 import java.util.Map;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
@@ -11,7 +12,7 @@ public class KeyStore {
 
   static HDSeed seed = new HDSeed();
 
-  static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys;
+  static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys = new HashMap<>();
   static Map<IncomingViewingKey, FullViewingKey> mapFullViewingKeys;
   static Map<PaymentAddress, IncomingViewingKey> mapIncomingViewingKeys;
 

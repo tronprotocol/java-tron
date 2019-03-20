@@ -18,9 +18,20 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
+    void librustzcash_ask_to_ak(byte[] ask, byte[] result);
+    void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
+    void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
   }
 
   // todo jni
+  /*
+  /// Derive the master ExtendedSpendingKey from a seed.
+    void librustzcash_zip32_xsk_master(
+        const unsigned char *seed,
+        size_t seedlen,
+        unsigned char *xsk_master
+    );
+  * */
   public static void librustzcashZip32XskMaster(byte[] data, int size, byte[] m_bytes) {
     INSTANCE.librustzcash_zip32_xsk_master(data, size, m_bytes);
   }
@@ -28,7 +39,10 @@ public class Librustzcash {
   public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
   }
 
+  // void librustzcash_crh_ivk(const unsigned char *ak, const unsigned char *nk, unsigned char *result);
   public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
+    System.out.println("just a test");
+    INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
   }
 
   public static boolean librustzcashSaplingComputeCm(
@@ -48,12 +62,18 @@ public class Librustzcash {
     return true;
   }
 
+  // void librustzcash_ask_to_ak(const unsigned char *ask, unsigned char *result);
   public static byte[] librustzcashAskToAk(byte[] aks) {
-    return null;
+    byte[] ak = new byte[32];
+    INSTANCE.librustzcash_ask_to_ak(aks, ak);
+    return ak;
   }
 
+  // void librustzcash_nsk_to_nk(const unsigned char *nsk, unsigned char *result);
   public static byte[] librustzcashNskToNk(byte[] nsk) {
-    return null;
+    byte[] nk = new byte[32];
+    INSTANCE.librustzcash_nsk_to_nk(nsk, nk);
+    return nk;
   }
 
   public static byte[] librustzcashSaplingGenerateR(byte[] r) {

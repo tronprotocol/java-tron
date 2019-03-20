@@ -4,6 +4,7 @@ import static org.tron.common.zksnark.sapling.KeyStore.getFullViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.getIncomingViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.haveSpendingKey;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,7 +20,7 @@ import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 public class ShieldWallet {
 
 
-  public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata;
+  public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = new HashMap<>();
 
   /**
    * Sapling note, its location in a transaction, and number of confirmations.

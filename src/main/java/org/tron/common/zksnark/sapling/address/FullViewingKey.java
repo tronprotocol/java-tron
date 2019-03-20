@@ -27,7 +27,7 @@ public class FullViewingKey {
 
   public IncomingViewingKey in_viewing_key() {
 
-    byte[] ivk = null; // the incoming viewing key
+    byte[] ivk = new byte[32]; // the incoming viewing key
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
     return new IncomingViewingKey(ivk);
   }
