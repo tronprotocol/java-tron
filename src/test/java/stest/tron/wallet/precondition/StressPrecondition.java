@@ -151,10 +151,31 @@ public class StressPrecondition {
     if (getChainParameters.get().getChainParameter(20).getValue() == 0L) {
       proposalMap.put(20L, 1L);
     }
+    if (getChainParameters.get().getChainParameter(9).getValue() == 0L) {
+      proposalMap.put(9L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(10).getValue() == 0L) {
+      proposalMap.put(10L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(11).getValue() == 10L) {
+      proposalMap.put(11L, 10L);
+    }
+    if (getChainParameters.get().getChainParameter(17).getValue() == 250000000000L) {
+      proposalMap.put(17L, 250000000000L);
+    }
+    if (getChainParameters.get().getChainParameter(19).getValue() == 100000000000L) {
+      proposalMap.put(19L, 100000000000L);
+    }
+    if (getChainParameters.get().getChainParameter(16).getValue() == 1) {
+      proposalMap.put(15L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(18).getValue() == 1) {
+      proposalMap.put(18L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(16).getValue() == 1) {
+      proposalMap.put(16L, 1L);
+    }
 
-//    if (getChainParameters.get().getChainParameter(21).getValue() == 0L) {
-//      proposalMap.put(21L, 1L);
-//    }
 
     if (!proposalMap.isEmpty()) {
       PublicMethed.createProposal(witness001Address, witnessKey001,
@@ -303,10 +324,9 @@ public class StressPrecondition {
 
     assetIssueId = PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull)
         .getAssetIssuedID();
+    logger.info("AssetIssueId is " + ByteArray.toStr(assetIssueId.toByteArray()));
 
-    //PublicMethed.transferAsset(WalletClient.decodeFromBase58Check(commonContractAddress1),assetIssueId.toByteArray(),3000000000000L,PublicMethed.getFinalAddress(assetIssueOwnerKey),assetIssueOwnerKey,blockingStubFull);
-
-    logger.info("commonContractAddress1 is " + commonContractAddress1);
+    logger.info("commonContractAddress1 is " + Wallet.encode58Check(commonContractAddress1));
     PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
     PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
