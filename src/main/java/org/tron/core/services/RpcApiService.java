@@ -1652,6 +1652,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDeferredTransactionInfoById(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();

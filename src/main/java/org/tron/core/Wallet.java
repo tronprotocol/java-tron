@@ -1212,7 +1212,9 @@ public class Wallet {
   }
 
   public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
-    if (Objects.isNull(transactionId)) {
+    if (Objects.isNull(transactionId) ||
+        Objects.isNull(dbManager.getDeferredTransactionCache()) ||
+        Objects.isNull(dbManager.getDeferredTransactionIdIndexCache())){
       return null;
     }
     DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionCache().getByTransactionId(transactionId);

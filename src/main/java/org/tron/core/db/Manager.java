@@ -609,17 +609,20 @@ public class Manager {
           }
         })));
 
-    futures.add(service.submit(() -> {
-      getDeferredTransactionStore().revokingDB.getAllValues().forEach((key, value) -> {
-        getDeferredTransactionCache().put(key, value);
-      });
-    }));
+    if (Objects.nonNull(getDeferredTransactionCache())
+        && Objects.nonNull(getDeferredTransactionIdIndexCache())) {
+      futures.add(service.submit(() -> {
+        getDeferredTransactionStore().revokingDB.getAllValues().forEach((key, value) -> {
+          getDeferredTransactionCache().put(key, value);
+        });
+      }));
 
-    futures.add(service.submit(() -> {
-      getDeferredTransactionIdIndexStore().revokingDB.getAllValues().forEach((key, value) -> {
-        getDeferredTransactionIdIndexCache().put(key, value);
-      });
-    }));
+      futures.add(service.submit(() -> {
+        getDeferredTransactionIdIndexStore().revokingDB.getAllValues().forEach((key, value) -> {
+          getDeferredTransactionIdIndexCache().put(key, value);
+        });
+      }));
+    }
 
     ListenableFuture<?> future = Futures.allAsList(futures);
     try {
@@ -2051,6 +2054,11 @@ public class Manager {
   }
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule){
+    if (Objects.isNull(getDeferredTransactionCache())
+        ||Objects.isNull(getDeferredTransactionIdIndexStore())) {
+      return;
+    }
+
     // add deferred transactions to header of pendingTransactions
     List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionCache()
             .getScheduledTransactions(blockCapsule.getTimeStamp());
@@ -2114,13 +2122,17 @@ public class Manager {
     Optional.ofNullable(getDeferredTransactionIdIndexCache())
         .ifPresent(t -> t.put(deferredTransactionCapsule));
 
-    getDeferredTransactionCache().put(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
+    getDeferredTransactionStore().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
 
     this.dynamicPropertiesStore.saveDeferredTransactionFee(deferredTransactionMaxSize + transactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
+    if (Objects.isNull(getDeferredTransactionCache()) ||
+        Objects.isNull(getDeferredTransactionIdIndexCache())) {
+      return false;
+    }
 
     DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionCache().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){

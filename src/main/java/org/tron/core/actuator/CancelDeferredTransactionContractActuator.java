@@ -57,7 +57,11 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
     }
 
     ByteString trxId = cancelDeferredTransactionContract.getTransactionId();
-    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionCache().getByTransactionId(trxId);
+    DeferredTransactionCapsule capsule = null;
+    if (Objects.nonNull(dbManager.getDeferredTransactionCache())) {
+      capsule = dbManager.getDeferredTransactionCache().getByTransactionId(trxId);
+    }
+
     if (Objects.isNull(capsule)) {
       throw new ContractValidateException("No deferred transaction!");
     }

@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -10,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -33,13 +31,6 @@ public class ExchangeCreateServlet extends HttpServlet {
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.ExchangeCreateContract)
           .getInstance();
-
-      JSONObject jsonObject = JSONObject.parseObject(contract);
-      long delaySeconds = jsonObject.getLong("delaySeconds");
-      if (delaySeconds > 0) {
-        TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
-      }
-
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
