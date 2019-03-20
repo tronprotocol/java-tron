@@ -146,35 +146,25 @@ public class StressPrecondition {
         .getChainParameters(EmptyMessage.newBuilder().build());
     Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
     logger.info(Long.toString(getChainParameters.get().getChainParameterCount()));
+    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      logger.info(getChainParameters.get().getChainParameter(i).getKey());
+      logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+    }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-
-    if (getChainParameters.get().getChainParameter(20).getValue() == 0L) {
-      proposalMap.put(20L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(9).getValue() == 0L) {
-      proposalMap.put(9L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(10).getValue() == 0L) {
-      proposalMap.put(10L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(11).getValue() == 10L) {
-      proposalMap.put(11L, 10L);
-    }
-    if (getChainParameters.get().getChainParameter(17).getValue() == 250000000000L) {
-      proposalMap.put(17L, 250000000000L);
-    }
-    if (getChainParameters.get().getChainParameter(19).getValue() == 100000000000L) {
-      proposalMap.put(19L, 100000000000L);
-    }
-    if (getChainParameters.get().getChainParameter(16).getValue() == 1) {
+/*    if (getChainParameters.get().getChainParameter(15).getValue() == 0) {
       proposalMap.put(15L, 1L);
     }
-    if (getChainParameters.get().getChainParameter(18).getValue() == 1) {
-      proposalMap.put(18L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(16).getValue() == 1) {
+   if (getChainParameters.get().getChainParameter(16).getValue() == 0) {
       proposalMap.put(16L, 1L);
     }
+    if (getChainParameters.get().getChainParameter(18).getValue() == 0) {
+      proposalMap.put(18L, 1L);
+    }*/
+  if (getChainParameters.get().getChainParameter(20).getValue() == 0L) {
+      proposalMap.put(20L, 1L);
+    }
+
+
 
 
     if (!proposalMap.isEmpty()) {
