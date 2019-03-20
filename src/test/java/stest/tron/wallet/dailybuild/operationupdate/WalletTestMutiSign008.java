@@ -172,7 +172,6 @@ public class WalletTestMutiSign008 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.getTransactionById(txid, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-//    Assert.assertTrue(infoById.get().getBlockNumber() > 0);
     Assert.assertTrue(
         PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
             ownerAddress, 2, blockingStubFull, permissionKeyString));
@@ -182,8 +181,6 @@ public class WalletTestMutiSign008 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceAfter: " + balanceAfter);
-
-//    Assert.assertEquals(balanceBefore - balanceAfter, needcoin);
 
     Assert.assertTrue(
         PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));

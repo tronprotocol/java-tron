@@ -133,7 +133,7 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = PublicMethed.triggerContract(contractAddress,
+    final String txid = PublicMethed.triggerContract(contractAddress,
         "testRequire()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -207,7 +207,7 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = PublicMethed.triggerContract(contractAddress,
+    final String txid = PublicMethed.triggerContract(contractAddress,
         "testThrow()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -282,7 +282,7 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = PublicMethed.triggerContract(contractAddress,
+    final String txid = PublicMethed.triggerContract(contractAddress,
         "testRevert()", "#", false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -352,7 +352,7 @@ public class RequireException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    String txid = PublicMethed.triggerContract(contractAddress,
+    final String txid = PublicMethed.triggerContract(contractAddress,
         "noPayable()", "#", false,
         22, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -410,7 +410,7 @@ public class RequireException {
         + "31c41844749c1571bfc4dfdd268a58ed29b7446dd817ce3c54b014150029";
     String abi = "[{\"inputs\":[{\"name\":\"_money\",\"type\":\"uint256\"}],\"payable\":false,\""
         + "stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
-    String txid = PublicMethed
+    final String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             22L, 100, null,
             testKeyForAssetIssue016, asset016Address, blockingStubFull);
@@ -464,7 +464,7 @@ public class RequireException {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
-    Account info;
+    final Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -483,7 +483,7 @@ public class RequireException {
 
     String newCxoAddress = "\"" + Base58.encode58Check(testNetAccountAddress)
         + "\"";
-    String txid = PublicMethed.triggerContract(contractAddress,
+    final String txid = PublicMethed.triggerContract(contractAddress,
         "tranferTest(address) ", newCxoAddress, false,
         5, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -570,7 +570,7 @@ public class RequireException {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    String txid = PublicMethed.triggerContract(contractAddress1,
+    final String txid = PublicMethed.triggerContract(contractAddress1,
         "callTest(address)", saleContractString, false,
         5, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -660,7 +660,7 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = PublicMethed.triggerContract(contractAddress1,
+    final String txid = PublicMethed.triggerContract(contractAddress1,
         "newAccount()", "#", false,
         0, 5226000, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -750,7 +750,7 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = PublicMethed.triggerContract(contractAddress1,
+    final String txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -838,7 +838,7 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = PublicMethed.triggerContract(contractAddress1,
+    final String txid = PublicMethed.triggerContract(contractAddress1,
         "messageUse(address)", saleContractString, false,
         0, maxFeeLimit, asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
