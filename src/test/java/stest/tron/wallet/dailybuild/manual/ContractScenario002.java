@@ -72,13 +72,8 @@ public class ContractScenario002 {
   public void deployTronNative() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] contract002Address = ecKey1.getAddress();
-<<<<<<< HEAD
     String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-=======
-    final String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    logger.info("From balance is "
-        + PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
->>>>>>> ae35d76109f76f300c232073a26202a00483087b
+
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
