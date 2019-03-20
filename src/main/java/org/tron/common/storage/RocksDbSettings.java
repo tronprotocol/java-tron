@@ -4,9 +4,9 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class DBSettings {
+public class RocksDbSettings {
 
-  private static DBSettings settings;
+  private static RocksDbSettings settings;
 
   @Getter
   private int levelNumber;
@@ -29,29 +29,31 @@ public class DBSettings {
   @Getter
   private boolean enableStatistics;
 
-  private DBSettings() {
+  private RocksDbSettings() {
 
   }
 
-  public static DBSettings getDefaultSettings() {
-    DBSettings defaultSettings = new DBSettings();
+  public static RocksDbSettings getDefaultSettings() {
+    RocksDbSettings defaultSettings = new RocksDbSettings();
     return defaultSettings.withLevelNumber(7).withBlockSize(64).withCompactThreads(32)
-        .withTargetFileSizeBase(256).withMaxBytesForLevelMultiplier(10).withTargetFileSizeMultiplier(1)
+        .withTargetFileSizeBase(256).withMaxBytesForLevelMultiplier(10)
+        .withTargetFileSizeMultiplier(1)
         .withMaxBytesForLevelBase(256).withMaxOpenFiles(-1).withEnableStatistics(false);
   }
 
-  public static DBSettings getSettings() {
+  public static RocksDbSettings getSettings() {
     if (settings == null) {
       return getDefaultSettings();
     }
     return settings;
   }
 
-  public static DBSettings initCustomSettings(int levelNumber, int compactThreads, int blocksize,
-      long maxBytesForLevelBase,
-      double maxBytesForLevelMultiplier, int level0FileNumCompactionTrigger, long targetFileSizeBase,
+  public static RocksDbSettings initCustomSettings(int levelNumber, int compactThreads,
+      int blocksize, long maxBytesForLevelBase,
+      double maxBytesForLevelMultiplier, int level0FileNumCompactionTrigger,
+      long targetFileSizeBase,
       int targetFileSizeMultiplier) {
-    settings = new DBSettings()
+    settings = new RocksDbSettings()
         .withMaxOpenFiles(-1)
         .withEnableStatistics(false)
         .withLevelNumber(levelNumber)
@@ -66,60 +68,62 @@ public class DBSettings {
   }
 
 
-  public DBSettings withMaxOpenFiles(int maxOpenFiles) {
+  public RocksDbSettings withMaxOpenFiles(int maxOpenFiles) {
     this.maxOpenFiles = maxOpenFiles;
     return this;
   }
 
-  public DBSettings withCompactThreads(int compactThreads) {
+  public RocksDbSettings withCompactThreads(int compactThreads) {
     this.compactThreads = compactThreads;
     return this;
   }
 
-  public DBSettings withBlockSize(long blockSize) {
+  public RocksDbSettings withBlockSize(long blockSize) {
     this.blockSize = blockSize * 1024;
     return this;
   }
 
-  public DBSettings withMaxBytesForLevelBase(long maxBytesForLevelBase) {
+  public RocksDbSettings withMaxBytesForLevelBase(long maxBytesForLevelBase) {
     this.maxBytesForLevelBase = maxBytesForLevelBase * 1024 * 1024;
     return this;
   }
 
-  public DBSettings withMaxBytesForLevelMultiplier(double maxBytesForLevelMultiplier) {
+  public RocksDbSettings withMaxBytesForLevelMultiplier(double maxBytesForLevelMultiplier) {
     this.maxBytesForLevelMultiplier = maxBytesForLevelMultiplier;
     return this;
   }
 
-  public DBSettings withLevel0FileNumCompactionTrigger(int level0FileNumCompactionTrigger) {
+  public RocksDbSettings withLevel0FileNumCompactionTrigger(int level0FileNumCompactionTrigger) {
     this.level0FileNumCompactionTrigger = level0FileNumCompactionTrigger;
     return this;
   }
 
-  public DBSettings withEnableStatistics(boolean enable) {
+  public RocksDbSettings withEnableStatistics(boolean enable) {
     this.enableStatistics = enable;
     return this;
   }
 
-  public DBSettings withLevelNumber(int levelNumber) {
+  public RocksDbSettings withLevelNumber(int levelNumber) {
     this.levelNumber = levelNumber;
     return this;
   }
 
 
-  public DBSettings withTargetFileSizeBase(long targetFileSizeBase) {
+  public RocksDbSettings withTargetFileSizeBase(long targetFileSizeBase) {
     this.targetFileSizeBase = targetFileSizeBase * 1024 * 1024;
     return this;
   }
 
-  public DBSettings withTargetFileSizeMultiplier(int targetFileSizeMultiplier) {
+  public RocksDbSettings withTargetFileSizeMultiplier(int targetFileSizeMultiplier) {
     this.targetFileSizeMultiplier = targetFileSizeMultiplier;
     return this;
   }
 
   public static void loggingSettings() {
     logger.info(String.format(
-        "level number: %d, CompactThreads: %d, Blocksize: %d, maxBytesForLevelBase: %d, withMaxBytesForLevelMultiplier: %f, level0FileNumCompactionTrigger: %d, withTargetFileSizeBase: %d, withTargetFileSizeMultiplier: %d",
+        "level number: %d, CompactThreads: %d, Blocksize: %d, maxBytesForLevelBase: %d,"
+            + " withMaxBytesForLevelMultiplier: %f, level0FileNumCompactionTrigger: %d, "
+            + "withTargetFileSizeBase: %d, withTargetFileSizeMultiplier: %d",
         settings.getLevelNumber(),
         settings.getCompactThreads(), settings.getBlockSize(), settings.getMaxBytesForLevelBase(),
         settings.getMaxBytesForLevelMultiplier(), settings.getLevel0FileNumCompactionTrigger(),

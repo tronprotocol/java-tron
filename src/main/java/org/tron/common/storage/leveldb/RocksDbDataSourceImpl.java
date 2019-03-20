@@ -26,8 +26,8 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
-import org.tron.common.storage.DBSettings;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -172,10 +172,10 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       logger.error("database engine do not match");
       throw new RuntimeException("Failed to initialize database");
     }
-    initDB(DBSettings.getSettings());
+    initDB(RocksDbSettings.getSettings());
   }
 
-  public void initDB(DBSettings settings) {
+  public void initDB(RocksDbSettings settings) {
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {

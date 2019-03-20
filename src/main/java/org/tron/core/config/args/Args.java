@@ -39,7 +39,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.storage.DBSettings;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -433,7 +433,7 @@ public class Args {
   private DbBackupConfig dbBackupConfig;
 
   @Getter
-  private DBSettings rocksDBCustomSettings;
+  private RocksDbSettings rocksDBCustomSettings;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -1184,11 +1184,11 @@ public class Args {
     int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
         .getInt(prefix + "targetFileSizeMultiplier") : 1;
 
-    INSTANCE.rocksDBCustomSettings = DBSettings
+    INSTANCE.rocksDBCustomSettings = RocksDbSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
             maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
             targetFileSizeBase, targetFileSizeMultiplier);
-    DBSettings.loggingSettings();
+    RocksDbSettings.loggingSettings();
   }
 
   private static void initRocksDbBackupProperty(Config config) {
