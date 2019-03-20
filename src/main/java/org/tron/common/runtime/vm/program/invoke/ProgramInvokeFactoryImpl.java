@@ -21,6 +21,7 @@ import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.Arrays;
 import org.springframework.stereotype.Component;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -47,7 +48,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
   // Invocation by the wire tx
   @Override
   public ProgramInvoke createProgramInvoke(InternalTransaction.TrxType trxType,
-      ExecutorType executorType, Transaction tx, long tokenValue, long tokenId, Block block,  Deposit deposit, long vmStartInUs,
+      ExecutorType executorType, Transaction tx, long tokenValue, long tokenId, Block block,
+      Deposit deposit, long vmStartInUs,
       long vmShouldEndInUs, long energyLimit) throws ContractValidateException {
     byte[] contractAddress;
     byte[] ownerAddress;
@@ -71,7 +73,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
         case ET_PRE_TYPE:
           if (null != block) {
             lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
-            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
+                .toByteArray();
             timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
           }
@@ -119,7 +122,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
             /***    PREVHASH  op  ***/
             lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
             /***   COINBASE  op ***/
-            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress().toByteArray();
+            coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
+                .toByteArray();
             /*** TIMESTAMP  op  ***/
             timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
             /*** NUMBER  op  ***/
@@ -130,7 +134,8 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
           break;
       }
 
-      return new ProgramInvokeImpl(address, origin, caller, balance, callValue, tokenValue, tokenId, data,
+      return new ProgramInvokeImpl(address, origin, caller, balance, callValue, tokenValue, tokenId,
+          data,
           lastHash, coinbase, timestamp, number, deposit, vmStartInUs, vmShouldEndInUs,
           energyLimit);
     }
@@ -153,7 +158,7 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
     DataWord balance = new DataWord(balanceInt);
     DataWord callValue = inValue;
 
-    byte[] data = dataIn;
+    byte[] data = Arrays.clone(dataIn);
     DataWord lastHash = program.getPrevHash();
     DataWord coinbase = program.getCoinbase();
     DataWord timestamp = program.getTimestamp();
