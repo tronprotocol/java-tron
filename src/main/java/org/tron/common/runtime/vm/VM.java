@@ -32,6 +32,7 @@ public class VM {
 
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
+  public static final String ADDRESS_LOG = "address: ";
 
   private final VMConfig config;
 
@@ -642,7 +643,7 @@ public class VM {
           }
 
           if (logger.isDebugEnabled()) {
-            hint = "address: " + Hex.toHexString(address.getLast20Bytes());
+            hint = ADDRESS_LOG + Hex.toHexString(address.getLast20Bytes());
           }
 
           program.stackPush(address);
@@ -654,7 +655,7 @@ public class VM {
           DataWord balance = program.getBalance(address);
 
           if (logger.isDebugEnabled()) {
-            hint = "address: "
+            hint = ADDRESS_LOG
                 + Hex.toHexString(address.getLast20Bytes())
                 + " balance: " + balance.toString();
           }
@@ -671,7 +672,7 @@ public class VM {
           }
 
           if (logger.isDebugEnabled()) {
-            hint = "address: " + Hex.toHexString(originAddress.getLast20Bytes());
+            hint = ADDRESS_LOG + Hex.toHexString(originAddress.getLast20Bytes());
           }
 
           program.stackPush(originAddress);
@@ -686,7 +687,7 @@ public class VM {
            */
           callerAddress = new DataWord(callerAddress.getLast20Bytes());
           if (logger.isDebugEnabled()) {
-            hint = "address: " + Hex.toHexString(callerAddress.getLast20Bytes());
+            hint = ADDRESS_LOG + Hex.toHexString(callerAddress.getLast20Bytes());
           }
 
           program.stackPush(callerAddress);
@@ -1323,7 +1324,7 @@ public class VM {
           program.getResult().addTouchAccount(address.getLast20Bytes());
 
           if (logger.isDebugEnabled()) {
-            hint = "address: " + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+            hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
           }
 
           program.stop();
@@ -1359,7 +1360,8 @@ public class VM {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
-        logger.warn("Unknown Exception occurred, tx id: {}", Hex.toHexString(program.getRootTransactionId()), e);
+        logger.warn("Unknown Exception occurred, tx id: {}",
+            Hex.toHexString(program.getRootTransactionId()), e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       } else {
         program.setRuntimeFailure(e);

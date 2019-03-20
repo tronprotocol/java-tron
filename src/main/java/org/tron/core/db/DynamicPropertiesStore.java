@@ -451,7 +451,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalStoragePool();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStoragePool(100_000_000_000000L);
+      this.saveTotalStoragePool(100_000_000_000_000L);
     }
 
     try {

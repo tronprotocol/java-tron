@@ -41,9 +41,9 @@ public class LogEventWrapper extends ContractTrigger {
     if (Objects.isNull(abiEntry)) {
       return "fallback()";
     }
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(abiEntry.getName()).append("(");
-    StringBuffer sbp = new StringBuffer();
+    StringBuilder sbp = new StringBuilder();
     for (Param param : abiEntry.getInputsList()) {
       if (sbp.length() > 0) {
         sbp.append(",");

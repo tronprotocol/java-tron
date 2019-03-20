@@ -26,6 +26,8 @@ import org.tron.common.utils.FastByteComparisons;
 
 public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializable {
 
+  private static final long serialVersionUID = -8645797230368480951L;
+
   private final byte[] data;
   private int hashCode = 0;
 
@@ -34,7 +36,7 @@ public class ByteArrayWrapper implements Comparable<ByteArrayWrapper>, Serializa
    */
   public ByteArrayWrapper(byte[] data) {
     if (data == null) {
-      throw new NullPointerException("Data must not be null");
+      throw new IllegalArgumentException("Data must not be null");
     }
     this.data = data;
     this.hashCode = Arrays.hashCode(data);
