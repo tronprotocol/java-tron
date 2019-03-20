@@ -14,7 +14,7 @@ public class FileUtilTest {
     try {
       file1.createNewFile();
     } catch (IOException e) {
-      return;
+      System.out.println("ignore this exception.");
     }
     Assert.assertTrue(file1.exists());
     Assert.assertTrue(FileUtil.createDirIfNotExists(existFile));
