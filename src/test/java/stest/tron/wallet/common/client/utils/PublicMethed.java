@@ -721,36 +721,40 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
-    ByteString bsTo = ByteString.copyFrom(to);
-    ByteString bsOwner = ByteString.copyFrom(owner);
-    builder.setToAddress(bsTo);
-    builder.setOwnerAddress(bsOwner);
-    builder.setAmount(amount);
+    Integer times = 0;
+    while (times++ <= 2) {
 
-    Contract.TransferContract contract = builder.build();
-    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("transaction ==null");
-      return false;
+      Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+      ByteString bsTo = ByteString.copyFrom(to);
+      ByteString bsOwner = ByteString.copyFrom(owner);
+      builder.setToAddress(bsTo);
+      builder.setOwnerAddress(bsOwner);
+      builder.setAmount(amount);
+
+      Contract.TransferContract contract = builder.build();
+      Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+        logger.info("transaction ==null");
+        continue;
+      }
+      transaction = signTransaction(ecKey, transaction);
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+      if (response.getResult() == false) {
+        logger.info(times + ": Code = " + response.getCode());
+        logger.info(times + ": Message = " + response.getMessage().toStringUtf8());
+
+      } else {
+        return true;
+      }
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
-    //Test raw data
-    /*    Protocol.Transaction.raw.Builder builder1 = transaction.getRawData().toBuilder();
-    builder1.setData(ByteString.copyFromUtf8("12345678"));
-    Transaction.Builder builder2 = transaction.toBuilder();
-    builder2.setRawData(builder1);
-    transaction = builder2.build();*/
+    return false;
 
-    transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
   }
 
   /**
