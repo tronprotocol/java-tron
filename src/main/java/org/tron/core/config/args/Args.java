@@ -625,7 +625,7 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
-    if (INSTANCE.storage.getDbEngine().toUpperCase().equals("ROCKSDB")
+    if ("ROCKSDB".equals(INSTANCE.storage.getDbEngine().toUpperCase())
         && INSTANCE.storage.getDbVersion() == 1) {
       throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
     }
@@ -879,7 +879,7 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
-    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+    if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }

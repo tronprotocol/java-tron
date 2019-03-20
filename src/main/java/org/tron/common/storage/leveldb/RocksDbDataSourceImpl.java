@@ -148,7 +148,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
     }
     engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
+    if ("ROCKSDB".equals(engine)) {
       return true;
     } else {
       return false;
