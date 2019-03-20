@@ -24,6 +24,8 @@ import org.tron.common.runtime.vm.program.listener.ProgramListenerAware;
 
 public class Stack extends java.util.Stack<DataWord> implements ProgramListenerAware {
 
+  private static final long serialVersionUID = 1;
+
   private transient ProgramListener programListener;
 
   @Override

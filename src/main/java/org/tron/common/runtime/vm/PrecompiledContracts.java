@@ -786,9 +786,9 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
-      }
+      // if (data == null) {
+      //   data = EMPTY_BYTE_ARRAY;
+      // }
 
 //      byte[] frozenBalance = new byte[32];
 //      System.arraycopy(data, 0, frozenBalance, 0, 32);
@@ -848,9 +848,9 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null) {
-        data = EMPTY_BYTE_ARRAY;
-      }
+      // if (data == null) {
+      //   data = EMPTY_BYTE_ARRAY;
+      // }
 
 //      if (getDeposit().getDbManager().getAccountStore().get(getCallerAddress()).getType()
 //          == AccountType.Contract) {
@@ -991,7 +991,7 @@ public class PrecompiledContracts {
       ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
       builder.setOwnerAddress(byteAddress);
       builder.setProposalId(ByteArray.toLong(proposalId));
-      builder.setIsAddApproval(ByteArray.toInt(isAddApproval) == 1 ? true : false);
+      builder.setIsAddApproval(ByteArray.toInt(isAddApproval) == 1);
       ProposalApproveContract contract = builder.build();
 
       TransactionCapsule trx = new TransactionCapsule(contract,
