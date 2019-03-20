@@ -2125,7 +2125,7 @@ public class Manager {
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
 
-    this.dynamicPropertiesStore.saveDeferredTransactionFee(deferredTransactionMaxSize + transactionCapsule.getData().length);
+    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionMaxSize + transactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){

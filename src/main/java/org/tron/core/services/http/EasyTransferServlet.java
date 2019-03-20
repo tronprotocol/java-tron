@@ -15,6 +15,7 @@ import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -56,8 +57,8 @@ public class EasyTransferServlet extends HttpServlet {
           .createTransactionCapsule(builder.build(), ContractType.TransferContract);
 
       JSONObject jsonObject = JSONObject.parseObject(input);
-      if (jsonObject.containsKey("delaySeconds")) {
-        long delaySeconds = jsonObject.getLong("delaySeconds");
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         transactionCapsule.setDeferredSeconds(delaySeconds);
       }
 

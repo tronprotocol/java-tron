@@ -12,8 +12,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -121,6 +123,13 @@ public class NodeDelegateImpl implements NodeDelegate {
     } else {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
+
+    if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
+        || trx.getDeferredSeconds() < 0) {
+      logger.warn("deferred transaction delay seconds is illegal");
+      return false;
+    }
+
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException

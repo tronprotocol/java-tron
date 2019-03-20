@@ -45,8 +45,9 @@ public class Constant {
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
-  public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45* 24 * 60 * 60; //45 days
+  public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 60 * 60; //45 days
   public static final long MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE = 500 * 1_024 * 1_024L;
+  public static final String DELAY_SECONDS = "delaySeconds";
 
   // config for smart contract
   public static final long SUN_PER_ENERGY = 100; // 1 us = 100 DROP = 100 * 10^-6 TRX

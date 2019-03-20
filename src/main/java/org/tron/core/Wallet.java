@@ -413,8 +413,9 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS) {
-      return builder.setResult(false).setCode(response_code.TOO_LONG_DEFERRED_TRANSACTION_DELAYTIME).build();
+    if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
+        || trx.getDeferredSeconds() < 0) {
+      return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
     }
 
     Message message = new TransactionMessage(signaturedTransaction);
@@ -897,6 +898,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("maxDeferredTransactionProcessTime")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("deferredTransactionOccupySpace")
+        .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionOccupySpace())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

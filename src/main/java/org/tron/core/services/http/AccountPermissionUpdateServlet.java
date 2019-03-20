@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -41,8 +42,8 @@ public class AccountPermissionUpdateServlet extends HttpServlet {
 
       JSONObject input = JSONObject.parseObject(contract);
 
-      if (input.containsKey("delaySeconds")) {
-        long delaySeconds = input.getLong("delaySeconds");
+      if (input.containsKey(Constant.DELAY_SECONDS)) {
+        long delaySeconds = input.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 

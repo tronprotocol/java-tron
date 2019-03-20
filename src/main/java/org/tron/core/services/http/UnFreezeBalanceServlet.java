@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
@@ -39,8 +40,8 @@ public class UnFreezeBalanceServlet extends HttpServlet {
           .getInstance();
 
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      if (jsonObject.containsKey("delaySeconds")) {
-        long delaySeconds = jsonObject.getLong("delaySeconds");
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 
