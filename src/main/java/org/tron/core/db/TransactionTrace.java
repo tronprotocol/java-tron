@@ -102,6 +102,7 @@ public class TransactionTrace {
   public void init(BlockCapsule blockCap) {
     init(blockCap, false);
   }
+
   //pre transaction check
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
     txStartTimeInMs = System.currentTimeMillis();
@@ -206,11 +207,8 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
-        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
-      return true;
-    }
-    return false;
+    return !trx.getContractRet().equals(contractResult.OUT_OF_TIME) && receipt.getResult()
+        .equals(contractResult.OUT_OF_TIME);
   }
 
   public void check() throws ReceiptCheckErrException {
@@ -223,7 +221,8 @@ public class TransactionTrace {
     if (!trx.getContractRet().equals(receipt.getResult())) {
       logger.info(
           "this tx id: {}, the resultCode in received block: {}, the resultCode in self: {}",
-          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(), receipt.getResult());
+          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(),
+          receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }
