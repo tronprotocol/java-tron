@@ -153,7 +153,7 @@ public class WalletTestMutiSign002 {
     manager2Address = ecKey4.getAddress();
     manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-    long needCoin = updateAccountPermissionFee + multiSignFee;
+    final long needCoin = updateAccountPermissionFee + multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -244,7 +244,7 @@ public class WalletTestMutiSign002 {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
     final Long beforeExchangeToken2Balance = exchangeIdInfo.get().getSecondTokenBalance();
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -300,7 +300,7 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true, description = "MutiSign for withdraw exchange")
   public void test5WithdrawExchange() {
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -362,7 +362,7 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true, description = "MutiSign for transaction exchange")
   public void test6TransactionExchange() {
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -422,7 +422,8 @@ public class WalletTestMutiSign002 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
-  @Test(enabled = true, description = "GetExchangeListPaginated after MutiSign exchange kind of transaction")
+  @Test(enabled = true, description = "GetExchangeListPaginated after MutiSign exchange kind of"
+      + " transaction")
   public void test7GetExchangeListPaginated() {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(0);

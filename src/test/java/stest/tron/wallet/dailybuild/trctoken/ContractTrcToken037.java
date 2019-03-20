@@ -120,7 +120,7 @@ public class ContractTrcToken037 {
         .getString("code.code_ContractTrcToken037_receiveTrc10Test");
     String abi = Configuration.getByPath("testng.conf")
         .getString("abi.abi_ContractTrcToken037_receiveTrc10Test");
-    byte[] bTestAddress = PublicMethed
+    byte[] btestAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",
             0, null, dev001Key, dev001Address,
@@ -156,7 +156,7 @@ public class ContractTrcToken037 {
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId,
             blockingStubFull);
     Long beforeAssetIssueBAddress = PublicMethed
-        .getAssetIssueValue(bTestAddress, assetAccountId,
+        .getAssetIssueValue(btestAddress, assetAccountId,
             blockingStubFull);
 
     Long beforeBalanceContractAddress = PublicMethed.queryAccount(transferTokenContractAddress,
@@ -176,7 +176,7 @@ public class ContractTrcToken037 {
     logger.info("beforeUserBalance:" + beforeUserBalance);
 
     String param =
-        "\"" + Base58.encode58Check(bTestAddress) + "\"";
+        "\"" + Base58.encode58Check(btestAddress) + "\"";
 
     final String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "receive(address)",
@@ -200,7 +200,7 @@ public class ContractTrcToken037 {
         .getAssetIssueValue(transferTokenContractAddress, assetAccountId,
             blockingStubFull);
     Long afterAssetIssueBAddress = PublicMethed
-        .getAssetIssueValue(bTestAddress, assetAccountId,
+        .getAssetIssueValue(btestAddress, assetAccountId,
             blockingStubFull);
 
     Long afterAssetIssueUserAddress = PublicMethed
