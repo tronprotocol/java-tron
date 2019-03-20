@@ -2,7 +2,10 @@ package org.tron.common.zksnark.sapling;
 
 import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import java.util.List;
+import java.util.Set;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
@@ -48,7 +51,7 @@ public class RpcWallet {
     }
 
     ExtendedSpendingKey m = ExtendedSpendingKey.Master(seed);
-    int bip44CoinType = Params.BIP44CoinType;
+    int bip44CoinType = ZkChainParams.BIP44CoinType;
 
     // We use a fixed keypath scheme of m/32'/coin_type'/account'
     // Derive m/32'
@@ -84,32 +87,56 @@ public class RpcWallet {
     System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
-  public void sendCoinShield() {
-    String fromAddress = "";
+  public void sendCoinShield(String fromAddr, List<Recipient> outputs) {
 
-    boolean fromTAddress = false;
-    boolean fromShieldAddress = false;
-    PaymentAddress shieldAddr;
+    boolean isFromTAddress = false;
+    boolean isFromShieldAddress = false;
+    PaymentAddress shieldFromAddr;
 
-    byte[] tAddressBytes = Wallet.decodeFromBase58Check(fromAddress);
-    if (tAddressBytes != null) {
-      fromTAddress = true;
+    byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
+    if (tFromAddrBytes != null) {
+      isFromTAddress = true;
     } else {
-      shieldAddr = KeyIo.DecodePaymentAddress(fromAddress);
-      if (shieldAddr == null) {
+      shieldFromAddr = KeyIo.decodePaymentAddress(fromAddr);
+      if (shieldFromAddr == null) {
         throw new RuntimeException("unknown address type ");
       }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldAddr)) {
+      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
         throw new RuntimeException(
             "From address does not belong to this wallet, spending key not found.");
       }
+      isFromShieldAddress = true;
     }
 
-    //todo：
-    List<Recipient> t_outputs_ = null;
-    List<Recipient> z_outputs_ = null;
+    List<Recipient> tOutputs = Lists.newArrayList();
+    List<Recipient> zOutputs = Lists.newArrayList();
+
+    Set<String> allToAddress = Sets.newHashSet();
+    long nTotalOut = 0;
+
+    for (int i = 0; i < outputs.size(); i++) {
+      Recipient recipient = outputs.get(i);
+      if (allToAddress.contains(recipient.address)) {
+        throw new RuntimeException("double address");
+      }
+      byte[] tToAddrBytes = Wallet.decodeFromBase58Check(recipient.address);
+      if (tToAddrBytes != null) {
+        tOutputs.add(recipient);
+      } else {
+        PaymentAddress shieldToAddr = KeyIo.decodePaymentAddress(fromAddr);
+        if (shieldToAddr == null) {
+          throw new RuntimeException("unknown address type ");
+        }
+        zOutputs.add(recipient);
+      }
+
+      allToAddress.add(recipient.address);
+
+    }
+
+
     ShieldSendCoin sendmany =
-        new ShieldSendCoin(fromAddress, t_outputs_, z_outputs_);
+        new ShieldSendCoin(fromAddr, tOutputs, zOutputs);
     sendmany.main_impl();
   }
 

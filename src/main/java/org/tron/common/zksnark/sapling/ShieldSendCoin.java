@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.sapling.ShieldWallet.SaplingNoteEntry;
-import org.tron.common.zksnark.sapling.ShieldWallet.SaplingWitness;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingVoucher;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
@@ -31,7 +31,7 @@ public class ShieldSendCoin {
   public ShieldSendCoin(String fromAddress, List<Recipient> tOutputs,
       List<Recipient> zOutputs) {
 //    if () {
-      PaymentAddress address = KeyIo.DecodePaymentAddress(fromAddress);
+    PaymentAddress address = KeyIo.decodePaymentAddress(fromAddress);
       //to look up spendingkey from walletDB
     spendingkey = ShieldWallet.GetSpendingKeyForPaymentAddress(address);
       isfromzaddr_ = true;
@@ -70,7 +70,7 @@ public class ShieldSendCoin {
 
     // Fetch Sapling anchor and witnesses
     byte[] anchor = null;
-    List<Optional<SaplingWitness>> witnesses = null;
+    List<Optional<SaplingVoucher>> witnesses = null;
 
     ShieldWallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
 
@@ -88,7 +88,7 @@ public class ShieldSendCoin {
       Long value = r.value;
       String hexMemo = r.memo;
 
-      PaymentAddress addr = KeyIo.DecodePaymentAddress(address);
+      PaymentAddress addr = KeyIo.decodePaymentAddress(address);
       if (addr == null) {
         throw new RuntimeException("");
       }

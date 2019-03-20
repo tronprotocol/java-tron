@@ -7,6 +7,7 @@ import org.tron.common.zksnark.sapling.utils.PRF;
 @AllArgsConstructor
 public class SpendingKey {
 
+
   public byte[] value;
   // class SpendingKey : public uint256 {
 

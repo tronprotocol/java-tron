@@ -2,7 +2,7 @@ package org.tron.common.zksnark.sapling;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.tron.common.zksnark.sapling.ShieldWallet.SaplingWitness;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingVoucher;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
@@ -24,7 +24,7 @@ public class TransactionBuilder {
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
   void AddSaplingSpend(
-      ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingWitness witness) {
+      ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingVoucher witness) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, witness));
     //    mtx.valueBalance += note.value;
 
@@ -148,10 +148,10 @@ public class TransactionBuilder {
     public Note note;
     public byte[] alpha;
     public byte[] anchor;
-    public SaplingWitness witness;
+    public SaplingVoucher witness;
 
     public SpendDescriptionInfo(
-        ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingWitness witness) {
+        ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingVoucher witness) {
       this.expsk = expsk;
       this.note = note;
       this.anchor = anchor;

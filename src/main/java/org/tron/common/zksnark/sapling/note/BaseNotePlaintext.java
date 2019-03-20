@@ -1,7 +1,7 @@
 package org.tron.common.zksnark.sapling.note;
 
 import java.util.Optional;
-import org.tron.common.zksnark.sapling.Params;
+import org.tron.common.zksnark.sapling.ZkChainParams;
 import org.tron.common.zksnark.sapling.address.DiversifierT;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
@@ -11,7 +11,7 @@ import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncCipherte
 public class BaseNotePlaintext {
 
   long value_ = 0L; // 64
-  byte[] memo_ = new byte[Params.ZC_MEMO_SIZE];
+  byte[] memo_ = new byte[ZkChainParams.ZC_MEMO_SIZE];
 
   public class SaplingNotePlaintextEncryptionResult {
 

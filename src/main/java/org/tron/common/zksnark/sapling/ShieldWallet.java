@@ -33,7 +33,7 @@ public class ShieldWallet {
     int confirmations;
   }
 
-  public class SaplingWitness {
+  public class SaplingVoucher {
 
     //todo:
     public long position() {
@@ -42,7 +42,7 @@ public class ShieldWallet {
   }
 
   public static void GetSaplingNoteWitnesses(List<OutPoint> ops,
-      List<Optional<SaplingWitness>> witnesses, byte[] anchor) {
+      List<Optional<SaplingVoucher>> witnesses, byte[] anchor) {
 
   }
 
