@@ -172,6 +172,7 @@ public class ShieldCoinConstructor {
   }
 
   private boolean findUnspentNotes() {
+
     List<NoteEntry> saplingEntries =
         ShieldWallet.GetFilteredNotes(this.shieldFromAddr, true, true);
 

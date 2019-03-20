@@ -1,7 +1,7 @@
 package org.tron.common.zksnark.sapling.note;
 
 import java.util.Optional;
-import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingOutCiphertext;
+import org.tron.common.zksnark.sapling.note.NoteEncryption.OutCiphertext;
 
 public class SaplingOutgoingPlaintext {
 
@@ -9,8 +9,8 @@ public class SaplingOutgoingPlaintext {
   byte[] esk;
 
   Optional<SaplingOutgoingPlaintext> decrypt(
-      SaplingOutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
-    //    Optional<SaplingOutPlaintext> pt = NoteEncryption.AttemptSaplingOutDecryption(ciphertext,
+      OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
+    //    Optional<OutPlaintext> pt = NoteEncryption.AttemptSaplingOutDecryption(ciphertext,
     // ovk, cv, cm, epk);
     //    if (!pt.isPresent()) {
     //      return  none;
@@ -29,12 +29,12 @@ public class SaplingOutgoingPlaintext {
     return null;
   }
 
-  SaplingOutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
+  OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
 
     //    // Create the plaintext
     //    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
     //    ss << ( * this);
-    //    SaplingOutPlaintext pt;
+    //    OutPlaintext pt;
     //    assert (pt.size() == ss.size());
     //    memcpy(pt[0], ss[0], pt.size());
     //

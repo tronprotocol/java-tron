@@ -1,7 +1,5 @@
 package org.tron.common.zksnark.sapling;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
@@ -100,6 +98,13 @@ public class Librustzcash {
   public static ProvingContext librustzcashSaplingProvingCtxFree() {
     return null;
   }
+
+  public static boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] d, byte[] pk_d) {
+
+    return true;
+  }
+
+
 
   public static void main(String[] args) throws Exception {
     Librustzcash librustzcash = new Librustzcash();

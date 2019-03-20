@@ -4,6 +4,7 @@ import static org.tron.common.zksnark.sapling.KeyStore.getFullViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.getIncomingViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.haveSpendingKey;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
@@ -12,11 +13,12 @@ import java.util.Optional;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
+import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.sapling.note.NoteData;
 import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
-import org.tron.common.zksnark.sapling.transaction.;
+import org.tron.common.zksnark.sapling.transaction.OutDesc;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
@@ -98,21 +100,60 @@ public class ShieldWallet {
       boolean ignoreSpent,
       boolean requireSpendingKey) {
 
+    List<NoteEntry> saplingEntries = Lists.newArrayList();
+
     for (Entry<OutPoint, NoteData> entry : mapNoteData.entrySet()) {
       OutPoint op = entry.getKey();
       NoteData nd = entry.getValue();
 
       //todo: tx.vShieldedOutput[op.n]
-      OutputDescription description = null;
+      OutDesc description = null;
       Optional<NotePlaintext> maybe_pt = NotePlaintext.decrypt(
           description.encCiphertext,
           nd.ivk.value,
           description.ephemeralKey,
           description.cm);
+      if (!maybe_pt.isPresent()) {
+        throw new RuntimeException("");
+      }
+
+      NotePlaintext notePt = maybe_pt.get();
+
+      Optional<PaymentAddress> maybe_pa = nd.ivk.address(notePt.d);
+      if (!maybe_pa.isPresent()) {
+        throw new RuntimeException("");
+      }
+      PaymentAddress pa = maybe_pa.get();
+
+      if (!filterAddress.equals(pa)) {
+        continue;
+      }
+
+      if (ignoreSpent && nd.nullifier.isPresent() && IsSaplingSpent(nd.nullifier.get())) {
+        continue;
+      }
+
+      // skip notes which cannot be spent
+      if (requireSpendingKey) {
+        IncomingViewingKey ivk = null;
+        FullViewingKey fvk = null;
+        if (!(KeyStore.getIncomingViewingKey(pa, ivk) &&
+            KeyStore.getFullViewingKey(ivk, fvk) &&
+            KeyStore.haveSpendingKey(fvk))) {
+          continue;
+        }
+      }
+
+      Note note = notePt.note(nd.ivk).get();
+      saplingEntries.add(new NoteEntry(op, pa, note, notePt.memo));
     }
 
-    return null;
+    return saplingEntries;
+  }
 
+  //todo: check db
+  private static boolean IsSaplingSpent(byte[] nullifier) {
+    return false;
   }
 
   // Add spending key to keystore

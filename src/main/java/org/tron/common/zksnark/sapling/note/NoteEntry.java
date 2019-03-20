@@ -1,9 +1,11 @@
 package org.tron.common.zksnark.sapling.note;
 
+import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 
+@AllArgsConstructor
 public class NoteEntry {
 
   /**
@@ -13,6 +15,5 @@ public class NoteEntry {
 
   public PaymentAddress address;
   public Note note;
-  public char[] memo; // ZC_MEMO_SIZE
-  public int confirmations;
+  public byte[] memo; // ZC_MEMO_SIZE
 }
