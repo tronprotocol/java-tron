@@ -117,15 +117,24 @@ public class MutiSignStress {
       String updateName = Long.toString(System.currentTimeMillis());
 
 
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
+          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
+          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
+          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
+          ownerKey,blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
+          ownerKey,blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
+          ownerKey,blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
+          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
+          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
+          blockingStubFull,permissionKeyString);
     }
 
 

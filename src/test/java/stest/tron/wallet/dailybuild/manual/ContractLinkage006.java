@@ -319,7 +319,7 @@ public class ContractLinkage006 {
     logger.info("afterFreeNetUsed2:" + afterFreeNetUsed2);
 
     Assert.assertTrue((beforeBalance2 - fee2) == afterBalance2);
-//    Assert.assertTrue(afterNetUsed2 > beforeNetUsed2);
+    //    Assert.assertTrue(afterNetUsed2 > beforeNetUsed2);
     Assert.assertTrue((beforeEnergyUsed2 + energyUsed2) >= afterEnergyUsed2);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 1);

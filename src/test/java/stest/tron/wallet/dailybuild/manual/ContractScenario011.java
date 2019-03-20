@@ -241,7 +241,8 @@ public class ContractScenario011 {
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
   }
 
-  @Test(enabled = true,description = "Set three contract address for Kitty Core, set three CXO roles")
+  @Test(enabled = true,description = "Set three contract address for Kitty Core, "
+      + "set three CXO roles")
   public void triggerToSetThreeContractAddressToKittyCore() {
     //Set SaleAuctionAddress to kitty core.
     String saleContractString = "\"" + Base58.encode58Check(saleClockAuctionContractAddress) + "\"";
