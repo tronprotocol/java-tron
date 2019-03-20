@@ -1892,7 +1892,7 @@ public class Manager {
           postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
-        e.printStackTrace();
+        logger.error("block header hash not exists or bad: {}", getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
   }

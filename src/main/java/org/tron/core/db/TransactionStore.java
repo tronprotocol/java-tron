@@ -117,7 +117,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
           indexHelper.remove(item.getInstance());
         }
       } catch (StoreException e) {
-        e.printStackTrace();
+        logger.error("deleteIndex: ", e);
       }
     }
   }
