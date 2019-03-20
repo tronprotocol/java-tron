@@ -1,4 +1,4 @@
-package stest.tron.wallet.onlineStress;
+package stest.tron.wallet.onlinestress;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
