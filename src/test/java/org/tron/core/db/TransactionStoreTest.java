@@ -9,6 +9,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -39,6 +41,7 @@ public class TransactionStoreTest {
   private static String indexDirectory = "index_TransactionStore_test";
   private static TransactionStore transactionStore;
   private static TronApplicationContext context;
+  private static Application AppT;
   private static final byte[] key1 = TransactionStoreTest.randomBytes(21);
   private static Manager dbManager;
   private static final byte[] key2 = TransactionStoreTest.randomBytes(21);
@@ -66,6 +69,7 @@ public class TransactionStoreTest {
         Constant.TEST_CONF
     );
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
   }
 
   /**
@@ -337,6 +341,8 @@ public class TransactionStoreTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
