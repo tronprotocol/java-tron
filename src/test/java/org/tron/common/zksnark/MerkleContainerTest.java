@@ -28,7 +28,8 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
+import org.tron.protos.Contract.IncrementalMerkleVoucher;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.SHA256Compress;
@@ -353,12 +354,12 @@ public class MerkleContainerTest {
         setOutPoint2(outputPoint2).setBlockNum(number).build();
 
     Wallet wallet = context.getBean(Wallet.class);
-    IncrementalMerkleWitnessInfo merkleTreeWitnessInfo = wallet
+    IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeWitnessInfo(outputPointInfo);
 
     Assert.assertEquals(number, merkleTreeWitnessInfo.getBlockNum());
 //    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
-    Assert.assertEquals(0, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getIndex());
+    Assert.assertEquals(0, merkleTreeWitnessInfo.getVoucher1().getOutputPoint().getIndex());
 //    Assert
 //        .assertEquals(13, new IncrementalMerkleVoucherCapsule(merkleTreeWitnessInfo.getWitness1()).
 //            toMerkleVoucherContainer().size());
@@ -367,20 +368,20 @@ public class MerkleContainerTest {
 //            toMerkleVoucherContainer().size());
 
     IncrementalMerkleVoucherCapsule capsule1 = new IncrementalMerkleVoucherCapsule(
-        merkleTreeWitnessInfo.getWitness1());
+        merkleTreeWitnessInfo.getVoucher1());
     capsule1.toMerkleVoucherContainer().printSize();
 
     IncrementalMerkleVoucherCapsule capsule2 = new IncrementalMerkleVoucherCapsule(
-        merkleTreeWitnessInfo.getWitness2());
+        merkleTreeWitnessInfo.getVoucher1());
     capsule2.toMerkleVoucherContainer().printSize();
 
     System.out
         .println("kkkkkk" + ByteArray
-            .toHexString(merkleTreeWitnessInfo.getWitness1().getRt().toByteArray()));
+            .toHexString(merkleTreeWitnessInfo.getVoucher1().getRt().toByteArray()));
     Assert
         .assertEquals(
-            ByteArray.toHexString(merkleTreeWitnessInfo.getWitness1().getRt().toByteArray()),
-            ByteArray.toHexString(merkleTreeWitnessInfo.getWitness2().getRt().toByteArray())
+            ByteArray.toHexString(merkleTreeWitnessInfo.getVoucher1().getRt().toByteArray()),
+            ByteArray.toHexString(merkleTreeWitnessInfo.getVoucher2().getRt().toByteArray())
         );
 
   }

@@ -83,8 +83,8 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
-import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
+import org.tron.protos.Contract.IncrementalMerkleVoucher;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
@@ -1724,13 +1724,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void getMerkleTreeWitness(OutputPoint request,
-        StreamObserver<IncrementalMerkleWitness> responseObserver) {
+        StreamObserver<IncrementalMerkleVoucher> responseObserver) {
 
       ByteString hash = request.getHash();
       int index = request.getIndex();
 
       if (null != hash && index >= 0) {
-        IncrementalMerkleWitness witness = wallet.getMerkleTreeWitness(hash.toByteArray(), index);
+        IncrementalMerkleVoucher witness = wallet.getMerkleTreeWitness(hash.toByteArray(), index);
         responseObserver.onNext(witness);
       } else {
         responseObserver.onNext(null);
@@ -1740,7 +1740,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getMerkleTreeWitnessInfo(OutputPointInfo request,
-        StreamObserver<IncrementalMerkleWitnessInfo> responseObserver) {
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
       if (request.getBlockNum() < 0) {
         responseObserver.onNext(null);
@@ -1772,7 +1772,7 @@ public class RpcApiService implements Service {
       }
 
       try {
-        IncrementalMerkleWitnessInfo witnessInfo = wallet
+        IncrementalMerkleVoucherInfo witnessInfo = wallet
             .getMerkleTreeWitnessInfo(request);
         responseObserver.onNext(witnessInfo);
       } catch (Exception ex) {

@@ -131,8 +131,8 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleWitness;
-import org.tron.protos.Contract.IncrementalMerkleWitnessInfo;
+import org.tron.protos.Contract.IncrementalMerkleVoucher;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
@@ -1338,7 +1338,7 @@ public class Wallet {
     return null;
   }
 
-  public IncrementalMerkleWitness getMerkleTreeWitness(byte[] hash, int index) {
+  public IncrementalMerkleVoucher getMerkleTreeWitness(byte[] hash, int index) {
     if (Objects.isNull(hash) || index < 0) {
       return null;
     }
@@ -1527,10 +1527,10 @@ public class Wallet {
     }
   }
 
-  public IncrementalMerkleWitnessInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
+  public IncrementalMerkleVoucherInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    IncrementalMerkleWitnessInfo.Builder result = IncrementalMerkleWitnessInfo.newBuilder();
+    IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
 
     IncrementalMerkleVoucherContainer witness1 = null;
@@ -1597,12 +1597,12 @@ public class Wallet {
 
     if (witness1 != null) {
       witness1.getVoucherCapsule().resetRt();
-      result.setWitness1(witness1.getVoucherCapsule().getInstance());
+      result.setVoucher1(witness1.getVoucherCapsule().getInstance());
     }
 
     if (witness2 != null) {
       witness2.getVoucherCapsule().resetRt();
-      result.setWitness2(witness2.getVoucherCapsule().getInstance());
+      result.setVoucher2(witness2.getVoucherCapsule().getInstance());
     }
 
     return result.build();
