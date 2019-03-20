@@ -326,10 +326,10 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
-    if (frozeBalance < 1000000L) {
+    if (frozeBalance < 1_000_000L) {
       return 0;
     }
-    long netWeight = frozeBalance / 1000000L;
+    long netWeight = frozeBalance / 1_000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     if (totalNetWeight == 0) {
