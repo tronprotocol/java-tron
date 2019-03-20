@@ -62,7 +62,7 @@ public class RpcWallet {
     }
 
     ExtendedSpendingKey m = ExtendedSpendingKey.Master(seed);
-    int bip44CoinType = Params.BIP44CoinType;
+    int bip44CoinType = ZkChainParams.BIP44CoinType;
 
     // We use a fixed keypath scheme of m/32'/coin_type'/account'
     // Derive m/32'
@@ -73,7 +73,7 @@ public class RpcWallet {
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
-    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().full_viewing_key())) {
+    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
       //
       xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
@@ -86,7 +86,7 @@ public class RpcWallet {
 //    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
 //      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
 
-    IncomingViewingKey ivk = xsk.getExpsk().full_viewing_key().in_viewing_key();
+    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().in_viewing_key();
     ShieldWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
 
     PaymentAddress addr = xsk.DefaultAddress();
@@ -98,33 +98,15 @@ public class RpcWallet {
     System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
-  public void sendCoinShield() {
-    String fromAddress = "";
+  public void sendCoinShield(String[] params) {
 
-    boolean fromTAddress = false;
-    boolean fromShieldAddress = false;
-    PaymentAddress shieldAddr;
+    String fromAddr = params[0];
+    List<Recipient> outputs = null;
 
-    byte[] tAddressBytes = Wallet.decodeFromBase58Check(fromAddress);
-    if (tAddressBytes != null) {
-      fromTAddress = true;
-    } else {
-      shieldAddr = KeyIo.DecodePaymentAddress(fromAddress);
-      if (shieldAddr == null) {
-        throw new RuntimeException("unknown address type ");
-      }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldAddr)) {
-        throw new RuntimeException(
-            "From address does not belong to this wallet, spending key not found.");
-      }
-    }
-
-    //todo：
-    List<Recipient> t_outputs_ = null;
-    List<Recipient> z_outputs_ = null;
-    ShieldSendCoin sendmany =
-        new ShieldSendCoin(fromAddress, t_outputs_, z_outputs_);
-    sendmany.main_impl();
+    ShieldCoinConstructor constructor =
+        new ShieldCoinConstructor(fromAddr, outputs);
+    constructor.build();
+//    broadcastTX();
   }
 
 

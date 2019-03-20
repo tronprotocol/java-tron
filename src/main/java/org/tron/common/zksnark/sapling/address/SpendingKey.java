@@ -7,6 +7,7 @@ import org.tron.common.zksnark.sapling.utils.PRF;
 @AllArgsConstructor
 public class SpendingKey {
 
+
   public byte[] value;
   // class SpendingKey : public uint256 {
 
@@ -26,7 +27,7 @@ public class SpendingKey {
 
   FullViewingKey full_viewing_key() {
 
-    return expanded_spending_key().full_viewing_key();
+    return expanded_spending_key().fullViewingKey();
   }
 
   // Can derive  addr from default diversifier

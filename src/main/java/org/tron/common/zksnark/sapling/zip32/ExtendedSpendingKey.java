@@ -61,7 +61,7 @@ public class ExtendedSpendingKey {
     ret.parentFVKTag = parentFVKTag;
     ret.childIndex = childIndex;
     ret.chaincode = chaincode;
-    ret.fvk = expsk.full_viewing_key();
+    ret.fvk = expsk.fullViewingKey();
     ret.dk = dk;
     return ret;
   }

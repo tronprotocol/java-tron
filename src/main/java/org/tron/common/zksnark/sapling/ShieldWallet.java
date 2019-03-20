@@ -4,37 +4,28 @@ import static org.tron.common.zksnark.sapling.KeyStore.getFullViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.getIncomingViewingKey;
 import static org.tron.common.zksnark.sapling.KeyStore.haveSpendingKey;
 
-import java.util.HashMap;
+import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.note.BaseNote.Note;
+import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
+import org.tron.common.zksnark.sapling.note.NoteData;
+import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
+import org.tron.common.zksnark.sapling.transaction.;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
 public class ShieldWallet {
 
+  public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = Maps.newHashMap();
+  public static Map<OutPoint, NoteData> mapNoteData = Maps.newHashMap();
 
-  public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = new HashMap<>();
-
-  /**
-   * Sapling note, its location in a transaction, and number of confirmations.
-   */
-  public class SaplingNoteEntry {
-
-    OutPoint op;
-    PaymentAddress address;
-    Note note;
-    char[] memo;//ZC_MEMO_SIZE
-    int confirmations;
-  }
-
-  public class SaplingWitness {
+  public class SaplingVoucher {
 
     //todo:
     public long position() {
@@ -43,7 +34,7 @@ public class ShieldWallet {
   }
 
   public static void GetSaplingNoteWitnesses(List<OutPoint> ops,
-      List<Optional<SaplingWitness>> witnesses, byte[] anchor) {
+      List<Optional<SaplingVoucher>> witnesses, byte[] anchor) {
 
   }
 
@@ -80,7 +71,7 @@ public class ShieldWallet {
 //      for (auto it = mapFullViewingKeys.begin(); it != mapFullViewingKeys.end();
 //          ++it) {
 //        SaplingIncomingViewingKey ivk = it -> first;
-//        auto result = SaplingNotePlaintext::decrypt
+//        auto result = NotePlaintext::decrypt
 //        (output.encCiphertext, ivk, output.ephemeralKey, output.cm);·
 //        if (!result) {
 //          continue;
@@ -102,23 +93,25 @@ public class ShieldWallet {
         haveSpendingKey(fvk);
   }
 
-  public static void GetFilteredNotes(
-      List<SaplingNoteEntry> saplingEntries,
-      Set<PaymentAddress> filterAddresses,
+  public static List<NoteEntry> GetFilteredNotes(
+      PaymentAddress filterAddress,
       boolean ignoreSpent,
-      boolean requireSpendingKey,
-      boolean ignoreLocked) {
+      boolean requireSpendingKey) {
 
-//    for (auto & pair :wtx.mapSaplingNoteData){
-//      OutPoint op = pair.first;
-//      SaplingNoteData nd = pair.second;
-//
-//      auto maybe_pt = SaplingNotePlaintext::decrypt (
-//          wtx.vShieldedOutput[op.n].encCiphertext,
-//          nd.ivk,
-//          wtx.vShieldedOutput[op.n].ephemeralKey,
-//          wtx.vShieldedOutput[op.n].cm);
-//    }
+    for (Entry<OutPoint, NoteData> entry : mapNoteData.entrySet()) {
+      OutPoint op = entry.getKey();
+      NoteData nd = entry.getValue();
+
+      //todo: tx.vShieldedOutput[op.n]
+      OutputDescription description = null;
+      Optional<NotePlaintext> maybe_pt = NotePlaintext.decrypt(
+          description.encCiphertext,
+          nd.ivk.value,
+          description.ephemeralKey,
+          description.cm);
+    }
+
+    return null;
 
   }
 
@@ -137,7 +130,7 @@ public class ShieldWallet {
     //    }
     //
     //    if (!IsCrypted()) {
-    //      auto ivk = sk.expsk.full_viewing_key().in_viewing_key();
+    //      auto ivk = sk.expsk.fullViewingKey().in_viewing_key();
     //      return CWalletDB(strWalletFile).WriteSaplingZKey(ivk, sk, mapSaplingZKeyMetadata[ivk]);
     //    }
 

@@ -19,8 +19,8 @@ public class BaseNote {
 
     public Note(PaymentAddress address, long value) {
       this.value = value;
-      d = address.getD();
-      pk_d = address.getPkD();
+      this.d = address.getD();
+      this.pk_d = address.getPkD();
       Librustzcash.librustzcashSaplingGenerateR(r);
     }
 

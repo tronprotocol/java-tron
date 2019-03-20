@@ -26,7 +26,7 @@ public class ExpandedSpendingKey {
   public ExpandedSpendingKey() {
   }
 
-  public FullViewingKey full_viewing_key() {
+  public FullViewingKey fullViewingKey() {
 
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256

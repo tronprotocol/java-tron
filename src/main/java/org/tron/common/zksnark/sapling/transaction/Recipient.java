@@ -5,5 +5,5 @@ public class Recipient {
 
   public String address;
   public Long value;
-  public String memo;
+  public String memo;//not support yet
 }

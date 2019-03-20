@@ -2,14 +2,13 @@ package org.tron.common.zksnark.sapling;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
-import org.tron.common.zksnark.sapling.ShieldWallet.SaplingWitness;
+import org.tron.common.zksnark.sapling.ShieldWallet.SaplingVoucher;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 
 public class TransactionBuilder {
 
-  int nHeight;
   //  CKeyStore keystore;
   //  CMutableTransaction mtx;
 
@@ -24,7 +23,7 @@ public class TransactionBuilder {
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
   void AddSaplingSpend(
-      ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingWitness witness) {
+      ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingVoucher witness) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, witness));
     //    mtx.valueBalance += note.value;
 
@@ -58,7 +57,7 @@ public class TransactionBuilder {
     //    for (SpendDescriptionInfo spend : spends) {
     //      byte[] cm = spend.note.cm();
     //      byte[] nf = spend.note.nullifier(
-    //          spend.expsk.full_viewing_key(), spend.witness.position());
+    //          spend.expsk.fullViewingKey(), spend.witness.position());
     //
     //      ByteArray.isEmpty();
     //      if (!cm || !nf) {
@@ -73,7 +72,7 @@ public class TransactionBuilder {
     //      SpendDescription sdesc;
     //      if (!librustzcash_sapling_spend_proof(
     //          ctx,
-    //          spend.expsk.full_viewing_key().ak.begin(),
+    //          spend.expsk.fullViewingKey().ak.begin(),
     //          spend.expsk.nsk.begin(),
     //          spend.note.d.data(),
     //          spend.note.r.begin(),
@@ -101,7 +100,7 @@ public class TransactionBuilder {
     //        return TransactionBuilderResult("Output is invalid");
     //      }
     //
-    //      SaplingNotePlaintext notePlaintext (output.note, output.memo);
+    //      NotePlaintext notePlaintext (output.note, output.memo);
     //
     //      auto res = notePlaintext.encrypt(output.note.pk_d);
     //      if (!res) {
@@ -148,10 +147,10 @@ public class TransactionBuilder {
     public Note note;
     public byte[] alpha;
     public byte[] anchor;
-    public SaplingWitness witness;
+    public SaplingVoucher witness;
 
     public SpendDescriptionInfo(
-        ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingWitness witness) {
+        ExpandedSpendingKey expsk, Note note, byte[] anchor, SaplingVoucher witness) {
       this.expsk = expsk;
       this.note = note;
       this.anchor = anchor;

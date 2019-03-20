@@ -25,7 +25,7 @@ public class KeyStore {
   }
 
   public static boolean AddSpendingKey(ExtendedSpendingKey sk, PaymentAddress defaultAddr) {
-    FullViewingKey fvk = sk.getExpsk().full_viewing_key();
+    FullViewingKey fvk = sk.getExpsk().fullViewingKey();
 
     // if SaplingFullViewingKey is not in SaplingFullViewingKeyMap, add it
     if (!addFullViewingKey(fvk, defaultAddr)) {

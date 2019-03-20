@@ -9,7 +9,7 @@ import org.tron.common.zksnark.sapling.Librustzcash;
 @AllArgsConstructor
 public class IncomingViewingKey {
 
-  byte[] value; // 256
+  public byte[] value; // 256
   // class IncomingViewingKey : public uint256 {
 
   // To create a new diversied payment address given an incoming viewing key ivk, repeatedly pick a
