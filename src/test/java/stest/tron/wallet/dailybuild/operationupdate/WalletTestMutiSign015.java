@@ -162,7 +162,6 @@ public class WalletTestMutiSign015 {
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 
-//    Assert.assertTrue(balanceBefore - balanceAfter >= needcoin);
   }
 
   /**
