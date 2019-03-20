@@ -33,4 +33,10 @@ public class PaymentAddress {
 
     return new PaymentAddress(d, pkD);
   }
+
+  //todo:
+  public boolean equals(PaymentAddress other) {
+
+    return false;
+  }
 }
