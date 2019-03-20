@@ -104,10 +104,8 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract && !charged) {
-        if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
-          continue;
-        }
+      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract, accountCapsule, now, bytesSize)  && !charged) {
+        continue;
       }
 
       if (useAccountNet(accountCapsule, bytesSize, now)) {
@@ -341,10 +339,10 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
-    if (frozeBalance < 1000_000L) {
+    if (frozeBalance < 1_000_000L) {
       return 0;
     }
-    long netWeight = frozeBalance / 1000_000L;
+    long netWeight = frozeBalance / 1_000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     if (totalNetWeight == 0) {

@@ -1271,8 +1271,11 @@ public class Wallet {
       TransactionCapsule transactionCapsule = dbManager.getTransactionStore().getUnchecked(transactionId.toByteArray());
       if (Objects.nonNull(transactionCapsule)) {
         transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+        if (Objects.isNull(transactionCapsule.getTransactionId())) {
+          return null;
+        }
         TransactionInfoCapsule transactionInfo = dbManager.getTransactionHistoryStore()
-            .get(transactionId.toByteArray());
+            .get(transactionCapsule.getTransactionId().getBytes());
         if (Objects.nonNull(transactionInfo)) {
           return transactionInfo.getInstance();
         }

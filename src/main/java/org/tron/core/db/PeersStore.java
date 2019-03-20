@@ -19,18 +19,8 @@ public class PeersStore extends TronDatabase<Set<Node>> {
   }
 
   @Override
-  public DbSourceInter<byte[]> getDbSource() {
-    return super.getDbSource();
-  }
-
-  @Override
-  public void reset() {
-    super.reset();
-  }
-
-  @Override
   public void put(byte[] key, Set<Node> nodes) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     nodes.forEach(node -> sb.append(node.getEnodeURL()).append("&").append(node.getReputation())
         .append("||"));
     dbSource.putData(key, sb.toString().getBytes());

@@ -45,12 +45,12 @@ import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
-class AccountComparator implements Comparator {
+/*class AccountComparator implements Comparator {
 
   public int compare(Object o1, Object o2) {
     return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
   }
-}
+}*/
 
 class WitnessComparator implements Comparator {
 
@@ -235,7 +235,7 @@ public class WalletClient {
    * Get a Wallet from storage.
    */
 
-  public static WalletClient GetWalletByStorage(String password) {
+  public static WalletClient getWalletByStorage(String password) {
     String priKeyEnced = loadPriKey();
     if (priKeyEnced == null) {
       return null;
@@ -463,7 +463,7 @@ public class WalletClient {
     return rpcCli.createAssetIssue(contract);
   }
 
-  public static Block GetBlock(long blockNum) {
+  public static Block getGetBlock(long blockNum) {
     return rpcCli.getBlock(blockNum);
   }
   /**
@@ -534,6 +534,19 @@ public class WalletClient {
     Transaction transaction = rpcCli.createTransaction(contract);
     return transaction;
   }
+
+  /**
+   * constructor.
+   */
+
+  public static Contract.AccountCreateContract createAccountCreateContract(byte[] owner,
+      byte[] address) {
+    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setAccountAddress(ByteString.copyFrom(address));
+    return builder.build();
+  }
+
   /**
    * constructor.
    */
@@ -571,17 +584,7 @@ public class WalletClient {
     Contract.AccountCreateContract contract = createAccountCreateContract(owner, address);
     return rpcCli.createAccount(contract);
   }
-  /**
-   * constructor.
-   */
 
-  public static Contract.AccountCreateContract createAccountCreateContract(byte[] owner,
-      byte[] address) {
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(owner));
-    builder.setAccountAddress(ByteString.copyFrom(address));
-    return builder.build();
-  }
   /**
    * constructor.
    */
@@ -673,7 +676,7 @@ public class WalletClient {
    * Get a Wallet from storage.
    */
 
-  public static WalletClient GetWalletByStorageIgnorPrivKey() {
+  public static WalletClient getWalletByStorageIgnorPrivKey() {
     try {
       String pubKey = loadPubKey(); //04 PubKey[128]
       if (StringUtils.isEmpty(pubKey)) {
@@ -927,10 +930,10 @@ public class WalletClient {
   * constructor.
   */
 
-  public boolean freezeBalance(long frozen_balance, long frozen_duration) {
+  public boolean freezeBalance(long frozenBalance, long frozenDuration) {
 
-    FreezeBalanceContract contract = createFreezeBalanceContract(frozen_balance,
-            frozen_duration);
+    FreezeBalanceContract contract = createFreezeBalanceContract(frozenBalance,
+        frozenDuration);
 
     Transaction transaction = rpcCli.createTransaction(contract);
 
@@ -942,14 +945,14 @@ public class WalletClient {
     return rpcCli.broadcastTransaction(transaction);
   }
 
-  private FreezeBalanceContract createFreezeBalanceContract(long frozen_balance,
-                                                            long frozen_duration) {
+  private FreezeBalanceContract createFreezeBalanceContract(long frozenBalance,
+                                                            long frozenDuration) {
     byte[] address = getAddress();
     FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
-    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozen_balance)
-            .setFrozenDuration(frozen_duration);
+    builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
+            .setFrozenDuration(frozenDuration);
 
     return builder.build();
   }
@@ -1012,8 +1015,8 @@ public class WalletClient {
     return rpcCli.getBlock(blockNum);
   }
 
-  public static Optional<Block> getBlockById(String blockID) {
-    return rpcCli.getBlockById(blockID);
+  public static Optional<Block> getBlockById(String blockId) {
+    return rpcCli.getBlockById(blockId);
   }
 
   public static Optional<BlockList> getBlockByLimitNext(long start, long end) {

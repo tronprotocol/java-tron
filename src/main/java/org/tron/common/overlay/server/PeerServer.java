@@ -47,9 +47,9 @@ public class PeerServer {
   @Autowired
   private NodeImpl p2pNode;
 
-  EventLoopGroup bossGroup;
-  EventLoopGroup workerGroup;
-  ChannelFuture channelFuture;
+  private EventLoopGroup bossGroup;
+  private EventLoopGroup workerGroup;
+  private ChannelFuture channelFuture;
 
   @Autowired
   public PeerServer(final Args args, final ApplicationContext ctx) {
