@@ -2,10 +2,7 @@ package org.tron.common.zksnark.sapling;
 
 import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.List;
-import java.util.Set;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
@@ -13,7 +10,6 @@ import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
-import org.tron.core.Wallet;
 
 public class RpcWallet {
 
@@ -62,7 +58,7 @@ public class RpcWallet {
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
-    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().full_viewing_key())) {
+    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
       //
       xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
@@ -75,7 +71,7 @@ public class RpcWallet {
 //    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
 //      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
 
-    IncomingViewingKey ivk = xsk.getExpsk().full_viewing_key().in_viewing_key();
+    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().in_viewing_key();
     ShieldWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
 
     PaymentAddress addr = xsk.DefaultAddress();
@@ -87,57 +83,15 @@ public class RpcWallet {
     System.out.println(KeyIo.EncodePaymentAddress(addr));
   }
 
-  public void sendCoinShield(String fromAddr, List<Recipient> outputs) {
+  public void sendCoinShield(String[] params) {
 
-    boolean isFromTAddress = false;
-    boolean isFromShieldAddress = false;
-    PaymentAddress shieldFromAddr;
+    String fromAddr = params[0];
+    List<Recipient> outputs = null;
 
-    byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
-    if (tFromAddrBytes != null) {
-      isFromTAddress = true;
-    } else {
-      shieldFromAddr = KeyIo.decodePaymentAddress(fromAddr);
-      if (shieldFromAddr == null) {
-        throw new RuntimeException("unknown address type ");
-      }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
-        throw new RuntimeException(
-            "From address does not belong to this wallet, spending key not found.");
-      }
-      isFromShieldAddress = true;
-    }
-
-    List<Recipient> tOutputs = Lists.newArrayList();
-    List<Recipient> zOutputs = Lists.newArrayList();
-
-    Set<String> allToAddress = Sets.newHashSet();
-    long nTotalOut = 0;
-
-    for (int i = 0; i < outputs.size(); i++) {
-      Recipient recipient = outputs.get(i);
-      if (allToAddress.contains(recipient.address)) {
-        throw new RuntimeException("double address");
-      }
-      byte[] tToAddrBytes = Wallet.decodeFromBase58Check(recipient.address);
-      if (tToAddrBytes != null) {
-        tOutputs.add(recipient);
-      } else {
-        PaymentAddress shieldToAddr = KeyIo.decodePaymentAddress(fromAddr);
-        if (shieldToAddr == null) {
-          throw new RuntimeException("unknown address type ");
-        }
-        zOutputs.add(recipient);
-      }
-
-      allToAddress.add(recipient.address);
-
-    }
-
-
-    ShieldSendCoin sendmany =
-        new ShieldSendCoin(fromAddr, tOutputs, zOutputs);
-    sendmany.main_impl();
+    ShieldCoinConstructor constructor =
+        new ShieldCoinConstructor(fromAddr, outputs);
+    constructor.build();
+//    broadcastTX();
   }
 
 

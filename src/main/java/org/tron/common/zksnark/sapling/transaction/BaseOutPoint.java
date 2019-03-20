@@ -4,8 +4,8 @@ import org.tron.common.utils.ByteArray;
 
 public class BaseOutPoint {
 
-  byte[] hash; // 256
-  Integer n; //
+  public byte[] hash; // 256
+  public Integer n; //
 
   void SetNull() {
     hash = new byte[256];

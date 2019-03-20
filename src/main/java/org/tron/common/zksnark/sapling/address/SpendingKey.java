@@ -27,7 +27,7 @@ public class SpendingKey {
 
   FullViewingKey full_viewing_key() {
 
-    return expanded_spending_key().full_viewing_key();
+    return expanded_spending_key().fullViewingKey();
   }
 
   // Can derive  addr from default diversifier

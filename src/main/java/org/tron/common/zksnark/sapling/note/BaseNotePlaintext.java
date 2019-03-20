@@ -10,8 +10,8 @@ import org.tron.common.zksnark.sapling.transaction.Ciphertext.SaplingEncCipherte
 
 public class BaseNotePlaintext {
 
-  long value_ = 0L; // 64
-  byte[] memo_ = new byte[ZkChainParams.ZC_MEMO_SIZE];
+  long value = 0L; // 64
+  byte[] memo = new byte[ZkChainParams.ZC_MEMO_SIZE];
 
   public class SaplingNotePlaintextEncryptionResult {
 
@@ -20,7 +20,7 @@ public class BaseNotePlaintext {
     // pair<SaplingEncCiphertext, SaplingNoteEncryption> SaplingNotePlaintextEncryptionResult;
   }
 
-  public class SaplingNotePlaintext extends BaseNotePlaintext {
+  public static class NotePlaintext extends BaseNotePlaintext {
 
     DiversifierT d;
     byte[] rcm;
@@ -28,13 +28,13 @@ public class BaseNotePlaintext {
     Optional<Note> note(IncomingViewingKey ivk) {
       Optional<PaymentAddress> addr = ivk.address(d);
       if (addr.isPresent()) {
-        return Optional.of(new Note(d, addr.get().getPkD(), value_, rcm));
+        return Optional.of(new Note(d, addr.get().getPkD(), value, rcm));
       } else {
         return Optional.empty();
       }
     }
 
-    Optional<SaplingNotePlaintext> decrypt(
+    public static Optional<NotePlaintext> decrypt(
         SaplingEncCiphertext ciphertext, byte[] ivk, byte[] epk, byte[] cmu) {
       //
       //      Optional<SaplingEncPlaintext> pt =
@@ -47,7 +47,7 @@ public class BaseNotePlaintext {
       //      CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
       //      ss << pt.get();
       //
-      //      SaplingNotePlaintext ret;
+      //      NotePlaintext ret;
       //      ss >> ret;
       //
       //      assert (ss.size() == 0);
@@ -76,7 +76,7 @@ public class BaseNotePlaintext {
       return null;
     }
 
-    public Optional<SaplingNotePlaintext> decrypt(
+    public static Optional<NotePlaintext> decrypt(
         SaplingEncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu) {
       //      auto pt = AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
       ////      if (!pt) {
@@ -87,7 +87,7 @@ public class BaseNotePlaintext {
       ////      CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
       ////      ss << pt.get();
       ////
-      ////      SaplingNotePlaintext ret;
+      ////      NotePlaintext ret;
       ////      ss >> ret;
       ////
       ////      byte[] cmu_expected;

@@ -9,7 +9,6 @@ import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 
 public class TransactionBuilder {
 
-  int nHeight;
   //  CKeyStore keystore;
   //  CMutableTransaction mtx;
 
@@ -58,7 +57,7 @@ public class TransactionBuilder {
     //    for (SpendDescriptionInfo spend : spends) {
     //      byte[] cm = spend.note.cm();
     //      byte[] nf = spend.note.nullifier(
-    //          spend.expsk.full_viewing_key(), spend.witness.position());
+    //          spend.expsk.fullViewingKey(), spend.witness.position());
     //
     //      ByteArray.isEmpty();
     //      if (!cm || !nf) {
@@ -73,7 +72,7 @@ public class TransactionBuilder {
     //      SpendDescription sdesc;
     //      if (!librustzcash_sapling_spend_proof(
     //          ctx,
-    //          spend.expsk.full_viewing_key().ak.begin(),
+    //          spend.expsk.fullViewingKey().ak.begin(),
     //          spend.expsk.nsk.begin(),
     //          spend.note.d.data(),
     //          spend.note.r.begin(),
@@ -101,7 +100,7 @@ public class TransactionBuilder {
     //        return TransactionBuilderResult("Output is invalid");
     //      }
     //
-    //      SaplingNotePlaintext notePlaintext (output.note, output.memo);
+    //      NotePlaintext notePlaintext (output.note, output.memo);
     //
     //      auto res = notePlaintext.encrypt(output.note.pk_d);
     //      if (!res) {
