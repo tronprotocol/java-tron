@@ -35,6 +35,7 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Slf4j(topic = "DB")
 @Getter // only for unit test
 public abstract class AbstractRevokingStore implements RevokingDatabase {
+  private static String ACTIVE_DIALOG_POSITIVE = "activeDialog has to be greater than 0";
 
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
@@ -168,7 +169,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void merge() {
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     if (activeDialog == 1 && stack.size() == 1) {
@@ -224,7 +225,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     }
 
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     disabled = true;
@@ -248,7 +249,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void commit() {
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     --activeDialog;

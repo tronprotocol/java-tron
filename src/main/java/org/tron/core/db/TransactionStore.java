@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import java.util.List;
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,7 +117,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
           indexHelper.remove(item.getInstance());
         }
       } catch (StoreException e) {
-        return;
+        e.printStackTrace();
       }
     }
   }
