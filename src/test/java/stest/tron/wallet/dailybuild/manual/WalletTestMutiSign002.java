@@ -153,7 +153,6 @@ public class WalletTestMutiSign002 {
     manager2Address = ecKey4.getAddress();
     manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -246,6 +245,7 @@ public class WalletTestMutiSign002 {
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
     final Long beforeExchangeToken2Balance = exchangeIdInfo.get().getSecondTokenBalance();
 
+
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -302,6 +302,7 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true, description = "MutiSign for withdraw exchange")
   public void test5WithdrawExchange() {
+
 
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
@@ -365,7 +366,6 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true, description = "MutiSign for transaction exchange")
   public void test6TransactionExchange() {
-
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -426,8 +426,10 @@ public class WalletTestMutiSign002 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
+
   @Test(enabled = true, description = "GetExchangeListPaginated after "
       + "MutiSign exchange kind of transaction")
+
   public void test7GetExchangeListPaginated() {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(0);

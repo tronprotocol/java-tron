@@ -89,7 +89,7 @@ public class ContractScenario011 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true,description = "Deploy Erc721 contract \"Kitty Core\"")
+  @Test(enabled = true, description = "Deploy Erc721 contract \"Kitty Core\"")
   public void deployErc721KittyCore() {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress, 100000000L,
         0, 1, deployKey, blockingStubFull));
@@ -139,7 +139,7 @@ public class ContractScenario011 {
         + "000000000000000000100";
   }
 
-  @Test(enabled = true,description = "Deploy Erc721 contract \"Sale Clock Auction\"")
+  @Test(enabled = true, description = "Deploy Erc721 contract \"Sale Clock Auction\"")
   public void deploySaleClockAuction() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
@@ -173,7 +173,7 @@ public class ContractScenario011 {
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
   }
 
-  @Test(enabled = true,description = "Deploy Erc721 contract \"Siring Clock Auction\"")
+  @Test(enabled = true, description = "Deploy Erc721 contract \"Siring Clock Auction\"")
   public void deploySiringClockAuction() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
@@ -207,7 +207,7 @@ public class ContractScenario011 {
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
   }
 
-  @Test(enabled = true,description = "Deploy Erc721 contract \"Gene Science Interface\"")
+  @Test(enabled = true, description = "Deploy Erc721 contract \"Gene Science Interface\"")
   public void deployGeneScienceInterface() {
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(deployAddress,
         blockingStubFull);
@@ -241,7 +241,7 @@ public class ContractScenario011 {
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
   }
 
-  @Test(enabled = true,description = "Set three contract address for Kitty Core, "
+  @Test(enabled = true, description = "Set three contract address for Kitty Core, "
       + "set three CXO roles")
   public void triggerToSetThreeContractAddressToKittyCore() {
     //Set SaleAuctionAddress to kitty core.
@@ -340,7 +340,7 @@ public class ContractScenario011 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
-  @Test(enabled = true,description = "Create Gen0 cat")
+  @Test(enabled = true, description = "Create Gen0 cat")
   public void triggerUseTriggerEnergyUsage() {
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] triggerUseTriggerEnergyUsageAddress = ecKey3.getAddress();
