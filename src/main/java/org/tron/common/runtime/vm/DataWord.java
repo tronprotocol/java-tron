@@ -318,7 +318,7 @@ public class DataWord implements Comparable<DataWord> {
     public void div(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO());
+            this.and(ZERO);
             return;
         }
 
@@ -330,7 +330,7 @@ public class DataWord implements Comparable<DataWord> {
     public void sDiv(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO());
+            this.and(ZERO);
             return;
         }
 
@@ -354,7 +354,7 @@ public class DataWord implements Comparable<DataWord> {
     public void mod(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO());
+            this.and(ZERO);
             return;
         }
 
