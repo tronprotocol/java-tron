@@ -8,7 +8,7 @@ public class PRF {
     byte[] ask = null;
     byte t = 0x00;
     byte[] tmp = prfExpand(sk, t);
-    Librustzcash.librustzcash_to_scalar(tmp, ask);
+    Librustzcash.librustzcashToScalar(tmp, ask);
     return ask;
   }
 
@@ -16,7 +16,7 @@ public class PRF {
     byte[] nsk = null;
     byte t = 0x01;
     byte[] tmp = prfExpand(sk, t);
-    Librustzcash.librustzcash_to_scalar(tmp, nsk);
+    Librustzcash.librustzcashToScalar(tmp, nsk);
     return nsk;
   }
 

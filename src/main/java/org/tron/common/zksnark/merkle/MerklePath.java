@@ -22,4 +22,10 @@ public class MerklePath {
   public List<Boolean> getIndex() {
     return this.index;
   }
+
+  //todo:
+  public byte[] encode() {
+
+    return null;
+  }
 }

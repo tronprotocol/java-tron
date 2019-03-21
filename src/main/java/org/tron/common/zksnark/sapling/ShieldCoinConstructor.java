@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.sapling.ShieldWallet.SaplingVoucher;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
@@ -21,6 +21,8 @@ import org.tron.core.Wallet;
 
 public class ShieldCoinConstructor {
 
+  private static long fee = 10_000_000L;
+
   private PaymentAddress shieldFromAddr;
   private ExtendedSpendingKey spendingKey;
 
@@ -31,6 +33,8 @@ public class ShieldCoinConstructor {
 
   private boolean isFromTAddress = false;
   private boolean isToTAddress = false;
+
+  private long targetAmount = 10_000_000L;
 
   public ShieldCoinConstructor(String fromAddr, List<Recipient> outputs) {
 
@@ -96,6 +100,8 @@ public class ShieldCoinConstructor {
       nTotalOut += recipient.value;
     }
 
+    targetAmount = nTotalOut + fee;
+
     if (this.tOutputs.size() != 0 && this.zOutputs.size() != 0) {
       throw new RuntimeException(
           "Transferring to two kind of addresses at the same time is not supported");
@@ -104,10 +110,9 @@ public class ShieldCoinConstructor {
     if (isFromTAddress && isToTAddress) {
       throw new RuntimeException("Transparent transfer is not supported");
     }
-
   }
 
-  public Boolean build() {
+  public TransactionBuilderResult build() {
 
     // todo：check value
 
@@ -115,7 +120,7 @@ public class ShieldCoinConstructor {
 
     byte[] ovk = null;
     if (isFromTAddress) {
-      //todo:get from input params
+      // todo:get from input params
       long value = 0L;
       builder.AddTransparentInput(fromAddress, value);
       HDSeed seed = KeyStore.seed;
@@ -128,7 +133,6 @@ public class ShieldCoinConstructor {
 
       // Get various necessary keys
       ExpandedSpendingKey expsk = spendingKey.getExpsk();
-
       ovk = expsk.fullViewingKey().getOvk();
 
       // Select Sapling notes
@@ -139,30 +143,32 @@ public class ShieldCoinConstructor {
         ops.add(t.op);
         notes.add(t.note);
         sum += t.note.value;
-        //      if (sum >= targetAmount) {
-        //        break;
-        //      }
+        if (sum >= targetAmount) {
+          break;
+        }
       }
 
-      // Fetch Sapling anchor and witnesses
+      // Fetch ShieldNote anchor and voucher
       byte[] anchor = null;
-      List<Optional<SaplingVoucher>> witnesses = null;
+      List<Optional<IncrementalMerkleVoucherContainer>> voucher = null;
 
-      ShieldWallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
+      ShieldWallet.getNoteVouchers(ops, voucher, anchor);
 
       // Add Sapling spends
       for (int i = 0; i < notes.size(); i++) {
-        if (!witnesses.get(i).isPresent()) {
-          throw new RuntimeException("Missing witness for Sapling note");
+        if (!voucher.get(i).isPresent()) {
+          throw new RuntimeException("Missing voucher for shield note");
         }
-        builder.AddSaplingSpend(expsk, notes.get(i), anchor, witnesses.get(i).get());
+        builder.AddNoteSpend(expsk, notes.get(i), anchor, voucher.get(i).get());
       }
     }
 
     if (isToTAddress) {
-      // Add transparent outputs
-      // ...
-    } else {  // Add Sapling outputs
+      for (Recipient out : tOutputs) {
+        builder.AddTransparentOutput(out.address, out.value);
+      }
+    } else {
+      // Add Sapling outputs
       for (Recipient r : zOutputs) {
         String address = r.address;
         Long value = r.value;
@@ -172,22 +178,14 @@ public class ShieldCoinConstructor {
         if (addr == null) {
           throw new RuntimeException("");
         }
-        PaymentAddress to = addr;
 
         byte[] memo = ByteArray.fromHexString(hexMemo);
 
-        builder.AddSaplingOutput(ovk, to, value, memo);
+        builder.AddSaplingOutput(ovk, addr, value, memo);
       }
     }
 
-
-
-    // Build the transaction
-    TransactionBuilderResult result = builder.Build();
-
-    // Send the transaction
-    // ...
-    return null;
+    return builder.Build();
   }
 
   private boolean findUnspentNotes() {

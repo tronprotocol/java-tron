@@ -3,6 +3,7 @@ package org.tron.common.zksnark.sapling;
 import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import java.util.List;
+import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
@@ -11,7 +12,6 @@ import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
-import org.tron.core.Wallet;
 
 public class RpcWallet {
 
@@ -54,8 +54,8 @@ public class RpcWallet {
 
     // init data for test
     RawHDSeed rawHDSeed = new RawHDSeed();
-    seed.seed = rawHDSeed;
-    seed.seed.data = aa;
+    seed.rawSeed = rawHDSeed;
+    seed.rawSeed.data = aa;
 
     if (seed == null) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
@@ -105,7 +105,7 @@ public class RpcWallet {
 
     ShieldCoinConstructor constructor =
         new ShieldCoinConstructor(fromAddr, outputs);
-    constructor.build();
+    TransactionBuilderResult result = constructor.build();
 //    broadcastTX();
   }
 
