@@ -27,7 +27,6 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.db.ByteArrayWrapper;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
@@ -45,9 +44,15 @@ public class DataWord implements Comparable<DataWord> {
     public static final int MAX_POW = 256;
     public static final BigInteger _2_256 = BigInteger.valueOf(2).pow(256);
     public static final BigInteger MAX_VALUE = _2_256.subtract(BigInteger.ONE);
-    public static final DataWord ZERO = new DataWord(new byte[32]);      // don't push it in to the stack
-    public static final DataWord ZERO_EMPTY_ARRAY = new DataWord(new byte[0]);      // don't push it in to the stack
-    public static final DataWord ONE = DataWord.of((byte) 1);
+    // TODO not safe
+//    public static final DataWord ZERO = new DataWord(new byte[32]);      // don't push it in to the stack
+
+    public static DataWord ONE() {
+        return DataWord.of((byte)1);
+    }
+    public static DataWord ZERO() {
+        return new DataWord(new byte[32]);
+    }
 
     private byte[] data = new byte[32];
 
@@ -71,14 +76,14 @@ public class DataWord implements Comparable<DataWord> {
 
     public static DataWord of(byte[] data) {
         if (data == null || data.length == 0) {
-            return DataWord.ZERO;
+            return DataWord.ZERO();
         }
 
         int leadingZeroBits = numberOfLeadingZeros(data);
         int valueBits = 8 * data.length - leadingZeroBits;
         if (valueBits <= 8) {
-            if (data[data.length - 1] == 0) return DataWord.ZERO;
-            if (data[data.length - 1] == 1) return DataWord.ONE;
+            if (data[data.length - 1] == 0) return DataWord.ZERO();
+            if (data[data.length - 1] == 1) return DataWord.ONE();
         }
 
         if (data.length == 32)
@@ -269,23 +274,15 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     public void negate() {
-
         if (this.isZero()) return;
 
-        for (int i = 0; i < this.data.length; ++i) {
-            this.data[i] = (byte) ~this.data[i];
-        }
-
-        for (int i = this.data.length - 1; i >= 0; --i) {
-            this.data[i] = (byte) (1 + this.data[i] & 0xFF);
-            if (this.data[i] != 0) break;
-        }
+        bnot();
+        add(DataWord.ONE());
     }
 
     public void bnot() {
         if (this.isZero()) {
             this.data = ByteUtil.copyToArray(MAX_VALUE);
-            return;
         }
         this.data = ByteUtil.copyToArray(MAX_VALUE.subtract(this.value()));
     }
@@ -320,7 +317,7 @@ public class DataWord implements Comparable<DataWord> {
     public void div(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO);
+            this.and(ZERO());
             return;
         }
 
@@ -332,7 +329,7 @@ public class DataWord implements Comparable<DataWord> {
     public void sDiv(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO);
+            this.and(ZERO());
             return;
         }
 
@@ -356,7 +353,7 @@ public class DataWord implements Comparable<DataWord> {
     public void mod(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO);
+            this.and(ZERO());
             return;
         }
 
@@ -367,7 +364,7 @@ public class DataWord implements Comparable<DataWord> {
     public void sMod(DataWord word) {
 
         if (word.isZero()) {
-            this.and(ZERO);
+            this.and(ZERO());
             return;
         }
 
@@ -492,7 +489,7 @@ public class DataWord implements Comparable<DataWord> {
      */
     public DataWord shiftLeft(DataWord arg) {
         if (arg.value().compareTo(BigInteger.valueOf(MAX_POW)) >= 0) {
-            return DataWord.ZERO;
+            return DataWord.ZERO();
         }
 
         BigInteger result = value().shiftLeft(arg.intValueSafe());
@@ -506,7 +503,7 @@ public class DataWord implements Comparable<DataWord> {
      */
     public DataWord shiftRight(DataWord arg) {
         if (arg.value().compareTo(BigInteger.valueOf(MAX_POW)) >= 0) {
-            return DataWord.ZERO;
+            return DataWord.ZERO();
         }
 
         BigInteger result = value().shiftRight(arg.intValueSafe());
@@ -521,11 +518,11 @@ public class DataWord implements Comparable<DataWord> {
     public DataWord shiftRightSigned(DataWord arg) {
         if (arg.value().compareTo(BigInteger.valueOf(MAX_POW)) >= 0) {
             if (this.isNegative()) {
-                DataWord result = DataWord.ONE;
+                DataWord result = ONE();
                 result.negate();
                 return result;
             } else {
-                return DataWord.ZERO;
+                return ZERO();
             }
         }
 
