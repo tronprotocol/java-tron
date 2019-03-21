@@ -2028,16 +2028,19 @@ public class Manager {
   }
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule){
-    if (Objects.isNull(getDeferredTransactionCache())
-        ||Objects.isNull(getDeferredTransactionIdIndexStore())) {
-      return;
+    List<DeferredTransactionCapsule> deferredTransactionList;
+    if (Objects.nonNull(getDeferredTransactionCache())
+        && Objects.nonNull(getDeferredTransactionIdIndexCache())) {
+      // add deferred transactions to header of pendingTransactions
+      deferredTransactionList = getDeferredTransactionCache()
+          .getScheduledTransactions(blockCapsule.getTimeStamp());
+    } else {
+      deferredTransactionList = getDeferredTransactionStore()
+          .getScheduledTransactions(blockCapsule.getTimeStamp());
     }
-
-    // add deferred transactions to header of pendingTransactions
-    List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionCache()
-            .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
-      TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
+      TransactionCapsule trxCapsule = new TransactionCapsule(
+          deferredTransaction.getDeferredTransaction().getTransaction());
       pendingTransactions.add(0, trxCapsule);
     }
 
@@ -2103,22 +2106,25 @@ public class Manager {
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
-    if (Objects.isNull(getDeferredTransactionCache()) ||
-        Objects.isNull(getDeferredTransactionIdIndexCache())) {
-      return false;
+    DeferredTransactionCapsule deferredTransactionCapsule;
+    if (Objects.nonNull(getDeferredTransactionCache()) && Objects.nonNull(getDeferredTransactionIdIndexCache())) {
+      deferredTransactionCapsule = getDeferredTransactionCache().getByTransactionId(transactionId);
+    } else {
+      deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
     }
-
-    DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionCache().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
       logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
 
-    getDeferredTransactionCache().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexCache().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
+    if (Objects.nonNull(getDeferredTransactionCache())) {
+      getDeferredTransactionCache().removeDeferredTransaction(deferredTransactionCapsule);
+    }
+    if (Objects.nonNull(getDeferredTransactionIdIndexCache())) {
+      getDeferredTransactionIdIndexCache().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
+    }
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
-
 
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 

@@ -19,10 +19,10 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-public class DeferredTransactionCacheTest {
-  private static String dbPath = "output_deferred_transactionCache_test";
-  private static String dbDirectory = "db_deferred_transactionCache_test";
-  private static String indexDirectory = "index_deferred_transactionCache_test";
+public class DeferredTransactionStoreTest {
+  private static String dbPath = "output_deferred_transaction_store_test";
+  private static String dbDirectory = "db_deferred_transaction_store_test";
+  private static String indexDirectory = "index_deferred_transaction_store_test";
   private static TronApplicationContext context;
   private static Manager dbManager;
 
@@ -49,8 +49,8 @@ public class DeferredTransactionCacheTest {
 
   @Test
   public void RemoveDeferredTransactionTest() {
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
+    DeferredTransactionStore deferredTransactionStore = dbManager.getDeferredTransactionStore();
+    DeferredTransactionIdIndexStore deferredTransactionIdIndexStore = dbManager.getDeferredTransactionIdIndexStore();
     // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
@@ -61,21 +61,21 @@ public class DeferredTransactionCacheTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
         buildDeferredTransaction(trx.getInstance()));
-    deferredTransactionCache.put(deferredTransactionCapsule);
-    deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
+    deferredTransactionStore.put(deferredTransactionCapsule);
+    deferredTransactionIdIndexStore.put(deferredTransactionCapsule);
 
     DeferredTransactionCapsule capsule =
-        deferredTransactionCache.getByTransactionId(deferredTransactionCapsule.getTransactionId());
+        deferredTransactionStore.getByTransactionId(deferredTransactionCapsule.getTransactionId());
     Assert.assertNotNull(capsule);
-    deferredTransactionCache.removeDeferredTransaction(deferredTransactionCapsule);
-    capsule = deferredTransactionCache.getByTransactionId(deferredTransactionCapsule.getTransactionId());
+    deferredTransactionStore.removeDeferredTransaction(deferredTransactionCapsule);
+    capsule = deferredTransactionStore.getByTransactionId(deferredTransactionCapsule.getTransactionId());
     Assert.assertNull(capsule);
   }
 
   @Test
   public void GetScheduledTransactionsTest (){
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
+    DeferredTransactionStore deferredTransactionStore = dbManager.getDeferredTransactionStore();
+    DeferredTransactionIdIndexStore deferredTransactionIdIndexStore = dbManager.getDeferredTransactionIdIndexStore();
     // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
@@ -86,17 +86,17 @@ public class DeferredTransactionCacheTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
         buildDeferredTransaction(trx.getInstance()));
-    deferredTransactionCache.put(
+    deferredTransactionStore.put(
         new DeferredTransactionCapsule(deferredTransactionCapsule.getInstance()
             .toBuilder().setDelayUntil(System.currentTimeMillis() + 1000).build()));
-    deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
-    Assert.assertNotNull(dbManager.getDeferredTransactionCache().getScheduledTransactions(System.currentTimeMillis()));
+    deferredTransactionIdIndexStore.put(deferredTransactionCapsule);
+    Assert.assertNotNull(dbManager.getDeferredTransactionStore().getScheduledTransactions(System.currentTimeMillis()));
   }
 
   @Test
   public void GetScheduledTransactionsTest2 (){
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
+    DeferredTransactionStore deferredTransactionStore = dbManager.getDeferredTransactionStore();
+    DeferredTransactionIdIndexStore deferredTransactionIdIndexStore = dbManager.getDeferredTransactionIdIndexStore();
 
     for (int i = 999; i >= 0; i --) {
       TransferContract tc =
@@ -109,14 +109,14 @@ public class DeferredTransactionCacheTest {
       DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
           buildDeferredTransaction(trx.getInstance()));
 
-      deferredTransactionCache.put(new DeferredTransactionCapsule(deferredTransactionCapsule.getInstance().toBuilder().setDelayUntil(i).build()));
-      deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
+      deferredTransactionStore.put(new DeferredTransactionCapsule(deferredTransactionCapsule.getInstance().toBuilder().setDelayUntil(i).build()));
+      deferredTransactionIdIndexStore.put(deferredTransactionCapsule);
     }
     // save in database with block number
-    Assert.assertEquals(100, dbManager.getDeferredTransactionCache().getScheduledTransactions(99).size());
-    Assert.assertEquals(500, dbManager.getDeferredTransactionCache().getScheduledTransactions(499).size());
-    Assert.assertEquals(334, dbManager.getDeferredTransactionCache().getScheduledTransactions(333).size());
-    Assert.assertEquals(178, dbManager.getDeferredTransactionCache().getScheduledTransactions(177).size());
+    Assert.assertEquals(100, dbManager.getDeferredTransactionStore().getScheduledTransactions(99).size());
+    Assert.assertEquals(500, dbManager.getDeferredTransactionStore().getScheduledTransactions(499).size());
+    Assert.assertEquals(334, dbManager.getDeferredTransactionStore().getScheduledTransactions(333).size());
+    Assert.assertEquals(178, dbManager.getDeferredTransactionStore().getScheduledTransactions(177).size());
 
   }
 

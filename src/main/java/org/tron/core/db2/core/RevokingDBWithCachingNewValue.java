@@ -200,7 +200,15 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
         result.add(collection.get(p).getBytes());
       }
     }
-    List<byte[]> list = ((DeferredTransactionCacheDB) ((SnapshotRoot) head.getRoot()).db).getPrevious(key, limit, precision);
+    List<byte[]> list = null;
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == DeferredTransactionCacheDB.class) {
+      list = ((DeferredTransactionCacheDB) ((SnapshotRoot) head.getRoot()).db).getPrevious(key, limit, precision);
+    } else if(((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class){
+      list =  ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
+          .getPrevious(key, limit, precision).values().stream()
+          .collect(Collectors.toList());
+    }
+
     result.addAll(list);
 
     return result.stream().limit(limit).collect(Collectors.toSet());
