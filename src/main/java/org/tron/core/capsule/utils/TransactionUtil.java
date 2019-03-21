@@ -174,6 +174,19 @@ public class TransactionUtil {
     return transaction.toBuilder().setRawData(rawData).build();
   }
 
+  public static boolean validateDeferredTransaction(TransactionCapsule transactionCapsule) {
+    if (transactionCapsule.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
+        || transactionCapsule.getDeferredSeconds() < 0) {
+      logger.warn("deferred transaction delay seconds is illegal");
+      return false;
+    }
+    if (transactionCapsule.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION
+        && transactionCapsule.getDeferredStage() != Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return false;
+    }
+    return true;
+  }
+
   /**
    * Get sender.
    */

@@ -19,6 +19,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -124,8 +125,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
 
-    if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
-        || trx.getDeferredSeconds() < 0) {
+    if (trx.getDeferredSeconds() != 0 && TransactionUtil.validateDeferredTransaction(trx) == false) {
       logger.warn("deferred transaction delay seconds is illegal");
       return false;
     }

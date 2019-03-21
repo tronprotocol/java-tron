@@ -93,6 +93,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -413,8 +414,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
-        || trx.getDeferredSeconds() < 0) {
+    if (trx.getDeferredSeconds() != 0 && TransactionUtil.validateDeferredTransaction(trx) == false) {
       return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
     }
 
