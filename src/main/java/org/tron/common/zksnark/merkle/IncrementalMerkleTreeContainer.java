@@ -62,6 +62,7 @@ public class IncrementalMerkleTreeContainer {
     }
   }
 
+
   public int size() {
 
     int ret = 0;

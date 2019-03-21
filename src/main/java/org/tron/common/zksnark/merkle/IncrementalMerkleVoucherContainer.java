@@ -10,24 +10,24 @@ public class IncrementalMerkleVoucherContainer {
 
   public static Integer DEPTH = IncrementalMerkleTreeContainer.DEPTH;
 
-  private IncrementalMerkleVoucherCapsule witnessCapsule;
+  private IncrementalMerkleVoucherCapsule voucherCapsule;
 
-  public IncrementalMerkleVoucherContainer(IncrementalMerkleVoucherCapsule witnessCapsule) {
-    this.witnessCapsule = witnessCapsule;
+  public IncrementalMerkleVoucherContainer(IncrementalMerkleVoucherCapsule voucherCapsule) {
+    this.voucherCapsule = voucherCapsule;
   }
 
   public IncrementalMerkleVoucherContainer(IncrementalMerkleTreeContainer tree) {
-    this.witnessCapsule = new IncrementalMerkleVoucherCapsule();
-    this.witnessCapsule.setTree(tree.getTreeCapsule());
+    this.voucherCapsule = new IncrementalMerkleVoucherCapsule();
+    this.voucherCapsule.setTree(tree.getTreeCapsule());
   }
 
   private Deque<SHA256Compress> partialPath() {
 
-    Deque<SHA256Compress> uncles = new ArrayDeque<>(witnessCapsule.getFilled());
+    Deque<SHA256Compress> uncles = new ArrayDeque<>(voucherCapsule.getFilled());
 
     if (cursorExist()) {
       uncles.add(
-          witnessCapsule.getCursor().toMerkleTreeContainer().root(witnessCapsule.getCursorDepth()));
+          voucherCapsule.getCursor().toMerkleTreeContainer().root(voucherCapsule.getCursorDepth()));
     }
 
     return uncles;
@@ -36,58 +36,62 @@ public class IncrementalMerkleVoucherContainer {
   public void append(SHA256Compress obj) {
 
     if (cursorExist()) {
-      IncrementalMerkleTreeCapsule cursor = witnessCapsule.getCursor();
+      IncrementalMerkleTreeCapsule cursor = voucherCapsule.getCursor();
       cursor.toMerkleTreeContainer().append(obj);
-      witnessCapsule.setCursor(cursor);
+      voucherCapsule.setCursor(cursor);
 
-      long cursorDepth = witnessCapsule.getCursorDepth();
+      long cursorDepth = voucherCapsule.getCursorDepth();
 
-      if (witnessCapsule.getCursor().toMerkleTreeContainer().isComplete(cursorDepth)) {
-        witnessCapsule.addFilled(
-            witnessCapsule.getCursor().toMerkleTreeContainer().root(cursorDepth));
-        witnessCapsule.clearCursor();
+      if (voucherCapsule.getCursor().toMerkleTreeContainer().isComplete(cursorDepth)) {
+        voucherCapsule.addFilled(
+            voucherCapsule.getCursor().toMerkleTreeContainer().root(cursorDepth));
+        voucherCapsule.clearCursor();
       }
     } else {
       long nextDepth =
-          witnessCapsule
+          voucherCapsule
               .getTree()
               .toMerkleTreeContainer()
-              .nextDepth(witnessCapsule.getFilled().size());
+              .nextDepth(voucherCapsule.getFilled().size());
 
-      witnessCapsule.setCursorDepth(nextDepth);
+      voucherCapsule.setCursorDepth(nextDepth);
 
       if (nextDepth >= DEPTH) {
         throw new RuntimeException("tree is full");
       }
 
       if (nextDepth == 0) {
-        witnessCapsule.addFilled(obj);
+        voucherCapsule.addFilled(obj);
       } else {
         IncrementalMerkleTreeCapsule cursor = new IncrementalMerkleTreeCapsule();
         cursor.toMerkleTreeContainer().append(obj);
-        witnessCapsule.setCursor(cursor);
+        voucherCapsule.setCursor(cursor);
       }
     }
   }
 
   public IncrementalMerkleVoucherCapsule getVoucherCapsule() {
-    return witnessCapsule;
+    return voucherCapsule;
   }
 
   public MerklePath path() {
-    return witnessCapsule.getTree().toMerkleTreeContainer().path(partialPath());
+    return voucherCapsule.getTree().toMerkleTreeContainer().path(partialPath());
   }
 
   public SHA256Compress element() {
-    return witnessCapsule.getTree().toMerkleTreeContainer().last();
+    return voucherCapsule.getTree().toMerkleTreeContainer().last();
+  }
+
+  public long position() {
+    return voucherCapsule.getTree().toMerkleTreeContainer().size() - 1;
   }
 
   public SHA256Compress root() {
-    return witnessCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
+    return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
 
   public byte[] getMerkleVoucherKey() {
-    OutputPoint outputPoint = witnessCapsule.getOutputPoint();
+    OutputPoint outputPoint = voucherCapsule.getOutputPoint();
 
     if (outputPoint.getHash().isEmpty()) {
       throw new RuntimeException("outputPoint is not initialized");
@@ -100,7 +104,7 @@ public class IncrementalMerkleVoucherContainer {
   }
 
   private boolean cursorExist() {
-    return !witnessCapsule.getCursor().isEmptyTree();
+    return !voucherCapsule.getCursor().isEmptyTree();
   }
 
   public static class OutputPointUtil {
@@ -119,19 +123,19 @@ public class IncrementalMerkleVoucherContainer {
   }
 
   public int size() {
-    return witnessCapsule.getTree().toMerkleTreeContainer().size()
-        + witnessCapsule.getFilled().size()
-        + witnessCapsule.getCursor().toMerkleTreeContainer().size();
+    return voucherCapsule.getTree().toMerkleTreeContainer().size()
+        + voucherCapsule.getFilled().size()
+        + voucherCapsule.getCursor().toMerkleTreeContainer().size();
   }
 
   //for test only
   public void printSize() {
     System.out.println(
         "TreeSize:"
-            + witnessCapsule.getTree().toMerkleTreeContainer().size()
+            + voucherCapsule.getTree().toMerkleTreeContainer().size()
             + ",FillSize:"
-            + witnessCapsule.getFilled().size()
+            + voucherCapsule.getFilled().size()
             + ",CursorSize:"
-            + witnessCapsule.getCursor().toMerkleTreeContainer().size());
+            + voucherCapsule.getCursor().toMerkleTreeContainer().size());
   }
 }

@@ -102,19 +102,44 @@ public class Librustzcash {
     return true;
   }
 
-  public static ProvingContext librustzcashIvkToPkd(byte[] value, byte[] data, byte[] pk_d) {
 
-    return null;
+  public static boolean librustzcashSaplingSpendProof(
+      ProvingContext ctx,
+      byte[] ak,
+      byte[] nsk,
+      byte[] d,
+      byte[] r,
+      byte[] alpha,
+      long value,
+      byte[] anchor,
+      byte[] voucherPath,
+      byte[] cv,
+      byte[] rk,
+      byte[] zkproof) {
+    return false;
   }
 
-  public static void librustzcash_to_scalar(byte[] value, byte[] data) {
+  public static boolean librustzcashSaplingOutputProof(
+      ProvingContext ctx,
+      byte[] esk,
+      byte[] d,
+      byte[] pk_d,
+      byte[] r,
+      long value,
+      byte[] cv,
+      byte[] zkproof) {
+    return false;
   }
 
-  public static ProvingContext librustzcashSaplingProvingCtxFree() {
-    return null;
+
+  public static void librustzcashToScalar(byte[] value, byte[] data) {
   }
 
-  public static boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] d, byte[] pk_d) {
+  public static void librustzcashSaplingProvingCtxFree(ProvingContext ctx) {
+    return;
+  }
+
+  public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
 
     return true;
   }

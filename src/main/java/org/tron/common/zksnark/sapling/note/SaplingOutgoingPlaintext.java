@@ -1,12 +1,15 @@
 package org.tron.common.zksnark.sapling.note;
 
 import java.util.Optional;
+import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.note.NoteEncryption.OutCiphertext;
+import org.tron.common.zksnark.sapling.note.NoteEncryption.OutPlaintext;
 
+@AllArgsConstructor
 public class SaplingOutgoingPlaintext {
 
-  byte[] pk_d;
-  byte[] esk;
+  public byte[] pk_d;
+  public byte[] esk;
 
   Optional<SaplingOutgoingPlaintext> decrypt(
       OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
@@ -29,16 +32,14 @@ public class SaplingOutgoingPlaintext {
     return null;
   }
 
-  OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
+  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
 
-    //    // Create the plaintext
-    //    CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
-    //    ss << ( * this);
-    //    OutPlaintext pt;
-    //    assert (pt.size() == ss.size());
-    //    memcpy(pt[0], ss[0], pt.size());
-    //
-    //    return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
+    OutPlaintext pt = this.encode();
+    return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
+  }
+
+  // todo:
+  private OutPlaintext encode() {
     return null;
   }
 }

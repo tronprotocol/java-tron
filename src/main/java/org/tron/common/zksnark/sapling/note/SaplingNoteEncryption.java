@@ -10,19 +10,20 @@ import org.tron.common.zksnark.sapling.note.NoteEncryption.OutPlaintext;
 public class SaplingNoteEncryption {
 
   // Ephemeral public key
-  byte[] epk;
+  public byte[] epk;
 
   // Ephemeral secret key
-  byte[] esk;
+  public byte[] esk;
 
-  boolean already_encrypted_enc;
-  boolean already_encrypted_out;
+  public boolean already_encrypted_enc;
+  public boolean already_encrypted_out;
 
+  //todo:
   public static Optional<SaplingNoteEncryption> FromDiversifier(DiversifierT d) {
     return null;
   }
 
-  Optional<EncCiphertext> encrypt_to_recipient(byte[] pk_d, EncPlaintext message) {
+  Optional<EncCiphertext> encryptToRecipient(byte[] pk_d, EncPlaintext message) {
     return null;
   }
 
