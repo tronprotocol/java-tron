@@ -31,11 +31,11 @@ public class BackupDbUtil {
   @Getter
   private long lastBackupHeight = 0;
 
-  public enum STATE {
+  public enum State {
     BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
     public int status;
 
-    private STATE(int status) {
+    private State(int status) {
       this.status = status;
     }
 
@@ -43,7 +43,7 @@ public class BackupDbUtil {
       return status;
     }
 
-    public static STATE valueOf(int value) {
+    public static State valueOf(int value) {
       switch (value) {
         case 1:
           return BAKINGONE;
@@ -81,18 +81,18 @@ public class BackupDbUtil {
   }
 
   private void switchBackupState() {
-    switch (STATE.valueOf(getBackupState())) {
+    switch (State.valueOf(getBackupState())) {
       case BAKINGONE:
-        setBackupState(STATE.BAKEDONE.getStatus());
+        setBackupState(State.BAKEDONE.getStatus());
         break;
       case BAKEDONE:
-        setBackupState(STATE.BAKEDTWO.getStatus());
+        setBackupState(State.BAKEDTWO.getStatus());
         break;
       case BAKINGTWO:
-        setBackupState(STATE.BAKEDTWO.getStatus());
+        setBackupState(State.BAKEDTWO.getStatus());
         break;
       case BAKEDTWO:
-        setBackupState(STATE.BAKEDONE.getStatus());
+        setBackupState(State.BAKEDONE.getStatus());
         break;
       default:
         break;
@@ -123,7 +123,7 @@ public class BackupDbUtil {
 
     long t1 = System.currentTimeMillis();
     try {
-      switch (STATE.valueOf(getBackupState())) {
+      switch (State.valueOf(getBackupState())) {
         case BAKINGONE:
           deleteBackup(DB_BACKUP_INDEX1);
           backup(DB_BACKUP_INDEX1);
