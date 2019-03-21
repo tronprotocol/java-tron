@@ -93,9 +93,9 @@ public class Librustzcash {
 
     HDSeed seed = KeyStore.seed;
     RawHDSeed rawHDSeed = new RawHDSeed();
-    seed.seed = rawHDSeed;
-    seed.seed.data = aa;
-    RawHDSeed rawSeed = seed.getSeed();
+    seed.rawSeed = rawHDSeed;
+    seed.rawSeed.data = aa;
+    RawHDSeed rawSeed = seed.getRawSeed();
 
     int ZIP32_XSK_SIZE = 169; // byte
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];

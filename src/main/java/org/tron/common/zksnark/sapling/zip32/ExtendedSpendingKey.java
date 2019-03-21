@@ -37,7 +37,7 @@ public class ExtendedSpendingKey {
 
   // HD钱包生成地址
   public static ExtendedSpendingKey Master(HDSeed seed) {
-    RawHDSeed rawSeed = seed.getSeed();
+    RawHDSeed rawSeed = seed.getRawSeed();
 
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
     Librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().length, m_bytes);

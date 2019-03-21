@@ -19,7 +19,6 @@ import org.tron.common.zksnark.sapling.note.NoteData;
 import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.transaction.OutDesc;
-import org.tron.common.zksnark.sapling.transaction.OutputDescription;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 
@@ -27,6 +26,7 @@ public class ShieldWallet {
 
   public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = Maps.newHashMap();
   public static Map<OutPoint, NoteData> mapNoteData = Maps.newHashMap();
+
 
   public class SaplingVoucher {
 
