@@ -178,10 +178,25 @@ public class PublicMethedForMutiSign {
   public static boolean broadcastTransaction(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Return response = blockingStubFull.broadcastTransaction(transaction);
+    int i = 10;
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      try {
+        Thread.sleep(500);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeat times = " + (10 - i));
+    }
+
     if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      logger.info(Integer.toString(response.getCode().getNumber()));
-      logger.info(Integer.toString(response.getCodeValue()));
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      //logger.info(Integer.toString(response.getCode().getNumber()));
+      //logger.info(Integer.toString(response.getCodeValue()));
       return false;
     } else {
       return true;
@@ -1311,12 +1326,13 @@ public class PublicMethedForMutiSign {
     }
     transaction = signTransaction(ecKey, transaction);
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    //if (response.getResult() == false) {
+    //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+    //return false;
+    //} else {
+    //return true;
+    //}
+    return response.getResult();
   }
 
   /**
@@ -1602,22 +1618,22 @@ public class PublicMethedForMutiSign {
     byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    int i = 10;
+//    int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeate times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
+      //logger.info("Code = " + response.getCode());
+      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -2424,22 +2440,22 @@ public class PublicMethedForMutiSign {
     byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    int i = 10;
+    //int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeate times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
+      //logger.info("Code = " + response.getCode());
+      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -2592,23 +2608,23 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
+    //int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeat times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
+//    if (response.getResult() == false) {
+//      //logger.info("Code = " + response.getCode());
+//      //logger.info("Message = " + response.getMessage().toStringUtf8());
+//    }
     return response.getResult();
   }
 
@@ -2677,22 +2693,22 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
+//    int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeat times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
+      //logger.info("Code = " + response.getCode());
+      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -2770,22 +2786,22 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
+    //int i = 10;
     Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeat times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
+      //logger.info("Code = " + response.getCode());
+      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -3015,6 +3031,10 @@ public class PublicMethedForMutiSign {
         e.printStackTrace();
       }
     }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response;
   }
 
@@ -3092,23 +3112,23 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+    //int i = 10;
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeat times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
+//    if (response.getResult() == false) {
+//      logger.info("Code = " + response.getCode());
+//      logger.info("Message = " + response.getMessage().toStringUtf8());
+//    }
     return response.getResult();
   }
 
@@ -3411,23 +3431,23 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+    //int i = 10;
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
+//    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+//        && i > 0) {
+//      i--;
+//      response = blockingStubFull.broadcastTransaction(transaction);
+//      logger.info("repeat times = " + (11 - i));
+//      try {
+//        Thread.sleep(300);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
+//    if (response.getResult() == false) {
+//      logger.info("Code = " + response.getCode());
+//      logger.info("Message = " + response.getMessage().toStringUtf8());
+//    }
     return response;
   }
 
@@ -3804,23 +3824,8 @@ public class PublicMethedForMutiSign {
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    GrpcAPI.Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -4309,13 +4314,15 @@ public class PublicMethedForMutiSign {
       e.printStackTrace();
     }
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    return broadcastTransaction(transaction, blockingStubFull);
+    //Return response = broadcastTransaction1(transaction, blockingStubFull);
+    //if (response.getResult() == false) {
+    // logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+    // return false;
+    //} else {
+    //  return true;
+    //}
+    //return response.getResult();
   }
 
 
