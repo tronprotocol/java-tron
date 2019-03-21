@@ -2038,6 +2038,7 @@ public class Manager {
       deferredTransactionList = getDeferredTransactionStore()
           .getScheduledTransactions(blockCapsule.getTimeStamp());
     }
+
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(
           deferredTransaction.getDeferredTransaction().getTransaction());
