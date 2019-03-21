@@ -180,11 +180,12 @@ public class TransactionUtil {
       logger.warn("deferred transaction delay seconds is illegal");
       return false;
     }
+    boolean result = true;
     if (transactionCapsule.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION
         && transactionCapsule.getDeferredStage() != Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      return false;
+      result = false;
     }
-    return true;
+    return result;
   }
 
   /**

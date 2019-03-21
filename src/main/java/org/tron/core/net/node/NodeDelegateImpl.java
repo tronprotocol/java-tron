@@ -125,7 +125,7 @@ public class NodeDelegateImpl implements NodeDelegate {
       dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
     }
 
-    if (trx.getDeferredSeconds() != 0 && TransactionUtil.validateDeferredTransaction(trx) == false) {
+    if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
       logger.warn("deferred transaction delay seconds is illegal");
       return false;
     }

@@ -95,9 +95,6 @@ service Wallet {
   rpc CreateCancelDeferredTransactionContract (CancelDeferredTransactionContract) returns (TransactionExtention) {
   };
 
-  rpc GetDeferredTransactionById (BytesMessage) returns (DeferredTransaction) {
-  }
-
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };
@@ -397,6 +394,16 @@ service Wallet {
       body: "*"
       additional_bindings {
         get: "/wallet/gettransactionbyid"
+      }
+    };
+  }
+
+  rpc GetDeferredTransactionById (BytesMessage) returns (DeferredTransaction) {
+    option (google.api.http) = {
+      post: "/wallet/getdeferredtransactionbyid"
+      body: "*"
+      additional_bindings {
+        get: "/wallet/getdeferredtransactionbyid"
       }
     };
   }
@@ -760,6 +767,17 @@ service WalletSolidity {
       }
     };
   }
+
+  rpc GetDeferredTransactionById (BytesMessage) returns (DeferredTransaction) {
+    option (google.api.http) = {
+      post: "/walletsolidity/getdeferredtransactionbyid"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/getdeferredtransactionbyid"
+      }
+    };
+  }
+
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"

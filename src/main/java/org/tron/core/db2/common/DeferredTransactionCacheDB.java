@@ -22,8 +22,6 @@ public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
     }
   });
 
-  int size = 0;
-
   @Override
   public synchronized  byte[] get(byte[] key) {
     return db.get(Key.of(key));
@@ -39,7 +37,6 @@ public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
       remove(key);
       return;
     }
-    size ++;
     db.put(Key.copyOf(key), value);
   }
 
@@ -57,7 +54,6 @@ public class DeferredTransactionCacheDB implements DB<byte[], byte[]>, Flusher {
   public synchronized  void remove(byte[] key) {
     if (key != null) {
       db.remove(Key.of(key));
-      size --;
     }
   }
 

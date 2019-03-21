@@ -74,7 +74,7 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
     }
     
     ByteString ownerAddress = cancelDeferredTransactionContract.getOwnerAddress();
-    if (sendAddress.equals(ownerAddress) == false) {
+    if (!sendAddress.equals(ownerAddress)) {
       throw new ContractValidateException("not have right to cancel!");
     }
     return true;

@@ -414,7 +414,7 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.getDeferredSeconds() != 0 && TransactionUtil.validateDeferredTransaction(trx) == false) {
+    if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
       return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
     }
 
@@ -1218,9 +1218,7 @@ public class Wallet {
   }
 
   public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
-    if (Objects.isNull(transactionId) ||
-        Objects.isNull(dbManager.getDeferredTransactionCache()) ||
-        Objects.isNull(dbManager.getDeferredTransactionIdIndexCache())){
+    if (Objects.isNull(transactionId)){
       return null;
     }
 

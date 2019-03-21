@@ -18,8 +18,6 @@ import org.tron.core.db.common.WrappedByteArray;
 public class DeferredTransactionIdIndexCacheDB implements DB<byte[], byte[]>, Flusher {
   private Map<Key, byte[]> db = new HashMap<>();
 
-  int size = 0;
-
   @Override
   public synchronized  byte[] get(byte[] key) {
 
@@ -37,8 +35,6 @@ public class DeferredTransactionIdIndexCacheDB implements DB<byte[], byte[]>, Fl
       remove(key);
       return;
     }
-
-    size ++;
     db.put(Key.copyOf(key), value);
   }
 
@@ -56,7 +52,6 @@ public class DeferredTransactionIdIndexCacheDB implements DB<byte[], byte[]>, Fl
   public synchronized  void remove(byte[] key) {
     if (key != null) {
       db.remove(Key.of(key));
-      size --;
     }
   }
 

@@ -2045,8 +2045,6 @@ public class Manager {
           deferredTransaction.getDeferredTransaction().getTransaction());
       pendingTransactions.add(0, trxCapsule);
     }
-
-    return;
   }
 
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
