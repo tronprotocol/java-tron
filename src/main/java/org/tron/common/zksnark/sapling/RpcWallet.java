@@ -10,6 +10,8 @@ import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
+import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
+import org.tron.core.Wallet;
 
 public class RpcWallet {
 
@@ -40,8 +42,21 @@ public class RpcWallet {
     long nCreationTime = System.currentTimeMillis();
     CKeyMetadata metadata = new CKeyMetadata(nCreationTime);
 
+    ///
+    byte [] aa = {
+        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52,
+        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52,
+        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52
+    };
+
     // Try to get the seed
     HDSeed seed = KeyStore.seed;
+
+    // init data for test
+    RawHDSeed rawHDSeed = new RawHDSeed();
+    seed.seed = rawHDSeed;
+    seed.seed.data = aa;
+
     if (seed == null) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
     }
@@ -133,4 +148,9 @@ public class RpcWallet {
 //
 //  }
 
+  public static void main(String[] args) throws Exception {
+    RpcWallet rpcWallet = new RpcWallet();
+    rpcWallet.getNewAddress();
+
+  }
 }

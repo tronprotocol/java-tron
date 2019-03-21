@@ -67,7 +67,8 @@ public class ExtendedSpendingKey {
   }
 
   public PaymentAddress DefaultAddress() {
-    //    return ToXFVK().DefaultAddress();
+    SaplingExtendedFullViewingKey fvk = ToXFVK();
+       // return ToXFVK().DefaultAddress();
     return null;
   }
 
