@@ -12,6 +12,7 @@ public class TransactionBuilder {
   //  CKeyStore keystore;
   //  CMutableTransaction mtx;
 
+  String from;
   List<SpendDescriptionInfo> spends;
   List<OutputDescriptionInfo> outputs;
   //  List<TransparentInputInfo> tIns;
@@ -29,7 +30,11 @@ public class TransactionBuilder {
 
   }
 
-  void AddSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
+  public void AddTransparentInput(String address, long value) {
+
+  }
+
+  public void AddSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     //    {
     //      Note note = new Note(to, value);
     //      outputs.add(new OutputDescriptionInfo(ovk, note, memo));
@@ -45,7 +50,7 @@ public class TransactionBuilder {
   //
   //  void SendChangeTo(CTxDestination&changeAddr);
 
-  TransactionBuilderResult Build() {
+  public TransactionBuilderResult Build() {
     //
     //    //
     //    // Sapling spends and outputs

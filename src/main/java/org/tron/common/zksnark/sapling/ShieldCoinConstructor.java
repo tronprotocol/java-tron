@@ -16,6 +16,7 @@ import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
 import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
+import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.core.Wallet;
 
 public class ShieldCoinConstructor {
@@ -28,7 +29,8 @@ public class ShieldCoinConstructor {
   private List<Recipient> zOutputs;
   private List<NoteEntry> zSaplingInputs;
 
-  private boolean isFromShieldAddress = false;
+  private boolean isFromTAddress = false;
+  private boolean isToTAddress = false;
 
   public ShieldCoinConstructor(String fromAddr, List<Recipient> outputs) {
 
@@ -40,7 +42,7 @@ public class ShieldCoinConstructor {
     this.fromAddress = fromAddr;
     byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
     if (tFromAddrBytes != null) {
-      this.isFromShieldAddress = false;
+      this.isFromTAddress = true;
     } else {
       this.shieldFromAddr = KeyIo.decodePaymentAddress(fromAddr);
       if (shieldFromAddr == null) {
@@ -51,7 +53,7 @@ public class ShieldCoinConstructor {
             "From address does not belong to this wallet, spending key not found.");
       }
       this.spendingKey = ShieldWallet.GetSpendingKeyForPaymentAddress(shieldFromAddr);
-      this.isFromShieldAddress = true;
+      this.isFromTAddress = false;
     }
 
     if (outputs.size() < 1) {
@@ -71,7 +73,6 @@ public class ShieldCoinConstructor {
       }
       allToAddress.add(recipient.address);
 
-      boolean isToTAddress = false;
       byte[] tToAddrBytes = Wallet.decodeFromBase58Check(recipient.address);
       if (tToAddrBytes != null) {
         tOutputs.add(recipient);
@@ -82,6 +83,7 @@ public class ShieldCoinConstructor {
           throw new RuntimeException("unknown address type.");
         }
         zOutputs.add(recipient);
+        isToTAddress = false;
       }
 
       if (recipient.memo != null && !recipient.memo.equals("")) {
@@ -93,75 +95,92 @@ public class ShieldCoinConstructor {
       }
       nTotalOut += recipient.value;
     }
+
+    if (this.tOutputs.size() != 0 && this.zOutputs.size() != 0) {
+      throw new RuntimeException(
+          "Transferring to two kind of addresses at the same time is not supported");
+    }
+
+    if (isFromTAddress && isToTAddress) {
+      throw new RuntimeException("Transparent transfer is not supported");
+    }
+
   }
 
   public Boolean build() {
 
+    // todo：check value
+
     TransactionBuilder builder = new TransactionBuilder();
 
-    if (isFromShieldAddress) {
+    byte[] ovk = null;
+    if (isFromTAddress) {
+      //todo:get from input params
+      long value = 0L;
+      builder.AddTransparentInput(fromAddress, value);
+      HDSeed seed = KeyStore.seed;
+      ovk = seed.ovkForShieldingFromTaddr();
+    } else {
       boolean found = findUnspentNotes();
       if (!found) {
         throw new RuntimeException("Insufficient funds, no unspent notes found.");
       }
-    }
 
-    // Get various necessary keys
-    ExpandedSpendingKey expsk = null;
-    byte[] ovk = null;
-    if (isFromShieldAddress) {
-      expsk = spendingKey.getExpsk();
+      // Get various necessary keys
+      ExpandedSpendingKey expsk = spendingKey.getExpsk();
+
       ovk = expsk.fullViewingKey().getOvk();
-    } else {
+
+      // Select Sapling notes
+      List<OutPoint> ops = Lists.newArrayList();
+      List<Note> notes = Lists.newArrayList();
+      Long sum = 0L;
+      for (NoteEntry t : zSaplingInputs) {
+        ops.add(t.op);
+        notes.add(t.note);
+        sum += t.note.value;
+        //      if (sum >= targetAmount) {
+        //        break;
+        //      }
+      }
+
+      // Fetch Sapling anchor and witnesses
+      byte[] anchor = null;
+      List<Optional<SaplingVoucher>> witnesses = null;
+
+      ShieldWallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
+
+      // Add Sapling spends
+      for (int i = 0; i < notes.size(); i++) {
+        if (!witnesses.get(i).isPresent()) {
+          throw new RuntimeException("Missing witness for Sapling note");
+        }
+        builder.AddSaplingSpend(expsk, notes.get(i), anchor, witnesses.get(i).get());
+      }
+    }
+
+    if (isToTAddress) {
+      // Add transparent outputs
       // ...
-    }
+    } else {  // Add Sapling outputs
+      for (Recipient r : zOutputs) {
+        String address = r.address;
+        Long value = r.value;
+        String hexMemo = r.memo;
 
-    // Select Sapling notes
-    List<OutPoint> ops = Lists.newArrayList();
-    List<Note> notes = Lists.newArrayList();
-    Long sum = 0L;
-    for (NoteEntry t : zSaplingInputs) {
-      ops.add(t.op);
-      notes.add(t.note);
-      sum += t.note.value;
-      //      if (sum >= targetAmount) {
-      //        break;
-      //      }
-    }
+        PaymentAddress addr = KeyIo.decodePaymentAddress(address);
+        if (addr == null) {
+          throw new RuntimeException("");
+        }
+        PaymentAddress to = addr;
 
-    // Fetch Sapling anchor and witnesses
-    byte[] anchor = null;
-    List<Optional<SaplingVoucher>> witnesses = null;
+        byte[] memo = ByteArray.fromHexString(hexMemo);
 
-    ShieldWallet.GetSaplingNoteWitnesses(ops, witnesses, anchor);
-
-    // Add Sapling spends
-    for (int i = 0; i < notes.size(); i++) {
-      if (!witnesses.get(i).isPresent()) {
-        throw new RuntimeException("Missing witness for Sapling note");
+        builder.AddSaplingOutput(ovk, to, value, memo);
       }
-      builder.AddSaplingSpend(expsk, notes.get(i), anchor, witnesses.get(i).get());
     }
 
-    // Add Sapling outputs
-    for (Recipient r : zOutputs) {
-      String address = r.address;
-      Long value = r.value;
-      String hexMemo = r.memo;
 
-      PaymentAddress addr = KeyIo.decodePaymentAddress(address);
-      if (addr == null) {
-        throw new RuntimeException("");
-      }
-      PaymentAddress to = addr;
-
-      byte[] memo = ByteArray.fromHexString(hexMemo);
-
-      builder.AddSaplingOutput(ovk, to, value, memo);
-    }
-
-    // Add transparent outputs
-    // ...
 
     // Build the transaction
     TransactionBuilderResult result = builder.Build();
@@ -173,8 +192,11 @@ public class ShieldCoinConstructor {
 
   private boolean findUnspentNotes() {
 
-    List<NoteEntry> saplingEntries =
-        ShieldWallet.GetFilteredNotes(this.shieldFromAddr, true, true);
+    List<NoteEntry> saplingEntries = ShieldWallet.GetFilteredNotes(this.shieldFromAddr, true, true);
+
+    if (saplingEntries.size() == 0) {
+      return false;
+    }
 
     for (NoteEntry entry : saplingEntries) {
       zSaplingInputs.add(entry);

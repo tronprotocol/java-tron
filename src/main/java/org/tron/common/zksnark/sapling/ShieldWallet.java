@@ -27,6 +27,7 @@ public class ShieldWallet {
   public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = Maps.newHashMap();
   public static Map<OutPoint, NoteData> mapNoteData = Maps.newHashMap();
 
+
   public class SaplingVoucher {
 
     //todo:
