@@ -1,15 +1,12 @@
-package stest.tron.wallet.onlineStress;
+package stest.tron.wallet.onlinestress;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.io.File;
-import java.io.IOException;
 import java.util.Optional;
 import java.util.Random;
 //import java.io.FileWriter;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -20,7 +17,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;

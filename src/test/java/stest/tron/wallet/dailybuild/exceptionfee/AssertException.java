@@ -406,7 +406,8 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "Trigger contract Call an uninitialized internal function type variable")
+  @Test(enabled = true, description = "Trigger contract Call an uninitialized "
+      + "internal function type variable")
   public void test6UninitializedContract() {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")

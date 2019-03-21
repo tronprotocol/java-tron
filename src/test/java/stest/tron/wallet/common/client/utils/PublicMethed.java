@@ -115,9 +115,18 @@ public class PublicMethed {
       }
       transaction = signTransaction(ecKey, transaction);
 
-      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
-      return response.getResult();
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+      if (response.getResult() == false) {
+        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+        return false;
+      } else {
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        return true;
+      }
     } catch (Exception ex) {
       ex.printStackTrace();
       return false;
@@ -171,9 +180,18 @@ public class PublicMethed {
       }
       transaction = signTransaction(ecKey, transaction);
 
-      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
-      return response.getResult();
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+      if (response.getResult() == false) {
+        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+        return false;
+      } else {
+        try {
+          Thread.sleep(3000);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        return true;
+      }
     } catch (Exception ex) {
       ex.printStackTrace();
       return false;
@@ -245,8 +263,9 @@ public class PublicMethed {
           "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
       transaction = signTransaction(ecKey, transaction);
 
-      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
       if (response.getResult() == false) {
+        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
         return response;
       } else {
         try {
@@ -419,8 +438,17 @@ public class PublicMethed {
     Contract.ParticipateAssetIssueContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(Integer.toString(response.getCode().getNumber()));
+      logger.info(Integer.toString(response.getCodeValue()));
+
+      return false;
+    } else {
+      //logger.info(name);
+      return true;
+    }
   }
 
   /**
@@ -471,12 +499,15 @@ public class PublicMethed {
     //Protocol.Transaction transaction = blockingStubFull.participateAssetIssue(contract);
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(Integer.toString(response.getCode().getNumber()));
+      logger.info(Integer.toString(response.getCodeValue()));
+
       return response;
-    } else {
-      return ret;
     }
+    return ret;
   }
 
   /**
@@ -527,9 +558,13 @@ public class PublicMethed {
 
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    return response.getResult();
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    }
+
     /*    Long afterBlockNum = 0L;
 
     while (afterBlockNum < beforeBlockNum) {
@@ -544,6 +579,7 @@ public class PublicMethed {
     logger.info("beforefronen" + beforeFrozenBalance.toString() + "    afterfronzen"
         + afterFrozenBalance.toString());
     Assert.assertTrue(afterFrozenBalance - beforeFrozenBalance == freezeBalance);*/
+    return true;
   }
 
   /**
@@ -609,9 +645,10 @@ public class PublicMethed {
 
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
 
     if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return response;
     }
 
@@ -659,9 +696,13 @@ public class PublicMethed {
     Contract.UnfreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.unfreezeBalance(contract);
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -698,8 +739,19 @@ public class PublicMethed {
         continue;
       }
       transaction = signTransaction(ecKey, transaction);
-      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-      return response.getResult();
+      GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+      if (response.getResult() == false) {
+        logger.info(times + ": Code = " + response.getCode());
+        logger.info(times + ": Message = " + response.getMessage().toStringUtf8());
+
+      } else {
+        return true;
+      }
+      try {
+        Thread.sleep(500);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
     return false;
 
@@ -754,9 +806,9 @@ public class PublicMethed {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
-      //      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return response;
     }
     return ret;
@@ -801,9 +853,9 @@ public class PublicMethed {
     transaction = builder2.build();*/
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
-      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -917,8 +969,13 @@ public class PublicMethed {
     }
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -970,9 +1027,9 @@ public class PublicMethed {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
-      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return response;
     }
     return ret;
@@ -1016,8 +1073,13 @@ public class PublicMethed {
     }
     transaction = signTransaction(ecKey, transaction);
 
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1051,8 +1113,14 @@ public class PublicMethed {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info("Please check!!! response.getresult==false");
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1193,8 +1261,14 @@ public class PublicMethed {
       logger.info("transaction == null");
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
+
   }
 
   /**
@@ -1242,9 +1316,9 @@ public class PublicMethed {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     if (response.getResult() == false) {
-      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return response;
     }
     return ret;
@@ -1290,9 +1364,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1336,8 +1414,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1380,8 +1463,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1447,8 +1535,13 @@ public class PublicMethed {
       logger.info("transaction == null");
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1486,13 +1579,19 @@ public class PublicMethed {
     }
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    }
+    return true;
   }
 
   /**
    * constructor.
    */
+
   public static AccountResourceMessage getAccountResource(byte[] address,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -1539,8 +1638,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1581,8 +1685,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
   /**
@@ -1706,8 +1815,22 @@ public class PublicMethed {
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -1832,8 +1955,22 @@ public class PublicMethed {
     byte[] contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -2113,11 +2250,16 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    } else {
+      return true;
+    }
   }
 
-  /**61
+  /**
    * constructor.
    */
 
@@ -2227,10 +2369,25 @@ public class PublicMethed {
     System.out.println(
         "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
             .toByteArray())));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
+      //logger.info("brodacast succesfully");
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     }
   }
@@ -2283,8 +2440,23 @@ public class PublicMethed {
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response.getResult();
   }
 
@@ -2333,8 +2505,23 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response.getResult();
   }
 
@@ -2428,7 +2615,23 @@ public class PublicMethed {
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response.getResult();
   }
 
@@ -2480,7 +2683,23 @@ public class PublicMethed {
     System.out.println(
         "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
 
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response.getResult();
   }
 
@@ -2602,8 +2821,22 @@ public class PublicMethed {
     byte[] contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -2646,8 +2879,13 @@ public class PublicMethed {
     }
     transaction = TransactionUtils.setTimestamp(transaction);
     transaction = TransactionUtils.sign(transaction, ecKey);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+
+    if (response.getResult() == false) {
+      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -2733,7 +2971,7 @@ public class PublicMethed {
       permissionBuilder.setPermissionName(permission_name);
     }
     if (json.containsKey("threshold")) {
-      //long threshold = json.getLong("threshold");
+//      long threshold = json.getLong("threshold");
       long threshold = Long.parseLong(json.getString("threshold"));
       permissionBuilder.setThreshold(threshold);
     }
@@ -2753,8 +2991,8 @@ public class PublicMethed {
         JSONObject key = keys.getJSONObject(i);
         String address = key.getString("address");
         long weight = Long.parseLong(key.getString("weight"));
-        //long weight = key.getLong("weight");
-        //keyBuilder.setAddress(ByteString.copyFrom(address.getBytes()));
+//        long weight = key.getLong("weight");
+//        keyBuilder.setAddress(ByteString.copyFrom(address.getBytes()));
         keyBuilder.setAddress(ByteString.copyFrom(WalletClient.decodeFromBase58Check(address)));
         keyBuilder.setWeight(weight);
         keyList.add(keyBuilder.build());
@@ -2777,7 +3015,7 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    final ECKey ecKey = temKey;
+    ECKey ecKey = temKey;
 
     Contract.AccountPermissionUpdateContract.Builder builder =
         Contract.AccountPermissionUpdateContract.newBuilder();
@@ -2825,7 +3063,23 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeat times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response.getResult();
   }
 
@@ -3044,8 +3298,19 @@ public class PublicMethed {
     byte[] contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     return response;
   }
 
@@ -3139,7 +3404,19 @@ public class PublicMethed {
     System.out.println(
         "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
             .toByteArray())));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeate times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     return response;
   }
 
@@ -3195,14 +3472,13 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
-    /*if (response.getResult() == false) {
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       return false;
     } else {
       return true;
-    }*/
+    }
   }
 
   /**
@@ -3219,7 +3495,7 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    final ECKey ecKey = temKey;
+    ECKey ecKey = temKey;
 
     Contract.AccountPermissionUpdateContract.Builder builder =
         Contract.AccountPermissionUpdateContract.newBuilder();
@@ -3267,8 +3543,23 @@ public class PublicMethed {
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-
+    int i = 10;
+    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
+        && i > 0) {
+      i--;
+      response = blockingStubFull.broadcastTransaction(transaction);
+      logger.info("repeat times = " + (11 - i));
+      try {
+        Thread.sleep(300);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+    if (response.getResult() == false) {
+      logger.info("Code = " + response.getCode());
+      logger.info("Message = " + response.getMessage().toStringUtf8());
+    }
     return response;
   }
 
@@ -3320,31 +3611,4 @@ public class PublicMethed {
     }
     return needBalance;
   }
-
-  /**
-   * constructor.
-   */
-  public static GrpcAPI.Return broadcastTransaction(Transaction transaction,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (10 - i));
-    }
-
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response;
-  }
-
 }

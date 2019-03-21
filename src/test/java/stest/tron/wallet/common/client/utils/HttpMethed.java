@@ -1,15 +1,14 @@
 package stest.tron.wallet.common.client.utils;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -204,35 +203,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static String sendCoinGetTxid(String httpNode, byte[] fromAddress, byte[] toAddress,
-      Long amount, String fromKey) {
-    try {
-      final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
-      JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
-      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
-      userBaseObj2.addProperty("amount", amount);
-      response = createConnect(requestUrl, userBaseObj2);
-      transactionString = EntityUtils.toString(response.getEntity());
-      logger.info(transactionString);
-      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
-      logger.info(transactionSignString);
-      response = broadcastTransaction(httpNode, transactionSignString);
-    } catch (Exception e) {
-      e.printStackTrace();
-      httppost.releaseConnection();
-      return null;
-    }
-    responseContent = HttpMethed.parseStringContent(transactionString);
-    logger.info(responseContent.getString("txID"));
-    return responseContent.getString("txID");
-  }
-
-  /**
-   * constructor.
-   */
   public static HttpResponse sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
-      Long amount, String[] managerKeys) {
+                                      Long amount, String[] managerKeys) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
       JsonObject userBaseObj2 = new JsonObject();
@@ -264,6 +236,33 @@ public class HttpMethed {
       return null;
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String sendCoinGetTxid(String httpNode, byte[] fromAddress, byte[] toAddress,
+      Long amount, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
+      userBaseObj2.addProperty("amount", amount);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode, transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseStringContent(transactionString);
+    logger.info(responseContent.getString("txID"));
+    return responseContent.getString("txID");
   }
 
   /**
@@ -1104,7 +1103,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getExchangeByIdFromSolidity(String httpSolidityNode, Integer exchangeId) {
+  public static HttpResponse getExchangeByIdFromSolidity(String httpSolidityNode,
+      Integer exchangeId) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getexchangebyid";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1155,7 +1155,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getAssetIssueListByNameFromSolidity(String httpSolidityNode, String name) {
+  public static HttpResponse getAssetIssueListByNameFromSolidity(String httpSolidityNode,
+      String name) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getassetissuelistbyname";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1189,7 +1190,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getAssetIssueByIdFromSolidity(String httpSolidityNode, String assetIssueId) {
+  public static HttpResponse getAssetIssueByIdFromSolidity(String httpSolidityNode,
+      String assetIssueId) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getassetissuebyid";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1258,7 +1260,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionInfoByIdFromSolidity(String httpSolidityNode, String txid) {
+  public static HttpResponse getTransactionInfoByIdFromSolidity(String httpSolidityNode,
+      String txid) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/gettransactioninfobyid";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1293,15 +1296,16 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionsFromThisFromSolidity(String httpSolidityNode, byte[] fromAddress, long offset, long limit) {
+  public static HttpResponse getTransactionsFromThisFromSolidity(String httpSolidityNode,
+      byte[] fromAddress, long offset, long limit) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletextension/gettransactionsfromthis";
       Map<String, String> map1 = new HashMap<String, String>();
       Map<String, Object> map = new HashMap<String, Object>();
       map1.put("address", ByteArray.toHexString(fromAddress));
       map.put("account", map1);
       map.put("offset", offset);
       map.put("limit", limit);
+      String requestUrl = "http://" + httpSolidityNode + "/walletextension/gettransactionsfromthis";
       String jsonStr = new Gson().toJson(map);
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
       response = createConnect(requestUrl, jsonObj);
@@ -1316,15 +1320,16 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionsToThisFromSolidity(String httpSolidityNode, byte[] toAddress, long offset, long limit) {
+  public static HttpResponse getTransactionsToThisFromSolidity(String httpSolidityNode,
+      byte[] toAddress, long offset, long limit) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletextension/gettransactionstothis";
       Map<String, String> map1 = new HashMap<String, String>();
       Map<String, Object> map = new HashMap<String, Object>();
       map1.put("address", ByteArray.toHexString(toAddress));
       map.put("account", map1);
       map.put("offset", offset);
       map.put("limit", limit);
+      String requestUrl = "http://" + httpSolidityNode + "/walletextension/gettransactionstothis";
       String jsonStr = new Gson().toJson(map);
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
       response = createConnect(requestUrl, jsonObj);
@@ -1654,7 +1659,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getDelegatedResourceAccountIndexFromSolidity(String httpSolidityNode,byte[] queryAddress) {
+  public static HttpResponse getDelegatedResourceAccountIndexFromSolidity(String httpSolidityNode,
+      byte[] queryAddress) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getdelegatedresourceaccountindex";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1754,8 +1760,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getPaginatedAssetissueListFromSolidity(String httpSolidityNode, Integer offset,
-      Integer limit) {
+  public static HttpResponse getPaginatedAssetissueListFromSolidity(String httpSolidityNode,
+      Integer offset, Integer limit) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getpaginatedassetissuelist";
       JsonObject userBaseObj2 = new JsonObject();

@@ -36,7 +36,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
-public class fuzzytest {
+public class Fuzzytest {
 
   //testng001、testng002、testng003、testng004
   private final String testKey002 =

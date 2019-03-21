@@ -1,4 +1,4 @@
-package stest.tron.wallet.onlineStress;
+package stest.tron.wallet.onlinestress;
 
 import static stest.tron.wallet.common.client.utils.PublicMethed.getTransactionInfoById;
 
