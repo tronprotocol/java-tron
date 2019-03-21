@@ -1223,7 +1223,13 @@ public class Wallet {
         Objects.isNull(dbManager.getDeferredTransactionIdIndexCache())){
       return null;
     }
-    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionCache().getByTransactionId(transactionId);
+
+    DeferredTransactionCapsule deferredTransactionCapsule;
+    if (Objects.nonNull(dbManager.getDeferredTransactionCache()) && Objects.nonNull(dbManager.getDeferredTransactionIdIndexCache())) {
+      deferredTransactionCapsule = dbManager.getDeferredTransactionCache().getByTransactionId(transactionId);
+    } else {
+      deferredTransactionCapsule = dbManager.getDeferredTransactionStore().getByTransactionId(transactionId);
+    }
 
     if (deferredTransactionCapsule != null) {
       return deferredTransactionCapsule.getDeferredTransaction();

@@ -91,7 +91,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
     }
     engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("LEVELDB")) {
+    if ("LEVELDB".equals(engine)) {
       return true;
     } else {
       return false;
