@@ -106,12 +106,22 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
     // trigger deployed contract
     String methodToTrigger  = "plusOne()";
-    hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
-    result = TVMTestUtils
+    for (int i = 1; i < 3; i++) {
+      hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
+      result = TVMTestUtils
+          .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+              actualContract, Hex.decode(hexInput), 0, fee, manager, null);
+      Assert.assertNull(result.getRuntime().getRuntimeError());
+      Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(i).getData());
+    }
+
+    // deploy contract again
+    result =  TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
-            actualContract, Hex.decode(hexInput), 0, fee, manager, null);
-    Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(1).getData());
+            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+    Assert.assertNotNull(result.getRuntime().getRuntimeError());
+    Assert.assertEquals(result.getRuntime().getRuntimeError(), "REVERT opcode executed");
+
   }
 
 }
