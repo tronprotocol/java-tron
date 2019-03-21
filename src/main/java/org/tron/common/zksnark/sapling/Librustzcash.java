@@ -16,9 +16,11 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
+    boolean librustzcash_zip32_xfvk_address(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret);
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
+
   }
 
   // todo jni
@@ -37,7 +39,20 @@ public class Librustzcash {
   public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
   }
 
-  // void librustzcash_crh_ivk(const unsigned char *ak, const unsigned char *nk, unsigned char *result);
+  // /// Derive a PaymentAddress from an ExtendedFullViewingKey.
+  //     bool librustzcash_zip32_xfvk_address(
+  //         const unsigned char *xfvk,
+  //         const unsigned char *j,
+  //         unsigned char *j_ret,
+  //         unsigned char *addr_ret
+  //     );
+  public static boolean librustzcashZip32XfvkAddress(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret) {
+    return INSTANCE.librustzcash_zip32_xfvk_address(xfvk, j, j_ret, addr_ret);
+  }
+
+
+  // void librustzcash_crh_ivk(const unsigned char *ak, const unsigned char *nk, unsigned char
+  // *result);
   public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
     System.out.println("just a test");
     INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
