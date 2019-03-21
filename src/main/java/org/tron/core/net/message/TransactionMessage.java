@@ -11,6 +11,7 @@ public class TransactionMessage extends TronMessage {
 
   public TransactionMessage(byte[] data) throws BadItemException {
     this.transactionCapsule = new TransactionCapsule(data);
+    setUnknownFieldEmpty(transactionCapsule.getTransaction().getUnknownFields());
     this.data = transactionCapsule.getData();
     this.type = MessageTypes.TRX.asByte();
   }

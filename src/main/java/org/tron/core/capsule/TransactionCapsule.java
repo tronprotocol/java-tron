@@ -774,4 +774,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     return this.transaction.getRet(0).getContractRet();
   }
+
+  public Transaction getTransaction() {
+    return transaction;
+  }
 }

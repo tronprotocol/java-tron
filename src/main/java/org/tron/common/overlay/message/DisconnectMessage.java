@@ -1,5 +1,8 @@
 package org.tron.common.overlay.message;
 
+import com.google.protobuf.UnknownFieldSet;
+import java.util.Collections;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
@@ -11,6 +14,7 @@ public class DisconnectMessage extends P2pMessage {
   public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
     this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
+    setUnknownFieldEmpty(disconnectMessage.getUnknownFields());
     data = disconnectMessage.toByteArray();
   }
 

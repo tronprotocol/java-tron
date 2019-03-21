@@ -14,6 +14,7 @@ public class ItemNotFound extends TronMessage {
     itemsBuilder.setType(Protocol.Items.ItemType.ERR);
     notFound = itemsBuilder.build();
     this.type = MessageTypes.ITEM_NOT_FOUND.asByte();
+    setUnknownFieldEmpty(notFound.getUnknownFields());
     this.data = notFound.toByteArray();
   }
 

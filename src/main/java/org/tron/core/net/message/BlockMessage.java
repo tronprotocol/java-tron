@@ -12,6 +12,7 @@ public class BlockMessage extends TronMessage {
   public BlockMessage(byte[] data) throws BadItemException {
     this.type = MessageTypes.BLOCK.asByte();
     this.block = new BlockCapsule(data);
+    setUnknownFieldEmpty(block.getBlock().getUnknownFields());
     this.data = block.getData();
   }
 

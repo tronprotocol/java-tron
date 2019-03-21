@@ -17,6 +17,7 @@ public class InventoryMessage extends TronMessage {
   public InventoryMessage(byte[] data) throws Exception {
     this.type = MessageTypes.INVENTORY.asByte();
     this.inv = Protocol.Inventory.parseFrom(data);
+    setUnknownFieldEmpty(inv.getUnknownFields());
     this.data = inv.toByteArray();
   }
 
