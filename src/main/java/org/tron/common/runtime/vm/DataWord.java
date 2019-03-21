@@ -283,6 +283,7 @@ public class DataWord implements Comparable<DataWord> {
     public void bnot() {
         if (this.isZero()) {
             this.data = ByteUtil.copyToArray(MAX_VALUE);
+            return;
         }
         this.data = ByteUtil.copyToArray(MAX_VALUE.subtract(this.value()));
     }
