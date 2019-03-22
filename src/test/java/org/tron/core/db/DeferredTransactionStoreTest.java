@@ -5,6 +5,7 @@ import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -97,6 +98,7 @@ public class DeferredTransactionStoreTest {
     Assert.assertNotNull(dbManager.getDeferredTransactionStore().getScheduledTransactions(System.currentTimeMillis()));
   }
 
+  @Ignore
   @Test
   public void GetScheduledTransactionsTest2 (){
     DeferredTransactionStore deferredTransactionStore = dbManager.getDeferredTransactionStore();
