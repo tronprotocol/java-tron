@@ -67,6 +67,10 @@ public class DbBackupConfig {
         throw new RuntimeException("failure to mkdir: " + bak2path);
       }
 
+      if (bak1path.equals(bak2path)) {
+        throw new RuntimeException("bak1path and bak2path must be different.");
+      }
+
       if (frequency <= 0) {
         throw new IllegalArgumentException("frequency must be positive number.");
       }

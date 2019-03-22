@@ -201,10 +201,6 @@ public class Manager {
 
   private ExecutorService validateSignService;
 
-  private Thread repushThread;
-
-  private Thread triggerCapsuleProcessThread;
-
   private boolean isRunRepushThread = true;
 
   private boolean isRunTriggerCapsuleProcessThread = true;
@@ -467,13 +463,13 @@ public class Manager {
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
-    repushThread = new Thread(repushLoop);
+    Thread repushThread = new Thread(repushLoop);
     repushThread.start();
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
-      triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
+      Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
   }
@@ -676,9 +672,7 @@ public class Manager {
         .getRawData().getRefBlockBytes().toByteArray();
     try {
       byte[] blockHash = this.recentBlockStore.get(refBlockNumBytes).getData();
-      if (Arrays.equals(blockHash, refBlockHash)) {
-        return;
-      } else {
+      if (!Arrays.equals(blockHash, refBlockHash)) {
         String str = String.format(
             "Tapos failed, different block hash, %s, %s , recent block %s, solid block %s head block %s",
             ByteArray.toLong(refBlockNumBytes), Hex.toHexString(refBlockHash),
@@ -686,7 +680,6 @@ public class Manager {
             getSolidBlockId().getString(), getHeadBlockId().getString()).toString();
         logger.info(str);
         throw new TaposException(str);
-
       }
     } catch (ItemNotFoundException e) {
       String str = String.
@@ -1140,9 +1133,7 @@ public class Manager {
     try {
       return this.khaosDb.containBlockInMiniStore(blockHash)
           || blockStore.get(blockHash.getBytes()) != null;
-    } catch (ItemNotFoundException e) {
-      return false;
-    } catch (BadItemException e) {
+    } catch (ItemNotFoundException | BadItemException e) {
       return false;
     }
   }
@@ -1150,9 +1141,7 @@ public class Manager {
   public boolean containBlockInMainChain(BlockId blockId) {
     try {
       return blockStore.get(blockId.getBytes()) != null;
-    } catch (ItemNotFoundException e) {
-      return false;
-    } catch (BadItemException e) {
+    } catch (ItemNotFoundException | BadItemException e) {
       return false;
     }
   }
@@ -1238,10 +1227,8 @@ public class Manager {
     }
 
     trace.finalization();
-    if (Objects.nonNull(blockCap)) {
-      if (getDynamicPropertiesStore().supportVM()) {
-        trxCap.setResult(trace.getRuntime());
-      }
+    if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
+      trxCap.setResult(trace.getRuntime());
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1737,6 +1724,7 @@ public class Manager {
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
     closeOneStore(delegatedResourceStore);
+    closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
     logger.info("******** end to close db ********");
@@ -1754,11 +1742,8 @@ public class Manager {
   }
 
   public boolean isTooManyPending() {
-    if (getPendingTransactions().size() + getRepushTransactions().size()
-        > MAX_TRANSACTION_PENDING) {
-      return true;
-    }
-    return false;
+    return getPendingTransactions().size() + getRepushTransactions().size()
+        > MAX_TRANSACTION_PENDING;
   }
 
   public boolean isGeneratingBlock() {
@@ -1828,13 +1813,7 @@ public class Manager {
 
     try {
       this.pushTransaction(tx);
-    } catch (ValidateSignatureException e) {
-      logger.debug(e.getMessage(), e);
-    } catch (ContractValidateException e) {
-      logger.debug(e.getMessage(), e);
-    } catch (ContractExeException e) {
-      logger.debug(e.getMessage(), e);
-    } catch (AccountResourceInsufficientException e) {
+    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | AccountResourceInsufficientException | VMIllegalException e) {
       logger.debug(e.getMessage(), e);
     } catch (DupTransactionException e) {
       logger.debug("pending manager: dup trans", e);
@@ -1846,8 +1825,6 @@ public class Manager {
       logger.debug("expiration transaction");
     } catch (ReceiptCheckErrException e) {
       logger.debug("outOfSlotTime transaction");
-    } catch (VMIllegalException e) {
-      logger.debug(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.debug("too big transaction result");
     }
@@ -1882,7 +1859,7 @@ public class Manager {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
-      if (result == false) {
+      if (!result) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
       }
     }
@@ -1898,7 +1875,7 @@ public class Manager {
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
       trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(trx);
-      if (result == false) {
+      if (!result) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
       }
     }
@@ -1915,10 +1892,8 @@ public class Manager {
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
           postContractTrigger(trx.getTrxTrace(), true);
         }
-      } catch (BadItemException e) {
-        e.printStackTrace();
-      } catch (ItemNotFoundException e) {
-        e.printStackTrace();
+      } catch (BadItemException | ItemNotFoundException e) {
+        logger.error("block header hash not exists or bad: {}", getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
   }
@@ -1946,7 +1921,7 @@ public class Manager {
           contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
           result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
         }
-        if (result == false) {
+        if (!result) {
           logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }

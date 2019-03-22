@@ -64,6 +64,7 @@ public class RevokingDbWithCacheOldValueTest {
     Assert.assertEquals(true, tronDatabase.has(testProtoCapsule.getData()));
     tronDatabase.reset();
     Assert.assertEquals(false, tronDatabase.has(testProtoCapsule.getData()));
+    tronDatabase.reset();
   }
 
   @Test
