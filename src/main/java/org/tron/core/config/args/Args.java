@@ -67,9 +67,17 @@ public class Args {
   private String outputDirectory = "output-directory";
 
   @Getter
-
   @Parameter(names = {"--stress-count"})
   private int stressCount = 100;
+
+  @Getter
+  @Parameter(names = {"--replay-start-number"})
+  private int replayStartNumber = 100;
+
+  @Getter
+  @Parameter(names = {"--replay-end-number"})
+  private int replayEndNumber = 100;
+
 
   @Getter
   @Parameter(names = {"--stress-tps"})
@@ -102,6 +110,12 @@ public class Args {
   @Setter
   @Parameter(names = {"--generate"})
   private boolean generate = false;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--replayGenerate"})
+  private boolean replayGenerate = false;
+
 
   @Getter
   @Setter

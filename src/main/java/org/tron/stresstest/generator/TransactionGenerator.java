@@ -51,6 +51,8 @@ public class TransactionGenerator {
     this(context, "transaction.csv", count);
   }
 
+
+
   private void consumerGenerateTransaction() throws IOException {
     if (transactions.isEmpty()) {
       try {
@@ -94,6 +96,7 @@ public class TransactionGenerator {
 
       LongStream.range(0L, this.count).forEach(l -> {
         generatePool.execute(() -> {
+
           Optional.ofNullable(TransactionFactory.newTransaction()).ifPresent(transactions::add);
         });
       });
