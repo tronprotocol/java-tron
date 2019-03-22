@@ -1,14 +1,11 @@
 package org.tron.common.overlay.message;
 
-import com.google.protobuf.UnknownFieldSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.Arrays;
-import java.util.Collections;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.MessageTypes;
 

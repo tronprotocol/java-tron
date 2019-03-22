@@ -1,8 +1,5 @@
 package org.tron.common.overlay.message;
 
-import com.google.protobuf.UnknownFieldSet;
-import java.util.Collections;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;

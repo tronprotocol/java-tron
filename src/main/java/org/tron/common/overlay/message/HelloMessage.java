@@ -1,11 +1,8 @@
 package org.tron.common.overlay.message;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.UnknownFieldSet;
-import java.util.Collections;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
