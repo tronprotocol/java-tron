@@ -8,6 +8,9 @@ import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.SAR;
+import static org.tron.common.runtime.vm.OpCode.SHL;
+import static org.tron.common.runtime.vm.OpCode.SHR;
 import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
@@ -90,7 +93,12 @@ public class VM {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
-
+      
+      if (!VMConfig.allowTvmConstantinople()) {
+        if (op == SHL || op == SHR || op == SAR ) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+      }
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
