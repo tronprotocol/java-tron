@@ -110,7 +110,7 @@ public class RpcWallet {
     TransactionBuilderResult result = constructor.build();
 //    broadcastTX();
   }
-  
+
 
   public long getBalanceZaddr(String address, int minDepth, boolean requireSpendingKey) {
     long balance = 0;
@@ -125,6 +125,9 @@ public class RpcWallet {
     for (NoteEntry entry : saplingEntries) {
       balance += entry.note.value;
     }
+
+
+    
 
     return balance;
   }
