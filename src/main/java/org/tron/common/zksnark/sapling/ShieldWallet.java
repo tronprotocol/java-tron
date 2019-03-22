@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
@@ -27,6 +30,7 @@ public class ShieldWallet {
 
   public static Map<IncomingViewingKey, CKeyMetadata> mapSaplingZKeyMetadata = Maps.newHashMap();
   public static Map<OutPoint, NoteData> mapNoteData = Maps.newHashMap();
+  public static Lock csWallet = new ReentrantLock();
 
   public static void getNoteVouchers(List<OutPoint> ops,
       List<Optional<IncrementalMerkleVoucherContainer>> voucher, byte[] anchor) {
