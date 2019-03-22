@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
 public class DataWord implements Comparable<DataWord> {
 
     /* Maximum value of the DataWord */
-    public static final int DATAWORD_UNIT_SIZE = 32;
+    public static final int UNIT_SIZE = 32;
     public static final int MAX_POW = 256;
     public static final BigInteger _2_256 = BigInteger.valueOf(2).pow(256);
     public static final BigInteger MAX_VALUE = _2_256.subtract(BigInteger.ONE);
@@ -136,8 +136,8 @@ public class DataWord implements Comparable<DataWord> {
     public byte[] getClonedData() {
         byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
         if (data != null){
-            ret = new byte[DATAWORD_UNIT_SIZE];
-            int dataSize = Math.min(data.length, DATAWORD_UNIT_SIZE);
+            ret = new byte[UNIT_SIZE];
+            int dataSize = Math.min(data.length, UNIT_SIZE);
             System.arraycopy(data, 0, ret, 0, dataSize);
         }
         return ret;
@@ -529,5 +529,9 @@ public class DataWord implements Comparable<DataWord> {
 
         BigInteger result = sValue().shiftRight(arg.intValueSafe());
         return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
+    }
+
+    public static long sizeInWords(long bytesSize) {
+        return bytesSize == 0 ? 0 : (bytesSize - 1) / UNIT_SIZE + 1;
     }
 }

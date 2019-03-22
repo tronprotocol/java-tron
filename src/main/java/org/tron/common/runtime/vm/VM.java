@@ -241,10 +241,11 @@ public class VM {
           break;
         case CREATE2:
           DataWord codeSize = stack.get(stack.size() - 3);
-          energyCost = energyCosts.getCREATE() +
-              calcMemEnergy(energyCosts, oldMemSize,
-                  memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op) +
-              VMUtils.getSizeInWords(codeSize.longValueSafe()) * energyCosts.getSHA3_WORD();
+          energyCost = energyCosts.getCREATE();
+          energyCost += calcMemEnergy(energyCosts, oldMemSize,
+                  memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
+          energyCost += DataWord.sizeInWords(codeSize.intValueSafe()) * energyCosts.getSHA3_WORD();
+
           break;
         case LOG0:
         case LOG1:

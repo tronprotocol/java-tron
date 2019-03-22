@@ -156,11 +156,4 @@ public final class VMUtils {
       return content;
     }
   }
-
-  /**
-   * Returns number of VM words required to hold data of size {@code size}
-   */
-  public static long getSizeInWords(long size) {
-    return size == 0 ? 0 : (size - 1) / 32 + 1;
-  }
 }
