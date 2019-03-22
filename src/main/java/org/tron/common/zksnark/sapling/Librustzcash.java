@@ -16,6 +16,7 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
+    void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
     boolean librustzcash_zip32_xfvk_address(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret);
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
@@ -36,7 +37,16 @@ public class Librustzcash {
     INSTANCE.librustzcash_zip32_xsk_master(data, size, m_bytes);
   }
 
+  /*
+  /// Derive a child ExtendedSpendingKey from a parent.
+    void librustzcash_zip32_xsk_derive(
+        const unsigned char *xsk_parent,
+        uint32_t i,
+        unsigned char *xsk_i
+    );
+  * */
   public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
+    INSTANCE.librustzcash_zip32_xsk_derive(p_bytes, i, m_bytes);
   }
 
   // /// Derive a PaymentAddress from an ExtendedFullViewingKey.

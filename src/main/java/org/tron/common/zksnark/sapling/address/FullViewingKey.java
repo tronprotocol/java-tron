@@ -44,4 +44,15 @@ public class FullViewingKey {
       return null;
     }
   }
+
+  public byte[] encode() {
+
+    byte[] m_bytes = new byte[96];
+
+    System.arraycopy(ak, 0, m_bytes, 0, 32);
+    System.arraycopy(nk, 0, m_bytes, 32, 32);
+    System.arraycopy(ovk, 0, m_bytes, 64, 32);
+
+    return m_bytes;
+  }
 }
