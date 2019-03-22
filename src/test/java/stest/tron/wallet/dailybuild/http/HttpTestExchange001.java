@@ -149,7 +149,7 @@ public class HttpTestExchange001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "GetExchangeById from solidity by http")
+  @Test(enabled = true, description = "GetExchangeById from solidity by http")
   public void test05GetExchangeByIdFromSolidity() {
     response = HttpMethed.getExchangeByIdFromSolidity(httpSoliditynode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -239,7 +239,7 @@ public class HttpTestExchange001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get asset issue list by name from solidity by http")
+  @Test(enabled = true, description = "Get asset issue list by name from solidity by http")
   public void test10GetAssetIssueListByNameFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     response = HttpMethed.getAssetIssueListByNameFromSolidity(httpSoliditynode, name);

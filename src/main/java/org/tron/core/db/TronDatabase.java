@@ -29,10 +29,10 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected TronDatabase(String dbName) {
     this.dbName = dbName;
 
-    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("LEVELDB")) {
+    if ("LEVELDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       dbSource =
           new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    } else if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+    } else if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       String parentName = Paths.get(Args.getInstance().getOutputDirectoryByDbName(dbName), Args.getInstance().getStorage().getDbDirectory()).toString();
       dbSource =
           new RocksDbDataSourceImpl(parentName, dbName);

@@ -2967,17 +2967,17 @@ public class PublicMethed {
       permissionBuilder.setTypeValue(type);
     }
     if (json.containsKey("permission_name")) {
-      String permission_name = json.getString("permission_name");
-      permissionBuilder.setPermissionName(permission_name);
+      String permissionName = json.getString("permission_name");
+      permissionBuilder.setPermissionName(permissionName);
     }
     if (json.containsKey("threshold")) {
-//      long threshold = json.getLong("threshold");
+      //      long threshold = json.getLong("threshold");
       long threshold = Long.parseLong(json.getString("threshold"));
       permissionBuilder.setThreshold(threshold);
     }
     if (json.containsKey("parent_id")) {
-      int parent_id = json.getInteger("parent_id");
-      permissionBuilder.setParentId(parent_id);
+      int parentId = json.getInteger("parent_id");
+      permissionBuilder.setParentId(parentId);
     }
     if (json.containsKey("operations")) {
       byte[] operations = ByteArray.fromHexString(json.getString("operations"));
@@ -2991,8 +2991,6 @@ public class PublicMethed {
         JSONObject key = keys.getJSONObject(i);
         String address = key.getString("address");
         long weight = Long.parseLong(key.getString("weight"));
-//        long weight = key.getLong("weight");
-//        keyBuilder.setAddress(ByteString.copyFrom(address.getBytes()));
         keyBuilder.setAddress(ByteString.copyFrom(WalletClient.decodeFromBase58Check(address)));
         keyBuilder.setWeight(weight);
         keyList.add(keyBuilder.build());
@@ -3015,28 +3013,28 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
+    final ECKey ecKey = temKey;
 
     Contract.AccountPermissionUpdateContract.Builder builder =
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -3495,28 +3493,28 @@ public class PublicMethed {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
+    final ECKey ecKey = temKey;
 
     Contract.AccountPermissionUpdateContract.Builder builder =
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesssPermission = permissions.getJSONObject("witness_permission");
+    JSONArray activesPermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownersPermission != null) {
+      Permission ownerPermission = json2Permission(ownersPermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesssPermission != null) {
+      Permission witnessPermission = json2Permission(witnesssPermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activesPermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activesPermissions.size(); j++) {
+        JSONObject permission = activesPermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);

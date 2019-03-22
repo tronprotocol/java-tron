@@ -48,9 +48,9 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     if (dbVersion == 1) {
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
     } else if (dbVersion == 2) {
-      if (dbEngine.toUpperCase().equals("LEVELDB")) {
+      if ("LEVELDB".equals(dbEngine.toUpperCase())) {
         this.revokingDB = new RevokingDBWithCachingNewValue(dbName, LevelDB.class);
-      } else if (dbEngine.toUpperCase().equals("ROCKSDB")) {
+      } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         this.revokingDB = new RevokingDBWithCachingNewValue(dbName, RocksDB.class);
       }
     } else {

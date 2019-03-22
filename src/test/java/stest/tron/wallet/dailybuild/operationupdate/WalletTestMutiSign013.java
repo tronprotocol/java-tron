@@ -161,12 +161,11 @@ public class WalletTestMutiSign013 {
     Assert.assertEquals(fee, energyFee + netFee + updateAccountPermissionFee);
 
     balanceBefore = balanceAfter;
-    byte[] ACCOUNT_NAME_ONE = "11z2122328".getBytes();
-//    byte[] ACCOUNT_NAME_ONE = ByteArray.fromLong(System.currentTimeMillis());
+    byte[] accountName = "11z2122328".getBytes();
     Assert.assertTrue(PublicMethedForMutiSign.createAccount1(
         ownerAddress, newAddress, ownerKey, blockingStubFull, 0, ownerKeyString));
     Assert.assertTrue(
-        PublicMethedForMutiSign.setAccountId1(ACCOUNT_NAME_ONE,
+        PublicMethedForMutiSign.setAccountId1(accountName,
             ownerAddress, ownerKey, 0, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
         newAddress, 100L, ownerAddress, 0, ownerKey, blockingStubFull, ownerKeyString));
@@ -210,6 +209,10 @@ public class WalletTestMutiSign013 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
+  /**
+   * constructor.
+   */
 
   public static byte[] randomBytes(int length) {
     // generate the random number

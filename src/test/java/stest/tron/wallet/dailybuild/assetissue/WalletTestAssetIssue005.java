@@ -108,7 +108,7 @@ public class WalletTestAssetIssue005 {
 
 
     //Get asset issue by name success.
-    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
+
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId)
         .build();
     Contract.AssetIssueContract assetIssueByName =
@@ -121,6 +121,7 @@ public class WalletTestAssetIssue005 {
 
     //Get asset issue by name failed when the name is not correct.There is no exception.
     String wrongName = name + "_wrong";
+    ByteString assetNameBs = ByteString.copyFrom(name.getBytes());
     assetNameBs = ByteString.copyFrom(wrongName.getBytes());
     request = GrpcAPI.BytesMessage.newBuilder().setValue(assetNameBs).build();
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);

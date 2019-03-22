@@ -36,11 +36,17 @@ public class WalletTestBlock001 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
+  /**
+   * constructor.
+   */
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -55,6 +61,9 @@ public class WalletTestBlock001 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
+  /**
+   * constructor.
+   */
   @Test(enabled = true,description = "Get now block from fullnode")
   public void testCurrentBlock() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -78,6 +87,9 @@ public class WalletTestBlock001 {
     newBlock.getTransactionsList();
   }
 
+  /**
+   * constructor.
+   */
   @Test(enabled = true,description = "Get now block from solidity")
   public void testCurrentBlockFromSolidity() {
     Block currentBlock = blockingStubSolidity
