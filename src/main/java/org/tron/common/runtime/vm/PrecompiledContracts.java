@@ -713,7 +713,7 @@ public class PrecompiledContracts {
       if (isRootCallConstant()) {
         return Pair.of(true, new DataWord(0).getData());
       }
-      if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
+      if (data == null || data.length != 2 * DataWord.WORD_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
 
@@ -977,7 +977,7 @@ public class PrecompiledContracts {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null || data.length != 2 * DataWord.DATAWORD_UNIT_SIZE) {
+      if (data == null || data.length != 2 * DataWord.WORD_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
 
@@ -1053,7 +1053,7 @@ public class PrecompiledContracts {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null || data.length == 0 || (data.length % (2 * DataWord.DATAWORD_UNIT_SIZE)
+      if (data == null || data.length == 0 || (data.length % (2 * DataWord.WORD_SIZE)
           != 0)) {
         return Pair.of(false, new DataWord(0).getData());
       }
@@ -1138,7 +1138,7 @@ public class PrecompiledContracts {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE) {
+      if (data == null || data.length != DataWord.WORD_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
       Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract
@@ -1204,7 +1204,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE) {
+      if (data == null || data.length != DataWord.WORD_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
       DataWord address = new DataWord(data);
@@ -1265,7 +1265,7 @@ public class PrecompiledContracts {
 //        return Pair.of(true, new DataWord(0).getData());
 //      }
 //
-//      if (data == null || (data.length <= DataWord.DATAWORD_UNIT_SIZE * 2 || data.length > DataWord.DATAWORD_UNIT_SIZE * 3)) {
+//      if (data == null || (data.length <= DataWord.WORD_SIZE * 2 || data.length > DataWord.WORD_SIZE * 3)) {
 //        return Pair.of(false, new DataWord(0).getData());
 //      }
 //
@@ -1332,7 +1332,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (data == null || data.length != DataWord.DATAWORD_UNIT_SIZE * 2) {
+      if (data == null || data.length != DataWord.WORD_SIZE * 2) {
         return Pair.of(false, new DataWord(0).getData());
       }
 

@@ -40,7 +40,7 @@ import java.nio.ByteBuffer;
 public class DataWord implements Comparable<DataWord> {
 
     /* Maximum value of the DataWord */
-    public static final int UNIT_SIZE = 32;
+    public static final int WORD_SIZE = 32;
     public static final int MAX_POW = 256;
     public static final BigInteger _2_256 = BigInteger.valueOf(2).pow(256);
     public static final BigInteger MAX_VALUE = _2_256.subtract(BigInteger.ONE);
@@ -68,9 +68,9 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     private DataWord(ByteBuffer buffer) {
-        final ByteBuffer targetByteBuffer = ByteBuffer.allocate(DATAWORD_UNIT_SIZE);
+        final ByteBuffer targetByteBuffer = ByteBuffer.allocate(WORD_SIZE);
         final byte[] array = buffer.array();
-        System.arraycopy(array, 0, targetByteBuffer.array(), DATAWORD_UNIT_SIZE - array.length, array.length);
+        System.arraycopy(array, 0, targetByteBuffer.array(), WORD_SIZE - array.length, array.length);
         this.data = targetByteBuffer.array();
     }
 
@@ -89,7 +89,7 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     public static DataWord of(byte num) {
-        byte[] bb = new byte[DATAWORD_UNIT_SIZE];
+        byte[] bb = new byte[WORD_SIZE];
         bb[31] = num;
         return new DataWord(bb);
 
@@ -107,10 +107,10 @@ public class DataWord implements Comparable<DataWord> {
     public DataWord(byte[] data) {
         if (data == null) {
             this.data = ByteUtil.EMPTY_BYTE_ARRAY;
-        } else if (data.length == DATAWORD_UNIT_SIZE) {
+        } else if (data.length == WORD_SIZE) {
             this.data = data;
-        } else if (data.length < DATAWORD_UNIT_SIZE) {
-            System.arraycopy(data, 0, this.data, DATAWORD_UNIT_SIZE - data.length, data.length);
+        } else if (data.length < WORD_SIZE) {
+            System.arraycopy(data, 0, this.data, WORD_SIZE - data.length, data.length);
         } else {
             throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteUtil.toHexString(data));
         }
@@ -121,14 +121,14 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     /**
-     * be careful, this one will not throw Exception when data.length > DATAWORD_UNIT_SIZE
+     * be careful, this one will not throw Exception when data.length > WORD_SIZE
      * @return
      */
     public byte[] getClonedData() {
         byte[] ret = ByteUtil.EMPTY_BYTE_ARRAY;
         if (data != null){
-            ret = new byte[UNIT_SIZE];
-            int dataSize = Math.min(data.length, UNIT_SIZE);
+            ret = new byte[WORD_SIZE];
+            int dataSize = Math.min(data.length, WORD_SIZE);
             System.arraycopy(data, 0, ret, 0, dataSize);
         }
         return ret;
@@ -523,6 +523,6 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     public static long sizeInWords(long bytesSize) {
-        return bytesSize == 0 ? 0 : (bytesSize - 1) / UNIT_SIZE + 1;
+        return bytesSize == 0 ? 0 : (bytesSize - 1) / WORD_SIZE + 1;
     }
 }
