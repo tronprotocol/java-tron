@@ -48,10 +48,7 @@ public class DisconnectMessageTest extends
             done = true;
             break;
           default: {
-            if (!parseUnknownFieldProto3(
-                input, unknownFields, extensionRegistry, tag)) {
-              done = true;
-            }
+            done = true;
             break;
           }
           case 8: {

@@ -14,7 +14,6 @@ public class DisconnectMessage extends P2pMessage {
   public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
     this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
-    setUnknownFieldEmpty(disconnectMessage.getUnknownFields());
     data = disconnectMessage.toByteArray();
   }
 

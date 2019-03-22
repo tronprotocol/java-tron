@@ -21,7 +21,6 @@ public class TransactionsMessage extends TronMessage {
   public TransactionsMessage(byte[] data) throws Exception {
     this.type = MessageTypes.TRXS.asByte();
     this.transactions = Protocol.Transactions.parseFrom(data);
-    setUnknownFieldEmpty(transactions.getUnknownFields());
     this.data = transactions.toByteArray();
   }
 

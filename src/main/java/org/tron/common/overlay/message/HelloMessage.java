@@ -20,7 +20,6 @@ public class HelloMessage extends P2pMessage {
   public HelloMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
     this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
-    setUnknownFieldEmpty(helloMessage.getUnknownFields());
     data = helloMessage.toByteArray();
   }
 

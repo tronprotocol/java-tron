@@ -71,9 +71,4 @@ public abstract class Message {
     return Arrays.equals(data, message.data);
   }
 
-  public void setUnknownFieldEmpty(UnknownFieldSet unknownFieldSet){
-    if (unknownFieldSet.getSerializedSize() > 0) {
-      ReflectUtils.setFieldValue(unknownFieldSet, "fields", Collections.emptyMap());
-    }
-  }
 }
