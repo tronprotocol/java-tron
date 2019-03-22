@@ -6,12 +6,14 @@ import java.util.List;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
+import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.Recipient;
 import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
+import org.tron.core.Wallet;
 
 public class RpcWallet {
 
@@ -109,6 +111,87 @@ public class RpcWallet {
 //    broadcastTX();
   }
 
+
+  //  CAmount getBalanceZaddr(std::string address, int minDepth = 1, bool ignoreUnspendable=true) {
+//    CAmount balance = 0;
+//    std::vector<CSproutNotePlaintextEntry> sproutEntries;
+//    std::vector<SaplingNoteEntry> saplingEntries;
+//    LOCK2(cs_main, pwalletMain->cs_wallet);
+//    pwalletMain->GetFilteredNotes(sproutEntries, saplingEntries, address, minDepth, true, ignoreUnspendable);
+//    for (auto & entry : sproutEntries) {
+//      balance += CAmount(entry.plaintext.value());
+//    }
+//    for (auto & entry : saplingEntries) {
+//      balance += CAmount(entry.note.value());
+//    }
+//    return balance;
+//  }
+
+  public long getBalanceZaddr(String address, int minDepth, boolean requireSpendingKey) {
+    long balance = 0;
+    List<NoteEntry> saplingEntries;
+
+    PaymentAddress filterAddresses = null;
+    if (address.length() > 0) {
+      filterAddresses = KeyIo.decodePaymentAddress(address);
+    }
+
+    saplingEntries = ShieldWallet.GetFilteredNotes(filterAddresses, true, requireSpendingKey);
+    for (NoteEntry entry : saplingEntries) {
+      balance += entry.note.value;
+    }
+
+    return balance;
+  }
+
+  public long getBalanceTaddr(String address, int minDepth, boolean requireSpendingKey) {
+
+    return 0;
+  }
+
+  public long getBalance(String[] params, boolean fHelp)
+  {
+
+//    if (fHelp || params.length==0 || params.length >2) {
+//      throw new RuntimeException("z_getbalance \"address\" ( minconf )\n"
+//            "\nReturns the balance of a taddr or zaddr belonging to the node's wallet.\n");
+//    }
+
+    ShieldWallet.csWallet.lock();
+
+    int nMinDepth = 1;
+    if (params.length > 1) {
+      nMinDepth = Integer.valueOf(params[1]).intValue();
+    }
+
+    // Check that the from address is valid.
+    String fromAddress = params[0];
+    boolean fromTaddr = false;
+    byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddress);
+    if (tFromAddrBytes != null) {
+      fromTaddr = true;
+    } else {
+      PaymentAddress shieldFromAddr = KeyIo.decodePaymentAddress(fromAddress);
+      if (shieldFromAddr == null) {
+        throw new RuntimeException("Invalid from address, should be a taddr or zaddr.");
+      }
+      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
+        throw new RuntimeException(
+                "From address does not belong to this node, spending key or viewing key not found.");
+      }
+    }
+
+    long nBalance = 0;
+    if (fromTaddr) {
+      nBalance = getBalanceTaddr(fromAddress, nMinDepth, false);
+    } else {
+      nBalance = getBalanceZaddr(fromAddress, nMinDepth, false);
+    }
+
+    ShieldWallet.csWallet.unlock();
+
+    return nBalance;
+  }
 
 
 //  UniValue z_importkey(  UniValue params, boolean fHelp) {
