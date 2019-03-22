@@ -1,5 +1,7 @@
 package org.tron.common.zksnark.sapling.note;
 
+import org.tron.common.zksnark.sapling.Libsodium;
+
 import java.util.Optional;
 
 public class NoteEncryption {
@@ -36,15 +38,15 @@ public class NoteEncryption {
 
     byte[] personalization = new byte[crypto_generichash_blake2b_PERSONALBYTES];
     System.arraycopy("Zcash_Derive_ock", 0,  personalization, 0, 16);
-//    if (crypto_generichash_blake2b_salt_personal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
-//            block, 128,
-//            NULL, 0, // No key.
-//            NULL,    // No salt.
-//            personalization
-//    ) != 0)
-//    {
-//      throw std::logic_error("hash function failure");
-//    }
+    if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
+            block, 128,
+            null, 0, // No key.
+            null,    // No salt.
+            personalization
+    ) != 0)
+    {
+      throw new RuntimeException("hash function failure");
+    }
 
     return;
   }
