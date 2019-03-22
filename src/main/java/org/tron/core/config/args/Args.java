@@ -142,6 +142,10 @@ public class Args {
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
+  @Parameter(names = {"--fast-forward"})
+  private boolean fastForward = false;
+
+  @Getter
   private Storage storage;
 
   @Getter

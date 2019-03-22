@@ -932,6 +932,21 @@ public class Manager {
     }
   }
 
+  public boolean validBlock(BlockCapsule block) throws ValidateSignatureException {
+    if (!block.validateSignature(this)) {
+      return false;
+    }
+    boolean flag = false;
+    List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
+    for (WitnessCapsule witness: witnesses){
+      if (witness.getAddress().equals(block.getWitnessAddress())) {
+        flag = true;
+        break;
+      }
+    }
+
+    return flag;
+  }
 
   /**
    * save a block.

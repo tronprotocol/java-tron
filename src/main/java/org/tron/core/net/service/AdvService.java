@@ -25,6 +25,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
@@ -61,14 +62,18 @@ public class AdvService {
   @Getter
   private MessageCount trxCount = new MessageCount();
 
+  private boolean fastForward = Args.getInstance().isFastForward();
+
   public void init () {
-    spreadExecutor.scheduleWithFixedDelay(() -> {
-      try {
-        consumerInvToSpread();
-      } catch (Throwable t) {
-        logger.error("Spread thread error.", t);
-      }
-    }, 100, 30, TimeUnit.MILLISECONDS);
+    if (!fastForward) {
+      spreadExecutor.scheduleWithFixedDelay(() -> {
+        try {
+          consumerInvToSpread();
+        } catch (Throwable t) {
+          logger.error("Spread thread error.", t);
+        }
+      }, 100, 30, TimeUnit.MILLISECONDS);
+    }
 
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -135,6 +140,10 @@ public class AdvService {
     }
     synchronized (invToSpread) {
       invToSpread.put(item, System.currentTimeMillis());
+    }
+
+    if (fastForward) {
+      consumerInvToSpread();
     }
   }
 
