@@ -141,8 +141,30 @@ public class BaseNotePlaintext {
     public static NotePlaintext decode(NoteEncryption.EncPlaintext encPlaintext) {
       byte[] data = encPlaintext.data;
 
+//      READWRITE(leadingByte);
+//
+//      if (leadingByte != 0x01) {
+//        throw std::ios_base::failure("lead byte of SaplingNotePlaintext is not recognized");
+//      }
+//
+//      READWRITE(d);           // 11 bytes
+//      READWRITE(value_);      // 8 bytes
+//      READWRITE(rcm);         // 32 bytes
+//      READWRITE(memo_);       // 512 bytes
+
+      if(encPlaintext.data[0] != 0x01) {
+        throw new RuntimeException("lead byte of SaplingNotePlaintext is not recognized");
+      }
+
       // todo
       NotePlaintext ret = new NotePlaintext();
+
+      //(ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE + ZC_MEMO_SIZE);
+      System.arraycopy(encPlaintext.data, 1,  ret.d, 0, 11);
+      System.arraycopy(encPlaintext.data, 1 + 11,  ret.value, 0, 8);
+      System.arraycopy(encPlaintext.data, 1 + 11 + 8,  ret.rcm, 0, 32);
+      System.arraycopy(encPlaintext.data, 1 + 11 + 8 + 32,  ret.memo, 0, 512);
+
       return ret;
     }
   }
