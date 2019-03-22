@@ -578,9 +578,4 @@ public class ManagerTest {
         .getByTransactionId(trx.getTransactionId().getByteString());
     Assert.assertNull(capsule);
   }
-
-  @Test
-  public void testCancelDeferredTransaction() {
-
-  }
 }

@@ -6,6 +6,8 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -24,6 +26,7 @@ public class DeferredTransactionStoreTest {
   private static String dbDirectory = "db_deferred_transaction_store_test";
   private static String indexDirectory = "index_deferred_transaction_store_test";
   private static TronApplicationContext context;
+  private static Application AppT;
   private static Manager dbManager;
 
   static {
@@ -37,6 +40,7 @@ public class DeferredTransactionStoreTest {
         Constant.TEST_CONF
     );
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
   }
 
   /**
@@ -137,6 +141,8 @@ public class DeferredTransactionStoreTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
