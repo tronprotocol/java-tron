@@ -99,7 +99,7 @@ public class TronNetService {
           transactionsMsgHandler.processMessage(peer, msg);
           break;
         default:
-          throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, "No such message: " + msg.getType());
+          throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
     }catch (Exception e) {
       processException(peer, msg, e);
@@ -108,7 +108,6 @@ public class TronNetService {
 
   private void processException (PeerConnection peer, TronMessage msg, Exception ex) {
     ReasonCode code = null;
-    boolean exceptionPrintFlag = false;
 
     if (ex instanceof P2pException) {
       TypeEnum type = ((P2pException) ex).getType();
@@ -118,7 +117,6 @@ public class TronNetService {
           break;
         case BAD_BLOCK:
           code = ReasonCode.BAD_BLOCK;
-          exceptionPrintFlag = true;
           break;
         case NO_SUCH_MESSAGE:
         case MESSAGE_WITH_WRONG_LENGTH:
@@ -135,15 +133,12 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
+      logger.error("Message {} /n process failed from peer {}, type: {}, detail: {}.",
+          msg, peer.getInetAddress(), type, ex.getMessage());
     } else {
-      exceptionPrintFlag = true;
       code = ReasonCode.UNKNOWN;
-    }
-
-    if (exceptionPrintFlag) {
-      logger.error("Message {} /n process failed from peer {}.", msg, peer.getInetAddress(), ex);
-    } else {
-      logger.error("Message {} /n process failed from peer {}, reason: {}.", msg, peer.getInetAddress(), ex.getMessage());
+      logger.error("Message {} /n process failed from peer {}.",
+          msg, peer.getInetAddress(), ex);
     }
 
     peer.disconnect(code);
