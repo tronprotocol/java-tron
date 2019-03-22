@@ -288,11 +288,6 @@ public class Wallet {
     return Hash.sha3omit12(mergedData);
   }
 
-  // for test
-  public static byte[] generateContractAddress2(byte[] address, byte[] code, long salt) {
-    return generateContractAddress2(address, code, new DataWord(salt).getData());
-  }
-
   // for `CREATE`
   public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
     byte[] nonceBytes = Longs.toByteArray(nonce);

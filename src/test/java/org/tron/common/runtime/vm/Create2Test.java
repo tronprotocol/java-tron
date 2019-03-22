@@ -17,6 +17,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
+import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class Create2Test extends VMTestBase {
@@ -91,7 +92,6 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
 
     // Trigger contract method: deploy(bytes,uint)
-    long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
     TVMTestResult result =  TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
@@ -100,7 +100,7 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
-    byte[] expectedContract = Wallet.generateContractAddress2(address, Hex.decode(testCode), salt);
+    byte[] expectedContract = Wallet.generateContractAddress2(address, Hex.decode(testCode), new DataWord(100L).getData());
     // check deployed contract
     Assert.assertEquals(actualContract, expectedContract);
 
