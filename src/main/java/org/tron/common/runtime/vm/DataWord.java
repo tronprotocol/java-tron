@@ -68,9 +68,9 @@ public class DataWord implements Comparable<DataWord> {
     }
 
     private DataWord(ByteBuffer buffer) {
-        final ByteBuffer targetByteBuffer = ByteBuffer.allocate(32);
+        final ByteBuffer targetByteBuffer = ByteBuffer.allocate(DATAWORD_UNIT_SIZE);
         final byte[] array = buffer.array();
-        System.arraycopy(array, 0, targetByteBuffer.array(), 32 - array.length, array.length);
+        System.arraycopy(array, 0, targetByteBuffer.array(), DATAWORD_UNIT_SIZE - array.length, array.length);
         this.data = targetByteBuffer.array();
     }
 
@@ -85,20 +85,11 @@ public class DataWord implements Comparable<DataWord> {
             if (data[data.length - 1] == 0) return DataWord.ZERO();
             if (data[data.length - 1] == 1) return DataWord.ONE();
         }
-
-        if (data.length == 32)
-            return new DataWord(java.util.Arrays.copyOf(data, data.length));
-        else if (data.length <= 32) {
-            byte[] bytes = new byte[32];
-            System.arraycopy(data, 0, bytes, 32 - data.length, data.length);
-            return new DataWord(bytes);
-        } else {
-            throw new RuntimeException(String.format("Data word can't exceed 32 bytes: 0x%s", ByteUtil.toHexString(data)));
-        }
+        return new DataWord(java.util.Arrays.copyOf(data, data.length));
     }
 
     public static DataWord of(byte num) {
-        byte[] bb = new byte[32];
+        byte[] bb = new byte[DATAWORD_UNIT_SIZE];
         bb[31] = num;
         return new DataWord(bb);
 
@@ -116,12 +107,12 @@ public class DataWord implements Comparable<DataWord> {
     public DataWord(byte[] data) {
         if (data == null) {
             this.data = ByteUtil.EMPTY_BYTE_ARRAY;
-        } else if (data.length == 32) {
+        } else if (data.length == DATAWORD_UNIT_SIZE) {
             this.data = data;
-        } else if (data.length <= 32) {
-            System.arraycopy(data, 0, this.data, 32 - data.length, data.length);
+        } else if (data.length < DATAWORD_UNIT_SIZE) {
+            System.arraycopy(data, 0, this.data, DATAWORD_UNIT_SIZE - data.length, data.length);
         } else {
-            throw new RuntimeException("Data word can't exceed 32 bytes: " + data);
+            throw new RuntimeException("Data word can't exceed 32 bytes: " + ByteUtil.toHexString(data));
         }
     }
 

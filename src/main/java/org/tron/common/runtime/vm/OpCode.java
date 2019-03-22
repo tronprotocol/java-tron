@@ -617,14 +617,17 @@ public enum OpCode {
     DELEGATECALL(0xf4, 6, 1, OpCode.Tier.SpecialTier, CallFlags.Call, CallFlags.Stateless, CallFlags.Delegate),
 
     /**
+     * (0xf5) Skinny CREATE2, same as CREATE but with deterministic address
+     */
+    CREATE2(0xf5, 4, 1, OpCode.Tier.SpecialTier),
+
+    /**
      *  opcode that can be used to call another contract (or itself) while disallowing any
      *  modifications to the state during the call (and its subcalls, if present).
      *  Any opcode that attempts to perform such a modification (see below for details)
      *  will result in an exception instead of performing the modification.
      */
     STATICCALL(0xfa, 6, 1, OpCode.Tier.SpecialTier, CallFlags.Call, CallFlags.Static),
-
-    CREATE2(0xf5, 4, 1, OpCode.Tier.SpecialTier),
 
     /**
      * (0xfd) The `REVERT` instruction will stop execution, roll back all state changes done so far
