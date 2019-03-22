@@ -17,6 +17,7 @@
 package org.tron.common.zksnark.sapling.utils;
 
 import java.io.ByteArrayOutputStream;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.zksnark.sapling.ZkChainParams;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.core.Bech32;
@@ -45,8 +46,8 @@ public class KeyIo {
   // todo:  base58
   public static String EncodePaymentAddress(PaymentAddress zaddr) {
     byte[] seraddr = zaddr.encode();
-    return Wallet.encode58Check(seraddr);
-    //    byte[] data = new byte[(43 * 8 + 4) / 5];
+    // byte[] data = new byte[(43 * 8 + 4) / 5];
+
     //
     //    ConvertBits< 8, 5, true > ([ &](unsigned char c){
     //      data.push_back(c);
@@ -54,6 +55,9 @@ public class KeyIo {
     //    return bech32::Encode (m_params.Bech32HRP(CChainParams::SAPLING_PAYMENT_ADDRESS), data);
 
     // return "";
+    return Hex.toHexString(seraddr);
+
+    // return Wallet.encode58Check(seraddr);
   }
 
   /**
