@@ -1831,7 +1831,8 @@ public class Manager {
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
     closeOneStore(deferredTransactionStore);
-    closeOneStore(deferredTransactionIdIndexCache);
+    closeOneStore(deferredTransactionIdIndexStore);
+
     logger.info("******** end to close db ********");
   }
 
