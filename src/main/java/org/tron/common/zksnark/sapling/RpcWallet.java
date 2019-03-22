@@ -110,22 +110,7 @@ public class RpcWallet {
     TransactionBuilderResult result = constructor.build();
 //    broadcastTX();
   }
-
-
-  //  CAmount getBalanceZaddr(std::string address, int minDepth = 1, bool ignoreUnspendable=true) {
-//    CAmount balance = 0;
-//    std::vector<CSproutNotePlaintextEntry> sproutEntries;
-//    std::vector<SaplingNoteEntry> saplingEntries;
-//    LOCK2(cs_main, pwalletMain->cs_wallet);
-//    pwalletMain->GetFilteredNotes(sproutEntries, saplingEntries, address, minDepth, true, ignoreUnspendable);
-//    for (auto & entry : sproutEntries) {
-//      balance += CAmount(entry.plaintext.value());
-//    }
-//    for (auto & entry : saplingEntries) {
-//      balance += CAmount(entry.note.value());
-//    }
-//    return balance;
-//  }
+  
 
   public long getBalanceZaddr(String address, int minDepth, boolean requireSpendingKey) {
     long balance = 0;
