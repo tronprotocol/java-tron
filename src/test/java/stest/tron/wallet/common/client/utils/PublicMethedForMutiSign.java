@@ -26,7 +26,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
@@ -177,30 +176,9 @@ public class PublicMethedForMutiSign {
    */
   public static boolean broadcastTransaction(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    int i = 10;
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      try {
-        Thread.sleep(500);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (10 - i));
-    }
 
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-      //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      //logger.info(Integer.toString(response.getCode().getNumber()));
-      //logger.info(Integer.toString(response.getCodeValue()));
-      return false;
-    } else {
-      return true;
-    }
+    Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
+    return response.getResult();
   }
 
 
@@ -1326,12 +1304,6 @@ public class PublicMethedForMutiSign {
     }
     transaction = signTransaction(ecKey, transaction);
     Return response = broadcastTransaction1(transaction, blockingStubFull);
-    //if (response.getResult() == false) {
-    //logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-    //return false;
-    //} else {
-    //return true;
-    //}
     return response.getResult();
   }
 
@@ -1620,11 +1592,8 @@ public class PublicMethedForMutiSign {
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      //logger.info("Code = " + response.getCode());
-      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
-      //logger.info("brodacast succesfully");
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     }
   }
@@ -2653,8 +2622,6 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
     Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      //logger.info("Code = " + response.getCode());
-      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -2734,8 +2701,6 @@ public class PublicMethedForMutiSign {
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
     Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      //logger.info("Code = " + response.getCode());
-      //logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -2952,24 +2917,8 @@ public class PublicMethedForMutiSign {
    */
   public static Return broadcastTransaction1(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
-    return response;
+
+    return PublicMethed.broadcastTransaction(transaction, blockingStubFull);
   }
 
   /**
