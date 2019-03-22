@@ -401,14 +401,13 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
         Entry<byte[], byte[]> entry = iterator.peekNext();
 
-        if (entry.getKey().length < precision) {
-          continue;
+        if (entry.getKey().length >= precision) {
+          if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
+              ByteUtil.parseBytes(entry.getKey(), 0, precision))) {
+            break;
+          }
+          result.put(entry.getKey(), entry.getValue());
         }
-        if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
-            ByteUtil.parseBytes(entry.getKey(), 0, precision))) {
-          break;
-        }
-        result.put(entry.getKey(), entry.getValue());
       }
       return result;
     } catch (IOException e) {
