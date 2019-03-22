@@ -47,6 +47,13 @@ public class ExtendedSpendingKey {
   }
 
   public ExtendedSpendingKey Derive(int i) {
+    /*
+    CDataStream ss_p(SER_NETWORK, PROTOCOL_VERSION);
+    ss_p << *this;
+    CSerializeData p_bytes(ss_p.begin(), ss_p.end());
+
+    CSerializeData i_bytes(ZIP32_XSK_SIZE);
+    * */
     byte[] p_bytes = encode();
 
     byte[] i_bytes = new byte[ZIP32_XSK_SIZE];
@@ -67,7 +74,8 @@ public class ExtendedSpendingKey {
   }
 
   public PaymentAddress DefaultAddress() {
-    SaplingExtendedFullViewingKey fvk = ToXFVK();
+    SaplingExtendedFullViewingKey fvk =
+        ToXFVK();
     return fvk.DefaultAddress();
   }
 

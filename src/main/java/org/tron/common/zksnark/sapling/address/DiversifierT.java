@@ -12,4 +12,7 @@ public class DiversifierT {
   byte[] data; // ZC_DIVERSIFIER_SIZE
 
   // typedef array<char, ZC_DIVERSIFIER_SIZE> DiversifierT;
+  DiversifierT() {
+    data = new byte[ZC_DIVERSIFIER_SIZE];
+  }
 }

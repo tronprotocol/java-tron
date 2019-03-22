@@ -21,6 +21,7 @@ import org.tron.common.zksnark.sapling.ZkChainParams;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.core.Bech32;
 import org.tron.common.zksnark.sapling.core.Bech32.Bech32Data;
+import org.tron.core.Wallet;
 
 public class KeyIo {
 
@@ -43,7 +44,8 @@ public class KeyIo {
 
   // todo:  base58
   public static String EncodePaymentAddress(PaymentAddress zaddr) {
-    //    byte[] seraddr = zaddr.encode();
+    byte[] seraddr = zaddr.encode();
+    return Wallet.encode58Check(seraddr);
     //    byte[] data = new byte[(43 * 8 + 4) / 5];
     //
     //    ConvertBits< 8, 5, true > ([ &](unsigned char c){
@@ -51,7 +53,7 @@ public class KeyIo {
     //    },seraddr.begin(), seraddr.end());
     //    return bech32::Encode (m_params.Bech32HRP(CChainParams::SAPLING_PAYMENT_ADDRESS), data);
 
-    return "";
+    // return "";
   }
 
   /**
