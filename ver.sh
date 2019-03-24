@@ -5,7 +5,7 @@ currentBranch=`git rev-parse --abbrev-ref HEAD`
 if [ "$currentBranch"x != "master"x ]
 then
   echo The current branch is not master. Please checkout into master.
-  #exit 1
+  exit 1
 fi
 
 git pull origin master
