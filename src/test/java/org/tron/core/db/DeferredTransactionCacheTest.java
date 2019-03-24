@@ -1,16 +1,11 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -22,42 +17,26 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-@Ignore
 public class DeferredTransactionCacheTest {
-  private static String dbPath = "output_deferred_transactionCache_test";
-  private static String dbDirectory = "db_deferred_transactionCache_test";
-  private static String indexDirectory = "index_deferred_transactionCache_test";
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static Application AppT;
-
-
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w"
-        },
-        Constant.TEST_CONF
-    );
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-  }
+  private static DeferredTransactionCache deferredTransactionCache;
+  private static DeferredTransactionIdIndexCache deferredTransactionIdIndexCache;
+  private static final String dbPath = "output-deferred-transaction-cache-test";
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    dbManager = context.getBean(Manager.class);
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    deferredTransactionCache = new DeferredTransactionCache("deferred-transaction-cache");
+    deferredTransactionIdIndexCache = new DeferredTransactionIdIndexCache("deferred-transactionid-index-cache");
+    deferredTransactionCache.setDeferredTransactionIdIndexCache(deferredTransactionIdIndexCache);
   }
 
   @Test
   public void RemoveDeferredTransactionTest() {
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
+    deferredTransactionCache.reset();
     // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
@@ -81,8 +60,8 @@ public class DeferredTransactionCacheTest {
 
   @Test
   public void GetScheduledTransactionsTest (){
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
+    deferredTransactionCache.reset();
+
     // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
@@ -97,15 +76,12 @@ public class DeferredTransactionCacheTest {
         new DeferredTransactionCapsule(deferredTransactionCapsule.getInstance()
             .toBuilder().setDelayUntil(System.currentTimeMillis() + 1000).build()));
     deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
-    Assert.assertNotNull(dbManager.getDeferredTransactionCache().getScheduledTransactions(System.currentTimeMillis()));
+    Assert.assertNotNull(deferredTransactionCache.getScheduledTransactions(System.currentTimeMillis()));
   }
 
-  @Ignore
   @Test
   public void GetScheduledTransactionsTest2 (){
-    DeferredTransactionCache deferredTransactionCache = dbManager.getDeferredTransactionCache();
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
-
+    deferredTransactionCache.reset();
     for (int i = 999; i >= 0; i --) {
       TransferContract tc =
           TransferContract.newBuilder()
@@ -121,10 +97,10 @@ public class DeferredTransactionCacheTest {
       deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
     }
     // save in database with block number
-    Assert.assertEquals(100, dbManager.getDeferredTransactionCache().getScheduledTransactions(99).size());
-    Assert.assertEquals(500, dbManager.getDeferredTransactionCache().getScheduledTransactions(499).size());
-    Assert.assertEquals(334, dbManager.getDeferredTransactionCache().getScheduledTransactions(333).size());
-    Assert.assertEquals(178, dbManager.getDeferredTransactionCache().getScheduledTransactions(177).size());
+    Assert.assertEquals(100, deferredTransactionCache.getScheduledTransactions(99).size());
+    Assert.assertEquals(500, deferredTransactionCache.getScheduledTransactions(499).size());
+    Assert.assertEquals(334, deferredTransactionCache.getScheduledTransactions(333).size());
+    Assert.assertEquals(178, deferredTransactionCache.getScheduledTransactions(177).size());
 
   }
 
@@ -145,9 +121,5 @@ public class DeferredTransactionCacheTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    context.destroy();
-    AppT.shutdownServices();
-    AppT.shutdown();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

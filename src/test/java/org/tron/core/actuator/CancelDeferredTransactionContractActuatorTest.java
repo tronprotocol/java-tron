@@ -55,7 +55,6 @@ public class CancelDeferredTransactionContractActuatorTest {
   private static Transaction transaction = null;
   private static DeferredTransaction deferredTransaction = null;
   private static DeferredTransactionCapsule deferredTransactionCapsule = null;
-  private static Application AppT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -81,7 +80,6 @@ public class CancelDeferredTransactionContractActuatorTest {
     deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
     dbManager.getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
     dbManager.getDeferredTransactionCache().put(deferredTransactionCapsule);
-    AppT = ApplicationFactory.create(context);
   }
 
   private static void initDeferredTransaction() {
@@ -183,7 +181,6 @@ public class CancelDeferredTransactionContractActuatorTest {
     byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     try {
       actuator.validate();
-
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
     }

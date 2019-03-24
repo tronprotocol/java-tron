@@ -1,61 +1,40 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import java.lang.instrument.Instrumentation;
 
 public class DeferredTransactionIdIndexCacheTest {
   private static String dbPath = "output_deferred_transactionIdIndexCache_test";
-  private static String dbDirectory = "db_deferred_transactionIdIndexCache_test";
-  private static String indexDirectory = "index_deferred_transactionIdIndexCache_test";
-  private static TronApplicationContext context;
-  private static Application AppT;
-  private static Manager dbManager;
-
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w"
-        },
-        Constant.TEST_CONF
-    );
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
-  }
+  private static DeferredTransactionCache deferredTransactionCache;
+  private static DeferredTransactionIdIndexCache deferredTransactionIdIndexCache;
 
   /**
    * Init data.
    */
   @BeforeClass
   public static void init() {
-    dbManager = context.getBean(Manager.class);
+    Args.setParam(new String[]{"--output-directory", dbPath},
+        Constant.TEST_CONF);
+    deferredTransactionCache = new DeferredTransactionCache("deferred-transaction-cache");
+    deferredTransactionIdIndexCache = new DeferredTransactionIdIndexCache("deferred-transactionid-index-cache");
+    deferredTransactionCache.setDeferredTransactionIdIndexCache(deferredTransactionIdIndexCache);
   }
 
   @Test
   public void RemoveDeferredTransactionIdIndexTest() {
-    DeferredTransactionIdIndexCache deferredTransactionIdIndexCache = dbManager.getDeferredTransactionIdIndexCache();
     // save in database with block number
     TransferContract tc =
         TransferContract.newBuilder()
@@ -66,7 +45,9 @@ public class DeferredTransactionIdIndexCacheTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
         buildDeferredTransaction(trx.getInstance()));
-
+    deferredTransactionIdIndexCache.put(deferredTransactionCapsule);
+    deferredTransactionIdIndexCache.removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
+    Assert.assertNull(deferredTransactionIdIndexCache.getDeferredTransactionKeyById(deferredTransactionCapsule.getTransactionId()));
   }
   
   private static DeferredTransaction buildDeferredTransaction(Transaction transaction) {
@@ -86,9 +67,5 @@ public class DeferredTransactionIdIndexCacheTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    context.destroy();
-    AppT.shutdownServices();
-    AppT.shutdown();
-    FileUtil.deleteDir(new File(dbPath));
   }
 }

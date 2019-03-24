@@ -98,7 +98,6 @@ public class DeferredTransactionStoreTest {
     Assert.assertNotNull(dbManager.getDeferredTransactionStore().getScheduledTransactions(System.currentTimeMillis()));
   }
 
-  @Ignore
   @Test
   public void GetScheduledTransactionsTest2 (){
     DeferredTransactionStore deferredTransactionStore = dbManager.getDeferredTransactionStore();
