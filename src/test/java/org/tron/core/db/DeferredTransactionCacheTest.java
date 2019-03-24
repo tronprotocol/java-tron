@@ -22,6 +22,7 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+@Ignore
 public class DeferredTransactionCacheTest {
   private static String dbPath = "output_deferred_transactionCache_test";
   private static String dbDirectory = "db_deferred_transactionCache_test";

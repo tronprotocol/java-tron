@@ -9,7 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -32,6 +35,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Transaction.raw.Builder;
 
+@Ignore
 @Slf4j
 public class CancelDeferredTransactionContractActuatorTest {
 
@@ -51,10 +55,12 @@ public class CancelDeferredTransactionContractActuatorTest {
   private static Transaction transaction = null;
   private static DeferredTransaction deferredTransaction = null;
   private static DeferredTransactionCapsule deferredTransactionCapsule = null;
+  private static Application AppT;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_INVALID =
@@ -75,6 +81,7 @@ public class CancelDeferredTransactionContractActuatorTest {
     deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
     dbManager.getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
     dbManager.getDeferredTransactionCache().put(deferredTransactionCapsule);
+    AppT = ApplicationFactory.create(context);
   }
 
   private static void initDeferredTransaction() {

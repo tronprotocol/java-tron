@@ -386,6 +386,7 @@ public class WalletTest {
     Assert.assertEquals("getTransactionById5", transaction5, transactionById);
   }
 
+  @Ignore
   @Test
   public void getDeferredTransactionById() {
     deferredTransaction = getBuildDeferredTransaction(transaction6);
@@ -395,6 +396,7 @@ public class WalletTest {
     Assert.assertEquals("getDeferredTransactionById", deferredTransaction, getDeferredTransactionById);
   }
 
+  @Ignore
   @Test
   public void cancelDeferredTransaction() {
     deferredTransaction = getBuildDeferredTransaction(transaction6);
