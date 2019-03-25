@@ -88,7 +88,7 @@ if (isWindows()) {
     }
 }
 
-task updateVersion(type: Exec) {
+task version(type: Exec) {
     commandLine 'bash', '-c', './ver.sh'
 }
 
@@ -119,6 +119,8 @@ dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
 
     compile "org.iq80.leveldb:leveldb:0.7"
+
+    compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
 
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
 
@@ -342,5 +344,6 @@ def binaryRelease(taskName, jarName, mainClass) {
 artifacts {
     archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
             binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
-            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'))
+            binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
+            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
 }

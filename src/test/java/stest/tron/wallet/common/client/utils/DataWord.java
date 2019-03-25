@@ -168,7 +168,7 @@ public class DataWord implements Comparable<DataWord> {
    * constructor.
    */
 
-  public BigInteger sValue() {
+  public BigInteger ssValue() {
     return new BigInteger(data);
   }
 
@@ -309,14 +309,14 @@ public class DataWord implements Comparable<DataWord> {
    */
 
   // TODO: improve with no BigInteger
-  public void sDiv(DataWord word) {
+  public void ssDiv(DataWord word) {
 
     if (word.isZero()) {
       this.and(ZERO);
       return;
     }
 
-    BigInteger result = sValue().divide(word.sValue());
+    BigInteger result = ssValue().divide(word.ssValue());
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
 
@@ -350,15 +350,15 @@ public class DataWord implements Comparable<DataWord> {
    * constructor.
    */
 
-  public void sMod(DataWord word) {
+  public void ssMod(DataWord word) {
 
     if (word.isZero()) {
       this.and(ZERO);
       return;
     }
 
-    BigInteger result = sValue().abs().mod(word.sValue().abs());
-    result = (sValue().signum() == -1) ? result.negate() : result;
+    BigInteger result = ssValue().abs().mod(word.ssValue().abs());
+    result = (ssValue().signum() == -1) ? result.negate() : result;
 
     this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
   }
@@ -462,7 +462,7 @@ public class DataWord implements Comparable<DataWord> {
     if (0 > k || k > 31) {
       throw new IndexOutOfBoundsException();
     }
-    byte mask = this.sValue().testBit((k * 8) + 7) ? (byte) 0xff : 0;
+    byte mask = this.ssValue().testBit((k * 8) + 7) ? (byte) 0xff : 0;
     for (int i = 31; i > k; i--) {
       this.data[31 - i] = mask;
     }

@@ -201,13 +201,13 @@ public class WalletTestAssetIssue018 {
 
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount1Key,blockingStubFull);
-    ByteString assetAccount1Id = getAssetIdFromThisAccount.getAssetIssuedID();
+    final ByteString assetAccount1Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
     getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount2Key,blockingStubFull);
-    ByteString assetAccount2Id = getAssetIdFromThisAccount.getAssetIssuedID();
+    final ByteString assetAccount2Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
     getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount3Key,blockingStubFull);
-    ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
+    final ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Transfer asset issue.

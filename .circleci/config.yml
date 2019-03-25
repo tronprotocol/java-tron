@@ -1,9 +1,22 @@
-#version: 2
-#jobs:
-#  build:
-#    docker:
-#    - image: circleci/openjdk:8-jdk-browsers
-#    working_directory: ~/java-tron
-#    steps:
-#    - checkout
-#    - run: curl http://60.205.215.34/Daily_Build_Task_Report
+version: 2
+jobs:
+  build:
+    branches:
+      only:
+      - master
+      - develop
+      - addinCircleCI
+
+    docker:
+    - image: circleci/openjdk:8-jdk-browsers
+    working_directory: ~/java-tron
+    steps:
+    - checkout
+    - run:
+        name: Daily Build Report
+        command: curl http://60.205.215.34/Daily_Build_Task_Report
+
+
+    - run:
+        name: Download Links
+        command: sh DownloadLinks.sh

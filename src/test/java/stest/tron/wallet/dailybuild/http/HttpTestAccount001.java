@@ -20,6 +20,8 @@ public class HttpTestAccount001 {
   private HttpResponse response;
   private String httpnode = Configuration.getByPath("testng.conf").getStringList("httpnode.ip.list")
       .get(0);
+  private String httpSoliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
 
   /**
    * constructor.
@@ -27,6 +29,19 @@ public class HttpTestAccount001 {
   @Test(enabled = true, description = "Get account by http")
   public void getAccount() {
     response = HttpMethed.getAccount(httpnode, fromAddress);
+    logger.info("code is " + response.getStatusLine().getStatusCode());
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.size() > 3);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get account from solidity by http")
+  public void getAccountFromSolidity() {
+    response = HttpMethed.getAccountFromSolidity(httpSoliditynode, fromAddress);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
@@ -45,7 +60,8 @@ public class HttpTestAccount001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertEquals(Integer.parseInt(responseContent.get("freeNetLimit").toString()),5000);
-    Assert.assertEquals(Long.parseLong(responseContent.get("TotalNetLimit").toString()),43200000000L);
+    Assert.assertEquals(
+        Long.parseLong(responseContent.get("TotalNetLimit").toString()),43200000000L);
     Assert.assertTrue(responseContent.size() >= 2);
   }
 
@@ -59,7 +75,8 @@ public class HttpTestAccount001 {
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertTrue(Long.parseLong(responseContent.get("TotalEnergyLimit").toString()) >= 50000000000L);
+    Assert.assertTrue(
+        Long.parseLong(responseContent.get("TotalEnergyLimit").toString()) >= 50000000000L);
     Assert.assertTrue(responseContent.size() >= 3);
   }
 

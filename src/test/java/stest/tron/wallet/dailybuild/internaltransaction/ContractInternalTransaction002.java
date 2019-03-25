@@ -88,9 +88,9 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = true, description = "Type is create create call call")
   public void test1InternalTransaction007() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "AAContract";
@@ -157,6 +157,7 @@ public class ContractInternalTransaction002 {
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertNotNull(infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     int transactionsCount = infoById.get().getInternalTransactionsCount();
     Assert.assertEquals(4, transactionsCount);
@@ -209,9 +210,9 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = true, description = "Type is call call")
   public void test2InternalTransaction008() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "AAContract";
@@ -419,9 +420,9 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = true, description = "Test suicide type in internalTransaction after call")
   public void test3InternalTransaction009() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "AAContract";
     String code = "608060405261043b806100136000396000f3006080604052600436106100405763ffffffff7"
@@ -595,9 +596,9 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = false, description = "Test maxfeelimit can trigger create type max time")
   public void test4InternalTransaction010() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "AAContract";
@@ -768,9 +769,9 @@ public class ContractInternalTransaction002 {
 
   @Test(enabled = true, description = "Type is call create->call->call.Three-level nesting")
   public void test5InternalTransaction012() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "AAContract";

@@ -41,6 +41,9 @@ public class WalletTestBlock002 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+  /**
+   * constructor.
+   */
 
   @BeforeClass
   public void beforeClass() {
@@ -55,7 +58,9 @@ public class WalletTestBlock002 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-
+  /**
+   * constructor.
+   */
   @Test(enabled = true,description = "GetBlockByNum from fullnode")
   public void testGetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());

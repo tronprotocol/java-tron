@@ -88,9 +88,10 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract Divide 0")
   public void test1DivideInt() {
-    PublicMethed
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String contractName = "divideInt";
@@ -405,7 +406,8 @@ public class AssertException {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "Trigger contract Call an uninitialized internal function type variable")
+  @Test(enabled = true, description = "Trigger contract Call an uninitialized "
+      + "internal function type variable")
   public void test6UninitializedContract() {
     String contractName = "uninitializedContract";
     String code = Configuration.getByPath("testng.conf")
