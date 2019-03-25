@@ -137,7 +137,7 @@ public class MessageQueue {
   private boolean needToLog(Message msg) {
     if (msg instanceof PingMessage ||
         msg instanceof PongMessage ||
-        msg instanceof TransactionsMessage){
+        msg instanceof TransactionsMessage) {
       return false;
     }
 

@@ -57,26 +57,18 @@ public class TestMutiSignStress {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,threadPoolSize = 30, invocationCount = 30)
+  @Test(enabled = true, threadPoolSize = 30, invocationCount = 30)
   public void testMutiSignForAccount() {
     PublicMethed.printAddress(testKey002);
-
-
-
-
 
     ECKey ecKey4 = new ECKey(Utils.getRandom());
     byte[] newAddress = ecKey4.getAddress();
     String newKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-
-
-
-
     ECKey ecKey3 = new ECKey(Utils.getRandom());
     byte[] ownerAddress = ecKey3.getAddress();
 
-    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress,9968981537400L,fromAddress,testKey002,
+    Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 9968981537400L, fromAddress, testKey002,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -107,8 +99,8 @@ public class TestMutiSignStress {
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
             + "]}]}";
     logger.info(accountPermissionJson);
-    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
-        blockingStubFull,ownerKeyString);
+    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey,
+        blockingStubFull, ownerKeyString);
 
     //permissionKeyString[0] = ownerKey;
 
@@ -120,7 +112,6 @@ public class TestMutiSignStress {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     Integer i = 0;
     while (i++ <= 1000) {
       ecKey4 = new ECKey(Utils.getRandom());
@@ -128,25 +119,23 @@ public class TestMutiSignStress {
       newKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
       PublicMethed.printAddress(newKey);
 
-
       PublicMethedForMutiSign.sendcoin(
-          newAddress,4000000L,ownerAddress,ownerKey,blockingStubFull,ownerKeyString1);
+          newAddress, 4000000L, ownerAddress, ownerKey, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.freezeBalance(
-          ownerAddress,1000000L,0,ownerKey,blockingStubFull,ownerKeyString1);
+          ownerAddress, 1000000L, 0, ownerKey, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.freezeBalanceGetEnergy(
-          ownerAddress,1000000L,0,1,ownerKey,blockingStubFull,ownerKeyString1);
+          ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.freezeBalanceForReceiver(
-          ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),
-          ownerKey,blockingStubFull,ownerKeyString1);
+          ownerAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
+          ownerKey, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.unFreezeBalance(
-          ownerAddress,ownerKey,0,null,blockingStubFull,ownerKeyString1);
+          ownerAddress, ownerKey, 0, null, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.unFreezeBalance(
-          ownerAddress,ownerKey,0,newAddress,blockingStubFull,ownerKeyString1);
+          ownerAddress, ownerKey, 0, newAddress, blockingStubFull, ownerKeyString1);
       PublicMethedForMutiSign.updateAccount(
-          ownerAddress,Long.toString(System.currentTimeMillis()).getBytes(),ownerKey,
-          blockingStubFull,ownerKeyString1);
+          ownerAddress, Long.toString(System.currentTimeMillis()).getBytes(), ownerKey,
+          blockingStubFull, ownerKeyString1);
     }
-
 
 
   }

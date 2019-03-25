@@ -326,15 +326,15 @@ public class SnapshotManager implements RevokingDatabase {
   }
 
   private void deleteCheckPoint() {
-    Map <byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
-   if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
-     for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
-       hmap.put(e.getKey(), null);
-     }
-   }
+    Map<byte[], byte[]> hmap = new HashMap<byte[], byte[]>();
+    if (!checkTmpStore.getDbSource().allKeys().isEmpty()) {
+      for (Map.Entry<byte[], byte[]> e : checkTmpStore.getDbSource()) {
+        hmap.put(e.getKey(), null);
+      }
+    }
 
-    checkTmpStore.getDbSource().updateByBatch(hmap,  WriteOptionsWrapper.getInstance()
-       .sync(Args.getInstance().getStorage().isDbSync()));
+    checkTmpStore.getDbSource().updateByBatch(hmap, WriteOptionsWrapper.getInstance()
+        .sync(Args.getInstance().getStorage().isDbSync()));
   }
 
   // ensure run this method first after process start.

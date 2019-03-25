@@ -332,6 +332,7 @@ public class UnfreezeAsset2Test {
     assetIssueList.getSerializedSize();
 
   }
+
   /**
    * constructor.
    */
@@ -342,6 +343,7 @@ public class UnfreezeAsset2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -400,6 +402,7 @@ public class UnfreezeAsset2Test {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -427,6 +430,7 @@ public class UnfreezeAsset2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -436,6 +440,7 @@ public class UnfreezeAsset2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -455,6 +460,7 @@ public class UnfreezeAsset2Test {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -494,6 +500,7 @@ public class UnfreezeAsset2Test {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -534,6 +541,7 @@ public class UnfreezeAsset2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -586,6 +594,7 @@ public class UnfreezeAsset2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */

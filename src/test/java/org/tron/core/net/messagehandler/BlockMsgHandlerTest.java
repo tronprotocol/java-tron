@@ -27,7 +27,7 @@ public class BlockMsgHandlerTest {
           System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
       msg = new BlockMessage(blockCapsule);
       handler.processMessage(peer, new BlockMessage(blockCapsule));
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       Assert.assertTrue(e.getMessage().equals("no request"));
     }
 
@@ -37,12 +37,13 @@ public class BlockMsgHandlerTest {
         transactionList.add(Transaction.newBuilder().build());
       }
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(),
-          System.currentTimeMillis() + 10000,transactionList);
+          System.currentTimeMillis() + 10000, transactionList);
       msg = new BlockMessage(blockCapsule);
       System.out.println("len = " + blockCapsule.getInstance().getSerializedSize());
-      peer.getAdvInvRequest().put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
+      peer.getAdvInvRequest()
+          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       System.out.println(e);
       Assert.assertTrue(e.getMessage().equals("block size over limit"));
     }
@@ -51,9 +52,10 @@ public class BlockMsgHandlerTest {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis() + 10000, Sha256Hash.ZERO_HASH.getByteString());
       msg = new BlockMessage(blockCapsule);
-      peer.getAdvInvRequest().put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
+      peer.getAdvInvRequest()
+          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       System.out.println(e);
       Assert.assertTrue(e.getMessage().equals("block time error"));
     }

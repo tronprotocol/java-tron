@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class TriggerConfig {
+
   @Getter
   @Setter
   private String triggerName;

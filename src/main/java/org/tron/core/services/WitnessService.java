@@ -388,7 +388,7 @@ public class WitnessService implements Service {
 
     WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
         .get(witnessAccountAddress);
-      // need handle init witness
+    // need handle init witness
     if (null == witnessCapsule) {
       logger.warn("WitnessCapsule[" + witnessAccountAddress + "] is not in witnessStore");
       witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAccountAddress));

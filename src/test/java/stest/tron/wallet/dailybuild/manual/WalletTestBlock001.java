@@ -44,6 +44,7 @@ public class WalletTestBlock001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -64,7 +65,7 @@ public class WalletTestBlock001 {
   /**
    * constructor.
    */
-  @Test(enabled = true,description = "Get now block from fullnode")
+  @Test(enabled = true, description = "Get now block from fullnode")
   public void testCurrentBlock() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Assert.assertTrue(currentBlock.hasBlockHeader());
@@ -90,7 +91,7 @@ public class WalletTestBlock001 {
   /**
    * constructor.
    */
-  @Test(enabled = true,description = "Get now block from solidity")
+  @Test(enabled = true, description = "Get now block from solidity")
   public void testCurrentBlockFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -104,6 +105,7 @@ public class WalletTestBlock001 {
     logger.info("test getcurrentblock in soliditynode is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
   }
+
   /**
    * constructor.
    */
@@ -154,6 +156,7 @@ public class WalletTestBlock001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -163,6 +166,7 @@ public class WalletTestBlock001 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

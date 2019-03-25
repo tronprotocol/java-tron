@@ -17,11 +17,12 @@ public class PeerStatusCheck {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
-  private ScheduledExecutorService peerStatusCheckExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService peerStatusCheckExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   private int blockUpdateTimeout = 20_000;
 
-  public void init () {
+  public void init() {
     peerStatusCheckExecutor.scheduleWithFixedDelay(() -> {
       try {
         statusCheck();
@@ -31,7 +32,7 @@ public class PeerStatusCheck {
     }, 5, 2, TimeUnit.SECONDS);
   }
 
-  public void close () {
+  public void close() {
     peerStatusCheckExecutor.shutdown();
   }
 
@@ -43,7 +44,8 @@ public class PeerStatusCheck {
 
       boolean isDisconnected = false;
 
-      if (peer.isNeedSyncFromPeer() && peer.getBlockBothHaveUpdateTime() < now - blockUpdateTimeout){
+      if (peer.isNeedSyncFromPeer()
+          && peer.getBlockBothHaveUpdateTime() < now - blockUpdateTimeout) {
         logger.warn("Peer {} not sync for a long time.", peer.getInetAddress());
         isDisconnected = true;
       }

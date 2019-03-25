@@ -121,7 +121,6 @@ public class Bucket {
     doOnTree.call(this);
   }
 
-
   //tree operations
 
   public interface DoOnTree {

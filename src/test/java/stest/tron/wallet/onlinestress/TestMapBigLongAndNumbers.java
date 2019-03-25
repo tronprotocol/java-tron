@@ -26,7 +26,6 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
-
 @Slf4j
 public class TestMapBigLongAndNumbers {
 
@@ -60,8 +59,6 @@ public class TestMapBigLongAndNumbers {
   String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
 
-
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -83,26 +80,26 @@ public class TestMapBigLongAndNumbers {
 
   }
 
-  @Test(enabled = true,threadPoolSize = 10, invocationCount = 10)
+  @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
   public void deployErc721KittyCore() {
 
     Long maxFeeLimit = 1000000000L;
 
     String contractName = "MappingExample";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TestMapBigLongAndNumbers_deployErc721KittyCore");
+        .getString("code.code_TestMapBigLongAndNumbers_deployErc721KittyCore");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TestMapBigLongAndNumbers_deployErc721KittyCore");
-    kittyCoreContractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-            maxFeeLimit, 0L, consumeUserResourcePercent,null,testKey002,
-            fromAddress,blockingStubFull);
+        .getString("abi.abi_TestMapBigLongAndNumbers_deployErc721KittyCore");
+    kittyCoreContractAddress = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 0L, consumeUserResourcePercent, null, testKey002,
+        fromAddress, blockingStubFull);
 
     String data1 = "a";
     String data2 = "b";
     String data3 = "c";
     String data4 = "d";
 
-    for (int i = 0;i < 13;i++) {
+    for (int i = 0; i < 13; i++) {
       data1 += data1;
     }
 
@@ -144,30 +141,27 @@ public class TestMapBigLongAndNumbers {
       String saleContractString = "\"" + data + "\"" + "," + "\""
           + Base58.encode58Check(userAddress) + "\"";
 
-
       System.out.println("long string address:" + addresstest);
 
-      txid = PublicMethed.triggerContract(kittyCoreContractAddress,"update2(string,address)",
-          saleContractString,false, 0,1000000000L,fromAddress,testKey002,blockingStubFull);
+      txid = PublicMethed.triggerContract(kittyCoreContractAddress, "update2(string,address)",
+          saleContractString, false, 0, 1000000000L, fromAddress, testKey002, blockingStubFull);
       logger.info(txid);
-
 
       String saleContractString1 = "\"" + data5 + "\"" + "," + "\""
           + Base58.encode58Check(userAddress) + "\"";
 
-
       System.out.println("short string address:" + addresstest);
 
-      txid = PublicMethed.triggerContract(kittyCoreContractAddress,"update2(string,address)",
-          saleContractString1,false, 0,1000000000L,fromAddress,testKey002,blockingStubFull);
+      txid = PublicMethed.triggerContract(kittyCoreContractAddress, "update2(string,address)",
+          saleContractString1, false, 0, 1000000000L, fromAddress, testKey002, blockingStubFull);
       logger.info(txid);
 
       System.out.println("time out");
 
-      txid = PublicMethed.triggerContract(kittyCoreContractAddress,"testUseCpu(uint256)",
-          "1000000000",false, 0,1000000000L,fromAddress,testKey002,blockingStubFull);
+      txid = PublicMethed.triggerContract(kittyCoreContractAddress, "testUseCpu(uint256)",
+          "1000000000", false, 0, 1000000000L, fromAddress, testKey002, blockingStubFull);
 
-      infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
       infoById.get().getResultValue();
 

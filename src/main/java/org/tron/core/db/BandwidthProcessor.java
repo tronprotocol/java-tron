@@ -91,7 +91,8 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
+      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
+          accountCapsule, now, bytesSize)) {
         continue;
       }
 
@@ -308,7 +309,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
       assetIssueCapsuleV2.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
       assetIssueCapsuleV2.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
-      dbManager.getAssetIssueV2Store().put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      dbManager.getAssetIssueV2Store()
+          .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
     } else {
       accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);

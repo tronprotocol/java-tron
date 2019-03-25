@@ -61,7 +61,7 @@ public class ContractScenario003 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    logger.info(Long.toString(PublicMethed.queryAccount(contract003Key,blockingStubFull)
+    logger.info(Long.toString(PublicMethed.queryAccount(contract003Key, blockingStubFull)
         .getBalance()));
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
         .usePlaintext(true)
@@ -76,7 +76,7 @@ public class ContractScenario003 {
     contract003Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(contract003Address, 500000000L, fromAddress,
-        testKey002,blockingStubFull));
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract003Address,
         blockingStubFull);
@@ -220,6 +220,7 @@ public class ContractScenario003 {
     Assert.assertTrue(energyUsage == 0);
     Assert.assertTrue(balanceBefore == balanceAfter + infoById.get().getFee());
   }
+
   /**
    * constructor.
    */

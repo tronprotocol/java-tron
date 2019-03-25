@@ -71,7 +71,8 @@ public class ArgsTest {
     // gRPC network configs checking
     Assert.assertEquals(50051, args.getRpcPort());
     Assert.assertEquals(Integer.MAX_VALUE, args.getMaxConcurrentCallsPerConnection());
-    Assert.assertEquals(NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW, args.getFlowControlWindow());
+    Assert
+        .assertEquals(NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW, args.getFlowControlWindow());
     Assert.assertEquals(60000L, args.getMaxConnectionIdleInMillis());
     Assert.assertEquals(Long.MAX_VALUE, args.getMaxConnectionAgeInMillis());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, args.getMaxMessageSize());

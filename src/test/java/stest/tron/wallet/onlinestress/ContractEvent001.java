@@ -64,6 +64,7 @@ public class ContractEvent001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -93,7 +94,6 @@ public class ContractEvent001 {
     PublicMethed.printAddress(event001Key);
     PublicMethed.printAddress(testKey002);
 
-
     Assert.assertTrue(PublicMethed.sendcoin(event001Address, maxFeeLimit * 30, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(event002Address, maxFeeLimit * 30, fromAddress,
@@ -121,8 +121,6 @@ public class ContractEvent001 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
 
-
-
     Integer i = 0;
     for (i = 0; i < 1; i++) {
       txid = PublicMethed.triggerContract(contractAddress,
@@ -135,18 +133,15 @@ public class ContractEvent001 {
           2L, 100000000L, event002Address, event002Key, blockingStubFull);
       logger.info(txid);
 
-
       txid = PublicMethed.triggerContract(contractAddress,
           "triggerUintEvent()", "#", false,
           0, maxFeeLimit, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
 
-
       txid = PublicMethed.triggerContract(contractAddress,
           "triggerintEvent()", "#", false,
           0, maxFeeLimit, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
-
 
       txid = PublicMethed.triggerContract(contractAddress,
           "depositForEventAndLog()", "#", false,
@@ -161,12 +156,10 @@ public class ContractEvent001 {
           1L, 100000000L, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
 
-
       txid = PublicMethed.triggerContract(contractAddress,
           "depositForEventNoIndex()", "#", false,
           1L, 100000000L, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
-
 
       txid = PublicMethed.triggerContract(contractAddress,
           "depositForEventOneIndex()", "#", false,
@@ -203,13 +196,13 @@ public class ContractEvent001 {
           5L, 100000000L, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
 
-      String param = "\"" +  code + "\"" + "," + "\"" + code + "\"";
+      String param = "\"" + code + "\"" + "," + "\"" + code + "\"";
       txid = PublicMethed.triggerContract(contractAddress,
           "triggerStringEvent(string,string)", param, false,
           0L, 100000000L, event001Address, event001Key, blockingStubFull);
       logger.info(txid);
 
-      param = "\"" +  "true1" + "\"" + "," + "\"" + "false1" + "\"";
+      param = "\"" + "true1" + "\"" + "," + "\"" + "false1" + "\"";
       txid = PublicMethed.triggerContract(contractAddress,
           "triggerBoolEvent(bool,bool)", param, false,
           0L, 100000000L, event001Address, event001Key, blockingStubFull);
@@ -221,7 +214,7 @@ public class ContractEvent001 {
         InputStreamReader read = new InputStreamReader(new FileInputStream(new File(filename)));
         BufferedReader reader = new BufferedReader(read);
         String tooLongString = reader.readLine();
-        param = "\"" +  tooLongString + "\"" + "," + "\"" + tooLongString + "\"";
+        param = "\"" + tooLongString + "\"" + "," + "\"" + tooLongString + "\"";
         txid = PublicMethed.triggerContract(contractAddress,
             "triggerStringEventAnonymous(string,string)", param, false,
             0L, 100000000L, event001Address, event001Key, blockingStubFull);
@@ -239,13 +232,7 @@ public class ContractEvent001 {
       }
 
 
-
-
-
-
     }
-
-
 
     contractName = "addressDemo";
     code = Configuration.getByPath("testng.conf")
@@ -264,9 +251,8 @@ public class ContractEvent001 {
     logger.info(txid);
 
 
-
-
   }
+
   /**
    * constructor.
    */

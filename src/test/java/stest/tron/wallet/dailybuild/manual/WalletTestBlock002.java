@@ -41,6 +41,7 @@ public class WalletTestBlock002 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -61,7 +62,7 @@ public class WalletTestBlock002 {
   /**
    * constructor.
    */
-  @Test(enabled = true,description = "GetBlockByNum from fullnode")
+  @Test(enabled = true, description = "GetBlockByNum from fullnode")
   public void testGetBlockByNum() {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -104,7 +105,7 @@ public class WalletTestBlock002 {
     Assert.assertTrue(lastSecondBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
   }
 
-  @Test(enabled = true,description = "GetBlockByNum from solidity")
+  @Test(enabled = true, description = "GetBlockByNum from solidity")
   public void testGetBlockByNumFromSolidity() {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -150,7 +151,7 @@ public class WalletTestBlock002 {
     logger.info("Last second test from solidity succesfully");
   }
 
-  @Test(enabled = true,description = "get block by id")
+  @Test(enabled = true, description = "get block by id")
   public void testGetBlockById() {
 
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -184,6 +185,7 @@ public class WalletTestBlock002 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -220,6 +222,7 @@ public class WalletTestBlock002 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -229,6 +232,7 @@ public class WalletTestBlock002 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

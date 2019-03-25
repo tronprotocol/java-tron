@@ -49,15 +49,16 @@ public class SyncService {
       .recordStats().build();
 
   private ScheduledExecutorService fetchExecutor = Executors.newSingleThreadScheduledExecutor();
-  
-  private ScheduledExecutorService blockHandleExecutor = Executors.newSingleThreadScheduledExecutor();
+
+  private ScheduledExecutorService blockHandleExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   private boolean syncHandleFlag = false;
 
   @Setter
   private boolean fetchFlag = false;
 
-  public void init () {
+  public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (fetchFlag) {
@@ -81,7 +82,7 @@ public class SyncService {
     }, 10, 1, TimeUnit.SECONDS);
   }
 
-  public void close () {
+  public void close() {
     fetchExecutor.shutdown();
     blockHandleExecutor.shutdown();
   }
@@ -104,19 +105,20 @@ public class SyncService {
       LinkedList<BlockId> chainSummary = getBlockChainSummary(peer);
       peer.setSyncChainRequested(new Pair<>(chainSummary, System.currentTimeMillis()));
       peer.sendMessage(new SyncBlockChainMessage(chainSummary));
-    }catch (Exception e) {
+    } catch (Exception e) {
       logger.error("Peer {} sync failed, reason: {}", peer.getInetAddress(), e.getMessage());
       peer.disconnect(ReasonCode.SYNC_FAIL);
     }
   }
 
-  public void processBlock(PeerConnection peer,  BlockMessage blockMessage) {
+  public void processBlock(PeerConnection peer, BlockMessage blockMessage) {
     synchronized (blockJustReceived) {
       blockJustReceived.put(blockMessage, peer);
     }
     syncHandleFlag = true;
     if (peer.isIdle()) {
-      if (peer.getRemainNum() > 0 && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
+      if (peer.getRemainNum() > 0
+          && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {
         syncNext(peer);
       } else {
         fetchFlag = true;
@@ -124,13 +126,13 @@ public class SyncService {
     }
   }
 
-  public void onDisconnect (PeerConnection peer) {
+  public void onDisconnect(PeerConnection peer) {
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId));
     }
   }
 
-  private void invalid (BlockId blockId) {
+  private void invalid(BlockId blockId) {
     requestBlockIds.invalidate(blockId);
     fetchFlag = true;
   }
@@ -146,15 +148,16 @@ public class SyncService {
     long highNoFork;
     long high;
 
-    if (beginBlockId.getNum() == 0){
+    if (beginBlockId.getNum() == 0) {
       highNoFork = high = tronNetDelegate.getHeadBlockId().getNum();
-    }else {
+    } else {
       if (tronNetDelegate.containBlockInMainChain(beginBlockId)) {
         highNoFork = high = beginBlockId.getNum();
       } else {
         forkList = tronNetDelegate.getBlockChainHashesOnFork(beginBlockId);
         if (forkList.isEmpty()) {
-          throw new P2pException(TypeEnum.SYNC_FAILED, "can't find blockId: " + beginBlockId.getString());
+          throw new P2pException(TypeEnum.SYNC_FAILED,
+              "can't find blockId: " + beginBlockId.getString());
         }
         highNoFork = forkList.peekLast().getNum();
         forkList.pollLast();
@@ -163,7 +166,7 @@ public class SyncService {
       }
     }
 
-    if (low > highNoFork){
+    if (low > highNoFork) {
       throw new P2pException(TypeEnum.SYNC_FAILED, "low: " + low + " gt highNoFork: " + highNoFork);
     }
 
@@ -171,7 +174,7 @@ public class SyncService {
 
     logger.info("Get block chain summary, low: {}, highNoFork: {}, high: {}, realHigh: {}",
         low, highNoFork, high, realHigh);
-    
+
     while (low <= realHigh) {
       if (low <= highNoFork) {
         summary.offer(tronNetDelegate.getBlockIdByNum(low));
@@ -250,7 +253,7 @@ public class SyncService {
     }
   }
 
-  private void processSyncBlock (BlockCapsule block) {
+  private void processSyncBlock(BlockCapsule block) {
     boolean flag = true;
     BlockId blockId = block.getBlockId();
     try {
@@ -259,14 +262,14 @@ public class SyncService {
       logger.error("Process sync block {} failed.", blockId.getString(), e);
       flag = false;
     }
-    for (PeerConnection peer: tronNetDelegate.getActivePeer()) {
+    for (PeerConnection peer : tronNetDelegate.getActivePeer()) {
       if (peer.getSyncBlockInProcess().remove(blockId)) {
-        if (flag){
+        if (flag) {
           peer.setBlockBothHave(blockId);
           if (peer.getSyncBlockToFetch().isEmpty()) {
             syncNext(peer);
           }
-        }else {
+        } else {
           peer.disconnect(ReasonCode.BAD_BLOCK);
         }
       }

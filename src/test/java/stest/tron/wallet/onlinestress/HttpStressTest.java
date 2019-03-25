@@ -54,12 +54,12 @@ public class HttpStressTest {
       .getInt("defaultParameter.httpConnectionTimeout");
   static Integer soTimeout = Configuration.getByPath("testng.conf")
       .getInt("defaultParameter.httpSoTimeout");
-  
+
 
   /**
    * constructor.
    */
-  @Test(enabled = true,threadPoolSize = 10, invocationCount = 10)
+  @Test(enabled = true, threadPoolSize = 10, invocationCount = 10)
   public void test4InjectExchange() {
     final long now = System.currentTimeMillis();
     final long totalSupply = 10000000000000000L;
@@ -72,46 +72,45 @@ public class HttpStressTest {
     httppost = new HttpPost(url);
     httppost.setHeader("Content-type", "application/json; charset=utf-8");
     httppost.setHeader("Connection", "Close");
-    
 
     response = HttpMethed
-        .sendCoin(httpnode,fromAddress,exchangeOwnerAddress,amount,testKey002);
+        .sendCoin(httpnode, fromAddress, exchangeOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-    response = HttpMethed.sendCoin(httpnode,fromAddress,asset2Address,amount,testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     //Create an asset issue
-    response = HttpMethed.assetIssue(httpnode,exchangeOwnerAddress,name,name,totalSupply,1,1,
-        System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
-        2,3,description,url,1000L, 1000L,exchangeOwnerKey);
+    response = HttpMethed.assetIssue(httpnode, exchangeOwnerAddress, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
+        2, 3, description, url, 1000L, 1000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-    response = HttpMethed.assetIssue(httpnode,asset2Address,name,name,totalSupply,1,1,
-        System.currentTimeMillis() + 5000,System.currentTimeMillis() + 50000000,
-        2,3,description,url,1000L, 1000L,asset2Key);
+    response = HttpMethed.assetIssue(httpnode, asset2Address, name, name, totalSupply, 1, 1,
+        System.currentTimeMillis() + 5000, System.currentTimeMillis() + 50000000,
+        2, 3, description, url, 1000L, 1000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getAccount(httpnode,exchangeOwnerAddress);
+    response = HttpMethed.getAccount(httpnode, exchangeOwnerAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId1 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId1) > 1000000);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    response = HttpMethed.getAccount(httpnode,asset2Address);
+    response = HttpMethed.getAccount(httpnode, asset2Address);
     responseContent = HttpMethed.parseResponseContent(response);
     assetIssueId2 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
 
-    response = HttpMethed.transferAsset(httpnode,asset2Address,exchangeOwnerAddress,assetIssueId2,
-        100000000000000L,asset2Key);
+    response = HttpMethed
+        .transferAsset(httpnode, asset2Address, exchangeOwnerAddress, assetIssueId2,
+            100000000000000L, asset2Key);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Create exchange.
-    response = HttpMethed.exchangeCreate(httpnode,exchangeOwnerAddress,assetIssueId1,
-        50000000000000L,assetIssueId2,50000000000000L,exchangeOwnerKey);
+    response = HttpMethed.exchangeCreate(httpnode, exchangeOwnerAddress, assetIssueId1,
+        50000000000000L, assetIssueId2, 50000000000000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -122,38 +121,37 @@ public class HttpStressTest {
     Assert.assertTrue(jsonArray.size() >= 1);
     exchangeId = jsonArray.size();
 
-
-    response = HttpMethed.getExchangeById(httpnode,exchangeId);
+    response = HttpMethed.getExchangeById(httpnode, exchangeId);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
     Integer times = 0;
     while (times++ <= 10000) {
-      HttpMethed.sendCoin(httpnode,fromAddress,exchangeOwnerAddress,100L,testKey002);
-      HttpMethed.sendCoin(httpnode,fromAddress,asset2Address,100L,testKey002);
+      HttpMethed.sendCoin(httpnode, fromAddress, exchangeOwnerAddress, 100L, testKey002);
+      HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, 100L, testKey002);
       //Inject exchange.
-      HttpMethed.exchangeInject(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-          10L,exchangeOwnerKey);
-      HttpMethed.exchangeWithdraw(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-          10L,exchangeOwnerKey);
-      HttpMethed.exchangeTransaction(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId1,
-          100L,1L,exchangeOwnerKey);
-      HttpMethed.exchangeTransaction(httpnode,exchangeOwnerAddress,exchangeId,assetIssueId2,
-          100L,1L,exchangeOwnerKey);
-      HttpMethed.transferAsset(httpnode,asset2Address,exchangeOwnerAddress,assetIssueId2,
-          1L,asset2Key);
-      HttpMethed.transferAsset(httpnode,exchangeOwnerAddress,asset2Address,assetIssueId1,
-          1L,exchangeOwnerKey);
-      HttpMethed.participateAssetIssue(httpnode,exchangeOwnerAddress,asset2Address,
-          assetIssueId1,1L,asset2Key);
-      HttpMethed.participateAssetIssue(httpnode,asset2Address,exchangeOwnerAddress,
-          assetIssueId2,1L,exchangeOwnerKey);
-      HttpMethed.freezeBalance(httpnode,fromAddress,10000000000L,0,0,
-          exchangeOwnerAddress,testKey002);
-      HttpMethed.freezeBalance(httpnode,fromAddress,10000000000L,0,1,
-          exchangeOwnerAddress,testKey002);
-      HttpMethed.unFreezeBalance(httpnode,fromAddress,0,exchangeOwnerAddress,testKey002);
-      HttpMethed.unFreezeBalance(httpnode,fromAddress,1,exchangeOwnerAddress,testKey002);
+      HttpMethed.exchangeInject(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId1,
+          10L, exchangeOwnerKey);
+      HttpMethed.exchangeWithdraw(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId1,
+          10L, exchangeOwnerKey);
+      HttpMethed.exchangeTransaction(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId1,
+          100L, 1L, exchangeOwnerKey);
+      HttpMethed.exchangeTransaction(httpnode, exchangeOwnerAddress, exchangeId, assetIssueId2,
+          100L, 1L, exchangeOwnerKey);
+      HttpMethed.transferAsset(httpnode, asset2Address, exchangeOwnerAddress, assetIssueId2,
+          1L, asset2Key);
+      HttpMethed.transferAsset(httpnode, exchangeOwnerAddress, asset2Address, assetIssueId1,
+          1L, exchangeOwnerKey);
+      HttpMethed.participateAssetIssue(httpnode, exchangeOwnerAddress, asset2Address,
+          assetIssueId1, 1L, asset2Key);
+      HttpMethed.participateAssetIssue(httpnode, asset2Address, exchangeOwnerAddress,
+          assetIssueId2, 1L, exchangeOwnerKey);
+      HttpMethed.freezeBalance(httpnode, fromAddress, 10000000000L, 0, 0,
+          exchangeOwnerAddress, testKey002);
+      HttpMethed.freezeBalance(httpnode, fromAddress, 10000000000L, 0, 1,
+          exchangeOwnerAddress, testKey002);
+      HttpMethed.unFreezeBalance(httpnode, fromAddress, 0, exchangeOwnerAddress, testKey002);
+      HttpMethed.unFreezeBalance(httpnode, fromAddress, 1, exchangeOwnerAddress, testKey002);
     }
   }
 

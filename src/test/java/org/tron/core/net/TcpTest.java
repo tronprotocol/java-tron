@@ -211,12 +211,14 @@ public class TcpTest {
     finish = false;
     channel.close();
     Thread.sleep(sleepTime);
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils
+        .invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", CacheBuilder.newBuilder().maximumSize(1000)
-        .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected",
+        CacheBuilder.newBuilder().maximumSize(1000)
+            .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
   }
 
   private void validResultUnCloseConnect() throws InterruptedException {
@@ -231,28 +233,30 @@ public class TcpTest {
   private void clearConnect(Channel channel) throws InterruptedException {
     channel.close();
     Thread.sleep(sleepTime);
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils
+        .invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
-    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected", CacheBuilder.newBuilder().maximumSize(1000)
-        .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
+    ReflectUtils.setFieldValue(channelManager, "recentlyDisconnected",
+        CacheBuilder.newBuilder().maximumSize(1000)
+            .expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build());
   }
 
   public void test() throws InterruptedException {
-      logger.info("begin normal test ");
-      normalTest();
-      logger.info("begin errorGenesisBlockId test ");
-      errorGenesisBlockIdTest();
-      logger.info("begin errorVersion test ");
-      errorVersionTest();
-      logger.info("begin errorSolidBlockId test ");
-      errorSolidBlockIdTest();
-      logger.info("begin repeatConnect test");
-      repeatConnectTest();
-      logger.info("begin unHandshake test");
-      unHandshakeTest();
-      logger.info("begin errorMsg test");
-      errorMsgTest();
+    logger.info("begin normal test ");
+    normalTest();
+    logger.info("begin errorGenesisBlockId test ");
+    errorGenesisBlockIdTest();
+    logger.info("begin errorVersion test ");
+    errorVersionTest();
+    logger.info("begin errorSolidBlockId test ");
+    errorSolidBlockIdTest();
+    logger.info("begin repeatConnect test");
+    repeatConnectTest();
+    logger.info("begin unHandshake test");
+    unHandshakeTest();
+    logger.info("begin errorMsg test");
+    errorMsgTest();
   }
 }

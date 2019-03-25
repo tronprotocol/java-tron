@@ -39,7 +39,7 @@ public class BlockMsgHandler implements TronMsgHandler {
   private int maxBlockSize = BLOCK_SIZE + 1000;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) throws P2pException {
+  public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     BlockMessage blockMessage = (BlockMessage) msg;
 
@@ -56,9 +56,10 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void check (PeerConnection peer, BlockMessage msg) throws P2pException {
+  private void check(PeerConnection peer, BlockMessage msg) throws P2pException {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
-    if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest().containsKey(item)) {
+    if (!peer.getSyncBlockRequested().containsKey(msg.getBlockId()) && !peer.getAdvInvRequest()
+        .containsKey(item)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "no request");
     }
     BlockCapsule blockCapsule = msg.getBlockCapsule();
@@ -71,11 +72,12 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void processBlock(PeerConnection peer,  BlockCapsule block) throws P2pException {
+  private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
-      logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(), peer.getInetAddress(), tronNetDelegate
-          .getHeadBlockId().getString());
+      logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
+          peer.getInetAddress(), tronNetDelegate
+              .getHeadBlockId().getString());
       syncService.startSync(peer);
       return;
     }

@@ -43,6 +43,7 @@ public class GetNowBlock2Test {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -103,6 +104,7 @@ public class GetNowBlock2Test {
     logger.info("test getcurrentblock in soliditynode is " + Long
         .toString(currentBlock.getBlockHeader().getRawData().getNumber()));
   }
+
   /**
    * constructor.
    */
@@ -116,6 +118,7 @@ public class GetNowBlock2Test {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -153,6 +156,7 @@ public class GetNowBlock2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -162,6 +166,7 @@ public class GetNowBlock2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

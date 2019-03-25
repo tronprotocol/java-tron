@@ -67,8 +67,9 @@ public class PeerConnection extends Channel {
   private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
 
   @Getter
-  private BlockId blockBothHave  = new BlockId();
-  public void setBlockBothHave (BlockId blockId) {
+  private BlockId blockBothHave = new BlockId();
+
+  public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
@@ -142,7 +143,7 @@ public class PeerConnection extends Channel {
     syncBlockInProcess.clear();
   }
 
-  public String log () {
+  public String log() {
     long now = System.currentTimeMillis();
 //    logger.info("Peer {}:{} [ {}, ping {} ms]-----------\n"
 //            + "connect time: {}\n"

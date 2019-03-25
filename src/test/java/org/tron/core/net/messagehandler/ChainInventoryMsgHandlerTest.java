@@ -23,7 +23,7 @@ public class ChainInventoryMsgHandlerTest {
   public void testProcessMessage() {
     try {
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       Assert.assertTrue(e.getMessage().equals("not send syncBlockChainMsg"));
     }
 
@@ -31,10 +31,9 @@ public class ChainInventoryMsgHandlerTest {
 
     try {
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       Assert.assertTrue(e.getMessage().equals("blockIds is empty"));
     }
-
 
     long size = NodeConstant.SYNC_FETCH_BATCH_NUM + 2;
     for (int i = 0; i < size; i++) {
@@ -44,7 +43,7 @@ public class ChainInventoryMsgHandlerTest {
 
     try {
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       Assert.assertTrue(e.getMessage().equals("big blockIds size: " + size));
     }
 
@@ -57,7 +56,7 @@ public class ChainInventoryMsgHandlerTest {
 
     try {
       handler.processMessage(peer, msg);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       Assert.assertTrue(e.getMessage().equals("remain: 100, blockIds size: " + size));
     }
   }

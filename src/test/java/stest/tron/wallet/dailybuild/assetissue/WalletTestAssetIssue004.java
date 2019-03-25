@@ -65,6 +65,7 @@ public class WalletTestAssetIssue004 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -86,8 +87,8 @@ public class WalletTestAssetIssue004 {
       Long end = System.currentTimeMillis() + 1000000000;
       //Create a new asset issue
       Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 6, 1000,
-          start, end, 2, description, url,10000L,10000L,
-          1L, 1L, testKey002,blockingStubFull));
+          start, end, 2, description, url, 10000L, 10000L,
+          1L, 1L, testKey002, blockingStubFull));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     } else {
       logger.info("This account already create an assetisue");
@@ -95,7 +96,7 @@ public class WalletTestAssetIssue004 {
 
   }
 
-  @Test(enabled = true,description = "Get asset issue by account")
+  @Test(enabled = true, description = "Get asset issue by account")
   public void testGetAssetIssueByAccount() {
     ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account request = Account.newBuilder().setAddress(addressBs).build();
@@ -134,6 +135,7 @@ public class WalletTestAssetIssue004 {
     logger.info("No asset account queryed nothing");
 
   }
+
   /**
    * constructor.
    */
@@ -144,6 +146,7 @@ public class WalletTestAssetIssue004 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -199,6 +202,7 @@ public class WalletTestAssetIssue004 {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -226,6 +230,7 @@ public class WalletTestAssetIssue004 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -235,6 +240,7 @@ public class WalletTestAssetIssue004 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -254,6 +260,7 @@ public class WalletTestAssetIssue004 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

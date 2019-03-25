@@ -299,6 +299,7 @@ public class ContractLinkage002 {
         linkage002Key, linkage002Address, blockingStubFull));
 
   }
+
   /**
    * constructor.
    */

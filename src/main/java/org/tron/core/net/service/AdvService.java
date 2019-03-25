@@ -44,7 +44,7 @@ public class AdvService {
   private ConcurrentHashMap<Item, Long> invToFetch = new ConcurrentHashMap<>();
 
   private ConcurrentHashMap<Item, Long> invToSpread = new ConcurrentHashMap<>();
-  
+
   private Cache<Item, Long> invToFetchCache = CacheBuilder.newBuilder()
       .maximumSize(100_000).expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
@@ -61,7 +61,7 @@ public class AdvService {
   @Getter
   private MessageCount trxCount = new MessageCount();
 
-  public void init () {
+  public void init() {
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
@@ -79,12 +79,12 @@ public class AdvService {
     }, 100, 30, TimeUnit.MILLISECONDS);
   }
 
-  public void close () {
+  public void close() {
     spreadExecutor.shutdown();
     fetchExecutor.shutdown();
   }
 
-  synchronized public boolean addInv (Item item) {
+  synchronized public boolean addInv(Item item) {
     if (invToFetchCache.getIfPresent(item) != null) {
       return false;
     }
@@ -104,7 +104,7 @@ public class AdvService {
     return true;
   }
 
-  public Message getMessage (Item item) {
+  public Message getMessage(Item item) {
     if (item.getType().equals(InventoryType.TRX)) {
       return trxCache.getIfPresent(item);
     } else {
@@ -118,17 +118,19 @@ public class AdvService {
       BlockMessage blockMsg = (BlockMessage) msg;
       item = new Item(blockMsg.getMessageId(), InventoryType.BLOCK);
       logger.info("Ready to broadcast block {}", blockMsg.getBlockId().getString());
-      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule ->{
+      blockMsg.getBlockCapsule().getTransactions().forEach(transactionCapsule -> {
         Sha256Hash tid = transactionCapsule.getTransactionId();
         invToSpread.remove(tid);
-        trxCache.put(new Item(tid, InventoryType.TRX), new TransactionMessage(transactionCapsule.getInstance()));
+        trxCache.put(new Item(tid, InventoryType.TRX),
+            new TransactionMessage(transactionCapsule.getInstance()));
       });
       blockCache.put(item, msg);
     } else if (msg instanceof TransactionMessage) {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
-      trxCache.put(item, new TransactionMessage(((TransactionMessage) msg).getTransactionCapsule().getInstance()));
+      trxCache.put(item,
+          new TransactionMessage(((TransactionMessage) msg).getTransactionCapsule().getInstance()));
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
@@ -138,11 +140,11 @@ public class AdvService {
     }
   }
 
-  public void onDisconnect (PeerConnection peer) {
+  public void onDisconnect(PeerConnection peer) {
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
         if (tronNetDelegate.getActivePeer().stream()
-            .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)){
+            .anyMatch(p -> !p.equals(peer) && p.getAdvInvReceive().getIfPresent(item) != null)) {
           invToFetch.put(item, System.currentTimeMillis());
         } else {
           invToFetchCache.invalidate(item);
@@ -164,13 +166,15 @@ public class AdvService {
     long now = System.currentTimeMillis();
     invToFetch.forEach((item, time) -> {
       if (time < now - MSG_CACHE_DURATION_IN_BLOCKS * BLOCK_PRODUCED_INTERVAL) {
-        logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(), item.getHash());
+        logger.info("This obj is too late to fetch, type: {} hash: {}.", item.getType(),
+            item.getHash());
         invToFetch.remove(item);
         invToFetchCache.invalidate(item);
         return;
       }
       peers.stream()
-          .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
+          .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) != null
+              && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER)
           .sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
           .findFirst().ifPresent(peer -> {
         invSender.add(item, peer);
@@ -197,7 +201,8 @@ public class AdvService {
     tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .forEach(peer -> spread.entrySet().stream()
-            .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)
+            .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null
+                && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)
             .forEach(entry -> {
               peer.getAdvInvSpread().put(entry.getKey(), Time.getCurrentMillis());
               invSender.add(entry.getKey(), peer);

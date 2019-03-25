@@ -33,7 +33,8 @@ public class UpdateWitnessServlet extends HttpServlet {
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract).getInstance();
+          .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract)
+          .getInstance();
       response.getWriter().println(Util.printTransaction(tx));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

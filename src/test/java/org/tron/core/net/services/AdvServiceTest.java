@@ -10,10 +10,11 @@ import org.tron.core.net.service.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class AdvServiceTest {
+
   AdvService service = new AdvService();
 
   @Test
-  public void testAddInv () {
+  public void testAddInv() {
     boolean flag;
     Item item = new Item(Sha256Hash.ZERO_HASH, InventoryType.BLOCK);
     flag = service.addInv(item);
@@ -23,7 +24,7 @@ public class AdvServiceTest {
   }
 
   @Test
-  public void testBroadcast () {
+  public void testBroadcast() {
     BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
     BlockMessage msg = new BlockMessage(blockCapsule);

@@ -44,6 +44,7 @@ public class ContractScenario008 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -62,35 +63,35 @@ public class ContractScenario008 {
     contract008Address = ecKey1.getAddress();
     contract008Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(contract008Key);
-    Assert.assertTrue(PublicMethed.sendcoin(contract008Address,5000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract008Address, 5000000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
-        3,1,contract008Key,blockingStubFull));
+        3, 1, contract008Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract008Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
     Long energyUsage = accountResource.getEnergyUsed();
-    Account account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(contract008Key, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     Long shortFeeLimit = 900L;
     String contractName = "Cat";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario008_deployErc721CryptoKitties");
+        .getString("code.code_ContractScenario008_deployErc721CryptoKitties");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario008_deployErc721CryptoKitties");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",shortFeeLimit,
-        0L, 100,null,contract008Key,contract008Address,blockingStubFull);
+        .getString("abi.abi_ContractScenario008_deployErc721CryptoKitties");
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", shortFeeLimit,
+        0L, 100, null, contract008Key, contract008Address, blockingStubFull);
 
-    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract008Key,contract008Address,blockingStubFull);
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contract008Key, contract008Address, blockingStubFull);
 
-    final SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
+    final SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract008Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
-    account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
+    account = PublicMethed.queryAccount(contract008Key, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
@@ -100,6 +101,7 @@ public class ContractScenario008 {
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
   }
+
   /**
    * constructor.
    */

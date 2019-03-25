@@ -24,6 +24,7 @@ import org.tron.protos.Protocol.TXOutput;
 
 @Slf4j
 public class TxOutputUtilTest {
+
   @Test
   public void testNewTxOutput() {
     long value = 123456L;

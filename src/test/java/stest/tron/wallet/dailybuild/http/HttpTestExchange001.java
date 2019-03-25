@@ -88,7 +88,6 @@ public class HttpTestExchange001 {
     assetIssueId2 = responseContent.getString("asset_issued_ID");
     Assert.assertTrue(Integer.parseInt(assetIssueId2) > 1000000);
 
-
     response = HttpMethed
         .transferAsset(httpnode, asset2Address, exchangeOwnerAddress, assetIssueId2,
             10000000000L, asset2Key);
@@ -121,7 +120,7 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "List exchanges from solidity by http")
   public void test03ListExchangeFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.listExchangesFromSolidity(httpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -241,7 +240,7 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "Get asset issue list by name from solidity by http")
   public void test10GetAssetIssueListByNameFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueListByNameFromSolidity(httpSoliditynode, name);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

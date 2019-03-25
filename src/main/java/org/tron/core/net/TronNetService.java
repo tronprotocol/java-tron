@@ -55,7 +55,7 @@ public class TronNetService {
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
 
-  public void start () {
+  public void start() {
     channelManager.init();
     advService.init();
     syncService.init();
@@ -64,7 +64,7 @@ public class TronNetService {
     logger.info("TronNetService start successfully.");
   }
 
-  public void close () {
+  public void close() {
     channelManager.close();
     advService.close();
     syncService.close();
@@ -101,12 +101,12 @@ public class TronNetService {
         default:
           throw new P2pException(TypeEnum.NO_SUCH_MESSAGE, msg.getType().toString());
       }
-    }catch (Exception e) {
+    } catch (Exception e) {
       processException(peer, msg, e);
     }
   }
 
-  private void processException (PeerConnection peer, TronMessage msg, Exception ex) {
+  private void processException(PeerConnection peer, TronMessage msg, Exception ex) {
     ReasonCode code = null;
 
     if (ex instanceof P2pException) {
