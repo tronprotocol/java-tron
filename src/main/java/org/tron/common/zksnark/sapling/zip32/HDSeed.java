@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.sapling.zip32;
 
+import java.security.SecureRandom;
 import lombok.Getter;
 import org.tron.common.zksnark.sapling.utils.CryptoGenerichashBlake2BState;
 import org.tron.common.zksnark.sapling.utils.PRF;
@@ -13,6 +14,16 @@ public class HDSeed {
 
     @Getter
     public byte[] data ;
+  }
+
+
+  public void random(int len) {
+    rawSeed = new RawHDSeed();
+
+    byte[] bytes = new byte[len];
+    new SecureRandom().nextBytes(bytes);
+
+    rawSeed.data = bytes;
   }
 
   public byte[] ovkForShieldingFromTaddr() {

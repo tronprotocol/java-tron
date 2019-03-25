@@ -55,9 +55,10 @@ public class RpcWallet {
     HDSeed seed = KeyStore.seed;
 
     // init data for test
-    RawHDSeed rawHDSeed = new RawHDSeed();
-    seed.rawSeed = rawHDSeed;
-    seed.rawSeed.data = aa;
+    seed.random(32);
+    // RawHDSeed rawHDSeed = new RawHDSeed();
+    // seed.rawSeed = rawHDSeed;
+    // seed.rawSeed.data = aa;
 
     if (seed == null) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
