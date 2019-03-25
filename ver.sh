@@ -29,4 +29,3 @@ sed -i "s/versionName.*$/versionName = \"$versionName\";/g;s/versionCode.*$/vers
 git add $versionPath
 git commit -m "update a new version. version name:$versionName,version code:$versionCode"
 git push origin $versionBranch
-git checkout master
