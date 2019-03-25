@@ -17,7 +17,6 @@ package org.tron.common.application;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.net.node.Node;
 
 public class CliApplication implements Application {
 
@@ -54,11 +53,6 @@ public class CliApplication implements Application {
   @Override
   public void shutdownServices() {
 
-  }
-
-  @Override
-  public Node getP2pNode() {
-    return null;
   }
 
   @Override

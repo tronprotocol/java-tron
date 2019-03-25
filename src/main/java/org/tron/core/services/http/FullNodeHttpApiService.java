@@ -140,6 +140,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
+  private GetNodeInfoServlet getNodeInfoServlet;
+  @Autowired
   private AddTransactionSignServlet addTransactionSignServlet;
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
@@ -147,8 +149,6 @@ public class FullNodeHttpApiService implements Service {
   private GetTransactionApprovedListServlet getTransactionApprovedListServlet;
   @Autowired
   private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
-  @Autowired
-  private GetNodeInfoServlet getNodeInfoServlet;
   @Autowired
   private UpdateSettingServlet updateSettingServlet;
   @Autowired

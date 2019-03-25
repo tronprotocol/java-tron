@@ -22,6 +22,7 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -39,8 +40,7 @@ import org.tron.common.overlay.message.MessageCodec;
 import org.tron.common.overlay.message.StaticMessages;
 import org.tron.core.db.ByteArrayWrapper;
 import org.tron.core.exception.P2pException;
-import org.tron.core.net.peer.PeerConnectionDelegate;
-import org.tron.core.net.peer.TronHandler;
+import org.tron.core.net.TronNetHandler;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -70,7 +70,7 @@ public class Channel {
   private P2pHandler p2pHandler;
 
   @Autowired
-  private TronHandler tronHandler;
+  private TronNetHandler tronNetHandler;
 
   private ChannelManager channelManager;
 
@@ -81,8 +81,6 @@ public class Channel {
   private Node node;
 
   private long startTime;
-
-  private PeerConnectionDelegate peerDel;
 
   private TronState tronState = TronState.INIT;
 
@@ -99,7 +97,7 @@ public class Channel {
   private boolean isTrustPeer;
 
   public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
-      ChannelManager channelManager, PeerConnectionDelegate peerDel) {
+      ChannelManager channelManager) {
 
     this.channelManager = channelManager;
 
@@ -118,18 +116,14 @@ public class Channel {
     //handshake first
     pipeline.addLast("handshakeHandler", handshakeHandler);
 
-    this.peerDel = peerDel;
-
     messageCodec.setChannel(this);
     msgQueue.setChannel(this);
     handshakeHandler.setChannel(this, remoteId);
     p2pHandler.setChannel(this);
-    tronHandler.setChannel(this);
+    tronNetHandler.setChannel(this);
 
     p2pHandler.setMsgQueue(msgQueue);
-    tronHandler.setMsgQueue(msgQueue);
-    tronHandler.setPeerDel(peerDel);
-
+    tronNetHandler.setMsgQueue(msgQueue);
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
@@ -138,7 +132,7 @@ public class Channel {
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
     ctx.pipeline().addLast("p2p", p2pHandler);
-    ctx.pipeline().addLast("data", tronHandler);
+    ctx.pipeline().addLast("data", tronNetHandler);
     setStartTime(msg.getTimestamp());
     setTronState(TronState.HANDSHAKE_FINISHED);
     getNodeStatistics().p2pHandShake.add();
@@ -158,7 +152,10 @@ public class Channel {
     this.isDisconnect = true;
     channelManager.processDisconnect(this, reason);
     DisconnectMessage msg = new DisconnectMessage(reason);
-    logger.info("Send to {}, {}", ctx.channel().remoteAddress(), msg);
+    logger.info("Send to {} online-time {}s, {}",
+        ctx.channel().remoteAddress(),
+        (System.currentTimeMillis() - startTime) / 1000,
+        msg);
     getNodeStatistics().nodeDisconnectedLocal(reason);
     ctx.writeAndFlush(msg.getSendData()).addListener(future -> close());
   }
@@ -168,17 +165,15 @@ public class Channel {
     while (baseThrowable.getCause() != null) {
       baseThrowable = baseThrowable.getCause();
     }
-    String errMsg = throwable.getMessage();
     SocketAddress address = ctx.channel().remoteAddress();
-    if (throwable instanceof ReadTimeoutException) {
-      logger.error("Read timeout, {}", address);
+    if (throwable instanceof ReadTimeoutException ||
+        throwable instanceof IOException) {
+      logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
-      logger.error("type: {}, info: {}, {}", ((P2pException) baseThrowable).getType(),
-          baseThrowable.getMessage(), address);
-    } else if (errMsg != null && errMsg.contains("Connection reset by peer")) {
-      logger.error("{}, {}", errMsg, address);
+      logger.warn("Close peer {}, type: {}, info: {}",
+          address,((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
     } else {
-      logger.error("exception caught, {}", address, throwable);
+      logger.error("Close peer {}, exception caught", address, throwable);
     }
     close();
   }
@@ -224,10 +219,6 @@ public class Channel {
     this.inetSocketAddress = ctx == null ? null : (InetSocketAddress) ctx.channel().remoteAddress();
   }
 
-  public ChannelHandlerContext getChannelHandlerContext() {
-    return this.ctx;
-  }
-
   public InetAddress getInetAddress() {
     return ctx == null ? null : ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
   }
@@ -246,10 +237,7 @@ public class Channel {
 
   public void setTronState(TronState tronState) {
     this.tronState = tronState;
-  }
-
-  public TronState getTronState() {
-    return tronState;
+    logger.info("Peer {} status change to {}.", inetSocketAddress, tronState);
   }
 
   public boolean isActive() {
@@ -258,10 +246,6 @@ public class Channel {
 
   public boolean isDisconnect() {
     return isDisconnect;
-  }
-
-  public boolean isProtocolsInitialized() {
-    return tronState.ordinal() > TronState.INIT.ordinal();
   }
 
   public boolean isTrustPeer() {

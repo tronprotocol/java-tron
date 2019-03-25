@@ -1248,6 +1248,7 @@ public class Manager {
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
+
     return true;
   }
 
