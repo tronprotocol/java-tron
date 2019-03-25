@@ -37,7 +37,8 @@ public class NoteEncryption {
     System.arraycopy(epk, 0,  block, 96, 32);
 
     byte[] personalization = new byte[crypto_generichash_blake2b_PERSONALBYTES];
-    System.arraycopy("Zcash_Derive_ock", 0,  personalization, 0, 16);
+    byte[] temp = "Zcash_Derive_ock".getBytes();
+    System.arraycopy(temp, 0,  personalization, 0, temp.length);
     if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
             block, 128,
             null, 0, // No key.
@@ -71,4 +72,5 @@ public class NoteEncryption {
 
     return null;
   }
+
 }

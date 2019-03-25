@@ -126,9 +126,6 @@ public class RpcWallet {
       balance += entry.note.value;
     }
 
-
-    
-
     return balance;
   }
 

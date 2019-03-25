@@ -1,20 +1,21 @@
 package org.tron.common.zksnark.sapling.note;
 
+import java.nio.ByteBuffer;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.Librustzcash;
-import org.tron.common.zksnark.sapling.ZkChainParams;
 import org.tron.common.zksnark.sapling.address.DiversifierT;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.note.BaseNote.Note;
 import org.tron.common.zksnark.sapling.note.NoteEncryption.EncCiphertext;
 import org.tron.common.zksnark.sapling.note.NoteEncryption.EncPlaintext;
+import static org.tron.common.zksnark.sapling.ZkChainParams.*;
 
 public class BaseNotePlaintext {
 
   public long value = 0L; // 64
-  public byte[] memo = new byte[ZkChainParams.ZC_MEMO_SIZE];
+  public byte[] memo = new byte[ZC_MEMO_SIZE];
 
   @AllArgsConstructor
   public class SaplingNotePlaintextEncryptionResult {
@@ -135,11 +136,34 @@ public class BaseNotePlaintext {
 
     // todo:
     public NoteEncryption.EncPlaintext encode() {
-      return null;
+      ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
+      byte[] valueLong;
+      byte[] data;
+      NoteEncryption.EncPlaintext ret = new NoteEncryption.EncPlaintext();
+
+      ret.data = new byte[ZC_SAPLING_ENCPLAINTEXT_SIZE];
+      data = ret.data;
+
+      //将long转换为byte[]
+      buffer.putLong(0, value);
+      valueLong =  buffer.array();
+
+      data[0] = 0x01;
+      System.arraycopy(d, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
+      System.arraycopy(valueLong, 0, data,
+              ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, ZC_V_SIZE);
+      System.arraycopy(rcm, 0, data,
+              ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ZC_R_SIZE);
+      System.arraycopy(memo, 0, data,
+              ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE, ZC_MEMO_SIZE);
+
+      return ret;
     }
 
     public static NotePlaintext decode(NoteEncryption.EncPlaintext encPlaintext) {
       byte[] data = encPlaintext.data;
+      byte[] valueLong = new byte[ZC_V_SIZE];
+      ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
 
 //      READWRITE(leadingByte);
 //
@@ -156,14 +180,22 @@ public class BaseNotePlaintext {
         throw new RuntimeException("lead byte of SaplingNotePlaintext is not recognized");
       }
 
-      // todo
       NotePlaintext ret = new NotePlaintext();
 
       //(ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE + ZC_MEMO_SIZE);
-      System.arraycopy(encPlaintext.data, 1,  ret.d, 0, 11);
-      System.arraycopy(encPlaintext.data, 1 + 11,  ret.value, 0, 8);
-      System.arraycopy(encPlaintext.data, 1 + 11 + 8,  ret.rcm, 0, 32);
-      System.arraycopy(encPlaintext.data, 1 + 11 + 8 + 32,  ret.memo, 0, 512);
+      System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING,
+              ret.d, 0, ZC_DIVERSIFIER_SIZE);
+      System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE,
+              valueLong, 0, ZC_V_SIZE);
+      System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE,
+              ret.rcm, 0, ZC_R_SIZE);
+      System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
+              ret.memo, 0, ZC_MEMO_SIZE);
+
+      //将byte[]转换成long
+      buffer.put(valueLong, 0, valueLong.length);
+      buffer.flip();
+      ret.value = buffer.getLong();
 
       return ret;
     }
