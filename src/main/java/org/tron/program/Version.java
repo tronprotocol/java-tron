@@ -5,8 +5,8 @@ public class Version {
   public static final String versionName = "";
   public static final String versionCode = "";
 
-    public static String getVersion() {
-      return version;
-    }
+  public static String getVersion() {
+    return version;
+  }
 }
 
