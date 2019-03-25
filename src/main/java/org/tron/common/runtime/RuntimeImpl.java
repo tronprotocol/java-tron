@@ -64,6 +64,7 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import sun.security.krb5.Config;
 
 @Slf4j(topic = "VM")
 public class RuntimeImpl implements Runtime {
@@ -466,10 +467,11 @@ public class RuntimeImpl implements Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
-    // TODO add hardfork
-//    byte[] precompiledCode = ProgramPrecompile.getCode(code);
-//    deposit.saveCode(contractAddress, precompiledCode);
-
+    if (VMConfig.allowTvmConstantinople()) {
+      deposit.saveCode(contractAddress, code);
+    } else {
+      deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
+    }
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
       transfer(this.deposit, callerAddress, contractAddress, callValue);
@@ -637,8 +639,9 @@ public class RuntimeImpl implements Runtime {
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
-            // TODO add hardfork
-            deposit.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
+            if (VMConfig.allowTvmConstantinople()) {
+              deposit.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
+            }
           }
         }
 

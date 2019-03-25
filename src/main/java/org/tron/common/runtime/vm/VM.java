@@ -6,6 +6,7 @@ import static org.tron.common.runtime.vm.OpCode.CALL;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
+import static org.tron.common.runtime.vm.OpCode.CREATE2;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.runtime.vm.OpCode.SAR;
@@ -95,7 +96,7 @@ public class VM {
       }
 
       if (!VMConfig.allowTvmConstantinople()) {
-        if (op == SHL || op == SHR || op == SAR) {
+        if (op == SHL || op == SHR || op == SAR || op == CREATE2) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
