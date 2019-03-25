@@ -74,20 +74,6 @@ public class DataWord implements Comparable<DataWord> {
         this.data = targetByteBuffer.array();
     }
 
-    public static DataWord of(byte[] data) {
-        if (data == null || data.length == 0) {
-            return DataWord.ZERO();
-        }
-
-        int leadingZeroBits = numberOfLeadingZeros(data);
-        int valueBits = 8 * data.length - leadingZeroBits;
-        if (valueBits <= 8) {
-            if (data[data.length - 1] == 0) return DataWord.ZERO();
-            if (data[data.length - 1] == 1) return DataWord.ONE();
-        }
-        return new DataWord(java.util.Arrays.copyOf(data, data.length));
-    }
-
     public static DataWord of(byte num) {
         byte[] bb = new byte[WORD_SIZE];
         bb[31] = num;
