@@ -226,7 +226,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
       context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
       context.addServlet(new ServletHolder(easyTransferAssetServlet), "/easytransferasset");
-      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet), "/easytransferassetbyprivate");
+      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet),
+          "/easytransferassetbyprivate");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");

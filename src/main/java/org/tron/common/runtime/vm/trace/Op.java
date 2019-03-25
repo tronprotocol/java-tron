@@ -22,49 +22,49 @@ import org.tron.common.runtime.vm.OpCode;
 
 public class Op {
 
-    private OpCode code;
-    private int deep;
-    private int pc;
-    private BigInteger energy;
-    private OpActions actions;
+  private OpCode code;
+  private int deep;
+  private int pc;
+  private BigInteger energy;
+  private OpActions actions;
 
-    public OpCode getCode() {
-        return code;
-    }
+  public OpCode getCode() {
+    return code;
+  }
 
-    public void setCode(OpCode code) {
-        this.code = code;
-    }
+  public void setCode(OpCode code) {
+    this.code = code;
+  }
 
-    public int getDeep() {
-        return deep;
-    }
+  public int getDeep() {
+    return deep;
+  }
 
-    public void setDeep(int deep) {
-        this.deep = deep;
-    }
+  public void setDeep(int deep) {
+    this.deep = deep;
+  }
 
-    public int getPc() {
-        return pc;
-    }
+  public int getPc() {
+    return pc;
+  }
 
-    public void setPc(int pc) {
-        this.pc = pc;
-    }
+  public void setPc(int pc) {
+    this.pc = pc;
+  }
 
-    public BigInteger getEnergy() {
-        return energy;
-    }
+  public BigInteger getEnergy() {
+    return energy;
+  }
 
-    public void setEnergy(BigInteger energy) {
-        this.energy = energy;
-    }
+  public void setEnergy(BigInteger energy) {
+    this.energy = energy;
+  }
 
-    public OpActions getActions() {
-        return actions;
-    }
+  public OpActions getActions() {
+    return actions;
+  }
 
-    public void setActions(OpActions actions) {
-        this.actions = actions;
-    }
+  public void setActions(OpActions actions) {
+    this.actions = actions;
+  }
 }

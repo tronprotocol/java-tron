@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.Set;
 
 
-public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>, Iterable<Map.Entry<byte[], V>> {
+public interface DbSourceInter<V> extends BatchSourceInter<byte[], V>,
+    Iterable<Map.Entry<byte[], V>> {
 
 
   String getDBName();

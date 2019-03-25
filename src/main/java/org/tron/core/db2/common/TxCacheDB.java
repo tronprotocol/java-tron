@@ -23,6 +23,7 @@ import org.tron.core.db.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
+
   // > 65_536(= 2^16) blocks, that is the number of the reference block
   private final int BLOCK_COUNT = 70_000;
 
@@ -78,7 +79,7 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return Iterators.transform(db.entrySet().iterator(),
         e -> Maps.immutableEntry(e.getKey().getBytes(), Longs.toByteArray(e.getValue())));
   }

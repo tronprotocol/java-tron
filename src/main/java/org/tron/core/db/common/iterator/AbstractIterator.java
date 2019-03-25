@@ -11,7 +11,8 @@ import java.util.Map.Entry;
 public abstract class AbstractIterator<T> implements Iterator<Map.Entry<byte[], T>> {
 
   protected Iterator<Map.Entry<byte[], byte[]>> iterator;
-  private TypeToken<T> typeToken = new TypeToken<T>(getClass()) {};
+  private TypeToken<T> typeToken = new TypeToken<T>(getClass()) {
+  };
 
   public AbstractIterator(Iterator<Map.Entry<byte[], byte[]>> iterator) {
     this.iterator = iterator;
