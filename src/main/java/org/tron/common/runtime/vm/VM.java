@@ -93,9 +93,9 @@ public class VM {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
-      
+
       if (!VMConfig.allowTvmConstantinople()) {
-        if (op == SHL || op == SHR || op == SAR ) {
+        if (op == SHL || op == SHR || op == SAR) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
@@ -605,8 +605,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftLeft(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -617,8 +618,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftRight(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -629,8 +631,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftRightSigned(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -1403,7 +1406,8 @@ public class VM {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
-        logger.warn("Unknown Exception occurred, tx id: {}", Hex.toHexString(program.getRootTransactionId()), e);
+        logger.warn("Unknown Exception occurred, tx id: {}",
+            Hex.toHexString(program.getRootTransactionId()), e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       } else {
         program.setRuntimeFailure(e);
