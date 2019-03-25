@@ -108,7 +108,8 @@ public abstract class BaseNet {
 
   @After
   public void destroy() {
-    Collection<PeerConnection> peerConnections = ReflectUtils.invokeMethod(tronNetDelegate, "getActivePeer");
+    Collection<PeerConnection> peerConnections = ReflectUtils
+        .invokeMethod(tronNetDelegate, "getActivePeer");
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }

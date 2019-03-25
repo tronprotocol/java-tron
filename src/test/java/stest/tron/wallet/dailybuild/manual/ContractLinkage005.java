@@ -96,7 +96,6 @@ public class ContractLinkage005 {
         0, 1, linkage005Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-
     contractName = "EnergyCost";
     code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f300608060405260"
         + "0436106100825763ffffffff7c0100000000000000000000000000000000000000000000000000000000600"

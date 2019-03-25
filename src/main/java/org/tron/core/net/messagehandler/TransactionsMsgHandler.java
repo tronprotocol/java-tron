@@ -51,9 +51,11 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   private ExecutorService trxHandlePool = new ThreadPoolExecutor(threadNum, threadNum, 0L,
       TimeUnit.MILLISECONDS, queue);
 
-  private ScheduledExecutorService smartContractExecutor = Executors.newSingleThreadScheduledExecutor();
+  private ScheduledExecutorService smartContractExecutor = Executors
+      .newSingleThreadScheduledExecutor();
 
   class TrxEvent {
+
     @Getter
     private PeerConnection peer;
     @Getter
@@ -83,12 +85,14 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
-    check (peer, transactionsMessage);
+    check(peer, transactionsMessage);
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       int type = trx.getRawData().getContract(0).getType().getNumber();
-      if (type == ContractType.TriggerSmartContract_VALUE || type == ContractType.CreateSmartContract_VALUE) {
+      if (type == ContractType.TriggerSmartContract_VALUE
+          || type == ContractType.CreateSmartContract_VALUE) {
         if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
-          logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueue.size(), queue.size());
+          logger.warn("Add smart contract failed, queueSize {}:{}", smartContractQueue.size(),
+              queue.size());
         }
       } else {
         trxHandlePool.submit(() -> handleTransaction(peer, new TransactionMessage(trx)));
@@ -120,9 +124,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }, 1000, 20, TimeUnit.MILLISECONDS);
   }
 
-  private void handleTransaction (PeerConnection peer, TransactionMessage trx) {
+  private void handleTransaction(PeerConnection peer, TransactionMessage trx) {
     if (peer.isDisconnect()) {
-      logger.warn("Drop trx {} from {}, peer is disconnect.", trx.getMessageId(), peer.getInetAddress());
+      logger.warn("Drop trx {} from {}, peer is disconnect.", trx.getMessageId(),
+          peer.getInetAddress());
       return;
     }
 
@@ -133,14 +138,15 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     try {
       tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
       advService.broadcast(trx);
-    }catch (P2pException e) {
+    } catch (P2pException e) {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
           trx.getMessageId(), peer.getInetAddress(), e.getType(), e.getMessage());
       if (e.getType().equals(TypeEnum.BAD_TRX)) {
         peer.disconnect(ReasonCode.BAD_TX);
       }
-    }catch (Exception e) {
-      logger.error("Trx {} from peer {} process failed.", trx.getMessageId(), peer.getInetAddress(), e);
+    } catch (Exception e) {
+      logger.error("Trx {} from peer {} process failed.", trx.getMessageId(), peer.getInetAddress(),
+          e);
     }
   }
 }

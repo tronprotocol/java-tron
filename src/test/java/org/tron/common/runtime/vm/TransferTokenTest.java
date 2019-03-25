@@ -95,7 +95,7 @@ public class TransferTokenTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
-    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)) ,100_000_000 );
+    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 100_000_000);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
   }
@@ -104,23 +104,13 @@ public class TransferTokenTest {
   /**
    * pragma solidity ^0.4.24;
    *
-   *    contract tokenTest{
-   *        constructor() public payable{}
-   *        // positive case
-   *        function TransferTokenTo(address toAddress, trcToken id,uint256 amount) public payable{
-   *            toAddress.transferToken(amount,id);
-   *        }
-   *        function suicide(address toAddress) payable public{
-   *            selfdestruct(toAddress);
-   *        }
-   *        function get(trcToken trc) public payable returns(uint256){
-   *            return address(this).tokenBalance(trc);
-   *        }
-   *    }
+   * contract tokenTest{ constructor() public payable{} // positive case function
+   * TransferTokenTo(address toAddress, trcToken id,uint256 amount) public payable{
+   * toAddress.transferToken(amount,id); } function suicide(address toAddress) payable public{
+   * selfdestruct(toAddress); } function get(trcToken trc) public payable returns(uint256){ return
+   * address(this).tokenBalance(trc); } }
    *
-   *  1. deploy
-   *  2. trigger and internal transaction
-   *  3. suicide (all token)
+   * 1. deploy 2. trigger and internal transaction 3. suicide (all token)
    */
   @Test
   public void TransferTokenTest()
@@ -129,7 +119,9 @@ public class TransferTokenTest {
     long id = createAsset("testToken1");
     byte[] contractAddress = deployTransferTokenContract(id);
     deposit.commit();
-    Assert.assertEquals(100, dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100,
+        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
+            .longValue());
     Assert.assertEquals(1000, dbManager.getAccountStore().get(contractAddress).getBalance());
 
     String selectorStr = "TransferTokenTo(address,trcToken,uint256)";
@@ -143,31 +135,39 @@ public class TransferTokenTest {
     long feeLimit = 100000000;
     long tokenValue = 8;
     Transaction transaction = TVMTestUtils
-        .generateTriggerSmartContractAndGetTransaction( Hex.decode(OWNER_ADDRESS), contractAddress, triggerData,
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData,
             triggerCallValue, feeLimit, tokenValue, id);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
 
     org.testng.Assert.assertNull(runtime.getRuntimeError());
-    Assert.assertEquals(100 + tokenValue - 9, dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id)).longValue());
-    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2().get(String.valueOf(id)).longValue());
+    Assert.assertEquals(100 + tokenValue - 9,
+        dbManager.getAccountStore().get(contractAddress).getAssetMapV2().get(String.valueOf(id))
+            .longValue());
+    Assert.assertEquals(9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        .get(String.valueOf(id)).longValue());
 
     /*   suicide test  */
     // create new token: testToken2
     long id2 = createAsset("testToken2");
     // add token balance for last created contract
     AccountCapsule changeAccountCapsule = dbManager.getAccountStore().get(contractAddress);
-    changeAccountCapsule.addAssetAmountV2(String.valueOf(id2).getBytes(),99,dbManager);
+    changeAccountCapsule.addAssetAmountV2(String.valueOf(id2).getBytes(), 99, dbManager);
     dbManager.getAccountStore().put(contractAddress, changeAccountCapsule);
     String selectorStr2 = "suicide(address)";
-    String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" ; //TRANSFER_TO
+    String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"; //TRANSFER_TO
     byte[] triggerData2 = TVMTestUtils.parseABI(selectorStr2, params2);
     Transaction transaction2 = TVMTestUtils
-        .generateTriggerSmartContractAndGetTransaction( Hex.decode(OWNER_ADDRESS), contractAddress, triggerData2,
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData2,
             triggerCallValue, feeLimit, 0, id);
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction2, dbManager, null);
     org.testng.Assert.assertNull(runtime.getRuntimeError());
-    Assert.assertEquals(100 + tokenValue - 9 + 9, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2().get(String.valueOf(id)).longValue());
-    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2().get(String.valueOf(id2)).longValue());
+    Assert.assertEquals(100 + tokenValue - 9 + 9,
+        dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+            .get(String.valueOf(id)).longValue());
+    Assert.assertEquals(99, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getAssetMapV2()
+        .get(String.valueOf(id2)).longValue());
   }
 
 
@@ -202,17 +202,9 @@ public class TransferTokenTest {
   }
 
   /**
-   *       contract tokenPerformanceTest{
-   *           uint256 public counter = 0;
-   *           constructor() public payable{}
-   *           // positive case
-   *           function TransferTokenTo(address toAddress, trcToken id,uint256 amount) public payable{
-   *                while(true){
-   *                   counter++;
-   *                   toAddress.transferToken(amount,id);
-   *                }
-   *           }
-   *       }
+   * contract tokenPerformanceTest{ uint256 public counter = 0; constructor() public payable{} //
+   * positive case function TransferTokenTo(address toAddress, trcToken id,uint256 amount) public
+   * payable{ while(true){ counter++; toAddress.transferToken(amount,id); } } }
    */
   @Test
   public void TransferTokenSingleInstructionTimeTest()
@@ -228,14 +220,15 @@ public class TransferTokenTest {
         "0000000000000000000000000000000000000000000000000000000000000002"; //TRANSFER_TO, 100001, 9
     byte[] triggerData = TVMTestUtils.parseABI(selectorStr, params);
     Transaction transaction = TVMTestUtils
-        .generateTriggerSmartContractAndGetTransaction( Hex.decode(OWNER_ADDRESS), contractAddress, triggerData,
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData,
             triggerCallValue, feeLimit, tokenValue, id);
     long start = System.nanoTime() / 1000;
 
     runtime = TVMTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
     long end = System.nanoTime() / 1000;
     System.err.println("running time:" + (end - start));
-    Assert.assertTrue((end - start) < 50_0000 );
+    Assert.assertTrue((end - start) < 50_0000);
 
   }
 

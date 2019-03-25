@@ -155,6 +155,7 @@ public class VoteWitnessAccount2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(), "");
 
   }
+
   /**
    * constructor.
    */
@@ -168,6 +169,7 @@ public class VoteWitnessAccount2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -243,6 +245,7 @@ public class VoteWitnessAccount2Test {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -292,6 +295,7 @@ public class VoteWitnessAccount2Test {
     return ret;
 
   }
+
   /**
    * constructor.
    */
@@ -386,6 +390,7 @@ public class VoteWitnessAccount2Test {
     }
     return ret;
   }
+
   /**
    * constructor.
    */
@@ -480,6 +485,7 @@ public class VoteWitnessAccount2Test {
 
 
   }
+
   /**
    * constructor.
    */
@@ -548,6 +554,7 @@ public class VoteWitnessAccount2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -557,6 +564,7 @@ public class VoteWitnessAccount2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

@@ -214,6 +214,7 @@ public class CycleMultiSign {
       logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
     }
   }
+
   /**
    * constructor.
    */

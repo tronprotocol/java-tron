@@ -22,7 +22,7 @@ import org.tron.core.net.service.SyncService;
 
 @Slf4j
 @Component
-public class ChainInventoryMsgHandler implements TronMsgHandler  {
+public class ChainInventoryMsgHandler implements TronMsgHandler {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -31,7 +31,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
   private SyncService syncService;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) throws P2pException {
+  public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     ChainInventoryMessage chainInventoryMessage = (ChainInventoryMessage) msg;
 
@@ -48,7 +48,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
       return;
     }
 
-    while (!peer.getSyncBlockToFetch().isEmpty()){
+    while (!peer.getSyncBlockToFetch().isEmpty()) {
       if (peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
         break;
       }
@@ -73,9 +73,10 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 //    }
 
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
-        (chainInventoryMessage.getRemainNum() != 0 && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
+        (chainInventoryMessage.getRemainNum() != 0
+            && peer.getSyncBlockToFetch().size() > NodeConstant.SYNC_FETCH_BATCH_NUM)) {
       syncService.setFetchFlag(true);
-    }else {
+    } else {
       syncService.syncNext(peer);
     }
   }
@@ -96,7 +97,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
 
     if (msg.getRemainNum() != 0 && blockIds.size() < NodeConstant.SYNC_FETCH_BATCH_NUM) {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
-          "remain: " + msg.getRemainNum() +", blockIds size: " + blockIds.size());
+          "remain: " + msg.getRemainNum() + ", blockIds size: " + blockIds.size());
     }
 
     long num = blockIds.get(0).getNum();
@@ -113,9 +114,11 @@ public class ChainInventoryMsgHandler implements TronMsgHandler  {
     }
 
     if (tronNetDelegate.getHeadBlockId().getNum() > 0) {
-      long maxRemainTime = ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - tronNetDelegate
-          .getBlockTime(tronNetDelegate.getSolidBlockId());
-      long maxFutureNum = maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
+      long maxRemainTime =
+          ChainConstant.CLOCK_MAX_DELAY + System.currentTimeMillis() - tronNetDelegate
+              .getBlockTime(tronNetDelegate.getSolidBlockId());
+      long maxFutureNum =
+          maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
       if (lastNum + msg.getRemainNum() > maxFutureNum) {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "lastNum: " + lastNum + " + remainNum: "

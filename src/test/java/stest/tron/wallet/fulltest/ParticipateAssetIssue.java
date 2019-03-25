@@ -41,7 +41,7 @@ public class ParticipateAssetIssue {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "PartAssetIssue_" + Long.toString(now);
@@ -102,7 +102,7 @@ public class ParticipateAssetIssue {
         fromAddress, testKey002, blockingStubFull));
     //Participate account freeze balance to get bandwidth.
     Assert.assertTrue(PublicMethed.freezeBalance(participateAssetAddress,
-        10000000L,3, testKeyForParticipate,blockingStubFull));
+        10000000L, 3, testKeyForParticipate, blockingStubFull));
     //Create an asset issue.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -114,7 +114,7 @@ public class ParticipateAssetIssue {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    final Account createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
+    final Account createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
     final Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate,
         blockingStubFull);
 
@@ -135,7 +135,7 @@ public class ParticipateAssetIssue {
   }
 
   //@Test(enabled = false)
-  @Test(enabled = false,threadPoolSize = 250, invocationCount = 250)
+  @Test(enabled = false, threadPoolSize = 250, invocationCount = 250)
   public void testParticipateAssetIssue() throws InterruptedException {
     Integer i = 0;
     Integer randNum;
@@ -150,10 +150,11 @@ public class ParticipateAssetIssue {
           .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-      participateAssetIssue(createAddress,name.getBytes(),
-          1,participateAssetAddress,testKeyForParticipate,blockingStubFull);
+      participateAssetIssue(createAddress, name.getBytes(),
+          1, participateAssetAddress, testKeyForParticipate, blockingStubFull);
     }
   }
+
   /**
    * constructor.
    */
@@ -164,10 +165,9 @@ public class ParticipateAssetIssue {
     end1 = System.currentTimeMillis();
     logger.info("The time is " + Long.toString(end1 - start1));
 
-    Account createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
+    Account createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
 
     Map<String, Long> createAssetIssueMap = new HashMap<String, Long>();
-
 
     Long temp = 0L;
     createAssetIssueMap = createInfo.getAssetMap();
@@ -182,7 +182,7 @@ public class ParticipateAssetIssue {
     afterCreateAssetIssueBalance = temp;
 
     temp = 0L;
-    Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate,blockingStubFull);
+    Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate, blockingStubFull);
     Map<String, Long> participateAssetIssueMap = new HashMap<String, Long>();
     participateAssetIssueMap = participateInfo.getAssetMap();
     for (Long key : participateAssetIssueMap.values()) {
@@ -217,8 +217,8 @@ public class ParticipateAssetIssue {
       }
     }
 
-    createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
-    participateInfo = PublicMethed.queryAccount(testKeyForParticipate,blockingStubFull);
+    createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
+    participateInfo = PublicMethed.queryAccount(testKeyForParticipate, blockingStubFull);
     createAssetIssueMap = new HashMap<String, Long>();
     participateAssetIssueMap = new HashMap<String, Long>();
 
@@ -253,6 +253,7 @@ public class ParticipateAssetIssue {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -288,6 +289,7 @@ public class ParticipateAssetIssue {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -302,6 +304,7 @@ public class ParticipateAssetIssue {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

@@ -109,7 +109,8 @@ public class UdpTest {
       socket.receive(packet);
       byte[] bytes = Arrays.copyOfRange(data, 0, packet.getLength());
       Message msg = Message.parse(bytes);
-      Assert.assertTrue(Arrays.equals(msg.getFrom().getId(), nodeManager.getPublicHomeNode().getId()));
+      Assert.assertTrue(
+          Arrays.equals(msg.getFrom().getId(), nodeManager.getPublicHomeNode().getId()));
       if (!pingFlag) {
         pingFlag = true;
         Assert.assertTrue(msg instanceof PingMessage);

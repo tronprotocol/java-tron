@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j
 @Component
-public class InventoryMsgHandler implements TronMsgHandler{
+public class InventoryMsgHandler implements TronMsgHandler {
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -28,7 +28,7 @@ public class InventoryMsgHandler implements TronMsgHandler{
   private int maxCountIn10s = 10_000;
 
   @Override
-  public void processMessage (PeerConnection peer, TronMessage msg) {
+  public void processMessage(PeerConnection peer, TronMessage msg) {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
     InventoryType type = inventoryMessage.getInventoryType();
 
@@ -43,7 +43,7 @@ public class InventoryMsgHandler implements TronMsgHandler{
     }
   }
 
-  private boolean check (PeerConnection peer, InventoryMessage inventoryMessage) {
+  private boolean check(PeerConnection peer, InventoryMessage inventoryMessage) {
     InventoryType type = inventoryMessage.getInventoryType();
     int size = inventoryMessage.getHashList().size();
 

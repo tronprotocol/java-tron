@@ -86,33 +86,31 @@ public class WalletTestAssetIssue008 {
   }
 
 
-  @Test(enabled = true,description = "Get asset issue list from Solidity")
+  @Test(enabled = true, description = "Get asset issue list from Solidity")
   public void testGetAllAssetIssueFromSolidity() {
-    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(queryAssetIssueFromSoliAddress, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(queryAssetIssueFromSoliAddress, name,
         totalSupply, 1, 100, start, end, 1, description, url, 10000L,
-        10000L,1L,1L,queryAssetIssueKey,blockingStubFull));
+        10000L, 1L, 1L, queryAssetIssueKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     GrpcAPI.AssetIssueList assetIssueList = blockingStubSolidity
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
     logger.info(Long.toString(assetIssueList.getAssetIssueCount()));
 
-
-
     if (assetIssueList.getAssetIssueCount() == 0) {
-      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000L,3,
-          testKey002,blockingStubFull));
-      Assert.assertTrue(PublicMethed.sendcoin(toAddress,999999L,fromAddress,
-          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000L, 3,
+          testKey002, blockingStubFull));
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress, 999999L, fromAddress,
+          testKey002, blockingStubFull));
       Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       logger.info("fullnode block num is " + Long.toString(currentBlock.getBlockHeader()
           .getRawData().getNumber()));
-      PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+      PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     }
 
     assetIssueList = blockingStubSolidity
@@ -127,6 +125,7 @@ public class WalletTestAssetIssue008 {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -140,6 +139,7 @@ public class WalletTestAssetIssue008 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -167,6 +167,7 @@ public class WalletTestAssetIssue008 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -176,6 +177,7 @@ public class WalletTestAssetIssue008 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -195,6 +197,7 @@ public class WalletTestAssetIssue008 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -234,6 +237,7 @@ public class WalletTestAssetIssue008 {
     }
 
   }
+
   /**
    * constructor.
    */

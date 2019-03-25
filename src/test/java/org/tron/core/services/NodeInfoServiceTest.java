@@ -43,10 +43,11 @@ public class NodeInfoServiceTest {
       .get(0);
 
   public void testGrpc() {
-    WalletBlockingStub walletStub = WalletGrpc.newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build());
-    logger.info("getNodeInfo: {}",walletStub.getNodeInfo(EmptyMessage.getDefaultInstance()));
+    WalletBlockingStub walletStub = WalletGrpc
+        .newBlockingStub(ManagedChannelBuilder.forTarget(fullnode)
+            .usePlaintext(true)
+            .build());
+    logger.info("getNodeInfo: {}", walletStub.getNodeInfo(EmptyMessage.getDefaultInstance()));
   }
 
 }

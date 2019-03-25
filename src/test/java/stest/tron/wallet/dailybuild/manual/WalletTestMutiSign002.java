@@ -245,7 +245,6 @@ public class WalletTestMutiSign002 {
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
     final Long beforeExchangeToken2Balance = exchangeIdInfo.get().getSecondTokenBalance();
 
-
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -302,7 +301,6 @@ public class WalletTestMutiSign002 {
 
   @Test(enabled = true, description = "MutiSign for withdraw exchange")
   public void test5WithdrawExchange() {
-
 
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();

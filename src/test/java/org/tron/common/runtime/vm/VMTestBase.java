@@ -20,6 +20,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 public class VMTestBase {
+
   protected Manager manager;
   protected TronApplicationContext context;
   protected String dbPath;

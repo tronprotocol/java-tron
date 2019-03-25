@@ -29,6 +29,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestCommittee004 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -95,19 +96,17 @@ public class WalletTestCommittee004 {
 
   @Test(enabled = true)
   public void test1DeleteProposal() {
-    PublicMethed.sendcoin(witness001Address,1000000L,
-        toAddress,testKey003,blockingStubFull);
-    PublicMethed.sendcoin(witness002Address,1000000L,
-        toAddress,testKey003,blockingStubFull);
-
-
+    PublicMethed.sendcoin(witness001Address, 1000000L,
+        toAddress, testKey003, blockingStubFull);
+    PublicMethed.sendcoin(witness002Address, 1000000L,
+        toAddress, testKey003, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(1L, 99999L);
-    Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
-        proposalMap,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
+        proposalMap, blockingStubFull));
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -115,38 +114,38 @@ public class WalletTestCommittee004 {
     }
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
+    Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
     final Integer proposalId = listProposals.get().getProposalsCount();
-    Assert.assertTrue(PublicMethed.approveProposal(witness001Address,witnessKey001,
-        proposalId,true,blockingStubFull));
+    Assert.assertTrue(PublicMethed.approveProposal(witness001Address, witnessKey001,
+        proposalId, true, blockingStubFull));
     logger.info(Integer.toString(listProposals.get().getProposals(0).getStateValue()));
     //The state is "pending", state value == 0
     Assert.assertTrue(listProposals.get().getProposals(0).getStateValue() == 0);
 
     //When the proposal isn't created by you, you can't delete it.
-    Assert.assertFalse(PublicMethed.deleteProposal(witness002Address,witnessKey002,
-        proposalId,blockingStubFull));
+    Assert.assertFalse(PublicMethed.deleteProposal(witness002Address, witnessKey002,
+        proposalId, blockingStubFull));
     //Cancel the proposal
-    Assert.assertTrue(PublicMethed.deleteProposal(witness001Address,witnessKey001,
-        proposalId,blockingStubFull));
+    Assert.assertTrue(PublicMethed.deleteProposal(witness001Address, witnessKey001,
+        proposalId, blockingStubFull));
     //When the state is cancel, you can't delete it again.
-    Assert.assertFalse(PublicMethed.deleteProposal(witness001Address,witnessKey001,
-        proposalId,blockingStubFull));
+    Assert.assertFalse(PublicMethed.deleteProposal(witness001Address, witnessKey001,
+        proposalId, blockingStubFull));
     //You can't delete an invalid proposal
-    Assert.assertFalse(PublicMethed.deleteProposal(witness001Address,witnessKey001,
-        proposalId + 100,blockingStubFull));
+    Assert.assertFalse(PublicMethed.deleteProposal(witness001Address, witnessKey001,
+        proposalId + 100, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    listProposals =  Optional.ofNullable(proposalList);
+    listProposals = Optional.ofNullable(proposalList);
     logger.info(Integer.toString(listProposals.get().getProposals(0).getStateValue()));
     //The state is "cancel", state value == 3
     Assert.assertTrue(listProposals.get().getProposals(0).getStateValue() == 3);
 
     //When the state is cancel, you can't approval proposal
-    Assert.assertFalse(PublicMethed.approveProposal(witness001Address,witnessKey001,
-        proposalId,true,blockingStubFull));
-    Assert.assertFalse(PublicMethed.approveProposal(witness001Address,witnessKey001,
-        proposalId,false,blockingStubFull));
+    Assert.assertFalse(PublicMethed.approveProposal(witness001Address, witnessKey001,
+        proposalId, true, blockingStubFull));
+    Assert.assertFalse(PublicMethed.approveProposal(witness001Address, witnessKey001,
+        proposalId, false, blockingStubFull));
   }
 
   @Test(enabled = true)
@@ -154,11 +153,11 @@ public class WalletTestCommittee004 {
     //Create a proposal and approval it
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(1L, 999999999L);
-    Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
-        proposalMap,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
+        proposalMap, blockingStubFull));
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
+    Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
     final Integer proposalId = listProposals.get().getProposalsCount();
 
     BytesMessage request = BytesMessage.newBuilder().setValue(ByteString.copyFrom(
@@ -185,15 +184,15 @@ public class WalletTestCommittee004 {
   public void testGetChainParameters() {
     //Set the default map
     HashMap<String, Long> defaultCommitteeMap = new HashMap<String, Long>();
-    defaultCommitteeMap.put("MAINTENANCE_TIME_INTERVAL",300000L);
-    defaultCommitteeMap.put("ACCOUNT_UPGRADE_COST",9999000000L);
-    defaultCommitteeMap.put("CREATE_ACCOUNT_FEE",100000L);
-    defaultCommitteeMap.put("TRANSACTION_FEE",10L);
-    defaultCommitteeMap.put("ASSET_ISSUE_FEE",1024000000L);
-    defaultCommitteeMap.put("WITNESS_PAY_PER_BLOCK",32000000L);
-    defaultCommitteeMap.put("WITNESS_STANDBY_ALLOWANCE",115200000000L);
-    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT",0L);
-    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_BANDWIDTH_RATE",1L);
+    defaultCommitteeMap.put("MAINTENANCE_TIME_INTERVAL", 300000L);
+    defaultCommitteeMap.put("ACCOUNT_UPGRADE_COST", 9999000000L);
+    defaultCommitteeMap.put("CREATE_ACCOUNT_FEE", 100000L);
+    defaultCommitteeMap.put("TRANSACTION_FEE", 10L);
+    defaultCommitteeMap.put("ASSET_ISSUE_FEE", 1024000000L);
+    defaultCommitteeMap.put("WITNESS_PAY_PER_BLOCK", 32000000L);
+    defaultCommitteeMap.put("WITNESS_STANDBY_ALLOWANCE", 115200000000L);
+    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT", 0L);
+    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_BANDWIDTH_RATE", 1L);
 
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());

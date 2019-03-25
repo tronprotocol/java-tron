@@ -109,6 +109,7 @@ public class GetBlockByLatestNum2Test {
     //Assert.assertTrue(getBlockByLatestNum.get().getBlock(10).getBlockid().isEmpty());
 
   }
+
   /**
    * constructor.
    */
@@ -119,6 +120,7 @@ public class GetBlockByLatestNum2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -155,6 +157,7 @@ public class GetBlockByLatestNum2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -164,6 +167,7 @@ public class GetBlockByLatestNum2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

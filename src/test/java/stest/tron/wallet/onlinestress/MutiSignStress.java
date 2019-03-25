@@ -73,7 +73,7 @@ public class MutiSignStress {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,threadPoolSize = 20, invocationCount = 20)
+  @Test(enabled = true, threadPoolSize = 20, invocationCount = 20)
   public void testMutiSignForAccount() {
     Integer i = 0;
     while (i < 20) {
@@ -94,11 +94,11 @@ public class MutiSignStress {
       newAddress = ecKey4.getAddress();
       newKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-      PublicMethed.sendcoin(ownerAddress,4000000L,fromAddress,testKey002,
+      PublicMethed.sendcoin(ownerAddress, 4000000L, fromAddress, testKey002,
           blockingStubFull);
-      PublicMethed.sendcoin(ownerAddress,4000000L,fromAddress,testKey002,
+      PublicMethed.sendcoin(ownerAddress, 4000000L, fromAddress, testKey002,
           blockingStubFull);
-      PublicMethed.sendcoin(ownerAddress,4000000L,fromAddress,testKey002,
+      PublicMethed.sendcoin(ownerAddress, 4000000L, fromAddress, testKey002,
           blockingStubFull);
       permissionKeyString[0] = manager1Key;
       permissionKeyString[1] = manager2Key;
@@ -111,32 +111,30 @@ public class MutiSignStress {
           + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}],\"name\":\"active\","
           + "\"threshold\":2}]";
       //logger.info(accountPermissionJson);
-      PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,ownerAddress,ownerKey,
-          blockingStubFull,ownerKeyString);
+      PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey,
+          blockingStubFull, ownerKeyString);
 
       String updateName = Long.toString(System.currentTimeMillis());
 
-
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
-          blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
-          blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.sendcoin(newAddress,1000000L,ownerAddress,ownerKey,
-          blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
-          ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
-          ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.freezeBalance(ownerAddress,1000000L,0,
-          ownerKey,blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
-          blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
-          blockingStubFull,permissionKeyString);
-      PublicMethedForMutiSign.unFreezeBalance(ownerAddress,ownerKey,0,null,
-          blockingStubFull,permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress, 1000000L, ownerAddress, ownerKey,
+          blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress, 1000000L, ownerAddress, ownerKey,
+          blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.sendcoin(newAddress, 1000000L, ownerAddress, ownerKey,
+          blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress, 1000000L, 0,
+          ownerKey, blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress, 1000000L, 0,
+          ownerKey, blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.freezeBalance(ownerAddress, 1000000L, 0,
+          ownerKey, blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress, ownerKey, 0, null,
+          blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress, ownerKey, 0, null,
+          blockingStubFull, permissionKeyString);
+      PublicMethedForMutiSign.unFreezeBalance(ownerAddress, ownerKey, 0, null,
+          blockingStubFull, permissionKeyString);
     }
-
 
 
   }

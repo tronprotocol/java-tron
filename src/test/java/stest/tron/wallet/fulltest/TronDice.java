@@ -68,25 +68,23 @@ public class TronDice {
         blockingStubFull);
 
 
-
-
-
   }
 
-  @Test(enabled = true,threadPoolSize = 30, invocationCount = 30)
+  @Test(enabled = true, threadPoolSize = 30, invocationCount = 30)
   public void tronDice() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] tronDiceAddress = ecKey1.getAddress();
     String tronDiceKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    PublicMethed.sendcoin(tronDiceAddress,100000000000L,fromAddress,testKey002,blockingStubFull);
+    PublicMethed
+        .sendcoin(tronDiceAddress, 100000000000L, fromAddress, testKey002, blockingStubFull);
     String contractName = "TronDice";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TronDice_tronDice");
+        .getString("code.code_TronDice_tronDice");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TronDice_tronDice");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-        maxFeeLimit,1000000000L, 100,null,tronDiceKey,tronDiceAddress,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+        .getString("abi.abi_TronDice_tronDice");
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 1000000000L, 100, null, tronDiceKey, tronDiceAddress, blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     try {
       Thread.sleep(10000);
     } catch (InterruptedException e) {
@@ -95,9 +93,7 @@ public class TronDice {
 
     Assert.assertTrue(smartContract.getAbi() != null);
 
-
     String txid;
-
 
     for (Integer i = 0; i < 100; i++) {
       String initParmes = "\"" + "10" + "\"";
@@ -116,6 +112,7 @@ public class TronDice {
     }
 
   }
+
   /**
    * constructor.
    */
