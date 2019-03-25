@@ -334,6 +334,8 @@ def binaryRelease(taskName, jarName, mainClass) {
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
+
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
     }
 }
 
