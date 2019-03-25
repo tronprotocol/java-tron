@@ -8,6 +8,9 @@ import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.runtime.vm.OpCode.SAR;
+import static org.tron.common.runtime.vm.OpCode.SHL;
+import static org.tron.common.runtime.vm.OpCode.SHR;
 import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
@@ -91,6 +94,11 @@ public class VM {
         }
       }
 
+      if (!VMConfig.allowTvmConstantinople()) {
+        if (op == SHL || op == SHR || op == SAR) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+      }
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
@@ -605,8 +613,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftLeft(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -617,8 +626,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftRight(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -629,8 +639,9 @@ public class VM {
           DataWord word2 = program.stackPop();
           final DataWord result = word2.shiftRightSigned(word1);
 
-          if (logger.isInfoEnabled())
+          if (logger.isInfoEnabled()) {
             hint = "" + result.value();
+          }
 
           program.stackPush(result);
           program.step();
@@ -1415,7 +1426,8 @@ public class VM {
       throw e;
     } catch (RuntimeException e) {
       if (StringUtils.isEmpty(e.getMessage())) {
-        logger.warn("Unknown Exception occurred, tx id: {}", Hex.toHexString(program.getRootTransactionId()), e);
+        logger.warn("Unknown Exception occurred, tx id: {}",
+            Hex.toHexString(program.getRootTransactionId()), e);
         program.setRuntimeFailure(new RuntimeException("Unknown Exception"));
       } else {
         program.setRuntimeFailure(e);

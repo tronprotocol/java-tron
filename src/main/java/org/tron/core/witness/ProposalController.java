@@ -202,6 +202,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
           break;
         }
+        case (24): {
+          manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
+          break;
+        }
         default:
           break;
       }
