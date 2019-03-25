@@ -80,7 +80,8 @@ public class DbBackupConfig {
       setBak2path(bak2path);
       setFrequency(frequency);
       logger.info(
-          "success to enable the db backup plugin. bak1path:{}, bak2path:{}, backup once every {} blocks handled",
+          "success to enable the db backup plugin. bak1path:{}, bak2path:{}, "
+              + "backup once every {} blocks handled",
           bak1path, bak2path, frequency);
     }
 
