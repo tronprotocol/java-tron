@@ -285,6 +285,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
   }
 
+  public Sha256Hash getAccountRoot() {
+    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
+  }
+
   public ByteString getWitnessAddress() {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
@@ -337,6 +341,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     if (!getTransactions().isEmpty()) {
       toStringBuff.append("merkle root=").append(getMerkleRoot()).append("\n");
+      toStringBuff.append("account root=").append(getAccountRoot()).append("\n");
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
     } else {
       toStringBuff.append("txs are empty\n");
