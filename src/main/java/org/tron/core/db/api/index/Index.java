@@ -8,6 +8,7 @@ import org.tron.core.db.common.WrappedByteArray;
 public class Index {
 
   public interface Iface<T> extends Iterable<T> {
+
     ResultSet<T> retrieve(Query<WrappedByteArray> query);
 
     ResultSet<T> retrieve(Query<WrappedByteArray> query, QueryOptions options);

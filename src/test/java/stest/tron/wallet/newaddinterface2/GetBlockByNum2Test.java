@@ -193,6 +193,7 @@ public class GetBlockByNum2Test {
     Assert.assertTrue(setIdOfBlock.getBlockHeader().getRawData().getWitnessId() >= 0);
     logger.info("By ID test succesfully");
   }
+
   /**
    * constructor.
    */
@@ -206,6 +207,7 @@ public class GetBlockByNum2Test {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -242,6 +244,7 @@ public class GetBlockByNum2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -251,6 +254,7 @@ public class GetBlockByNum2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

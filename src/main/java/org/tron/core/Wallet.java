@@ -399,7 +399,8 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance().getTrxExpirationTimeInMilliseconds();
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -564,7 +565,7 @@ public class Wallet {
           throw new PermissionException("Permission type is error");
         }
         //check oprations
-        if (!checkPermissionOprations(permission, contract)){
+        if (!checkPermissionOprations(permission, contract)) {
           throw new PermissionException("Permission denied");
         }
       }
@@ -1304,7 +1305,8 @@ public class Wallet {
       Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       VMConfig.initVmHardFork();
-      VMConfig.initAllowTvmTransferTrc10(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+      VMConfig.initAllowTvmTransferTrc10(
+          dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
       VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
       runtime.execute();
       runtime.go();

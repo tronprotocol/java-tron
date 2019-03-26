@@ -55,6 +55,7 @@ public class WalletTestTransfer002 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -99,6 +100,7 @@ public class WalletTestTransfer002 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -112,6 +114,7 @@ public class WalletTestTransfer002 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -149,6 +152,7 @@ public class WalletTestTransfer002 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -176,6 +180,7 @@ public class WalletTestTransfer002 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -185,6 +190,7 @@ public class WalletTestTransfer002 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

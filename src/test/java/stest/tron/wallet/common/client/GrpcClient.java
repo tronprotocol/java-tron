@@ -32,7 +32,6 @@ import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
 
-
 public class GrpcClient {
 
   private ManagedChannel channelFull = null;
@@ -55,18 +54,19 @@ public class GrpcClient {
   public GrpcClient(String fullnode, String soliditynode) {
     if (!(fullnode.isEmpty())) {
       channelFull = ManagedChannelBuilder.forTarget(fullnode)
-                .usePlaintext(true)
-                .build();
+          .usePlaintext(true)
+          .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     }
     if (!(soliditynode.isEmpty())) {
       channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-                .usePlaintext(true)
-                .build();
+          .usePlaintext(true)
+          .build();
       blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
       blockingStubExtension = WalletExtensionGrpc.newBlockingStub(channelSolidity);
     }
   }
+
   /**
    * constructor.
    */
@@ -79,6 +79,7 @@ public class GrpcClient {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -118,7 +119,7 @@ public class GrpcClient {
   }
 
   public Transaction createParticipateAssetIssueTransaction(
-            Contract.ParticipateAssetIssueContract contract) {
+      Contract.ParticipateAssetIssueContract contract) {
     return blockingStubFull.participateAssetIssue(contract);
   }
 
@@ -142,6 +143,7 @@ public class GrpcClient {
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(signaturedTransaction);
     return response.getResult();
   }
+
   /**
    * constructor.
    */
@@ -151,6 +153,7 @@ public class GrpcClient {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccountNet(request);
   }
+
   /**
    * constructor.
    */
@@ -183,17 +186,18 @@ public class GrpcClient {
             return Optional.ofNullable(accountList);
         }
     }*/
+
   /**
    * constructor.
    */
   public Optional<WitnessList> listWitnesses() {
     if (blockingStubSolidity != null) {
       WitnessList witnessList = blockingStubSolidity.listWitnesses(
-              EmptyMessage.newBuilder().build());
+          EmptyMessage.newBuilder().build());
       return Optional.ofNullable(witnessList);
     } else {
       WitnessList witnessList = blockingStubFull.listWitnesses(
-              EmptyMessage.newBuilder().build());
+          EmptyMessage.newBuilder().build());
       return Optional.ofNullable(witnessList);
     }
   }
@@ -225,21 +229,22 @@ public class GrpcClient {
   public Optional<AssetIssueList> getAssetIssueList() {
     if (blockingStubSolidity != null) {
       AssetIssueList assetIssueList = blockingStubSolidity
-               .getAssetIssueList(EmptyMessage.newBuilder().build());
+          .getAssetIssueList(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(assetIssueList);
     } else {
       AssetIssueList assetIssueList = blockingStubFull
-               .getAssetIssueList(EmptyMessage.newBuilder().build());
+          .getAssetIssueList(EmptyMessage.newBuilder().build());
       return Optional.ofNullable(assetIssueList);
     }
   }
+
   /**
    * constructor.
    */
 
   public Optional<NodeList> listNodes() {
     NodeList nodeList = blockingStubFull
-            .listNodes(EmptyMessage.newBuilder().build());
+        .listNodes(EmptyMessage.newBuilder().build());
     return Optional.ofNullable(nodeList);
   }
 
@@ -294,6 +299,7 @@ public class GrpcClient {
         .getTransactionsByTimestamp(timePageMessage.build());
         return Optional.ofNullable(transactionList);
     }*/
+
   /**
    * constructor.
    */
@@ -305,9 +311,10 @@ public class GrpcClient {
     builder.setLimit(1000);
     builder.setOffset(0);
     TransactionList transactionList = blockingStubExtension
-            .getTransactionsFromThis(builder.build());
+        .getTransactionsFromThis(builder.build());
     return Optional.ofNullable(transactionList);
   }
+
   /**
    * constructor.
    */
@@ -345,6 +352,7 @@ public class GrpcClient {
     Block block = blockingStubFull.getBlockById(request);
     return Optional.ofNullable(block);
   }
+
   /**
    * constructor.
    */
@@ -356,6 +364,7 @@ public class GrpcClient {
     BlockList blockList = blockingStubFull.getBlockByLimitNext(builder.build());
     return Optional.ofNullable(blockList);
   }
+
   /**
    * constructor.
    */

@@ -43,6 +43,7 @@ public class WalletTestBlock003 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -71,6 +72,7 @@ public class WalletTestBlock003 {
     Assert.assertTrue(getNextMaintenanceTime.getNum() > now);
 
   }
+
   /**
    * constructor.
    */
@@ -84,6 +86,7 @@ public class WalletTestBlock003 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -111,6 +114,7 @@ public class WalletTestBlock003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -120,6 +124,7 @@ public class WalletTestBlock003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

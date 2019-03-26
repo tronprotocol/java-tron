@@ -25,6 +25,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class TestStorageAndCpu {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("witness.key5");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -56,12 +57,12 @@ public class TestStorageAndCpu {
   Long currentBlockNum;
 
 
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -83,7 +84,7 @@ public class TestStorageAndCpu {
     beforeTime = System.currentTimeMillis();
   }
 
-  @Test(enabled = true,threadPoolSize = 1, invocationCount = 1)
+  @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
   public void storageAndCpu() {
     Random rand = new Random();
     Integer randNum = rand.nextInt(30) + 1;
@@ -92,19 +93,20 @@ public class TestStorageAndCpu {
     Long maxFeeLimit = 1000000000L;
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TestStorageAndCpu_storageAndCpu");
+        .getString("code.code_TestStorageAndCpu_storageAndCpu");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
-    PublicMethed.freezeBalanceGetEnergy(fromAddress,1000000000000L,3,1,testKey002,blockingStubFull);
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit,
-        0L, 100,null,testKey002,fromAddress,blockingStubFull);
+        .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
+    PublicMethed
+        .freezeBalanceGetEnergy(fromAddress, 1000000000000L, 3, 1, testKey002, blockingStubFull);
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code,
+        "", maxFeeLimit,
+        0L, 100, null, testKey002, fromAddress, blockingStubFull);
     try {
       Thread.sleep(30000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     String txid;
 
     ChainParameters chainParameters = blockingStubFull
@@ -193,7 +195,6 @@ public class TestStorageAndCpu {
     logger.info("EnergyTotal is " + oneEnergyTotal);
     logger.info("Average energy is " + oneEnergyTotal * (totalNum / costTime));
 */
-
 
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

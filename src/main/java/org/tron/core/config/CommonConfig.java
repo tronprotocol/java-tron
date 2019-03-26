@@ -28,5 +28,5 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @ComponentScan(basePackages = "org.tron")
 public class CommonConfig {
 
-    private static CommonConfig defaultInstance;
+  private static CommonConfig defaultInstance;
 }

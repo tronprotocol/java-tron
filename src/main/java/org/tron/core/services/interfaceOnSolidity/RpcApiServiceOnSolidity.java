@@ -222,6 +222,7 @@ public class RpcApiServiceOnSolidity implements Service {
               .getAssetIssueListByName(request, responseObserver)
       );
     }
+
     @Override
     public void getPaginatedAssetIssueList(PaginatedMessage request,
         StreamObserver<AssetIssueList> responseObserver) {

@@ -18,6 +18,7 @@ public class AbiUtil {
   //
 
   abstract static class Coder {
+
     boolean dynamic = false;
     String name;
     String type;
@@ -28,6 +29,7 @@ public class AbiUtil {
     abstract byte[] decode();
 
   }
+
   /**
    * constructor.
    */
@@ -36,7 +38,7 @@ public class AbiUtil {
     int start = methodSign.indexOf('(') + 1;
     int end = methodSign.indexOf(')');
 
-    String typeString = methodSign.subSequence(start,end).toString();
+    String typeString = methodSign.subSequence(start, end).toString();
 
     return typeString.split(",");
   }
@@ -44,6 +46,7 @@ public class AbiUtil {
   public static String geMethodId(String methodSign) {
     return null;
   }
+
   /**
    * constructor.
    */
@@ -86,6 +89,7 @@ public class AbiUtil {
   }
 
   static class CoderArray extends Coder {
+
     private String elementType;
     private int length;
 
@@ -137,7 +141,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderNumber extends  Coder {
+  static class CoderNumber extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -155,7 +159,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderFixedBytes extends  Coder {
+  static class CoderFixedBytes extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -194,7 +198,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderDynamicBytes extends  Coder {
+  static class CoderDynamicBytes extends Coder {
 
     CoderDynamicBytes() {
       dynamic = true;
@@ -211,7 +215,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderBool extends  Coder {
+  static class CoderBool extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -243,7 +247,8 @@ public class AbiUtil {
     }
   }
 
-  static class CoderString extends  Coder {
+  static class CoderString extends Coder {
+
     CoderString() {
       dynamic = true;
     }
@@ -258,6 +263,7 @@ public class AbiUtil {
       return new byte[0];
     }
   }
+
   /**
    * constructor.
    */
@@ -288,6 +294,7 @@ public class AbiUtil {
 
     return retBytes;
   }
+
   /**
    * constructor.
    */
@@ -299,7 +306,7 @@ public class AbiUtil {
 
     List<byte[]> encodedList = new ArrayList<>();
 
-    for (int idx = 0;idx < codes.size();  idx++) {
+    for (int idx = 0; idx < codes.size(); idx++) {
       Coder coder = codes.get(idx);
       String value = values.get(idx).toString();
 
@@ -324,19 +331,20 @@ public class AbiUtil {
       Coder coder = codes.get(idx);
 
       if (coder.dynamic) {
-        System.arraycopy(new DataWord(dynamicOffset).getData(), 0,data, offset, 32);
+        System.arraycopy(new DataWord(dynamicOffset).getData(), 0, data, offset, 32);
         offset += 32;
 
-        System.arraycopy(encodedList.get(idx), 0,data, dynamicOffset, encodedList.get(idx).length);
+        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset, encodedList.get(idx).length);
         dynamicOffset += encodedList.get(idx).length;
       } else {
-        System.arraycopy(encodedList.get(idx), 0,data, offset, encodedList.get(idx).length);
+        System.arraycopy(encodedList.get(idx), 0, data, offset, encodedList.get(idx).length);
         offset += encodedList.get(idx).length;
       }
     }
 
     return data;
   }
+
   /**
    * constructor.
    */
@@ -344,13 +352,14 @@ public class AbiUtil {
   public static String parseMethod(String methodSign, String params) {
     return parseMethod(methodSign, params, false);
   }
+
   /**
    * constructor.
    */
 
   public static String parseMethod(String methodSign, String input, boolean isHex) {
     byte[] selector = new byte[4];
-    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector,0, 4);
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     System.out.println(methodSign + ":" + Hex.toHexString(selector));
     if (input.length() == 0) {
       return Hex.toHexString(selector);
@@ -362,6 +371,7 @@ public class AbiUtil {
 
     return Hex.toHexString(selector) + Hex.toHexString(encodedParms);
   }
+
   /**
    * constructor.
    */
@@ -377,18 +387,19 @@ public class AbiUtil {
     }
 
     List<Coder> coders = new ArrayList<>();
-    for (String s: getTypes(methodSign)) {
+    for (String s : getTypes(methodSign)) {
       Coder c = getParamCoder(s);
       coders.add(c);
     }
 
     return pack(coders, items);
   }
+
   /**
    * constructor.
    */
 
-  public  static void main(String[] args) {
+  public static void main(String[] args) {
     //    String method = "test(address,string,int)";
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
@@ -401,7 +412,6 @@ public class AbiUtil {
     String tokenParams = "\"nmb\",111";
 
     System.out.println("token:" + parseMethod(tokenMethod, tokenParams));
-
 
     String method1 = "test(uint256,string,string,uint256[])";
     String expected1 = "db103cf3000000000000000000000000000000000000000000000000000000000000000500"
@@ -427,24 +437,24 @@ public class AbiUtil {
     System.out.println(parseMethod(byteMethod1, bytesValue1));
 
   }
+
   /**
    * constructor.
    */
 
   public static byte[] concat(byte[]... bytesArray) {
     int length = 0;
-    for (byte[] bytes: bytesArray) {
+    for (byte[] bytes : bytesArray) {
       length += bytes.length;
     }
     byte[] ret = new byte[length];
     int index = 0;
-    for (byte[] bytes: bytesArray) {
+    for (byte[] bytes : bytesArray) {
       System.arraycopy(bytes, 0, ret, index, bytes.length);
       index += bytes.length;
     }
     return ret;
   }
-
 
 
 }

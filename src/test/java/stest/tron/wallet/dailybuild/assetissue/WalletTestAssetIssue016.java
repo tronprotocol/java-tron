@@ -25,6 +25,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAssetIssue016 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final String testKey003 = Configuration.getByPath("testng.conf")
@@ -80,13 +81,12 @@ public class WalletTestAssetIssue016 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,description = "Get asset issue net resource")
+  @Test(enabled = true, description = "Get asset issue net resource")
   public void testGetAssetIssueNet() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());
     asset016Address = ecKey1.getAddress();
     testKeyForAssetIssue016 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
     ecKey2 = new ECKey(Utils.getRandom());
     transferAssetAddress = ecKey2.getAddress();
@@ -108,18 +108,18 @@ public class WalletTestAssetIssue016 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset016Address,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset016Address, blockingStubFull);
     assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
-    
-    
-    AccountNetMessage assetIssueInfo = PublicMethed.getAccountNet(asset016Address,blockingStubFull);
+
+    AccountNetMessage assetIssueInfo = PublicMethed
+        .getAccountNet(asset016Address, blockingStubFull);
     Assert.assertTrue(assetIssueInfo.getAssetNetLimitCount() == 1);
     Assert.assertTrue(assetIssueInfo.getAssetNetUsedCount() == 1);
     Assert.assertFalse(assetIssueInfo.getAssetNetLimitMap().isEmpty());
     Assert.assertFalse(assetIssueInfo.getAssetNetUsedMap().isEmpty());
 
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
-            .setValue(assetAccountId).build();
+        .setValue(assetAccountId).build();
     Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
@@ -128,11 +128,11 @@ public class WalletTestAssetIssue016 {
     assetIssueInfo.getSerializedSize();
     assetIssueInfo.equals(assetIssueInfo);
 
-    PublicMethed.transferAsset(transferAssetAddress,assetAccountId.toByteArray(),1000L,
-        asset016Address,testKeyForAssetIssue016,blockingStubFull);
+    PublicMethed.transferAsset(transferAssetAddress, assetAccountId.toByteArray(), 1000L,
+        asset016Address, testKeyForAssetIssue016, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),100L,
-        transferAssetAddress,transferAssetCreateKey,blockingStubFull);
+    PublicMethed.transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
+        transferAssetAddress, transferAssetCreateKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -140,11 +140,11 @@ public class WalletTestAssetIssue016 {
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetUsage() == 0);
 
-    Assert.assertTrue(PublicMethed.freezeBalance(asset016Address,30000000L,
-        3,testKeyForAssetIssue016,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(asset016Address, 30000000L,
+        3, testKeyForAssetIssue016, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(toAddress,assetAccountId.toByteArray(),100L,
-        transferAssetAddress,transferAssetCreateKey,blockingStubFull);
+    PublicMethed.transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
+        transferAssetAddress, transferAssetCreateKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetIssueByName = blockingStubFull.getAssetIssueByName(request);
@@ -153,6 +153,7 @@ public class WalletTestAssetIssue016 {
 
 
   }
+
   /**
    * constructor.
    */

@@ -53,7 +53,7 @@ public class MainNetVoteOrFreezeOrCreate {
       //Beta Env
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey001);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] defaultAddress = PublicMethed.getFinalAddress(defaultKey);
 
 
@@ -105,7 +105,7 @@ public class MainNetVoteOrFreezeOrCreate {
   }
 
   //@Test(enabled = false)
-  @Test(enabled = false,threadPoolSize = 2, invocationCount = 2)
+  @Test(enabled = false, threadPoolSize = 2, invocationCount = 2)
   public void freezeAndSendcoin() throws InterruptedException {
     Random rand = new Random();
     Integer randNum = 0;
@@ -180,6 +180,7 @@ public class MainNetVoteOrFreezeOrCreate {
       }
     }
   }
+
   /**
    * constructor.
    */
@@ -188,13 +189,14 @@ public class MainNetVoteOrFreezeOrCreate {
   public void shutdown() throws InterruptedException {
     endTime = System.currentTimeMillis();
     logger.info("Time is " + Long.toString(endTime - startTime));
-    Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
-    Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    Account fromAccount = PublicMethed.queryAccount(testKey001, blockingStubFull);
+    Account toAccount = PublicMethed.queryAccount(testKey002, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
 
   }
+
   /**
    * constructor.
    */
@@ -256,6 +258,7 @@ public class MainNetVoteOrFreezeOrCreate {
     }*/
     return true;
   }
+
   /**
    * constructor.
    */
@@ -283,6 +286,7 @@ public class MainNetVoteOrFreezeOrCreate {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -292,6 +296,7 @@ public class MainNetVoteOrFreezeOrCreate {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -311,6 +316,7 @@ public class MainNetVoteOrFreezeOrCreate {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

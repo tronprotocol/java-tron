@@ -58,6 +58,7 @@ public class WalletTestAccount005 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -86,8 +87,6 @@ public class WalletTestAccount005 {
     //Assert.assertTrue(WithdrawBalance(fromAddress,testKey002));
     //Withdraw failed when the latest time to withdraw within 1 day.
 
-
-
     if (withdrawBalance(fromAddress, testKey002)) {
       Assert.assertFalse(withdrawBalance(fromAddress, testKey002));
     } else {
@@ -110,6 +109,7 @@ public class WalletTestAccount005 {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -144,6 +144,7 @@ public class WalletTestAccount005 {
     return true;
 
   }
+
   /**
    * constructor.
    */
@@ -205,6 +206,7 @@ public class WalletTestAccount005 {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -232,6 +234,7 @@ public class WalletTestAccount005 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -241,6 +244,7 @@ public class WalletTestAccount005 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

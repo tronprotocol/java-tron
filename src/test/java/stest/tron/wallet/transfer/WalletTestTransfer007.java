@@ -55,7 +55,6 @@ public class WalletTestTransfer007 {
       .getStringList("solidityNode.ip.list").get(1);*/
 
 
-
   /**
    * constructor.
    */
@@ -127,12 +126,11 @@ public class WalletTestTransfer007 {
     transactionInfo = blockingStubFull.getTransactionInfoById(request);
     Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
 
-
     //transactionInfo = blockingStubSolidityInFullnode.getTransactionInfoById(request);
     //Assert.assertTrue(transactionInfo.getBlockTimeStamp() >= timestampBlockOne);
 
-
   }
+
   /**
    * constructor.
    */

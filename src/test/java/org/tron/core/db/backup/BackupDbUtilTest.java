@@ -84,7 +84,7 @@ public class BackupDbUtilTest {
     PropUtil.writeProperty(propPath, BackupDbUtil.getDB_BACKUP_STATE(),
         String.valueOf("11"));
     mngForTest.pushNTestBlock(50);
-    List<RevokingDBWithCachingNewValue> alist = ((SnapshotManager)dbBackupUtil.getDb()).getDbs();
+    List<RevokingDBWithCachingNewValue> alist = ((SnapshotManager) dbBackupUtil.getDb()).getDbs();
 
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 50);
     Assert.assertTrue("22".equals(

@@ -200,7 +200,7 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "Get asset issue list from solidity by http")
   public void test10GetAssetissueListFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueListFromSolidity(httpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

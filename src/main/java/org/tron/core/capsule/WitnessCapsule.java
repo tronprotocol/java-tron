@@ -12,7 +12,7 @@ public class WitnessCapsule implements ProtoCapsule<Witness>, Comparable<Witness
 
   private Witness witness;
 
-  
+
   @Override
   public int compareTo(WitnessCapsule otherObject) {
     return Long.compare(otherObject.getVoteCount(), this.getVoteCount());

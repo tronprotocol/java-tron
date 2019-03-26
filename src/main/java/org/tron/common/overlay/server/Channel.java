@@ -171,7 +171,7 @@ public class Channel {
       logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
       logger.warn("Close peer {}, type: {}, info: {}",
-          address,((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
+          address, ((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
     } else {
       logger.error("Close peer {}, exception caught", address, throwable);
     }

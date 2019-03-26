@@ -105,7 +105,7 @@ public class TronNetDelegate {
   public BlockId getBlockIdByNum(long num) throws P2pException {
     try {
       return dbManager.getBlockIdByNum(num);
-    }catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND, "num: " + num);
     }
   }
@@ -129,7 +129,7 @@ public class TronNetDelegate {
   public LinkedList<BlockId> getBlockChainHashesOnFork(BlockId forkBlockHash) throws P2pException {
     try {
       return dbManager.getBlockChainHashesOnFork(forkBlockHash);
-    }catch (NonCommonBlockException e){
+    } catch (NonCommonBlockException e) {
       throw new P2pException(TypeEnum.HARD_FORKED, forkBlockHash.getString());
     }
   }
@@ -161,7 +161,7 @@ public class TronNetDelegate {
         default:
           throw new StoreException();
       }
-    }catch (StoreException e) {
+    } catch (StoreException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND,
           "type: " + type + ", hash: " + hash.getByteString());
     }
@@ -196,7 +196,7 @@ public class TronNetDelegate {
     }
   }
 
-  public void pushTransaction (TransactionCapsule trx) throws P2pException {
+  public void pushTransaction(TransactionCapsule trx) throws P2pException {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException

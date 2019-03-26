@@ -36,6 +36,7 @@ import stest.tron.wallet.common.client.utils.TransactionUtils;
 
 @Slf4j
 public class WalletTestTransfer004 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -227,6 +228,7 @@ public class WalletTestTransfer004 {
 
 
   }*/
+
   /**
    * constructor.
    */
@@ -240,11 +242,12 @@ public class WalletTestTransfer004 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
 
-  public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
     if (ecKey == null) {
       String pubKey = loadPubKey(); //04 PubKey[128]
@@ -267,6 +270,7 @@ public class WalletTestTransfer004 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -276,6 +280,7 @@ public class WalletTestTransfer004 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

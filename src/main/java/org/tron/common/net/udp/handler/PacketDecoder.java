@@ -31,11 +31,13 @@ public class PacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
   private static final int MAXSIZE = 2048;
 
   @Override
-  public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out) throws Exception {
+  public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out)
+      throws Exception {
     ByteBuf buf = packet.content();
     int length = buf.readableBytes();
     if (length <= 1 || length >= MAXSIZE) {
-      logger.error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
+      logger
+          .error("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
       return;
     }
     byte[] encoded = new byte[length];

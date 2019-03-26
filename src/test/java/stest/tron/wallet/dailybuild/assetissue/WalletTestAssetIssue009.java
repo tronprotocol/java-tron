@@ -48,6 +48,7 @@ public class WalletTestAssetIssue009 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -97,6 +98,7 @@ public class WalletTestAssetIssue009 {
 
     logger.info("TestGetAssetIssueByNameFromSolidity");
   }*/
+
   /**
    * constructor.
    */
@@ -110,6 +112,7 @@ public class WalletTestAssetIssue009 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -137,6 +140,7 @@ public class WalletTestAssetIssue009 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -146,6 +150,7 @@ public class WalletTestAssetIssue009 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
