@@ -21,7 +21,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
@@ -64,7 +63,6 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import sun.security.krb5.Config;
 
 @Slf4j(topic = "VM")
 public class RuntimeImpl implements Runtime {
@@ -467,9 +465,7 @@ public class RuntimeImpl implements Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
-    if (VMConfig.allowTvmConstantinople()) {
-      deposit.saveCode(contractAddress, code);
-    } else {
+    if (!VMConfig.allowTvmConstantinople()) {
       deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
     }
     // transfer from callerAddress to contractAddress according to callValue
