@@ -191,6 +191,10 @@ public class Args {
 
   @Getter
   @Setter
+  private List<Node> fastForwardNodes;
+
+  @Getter
+  @Setter
   private int nodeChannelReadTimeout;
 
   @Getter
@@ -468,6 +472,7 @@ public class Args {
     INSTANCE.nodeConnectionTimeout = 0;
     INSTANCE.activeNodes = Collections.emptyList();
     INSTANCE.passiveNodes = Collections.emptyList();
+    INSTANCE.fastForwardNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 30;
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
@@ -696,6 +701,8 @@ public class Args {
     INSTANCE.activeNodes = getNodes(config, "node.active");
 
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
+
+    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")

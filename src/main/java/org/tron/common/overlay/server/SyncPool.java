@@ -89,6 +89,10 @@ public class SyncPool {
       nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
     }
 
+    for (Node node : args.getFastForwardNodes()) {
+      nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
+    }
+
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();

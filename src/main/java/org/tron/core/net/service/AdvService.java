@@ -266,6 +266,9 @@ public class AdvService {
 
     void sendFetch() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
+        if (key.equals(InventoryType.TRX) && peer.isFastForwardPeer()) {
+          return;
+        }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
         }

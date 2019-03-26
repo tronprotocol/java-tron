@@ -49,6 +49,9 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
 
+  @Getter
+  private Map<InetAddress, Node> fastForwardPeers = new ConcurrentHashMap();
+
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
@@ -63,6 +66,11 @@ public class ChannelManager {
       trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
+
+    for (Node node : args.getFastForwardNodes()) {
+      fastForwardPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
+    }
+    logger.info("fastForward peer size {}", fastForwardPeers.size());
 
     syncPool.init();
   }
