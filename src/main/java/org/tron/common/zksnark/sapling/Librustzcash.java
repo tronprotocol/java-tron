@@ -21,6 +21,7 @@ public class Librustzcash {
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
+    boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
 
   }
 
@@ -66,6 +67,10 @@ public class Librustzcash {
   public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
     System.out.println("just a test");
     INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
+  }
+
+  public static boolean librustzcashSaplingKaAgree(byte[] p, byte[] sk, byte[] result) {
+    return INSTANCE.librustzcash_sapling_ka_agree(p, sk, result);
   }
 
   public static boolean librustzcashSaplingComputeCm(

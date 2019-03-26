@@ -6,6 +6,10 @@ import com.sun.jna.Native;
 public class Libsodium {
     private static ILibsodium INSTANCE;
 
+    public static final int crypto_generichash_blake2b_PERSONALBYTES = 16;
+    public static final int crypto_aead_chacha20poly1305_ietf_NPUBBYTES = 12;
+    public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
+
     static {
         INSTANCE = (ILibsodium)Native.loadLibrary("/Users/tron/xiefei/code/java/java-tron/src/main/resources/libsodium/libsodium.dylib", ILibsodium.class);
     }
@@ -22,6 +26,26 @@ public class Libsodium {
         int crypto_generichash_blake2b_salt_personal(byte[] out, int outlen, byte[]in, long inlen,
                                                      byte[] key, int keylen, byte[] salt, byte[]personal);
 
+//        int crypto_aead_chacha20poly1305_ietf_decrypt(unsigned char *m,
+//                                                      unsigned long long *mlen_p,
+//                                                      unsigned char *nsec,
+//                                              const unsigned char *c,
+//                                                      unsigned long long clen,
+//                                              const unsigned char *ad,
+//                                                      unsigned long long adlen,
+//                                              const unsigned char *npub,
+//                                              const unsigned char *k)
+
+        int crypto_aead_chacha20poly1305_ietf_decrypt(byte[] m,
+                                                      long[] mlen_p,
+                                                      byte[] nsec,
+                                                      byte[]c,
+                                                      long clen,
+                                                      byte[] ad,
+                                                      long  adlen,
+                                                      byte[]npub,
+                                                      byte[] k);
+
 
     }
 
@@ -29,6 +53,12 @@ public class Libsodium {
     public static int cryptoGenerichashBlack2bSaltPersonal(byte[] out, int outlen, byte[]in, long inlen,
                                                            byte[] key, int keylen, byte[] salt, byte[]personal) {
         return INSTANCE.crypto_generichash_blake2b_salt_personal(out, outlen, in, inlen, key, keylen, salt, personal);
+    }
+
+    public static int cryptoAeadChacha20poly1305IetfDecrypt(byte[] m, long[] mlen_p, byte[] nsec,
+                                                            byte[]c, long clen, byte[] ad,
+                                                            long  adlen, byte[]npub, byte[] k) {
+        return INSTANCE.crypto_aead_chacha20poly1305_ietf_decrypt(m, mlen_p, nsec, c, clen, ad,  adlen, npub, k);
     }
 
 
@@ -50,13 +80,29 @@ public class Libsodium {
                 personalization
         ) != 0)
         {
-            System.out.println("not ok...");
+            System.out.println("cryptoGenerichashBlack2bSaltPersonal return pok...");
             //throw new RuntimeException("hash function failure");
         } else {
-            System.out.println("ok....");
+            System.out.println("cryptoGenerichashBlack2bSaltPersonal return ok....");
             for(int i=0; i<personalization.length; i++) {
                 System.out.print(personalization[i] + " ");
             }
+            System.out.println();
+        }
+
+        byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+
+        if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
+                new byte[1024], null,
+                null,
+                new byte[1024], 1024,
+                null,
+                0,
+                cipher_nonce, K) != 0)
+        {
+            System.out.println("cryptoAeadChacha20poly1305IetfDecrypt return true.");
+        }  else {
+            System.out.println("cryptoAeadChacha20poly1305IetfDecrypt return false.");
         }
 
         return;
