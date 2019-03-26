@@ -62,15 +62,20 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
+    InetAddress address;
     for (Node node : args.getPassiveNodes()) {
-      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustPeers.put(address, node);
     }
-    logger.info("Trust peer size {}", trustPeers.size());
 
     for (Node node : args.getFastForwardNodes()) {
-      fastForwardPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustPeers.put(address, node);
+      fastForwardPeers.put(address, node);
     }
-    logger.info("fastForward peer size {}", fastForwardPeers.size());
+
+    logger.info("Trust peer size {}, Fast forward peer size {}.", trustPeers.size(),
+        fastForwardPeers.size());
 
     syncPool.init();
   }
