@@ -47,10 +47,13 @@ public class ChannelManager {
       .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   @Getter
-  private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
+  private Map<InetAddress, Node> trustNodes = new ConcurrentHashMap();
 
   @Getter
-  private Map<InetAddress, Node> fastForwardPeers = new ConcurrentHashMap();
+  private Map<InetAddress, Node> activeNodes = new ConcurrentHashMap();
+
+  @Getter
+  private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
@@ -65,17 +68,23 @@ public class ChannelManager {
     InetAddress address;
     for (Node node : args.getPassiveNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
-      trustPeers.put(address, node);
+      trustNodes.put(address, node);
+    }
+
+    for (Node node : args.getActiveNodes()) {
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
+      activeNodes.put(address, node);
     }
 
     for (Node node : args.getFastForwardNodes()) {
       address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
-      trustPeers.put(address, node);
-      fastForwardPeers.put(address, node);
+      trustNodes.put(address, node);
+      fastForwardNodes.put(address, node);
     }
 
-    logger.info("Trust peer size {}, Fast forward peer size {}.", trustPeers.size(),
-        fastForwardPeers.size());
+    logger.info("Peer config, trust {}, active {}, forward {}.",
+        trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
     syncPool.init();
   }
@@ -113,7 +122,7 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (!trustPeers.containsKey(peer.getInetAddress())) {
+    if (!trustNodes.containsKey(peer.getInetAddress())) {
       if (recentlyDisconnected.getIfPresent(peer) != null) {
         logger.info("Peer {} recently disconnected.", peer.getInetAddress());
         return false;

@@ -129,8 +129,8 @@ public class Channel {
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
-    isTrustPeer = channelManager.getTrustPeers().containsKey(getInetAddress());
-    isFastForwardPeer = channelManager.getFastForwardPeers().containsKey(getInetAddress());
+    isTrustPeer = channelManager.getTrustNodes().containsKey(getInetAddress());
+    isFastForwardPeer = channelManager.getFastForwardNodes().containsKey(getInetAddress());
     ctx.pipeline().remove(handshakeHandler);
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
