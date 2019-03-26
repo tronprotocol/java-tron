@@ -286,7 +286,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public Sha256Hash getAccountRoot() {
-    return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
+    if (this.block.getBlockHeader().getRawData().getAccountStateRoot() != null
+        && !this.block.getBlockHeader().getRawData().getAccountStateRoot().isEmpty()) {
+      return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
+    }
+    return Sha256Hash.ZERO_HASH;
   }
 
   public ByteString getWitnessAddress() {
