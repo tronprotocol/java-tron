@@ -24,6 +24,10 @@ import org.tron.common.zksnark.sapling.core.Bech32;
 import org.tron.common.zksnark.sapling.core.Bech32.Bech32Data;
 import org.tron.core.Wallet;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class KeyIo {
 
   public static int ConvertedSaplingPaymentAddressSize = ((32 + 11) * 8 + 4) / 5;
@@ -46,16 +50,21 @@ public class KeyIo {
   // todo:  base58
   public static String EncodePaymentAddress(PaymentAddress zaddr) {
     byte[] seraddr = zaddr.encode();
-    // byte[] data = new byte[(43 * 8 + 4) / 5];
 
-    //
-    //    ConvertBits< 8, 5, true > ([ &](unsigned char c){
-    //      data.push_back(c);
-    //    },seraddr.begin(), seraddr.end());
-    //    return bech32::Encode (m_params.Bech32HRP(CChainParams::SAPLING_PAYMENT_ADDRESS), data);
+    // version 1
+    // byte[] tmp = new byte[(seraddr.length * 8 + 4) / 5];
+    // System.arraycopy(seraddr, 0, tmp, 0, seraddr.length);
+    // byte[]  data = convertBits(tmp, 0, tmp.length, 8, 5, true);
+    // return Bech32.encode("ztestsapling", data) + "-" + Hex.toHexString(seraddr);
 
-    // return "";
-    return Hex.toHexString(seraddr);
+    // version 2
+    List<Byte> progBytes = new ArrayList<Byte>();
+    for(int i = 0; i < seraddr.length; i++) {
+      progBytes.add(seraddr[i]);
+    }
+
+    byte[] prog = convertBits(progBytes, 8, 5, true);
+    return Bech32.encode("ztestsapling", prog) + "-" + Hex.toHexString(seraddr);
 
     // return Wallet.encode58Check(seraddr);
   }
@@ -73,7 +82,11 @@ public class KeyIo {
       throws IllegalArgumentException {
     int acc = 0;
     int bits = 0;
-    ByteArrayOutputStream out = new ByteArrayOutputStream(64); // todo:size
+
+    // int size = 64;
+    int size = inLen;
+    ByteArrayOutputStream out = new ByteArrayOutputStream(size); // todo:size
+
     final int maxv = (1 << toBits) - 1;
     final int max_acc = (1 << (fromBits + toBits - 1)) - 1;
     for (int i = 0; i < inLen; i++) {
@@ -86,7 +99,7 @@ public class KeyIo {
       bits += fromBits;
       while (bits >= toBits) {
         bits -= toBits;
-        out.write((acc >>> bits) & maxv);
+        out.write((int)((acc >>> bits) & maxv));
       }
     }
     if (pad) {
@@ -97,5 +110,59 @@ public class KeyIo {
       throw new IllegalArgumentException("Could not convert bits, invalid padding");
     }
     return out.toByteArray();
+  }
+
+
+  private static byte[] convertBits(List<Byte> data, int fromBits, int toBits, boolean pad)     {
+
+    int acc = 0;
+    int bits = 0;
+    int maxv = (1 << toBits) - 1;
+    List<Byte> ret = new ArrayList<Byte>();
+
+    for (Byte value : data)  {
+      short b = (short)(value.byteValue() & 0xff);
+      if (b < 0) {
+        throw new IllegalArgumentException();
+      }
+      else if ((b >> fromBits) > 0) {
+        throw new IllegalArgumentException();
+      }
+      else    {
+        ;
+      }
+
+      acc = (acc << fromBits) | b;
+      bits += fromBits;
+      while (bits >= toBits)  {
+        bits -= toBits;
+        ret.add((byte)((acc >> bits) & maxv));
+      }
+    }
+
+    if(pad && (bits > 0))    {
+      ret.add((byte)((acc << (toBits - bits)) & maxv));
+    }
+    else if (bits >= fromBits || (byte)(((acc << (toBits - bits)) & maxv)) != 0) {
+      return null;
+    }
+    else    {
+      ;
+    }
+
+    byte[] buf = new byte[ret.size()];
+    for(int i = 0; i < ret.size(); i++) {
+      buf[i] = ret.get(i);
+    }
+
+    return buf;
+  }
+
+  public static void main(String[] args) throws Exception {
+    // byte[] tmp = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    byte[] tmp = {2, 0, 2, 0, 2, 0};
+    byte[]  data = convertBits(tmp, 0, tmp.length, 8, 5, true);
+
+    System.out.println("test");
   }
 }

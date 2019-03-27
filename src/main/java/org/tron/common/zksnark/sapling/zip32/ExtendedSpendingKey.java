@@ -12,6 +12,7 @@ public class ExtendedSpendingKey {
 
   public static int ZIP32_XSK_SIZE = 169; // byte
   public static int ZIP32_HARDENED_KEY_LIMIT = 0x80000000;
+  // public static long ZIP32_HARDENED_KEY_LIMIT = 2147483648L;
   public static int ZIP32_XFVK_SIZE = 169;
 
   public static int ZC_MEMO_SIZE = 512;
@@ -46,6 +47,7 @@ public class ExtendedSpendingKey {
     return xsk_m;
   }
 
+  // u_int32
   public ExtendedSpendingKey Derive(int i) {
     /*
     CDataStream ss_p(SER_NETWORK, PROTOCOL_VERSION);
@@ -111,5 +113,11 @@ public class ExtendedSpendingKey {
     System.arraycopy(dk, 0, m_bytes, 137, 32);
 
     return m_bytes;
+  }
+
+  public static void main(String[] args) throws Exception {
+
+    ExtendedSpendingKey key = new ExtendedSpendingKey();
+    key.Derive(32 | ZIP32_HARDENED_KEY_LIMIT );
   }
 }

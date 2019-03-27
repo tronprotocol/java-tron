@@ -69,16 +69,16 @@ public class RpcWallet {
 
     // We use a fixed keypath scheme of m/32'/coin_type'/account'
     // Derive m/32'
-    ExtendedSpendingKey m_32h = m.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
+    ExtendedSpendingKey m_32h = m.Derive(32 | ZIP32_HARDENED_KEY_LIMIT );
     // Derive m/32'/coin_type'
-    ExtendedSpendingKey m_32h_cth = m_32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+    ExtendedSpendingKey m_32h_cth = m_32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT );
 
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
     while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
       //
-      xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+      xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT );
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
       metadata.seedFp = HdChain.seedFp;
       // Increment childkey index
