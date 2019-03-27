@@ -158,7 +158,7 @@ public class TronNetDelegate {
       }
     } catch (StoreException e) {
       throw new P2pException(TypeEnum.DB_ITEM_NOT_FOUND,
-              "type: " + type + ", hash: " + hash.getByteString());
+          "type: " + type + ", hash: " + hash.getByteString());
     }
   }
 
@@ -171,22 +171,22 @@ public class TronNetDelegate {
           logger.info("Success process block {}.", block.getBlockId().getString());
         }
       } catch (ValidateSignatureException
-              | ContractValidateException
-              | ContractExeException
-              | UnLinkedBlockException
-              | ValidateScheduleException
-              | AccountResourceInsufficientException
-              | TaposException
-              | TooBigTransactionException
-              | TooBigTransactionResultException
-              | DupTransactionException
-              | DeferredTransactionException
-              | TransactionExpirationException
-              | BadNumberBlockException
-              | BadBlockException
-              | NonCommonBlockException
-              | ReceiptCheckErrException
-              | VMIllegalException e) {
+          | ContractValidateException
+          | ContractExeException
+          | UnLinkedBlockException
+          | ValidateScheduleException
+          | AccountResourceInsufficientException
+          | TaposException
+          | TooBigTransactionException
+          | TooBigTransactionResultException
+          | DupTransactionException
+          | DeferredTransactionException
+          | TransactionExpirationException
+          | BadNumberBlockException
+          | BadBlockException
+          | NonCommonBlockException
+          | ReceiptCheckErrException
+          | VMIllegalException e) {
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }
@@ -196,19 +196,19 @@ public class TronNetDelegate {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
-            | ValidateSignatureException
-            | VMIllegalException e) {
+        | ValidateSignatureException
+        | VMIllegalException e) {
       throw new P2pException(TypeEnum.BAD_TRX, e);
     } catch (ContractValidateException
-            | ContractExeException
-            | DupTransactionException
-            | DeferredTransactionException
-            | TaposException
-            | TooBigTransactionException
-            | TransactionExpirationException
-            | ReceiptCheckErrException
-            | TooBigTransactionResultException
-            | AccountResourceInsufficientException e) {
+        | ContractExeException
+        | DupTransactionException
+        | DeferredTransactionException
+        | TaposException
+        | TooBigTransactionException
+        | TransactionExpirationException
+        | ReceiptCheckErrException
+        | TooBigTransactionResultException
+        | AccountResourceInsufficientException e) {
       throw new P2pException(TypeEnum.TRX_EXE_FAILED, e);
     }
   }

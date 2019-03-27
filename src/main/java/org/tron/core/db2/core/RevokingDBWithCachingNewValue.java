@@ -127,9 +127,9 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       if (!((SnapshotImpl) snapshot).db.isEmpty()) {
         --tmp;
         Streams.stream(((SnapshotImpl) snapshot).db)
-                .map(Map.Entry::getValue)
-                .map(Value::getBytes)
-                .forEach(result::add);
+            .map(Map.Entry::getValue)
+            .map(Value::getBytes)
+            .forEach(result::add);
       }
     }
 
@@ -159,27 +159,27 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
 
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-              .map(e -> Maps
-                      .immutableEntry(WrappedByteArray.of(e.getKey()),
-                              WrappedByteArray.of(e.getValue())))
-              .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()),
+                  WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
-              .map(e -> Maps
-                      .immutableEntry(WrappedByteArray.of(e.getKey()),
-                              WrappedByteArray.of(e.getValue())))
-              .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
+          .map(e -> Maps
+              .immutableEntry(WrappedByteArray.of(e.getKey()),
+                  WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
     }
 
     levelDbMap.putAll(collection);
 
     return levelDbMap.entrySet().stream()
-            .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
-            .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
-            .limit(limit)
-            .map(Map.Entry::getValue)
-            .map(WrappedByteArray::getBytes)
-            .collect(Collectors.toSet());
+        .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+        .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
+        .limit(limit)
+        .map(Map.Entry::getValue)
+        .map(WrappedByteArray::getBytes)
+        .collect(Collectors.toSet());
   }
 
   @Override
@@ -197,7 +197,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     Set<byte[]> result = new HashSet<>();
     for (WrappedByteArray p : collection.keySet()) {
       if (ByteUtil.lessOrEquals(ByteUtil.parseBytes(p.getBytes(), 0, precision), key)
-              && limit > 0) {
+          && limit > 0) {
         result.add(collection.get(p).getBytes());
         limit--;
       }
@@ -208,12 +208,12 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     List<byte[]> list = null;
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       list = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
-              .getPrevious(key, limit, precision).values().stream()
-              .collect(Collectors.toList());
+          .getPrevious(key, limit, precision).values().stream()
+          .collect(Collectors.toList());
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       list = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
-              .getPrevious(key, limit, precision).values().stream()
-              .collect(Collectors.toList());
+          .getPrevious(key, limit, precision).values().stream()
+          .collect(Collectors.toList());
     }
     result.addAll(list);
     return result.stream().limit(limit).collect(Collectors.toSet());
@@ -226,9 +226,9 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
     }
     Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
     ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll().entrySet().stream()
-            .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()),
-                    WrappedByteArray.of(e.getValue())))
-            .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()),
+            WrappedByteArray.of(e.getValue())))
+        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
     levelDBMap.putAll(collection);
     return levelDBMap;
   }

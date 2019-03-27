@@ -42,7 +42,7 @@ public class DefaultConfig {
   @Bean
   public IndexHelper indexHelper() {
     if (Args.getInstance().isSolidityNode()
-            && BooleanUtils.toBoolean(Args.getInstance().getStorage().getIndexSwitch())) {
+        && BooleanUtils.toBoolean(Args.getInstance().getStorage().getIndexSwitch())) {
       return new IndexHelper();
     }
     return null;
@@ -98,7 +98,7 @@ public class DefaultConfig {
 
     return null;
   }
-  
+
   @Bean
   @Conditional(NeedBeanCondition.class)
   public BackupRocksDBAspect backupRocksDBAspect() {
