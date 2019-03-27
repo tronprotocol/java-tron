@@ -108,7 +108,9 @@ public class WalletTestWitness003 {
     Optional<WitnessList> result = Optional.ofNullable(witnesslist);
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
-      Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
+      Assert.assertTrue(PublicMethed
+          .sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002,
+              blockingStubFull));
       Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
 
     }
@@ -168,12 +170,8 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
+    return response.getResult();
 
   }
 
@@ -201,7 +199,7 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       logger.info("response.getRestult() == false");
