@@ -1220,7 +1220,7 @@ public class Manager {
     return true;
   }
 
-  void validateExecutingDeferredTransaction(TransactionCapsule transactionCapsule,
+  TransactionCapsule getExecutingDeferredTransaction(TransactionCapsule transactionCapsule,
       BlockCapsule blockCap)
       throws DeferredTransactionException {
     if (Objects.isNull(blockCap)) {
@@ -1235,12 +1235,16 @@ public class Manager {
     if (deferredTransactionCapsule.getDelayUntil() > blockCap.getTimeStamp()) {
       throw new DeferredTransactionException("this transaction isn't ready");
     }
+    if (Objects.isNull(deferredTransactionCapsule.getInstance())) {
+      throw new DeferredTransactionException("not transaction found");
+    }
+    return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
   }
 
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public boolean processTransaction(TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
@@ -1258,13 +1262,11 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
-
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-      validateExecutingDeferredTransaction(trxCap, blockCap);
+      trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
+    } else if (!trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
@@ -1310,9 +1312,10 @@ public class Manager {
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
+    TransactionCapsule finalTrxCap = trxCap;
     Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+        .ifPresent(t -> t.put(finalTrxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);

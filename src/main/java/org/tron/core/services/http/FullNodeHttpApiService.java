@@ -83,6 +83,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetDeferredTransactionInfoByIdServlet getDeferredTransactionInfoByIdServlet;
   @Autowired
+  private CancelDeferredTransactionByIdServlet cancelDeferredTransactionByIdServlet;
+  @Autowired
   private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
