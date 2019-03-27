@@ -849,8 +849,13 @@ public class Program {
   }
 
   public byte[] getCodeHashAt(DataWord address) {
-    byte[] code = getCodeAt(address);
-    return Hash.sha3(code);
+    AccountCapsule existingAddr = getContractState().getAccount(convertToTronAddress(address.getLast20Bytes()));
+    if (existingAddr != null) {
+      byte[] code = getCodeAt(address);
+      return Hash.sha3(code);
+    } else {
+      return EMPTY_BYTE_ARRAY;
+    }
   }
 
   public DataWord getContractAddress() {
