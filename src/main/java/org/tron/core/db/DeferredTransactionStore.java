@@ -22,9 +22,6 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
   private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
 
   @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
-
-  @Autowired
   private DeferredTransactionStore(@Value("deferred_transaction") String dbName) {
     super(dbName);
   }
@@ -41,7 +38,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
   }
 
   public List<DeferredTransactionCapsule> getScheduledTransactions() {
-    return getScheduledTransactions(dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
+    return getScheduledTransactions(System.currentTimeMillis());
   }
 
   public void removeDeferredTransaction(DeferredTransactionCapsule deferredTransactionCapsule) {
