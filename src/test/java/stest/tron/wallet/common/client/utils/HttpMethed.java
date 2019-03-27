@@ -39,10 +39,9 @@ public class HttpMethed {
   static JSONObject transactionApprovedListContent;
 
   static {
-    //多连接的线程安全的管理器
     PoolingClientConnectionManager pccm = new PoolingClientConnectionManager();
-    pccm.setDefaultMaxPerRoute(20); //每个主机的最大并行链接数
-    pccm.setMaxTotal(100);          //客户端总并行链接最大数
+    pccm.setDefaultMaxPerRoute(20);
+    pccm.setMaxTotal(100);
 
     httpClient = new DefaultHttpClient(pccm);
   }
