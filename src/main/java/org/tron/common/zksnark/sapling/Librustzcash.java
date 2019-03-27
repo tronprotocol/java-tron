@@ -11,7 +11,7 @@ public class Librustzcash {
 
   static {
     // System.load("/Users/tron/Documents/codes/java-tron/src/main/resources/librustzcash/librustzcash.dylib");
-    INSTANCE = (ILibrustzcash)Native.loadLibrary("/Users/tron/Documents/codes/java-tron/src/main/resources/librustzcash/librustzcash.dylib", ILibrustzcash.class);
+    INSTANCE = (ILibrustzcash)Native.loadLibrary("/Users/tron/xiefei/code/java/java-tron/src/main/resources/librustzcash/librustzcash.dylib", ILibrustzcash.class);
   }
 
   public interface ILibrustzcash extends Library {
@@ -22,6 +22,17 @@ public class Librustzcash {
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
     boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
+
+    boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] diversifier, byte[] result);
+    boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r, byte[] result);
+    //bool librustzcash_ivk_to_pkd(const unsigned char *ivk, const unsigned char *diversifier, unsigned char *result);
+//    bool librustzcash_sapling_compute_cm(
+//        const unsigned char *diversifier,
+//        const unsigned char *pk_d,
+//        const uint64_t value,
+//        const unsigned char *r,
+//        unsigned char *result
+//    );
 
   }
 
@@ -74,8 +85,8 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashSaplingComputeCm(
-      byte[] d, byte[] pk_d, long value_, byte[] r, byte[] cm) {
-    return true;
+      byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm) {
+    return INSTANCE.librustzcash_sapling_compute_cm(d, pk_d, value, r, cm);
   }
 
   public static boolean librustzcashSaplingComputeNf(
@@ -156,7 +167,7 @@ public class Librustzcash {
 
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
 
-    return true;
+    return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
   }
 
 
