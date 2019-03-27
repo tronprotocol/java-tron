@@ -6,6 +6,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 
 public interface IRevokingDB extends Iterable<Map.Entry<byte[], byte[]>> {
+
   void put(byte[] key, byte[] newValue);
 
   void delete(byte[] key);

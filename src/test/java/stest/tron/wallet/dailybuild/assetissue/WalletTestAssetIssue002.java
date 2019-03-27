@@ -69,7 +69,7 @@ public class WalletTestAssetIssue002 {
 
   }
 
-  @Test(enabled = true,description = "Participate token")
+  @Test(enabled = true, description = "Participate token")
   public void testParticipateAssetissue() {
     //get account
     ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -81,36 +81,36 @@ public class WalletTestAssetIssue002 {
     final String testKey003 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //send coin to the new account
-    Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(participateAccountAddress, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(toAddress,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Create a new Asset Issue
     Assert.assertTrue(PublicMethed.createAssetIssue(participateAccountAddress,
         name, totalSupply, 1, 1, System.currentTimeMillis() + 5000,
         System.currentTimeMillis() + 1000000000, 1, description, url,
-        2000L,2000L, 1L, 1L,
-        participateAccountKey,blockingStubFull));
+        2000L, 2000L, 1L, 1L,
+        participateAccountKey, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(participateAccountKey,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(participateAccountKey, blockingStubFull);
     final ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
     //Participate AssetIssue success
     logger.info(name);
     //Freeze amount to get bandwitch.
     logger.info("toaddress balance is "
-            + PublicMethed.queryAccount(toAddress,blockingStubFull).getBalance());
+        + PublicMethed.queryAccount(toAddress, blockingStubFull).getBalance());
     Assert.assertTrue(PublicMethed.freezeBalance(toAddress, 10000000, 3, testKey003,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.participateAssetIssue(participateAccountAddress,
         assetAccountId.toByteArray(),
-        100L, toAddress, testKey003,blockingStubFull));
+        100L, toAddress, testKey003, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //The amount is large than the total supply, participate failed.
     Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
@@ -119,17 +119,18 @@ public class WalletTestAssetIssue002 {
 
     //The amount is 0, participate asset issue failed.
     Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
-        assetAccountId.toByteArray(), 0L, toAddress, testKey003,blockingStubFull));
+        assetAccountId.toByteArray(), 0L, toAddress, testKey003, blockingStubFull));
 
     //The amount is -1, participate asset issue failed.
     Assert.assertFalse(PublicMethed.participateAssetIssue(participateAccountAddress,
-        assetAccountId.toByteArray(), -1L, toAddress, testKey003,blockingStubFull));
+        assetAccountId.toByteArray(), -1L, toAddress, testKey003, blockingStubFull));
 
     //The asset issue owner address is not correct, participate asset issue failed.
     Assert.assertFalse(PublicMethed.participateAssetIssue(fromAddress,
         assetAccountId.toByteArray(), 100L,
-        toAddress, testKey003,blockingStubFull));
+        toAddress, testKey003, blockingStubFull));
   }
+
   /**
    * constructor.
    */
@@ -140,6 +141,7 @@ public class WalletTestAssetIssue002 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -177,6 +179,7 @@ public class WalletTestAssetIssue002 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -231,6 +234,7 @@ public class WalletTestAssetIssue002 {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -266,6 +270,7 @@ public class WalletTestAssetIssue002 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -275,6 +280,7 @@ public class WalletTestAssetIssue002 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -294,6 +300,7 @@ public class WalletTestAssetIssue002 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

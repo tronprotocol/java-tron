@@ -194,10 +194,10 @@ public class RevokingDbWithCacheOldValueTest {
     }
     Set<ProtoCapsuleTest> result =
         tronDatabase.getRevokingDB().getValuesNext(
-          new ProtoCapsuleTest("getValuesNext2".getBytes()).getData(), 3)
-          .stream()
-          .map(ProtoCapsuleTest::new)
-          .collect(Collectors.toSet());
+            new ProtoCapsuleTest("getValuesNext2".getBytes()).getData(), 3)
+            .stream()
+            .map(ProtoCapsuleTest::new)
+            .collect(Collectors.toSet());
 
     for (int i = 2; i < 5; i++) {
       Assert.assertEquals(true,

@@ -37,9 +37,9 @@ public class MainNetTransferSendOrAsset {
       "8DFBB4513AECF779A0803C7CEBF2CDCC51585121FAB1E086465C4E0B40724AF1";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey001);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey002);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey002);
   private final byte[] fromSendAddress = PublicMethed.getFinalAddress(testKey003);
-  private final byte[] toSendAddress   = PublicMethed.getFinalAddress(testKey004);
+  private final byte[] toSendAddress = PublicMethed.getFinalAddress(testKey004);
   private final byte[] defaultAddress = PublicMethed.getFinalAddress(defaultKey);
 
 
@@ -75,25 +75,27 @@ public class MainNetTransferSendOrAsset {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
-    Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    Account fromAccount = PublicMethed.queryAccount(testKey001, blockingStubFull);
+    Account toAccount = PublicMethed.queryAccount(testKey002, blockingStubFull);
     if (fromAccount.getBalance() < 10000000000L) {
-      PublicMethed.sendcoin(fromAddress,10000000000L,defaultAddress,defaultKey,blockingStubFull);
+      PublicMethed
+          .sendcoin(fromAddress, 10000000000L, defaultAddress, defaultKey, blockingStubFull);
     }
     if (fromAccount.getAssetCount() == 0) {
       start = System.currentTimeMillis() + 2000;
       end = System.currentTimeMillis() + 1000000000;
       PublicMethed.createAssetIssue(fromAddress, "testNetAsset", 1000000000000L,
-          1, 1, start, end, 1, "wwwwww","wwwwwwww", 100000L,
+          1, 1, start, end, 1, "wwwwww", "wwwwwwww", 100000L,
           100000L, 1L, 1L, testKey001, blockingStubFull);
     }
     beforeToBalance = toAccount.getBalance();
     beforeToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
 
-    Account fromSendAccount = PublicMethed.queryAccount(testKey003,blockingStubFull);
-    Account toSendAccount   = PublicMethed.queryAccount(testKey004,blockingStubFull);
+    Account fromSendAccount = PublicMethed.queryAccount(testKey003, blockingStubFull);
+    Account toSendAccount = PublicMethed.queryAccount(testKey004, blockingStubFull);
     if (fromSendAccount.getBalance() < 1000000000L) {
-      PublicMethed.sendcoin(fromSendAddress,1000000000L,defaultAddress,defaultKey,blockingStubFull);
+      PublicMethed
+          .sendcoin(fromSendAddress, 1000000000L, defaultAddress, defaultKey, blockingStubFull);
     }
     beforeToBalance = toAccount.getBalance();
     logger.info("Before From account balance is " + Long.toString(fromAccount.getBalance()));
@@ -101,7 +103,7 @@ public class MainNetTransferSendOrAsset {
     start = System.currentTimeMillis();
   }
 
-  @Test(enabled = false,threadPoolSize = 20, invocationCount = 100000)
+  @Test(enabled = false, threadPoolSize = 20, invocationCount = 100000)
   public void freezeAnd() throws InterruptedException {
     Random rand = new Random();
     Integer randNum = 0;
@@ -112,12 +114,11 @@ public class MainNetTransferSendOrAsset {
       e.printStackTrace();
     }
 
-
     Integer i = 0;
     while (i < 60) {
       PublicMethed
-          .transferAsset(toAddress,"testNetAsset".getBytes(),transferAmount,fromAddress,
-              testKey001,blockingStubFull);
+          .transferAsset(toAddress, "testNetAsset".getBytes(), transferAmount, fromAddress,
+              testKey001, blockingStubFull);
       try {
         Thread.sleep(200);
       } catch (InterruptedException e) {
@@ -132,6 +133,7 @@ public class MainNetTransferSendOrAsset {
       }
     }
   }
+
   /**
    * constructor.
    */
@@ -140,8 +142,8 @@ public class MainNetTransferSendOrAsset {
   public void shutdown() throws InterruptedException {
     end = System.currentTimeMillis();
     logger.info("Time is " + Long.toString(end - start));
-    Account fromAccount = PublicMethed.queryAccount(testKey001,blockingStubFull);
-    Account toAccount   = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    Account fromAccount = PublicMethed.queryAccount(testKey001, blockingStubFull);
+    Account toAccount = PublicMethed.queryAccount(testKey002, blockingStubFull);
     afterToBalance = toAccount.getBalance();
     afterToAssetBalance = toAccount.getAssetMap().get("testNetAsset");
 

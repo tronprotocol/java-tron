@@ -71,7 +71,7 @@ public class MessageQueue {
           }
           Message msg = msgQueue.take();
           ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
-            if (!future.isSuccess()) {
+            if (!future.isSuccess() && !channel.isDisconnect()) {
               logger.error("Fail send to {}, {}", ctx.channel().remoteAddress(), msg);
             }
           });
@@ -137,7 +137,7 @@ public class MessageQueue {
   private boolean needToLog(Message msg) {
     if (msg instanceof PingMessage ||
         msg instanceof PongMessage ||
-        msg instanceof TransactionsMessage){
+        msg instanceof TransactionsMessage) {
       return false;
     }
 

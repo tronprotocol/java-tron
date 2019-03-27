@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class BlockLogTrigger extends Trigger {
+
   @Getter
   @Setter
   private long blockNumber;
@@ -33,17 +34,17 @@ public class BlockLogTrigger extends Trigger {
   @Override
   public String toString() {
     return new StringBuilder().append("triggerName: ").append(getTriggerName())
-      .append("timestamp: ")
-      .append(timeStamp)
-      .append(", blockNumber: ")
-      .append(blockNumber)
-      .append(", blockhash: ")
-      .append(blockHash)
-      .append(", transactionSize: ")
-      .append(transactionSize)
-      .append(", latestSolidifiedBlockNumber: ")
-      .append(latestSolidifiedBlockNumber)
-      .append(", transactionList: ")
-      .append(transactionList).toString();
+        .append("timestamp: ")
+        .append(timeStamp)
+        .append(", blockNumber: ")
+        .append(blockNumber)
+        .append(", blockhash: ")
+        .append(blockHash)
+        .append(", transactionSize: ")
+        .append(transactionSize)
+        .append(", latestSolidifiedBlockNumber: ")
+        .append(latestSolidifiedBlockNumber)
+        .append(", transactionList: ")
+        .append(transactionList).toString();
   }
 }

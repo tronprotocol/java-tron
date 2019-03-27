@@ -104,30 +104,30 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException("vote count must be greater than 0");
         }
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if( !Objects.isNull(getDeposit())) {
+        if (!Objects.isNull(getDeposit())) {
           if (Objects.isNull(getDeposit().getAccount(witnessCandidate))) {
             throw new ContractValidateException(
                 ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
           }
-        }
-        else if (!accountStore.has(witnessCandidate)) {
+        } else if (!accountStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
-        if( !Objects.isNull(getDeposit())) {
+        if (!Objects.isNull(getDeposit())) {
           if (Objects.isNull(getDeposit().getWitness(witnessCandidate))) {
             throw new ContractValidateException(
                 WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
           }
-        }
-        else if (!witnessStore.has(witnessCandidate)) {
+        } else if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
         sum = LongMath.checkedAdd(sum, vote.getVoteCount());
       }
 
-      AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress) : getDeposit().getAccount(ownerAddress);
+      AccountCapsule accountCapsule =
+          (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
+              : getDeposit().getAccount(ownerAddress);
       if (accountCapsule == null) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
@@ -156,18 +156,18 @@ public class VoteWitnessActuator extends AbstractActuator {
     VotesStore votesStore = dbManager.getVotesStore();
     AccountStore accountStore = dbManager.getAccountStore();
 
-    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress) : getDeposit().getAccount(ownerAddress);
+    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
+        : getDeposit().getAccount(ownerAddress);
 
-    if (!Objects.isNull(getDeposit())){
+    if (!Objects.isNull(getDeposit())) {
       VotesCapsule vCapsule = getDeposit().getVotesCapsule(ownerAddress);
       if (Objects.isNull(vCapsule)) {
         votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
             accountCapsule.getVotesList());
-      }
-      else
+      } else {
         votesCapsule = vCapsule;
-    }
-    else if (!votesStore.has(ownerAddress)) {
+      }
+    } else if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
           accountCapsule.getVotesList());
     } else {
@@ -188,11 +188,10 @@ public class VoteWitnessActuator extends AbstractActuator {
     if (Objects.isNull(deposit)) {
       accountStore.put(accountCapsule.createDbKey(), accountCapsule);
       votesStore.put(ownerAddress, votesCapsule);
-    }
-    else{
+    } else {
       // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(),accountCapsule);
-      deposit.putVoteValue(ownerAddress,votesCapsule);
+      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
+      deposit.putVoteValue(ownerAddress, votesCapsule);
     }
 
   }

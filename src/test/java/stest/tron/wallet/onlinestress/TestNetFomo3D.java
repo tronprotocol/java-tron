@@ -60,7 +60,7 @@ public class TestNetFomo3D {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey,blockingStubFull)
+    logger.info(Long.toString(PublicMethed.queryAccount(testNetAccountKey, blockingStubFull)
         .getBalance()));
     //Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(testNetAccountAddress,10000000L,
     //3,1,testNetAccountKey,blockingStubFull));
@@ -78,7 +78,7 @@ public class TestNetFomo3D {
     //Long storageLimit = accountResource.getStorageLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    Account account = PublicMethed.queryAccount(testNetAccountKey, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
@@ -87,28 +87,27 @@ public class TestNetFomo3D {
     Long maxFeeLimit = 3900000000L;
     String contractName = "Fomo3D";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TestNetFomo3D_deployErc721CryptoKitties");
+        .getString("code.code_TestNetFomo3D_deployErc721CryptoKitties");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TestNetFomo3D_deployErc721CryptoKitties");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,testNetAccountKey,testNetAccountAddress,blockingStubFull);
+        .getString("abi.abi_TestNetFomo3D_deployErc721CryptoKitties");
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, testNetAccountKey, testNetAccountAddress, blockingStubFull);
 
     String code1 = Configuration.getByPath("testng.conf")
-            .getString("code.code1_TestNetFomo3D_deployErc721CryptoKitties");
+        .getString("code.code1_TestNetFomo3D_deployErc721CryptoKitties");
     String abi1 = Configuration.getByPath("testng.conf")
-            .getString("abi.abi1_TestNetFomo3D_deployErc721CryptoKitties");
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi1,
-        code1,"",maxFeeLimit, 0L, 100,null,
-        testNetAccountKey,testNetAccountAddress,blockingStubFull);
+        .getString("abi.abi1_TestNetFomo3D_deployErc721CryptoKitties");
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi1,
+        code1, "", maxFeeLimit, 0L, 100, null,
+        testNetAccountKey, testNetAccountAddress, blockingStubFull);
 
-
-    final SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
-    accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
+    final SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(testNetAccountAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    account = PublicMethed.queryAccount(testNetAccountKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -125,8 +124,6 @@ public class TestNetFomo3D {
     //logger.info(smartContract.getName());
     //logger.info(smartContract.getAbi().toString());
 
-
-
   }
 
   @Test(enabled = false)
@@ -135,26 +132,26 @@ public class TestNetFomo3D {
         blockingStubFull);
     Long cpuLimit = accountResource.getEnergyLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
-    Account account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    Account account = PublicMethed.queryAccount(testNetAccountKey, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     Long maxFeeLimit = 100000000000000000L;
     String contractName = "tooLargeStorage";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TestNetFomo3D_tooLargeStorage");
+        .getString("code.code_TestNetFomo3D_tooLargeStorage");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TestNetFomo3D_tooLargeStorage");
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,
-        code,"",maxFeeLimit, 0L, 100,null,
-        testNetAccountKey,testNetAccountAddress,blockingStubFull);
-    infoById = getTransactionInfoById(txid,blockingStubFull);
-    accountResource = PublicMethed.getAccountResource(testNetAccountAddress,blockingStubFull);
+        .getString("abi.abi_TestNetFomo3D_tooLargeStorage");
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi,
+        code, "", maxFeeLimit, 0L, 100, null,
+        testNetAccountKey, testNetAccountAddress, blockingStubFull);
+    infoById = getTransactionInfoById(txid, blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(testNetAccountAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(testNetAccountKey,blockingStubFull);
+    account = PublicMethed.queryAccount(testNetAccountKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -162,21 +159,16 @@ public class TestNetFomo3D {
     /*    String name = readFromXieChang();*/
     String stringTimes = Integer.toString(7);
     byte[] contractAddress = infoById.get().getContractAddress().toByteArray();
-    txid = PublicMethed.triggerContract(contractAddress, "slice(uint256)",stringTimes,false,
-        0,maxFeeLimit,testNetAccountAddress,testNetAccountKey,blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress, "slice(uint256)", stringTimes, false,
+        0, maxFeeLimit, testNetAccountAddress, testNetAccountKey, blockingStubFull);
     logger.info("slice  " + txid);
     logger.info(Integer.toString(infoById.get().getResultValue()));
-    infoById = getTransactionInfoById(txid,blockingStubFull);
+    infoById = getTransactionInfoById(txid, blockingStubFull);
 
-    txid = PublicMethed.triggerContract(contractAddress, "s()","#",false,
-        0,maxFeeLimit,testNetAccountAddress,testNetAccountKey,blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress, "s()", "#", false,
+        0, maxFeeLimit, testNetAccountAddress, testNetAccountKey, blockingStubFull);
     logger.info(txid);
     logger.info(Integer.toString(infoById.get().getResultValue()));
-
-
-
-
-
 
 
   }
@@ -191,6 +183,7 @@ public class TestNetFomo3D {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */

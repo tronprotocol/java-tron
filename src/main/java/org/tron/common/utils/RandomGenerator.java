@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j(topic = "utils")
 public class RandomGenerator<T> {
+
   private static long RANDOM_GENERATOR_NUMBER = 2685821657736338717L;
 
   public List<T> shuffle(List<T> list, long time) {

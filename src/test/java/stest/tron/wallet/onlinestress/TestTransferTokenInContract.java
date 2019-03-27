@@ -28,6 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class TestTransferTokenInContract {
+
   private AtomicLong count = new AtomicLong();
   private AtomicLong errorCount = new AtomicLong();
   private long startTime = System.currentTimeMillis();
@@ -81,6 +82,7 @@ public class TestTransferTokenInContract {
   private static int randomInt(int minInt, int maxInt) {
     return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
   }
+
   /**
    * constructor.
    */
@@ -101,8 +103,8 @@ public class TestTransferTokenInContract {
 
       //Create a new AssetIssue success.
       Assert.assertTrue(PublicMethed.createAssetIssue(devAddress, tokenName, TotalSupply, 1,
-          100, start, end, 1, description, url, 10000L,10000L,
-          1L,1L, devKey, blockingStubFull));
+          100, start, end, 1, description, url, 10000L, 10000L,
+          1L, 1L, devKey, blockingStubFull));
 
       Account getAssetIdFromThisAccount = PublicMethed.queryAccount(devAddress, blockingStubFull);
       assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -235,7 +237,7 @@ public class TestTransferTokenInContract {
       String param =
           "\"" + Base58.encode58Check(receiveTokenContractAddress) + "\",\"" + tokenId
               .toStringUtf8()
-          + "\",\"5\"";
+              + "\",\"5\"";
 
       String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
           "TransferTokenTo(address,trcToken,uint256)",
@@ -314,6 +316,7 @@ public class TestTransferTokenInContract {
           user001Address, blockingStubFull);
     }
   }
+
   /**
    * constructor.
    */

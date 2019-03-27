@@ -60,8 +60,6 @@ public class TestNetErc721Cat {
   String triggerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
 
-
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -80,12 +78,12 @@ public class TestNetErc721Cat {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(deployAddress,50000000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(triggerAddress,50000000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress,100000000L,
-        3,1,deployKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(deployAddress, 50000000000L, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(triggerAddress, 50000000000L, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(deployAddress, 100000000L,
+        3, 1, deployKey, blockingStubFull));
     /*    Assert.assertTrue(PublicMethed.freezeBalanceGetCpu(triggerAddress,100000000L,
         3,1,triggerKey,blockingStubFull));*/
     /*Assert.assertTrue(PublicMethed.buyStorage(500000000L,deployAddress,deployKey,
@@ -97,7 +95,6 @@ public class TestNetErc721Cat {
     Assert.assertTrue(PublicMethed.freezeBalance(triggerAddress,100000000L,3,
         triggerKey,blockingStubFull));*/
 
-
   }
 
   @Test(enabled = false)
@@ -108,7 +105,7 @@ public class TestNetErc721Cat {
     //Long storageLimit = accountResource.getStorageLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(deployAddress,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployAddress, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
@@ -117,23 +114,23 @@ public class TestNetErc721Cat {
     Long maxFeeLimit = 3900000000L;
     String contractName = "KittyCore";
     String code = Configuration.getByPath("testng.conf")
-          .getString("code.code_TestNetErc721Cat_deployErc721KittyCore");
+        .getString("code.code_TestNetErc721Cat_deployErc721KittyCore");
     String abi = Configuration.getByPath("testng.conf")
-          .getString("abi.abi_TestNetErc721Cat_deployErc721KittyCore");
+        .getString("abi.abi_TestNetErc721Cat_deployErc721KittyCore");
     logger.info("Kitty Core");
-    kittyCoreContractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-        maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
-        deployAddress,blockingStubFull);
+    kittyCoreContractAddress = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
+        deployAddress, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(kittyCoreContractAddress,
         blockingStubFull);
 
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(deployAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -156,7 +153,7 @@ public class TestNetErc721Cat {
     //Long storageLimit = accountResource.getStorageLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
@@ -166,21 +163,21 @@ public class TestNetErc721Cat {
     String contractName = "SaleClockAuction";
     logger.info("Sale Clock Auction");
     String code = Configuration.getByPath("testng.conf")
-          .getString("code.code_TestNetErc721Cat_deploySaleClockAuction");
+        .getString("code.code_TestNetErc721Cat_deploySaleClockAuction");
     String abi = Configuration.getByPath("testng.conf")
-          .getString("abi.abi_TestNetErc721Cat_deploySaleClockAuction");
-    saleClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
-        deployAddress,blockingStubFull);
+        .getString("abi.abi_TestNetErc721Cat_deploySaleClockAuction");
+    saleClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
+        "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
+        deployAddress, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(saleClockAuctionContractAddress,
         blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(deployAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -196,7 +193,7 @@ public class TestNetErc721Cat {
     //Long storageLimit = accountResource.getStorageLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
@@ -205,22 +202,22 @@ public class TestNetErc721Cat {
     Long maxFeeLimit = 3900000000L;
     String contractName = "SiringClockAuction";
     String code = Configuration.getByPath("testng.conf")
-          .getString("code.code_TestNetErc721Cat_deploySiringClockAuction");
+        .getString("code.code_TestNetErc721Cat_deploySiringClockAuction");
     String abi = Configuration.getByPath("testng.conf")
-          .getString("abi.abi_TestNetErc721Cat_deploySiringClockAuction");
+        .getString("abi.abi_TestNetErc721Cat_deploySiringClockAuction");
     logger.info("Siring Clock Auction");
-    siringClockAuctionContractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit, 0L, consumeUserResourcePercent,null,deployKey,
-        deployAddress,blockingStubFull);
+    siringClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
+        "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
+        deployAddress, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(siringClockAuctionContractAddress,
         blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(deployAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -236,7 +233,7 @@ public class TestNetErc721Cat {
     //Long storageLimit = accountResource.getStorageLimit();
     Long cpuUsage = accountResource.getEnergyUsed();
     //Long storageUsage = accountResource.getStorageUsed();
-    Account account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    Account account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("before balance is " + Long.toString(account.getBalance()));
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
@@ -245,22 +242,22 @@ public class TestNetErc721Cat {
     Long maxFeeLimit = 3900000000L;
     String contractName = "GeneScienceInterface";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TestNetErc721Cat_deployGeneScienceInterface");
+        .getString("code.code_TestNetErc721Cat_deployGeneScienceInterface");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TestNetErc721Cat_deployGeneScienceInterface");
+        .getString("abi.abi_TestNetErc721Cat_deployGeneScienceInterface");
     logger.info("gene Science Interface");
-    geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit,
-        0L, consumeUserResourcePercent,null,deployKey,deployAddress,blockingStubFull);
+    geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName, abi, code,
+        "", maxFeeLimit,
+        0L, consumeUserResourcePercent, null, deployKey, deployAddress, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(geneScienceInterfaceContractAddress,
         blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
-    accountResource = PublicMethed.getAccountResource(deployAddress,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(deployAddress, blockingStubFull);
     cpuLimit = accountResource.getEnergyLimit();
     //storageLimit = accountResource.getStorageLimit();
     cpuUsage = accountResource.getEnergyUsed();
     //storageUsage = accountResource.getStorageUsed();
-    account = PublicMethed.queryAccount(deployKey,blockingStubFull);
+    account = PublicMethed.queryAccount(deployKey, blockingStubFull);
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
@@ -272,51 +269,51 @@ public class TestNetErc721Cat {
   public void triggerToSetThreeContractAddressToKittyCore() {
     //Set SaleAuctionAddress to kitty core.
     String saleContractString = "\"" + Base58.encode58Check(saleClockAuctionContractAddress) + "\"";
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSaleAuctionAddress(address)",
-            saleContractString,false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress, "setSaleAuctionAddress(address)",
+        saleContractString, false, 0, 10000000L, deployAddress, deployKey, blockingStubFull);
     logger.info(txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Set SiringAuctionAddress to kitty core.
-    String siringContractString  = "\"" + Base58.encode58Check(siringClockAuctionContractAddress)
+    String siringContractString = "\"" + Base58.encode58Check(siringClockAuctionContractAddress)
         + "\"";
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"setSiringAuctionAddress(address)",
-            siringContractString,false, 0,10000000L,
-            deployAddress,deployKey,blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(kittyCoreContractAddress, "setSiringAuctionAddress(address)",
+            siringContractString, false, 0, 10000000L,
+            deployAddress, deployKey, blockingStubFull);
     logger.info(txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Set gen contract to kitty core
     String genContractString = "\"" + Base58.encode58Check(geneScienceInterfaceContractAddress)
         + "\"";
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setGeneScienceAddress(address)",genContractString,
-        false, 0,10000000L,deployAddress,deployKey,blockingStubFull);
+        "setGeneScienceAddress(address)", genContractString,
+        false, 0, 10000000L, deployAddress, deployKey, blockingStubFull);
     logger.info(txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     //Assert.assertTrue(infoById.get().getReceipt().getStorageDelta() > 50);
 
     //Start the game.
-    txid = PublicMethed.triggerContract(kittyCoreContractAddress,"unpause()","",false, 0,
-        10000000L,deployAddress,deployKey,blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress, "unpause()", "", false, 0,
+        10000000L, deployAddress, deployKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     logger.info("start the game " + txid);
 
     //Create one gen0 cat.
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "createGen0Auction(uint256)","-1000000000000000",false,
-        0,100000000L,deployAddress,deployKey,blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+        "createGen0Auction(uint256)", "-1000000000000000", false,
+        0, 100000000L, deployAddress, deployKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
-
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "gen0CreatedCount()","#",false,
-        0,100000000L,deployAddress,deployKey,blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+        "gen0CreatedCount()", "#", false,
+        0, 100000000L, deployAddress, deployKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     /*      txid = PublicMethed.triggerContract(kittyCoreContractAddress,
@@ -324,52 +321,49 @@ public class TestNetErc721Cat {
           triggerKey,blockingStubFull);
       logger.info("getname " + txid);*/
 
-
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "getKitty(uint256)","1",false,0,10000000,triggerAddress,
-        triggerKey,blockingStubFull);
+        "getKitty(uint256)", "1", false, 0, 10000000, triggerAddress,
+        triggerKey, blockingStubFull);
     logger.info("getKitty " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-
-
 
     String newCxoAddress = "\"" + Base58.encode58Check(triggerAddress)
         + "\"";
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCOO(address)",newCxoAddress,false,0,10000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCOO(address)", newCxoAddress, false, 0, 10000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("COO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCFO(address)",newCxoAddress,false,0,10000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCFO(address)", newCxoAddress, false, 0, 10000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("CFO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-        "setCEO(address)",newCxoAddress,false,0,1000000,deployAddress,
-        deployKey,blockingStubFull);
+        "setCEO(address)", newCxoAddress, false, 0, 1000000, deployAddress,
+        deployKey, blockingStubFull);
     logger.info("CEO " + txid);
-    infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
 
-  @Test(enabled = false,threadPoolSize = 1, invocationCount = 1)
+  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
   public void unCreateKitty() {
     Integer times = 0;
     logger.info("In create kitty, kitty core address is " + ByteArray
         .toHexString(kittyCoreContractAddress));
     while (times++ < 20) {
       txid = PublicMethed.triggerContract(kittyCoreContractAddress,
-          "createGen0Auction(uint256)","0",false,
-          0,100000000L,triggerAddress,triggerKey,blockingStubFull);
+          "createGen0Auction(uint256)", "0", false,
+          0, 100000000L, triggerAddress, triggerKey, blockingStubFull);
       logger.info("createGen0 " + txid);
-      infoById = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+      infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
       //Assert.assertTrue(infoById.get().getResultValue() == 0);
       /*      String promoKitty = "\"" + times.toString() + "\",\""
           +  Base58.encode58Check(kittyCoreContractAddress) + "\"";

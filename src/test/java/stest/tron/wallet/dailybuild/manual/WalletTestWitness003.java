@@ -70,6 +70,7 @@ public class WalletTestWitness003 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -80,19 +81,18 @@ public class WalletTestWitness003 {
     logger.info(ByteArray.toHexString(PublicMethed.getFinalAddress(lowBalTest)));
     logger.info(Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest)));
 
-
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,description = "Invaild account to apply create witness")
+  @Test(enabled = true, description = "Invaild account to apply create witness")
   public void testInvaildToApplyBecomeWitness() {
     Assert.assertFalse(createWitness(INVAILD_ADDRESS, createUrl, testKey002));
   }
 
-  @Test(enabled = true,description = "Create witness")
+  @Test(enabled = true, description = "Create witness")
   public void testCreateWitness() {
     //If you are already is witness, apply failed
     //createWitness(fromAddress, createUrl, testKey002);
@@ -114,7 +114,7 @@ public class WalletTestWitness003 {
     }
   }
 
-  @Test(enabled = true,description = "Update witness")
+  @Test(enabled = true, description = "Update witness")
   public void testUpdateWitness() {
     GrpcAPI.WitnessList witnesslist = blockingStubFull
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -133,6 +133,7 @@ public class WalletTestWitness003 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -175,6 +176,7 @@ public class WalletTestWitness003 {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -283,6 +285,7 @@ public class WalletTestWitness003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -292,6 +295,7 @@ public class WalletTestWitness003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

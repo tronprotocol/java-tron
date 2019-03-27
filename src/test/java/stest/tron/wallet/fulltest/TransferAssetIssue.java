@@ -43,7 +43,7 @@ public class TransferAssetIssue {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private static String name = "PartAssetIssue_" + Long.toString(now);
@@ -103,8 +103,8 @@ public class TransferAssetIssue {
     Assert.assertTrue(PublicMethed.sendcoin(participateAssetAddress,
         sendAmount, fromAddress, testKey002, blockingStubFull));
     //Participate account freeze balance to get bandwidth.
-    Assert.assertTrue(PublicMethed.freezeBalance(participateAssetAddress,10000000L,3,
-        testKeyForParticipate,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(participateAssetAddress, 10000000L, 3,
+        testKeyForParticipate, blockingStubFull));
     //Create an asset issue.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
@@ -116,7 +116,7 @@ public class TransferAssetIssue {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    final Account createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
+    final Account createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
     final Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate,
         blockingStubFull);
 
@@ -137,7 +137,7 @@ public class TransferAssetIssue {
   }
 
   //@Test(enabled = false)
-  @Test(enabled = false,threadPoolSize = 200, invocationCount = 200)
+  @Test(enabled = false, threadPoolSize = 200, invocationCount = 200)
   public void transferAssetIssue() throws InterruptedException {
     Integer i = 0;
     Integer randNum;
@@ -152,9 +152,8 @@ public class TransferAssetIssue {
           .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-
-      transferAsset(participateAssetAddress,name.getBytes(),1,
-          createAddress,testKeyForCreate,blockingStubFull);
+      transferAsset(participateAssetAddress, name.getBytes(), 1,
+          createAddress, testKeyForCreate, blockingStubFull);
     }
   }
 
@@ -169,13 +168,10 @@ public class TransferAssetIssue {
     end1 = System.currentTimeMillis();
     logger.info("The time is " + Long.toString(end1 - start1));
 
-
-
     Map<String, Long> createAssetIssueMap = new HashMap<String, Long>();
 
-
     Long temp = 0L;
-    Account createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
+    Account createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
     createAssetIssueMap = createInfo.getAssetMap();
     for (String key : createAssetIssueMap.keySet()) {
 
@@ -188,7 +184,7 @@ public class TransferAssetIssue {
     afterCreateAssetIssueBalance = temp;
 
     temp = 0L;
-    Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate,blockingStubFull);
+    Account participateInfo = PublicMethed.queryAccount(testKeyForParticipate, blockingStubFull);
     Map<String, Long> participateAssetIssueMap = new HashMap<String, Long>();
     participateAssetIssueMap = participateInfo.getAssetMap();
     for (Long key : participateAssetIssueMap.values()) {
@@ -245,8 +241,8 @@ public class TransferAssetIssue {
     logger.info("Use Net num is " + Integer.toString(useNet));
     logger.info("Use Fee num is " + Integer.toString(useFee));
 
-    createInfo = PublicMethed.queryAccount(testKeyForCreate,blockingStubFull);
-    participateInfo = PublicMethed.queryAccount(testKeyForParticipate,blockingStubFull);
+    createInfo = PublicMethed.queryAccount(testKeyForCreate, blockingStubFull);
+    participateInfo = PublicMethed.queryAccount(testKeyForParticipate, blockingStubFull);
     createAssetIssueMap = new HashMap<String, Long>();
     participateAssetIssueMap = new HashMap<String, Long>();
 
@@ -281,6 +277,7 @@ public class TransferAssetIssue {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -332,6 +329,7 @@ public class TransferAssetIssue {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

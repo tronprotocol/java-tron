@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ContractLogTrigger extends ContractTrigger {
+
   /**
    * topic list produced by the smart contract LOG function
    */

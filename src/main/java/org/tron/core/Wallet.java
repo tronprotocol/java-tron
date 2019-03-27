@@ -116,8 +116,9 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -148,7 +149,9 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetService tronNetService;
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -327,8 +330,7 @@ public class Wallet {
     accountCapsule.setLatestConsumeFreeTime(genesisTimeStamp
             + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeFreeTime());
     accountCapsule.setLatestConsumeTimeForEnergy(genesisTimeStamp
-            + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule
-            .getLatestConsumeTimeForEnergy());
+            + ChainConstant.BLOCK_PRODUCED_INTERVAL * accountCapsule.getLatestConsumeTimeForEnergy());
 
     return accountCapsule.getInstance();
   }
@@ -424,14 +426,14 @@ public class Wallet {
 
     try {
       if (minEffectiveConnection != 0) {
-        if (p2pNode.getActivePeer().isEmpty()) {
+        if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
                   .setMessage(ByteString.copyFromUtf8("no connection"))
                   .build();
         }
 
-        int count = (int) p2pNode.getActivePeer().stream()
+        int count = (int) tronNetDelegate.getActivePeer().stream()
                 .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
                 .count();
 
@@ -452,8 +454,7 @@ public class Wallet {
 
       if (dbManager.isGeneratingBlock()) {
         logger
-                .warn("Broadcast transaction {} failed, is generating block.",
-                        trx.getTransactionId());
+                .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
@@ -467,7 +468,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
@@ -791,15 +792,13 @@ public class Wallet {
             Protocol.ChainParameters.ChainParameter.newBuilder()
                     .setKey("getCreateNewAccountFeeInSystemContract")
                     .setValue(
-                            dbManager.getDynamicPropertiesStore()
-                                    .getCreateNewAccountFeeInSystemContract())
+                            dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract())
                     .build());
     //    CREATE_NEW_ACCOUNT_BANDWIDTH_RATE, // 1 ~ ,8
     builder.addChainParameter(
             Protocol.ChainParameters.ChainParameter.newBuilder()
                     .setKey("getCreateNewAccountBandwidthRate")
-                    .setValue(dbManager.getDynamicPropertiesStore()
-                            .getCreateNewAccountBandwidthRate())
+                    .setValue(dbManager.getDynamicPropertiesStore().getCreateNewAccountBandwidthRate())
                     .build());
     //    ALLOW_CREATION_OF_CONTRACTS, // 0 / >0 ,9
     builder.addChainParameter(
@@ -891,13 +890,13 @@ public class Wallet {
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getDeferredTransactionFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionFee())
+            .setKey("getUpdateAccountPermissionFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getCancelDeferredTransactionFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
+            .setKey("getMultiSignFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -913,11 +912,6 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getUpdateAccountPermissionFee")
             .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
-            .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getMultiSignFee")
-            .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
             .build());
 
     return builder.build();
@@ -1117,8 +1111,7 @@ public class Wallet {
         if (assetIssueCapsule != null) {
           // check already fetch
           if (builder.getAssetIssueCount() > 0
-                  && builder.getAssetIssue(0).getId()
-                  .equals(assetIssueCapsule.getInstance().getId())) {
+                  && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
             return assetIssueCapsule.getInstance();
           }
 
@@ -1252,6 +1245,7 @@ public class Wallet {
     }
     return null;
   }
+
 
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {

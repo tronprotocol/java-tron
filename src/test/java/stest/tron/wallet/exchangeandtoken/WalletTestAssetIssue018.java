@@ -102,7 +102,6 @@ public class WalletTestAssetIssue018 {
     assetAccount4Address = ecKey4.getAddress();
     assetAccount4Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-
     ecKey5 = new ECKey(Utils.getRandom());
     assetAccount5Address = ecKey5.getAddress();
     assetAccount5Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
@@ -111,35 +110,33 @@ public class WalletTestAssetIssue018 {
     assetAccount6Address = ecKey6.getAddress();
     assetAccount6Key = ByteArray.toHexString(ecKey6.getPrivKeyBytes());
 
-
-
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount4Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount5Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount6Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount4Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount5Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount6Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
 
     //Can create 32 char token name.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount4Address,
         char32Name, totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,assetAccount4Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, assetAccount4Key, blockingStubFull));
 
     //Can't create 33 char token name.
     start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertFalse(PublicMethed.createAssetIssue(assetAccount5Address,
         char33Name, totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,assetAccount5Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, assetAccount5Key, blockingStubFull));
 
     //
     start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount6Address,
         char32Name, totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,assetAccount6Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, assetAccount6Key, blockingStubFull));
 
   }
 
@@ -161,29 +158,29 @@ public class WalletTestAssetIssue018 {
     logger.info(name);
     logger.info("total supply is " + Long.toString(totalSupply));
     //send coin to the new account
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount1Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount2Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(assetAccount3Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount1Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount2Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(assetAccount3Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Create 3 the same name token.
     Long start = System.currentTimeMillis() + 2000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount1Address,
         name, totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,assetAccount1Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, assetAccount1Key, blockingStubFull));
     start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount2Address,
         name, totalSupply, 2, 2, start, end, 2, description, url,
-        3000L,3000L, 2L,2L,assetAccount2Key,blockingStubFull));
+        3000L, 3000L, 2L, 2L, assetAccount2Key, blockingStubFull));
     start = System.currentTimeMillis() + 2000;
     end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetAccount3Address,
         name, totalSupply, 3, 3, start, end, 3, description, url,
-        4000L,4000L, 3L,3L,assetAccount3Key,blockingStubFull));
+        4000L, 4000L, 3L, 3L, assetAccount3Key, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Get asset issue by name
@@ -200,48 +197,47 @@ public class WalletTestAssetIssue018 {
     }
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount1Key,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount1Key, blockingStubFull);
     final ByteString assetAccount1Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount2Key,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount2Key, blockingStubFull);
     final ByteString assetAccount2Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount3Key,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(assetAccount3Key, blockingStubFull);
     final ByteString assetAccount3Id = getAssetIdFromThisAccount.getAssetIssuedID();
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Transfer asset issue.
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address,assetAccount1Id
-                    .toByteArray(), 1L,assetAccount1Address,assetAccount1Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount2Address, assetAccount1Id
+        .toByteArray(), 1L, assetAccount1Address, assetAccount1Key, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address,assetAccount2Id
-                    .toByteArray(), 2L,assetAccount2Address,assetAccount2Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount3Address, assetAccount2Id
+        .toByteArray(), 2L, assetAccount2Address, assetAccount2Key, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address,assetAccount3Id
-                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(assetAccount1Address, assetAccount3Id
+        .toByteArray(), 3L, assetAccount3Address, assetAccount3Key, blockingStubFull));
 
-    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address,assetAccount2Id
-                    .toByteArray(), 3L,assetAccount3Address,assetAccount3Key,blockingStubFull));
-
-
+    Assert.assertFalse(PublicMethed.transferAsset(assetAccount1Address, assetAccount2Id
+        .toByteArray(), 3L, assetAccount3Address, assetAccount3Key, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Participate asset issue.
-    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount3Address,assetAccount3Id
-        .toByteArray(), 1L,assetAccount2Address,assetAccount2Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount3Address, assetAccount3Id
+        .toByteArray(), 1L, assetAccount2Address, assetAccount2Key, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount1Address,assetAccount1Id
-        .toByteArray(), 2L,assetAccount3Address,assetAccount3Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount1Address, assetAccount1Id
+        .toByteArray(), 2L, assetAccount3Address, assetAccount3Key, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount2Address,assetAccount2Id
-        .toByteArray(), 3L,assetAccount1Address,assetAccount1Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.participateAssetIssue(assetAccount2Address, assetAccount2Id
+        .toByteArray(), 3L, assetAccount1Address, assetAccount1Key, blockingStubFull));
 
-    Assert.assertFalse(PublicMethed.participateAssetIssue(assetAccount2Address,assetAccount3Id
-        .toByteArray(), 3L,assetAccount1Address,assetAccount1Key,blockingStubFull));
+    Assert.assertFalse(PublicMethed.participateAssetIssue(assetAccount2Address, assetAccount3Id
+        .toByteArray(), 3L, assetAccount1Address, assetAccount1Key, blockingStubFull));
 
 
   }
+
   /**
    * constructor.
    */

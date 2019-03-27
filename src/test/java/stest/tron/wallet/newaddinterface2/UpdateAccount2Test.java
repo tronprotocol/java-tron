@@ -252,6 +252,7 @@ public class UpdateAccount2Test {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
+
   /**
    * constructor.
    */
@@ -262,6 +263,7 @@ public class UpdateAccount2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -292,6 +294,7 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -376,6 +379,7 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -486,6 +490,7 @@ public class UpdateAccount2Test {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
+
   /**
    * constructor.
    */
@@ -522,6 +527,7 @@ public class UpdateAccount2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -531,6 +537,7 @@ public class UpdateAccount2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -590,6 +597,7 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -646,6 +654,7 @@ public class UpdateAccount2Test {
       return response;
     }
   }
+
   /**
    * constructor.
    */
@@ -682,6 +691,7 @@ public class UpdateAccount2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -733,6 +743,7 @@ public class UpdateAccount2Test {
     }
     return ret;
   }
+
   /**
    * constructor.
    */
@@ -779,6 +790,7 @@ public class UpdateAccount2Test {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -887,6 +899,7 @@ public class UpdateAccount2Test {
 
 
   }
+
   /**
    * constructor.
    */

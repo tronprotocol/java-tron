@@ -3,7 +3,7 @@ package org.tron.common.net.udp.message;
 import java.util.HashMap;
 import java.util.Map;
 
-public enum  UdpMessageTypeEnum {
+public enum UdpMessageTypeEnum {
 
   DISCOVER_PING((byte) 0x01),
 

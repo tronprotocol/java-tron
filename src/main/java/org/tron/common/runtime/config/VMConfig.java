@@ -75,11 +75,13 @@ public class VMConfig {
     ENERGY_LIMIT_HARD_FORK = ForkController.instance().pass(ForkBlockVersionConsts.ENERGY_LIMIT);
     //VERSION_3_5_HARD_FORK = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_3_5);
   }
+
   public static void initAllowMultiSign(long allow) {
-    ALLOW_MULTI_SIGN = allow ==1 ;
+    ALLOW_MULTI_SIGN = allow == 1;
   }
 
-  public static void initAllowTvmTransferTrc10(long allow) {    ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
+  public static void initAllowTvmTransferTrc10(long allow) {
+    ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
   }
 
   public static boolean getEnergyLimitHardFork() {

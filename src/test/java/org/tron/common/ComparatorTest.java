@@ -16,17 +16,17 @@ public class ComparatorTest {
 
   @Test
   public void intComparator() {
-    List<Integer> list1 = Lists.newArrayList(ImmutableList.of(1,8,4,6,2));
-    List<Integer> list2 = Lists.newArrayList(ImmutableList.of(1,8,4,6,2));
+    List<Integer> list1 = Lists.newArrayList(ImmutableList.of(1, 8, 4, 6, 2));
+    List<Integer> list2 = Lists.newArrayList(ImmutableList.of(1, 8, 4, 6, 2));
     list1.sort((o1, o2) -> o1 - o2);
     list2.sort(Comparator.comparingInt(o -> o));
     logger.info("list1:" + list1);
     logger.info("list2:" + list2);
     Assert.assertEquals(list1, list2);
 
-    List<Integer> list3 = Lists.newArrayList(ImmutableList.of(1,8,4,6,2));
-    List<Integer> list4 = Lists.newArrayList(ImmutableList.of(1,8,4,6,2));
-    List<Integer> list5 = Lists.newArrayList(ImmutableList.of(1,8,4,6,2));
+    List<Integer> list3 = Lists.newArrayList(ImmutableList.of(1, 8, 4, 6, 2));
+    List<Integer> list4 = Lists.newArrayList(ImmutableList.of(1, 8, 4, 6, 2));
+    List<Integer> list5 = Lists.newArrayList(ImmutableList.of(1, 8, 4, 6, 2));
     list3.sort((o1, o2) -> o2 - o1);
     list4.sort(Comparator.comparingInt((Integer o) -> o).reversed());
     list5.sort((o1, o2) -> -(o1 - o2));
@@ -61,8 +61,8 @@ public class ComparatorTest {
     });
 
     cs2.sort(Comparator.comparingInt((C c) -> c.getAge())
-    .reversed()
-    .thenComparing(Comparator.comparingInt((C c) -> c.getB().getHigh()).reversed()));
+        .reversed()
+        .thenComparing(Comparator.comparingInt((C c) -> c.getB().getHigh()).reversed()));
     logger.info("cs1:" + cs1);
     logger.info("cs2:" + cs2);
     Assert.assertEquals(cs1, cs2);
@@ -71,12 +71,14 @@ public class ComparatorTest {
   @Data
   @AllArgsConstructor
   static class B {
+
     int high;
   }
 
   @Data
   @AllArgsConstructor
   static class C {
+
     int age;
     B b;
   }

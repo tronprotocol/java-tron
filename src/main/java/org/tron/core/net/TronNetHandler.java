@@ -1,31 +1,36 @@
-package org.tron.core.net.peer;
+package org.tron.core.net;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.Channel;
 import org.tron.common.overlay.server.MessageQueue;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.peer.PeerConnection;
 
 @Component
 @Scope("prototype")
-public class TronHandler extends SimpleChannelInboundHandler<TronMessage> {
+public class TronNetHandler extends SimpleChannelInboundHandler<TronMessage> {
 
   protected PeerConnection peer;
 
-  private MessageQueue msgQueue = null;
+  private MessageQueue msgQueue;
 
-  public PeerConnectionDelegate peerDel;
+  @Autowired
+  private TronNetService tronNetService;
 
-  public void setPeerDel(PeerConnectionDelegate peerDel) {
-    this.peerDel = peerDel;
-  }
+//  @Autowired
+//  private TronNetHandler (final ApplicationContext ctx){
+//    tronNetService = ctx.getBean(TronNetService.class);
+//  }
 
   @Override
   public void channelRead0(final ChannelHandlerContext ctx, TronMessage msg) throws Exception {
     msgQueue.receivedMessage(msg);
-    peerDel.onMessage(peer, msg);
+    tronNetService.onMessage(peer, msg);
   }
 
   @Override

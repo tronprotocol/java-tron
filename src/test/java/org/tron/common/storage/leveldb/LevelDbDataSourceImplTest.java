@@ -45,7 +45,7 @@ import org.tron.core.config.args.Args;
 public class LevelDbDataSourceImplTest {
 
   private static final String dbPath = "output-levelDb-test";
-  private static  LevelDbDataSourceImpl dataSourceTest;
+  private static LevelDbDataSourceImpl dataSourceTest;
 
   private byte[] value1 = "10000".getBytes();
   private byte[] value2 = "20000".getBytes();

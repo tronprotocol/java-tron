@@ -158,6 +158,7 @@ public class CreateTransaction2Test {
     logger.info(Long.toString(receiptAccountAfterBalance1));
     Assert.assertTrue(receiptAccountAfterBalance1 == 49880000000L + 40119900000L);
   }
+
   /**
    * constructor.
    */
@@ -171,6 +172,7 @@ public class CreateTransaction2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -255,6 +257,7 @@ public class CreateTransaction2Test {
 
 
   }
+
   /**
    * constructor.
    */
@@ -292,6 +295,7 @@ public class CreateTransaction2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -319,6 +323,7 @@ public class CreateTransaction2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -328,6 +333,7 @@ public class CreateTransaction2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
