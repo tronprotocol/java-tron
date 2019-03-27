@@ -267,6 +267,7 @@ public class AdvService {
     void sendFetch() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (key.equals(InventoryType.TRX) && peer.isFastForwardPeer()) {
+          logger.info("Is forward node {}.", peer.getInetAddress());
           return;
         }
         if (key.equals(InventoryType.BLOCK)) {
