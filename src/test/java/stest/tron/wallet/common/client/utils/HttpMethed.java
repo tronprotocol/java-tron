@@ -15,6 +15,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
@@ -24,7 +25,7 @@ import stest.tron.wallet.common.client.Configuration;
 @Slf4j
 public class HttpMethed {
 
-  static HttpClient httpClient = new DefaultHttpClient();
+  static HttpClient httpClient;
   static HttpPost httppost;
   static HttpResponse response;
   static Integer connectionTimeout = Configuration.getByPath("testng.conf")
@@ -36,6 +37,14 @@ public class HttpMethed {
   static JSONObject responseContent;
   static JSONObject signResponseContent;
   static JSONObject transactionApprovedListContent;
+
+  static {
+    PoolingClientConnectionManager pccm = new PoolingClientConnectionManager();
+    pccm.setDefaultMaxPerRoute(20);
+    pccm.setMaxTotal(100);
+
+    httpClient = new DefaultHttpClient(pccm);
+  }
 
   /**
    * constructor.
@@ -834,6 +843,27 @@ public class HttpMethed {
       e.printStackTrace();
       httppost.releaseConnection();
       return null;
+    }
+
+    responseContent = HttpMethed.parseResponseContent(response);
+    Integer times = 0;
+
+    while (times++ <= 10 && responseContent.getString("code") != null && responseContent
+      .getString("code").equalsIgnoreCase("SERVER_BUSY")) {
+      logger.info("retry num are " + times);
+      try {
+        response = httpClient.execute(httppost);
+      } catch (Exception e) {
+        e.printStackTrace();
+        httppost.releaseConnection();
+        return null;
+      }
+      responseContent = HttpMethed.parseResponseContent(response);
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
     }
     httppost.releaseConnection();
     return response;
@@ -2021,6 +2051,7 @@ public class HttpMethed {
   }
 
 
+
   /**
    * constructor.
    */
@@ -2034,6 +2065,8 @@ public class HttpMethed {
   public static JSONObject parseResponseContent(HttpResponse response) {
     try {
       String result = EntityUtils.toString(response.getEntity());
+      StringEntity entity = new StringEntity(result, Charset.forName("UTF-8"));
+      response.setEntity(entity);
       JSONObject obj = JSONObject.parseObject(result);
       return obj;
     } catch (Exception e) {
