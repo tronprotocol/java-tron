@@ -14,15 +14,12 @@ import org.tron.core.Wallet;
 
 public class AbiUtil {
 
-  static Pattern paramTypeBytes = Pattern.compile("^bytes([0-9]*)$");
-  static Pattern paramTypeNumber = Pattern.compile("^(u?int)([0-9]*)$");
-  static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)\\]$");
-  //
+  private static Pattern paramTypeBytes = Pattern.compile("^bytes([0-9]*)$");
+  private static Pattern paramTypeNumber = Pattern.compile("^(u?int)([0-9]*)$");
+  private static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)]$");
+
   static abstract class Coder {
     boolean dynamic = false;
-    String name;
-    String type;
-
     //    DataWord[] encode
     abstract byte[] encode(String value);
     abstract byte[] decode();
@@ -38,11 +35,7 @@ public class AbiUtil {
     return typeString.split(",");
   }
 
-  public static String geMethodId(String methodSign) {
-    return null;
-  }
-
-  public static Coder getParamCoder(String type) {
+  private static Coder getParamCoder(String type) {
 
     switch (type) {
       case "address":
@@ -57,11 +50,13 @@ public class AbiUtil {
         return new CoderNumber();
     }
 
-    if (paramTypeBytes.matcher(type).find())
+    if (paramTypeBytes.matcher(type).find()) {
       return new CoderFixedBytes();
+    }
 
-    if (paramTypeNumber.matcher(type).find())
+    if (paramTypeNumber.matcher(type).find()) {
       return new CoderNumber();
+    }
 
     Matcher m = paramTypeArray.matcher(type);
     if (m.find()) {
@@ -169,20 +164,6 @@ public class AbiUtil {
     }
   }
 
-  static class CoderToken extends Coder {
-
-    @Override
-    byte[] encode(String value) {
-      String hex = Hex.toHexString(new DataWord(value.getBytes()).getData());
-      return new CoderFixedBytes().encode(hex);
-    }
-
-    @Override
-    byte[] decode() {
-      return new byte[0];
-    }
-  }
-
   static class CoderDynamicBytes extends  Coder {
 
     CoderDynamicBytes() {
@@ -251,7 +232,7 @@ public class AbiUtil {
     }
   }
 
-  public static byte[] encodeDynamicBytes(String value, boolean hex) {
+  private static byte[] encodeDynamicBytes(String value, boolean hex) {
     byte[] data;
     if (hex) {
       if (value.startsWith("0x")) {
@@ -264,7 +245,7 @@ public class AbiUtil {
     return encodeDynamicBytes(data);
   }
 
-  public static byte[] encodeDynamicBytes(byte[] data) {
+  private static byte[] encodeDynamicBytes(byte[] data) {
     List<DataWord> ret = new ArrayList<>();
     ret.add(new DataWord(data.length));
 
@@ -290,7 +271,7 @@ public class AbiUtil {
     return retBytes;
   }
 
-  public static byte[] encodeDynamicBytes(String value) {
+  private static byte[] encodeDynamicBytes(String value) {
     byte[] data = value.getBytes();
     List<DataWord> ret = new ArrayList<>();
     ret.add(new DataWord(data.length));
@@ -412,12 +393,7 @@ public class AbiUtil {
     return parseMethod(methodSign, StringUtils.join(inputArr, ','));
   }
 
-  public static byte[] getTronAddress(DataWord address) {
-    return ByteUtil.merge(new byte[] {41}, address.getLast20Bytes());
-  }
-
   public  static void main(String[] args) {
-//    String method = "test(address,string,int)";
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
 
@@ -440,16 +416,8 @@ public class AbiUtil {
     System.out.println(parseMethod(method2, listString));
 
     String bytesValue1 = "\"0112313\",112313";
-    String bytesValue2 = "123123123";
 
     System.out.println(parseMethod(byteMethod1, bytesValue1));
-//    System.out.println(parseMethod(byteMethod1, bytesValue2));
-
-//    String method3 = "voteForSingleWitness(address,uint256)";
-//    String method3 = "voteForSingleWitness(address)";
-//    String params3 = "\"TNNqZuYhMfQvooC4kJwTsMJEQVU3vWGa5u\"";
-//
-//    System.out.println(parseMethod(method3, params3));
   }
 
 
