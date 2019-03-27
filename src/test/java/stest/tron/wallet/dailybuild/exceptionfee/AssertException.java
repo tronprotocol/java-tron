@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.exceptionfee;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -94,11 +95,12 @@ public class AssertException {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName = "divideInt";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_AssertException_testdivideInt");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_AssertException_testdivideInt");
+    String filePath = "src/test/resources/soliditycode/test1DivideInt.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
