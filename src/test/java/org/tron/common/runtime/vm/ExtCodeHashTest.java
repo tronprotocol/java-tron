@@ -85,7 +85,7 @@ contract TestExtCodeHash {
 
 
     // trigger deployed contract
-    BigInteger bigIntAddr = new DataWord(factoryAddress).ssValue();
+    BigInteger bigIntAddr = new DataWord(factoryAddress).sValue();
     String bigIntAddrChange = BigInteger.valueOf(2).pow(160).add(bigIntAddr).toString(16);
     fullHexAddr = new DataWord(bigIntAddrChange).getData();
     hexInput = AbiUtil.parseMethod(methodByUint, Hex.toHexString(fullHexAddr), true);
