@@ -12,10 +12,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
@@ -30,6 +28,7 @@ import org.tron.core.exception.BadTransactionException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -59,7 +58,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public synchronized LinkedList<Sha256Hash> handleBlock(BlockCapsule block, boolean syncMode)
-      throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException {
+          throws BadBlockException, UnLinkedBlockException, InterruptedException, NonCommonBlockException {
 
     if (block.getInstance().getSerializedSize() > BLOCK_SIZE + 100) {
       throw new BadBlockException("block size over limit");
@@ -75,8 +74,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         List<TransactionCapsule> trx = null;
         trx = block.getTransactions();
         return trx.stream()
-            .map(TransactionCapsule::getTransactionId)
-            .collect(Collectors.toCollection(LinkedList::new));
+                .map(TransactionCapsule::getTransactionId)
+                .collect(Collectors.toCollection(LinkedList::new));
       } else {
         return null;
       }
@@ -95,6 +94,8 @@ public class NodeDelegateImpl implements NodeDelegate {
       throw new BadBlockException("tapos exception," + e.getMessage());
     } catch (DupTransactionException e) {
       throw new BadBlockException("DupTransaction exception," + e.getMessage());
+    } catch (DeferredTransactionException e) {
+      throw new BadBlockException("DeferredTransaction exception," + e.getMessage());
     } catch (TooBigTransactionException e) {
       throw new BadBlockException("TooBigTransaction exception," + e.getMessage());
     } catch (TooBigTransactionResultException e) {
@@ -113,7 +114,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
 
   @Override
-  public boolean handleTransaction(TransactionCapsule trx) throws BadTransactionException {
+  public boolean handleTransaction(TransactionCapsule trx)
+          throws BadTransactionException {
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       trx.resetResult();
     }
@@ -133,19 +135,20 @@ public class NodeDelegateImpl implements NodeDelegate {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
-        | ValidateSignatureException
-        | VMIllegalException e) {
+            | ValidateSignatureException
+            | VMIllegalException | DeferredTransactionException e) {
       throw new BadTransactionException(e.getMessage());
     } catch (ContractValidateException
-        | ContractExeException
-        | AccountResourceInsufficientException
-        | DupTransactionException
-        | TaposException
-        | TooBigTransactionException
-        | TransactionExpirationException
-        | ReceiptCheckErrException
-        | TooBigTransactionResultException e) {
-      logger.warn("Handle transaction {} failed, reason: {}", trx.getTransactionId(), e.getMessage());
+            | ContractExeException
+            | AccountResourceInsufficientException
+            | DupTransactionException
+            | TaposException
+            | TooBigTransactionException
+            | TransactionExpirationException
+            | ReceiptCheckErrException
+            | TooBigTransactionResultException e) {
+      logger.warn("Handle transaction {} failed, reason: {}", trx.getTransactionId(),
+              e.getMessage());
       return false;
     }
     return true;
@@ -153,7 +156,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary)
-      throws StoreException {
+          throws StoreException {
 
     if (dbManager.getHeadBlockNum() == 0) {
       return new LinkedList<>();
@@ -162,18 +165,18 @@ public class NodeDelegateImpl implements NodeDelegate {
     BlockId unForkedBlockId;
 
     if (blockChainSummary.isEmpty() ||
-        (blockChainSummary.size() == 1
-            && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
+            (blockChainSummary.size() == 1
+                    && blockChainSummary.get(0).equals(dbManager.getGenesisBlockId()))) {
       unForkedBlockId = dbManager.getGenesisBlockId();
     } else if (blockChainSummary.size() == 1
-        && blockChainSummary.get(0).getNum() == 0) {
+            && blockChainSummary.get(0).getNum() == 0) {
       return new LinkedList(Arrays.asList(dbManager.getGenesisBlockId()));
     } else {
 
       Collections.reverse(blockChainSummary);
       unForkedBlockId = blockChainSummary.stream()
-          .filter(blockId -> containBlockInMainChain(blockId))
-          .findFirst().orElse(null);
+              .filter(blockId -> containBlockInMainChain(blockId))
+              .findFirst().orElse(null);
       if (unForkedBlockId == null) {
         return new LinkedList<>();
       }
@@ -181,7 +184,8 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     long unForkedBlockIdNum = unForkedBlockId.getNum();
     long len = Longs
-        .min(dbManager.getHeadBlockNum(), unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
+            .min(dbManager.getHeadBlockNum(),
+                    unForkedBlockIdNum + NodeConstant.SYNC_FETCH_BATCH_NUM);
 
     LinkedList<BlockId> blockIds = new LinkedList<>();
     for (long i = unForkedBlockIdNum; i <= len; i++) {
@@ -193,7 +197,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public Deque<BlockId> getBlockChainSummary(BlockId beginBlockId, Deque<BlockId> blockIdsToFetch)
-      throws TronException {
+          throws TronException {
 
     Deque<BlockId> retSummary = new LinkedList<>();
     List<BlockId> blockIds = new ArrayList<>(blockIdsToFetch);
@@ -209,8 +213,8 @@ public class NodeDelegateImpl implements NodeDelegate {
         highBlkNum = beginBlockId.getNum();
         if (highBlkNum == 0) {
           throw new TronException(
-              "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
-                  + beginBlockId.getString());
+                  "This block don't equal my genesis block hash, but it is in my DB, the block id is :"
+                          + beginBlockId.getString());
         }
         highNoForkBlkNum = highBlkNum;
         if (beginBlockId.getNum() < lowBlkNum) {
@@ -220,9 +224,9 @@ public class NodeDelegateImpl implements NodeDelegate {
         forkList = dbManager.getBlockChainHashesOnFork(beginBlockId);
         if (forkList.isEmpty()) {
           throw new UnLinkedBlockException(
-              "We want to find forkList of this block: " + beginBlockId.getString()
-                  + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
-                  + " we switch and pop it after that time. ");
+                  "We want to find forkList of this block: " + beginBlockId.getString()
+                          + " ,but in KhasoDB we can not find it, It maybe a very old beginBlockId, we are sync once,"
+                          + " we switch and pop it after that time. ");
         }
         highNoForkBlkNum = forkList.peekLast().getNum();
         forkList.pollLast();
@@ -230,9 +234,9 @@ public class NodeDelegateImpl implements NodeDelegate {
         highBlkNum = highNoForkBlkNum + forkList.size();
         if (highNoForkBlkNum < lowBlkNum) {
           throw new UnLinkedBlockException(
-              "It is a too old block that we take it as a forked block long long ago"
-                  + "\n lowBlkNum:" + lowBlkNum
-                  + "\n highNoForkBlkNum" + highNoForkBlkNum);
+                  "It is a too old block that we take it as a forked block long long ago"
+                          + "\n lowBlkNum:" + lowBlkNum
+                          + "\n highNoForkBlkNum" + highNoForkBlkNum);
         }
       }
     } else {
@@ -243,8 +247,9 @@ public class NodeDelegateImpl implements NodeDelegate {
 
     if (!blockIds.isEmpty() && highBlkNum != blockIds.get(0).getNum() - 1) {
       logger.error("Check ERROR: highBlkNum:" + highBlkNum + ",blockIdToSyncFirstNum is "
-          + blockIds.get(0).getNum() + ",blockIdToSyncEnd is " + blockIds.get(blockIds.size() - 1)
-          .getNum());
+              + blockIds.get(0).getNum() + ",blockIdToSyncEnd is " + blockIds
+              .get(blockIds.size() - 1)
+              .getNum());
     }
 
     long realHighBlkNum = highBlkNum + blockIds.size();
@@ -264,7 +269,7 @@ public class NodeDelegateImpl implements NodeDelegate {
 
   @Override
   public Message getData(Sha256Hash hash, MessageTypes type)
-      throws StoreException {
+          throws StoreException {
     switch (type) {
       case BLOCK:
         return new BlockMessage(dbManager.getBlockById(hash));

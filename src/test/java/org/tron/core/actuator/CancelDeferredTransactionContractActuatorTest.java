@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static junit.framework.TestCase.fail;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -11,8 +9,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -33,7 +29,6 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.Protocol.Transaction.raw.Builder;
 
 @Ignore
 @Slf4j
@@ -63,10 +58,10 @@ public class CancelDeferredTransactionContractActuatorTest {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ACCOUNT_INVALID =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
+            Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
     OWNER_NO_BALANCE = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3433";
     To_ACCOUNT_INVALID =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
+            Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3422";
   }
 
   /**
@@ -78,14 +73,12 @@ public class CancelDeferredTransactionContractActuatorTest {
     initDeferredTransaction();
     deferredTransaction = getBuildDeferredTransaction(transaction);
     deferredTransactionCapsule = new DeferredTransactionCapsule(deferredTransaction);
-    dbManager.getDeferredTransactionIdIndexCache().put(deferredTransactionCapsule);
-    dbManager.getDeferredTransactionCache().put(deferredTransactionCapsule);
   }
 
   private static void initDeferredTransaction() {
     transaction = getBuildTransaction(
-        getBuildTransferContract(OWNER_ADDRESS, TO_ADDRESS),
-        System.currentTimeMillis(), 100);
+            getBuildTransferContract(OWNER_ADDRESS, TO_ADDRESS),
+            System.currentTimeMillis(), 100);
   }
 
   /**
@@ -104,8 +97,9 @@ public class CancelDeferredTransactionContractActuatorTest {
 
   private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
     DeferredStage deferredStage = transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(100).build();
-    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+            getDeferredStage().toBuilder().setDelaySeconds(100).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder()
+            .setDeferredStage(deferredStage).build();
     transaction = transaction.toBuilder().setRawData(rawData).build();
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
@@ -122,48 +116,52 @@ public class CancelDeferredTransactionContractActuatorTest {
   }
 
   private static Transaction getBuildTransaction(
-      TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
+          TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
     return Transaction.newBuilder().setRawData(
-        Transaction.raw.newBuilder().setTimestamp(transactionTimestamp).setRefBlockNum(refBlockNum)
-            .addContract(
-                Transaction.Contract.newBuilder().setType(ContractType.TransferContract)
-                    .setParameter(Any.pack(transferContract)).build()).build()).build();
+            Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
+                    .setRefBlockNum(refBlockNum)
+                    .addContract(
+                            Transaction.Contract.newBuilder().setType(ContractType.TransferContract)
+                                    .setParameter(Any.pack(transferContract)).build()).build())
+            .build();
   }
 
   private static TransferContract getBuildTransferContract(String ownerAddress, String toAddress) {
     return TransferContract.newBuilder().setAmount(10)
-        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress))).build();
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
+            .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress))).build();
   }
 
   private Any getOwnerAddressContract() {
     return Any.pack(
-        Contract.CancelDeferredTransactionContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-            .setTransactionId(deferredTransactionCapsule.getTransactionId())
-            .build());
+            Contract.CancelDeferredTransactionContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .setTransactionId(deferredTransactionCapsule.getTransactionId())
+                    .build());
   }
 
   private Any getToAddressContract() {
     return Any.pack(
-        Contract.CancelDeferredTransactionContract.newBuilder()
-            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
-            .setTransactionId(deferredTransactionCapsule.getTransactionId())
-            .build());
+            Contract.CancelDeferredTransactionContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
+                    .setTransactionId(deferredTransactionCapsule.getTransactionId())
+                    .build());
   }
 
   @Test
   public void perfectCancelDeferredTransaction() {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
-        getOwnerAddressContract(), dbManager);
+            getOwnerAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexStore()
+            .getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     Assert.assertNotNull("perfect cancel deferred transaction", key);
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+      key = dbManager.getDeferredTransactionIdIndexStore()
+              .getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
       Assert.assertNull("perfect cancel deferred transaction", key);
 
     } catch (ContractValidateException e) {
@@ -174,11 +172,12 @@ public class CancelDeferredTransactionContractActuatorTest {
   }
 
   @Test
-  public void failedCancelDeferredTransaction() throws ContractValidateException {
+  public void failedCancelDeferredTransaction() {
     CancelDeferredTransactionContractActuator actuator = new CancelDeferredTransactionContractActuator(
-        getToAddressContract(), dbManager);
+            getToAddressContract(), dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    byte[] key = dbManager.getDeferredTransactionIdIndexCache().getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
+    byte[] key = dbManager.getDeferredTransactionIdIndexStore()
+            .getDeferredTransactionKeyById(deferredTransaction.getTransactionId());
     try {
       actuator.validate();
     } catch (ContractValidateException e) {
