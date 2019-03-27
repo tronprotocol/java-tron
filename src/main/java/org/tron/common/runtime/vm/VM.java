@@ -198,6 +198,9 @@ public class VM {
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 4)),
               stack.get(stack.size() - 4).longValueSafe(), op);
           break;
+        case EXTCODEHASH:
+          energyCost = energyCosts.getEXT_CODE_HASH();
+          break;
         case CALL:
         case CALLCODE:
         case DELEGATECALL:
@@ -902,6 +905,13 @@ public class VM {
           }
 
           program.memorySave(memOffset, codeCopy);
+          program.step();
+        }
+        break;
+        case EXTCODEHASH:{
+          DataWord address = program.stackPop();
+          byte[] codeHash = program.getCodeHashAt(address);
+          program.stackPush(codeHash);
           program.step();
         }
         break;

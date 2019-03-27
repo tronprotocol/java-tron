@@ -219,6 +219,11 @@ public enum OpCode {
      * environment to memory with given offset
      */
     EXTCODECOPY(0x3c, 4, 0, OpCode.Tier.ExtTier),
+    /**
+     * (0x3f) Returns the keccak256 hash of
+     * a contract’s code
+     */
+    EXTCODEHASH(0x3f, 1,1 , OpCode.Tier.ExtTier),
 
     /*  Block Information   */
 

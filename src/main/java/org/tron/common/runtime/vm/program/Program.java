@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
@@ -845,6 +846,11 @@ public class Program {
   public byte[] getCodeAt(DataWord address) {
     byte[] code = invoke.getDeposit().getCode(convertToTronAddress(address.getLast20Bytes()));
     return nullToEmpty(code);
+  }
+
+  public byte[] getCodeHashAt(DataWord address) {
+    byte[] code = getCodeAt(address);
+    return Hash.sha3(code);
   }
 
   public DataWord getContractAddress() {
