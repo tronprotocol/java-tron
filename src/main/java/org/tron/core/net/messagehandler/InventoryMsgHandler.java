@@ -36,7 +36,6 @@ public class InventoryMsgHandler implements TronMsgHandler {
     InventoryType type = inventoryMessage.getInventoryType();
 
     if (fastForward && inventoryMessage.getInventoryType().equals(InventoryType.TRX)) {
-      logger.info("i am fast forward node.");
       return;
     }
 

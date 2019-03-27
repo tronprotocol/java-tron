@@ -133,12 +133,12 @@ public class TronNetService {
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message {} /n process failed from peer {}, type: {}, detail: {}.",
-          msg, peer.getInetAddress(), type, ex.getMessage());
+      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+          peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message {} /n process failed from peer {}.",
-          msg, peer.getInetAddress(), ex);
+      logger.error("Message from {} process failed, {}",
+          peer.getInetAddress(), msg, ex);
     }
 
     peer.disconnect(code);
