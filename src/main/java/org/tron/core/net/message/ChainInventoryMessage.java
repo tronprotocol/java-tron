@@ -14,8 +14,9 @@ public class ChainInventoryMessage extends TronMessage {
   protected ChainInventory chainInventory;
 
   public ChainInventoryMessage(byte[] data) throws Exception {
+    super(data);
     this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
-    chainInventory = Protocol.ChainInventory.parseFrom(data);
+    chainInventory = Protocol.ChainInventory.parseFrom(getCodedInputStream());
     this.data = chainInventory.toByteArray();
   }
 

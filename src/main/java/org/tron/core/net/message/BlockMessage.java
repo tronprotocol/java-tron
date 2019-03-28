@@ -10,8 +10,9 @@ public class BlockMessage extends TronMessage {
   private BlockCapsule block;
 
   public BlockMessage(byte[] data) throws BadItemException {
+    super(data);
     this.type = MessageTypes.BLOCK.asByte();
-    this.block = new BlockCapsule(data);
+    this.block = new BlockCapsule(getCodedInputStream());
     this.data = block.getData();
   }
 

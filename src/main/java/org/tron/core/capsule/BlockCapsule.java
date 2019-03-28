@@ -17,7 +17,9 @@ package org.tron.core.capsule;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -179,6 +181,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     }
   }
 
+  public BlockCapsule(CodedInputStream codedInputStream) throws BadItemException {
+    try {
+      this.block = Block.parseFrom(codedInputStream);
+      initTxs();
+    } catch (IOException e) {
+      throw new BadItemException("Block proto data parse exception");
+    }
+  }
+
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
     getTransactions().add(pendingTrx);
@@ -232,7 +243,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
+          getNum());
     }
     return blockId;
   }
@@ -260,8 +272,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
+
   /* only for genisis */
-  public void  setWitness(String witness) {
+  public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
             ByteString.copyFrom(witness.getBytes())).build();

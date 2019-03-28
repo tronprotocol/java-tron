@@ -1,11 +1,14 @@
 package org.tron.common.overlay.message;
 
+import com.google.protobuf.CodedInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.ReflectionUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.MessageTypes;
 
@@ -66,6 +69,15 @@ public abstract class Message {
     }
     Message message = (Message) o;
     return Arrays.equals(data, message.data);
+  }
+
+  public CodedInputStream getCodedInputStream() {
+    CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
+    Field field = ReflectionUtils
+        .findField(codedInputStream.getClass(), "explicitDiscardUnknownFields");
+    ReflectionUtils.makeAccessible(field);
+    ReflectionUtils.setField(field, codedInputStream, true);
+    return codedInputStream;
   }
 
 }

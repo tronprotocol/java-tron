@@ -23,7 +23,9 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +40,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -119,6 +120,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     try {
       this.transaction = Transaction.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException("Transaction proto data parse exception");
+    }
+  }
+
+  public TransactionCapsule(CodedInputStream codedInputStream) throws BadItemException {
+    try {
+      this.transaction = Transaction.parseFrom(codedInputStream);
+    } catch (IOException e) {
       throw new BadItemException("Transaction proto data parse exception");
     }
   }
@@ -331,7 +340,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -578,7 +587,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }

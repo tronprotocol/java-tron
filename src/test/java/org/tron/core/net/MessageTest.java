@@ -20,4 +20,16 @@ public class MessageTest {
     Assert.assertTrue(Arrays.equals(bytes, disconnectMessage.getData()));
   }
 
+  @Test
+  public void test2() throws Exception {
+    DisconnectMessageTest disconnectMessageTest = new DisconnectMessageTest();
+    long startTime = System.currentTimeMillis();
+    for (int i = 0; i < 100000; i++) {
+      disconnectMessage = new DisconnectMessage(MessageTypes.P2P_DISCONNECT.asByte(),
+          disconnectMessageTest.toByteArray());
+    }
+    long endTime = System.currentTimeMillis();
+    System.out.println("spend time : " + (endTime - startTime));
+  }
+
 }

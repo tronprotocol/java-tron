@@ -112,7 +112,7 @@ dependencies {
 
     compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
 
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.3.0'
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
 
     compile "org.iq80.leveldb:leveldb:0.7"
 
@@ -229,16 +229,10 @@ sourceSets {
 
 }
 
-configurations.all {
-    resolutionStrategy {
-        force 'com.google.protobuf:protobuf-java:3.3.0'
-    }
-}
-
 protobuf {
     generatedFilesBaseDir = "$projectDir/src/"
     protoc {
-        artifact = "com.google.protobuf:protoc:3.3.0"
+        artifact = "com.google.protobuf:protoc:3.5.1-1"
     }
 
     plugins {

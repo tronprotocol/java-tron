@@ -1,5 +1,6 @@
 package org.tron.common.overlay.message;
 
+import com.google.protobuf.CodedInputStream;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
@@ -10,7 +11,7 @@ public class DisconnectMessage extends P2pMessage {
 
   public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
+    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(getCodedInputStream());
     data = disconnectMessage.toByteArray();
   }
 
