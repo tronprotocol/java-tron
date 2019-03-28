@@ -62,9 +62,9 @@ public class SyncService {
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (fetchFlag) {
+          fetchFlag = false;
           startFetchSyncBlock();
         }
-        fetchFlag = false;
       } catch (Throwable t) {
         logger.error("Fetch sync block error.", t);
       }
