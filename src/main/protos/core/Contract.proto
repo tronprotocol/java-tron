@@ -48,8 +48,14 @@ message TransferContract {
 }
 
 message CancelDeferredTransactionContract {
-   bytes transactionId = 1;
-   bytes ownerAddress = 2;
+  bytes transactionId = 1;
+  bytes ownerAddress = 2;
+}
+
+message UpdateDeferredTransactionContract {
+  bytes transactionId = 1;
+  bytes ownerAddress = 2;
+  int64 delaySeconds = 3;
 }
 
 message TransferAssetContract {

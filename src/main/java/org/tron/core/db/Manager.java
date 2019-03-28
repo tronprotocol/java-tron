@@ -1262,11 +1262,13 @@ public class Manager {
 
     validateDup(trxCap);
 
+    if (!trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
-    } else if (!trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
@@ -2086,16 +2088,6 @@ public class Manager {
     // new trx id to represent the second trx record
     transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
-
-    Long deferredTransactionOccupySize = this.dynamicPropertiesStore
-        .getDeferredTransactionOccupySpace();
-    if (deferredTransactionOccupySize + transactionCapsule.getData().length
-        > Constant.MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE) {
-      logger.info("deferred transaction over limit, the size is " + deferredTransactionOccupySize
-          + " bytes");
-      return;
-    }
-
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
     // save original transactionId in order to query deferred transaction
     deferredTransaction.setTransactionId(originalTransactionId.getByteString());
@@ -2131,15 +2123,11 @@ public class Manager {
 
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
-
-    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(
-        deferredTransactionOccupySize + deferredTransactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId) {
     DeferredTransactionCapsule deferredTransactionCapsule
         = getDeferredTransactionStore().getByTransactionId(transactionId);
-
     if (Objects.isNull(deferredTransactionCapsule)) {
       logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
@@ -2147,13 +2135,25 @@ public class Manager {
 
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
-
-    long deferredTransactionOccupySpace = this.dynamicPropertiesStore
-        .getDeferredTransactionOccupySpace();
-    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(
-        deferredTransactionOccupySpace - deferredTransactionCapsule.getData().length);
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 
+    return true;
+  }
+
+  public boolean updateDeferredTransaction(ByteString transactionId, long delaySecond) {
+    DeferredTransactionCapsule deferredTransactionCapsule
+        = getDeferredTransactionStore().getByTransactionId(transactionId);
+    if (Objects.isNull(deferredTransactionCapsule)) {
+      logger.info("updateDeferredTransaction failed, transaction id not exists");
+      return false;
+    }
+
+    getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
+    deferredTransactionCapsule.setDelaySecond(delaySecond);
+    getDeferredTransactionStore().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().put(transactionId.toByteArray(), deferredTransactionCapsule.getKey());
+    logger.debug("update deferred transaction {} successfully", transactionId.toString());
     return true;
   }
 

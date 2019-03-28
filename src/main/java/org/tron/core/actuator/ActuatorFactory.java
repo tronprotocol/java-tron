@@ -101,6 +101,8 @@ public class ActuatorFactory {
         return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
       case CancelDeferredTransactionContract:
         return new CancelDeferredTransactionContractActuator(contract.getParameter(), manager);
+      case UpdateDeferredTransactionContract:
+        return new UpdateDeferredTransactionContractActuator(contract.getParameter(), manager);
       default:
         break;
 

@@ -95,6 +95,9 @@ service Wallet {
   rpc CreateCancelDeferredTransactionContract (CancelDeferredTransactionContract) returns (TransactionExtention) {
   };
 
+  rpc CreateUpdateDeferredTransactionContract (UpdateDeferredTransactionContract) returns (TransactionExtention) {
+  };
+
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };
@@ -646,16 +649,6 @@ service Wallet {
 
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   }
-
-  rpc cancelDeferredTransaction (BytesMessage) returns (Return) {
-          option (google.api.http) = {
-            post: "/wallet/cancelDeferredTransaction"
-            body: "*"
-            additional_bindings {
-              get: "/wallet/cancelDeferredTransaction"
-            }
-          };
-     };
 };
 
 

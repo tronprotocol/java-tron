@@ -599,6 +599,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public boolean validateSignature(Manager manager)
       throws ValidateSignatureException {
+    if (getDeferredSeconds() > 0
+        && getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      isVerified = true;
+      return true;
+    }
+
     if (isVerified == true) {
       return true;
     }

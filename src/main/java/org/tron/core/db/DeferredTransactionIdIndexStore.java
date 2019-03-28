@@ -20,6 +20,10 @@ public class DeferredTransactionIdIndexStore extends TronStoreWithRevoking<Defer
     revokingDB.put(trxId, deferredTransactionCapsule.getKey());
   }
 
+  public void put(byte[] key, byte[] value) {
+    revokingDB.put(key, value);
+  }
+
   public void removeDeferredTransactionIdIndex(ByteString transactionId) {
     revokingDB.delete(transactionId.toByteArray());
   }
