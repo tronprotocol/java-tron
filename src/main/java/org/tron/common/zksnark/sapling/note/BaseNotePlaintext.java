@@ -83,37 +83,28 @@ public class BaseNotePlaintext {
 
     public static Optional<NotePlaintext> decrypt(
         NoteEncryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu) {
-      //      auto pt = AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
-      ////      if (!pt) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      // Deserialize from the plaintext
-      ////      CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
-      ////      ss << pt.get();
-      ////
-      ////      NotePlaintext ret;
-      ////      ss >> ret;
-      ////
-      ////      byte[] cmu_expected;
-      ////      if (!librustzcash_sapling_compute_cm(
-      ////          ret.d.data(),
-      ////          pk_d.begin(),
-      ////          ret.value(),
-      ////          ret.rcm.begin(),
-      ////          cmu_expected.begin()
-      ////      )) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      if (cmu_expected != cmu) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      assert (ss.size() == 0);
-      ////
-      ////      return ret;
-      return null;
+      Optional<NoteEncryption.EncPlaintext> pt =
+              NoteEncryption.AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
+      if (!pt.isPresent()) {
+        return Optional.empty();
+      }
+
+      NotePlaintext ret = NotePlaintext.decode(pt.get());
+
+      byte[] cmu_expected = new byte[32];
+      if (!Librustzcash.librustzcashSaplingComputeCm(
+              ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected)) {
+        return Optional.empty();
+      }
+
+      if (!Arrays.equals(cmu, cmu_expected)) {
+        return Optional.empty();
+      }
+
+      //TODO
+      //assert(ss.size() == 0);
+
+      return Optional.of(ret);
     }
 
     public Optional<SaplingNotePlaintextEncryptionResult> encrypt(byte[] pk_d) {

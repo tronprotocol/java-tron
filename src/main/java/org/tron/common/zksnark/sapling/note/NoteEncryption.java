@@ -95,12 +95,6 @@ public class NoteEncryption {
     EncPlaintext plaintext = new EncPlaintext();
     plaintext.data = new byte[ZC_SAPLING_ENCPLAINTEXT_SIZE];
 
-//    System.out.println("K :");
-//    for(int i = 0; i < NOTEENCRYPTION_CIPHER_KEYSIZE; i++) {
-//      System.out.print(K[i] + ",");
-//    }
-//    System.out.println();
-
     if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
             plaintext.data, null,
             null,
@@ -117,7 +111,32 @@ public class NoteEncryption {
 
   public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
       EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) {
-    return null;
+    byte[] dhsecret = new byte[32];
+
+    if(!Librustzcash.librustzcashSaplingKaAgree(pk_d, esk, dhsecret)) {
+      return Optional.empty();
+    }
+
+    byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
+    KDFSapling(K, dhsecret, epk);
+
+    byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+
+    EncPlaintext plaintext = new EncPlaintext();
+    plaintext.data = new byte[ZC_SAPLING_ENCPLAINTEXT_SIZE];
+
+    if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
+            plaintext.data, null,
+            null,
+            ciphertext.data, ZC_SAPLING_ENCCIPHERTEXT_SIZE,
+            null,
+            0,
+            cipher_nonce, K) != 0)
+    {
+      return Optional.empty();
+    }
+
+    return Optional.of(plaintext);
   }
 
   public static Optional<OutPlaintext> AttemptSaplingOutDecryption(
