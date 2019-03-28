@@ -53,10 +53,10 @@ public class SyncService {
   private ScheduledExecutorService blockHandleExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private boolean syncHandleFlag = false;
+  private volatile boolean syncHandleFlag = false;
 
   @Setter
-  private boolean fetchFlag = false;
+  private volatile boolean fetchFlag = false;
 
   public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
