@@ -3,7 +3,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.sun.org.apache.bcel.internal.Constants;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
@@ -13,7 +12,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateDeferredTransactionContract;
@@ -85,11 +83,9 @@ public class UpdateDeferredTransactionContractActuator  extends AbstractActuator
     }
 
     ByteString ownerAddress = updateDeferredTransactionContract.getOwnerAddress();
-
     if (!Wallet.addressValid(ownerAddress.toByteArray())) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-
     if (!sendAddress.equals(ownerAddress)) {
       throw new ContractValidateException("not have right to update!");
     }
