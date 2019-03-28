@@ -905,11 +905,6 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("deferredTransactionOccupySpace")
-        .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionOccupySpace())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getUpdateAccountPermissionFee")
         .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());

@@ -3,9 +3,14 @@ package org.tron.core.capsule;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "capsule")
 public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransaction> {
@@ -68,6 +73,23 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
 
     public ByteString getReceiverAddress(){
         return deferredTransaction.getReceiverAddress();
+    }
+
+    public void setDelaySecond(long delaySecond) {
+        if (Objects.isNull(deferredTransaction) || Objects.isNull(deferredTransaction.getTransaction()) ) {
+            logger.info("updateDeferredTransaction failed, transaction is null");
+            return;
+        }
+
+        long delayUntil = deferredTransaction.getPublishTime() + delaySecond * 1000;
+        long expiration = delayUntil + Args.getInstance().getTrxExpirationTimeInMilliseconds();
+        Transaction transaction = deferredTransaction.getTransaction();
+        DeferredStage deferredStage = transaction.getRawData().toBuilder().
+            getDeferredStage().toBuilder().setDelaySeconds(delaySecond).build();
+        Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+        transaction = transaction.toBuilder().setRawData(rawData).build();
+        deferredTransaction = deferredTransaction.toBuilder().setDelayUntil(delayUntil).
+            setDelaySeconds(delaySecond).setExpiration(expiration).setTransaction(transaction).build();
     }
 
 }

@@ -172,8 +172,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
-  private static final byte[] DEFERRED_TRANSACTION_OCCUPY_SPACE = "DEFERRED_TRANSACTION_OCCUPY_SPACE"
-      .getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -529,12 +527,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       String contractType = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
       byte[] bytes = ByteArray.fromHexString(contractType);
       this.saveActiveDefaultOperations(bytes);
-    }
-
-    try {
-      this.getDeferredTransactionOccupySpace();
-    } catch (IllegalArgumentException e) {
-      this.saveDeferredTransactionOccupySpace(0);
     }
 
     try {
@@ -1345,27 +1337,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(value));
   }
 
-  public void saveDeferredTransactionOccupySpace(long value) {
-    this.put(DEFERRED_TRANSACTION_OCCUPY_SPACE,
-        new BytesCapsule(ByteArray.fromLong(value)));
-  }
-
   public byte[] getActiveDefaultOperations() {
     return Optional.ofNullable(getUnchecked(ACTIVE_DEFAULT_OPERATIONS))
         .map(BytesCapsule::getData)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACTIVE_DEFAULT_OPERATIONS"));
   }
-
-  public Long getDeferredTransactionOccupySpace() {
-    return Optional.ofNullable(getUnchecked(DEFERRED_TRANSACTION_OCCUPY_SPACE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "not found DEFERRED_TRANSACTION_OCCUPY_SPACE"));
-  }
-
 
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;

@@ -9,13 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
+import org.tron.protos.Contract.UpdateDeferredTransactionContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class CancelDeferredTransactionByIdServlet extends HttpServlet {
+public class UpdateDeferredTransactionByIdServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
@@ -27,10 +27,10 @@ public class CancelDeferredTransactionByIdServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
-      CancelDeferredTransactionContract.Builder build = CancelDeferredTransactionContract.newBuilder();
+      UpdateDeferredTransactionContract.Builder build = UpdateDeferredTransactionContract.newBuilder();
       JsonFormat.merge(contract, build);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.CancelDeferredTransactionContract)
+          .createTransactionCapsule(build.build(), ContractType.UpdateDeferredTransactionContract)
           .getInstance();
 
       response.getWriter().println(Util.printTransaction(tx));
