@@ -95,7 +95,7 @@ public class AssertException {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/test1DivideInt.sol";
+    String filePath = "src/test/resources/soliditycode/assertExceptiontest1DivideInt.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
