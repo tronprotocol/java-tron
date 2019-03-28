@@ -298,7 +298,8 @@ public class TransactionTrace {
     return runtime;
   }
 
-  public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule){
+  public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule)
+      throws ContractValidateException {
     byte[] ownerAddress = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
     if (ArrayUtils.isEmpty(ownerAddress)){
       logger.error("empty owner address");
@@ -306,7 +307,6 @@ public class TransactionTrace {
     }
 
     long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySeconds / (24 * 60 * 60) + 1);
-
     try {
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
@@ -314,6 +314,8 @@ public class TransactionTrace {
     } catch (BalanceInsufficientException e) {
       e.printStackTrace();
       resultCapsule.setStatus(fee, Transaction.Result.code.FAILED);
+      throw new ContractValidateException(
+          "create deferred transaction error, insufficient fee.");
     }
 
     return true;

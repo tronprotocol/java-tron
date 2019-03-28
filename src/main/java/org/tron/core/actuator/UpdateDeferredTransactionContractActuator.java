@@ -12,6 +12,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateDeferredTransactionContract;
@@ -37,9 +38,14 @@ public class UpdateDeferredTransactionContractActuator  extends AbstractActuator
       dbManager.adjustBalance(getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
-    } catch (Exception e) {
+    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       capsule.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      capsule.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
 
     return true;

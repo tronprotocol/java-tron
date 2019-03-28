@@ -2121,6 +2121,8 @@ public class Manager {
     // delay until
     long delayUntil = publishTime + transactionCapsule.getDeferredSeconds() * 1000;
     deferredTransaction.setDelayUntil(delayUntil);
+    deferredTransaction.setExpiration(delayUntil
+        + Args.getInstance().getTrxExpirationTimeInMilliseconds());
 
     deferredTransaction.setTransaction(transactionCapsule.getInstance());
 
