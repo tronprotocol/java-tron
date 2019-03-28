@@ -1,9 +1,9 @@
-pragma solidity ^0.4.11;
+//pragma solidity ^0.4.11;
 
 library Set {
  struct Data { mapping(uint => bool) flags; }
 
- function insert(Data storage self, uint value)
+ function insert(Data storage self, uint value) public
  returns (bool)
  {
  if (self.flags[value])
@@ -12,7 +12,7 @@ library Set {
  return true;
  }
 
- function remove(Data storage self, uint value)
+ function remove(Data storage self, uint value) public
  returns (bool)
  {
  if (!self.flags[value])
@@ -21,7 +21,7 @@ library Set {
  return true;
  }
 
- function contains(Data storage self, uint value)
+ function contains(Data storage self, uint value) public
  returns (bool)
  {
  return self.flags[value];

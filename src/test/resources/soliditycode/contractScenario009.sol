@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+//pragma solidity ^0.4.0;
 
 library Set {
   // We define a new struct datatype that will be used to

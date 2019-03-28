@@ -1,4 +1,4 @@
-pragma solidity ^0.4.4;
+//pragma solidity ^0.4.4;
 contract A {
 uint256 public numberForB;
 address public senderForB;

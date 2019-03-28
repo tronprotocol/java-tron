@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+//pragma solidity ^0.4.19;
 contract Feline {
  function utterance() returns (bytes32);
 

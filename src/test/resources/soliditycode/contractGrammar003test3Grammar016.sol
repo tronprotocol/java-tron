@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+//pragma solidity ^0.4.0;
 contract C {
 uint private data;
 function f(uint a) private returns(uint b) { return a + 1; }

@@ -1,7 +1,7 @@
-pragma solidity ^0.4.0;
+//pragma solidity ^0.4.0;
 
 contract divideIHaveArgsReturnStorage{
-function divideIHaveArgsReturn(int x,int y) returns (int z) {
+function divideIHaveArgsReturn(int x,int y) public returns (int z) {
 return z = x / y;
 }
 }

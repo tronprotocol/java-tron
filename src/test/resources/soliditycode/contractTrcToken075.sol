@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+//pragma solidity ^0.4.0;
 
 contract Dest {
     event logFallback(uint256 indexed, uint256 indexed, uint256 indexed);
