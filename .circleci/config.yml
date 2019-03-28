@@ -6,12 +6,17 @@ jobs:
       - master
       - develop
       - addinCircleCI
+      - daily_test_on_multi_os
 
     docker:
     - image: circleci/openjdk:8-jdk-browsers
     working_directory: ~/java-tron
     steps:
     - checkout
+    - run:
+        name: multi_os_result
+        command: curl http://60.205.215.34/multi_os_result
+
     - run:
         name: Daily Build Report
         command: curl http://60.205.215.34/Daily_Build_Task_Report
@@ -20,3 +25,4 @@ jobs:
     - run:
         name: Download Links
         command: sh DownloadLinks.sh
+
