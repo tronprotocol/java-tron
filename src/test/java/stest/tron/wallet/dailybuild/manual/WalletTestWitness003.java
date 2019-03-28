@@ -43,6 +43,9 @@ public class WalletTestWitness003 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  private final String testUpdateWitnessKey = Configuration.getByPath("testng.conf")
+      .getString("witness.key1");
+  private final byte[] updateAddress = PublicMethed.getFinalAddress(testUpdateWitnessKey);
   private static final byte[] INVAILD_ADDRESS = Base58
       .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
@@ -108,8 +111,10 @@ public class WalletTestWitness003 {
     Optional<WitnessList> result = Optional.ofNullable(witnesslist);
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
-      Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-      Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
+      Assert.assertTrue(PublicMethed
+          .sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002,
+              blockingStubFull));
+      Assert.assertTrue(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     }
   }
@@ -122,11 +127,11 @@ public class WalletTestWitness003 {
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
       //null url, update failed
-      Assert.assertFalse(updateWitness(lowBalAddress, wrongUrl, lowBalTest));
+      Assert.assertFalse(updateWitness(updateAddress, wrongUrl, testUpdateWitnessKey));
       //Content space and special char, update success
-      Assert.assertTrue(updateWitness(lowBalAddress, updateSpaceUrl, lowBalTest));
+      Assert.assertTrue(updateWitness(updateAddress, updateSpaceUrl, testUpdateWitnessKey));
       //update success
-      Assert.assertTrue(updateWitness(lowBalAddress, updateUrl, lowBalTest));
+      Assert.assertTrue(updateWitness(updateAddress, updateUrl, testUpdateWitnessKey));
     } else {
       logger.info("Update witness case had been test.This time skip it.");
     }
@@ -168,13 +173,35 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
+    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
+    return response.getResult();
 
+  }
+
+  /**
+   * constructor.
+   */
+
+  public Boolean createWitnessNotBroadcast(byte[] owner, byte[] url, String priKey) {
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setUrl(ByteString.copyFrom(url));
+    Contract.WitnessCreateContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      return false;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    return true;
   }
 
   /**
@@ -201,7 +228,7 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       logger.info("response.getRestult() == false");
