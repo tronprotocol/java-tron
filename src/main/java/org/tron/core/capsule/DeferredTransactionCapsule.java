@@ -46,7 +46,7 @@ public class DeferredTransactionCapsule implements ProtoCapsule<DeferredTransact
         try {
             this.deferredTransaction = DeferredTransaction.parseFrom(data);
         } catch (InvalidProtocolBufferException e) {
-            logger.debug(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
         }
     }
 

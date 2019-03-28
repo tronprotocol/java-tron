@@ -725,6 +725,11 @@ public class Manager {
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
+    if (transactionCapsule.getDeferredSeconds() > 0
+        && transactionCapsule.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      transactionExpiration += transactionCapsule.getDeferredSeconds() * 1000;
+    }
+
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||
         transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
@@ -1262,7 +1267,6 @@ public class Manager {
     }
 
     validateDup(trxCap);
-
 
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
@@ -2118,9 +2122,6 @@ public class Manager {
     long delayUntil = publishTime + transactionCapsule.getDeferredSeconds() * 1000;
     deferredTransaction.setDelayUntil(delayUntil);
 
-    // expiration
-    long expiration = delayUntil + Args.getInstance().getTrxExpirationTimeInMilliseconds();
-    transactionCapsule.setExpiration(expiration);
     deferredTransaction.setTransaction(transactionCapsule.getInstance());
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
@@ -2162,7 +2163,7 @@ public class Manager {
     return true;
   }
 
-  ByteString recoveryTransactionId(TransactionCapsule trxCap) {
+  private ByteString recoveryTransactionId(TransactionCapsule trxCap) {
     TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
     oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     return oldTrxCap.getTransactionId().getByteString();

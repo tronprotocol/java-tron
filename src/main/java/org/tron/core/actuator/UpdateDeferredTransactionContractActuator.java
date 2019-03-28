@@ -3,11 +3,17 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.sun.org.apache.bcel.internal.Constants;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UpdateDeferredTransactionContract;
@@ -20,14 +26,20 @@ public class UpdateDeferredTransactionContractActuator  extends AbstractActuator
     super(contract, dbManager);
   }
   @Override
-  public boolean execute(TransactionResultCapsule capsule) throws ContractExeException {
+  public boolean execute(TransactionResultCapsule capsule)
+      throws ContractExeException {
     long fee = calcFee();
     final UpdateDeferredTransactionContract updateDeferredTransactionContract;
     try {
       updateDeferredTransactionContract = this.contract
           .unpack(UpdateDeferredTransactionContract.class);
-      dbManager.updateDeferredTransaction(updateDeferredTransactionContract.getTransactionId(), updateDeferredTransactionContract.getDelaySeconds());
-    } catch (InvalidProtocolBufferException e) {
+      dbManager.updateDeferredTransaction(updateDeferredTransactionContract.getTransactionId()
+          , updateDeferredTransactionContract.getDelaySeconds());
+
+      dbManager.adjustBalance(getOwnerAddress().toByteArray(), -fee);
+      // Add to blackhole address
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+    } catch (Exception e) {
       logger.debug(e.getMessage(), e);
       capsule.setStatus(fee, code.FAILED);
     }
@@ -73,13 +85,31 @@ public class UpdateDeferredTransactionContractActuator  extends AbstractActuator
     }
 
     ByteString ownerAddress = updateDeferredTransactionContract.getOwnerAddress();
+
+    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+
     if (!sendAddress.equals(ownerAddress)) {
       throw new ContractValidateException("not have right to update!");
     }
 
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress.toByteArray());
+    if (accountCapsule == null) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
+    }
+
+    final long fee = calcFee();
+    if (accountCapsule.getBalance() < fee) {
+      throw new ContractValidateException(
+          "Validate CreateAccountActuator error, insufficient fee.");
+    }
+
     long delaySecond = updateDeferredTransactionContract.getDelaySeconds();
-    if (delaySecond <= 0) {
-      throw new ContractValidateException("delay second must be bigger than 0!");
+    if (delaySecond <= 0 || delaySecond > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS) {
+      throw new ContractValidateException("delay second must be bigger than 0 and small than 45 * 24 * 3_600Ls!");
     }
 
     return true;
