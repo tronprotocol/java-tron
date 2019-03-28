@@ -234,6 +234,7 @@ public class Manager {
 
   private Set<String> ownerAddressSet = new HashSet<>();
 
+  @Getter
   private ScheduledFuture<?> deferredTransactionTask;
 
   public WitnessStore getWitnessStore() {
@@ -1262,14 +1263,14 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
 
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
+    } else if (!trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
     }
+
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
@@ -1905,6 +1906,10 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
+        if (trx.getDeferredSeconds() > 0
+            && trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+          return true;
+        }
         trx.validateSignature(manager);
       } catch (ValidateSignatureException e) {
         throw e;
