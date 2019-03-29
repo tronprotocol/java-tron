@@ -17,7 +17,7 @@ contract Proxy {
   function upgradeTo(address _address) public {
     implementation = _address;
   }
-  function() payable public{
+  function() payable external{
     address addr = implementation;
     require(addr != address(0));
     assembly {
@@ -33,12 +33,12 @@ contract Proxy {
 }
 
 contract A {
-    function trans(uint256 amount, address toAddress, trcToken id) payable public {
+    function trans(uint256 amount, address payable toAddress, trcToken id) payable public {
         toAddress.transfer(amount);
     }
 }
 contract B{
-    function trans(uint256 amount, address toAddress, trcToken id) payable public {
+    function trans(uint256 amount, address payable toAddress, trcToken id) payable public {
         toAddress.transferToken(amount,id);
     }
 }
