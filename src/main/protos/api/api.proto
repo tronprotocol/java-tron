@@ -95,9 +95,6 @@ service Wallet {
   rpc CreateCancelDeferredTransactionContract (CancelDeferredTransactionContract) returns (TransactionExtention) {
   };
 
-  rpc CreateUpdateDeferredTransactionContract (UpdateDeferredTransactionContract) returns (TransactionExtention) {
-  };
-
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };

@@ -1728,10 +1728,6 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.CancelDeferredTransactionContract, responseObserver);
     }
 
-    @Override
-    public void createUpdateDeferredTransactionContract(Contract.UpdateDeferredTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.UpdateDeferredTransactionContract, responseObserver);
-    }
   }
 
   @Override

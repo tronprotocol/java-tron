@@ -79,7 +79,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateDeferredTransactionContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
@@ -463,9 +462,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case CancelDeferredTransactionContract:
           owner = contractParameter.unpack(CancelDeferredTransactionContract.class).getOwnerAddress();
-          break;
-        case UpdateDeferredTransactionContract:
-          owner = contractParameter.unpack(UpdateDeferredTransactionContract.class).getOwnerAddress();
           break;
         // todo add other contract
         default:

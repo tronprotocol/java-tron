@@ -2148,23 +2148,6 @@ public class Manager {
     return true;
   }
 
-  public boolean updateDeferredTransaction(ByteString transactionId, long delaySecond) {
-    DeferredTransactionCapsule deferredTransactionCapsule
-        = getDeferredTransactionStore().getByTransactionId(transactionId);
-    if (Objects.isNull(deferredTransactionCapsule)) {
-      logger.info("updateDeferredTransaction failed, transaction id not exists");
-      return false;
-    }
-
-    getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
-    deferredTransactionCapsule.setDelaySecond(delaySecond);
-    getDeferredTransactionStore().put(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().put(transactionId.toByteArray(), deferredTransactionCapsule.getKey());
-    logger.debug("update deferred transaction {} successfully", transactionId.toString());
-    return true;
-  }
-
   private ByteString recoveryTransactionId(TransactionCapsule trxCap) {
     TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
     oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
