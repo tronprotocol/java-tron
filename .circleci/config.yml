@@ -25,4 +25,3 @@ jobs:
     - run:
         name: Download Links
         command: sh DownloadLinks.sh
-
