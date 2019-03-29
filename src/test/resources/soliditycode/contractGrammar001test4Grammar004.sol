@@ -13,11 +13,11 @@ contract C {
     using Search for uint[];
     uint[] public data;
 
-    function append(uint value) {
+    function append(uint value) public{
         data.push(value);
     }
 
-    function replace(uint _old, uint _new) {
+    function replace(uint _old, uint _new) public{
         // This performs the library function call
         uint index = data.indexOf(_old);
         if (index == uint(-1))

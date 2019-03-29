@@ -14,7 +14,7 @@ contract token{
 contract B{
     uint256 public  flag =0;
     constructor() public payable{}
-    function() public payable{}
+    function() external payable{}
     function transferToken(uint256 amount, trcToken id) payable public returns(bool){
         flag =9;
     }

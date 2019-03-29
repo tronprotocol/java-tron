@@ -33,12 +33,12 @@ contract C {
  using Set for Set.Data; // this is the crucial change
  Set.Data knownValues;
 
- function register(uint value) {
+ function register(uint value) public{
  // Here, all variables of type Set.Data have
  // corresponding member functions.
  // The following function call is identical to
  // Set.insert(knownValues, value)
  if (!knownValues.insert(value))
- throw;
+ revert();
  }
 }

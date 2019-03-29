@@ -2,19 +2,24 @@
 contract A {
 uint256 public numberForB;
 address public senderForB;
-function callTest(address bAddress, uint256 _number) {
-bAddress.call(bytes4(sha3("setValue(uint256)")), _number); // B's storage is set, A is not modified
+function callTest(address bAddress, uint256 _number) public{
+//bAddress.call(bytes4(sha3("setValue(uint256)")), _number); // B's storage is set, A is not modified
+bAddress.call(abi.encode(bytes4(keccak256("setValue(uint256)")), _number)); // B's storage is set, A is not modified
 }
-function callcodeTest(address bAddress, uint256 _number) {
-bAddress.callcode(bytes4(sha3("setValue(uint256)")), _number); // A's storage is set, B is not modified
+function callcodeTest(address bAddress, uint256 _number) public{
+//bAddress.callcode(bytes4(sha3("setValue(uint256)")), _number); // A's storage is set, B is not modified
+bAddress.delegatecall(abi.encode(bytes4(keccak256("setValue(uint256)")), _number)); // A's storage is set, B is not modified
 }
-function delegatecallTest(address bAddress, uint256 _number) {
-bAddress.delegatecall(bytes4(sha3("setValue(uint256)")), _number); // A's storage is set, B is not modified
+function delegatecallTest(address bAddress, uint256 _number) public{
+//bAddress.delegatecall(bytes4(sha3("setValue(uint256)")), _number); // A's storage is set, B is not modified
+bAddress.delegatecall(abi.encode(bytes4(keccak256("setValue(uint256)")), _number)); // A's storage is set, B is not modified
 }
 
-function callAddTest(address bAddress) {
-bAddress.call(bytes4(sha3("add()"))); // B's storage is set, A is not modified
-bAddress.call(bytes4(sha3("add()"))); // B's storage is set, A is not modified
+function callAddTest(address bAddress) public{
+//bAddress.call(bytes4(sha3("add()"))); // B's storage is set, A is not modified
+bAddress.call(abi.encode(bytes4(keccak256("add()")))); // B's storage is set, A is not modified
+//bAddress.call(bytes4(sha3("add()"))); // B's storage is set, A is not modified
+bAddress.call(abi.encode(bytes4(keccak256("add()")))); // B's storage is set, A is not modified
 }
 function getnumberForB() public returns(uint256){
         return numberForB;
@@ -29,7 +34,7 @@ address public senderForB;
 address public addr11;
 mapping(uint256=>address) public addr1;
 mapping(uint256=>address) public addr2;
-function setValue(uint256 _number) {
+function setValue(uint256 _number) public{
 numberForB = _number;
 senderForB = msg.sender;
 // senderForB is A if invoked by A's callTest. B's storage will be updated

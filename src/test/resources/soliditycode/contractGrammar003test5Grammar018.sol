@@ -24,7 +24,8 @@ contract Grammar18{
   }
     function testSha3() public  returns(bytes32){
       //计算（紧密包装）参数的SHA-256散列
-      return sha3("11");
+      //return sha3("11");
+      return keccak256("11");
   }
 
     function testRipemd160()  public returns(bytes32){
