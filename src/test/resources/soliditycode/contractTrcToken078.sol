@@ -1,26 +1,26 @@
 //pragma solidity ^0.4.24;
 contract callerContract {
-    constructor() payable{}
-    function() payable{}
-    function sendToB(address called_address,address c) public payable{
-       called_address.delegatecall(bytes4(keccak256("transferTo(address)")),c);
+    constructor() public payable{}
+    function() external payable{}
+    function sendToB(address called_address, address c) public payable{
+       called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
     function sendToB2(address called_address,address c) public payable{
-        called_address.call(bytes4(keccak256("transferTo(address)")),c);
+        called_address.call(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
     function sendToB3(address called_address,address c) public payable{
-        called_address.callcode(bytes4(keccak256("transferTo(address)")),c);
+        called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
 }
    contract calledContract {
-        function() payable{}
-       constructor() payable {}
-       function transferTo(address toAddress)public payable{
+        function() external payable{}
+       constructor() public payable {}
+       function transferTo(address payable toAddress)public payable{
            toAddress.transfer(5);
        }
 
        function setIinC(address c) public payable{
-           c.call.value(5)(bytes4(keccak256("setI()")));
+           c.call.value(5)(abi.encode(bytes4(keccak256("setI()"))));
        }
 
    }
@@ -29,7 +29,7 @@ contract callerContract {
     address public sender;
     constructor() public payable{}
     event log(address,address);
-    function() payable public{
+    function() payable external{
          emit log(tx.origin,msg.sender);
     }
    }

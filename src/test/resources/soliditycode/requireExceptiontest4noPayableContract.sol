@@ -2,7 +2,7 @@
 
 contract noPayableContract {
 
-function noPayable() public returns (uint){
+function noPayable() public payable returns (uint){
 return msg.value;
 }
 }

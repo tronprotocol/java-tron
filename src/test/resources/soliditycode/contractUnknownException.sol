@@ -34,7 +34,7 @@ contract A {
     constructor() public payable{
         selfdestruct(msg.sender);
     }
-    function fun() {
+    function fun() public {
     }
 
 }
@@ -43,7 +43,7 @@ contract B {
     constructor() public payable {
         revert();
     }
-    function fun() {
+    function fun() public {
     }
 }
 
@@ -52,7 +52,7 @@ contract C {
     constructor() public payable {
        assert(1==2);
     }
-    function fun() {
+    function fun() public {
     }
 }
 
@@ -60,6 +60,6 @@ contract D {
     constructor() public payable {
        require(1==2);
     }
-    function fun() {
+    function fun() public {
     }
 }

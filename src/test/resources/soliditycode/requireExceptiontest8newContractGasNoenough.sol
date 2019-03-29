@@ -3,7 +3,8 @@
 contract Account{
     uint256 public accId;
 
-    function Account(uint accountId) payable{
+   // function Account(uint accountId) payable{
+    constructor(uint accountId) payable public {
         accId = accountId;
     }
 }
@@ -11,7 +12,7 @@ contract Account{
 contract Initialize{
     // Account public account = new Account(10);
 
-    function newAccount(){
+    function newAccount() public {
         Account account = new Account(1);
     }
 

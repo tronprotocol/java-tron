@@ -1,15 +1,12 @@
-//pragma solidity ^0.4.0;
-
 contract timeoutTest {
         string public iarray1;
     // cpu
-    function oneCpu() {
+    function oneCpu() public {
         require(1==1);
     }
 
-    function storage8Char() {
+    function storage8Char() public {
         iarray1 = "12345678";
-
     }
 
     function testUseCpu(uint256 a) public returns (uint256){
@@ -35,13 +32,15 @@ contract timeoutTest {
     }
 
     // stack
-    uint n = 0;
-    function test() {
-        n += 1;
+    //uint n = 0;
+    uint yy = 0;
+    function test() public {
+        //n += 1;
+        yy += 1;
         test();
     }
 
-        function setFibonacci(uint n) public returns (uint256){
+    function setFibonacci(uint n) public returns (uint256){
         calculatedFibNumber = fibonacci(n);
         return calculatedFibNumber;
     }

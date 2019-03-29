@@ -5,13 +5,13 @@ contract Dest {
  event logGetToken(uint256 indexed, uint256 indexed, uint256 indexed, uint256);
 
 
- function Dest() payable public {}
+ constructor() payable public {}
 
-    function getToken(trcToken tokenId) payable {
-        logGetToken(msg.sender.tokenBalance(tokenId), msg.tokenid, msg.tokenvalue, msg.value);
+    function getToken(trcToken tokenId) payable public{
+      emit  logGetToken(msg.sender.tokenBalance(tokenId), msg.tokenid, msg.tokenvalue, msg.value);
  }
 
-    function () payable {
-        logFallback(msg.tokenid, msg.tokenvalue, msg.value);
+    function () payable external{
+      emit  logFallback(msg.tokenid, msg.tokenvalue, msg.value);
  }
 }
