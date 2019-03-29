@@ -24,6 +24,7 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -321,6 +322,12 @@ public class Util {
                 .unpack(UpdateEnergyLimitContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
+            break;
+          case CancelDeferredTransactionContract:
+            CancelDeferredTransactionContract cancelDeferredTransactionContract = contractParameter
+                .unpack(CancelDeferredTransactionContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(cancelDeferredTransactionContract));
             break;
           // todo add other contract
           default:
