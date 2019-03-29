@@ -4,9 +4,9 @@ contract IllegalDecorate {
 
     constructor() payable public{}
 
-    function() payable public{}
+    function() payable external{}
 
-     function transferTokenWithPure(address toAddress, uint256 tokenValue) public pure {
+     function transferTokenWithPure(address payable toAddress, uint256 tokenValue) public {
 
         toAddress.transferToken(tokenValue, 0x6e6d62);
 

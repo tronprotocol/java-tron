@@ -5,9 +5,9 @@ contract IllegalDecorate {
 event log(uint256);
 constructor() payable public{}
 
-function() payable public{}
+function() payable external{}
 
-function transferTokenWithOutPayable(address toAddress, uint256 tokenValue) public {
+function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue) payable public {
 // function transferTokenWithValue(address toAddress, uint256 tokenValue) payable public {
 emit log(msg.value);
 emit log(msg.tokenvalue);

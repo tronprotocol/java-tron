@@ -2,7 +2,7 @@
 
 contract Test{
 
-function a() returns (uint){
+function a() public returns (uint){
 
 uint256 count = 0;
 

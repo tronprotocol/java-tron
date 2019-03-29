@@ -6,7 +6,7 @@ contract InnerContract {
 
 
 
-    function messageI() payable returns (uint ret) {
+    function messageI() payable public returns (uint ret) {
 
 
 
@@ -20,7 +20,7 @@ contract OuterContract {
 
 
 
-    function callInner(address addr) payable returns (uint) {
+    function callInner(address addr) payable public returns (uint) {
 
         return InnerContract(addr).messageI.value(1)();
 

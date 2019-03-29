@@ -4,18 +4,18 @@ contract SubC {
 
 event log(string);
 
-function () payable {}
+function () payable external{}
 
-function receiveToken() payable {}
+function receiveToken() payable public{}
 
-function getBalance() constant public returns (uint256 r){
+function getBalance() view public returns (uint256 r) {
 r = address(this).balance;
 }
 }
 
 contract UseDot {
 constructor() payable public{}
-function() payable public{}
+function() payable external{}
 mapping(address => mapping(trcToken => uint256)) sender_tokens;
 
 function trigger1(address addr) payable public {
@@ -34,23 +34,24 @@ function trigger4(address addr) payable public {
 // SubC(addr).receiveToken.tokenId(0x6e6d62)();
 }
 
-function trigger5(address addr) payable public {
+function trigger5(address payable addr) payable public {
 SubC(addr).receiveToken.value(10)();
 }
 
-function trigger6(address addr) payable public {
-SubC(addr).call.value(1000)(bytes4(sha3("transferToken(uint256, trcToken)")), 10, 0x6e6d62);
+function trigger6(address payable addr) payable public {
+
+address(SubC(addr)).call.value(1000)( abi.encode(bytes4(keccak256("transferToken(uint256, trcToken)")), 10, 0x6e6d62));
 }
 
 function trigger7(address addr) payable public {
 // sender_tokens[msg.sender][msg.tokenid] += msg.tokenvalue; // ERROR
 }
 
-function trigger8(address addr) public payable returns(bytes r){
+function trigger8(address addr) public payable returns(bytes memory r){
 // r = msg.data;
 }
 
-function getBalance() constant public returns (uint256 r){
+function getBalance() view public returns (uint256 r){
 r = address(this).balance;
 }
 }
