@@ -332,6 +332,8 @@ public class Manager {
   private List<TransactionCapsule> popedTransactions =
       Collections.synchronizedList(Lists.newArrayList());
 
+  private final Object lockObj = new Object();
+
   private List<DeferredTransactionCapsule> deferredTransactionList =
       Collections.synchronizedList(Lists.newArrayList());
 
@@ -484,7 +486,7 @@ public class Manager {
     Thread repushThread = new Thread(repushLoop);
     repushThread.start();
     deferredTransactionTask = deferredTransactionTimer.scheduleAtFixedRate(() -> {
-      synchronized (deferredTransactionList) {
+      synchronized (lockObj) {
         deferredTransactionList = getDeferredTransactionStore()
             .getScheduledTransactions();
       }
@@ -2077,7 +2079,7 @@ public class Manager {
   }
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule) {
-    synchronized (deferredTransactionList) {
+    synchronized (lockObj) {
       for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
         if (deferredTransaction.getDelayUntil() <= blockCapsule.getTimeStamp()) {
           TransactionCapsule trxCapsule = new TransactionCapsule(

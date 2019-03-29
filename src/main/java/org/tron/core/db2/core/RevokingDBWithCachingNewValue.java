@@ -210,8 +210,8 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       list = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
           .getPrevious(key, limit, precision).values().stream()
           .collect(Collectors.toList());
-    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-      list = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      list = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb()
           .getPrevious(key, limit, precision).values().stream()
           .collect(Collectors.toList());
     }
