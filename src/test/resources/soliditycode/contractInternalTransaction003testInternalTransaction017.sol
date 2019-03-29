@@ -186,7 +186,7 @@
            (new B).value(1)();//1
 
         }
-        function getBalance() returns(uint256){
+        function getBalance() public returns(uint256){
             return this.balance;
         }
     }

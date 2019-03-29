@@ -11,7 +11,7 @@ if (owner == msg.sender) {
 count = count + step;
 }
 }
-function getCount()  returns (uint) {
+function getCount() public returns (uint) {
 return count;
 }
 function kill() {

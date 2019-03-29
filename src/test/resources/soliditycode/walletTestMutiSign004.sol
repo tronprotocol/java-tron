@@ -12,7 +12,7 @@ contract timeoutTest {
 
     }
 
-    function testUseCpu(uint256 a) returns (uint256){
+    function testUseCpu(uint256 a) public returns (uint256){
         uint256 count = 0;
         for (uint256 i = 0; i < a; i++) {
             count++;
@@ -25,7 +25,7 @@ contract timeoutTest {
     uint public calculatedFibNumber;
     mapping(address=>mapping(address=>uint256)) public m;
 
-    function testUseStorage(uint256 a) returns (uint256){
+    function testUseStorage(uint256 a) public returns (uint256){
         uint256 count = 0;
         for (uint256 i = 0; i < a; i++) {
             count++;
