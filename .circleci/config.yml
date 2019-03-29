@@ -6,7 +6,6 @@ jobs:
       - master
       - develop
       - addinCircleCI
-      - daily_test_on_multi_os
 
     docker:
     - image: circleci/openjdk:8-jdk-browsers
