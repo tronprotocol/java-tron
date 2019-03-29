@@ -124,13 +124,14 @@ public class SolidityNodeHttpApiService implements Service {
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
           "/walletsolidity/gettransactionbyid");
+
       context.addServlet(new ServletHolder(getDeferredTransactionByIdServlet),
           "/walletsolidity/getdeferredtransactionbyid");
+
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdServlet),
               "/walletsolidity/gettransactioninfobyid");
-      context
-          .addServlet(new ServletHolder(getDeferredTransactionInfoByIdServlet),
+      context.addServlet(new ServletHolder(getDeferredTransactionInfoByIdServlet),
               "/walletsolidity/getdeferredtransactioninfobyid");
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),

@@ -578,6 +578,15 @@ public class Util {
                     UpdateEnergyLimitContractBuilder);
             any = Any.pack(UpdateEnergyLimitContractBuilder.build());
             break;
+
+          case "CancelDeferredTransactionContract":
+            CancelDeferredTransactionContract.Builder CancelDeferredTransactionContractBuilder =
+                CancelDeferredTransactionContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    CancelDeferredTransactionContractBuilder);
+            any = Any.pack(CancelDeferredTransactionContractBuilder.build());
+            break;
           // todo add other contract
           default:
         }
