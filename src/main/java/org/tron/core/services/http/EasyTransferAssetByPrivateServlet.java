@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -15,13 +14,9 @@ import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.common.crypto.ECKey;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Protocol.DeferredStage;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
@@ -53,15 +48,10 @@ public class EasyTransferAssetByPrivateServlet extends HttpServlet {
       builder.setToAddress(build.getToAddress());
       builder.setAssetName(ByteString.copyFrom(build.getAssetId().getBytes()));
       builder.setAmount(build.getAmount());
+
       TransactionCapsule transactionCapsule;
       transactionCapsule = wallet
           .createTransactionCapsule(builder.build(), ContractType.TransferAssetContract);
-
-      JSONObject jsonObject = JSONObject.parseObject(input);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        transactionCapsule.setDeferredSeconds(delaySeconds);
-      }
       transactionCapsule.sign(privateKey);
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());

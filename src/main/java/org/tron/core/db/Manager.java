@@ -1517,7 +1517,7 @@ public class Manager {
     } // end of while
 
     session.reset();
-    if (processedDeferredTrxCount > 0) {
+    if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
