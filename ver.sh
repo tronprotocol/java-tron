@@ -1,14 +1,14 @@
 #!/bin/bash
-
+set -x 
 currentBranch=`git rev-parse --abbrev-ref HEAD`
 
 if [ "$currentBranch"x != "master"x ]
 then
   echo The current branch is not master. Please checkout into master.
   exit 1
+else
+  git pull origin master
 fi
-
-git pull origin master
 
 versionName=`git describe --tags`
 versionCode=`git rev-list HEAD --count`
