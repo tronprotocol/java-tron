@@ -1,14 +1,14 @@
-pragma solidity ^0.4.24;
+//pragma solidity ^0.4.24;
 
  contract Test {
 		    event log(uint256);
- 		    function testMsgTokenValue() payable returns(uint256 value) {
-		        log(msg.tokenvalue);
+ 		    function testMsgTokenValue() payable public returns(uint256 value) {
+		        emit log(msg.tokenvalue);
  		        return msg.tokenvalue;
  		    }
 
- 		    function testMsgValue() payable returns(uint256 value) {
- 		        log(msg.value);
+ 		    function testMsgValue() payable public returns(uint256 value) {
+ 		        emit log(msg.value);
  		        return msg.value;
 		    }
      		}
