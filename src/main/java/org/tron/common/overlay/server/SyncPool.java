@@ -117,13 +117,6 @@ public class SyncPool {
       }
     });
 
-    channelManager.getFastForwardNodes().forEach((address, node) -> {
-      nodesInUse.add(node.getHexId());
-      if (!addressInUse.contains(address)) {
-        connectNodes.add(nodeManager.getNodeHandler(node));
-      }
-    });
-
     int size = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
         (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
     int lackSize = size - connectNodes.size();

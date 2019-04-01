@@ -38,20 +38,20 @@ public class FastForward {
 
   private BackupManager backupManager;
 
-  private Args args = Args.getInstance();
-
-  private byte[] witnessAddress = args.getLocalWitnesses().getWitnessAccountAddress();
-
-  private List<Node> fastForwardNodes = Lists.newArrayList(Node.instanceOf("47.90.208.194:18888"));
-
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
+  private Args args = Args.getInstance();
+  private List<Node> fastForwardNodes = args.getFastForwardNodes();
+  private byte[] witnessAddress = args.getLocalWitnesses().getWitnessAccountAddress();
+  private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
+
 
   public void init() {
 
-    logger.info("Init fast forward, isWitness: {}, key size: {}", args.isWitness(),
-        args.getLocalWitnesses().getPrivateKeys().size());
+    logger.info("Fast forward config, isWitness: {}, keySize: {}, fastForwardNodes: {}",
+        args.isWitness(), keySize, fastForwardNodes.size());
 
-    if (!args.isWitness() || args.getLocalWitnesses().getPrivateKeys().size() == 0) {
+    if (!args.isWitness() || keySize == 0 || fastForwardNodes.size() == 0) {
       return;
     }
 
@@ -83,16 +83,14 @@ public class FastForward {
   private void connect() {
     fastForwardNodes.forEach(node -> {
       InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
-      channelManager.getFastForwardNodes().put(address, node);
-      channelManager.getTrustNodes().put(address, node);
+      channelManager.getActiveNodes().put(address, node);
     });
   }
 
   private void disconnect() {
     fastForwardNodes.forEach(node -> {
       InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
-      channelManager.getFastForwardNodes().remove(address);
-      channelManager.getTrustNodes().remove(address);
+      channelManager.getActiveNodes().remove(address);
       channelManager.getActivePeers().forEach(channel -> {
         if (channel.getNode().equals(node)) {
           channel.disconnect(ReasonCode.RESET);

@@ -86,7 +86,7 @@ public class ChannelManager {
       fastForwardNodes.put(address, node);
     }
 
-    logger.info("Peer config, trust {}, active {}, forward {}.",
+    logger.info("Node config, trust {}, active {}, forward {}.",
         trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
     syncPool.init();
