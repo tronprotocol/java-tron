@@ -1,13 +1,13 @@
 //pragma solidity ^0.4.19;
 contract Doug{
  mapping (bytes32 => uint) public contracts;
- function Doug() {
+ constructor() public{
  contracts['hww'] = 1;
  contracts['brian'] = 2;
  contracts['zzy'] = 7;
  }
- 
- function getDougName(string _name) public view returns(string) {
+
+ function getDougName(string memory _name) public view returns(string memory) {
  return _name;
  }
  

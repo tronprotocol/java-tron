@@ -2,7 +2,7 @@
 contract Feline {
  function utterance() public returns (bytes32);
 
- function getContractName() public returns (string){
+ function getContractName() public returns (string memory){
  return "Feline";
  }
 }

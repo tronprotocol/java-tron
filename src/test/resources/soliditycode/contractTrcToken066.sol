@@ -1,14 +1,14 @@
 //pragma solidity ^0.4.24;
 contract transferTokenContract {
     constructor() payable public{}
-    function() payable public{}
-    function transferTokenTest(address toAddress, uint256 tokenValue, trcToken id) payable public  {
+    function() payable external{}
+    function transferTokenTest(address payable toAddress, uint256 tokenValue, trcToken id) payable public  {
             toAddress.transferToken(tokenValue, id);
     }
-    function transferTokenTestIDOverBigInteger(address toAddress) payable public  {
+    function transferTokenTestIDOverBigInteger(address payable toAddress) payable public  {
         toAddress.transferToken(1, 9223372036854775809);
     }
-    function transferTokenTestValueRandomIdBigInteger(address toAddress) payable public  {
+    function transferTokenTestValueRandomIdBigInteger(address payable toAddress) payable public  {
         toAddress.transferToken(1, 36893488147420103233);
     }
     function msgTokenValueAndTokenIdTest() public payable returns(trcToken, uint256){
@@ -27,9 +27,9 @@ contract transferTokenContract {
 
 
 contract Result {
-   Event log(uint256,uint256,uint256);
+   event log(uint256,uint256,uint256);
    constructor() payable public{}
-    function() payable public{
+    function() payable external{
          emit log(msg.tokenid,msg.tokenvalue,msg.value);
     }
 }
