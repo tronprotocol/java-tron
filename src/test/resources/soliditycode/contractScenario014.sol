@@ -1,8 +1,34 @@
-//pragma solidity ^0.4.0;
-contract timetest {
+pragma solidity ^0.4.0;
+contract Contract1 {
+    constructor() payable{}
+    function send5SunToReceiver(address _receiver) payable public{
+        _receiver.transfer(5);
+    }
+}
+contract contract2 {
+    address public payContract;
 
-function time() public{
-require(1 trx == 1000000 sun);
+    constructor(address _add) payable public{
+        payContract = _add;
+    }
+
+    function triggerContract1(address _receiver) payable public{
+        payContract.call(bytes4(keccak256("send5SunToReceiver(address)")),_receiver);
+    }
+
+    function triggerContract1ButRevert(address _receiver) payable public{
+        payContract.call(bytes4(keccak256("send5SunToReceiver(address)")),_receiver);
+        require(1 == 2);
+    }
 
 }
+contract contract3 {
+    address public payContract;
+    constructor(address _add) payable public{
+        payContract = _add;
+    }
+
+    function triggerContract2(address _receiver) payable public{
+        payContract.call(bytes4(keccak256("triggerContract1(address)")),_receiver);
+    }
 }
