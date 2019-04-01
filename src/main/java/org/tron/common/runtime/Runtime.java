@@ -10,7 +10,7 @@ import org.tron.core.exception.VMIllegalException;
 
 public interface Runtime {
 
-  boolean isCallConstant() throws ContractValidateException;
+  boolean isCallConstant();
 
   void execute() throws ContractValidateException, ContractExeException, VMIllegalException;
 

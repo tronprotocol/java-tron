@@ -1515,12 +1515,30 @@ public class RpcApiService implements Service {
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
+
+      callContract(request, responseObserver, false);
+    }
+
+    @Override
+    public void triggerConstantContract(Contract.TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+
+      callContract(request, responseObserver, true);
+    }
+
+    private void callContract(Contract.TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver, boolean isConstant) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        Transaction trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+        Transaction trx;
+        if (isConstant) {
+          trx = wallet.triggerConstantContract(request, trxCap, trxExtBuilder, retBuilder);
+        } else {
+          trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+        }
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);

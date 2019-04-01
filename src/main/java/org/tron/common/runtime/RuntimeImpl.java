@@ -89,7 +89,7 @@ public class RuntimeImpl implements Runtime {
 
   //tx trace
   private TransactionTrace trace;
-  private boolean isStaticCall;
+  private boolean isStaticCall = false;
 
   @Setter
   private boolean enableEventLinstener;
@@ -541,8 +541,7 @@ public class RuntimeImpl implements Runtime {
       }
       AccountCapsule caller = this.deposit.getAccount(callerAddress);
       long energyLimit;
-      if (isCallConstant(contractAddress)) {
-        isStaticCall = true;
+      if (isStaticCall) {
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
         AccountCapsule creator = this.deposit
@@ -612,7 +611,7 @@ public class RuntimeImpl implements Runtime {
         vm.play(program);
         result = program.getResult();
 
-        if (isCallConstant()) {
+        if (isStaticCall) {
           long callValue = TransactionCapsule.getCallValue(trx.getRawData().getContract(0));
           long callTokenValue = TransactionCapsule
               .getCallTokenValue(trx.getRawData().getContract(0));
@@ -681,8 +680,6 @@ public class RuntimeImpl implements Runtime {
       result.rejectInternalTransactions();
       runtimeError = result.getException().getMessage();
       logger.info("timeout: {}", result.getException().getMessage());
-    } catch (ContractValidateException e) {
-      logger.info("when check constant, {}", e.getMessage());
     } catch (Throwable e) {
       program.spendAllEnergy();
       result = program.getResult();
@@ -708,38 +705,8 @@ public class RuntimeImpl implements Runtime {
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
   }
 
-  public boolean isCallConstant() throws ContractValidateException {
-
-    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
-        .getTriggerContractFromTransaction(trx);
-    if (TrxType.TRX_CONTRACT_CALL_TYPE == trxType) {
-
-      ContractCapsule contract = deposit
-          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
-      if (contract == null) {
-        logger.info("contract: {} is not in contract store", Wallet
-            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
-        throw new ContractValidateException("contract: " + Wallet
-            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
-            + " is not in contract store");
-      }
-      ABI abi = contract.getInstance().getAbi();
-      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isCallConstant(byte[] address) throws ContractValidateException {
-
-    if (TrxType.TRX_CONTRACT_CALL_TYPE == trxType) {
-      ABI abi = deposit.getContract(address).getInstance().getAbi();
-      if (Wallet.isConstant(abi, ContractCapsule.getTriggerContractFromTransaction(trx))) {
-        return true;
-      }
-    }
-    return false;
+  public boolean isCallConstant() {
+    return isStaticCall;
   }
 
   public void finalization() {
