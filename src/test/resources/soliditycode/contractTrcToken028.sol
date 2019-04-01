@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+//pragma solidity ^0.4.24;
 
 contract token{
     uint256 public a=1;
@@ -13,7 +13,7 @@ contract token{
 contract B{
     uint256 public  flag =0;
     constructor() public payable{}
-    function() public payable{}
+    function() external payable{}
     function tokenBalance(trcToken id) payable public returns(uint256){
         flag =9;
         return flag;

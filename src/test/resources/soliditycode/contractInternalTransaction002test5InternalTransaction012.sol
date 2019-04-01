@@ -1,18 +1,18 @@
-pragma solidity ^0.4.24;
+//pragma solidity ^0.4.24;
 
 contract A{
     constructor() payable public{}
-    function() payable public{}
+    function() payable external{}
     function test1(address bAddr,address eAddr) public payable{
-        bAddr.call.value(1)(bytes4(keccak256("testNN(address)")),eAddr);//2.1
+        bAddr.call.value(1)(abi.encode(bytes4(keccak256("testNN(address)")),eAddr));//2.1
     }
 
 }
 
 contract B{
     constructor() payable public{}
-    function() payable public{}
-    function getOne() payable returns(uint256){
+    function() payable external{}
+    function getOne() payable public returns(uint256){
         return 1;
     }
     function testNN(address eAddress) public payable{
@@ -23,7 +23,7 @@ contract B{
 
 contract C{
     constructor() payable public{}
-    function() payable public{}
+    function() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }
@@ -33,7 +33,7 @@ contract C{
 }
 contract E{
     constructor() payable public{}
-    function() payable public{}
+    function() payable external{}
     function getZero() payable public returns(uint256){
         return 0;
     }
@@ -43,9 +43,9 @@ contract E{
 }
 contract D{
     constructor() payable public{}
-    function() payable public{}
-    function getOne(address eAddress) payable returns(uint256){
-        eAddress.call.value(1)(bytes4(keccak256("getZero()")));//2.1
+    function() payable external{}
+    function getOne(address eAddress) payable public returns(uint256){
+        eAddress.call.value(1)(abi.encode(bytes4(keccak256("getZero()"))));//2.1
     }
 
 }

@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+//pragma solidity ^0.4.19;
 contract Doug{
  mapping (bytes32 => uint) public contracts;
  function Doug() {

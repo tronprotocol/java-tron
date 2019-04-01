@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+//pragma solidity ^0.4.19;
 
 contract main{
 
@@ -20,7 +20,7 @@ contract main{
  // return num;
  }
 
- function uintOfName(bytes32 _name) returns (uint) {
+ function uintOfName(bytes32 _name) public returns (uint) {
 
  dogContract.contracts(_name);
  FetchContract(dogInterfaceAddress, msg.sender, _name);

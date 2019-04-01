@@ -1,11 +1,11 @@
-pragma solidity ^0.4.0;
-contract byteContract {
+pragma solidity >0.5.0;
+contract byteContract{
 bytes b;
-function testBytesGet(uint i) returns (bytes1){
+function testBytesGet(uint i) public returns (bytes1){
 b = new bytes(3);
-b[0]=12;
-b[1]=13;
-b[2]=14;
+b[0]=0x0b;
+b[1]=0x0c;
+b[2]=0x0d;
 return b[i];
 }
 }

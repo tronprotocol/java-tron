@@ -1,8 +1,9 @@
-pragma solidity ^0.4.4;
+//pragma solidity ^0.4.4;
 contract Counter {
 uint count = 0;
 address owner;
-function Counter() {
+//function Counter() public{
+constructor() public{
 owner = msg.sender;
 }
 function increment() public {
@@ -11,12 +12,13 @@ if (owner == msg.sender) {
 count = count + step;
 }
 }
-function getCount()  returns (uint) {
+function getCount() public returns (uint){
 return count;
 }
-function kill() {
+function kill() public{
 if (owner == msg.sender) {
-selfdestruct(owner);
+//selfdestruct(owner);
+//selfdestruct(address(owner));
 }
 }
 }

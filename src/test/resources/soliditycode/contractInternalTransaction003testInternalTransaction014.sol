@@ -1,28 +1,29 @@
-pragma solidity ^0.4.24;
+//pragma solidity ^0.4.24;
 
 contract callerContract {
-    constructor() payable{}
-    function() payable{}
+    constructor() payable public{}
+    function() payable external{}
     function sendToB(address called_address,address c) public payable{
-       called_address.delegatecall(bytes4(keccak256("transferTo(address)")),c);
+       called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
     function sendToB2(address called_address,address c) public payable{
-        called_address.call(bytes4(keccak256("transferTo(address)")),c);
+        called_address.call(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
     function sendToB3(address called_address,address c) public payable{
-        called_address.callcode(bytes4(keccak256("transferTo(address)")),c);
+        //called_address.callcode(bytes4(keccak256("transferTo(address)")),c);
+        called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
     }
 }
 
    contract calledContract {
-        function() payable{}
-       constructor() payable {}
-       function transferTo(address toAddress)public payable{
+        function() payable external{}
+       constructor() payable public{}
+       function transferTo(address payable toAddress)public payable{
            toAddress.transfer(5);
        }
 
        function setIinC(address c) public payable{
-           c.call.value(5)(bytes4(keccak256("setI()")));
+           c.call.value(5)(abi.encode(bytes4(keccak256("setI()"))));
        }
 
    }
@@ -31,10 +32,10 @@ contract callerContract {
        uint256 public i=0;
        constructor() public payable{}
        function getBalance() public view returns(uint256){
-           return this.balance;
+           return address(this).balance;
        }
-       function setI() payable{
+       function setI() payable public{
            i=5;
        }
-       function() payable{}
+       function() payable external{}
    }

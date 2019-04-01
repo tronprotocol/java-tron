@@ -1,4 +1,4 @@
-pragma solidity ^0.4.24;
+//pragma solidity ^0.4.24;
 
 interface PlayerBookInterface {
     function getPlayerID(address _addr) external returns (uint256);
