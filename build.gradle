@@ -51,6 +51,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url 'http://repo.spring.io/plugins-release' }
+    maven { url 'https://jitpack.io' }
 }
 def versions = [
         checkstyle: '8.7',
@@ -180,6 +181,8 @@ dependencies {
 
     compile "io.vavr:vavr:0.9.2"
     compile group: 'org.pf4j', name: 'pf4j', version: '2.5.0'
+    implementation 'com.github.tronprotocol:chainbase:init-SNAPSHOT'
+
 }
 
 check.dependsOn 'lint'
