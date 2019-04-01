@@ -36,6 +36,9 @@ public class ChannelManager {
   @Autowired
   private SyncPool syncPool;
 
+  @Autowired
+  private FastForward fastForward;
+
   private Args args = Args.getInstance();
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
@@ -87,6 +90,7 @@ public class ChannelManager {
         trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
     syncPool.init();
+    fastForward.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {
