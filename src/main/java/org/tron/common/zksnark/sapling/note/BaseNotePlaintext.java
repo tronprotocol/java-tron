@@ -83,37 +83,28 @@ public class BaseNotePlaintext {
 
     public static Optional<NotePlaintext> decrypt(
         NoteEncryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu) {
-      //      auto pt = AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
-      ////      if (!pt) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      // Deserialize from the plaintext
-      ////      CDataStream ss (SER_NETWORK, PROTOCOL_VERSION);
-      ////      ss << pt.get();
-      ////
-      ////      NotePlaintext ret;
-      ////      ss >> ret;
-      ////
-      ////      byte[] cmu_expected;
-      ////      if (!librustzcash_sapling_compute_cm(
-      ////          ret.d.data(),
-      ////          pk_d.begin(),
-      ////          ret.value(),
-      ////          ret.rcm.begin(),
-      ////          cmu_expected.begin()
-      ////      )) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      if (cmu_expected != cmu) {
-      ////        return Optional.empty();
-      ////      }
-      ////
-      ////      assert (ss.size() == 0);
-      ////
-      ////      return ret;
-      return null;
+      Optional<NoteEncryption.EncPlaintext> pt =
+              NoteEncryption.AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
+      if (!pt.isPresent()) {
+        return Optional.empty();
+      }
+
+      NotePlaintext ret = NotePlaintext.decode(pt.get());
+
+      byte[] cmu_expected = new byte[32];
+      if (!Librustzcash.librustzcashSaplingComputeCm(
+              ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected)) {
+        return Optional.empty();
+      }
+
+      if (!Arrays.equals(cmu, cmu_expected)) {
+        return Optional.empty();
+      }
+
+      //TODO
+      //assert(ss.size() == 0);
+
+      return Optional.of(ret);
     }
 
     public Optional<SaplingNotePlaintextEncryptionResult> encrypt(byte[] pk_d) {
@@ -150,6 +141,13 @@ public class BaseNotePlaintext {
       buffer.putLong(0, value);
       valueLong =  buffer.array();
 
+      // TODO zcash c++代码是按照大字节序保存的
+      for(int i=0; i<valueLong.length/2; i++) {
+        byte temp = valueLong[i];
+        valueLong[i] = valueLong[valueLong.length - 1 - i];
+        valueLong[valueLong.length - 1 - i] = temp;
+      }
+
       data[0] = 0x01;
       System.arraycopy(d, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
       System.arraycopy(valueLong, 0, data,
@@ -167,28 +165,14 @@ public class BaseNotePlaintext {
       byte[] valueLong = new byte[ZC_V_SIZE];
       ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
 
-//      READWRITE(leadingByte);
-//
-//      if (leadingByte != 0x01) {
-//        throw std::ios_base::failure("lead byte of SaplingNotePlaintext is not recognized");
-//      }
-//
-//      READWRITE(d);           // 11 bytes
-//      READWRITE(value_);      // 8 bytes
-//      READWRITE(rcm);         // 32 bytes
-//      READWRITE(memo_);       // 512 bytes
-
       if(encPlaintext.data[0] != 0x01) {
         throw new RuntimeException("lead byte of SaplingNotePlaintext is not recognized");
       }
 
       NotePlaintext ret = new NotePlaintext();
-      byte[] diversifierData = new byte[ZC_DIVERSIFIER_SIZE]; // ZC_DIVERSIFIER_SIZE
-
       //(ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE + ZC_MEMO_SIZE);
       System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING,
-              diversifierData, 0, ZC_DIVERSIFIER_SIZE);
-      ret.d.setData(diversifierData);
+              ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);
 
       System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE,
               valueLong, 0, ZC_V_SIZE);
@@ -197,7 +181,7 @@ public class BaseNotePlaintext {
       System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
               ret.memo, 0, ZC_MEMO_SIZE);
 
-      // TODO C++是按照大字节序保存的
+      // TODO zcash c++是按照大字节序保存的
       for(int i=0; i<valueLong.length/2; i++) {
         byte temp = valueLong[i];
         valueLong[i] = valueLong[valueLong.length - 1 - i];

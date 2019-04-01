@@ -149,7 +149,49 @@ public class TransactionBuilder {
       odesc.outCiphertext = outPlaintext.encrypt(output.ovk, odesc.cv, odesc.cm, encryptor);
       //todo: add odesc into tx
 //      mtx.vShieldedOutput.push_back(odesc);
+
     }
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256 
+    try {
+//      dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0,
+//          consensusBranchId);
+      dataToBeSigned = null;
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    // Create Sapling spendAuth and binding signatures
+    for (int i = 0; i < spends.size(); i++) {
+      byte[] result = null;
+      Librustzcash.librustzcashSaplingSpendSig(
+          spends.get(i).expsk.getAsk(),
+          spends.get(i).alpha,
+          dataToBeSigned,
+//          mtx.vShieldedSpend[i].spendAuthSig.data());
+          result);
+    }
+
+    long valueBalance = 0;
+    byte[] bindingSig = null;
+    Librustzcash.librustzcashSaplingBindingSig(
+        ctx,
+//        mtx.valueBalance,
+        valueBalance,
+        dataToBeSigned,
+//        mtx.bindingSig.data()
+        bindingSig
+    );
+
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+
+    // Transparent signatures
+//    for (int nIn = 0; nIn < mtx.vin.size(); nIn++) {
+//
+//    }
+
     return null;
   }
 
