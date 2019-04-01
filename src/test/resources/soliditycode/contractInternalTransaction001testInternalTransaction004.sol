@@ -2,7 +2,7 @@
 
 contract A{
     constructor () payable public{}
-    function suicide(address payable toAddress) public payable{
+    function selfdestruct(address toAddress) public payable{
         selfdestruct(toAddress);
     }
     function () payable external{}
@@ -16,7 +16,7 @@ contract B{
     }
     function kill2() public{
         A a = new A();
-        a.suicide(address(this));
+        a.selfdestruct(address(this));
     }
     function getBalance() public view returns(uint256){
         return address(this).balance;
