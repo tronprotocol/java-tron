@@ -74,7 +74,8 @@ public class UpdateEnergyLimitContractActuatorTest {
 
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    dbManager.getDynamicPropertiesStore().statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     VMConfig.initVmHardFork();
   }
 

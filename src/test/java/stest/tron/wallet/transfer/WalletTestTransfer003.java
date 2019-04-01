@@ -64,9 +64,9 @@ public class WalletTestTransfer003 {
   private static Protocol.Transaction sendCoinTransaction;
 
   private String fullnode = Configuration.getByPath("testng.conf")
-          .getStringList("fullnode.ip.list").get(0);
+      .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
-          .getStringList("fullnode.ip.list").get(1);
+      .getStringList("fullnode.ip.list").get(1);
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
 
@@ -122,20 +122,18 @@ public class WalletTestTransfer003 {
     newAccountAddress = ecKey2.getAddress();
     testKeyForNewAccount = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-
-    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress,200000L,
-        fromAddress,testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(sendCoinAddress, 200000L,
+        fromAddress, testKey002, blockingStubFull));
     Long feeNum = 0L;
     Long netNum = 0L;
     Long sendNum = 0L;
     Long feeCost = 0L;
     Long times = 0L;
-    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
+    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin, blockingStubFull);
     final Long beforeBalance = sendAccountInfo.getBalance();
     Long netUsed1 = 0L;
     Long netUsed2 = 1L;
     logger.info("Before test, the account balance is " + Long.toString(beforeBalance));
-
 
     while (!(netUsed1.equals(netUsed2))) {
       sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin, blockingStubFull);
@@ -157,7 +155,7 @@ public class WalletTestTransfer003 {
         TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
         Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
         logger.info("solidity block num is " + Long.toString(getTransactionById
-                .get().getBlockNumber()));
+            .get().getBlockNumber()));
         Assert.assertTrue(getTransactionById.get().getBlockNumber() > 0);
       }
 
@@ -176,7 +174,7 @@ public class WalletTestTransfer003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
-          .getRawData().toByteArray()));
+        .getRawData().toByteArray()));
     logger.info(txId);
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
@@ -184,19 +182,19 @@ public class WalletTestTransfer003 {
     Optional<TransactionInfo> getTransactionById = Optional.ofNullable(transactionInfo);
     logger.info(getTransactionById.get().toString());
     logger.info("when use fee, the block num is " + Long.toString(getTransactionById
-            .get().getBlockNumber()));
+        .get().getBlockNumber()));
     Assert.assertTrue(getTransactionById.get().getFee() > 0);
     Assert.assertTrue(getTransactionById.get().getBlockNumber() > 0);
   }
 
   @Test(enabled = true)
   public void test2CreateAccountUseFee() {
-    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
+    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin, blockingStubFull);
     final Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("before balance " + Long.toString(beforeBalance));
     Long times = 0L;
-    sendCoinTransaction = sendcoin(newAccountAddress,1L,sendCoinAddress,
-        testKeyForSendCoin,blockingStubFull);
+    sendCoinTransaction = sendcoin(newAccountAddress, 1L, sendCoinAddress,
+        testKeyForSendCoin, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
     String txId = ByteArray.toHexString(Sha256Hash.hash(sendCoinTransaction
@@ -210,7 +208,7 @@ public class WalletTestTransfer003 {
     logger.info("In create account case, the fee is " + getTransactionById.get().getFee());
     Assert.assertTrue(getTransactionById.get().getFee() == createUseFee);
 
-    sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
+    sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin, blockingStubFull);
     final Long afterBalance = sendAccountInfo.getBalance();
     logger.info("after balance " + Long.toString(afterBalance));
     Assert.assertTrue(afterBalance + 1L + createUseFee == beforeBalance);
@@ -222,9 +220,8 @@ public class WalletTestTransfer003 {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubFull.getTransactionById(request);
-    Optional<Transaction>  getTransactionById = Optional.ofNullable(transaction);
+    Optional<Transaction> getTransactionById = Optional.ofNullable(transaction);
     Assert.assertTrue(getTransactionById.get().getRawData().getContractCount() == 0);
-
 
     txId = "1";
     bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -237,12 +234,12 @@ public class WalletTestTransfer003 {
   @Test(enabled = true)
   public void test4NoBalanceCanSend() {
     Long feeNum = 0L;
-    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin,blockingStubFull);
+    Account sendAccountInfo = PublicMethed.queryAccount(testKeyForSendCoin, blockingStubFull);
     Long beforeBalance = sendAccountInfo.getBalance();
     logger.info("Before test, the account balance is " + Long.toString(beforeBalance));
     while (feeNum < 250) {
-      sendCoinTransaction = sendcoin(fromAddress,10L,sendCoinAddress,
-          testKeyForSendCoin,blockingStubFull);
+      sendCoinTransaction = sendcoin(fromAddress, 10L, sendCoinAddress,
+          testKeyForSendCoin, blockingStubFull);
       feeNum++;
     }
     Assert.assertTrue(PublicMethed.waitProduceNextBlock(blockingStubFull));
@@ -265,6 +262,7 @@ public class WalletTestTransfer003 {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -292,6 +290,7 @@ public class WalletTestTransfer003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -301,6 +300,7 @@ public class WalletTestTransfer003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -320,6 +320,7 @@ public class WalletTestTransfer003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -358,6 +359,7 @@ public class WalletTestTransfer003 {
 
     return transaction;
   }
+
   /**
    * constructor.
    */

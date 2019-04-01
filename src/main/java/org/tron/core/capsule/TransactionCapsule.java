@@ -331,7 +331,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -578,7 +578,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }

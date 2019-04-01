@@ -86,6 +86,7 @@ public class ContractTrcToken039 {
             testKey002, blockingStubFull));
     logger.info(
         "dev001Address:" + Base58.encode58Check(dev001Address));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
         .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));

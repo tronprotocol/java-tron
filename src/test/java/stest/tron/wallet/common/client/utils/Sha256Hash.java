@@ -66,6 +66,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   public long getBlockNum() {
     return blockNum;
   }
+
   /**
    * constructor.
    */
@@ -76,6 +77,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
     this.bytes = rawHashBytes;
     this.blockNum = num;
   }
+
   /**
    * constructor.
    */

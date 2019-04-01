@@ -26,8 +26,8 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
-import org.tron.common.storage.DBSettings;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -116,7 +116,19 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   @Override
   public long getTotal() throws RuntimeException {
-    return 0;
+    if (quitIfNotAlive()) {
+      return 0;
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iterator = database.newIterator()) {
+      long total = 0;
+      for (iterator.seekToFirst(); iterator.isValid(); iterator.next()) {
+        total++;
+      }
+      return total;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override
@@ -148,7 +160,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
     }
     engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("ROCKSDB")) {
+    if ("ROCKSDB".equals(engine)) {
       return true;
     } else {
       return false;
@@ -160,10 +172,10 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       logger.error("database engine do not match");
       throw new RuntimeException("Failed to initialize database");
     }
-    initDB(DBSettings.getSettings());
+    initDB(RocksDbSettings.getSettings());
   }
 
-  public void initDB(DBSettings settings) {
+  public void initDB(RocksDbSettings settings) {
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {
@@ -192,7 +204,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
         options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
         options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
         options.setMaxBackgroundCompactions(settings.getCompactThreads());
-        options.setCompressionPerLevel(settings.getCompressionTypeList());
         options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
         options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
         options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
@@ -482,7 +493,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public void backup(String dir) throws RocksDBException {
-    Checkpoint.create(database).createCheckpoint(dir + this.getDBName());
+    Checkpoint cp = Checkpoint.create(database);
+    cp.createCheckpoint(dir + this.getDBName());
   }
 
   public boolean deleteDbBakPath(String dir) {

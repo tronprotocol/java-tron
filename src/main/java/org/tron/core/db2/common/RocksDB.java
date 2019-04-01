@@ -1,6 +1,5 @@
 package org.tron.core.db2.common;
 
-
 import com.google.common.collect.Maps;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -20,7 +19,8 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
       .sync(Args.getInstance().getStorage().isDbSync());
 
   public RocksDB(String parentName, String name) {
-    db = new RocksDbDataSourceImpl(Paths.get(parentName, Args.getInstance().getStorage().getDbDirectory()).toString(), name);
+    db = new RocksDbDataSourceImpl(
+        Paths.get(parentName, Args.getInstance().getStorage().getDbDirectory()).toString(), name);
     db.initDB();
   }
 

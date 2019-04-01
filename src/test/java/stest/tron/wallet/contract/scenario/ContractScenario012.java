@@ -58,6 +58,7 @@ public class ContractScenario012 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -78,8 +79,8 @@ public class ContractScenario012 {
     contract012Address = ecKey1.getAddress();
     contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract012Address, 2000000000L, fromAddress,
+        testKey002, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -89,12 +90,12 @@ public class ContractScenario012 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "TransactionCoin";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario012_deployTransactionCoin");
+        .getString("code.code_ContractScenario012_deployTransactionCoin");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario012_deployTransactionCoin");
-    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract012Key,contract012Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+        .getString("abi.abi_ContractScenario012_deployTransactionCoin");
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contract012Key, contract012Address, blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
   }
 
@@ -118,7 +119,6 @@ public class ContractScenario012 {
   }
 
 
-
   @Test(enabled = true)
   public void test3TriggerTransactionCanNotCreateAccount() {
     ecKey2 = new ECKey(Utils.getRandom());
@@ -126,15 +126,15 @@ public class ContractScenario012 {
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress,1000000000L,toAddress,
-            testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
+        testKey003, blockingStubFull));
 
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
     //In smart contract, you can't create account
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddressParam, false,
-            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        "sendToAddress2(address)", receiveAddressParam, false,
+        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -147,17 +147,16 @@ public class ContractScenario012 {
   }
 
 
-
   @Test(enabled = true)
   public void test4TriggerTransactionCoin() {
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
     //This time, trigger the methed sendToAddress2 is OK.
-    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,toAddress,
-        testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress, 10000000L, toAddress,
+        testKey003, blockingStubFull));
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddressParam, false,
-            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        "sendToAddress2(address)", receiveAddressParam, false,
+        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);

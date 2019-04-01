@@ -33,7 +33,8 @@ public class CreateAccountActuator extends AbstractActuator {
       AccountCapsule accountCapsule = new AccountCapsule(accountCreateContract,
           dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
 
-      dbManager.getAccountStore().put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
+      dbManager.getAccountStore()
+          .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
       dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address

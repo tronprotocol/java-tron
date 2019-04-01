@@ -45,7 +45,7 @@ public class InterpreterTest {
   public void testVMException() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
-    byte[] op = { 0x5b, 0x60, 0x00, 0x56 };
+    byte[] op = {0x5b, 0x60, 0x00, 0x56};
     // 0x5b      - JUMPTEST
     // 0x60 0x00 - PUSH 0x00
     // 0x56      - JUMP to 0
@@ -70,7 +70,7 @@ public class InterpreterTest {
   public void JumpSingleOperation() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
-    byte[] op = { 0x56 };
+    byte[] op = {0x56};
     // 0x56      - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
@@ -94,7 +94,7 @@ public class InterpreterTest {
   public void JumpToInvalidDestination() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
-    byte[] op = { 0x60, 0x20,0x56 };
+    byte[] op = {0x60, 0x20, 0x56};
     // 0x60      - PUSH1
     // 0x20      - 20
     // 0x56      - JUMP
@@ -121,7 +121,7 @@ public class InterpreterTest {
   public void JumpToLargeNumberDestination() throws ContractValidateException {
     VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
-    byte[] op = { 0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f,0x56 };
+    byte[] op = {0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x56};
     // 0x60              - PUSH5
     // 0x7F7F7F7F7F      - 547599908735
     // 0x56              - JUMP
@@ -145,7 +145,7 @@ public class InterpreterTest {
   }
 
   @AfterClass
-  public static void destroy(){
+  public static void destroy() {
     Args.clearParam();
   }
 }

@@ -34,6 +34,7 @@ import org.tron.core.exception.TronException;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
@@ -67,6 +68,8 @@ public class WitnessService implements Service {
 
   private BackupServer backupServer;
 
+  private TronNetService tronNetService;
+
   private AtomicInteger dupBlockCount = new AtomicInteger(0);
   private AtomicLong dupBlockTime = new AtomicLong(0);
   private long blockCycle =
@@ -80,6 +83,7 @@ public class WitnessService implements Service {
     this.context = context;
     backupManager = context.getBean(BackupManager.class);
     backupServer = context.getBean(BackupServer.class);
+    tronNetService = context.getBean(TronNetService.class);
     generateThread = new Thread(scheduleProductionLoop);
     manager = tronApp.getDbManager();
     manager.setWitnessService(this);
@@ -306,7 +310,7 @@ public class WitnessService implements Service {
 
   private void broadcastBlock(BlockCapsule block) {
     try {
-      tronApp.getP2pNode().broadcast(new BlockMessage(block.getData()));
+      tronNetService.broadcast(new BlockMessage(block.getData()));
     } catch (Exception ex) {
       throw new RuntimeException("BroadcastBlock error");
     }
@@ -384,7 +388,7 @@ public class WitnessService implements Service {
 
     WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
         .get(witnessAccountAddress);
-      // need handle init witness
+    // need handle init witness
     if (null == witnessCapsule) {
       logger.warn("WitnessCapsule[" + witnessAccountAddress + "] is not in witnessStore");
       witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAccountAddress));

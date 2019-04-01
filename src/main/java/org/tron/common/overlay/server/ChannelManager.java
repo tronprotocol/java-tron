@@ -27,6 +27,17 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ChannelManager {
 
+  @Autowired
+  private PeerServer peerServer;
+
+  @Autowired
+  private PeerClient peerClient;
+
+  @Autowired
+  private SyncPool syncPool;
+
+  private Args args = Args.getInstance();
+
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
@@ -38,24 +49,9 @@ public class ChannelManager {
   @Getter
   private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
 
-  private Args args = Args.getInstance();
-
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
-
-  private PeerServer peerServer;
-
-  private PeerClient peerClient;
-
-  @Autowired
-  private SyncPool syncPool;
-
-  @Autowired
-  private ChannelManager(final PeerServer peerServer, final PeerClient peerClient) {
-    this.peerServer = peerServer;
-    this.peerClient = peerClient;
-  }
 
   public void init() {
     if (this.args.getNodeListenPort() > 0) {
@@ -67,6 +63,8 @@ public class ChannelManager {
       trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
     }
     logger.info("Trust peer size {}", trustPeers.size());
+
+    syncPool.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {
@@ -164,5 +162,6 @@ public class ChannelManager {
   public void close() {
     peerServer.close();
     peerClient.close();
+    syncPool.close();
   }
 }

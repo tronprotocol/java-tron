@@ -54,16 +54,16 @@ public class TvmContract {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contract008Address,500000000L,fromAddress,
-        testKey002,blockingStubFull));
-    logger.info(Long.toString(PublicMethed.queryAccount(contract008Key,blockingStubFull)
+    Assert.assertTrue(PublicMethed.sendcoin(contract008Address, 500000000L, fromAddress,
+        testKey002, blockingStubFull));
+    logger.info(Long.toString(PublicMethed.queryAccount(contract008Key, blockingStubFull)
         .getBalance()));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract008Address, 1000000L,
-        3,1,contract008Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.buyStorage(50000000L,contract008Address,contract008Key,
+        3, 1, contract008Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.buyStorage(50000000L, contract008Address, contract008Key,
         blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(contract008Address,5000000L,
-        3,contract008Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(contract008Address, 5000000L,
+        3, contract008Key, blockingStubFull));
 
   }
 
@@ -83,29 +83,29 @@ public class TvmContract {
     Long maxFeeLimit = 50000000L;
     String contractName = "ERC721";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_TvmContract_deployErc721CryptoKitties");
+        .getString("code.code_TvmContract_deployErc721CryptoKitties");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_TvmContract_deployErc721CryptoKitties");
+        .getString("abi.abi_TvmContract_deployErc721CryptoKitties");
     Long m = 0L;
     Long freeNet;
-    accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract008Address, blockingStubFull);
     Long net = accountResource.getFreeNetUsed();
-    Account account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
+    Account account = PublicMethed.queryAccount(contract008Key, blockingStubFull);
     Long netUsed = account.getNetUsage();
     logger.info("before net used is " + Long.toString(netUsed));
     logger.info("before balance is " + account.getBalance());
 
     for (Integer i = 0; i < 1; i++) {
-      byte[] contractAddress = PublicMethed.deployContract("1",abi,code,"",
-          30000000L,0L, 1,null,contract008Key,contract008Address,blockingStubFull);
-      accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
+      byte[] contractAddress = PublicMethed.deployContract("1", abi, code, "",
+          30000000L, 0L, 1, null, contract008Key, contract008Address, blockingStubFull);
+      accountResource = PublicMethed.getAccountResource(contract008Address, blockingStubFull);
       freeNet = accountResource.getFreeNetUsed();
       energyUsage = accountResource.getEnergyUsed();
       logger.info(
           "Time " + Integer.toString(i) + ": energy usage is " + Long.toString(energyUsage - m));
       logger.info("Time " + Integer.toString(i) + ": free net used is " + Long
           .toString(freeNet - net));
-      account = PublicMethed.queryAccount(contract008Key,blockingStubFull);
+      account = PublicMethed.queryAccount(contract008Key, blockingStubFull);
       logger.info("after balance is " + account.getBalance());
       netUsed = account.getNetUsage();
       logger.info("after net used is " + Long.toString(netUsed));
@@ -125,7 +125,7 @@ public class TvmContract {
     //Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
     //logger.info(smartContract.getName());
     //logger.info(smartContract.getAbi().toString());
-    accountResource = PublicMethed.getAccountResource(contract008Address,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract008Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     storageLimit = accountResource.getStorageLimit();
     energyUsage = accountResource.getEnergyUsed();
@@ -140,6 +140,7 @@ public class TvmContract {
     logger.info("after storage limit is " + Long.toString(storageLimit));
     logger.info("after storage usaged is " + Long.toString(storageUsage));
   }
+
   /**
    * constructor.
    */

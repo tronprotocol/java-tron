@@ -588,7 +588,8 @@ public class MultiSign11 {
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey01)
             + "\",\"weight\":2147483647}]},"
-            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":10,"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\""
+            + ",\"threshold\":10,"
             + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey) + "\",\"weight\":2},"
@@ -920,6 +921,7 @@ public class MultiSign11 {
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 9, ownerKey,
             blockingStubFull,
             activePermissionKeys.toArray(new String[activePermissionKeys.size()])));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);

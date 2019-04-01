@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 
 @Component
@@ -18,18 +19,8 @@ public class PeersStore extends TronDatabase<Set<Node>> {
   }
 
   @Override
-  public LevelDbDataSourceImpl getDbSource() {
-    return super.getDbSource();
-  }
-
-  @Override
-  public void reset() {
-    super.reset();
-  }
-
-  @Override
   public void put(byte[] key, Set<Node> nodes) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     nodes.forEach(node -> sb.append(node.getEnodeURL()).append("&").append(node.getReputation())
         .append("||"));
     dbSource.putData(key, sb.toString().getBytes());
