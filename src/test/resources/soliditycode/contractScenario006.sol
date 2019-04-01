@@ -48,7 +48,7 @@ library NameFilter {
      * -restricts characters to A-Z, a-z, 0-9, and space.
      * @return reprocessed string in bytes32 format
      */
-    function nameFilter(string _input)
+    function nameFilter(string memory _input)
         internal
         pure
         returns(bytes32)
@@ -77,7 +77,7 @@ library NameFilter {
             if (_temp[i] > 0x40 && _temp[i] < 0x5b)
             {
                 // convert to lower case a-z
-                _temp[i] = byte(uint(_temp[i]) + 32);
+                _temp[i] = byte(uint8(_temp[i]) + 32);
 
                 // we have a non number
                 if (_hasNonNumber == false)
@@ -310,7 +310,7 @@ library F3Ddatasets {
         uint256 potAmount;          // amount added to pot
     }
     struct Player {
-        address addr;   // player address
+        address payable addr;   // player address
         bytes32 name;   // player name
         uint256 win;    // winnings vault
         uint256 gen;    // general vault
@@ -607,11 +607,12 @@ contract FoMo3Dlong is F3Devents {
     isActivated()
     isHuman()
     isWithinLimits(msg.value)
-    public
+    external
     payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ ;
+       _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -636,7 +637,8 @@ contract FoMo3Dlong is F3Devents {
     payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_;
+        _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -669,7 +671,8 @@ contract FoMo3Dlong is F3Devents {
     payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_;
+        _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -710,7 +713,8 @@ contract FoMo3Dlong is F3Devents {
     payable
     {
         // set up our tx event data and determine if player is new or not
-        F3Ddatasets.EventReturns memory _eventData_ = determinePID(_eventData_);
+        F3Ddatasets.EventReturns memory _eventData_ ;
+       _eventData_ = determinePID(_eventData_);
 
         // fetch player id
         uint256 _pID = pIDxAddr_[msg.sender];
@@ -961,7 +965,7 @@ contract FoMo3Dlong is F3Devents {
      * @param _all set to true if you want this to push your info to all games
      * (this might cost a lot of gas)
      */
-    function registerNameXID(string _nameString, uint256 _affCode, bool _all)
+    function registerNameXID(string memory _nameString, uint256 _affCode, bool _all)
     isHuman()
     public
     payable
@@ -977,7 +981,7 @@ contract FoMo3Dlong is F3Devents {
         emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
-    function registerNameXaddr(string _nameString, address _affCode, bool _all)
+    function registerNameXaddr(string memory _nameString, address _affCode, bool _all)
     isHuman()
     public
     payable
@@ -993,7 +997,7 @@ contract FoMo3Dlong is F3Devents {
         emit F3Devents.onNewName(_pID, _addr, _name, _isNewPlayer, _affID, plyr_[_affID].addr, plyr_[_affID].name, _paid, now);
     }
 
-    function registerNameXname(string _nameString, bytes32 _affCode, bool _all)
+    function registerNameXname(string memory _nameString, bytes32 _affCode, bool _all)
     isHuman()
     public
     payable
@@ -1494,7 +1498,7 @@ contract FoMo3Dlong is F3Devents {
     /**
 	 * @dev receives name/player info from names contract
      */
-    function receivePlayerInfo(uint256 _pID, address _addr, bytes32 _name, uint256 _laff)
+    function receivePlayerInfo(uint256 _pID, address payable _addr, bytes32 _name, uint256 _laff)
     external
     {
         require(msg.sender == address(playerBook), "your not playerNames contract... hmmm..");
@@ -1529,7 +1533,7 @@ contract FoMo3Dlong is F3Devents {
      */
     function determinePID(F3Ddatasets.EventReturns memory _eventData_)
     private
-    returns (F3Ddatasets.EventReturns)
+    returns (F3Ddatasets.EventReturns memory)
     {
         uint256 _pID = pIDxAddr_[msg.sender];
         // if player is new to this version of fomo3d
@@ -1581,7 +1585,7 @@ contract FoMo3Dlong is F3Devents {
      */
     function managePlayer(uint256 _pID, F3Ddatasets.EventReturns memory _eventData_)
     private
-    returns (F3Ddatasets.EventReturns)
+    returns (F3Ddatasets.EventReturns memory)
     {
         // if player has played a previous round, move their unmasked earnings
         // from that round to gen vault.
@@ -1602,7 +1606,7 @@ contract FoMo3Dlong is F3Devents {
      */
     function endRound(F3Ddatasets.EventReturns memory _eventData_)
     private
-    returns (F3Ddatasets.EventReturns)
+    returns (F3Ddatasets.EventReturns memory)
     {
         // setup local rID
         uint256 _rID = rID_;
@@ -1635,7 +1639,8 @@ contract FoMo3Dlong is F3Devents {
         plyr_[_winPID].win = _win.add(plyr_[_winPID].win);
 
         // community rewards
-        if (!address(Jekyll_Island_Inc).send(_com))
+        address payable add = address(uint160(Jekyll_Island_Inc));
+        if (!add.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
@@ -1651,9 +1656,10 @@ contract FoMo3Dlong is F3Devents {
         round_[_rID].mask = _ppt.add(round_[_rID].mask);
 
         // send share for p3d to divies
-        if (_p3d > 0)
-            Divies.transfer(_p3d);
-
+        if (_p3d > 0){
+            address payable addr = address(uint160(Divies));
+            addr.transfer(_p3d);
+        }
         // prepare event data
         _eventData_.compressedData = _eventData_.compressedData + (round_[_rID].end * 1000000);
         _eventData_.compressedIDs = _eventData_.compressedIDs + (_winPID * 100000000000000000000000000) + (_winTID * 100000000000000000);
@@ -1744,12 +1750,13 @@ contract FoMo3Dlong is F3Devents {
      */
     function distributeExternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _affID, uint256 _team, F3Ddatasets.EventReturns memory _eventData_)
     private
-    returns (F3Ddatasets.EventReturns)
+    returns (F3Ddatasets.EventReturns memory)
     {
         // pay 2% out to community rewards
         uint256 _com = _eth / 50;
         uint256 _p3d;
-        if (!address(Jekyll_Island_Inc).send(_com))
+        address payable addr = address(uint160(Jekyll_Island_Inc));
+        if (!addr.send(_com))
         {
             // This ensures Team Just cannot influence the outcome of FoMo3D with
             // bank migrations by breaking outgoing transactions.
@@ -1762,19 +1769,20 @@ contract FoMo3Dlong is F3Devents {
         }
 
         // pay 1% out to FoMo3D short
-        uint256 _long = _eth / 100;
-        otherF3D_.transfer(_long);
+         _com = _eth / 100;
+        address payable add = address(uint160(otherF3D_));
+        add.transfer(_com);
 
         // distribute share to affiliate
-        uint256 _aff = _eth / 10;
+         _com = _eth / 10;
 
         // decide what to do with affiliate share of fees
         // affiliate must not be self, and must have a name registered
         if (_affID != _pID && plyr_[_affID].name != '') {
-            plyr_[_affID].aff = _aff.add(plyr_[_affID].aff);
-            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _aff, now);
+            plyr_[_affID].aff = _com.add(plyr_[_affID].aff);
+            emit F3Devents.onAffiliatePayout(_affID, plyr_[_affID].addr, plyr_[_affID].name, _rID, _pID, _com, now);
         } else {
-            _p3d = _aff;
+            _p3d = _com;
         }
 
         // pay out p3d
@@ -1782,7 +1790,8 @@ contract FoMo3Dlong is F3Devents {
         if (_p3d > 0)
         {
             // deposit to divies contract
-            Divies.transfer(_p3d);
+            address payable add = address(uint160(Divies));
+            add.transfer(_p3d);
 
             // set up event data
             _eventData_.P3DAmount = _p3d.add(_eventData_.P3DAmount);
@@ -1807,7 +1816,7 @@ contract FoMo3Dlong is F3Devents {
      */
     function distributeInternal(uint256 _rID, uint256 _pID, uint256 _eth, uint256 _team, uint256 _keys, F3Ddatasets.EventReturns memory _eventData_)
     private
-    returns (F3Ddatasets.EventReturns)
+    returns (F3Ddatasets.EventReturns memory)
     {
         // calculate gen share
         uint256 _gen = (_eth.mul(fees_[_team].gen)) / 100;

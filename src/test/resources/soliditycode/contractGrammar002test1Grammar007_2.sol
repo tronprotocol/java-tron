@@ -26,14 +26,14 @@ contract main{
 
  address DOUG;
 
- address payable dogInterfaceAddress = 0x7CDFA76B1C4566259734353C05AF2EAC2959714A;
+ address payable dogInterfaceAddress = 0x7cDfa76B1C4566259734353C05af2Eac2959714A;
  DogInterface dogContract = DogInterface(dogInterfaceAddress);
 
  function setDOUG(address _doug) public {
  DOUG = _doug;
  }
 
- function dougOfage(uint _age) public view returns(uint) {
+ function dougOfage(uint _age) public payable returns(uint) {
 
  uint num = dogContract.getDougAge(_age);
  return _age+num;
