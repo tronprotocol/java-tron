@@ -485,12 +485,14 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread repushThread = new Thread(repushLoop);
     repushThread.start();
-    deferredTransactionTask = deferredTransactionTimer.scheduleAtFixedRate(() -> {
-      synchronized (lockObj) {
-        deferredTransactionList = getDeferredTransactionStore()
-            .getScheduledTransactions();
-      }
-    }, 1, 1, TimeUnit.SECONDS);
+    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1 && witnessService.isRunning()) {
+      deferredTransactionTask = deferredTransactionTimer.scheduleAtFixedRate(() -> {
+        synchronized (lockObj) {
+          deferredTransactionList = getDeferredTransactionStore()
+              .getScheduledTransactions();
+        }
+      }, 1, 1, TimeUnit.SECONDS);
+    }
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
@@ -1208,7 +1210,12 @@ public class Manager {
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
-      TransactionTrace transactionTrace) {
+      TransactionTrace transactionTrace) throws ContractValidateException {
+    if (getDynamicPropertiesStore().getAllowDeferredTransaction() != 1) {
+      throw new ContractValidateException("deferred transaction is not allowed, "
+          + "need to be opened by the committee");
+    }
+
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1272,6 +1279,10 @@ public class Manager {
 
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      if (getDynamicPropertiesStore().getAllowDeferredTransaction() != 1) {
+        throw new ContractValidateException("deferred transaction is not allowed, "
+            + "need to be opened by the committee");
+      }
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
     }else if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");

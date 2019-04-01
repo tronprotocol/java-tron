@@ -161,6 +161,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //Used only for multi sign, once，value is {0,1}
   private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
 
+  //Used only for deferred transaction, once, value is {0,1}
+  private static final byte[] ALLOW_DEFERRED_TRANSACTION = "ALLOW_DEFERRED_TRANSACTION".getBytes();
+
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -187,6 +190,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowMultiSign();
     } catch (IllegalArgumentException e) {
       this.saveAllowMultiSign(Args.getInstance().getAllowMultiSign());
+    }
+
+    try {
+      this.getAllowDeferredTransaction();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
     }
 
     try {
@@ -1403,6 +1412,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
+  }
+
+  public void saveAllowDeferredTransaction(long allowDeferredTransaction) {
+    this.put(ALLOW_DEFERRED_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowDeferredTransaction)));
+  }
+
+  public long getAllowDeferredTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DEFERRED_TRANSACTION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DEFERRED_TRANSACTION"));
   }
 
   public long getAllowCreationOfContracts() {
