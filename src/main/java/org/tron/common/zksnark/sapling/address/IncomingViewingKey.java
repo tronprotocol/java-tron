@@ -15,7 +15,7 @@ public class IncomingViewingKey {
   // To create a new diversied payment address given an incoming viewing key ivk, repeatedly pick a
   // diversier d uniformly at random
   public Optional<PaymentAddress> address(DiversifierT d) {
-    byte[] pkD = null; // 256
+    byte[] pkD = new byte[32]; // 32
     if (Librustzcash.librustzcashCheckDiversifier(d.getData())) {
       Librustzcash.librustzcashIvkToPkd(value, d.getData(), pkD);
       return Optional.of(new PaymentAddress(d, pkD));

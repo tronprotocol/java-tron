@@ -11,7 +11,7 @@ public class Librustzcash {
 
   static {
     // System.load("/Users/tron/Documents/codes/java-tron/src/main/resources/librustzcash/librustzcash.dylib");
-    INSTANCE = (ILibrustzcash)Native.loadLibrary("/Users/tron/xiefei/code/java/java-tron/src/main/resources/librustzcash/librustzcash.dylib", ILibrustzcash.class);
+    INSTANCE = (ILibrustzcash)Native.loadLibrary("/Users/tron/Documents/codes/java-tron/src/main/resources/librustzcash/librustzcash.dylib", ILibrustzcash.class);
   }
 
   public interface ILibrustzcash extends Library {
@@ -22,6 +22,7 @@ public class Librustzcash {
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
     boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
+    boolean librustzcash_check_diversifier(byte[] diversifier);
 
     boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] diversifier, byte[] result);
     boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r, byte[] result);
@@ -125,7 +126,8 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashCheckDiversifier(byte[] b) {
-    return true;
+    // TODO
+    return INSTANCE.librustzcash_check_diversifier(b);
   }
 
 

@@ -99,7 +99,7 @@ public class KeyIo {
       bits += fromBits;
       while (bits >= toBits) {
         bits -= toBits;
-        out.write((int)((acc >>> bits) & maxv));
+        out.write(((acc >>> bits) & maxv));
       }
     }
     if (pad) {
@@ -158,10 +158,82 @@ public class KeyIo {
     return buf;
   }
 
+  private static byte[] convertBitsV2(List<Byte> data, int fromBits, int toBits, boolean pad) {
+
+    int acc = 0;
+    int bits = 0;
+    int maxv = (1 << toBits) - 1;
+    int max_acc = (1 << (fromBits + toBits - 1)) - 1;
+
+    List<Byte> ret = new ArrayList<Byte>();
+
+    for (Byte value : data)  {
+      short b = (short)(value.byteValue() & 0xff);
+      if (b < 0) {
+        throw new IllegalArgumentException();
+      }
+      else if ((b >> fromBits) > 0) {
+        throw new IllegalArgumentException();
+      }
+      else    {
+        ;
+      }
+
+      // acc = (acc << fromBits) | b;
+      acc = ((acc << fromBits) | value) & max_acc;
+      bits += fromBits;
+      while (bits >= toBits)  {
+        bits -= toBits;
+        ret.add((byte)((acc >> bits) & maxv));
+      }
+    }
+
+    if(pad && (bits > 0))    {
+      ret.add((byte)((acc << (toBits - bits)) & maxv));
+    }
+    else if (bits >= fromBits || (byte)(((acc << (toBits - bits)) & maxv)) != 0) {
+      return null;
+    }
+    else    {
+      ;
+    }
+
+    byte[] buf = new byte[ret.size()];
+    for(int i = 0; i < ret.size(); i++) {
+      buf[i] = ret.get(i);
+    }
+
+    return buf;
+  }
+
   public static void main(String[] args) throws Exception {
+    /*
+     * 000000 -> 0000000000
+     * 202020 -> 0400100200
+     * 757575 -> 0e151a170a
+     * abcdef -> 150f061e1e
+     * ffffff -> 1f1f1f1f1e
+    * */
     // byte[] tmp = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    byte[] tmp = {2, 0, 2, 0, 2, 0};
+    // byte[] tmp = {2, 0, 2, 0, 2, 0};
+    byte[] tmp = {0xf, 0xf, 0xf, 0xf, 0xf, 0xf};
+    // version 1
     byte[]  data = convertBits(tmp, 0, tmp.length, 8, 5, true);
+
+    // version 2
+    List<Byte> progBytes = new ArrayList<Byte>();
+    for(int i = 0; i < tmp.length; i++) {
+      progBytes.add(tmp[i]);
+    }
+    byte[] prog = convertBits(progBytes, 8, 5, true);
+
+    // version 3
+    List<Byte> progBytes2 = new ArrayList<Byte>();
+    for(int i = 0; i < tmp.length; i++) {
+      progBytes2.add(tmp[i]);
+    }
+    byte[] prog2 = convertBitsV2(progBytes2, 8, 5, true);
+
 
     System.out.println("test");
   }
