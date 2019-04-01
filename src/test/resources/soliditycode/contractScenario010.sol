@@ -1,24 +1,24 @@
-pragma solidity ^0.4.11;
+//pragma solidity ^0.4.11;
 
 contract TRON_ERC721 {
   //name
-  function name() constant returns (string name){
+  function name() view public returns (string memory name){
     return "Tron ERC721 Token";
   }
   //symbol
-  function symbol() constant returns (string symbol){
+  function symbol() view public returns (string memory symbol){
     return "T721T";
   }
 
   //totalSupply
 
-  function totalSupply() constant returns (uint256 supply){
+  function totalSupply() view public returns (uint256 supply){
     uint256 totalSupply = 1000000000000;
     return totalSupply;
   }
 
   mapping(address => uint) private balances;
-  function balanceOf(address _owner) constant returns (uint balance)
+  function balanceOf(address _owner) view public returns (uint balance)
   {
     return balances[_owner];
   }
@@ -26,22 +26,22 @@ contract TRON_ERC721 {
 
   mapping(uint256 => address) private tokenOwners;
   mapping(uint256 => bool) private tokenExists;
-  function ownerOf(uint256 _tokenId)  constant returns (address owner) {
+  function ownerOf(uint256 _tokenId)  view public returns (address owner) {
     require(tokenExists[_tokenId]);
     return tokenOwners[_tokenId];
   }
 
 
   mapping(address => mapping (address => uint256)) allowed;
-  function approve(address _to, uint256 _tokenId){
+  function approve(address _to, uint256 _tokenId) public{
     require(msg.sender == ownerOf(_tokenId));
     require(msg.sender != _to);
     allowed[msg.sender][_to] = _tokenId;
-    Approval(msg.sender, _to, _tokenId);
+    emit Approval(msg.sender, _to, _tokenId);
   }
 
 
-  function takeOwnership(uint256 _tokenId){
+  function takeOwnership(uint256 _tokenId) public {
     require(tokenExists[_tokenId]);
     address oldOwner = ownerOf(_tokenId);
     address newOwner = msg.sender;
@@ -50,7 +50,7 @@ contract TRON_ERC721 {
     balances[oldOwner] -= 1;
     tokenOwners[_tokenId] = newOwner;
     balances[newOwner] += 1;
-    Transfer(oldOwner, newOwner, _tokenId);
+    emit Transfer(oldOwner, newOwner, _tokenId);
   }
 
 
@@ -61,7 +61,7 @@ contract TRON_ERC721 {
     }
   }
 
-  function transfer(address _to, uint256 _tokenId){
+  function transfer(address _to, uint256 _tokenId) public{
     address currentOwner = msg.sender;
     address newOwner = _to;
     require(tokenExists[_tokenId]);
@@ -73,10 +73,10 @@ contract TRON_ERC721 {
     balances[oldOwner] -= 1;
     tokenOwners[_tokenId] = newOwner;
     balances[newOwner] += 1;
-    Transfer(oldOwner, newOwner, _tokenId);
+    emit Transfer(oldOwner, newOwner, _tokenId);
   }
 
-    function transferFrom(address _from,address _to, uint256 _tokenId){
+    function transferFrom(address _from,address _to, uint256 _tokenId) public{
     address currentOwner = _from;
     address newOwner = _to;
     require(tokenExists[_tokenId]);
@@ -88,17 +88,17 @@ contract TRON_ERC721 {
     balances[oldOwner] -= 1;
     tokenOwners[_tokenId] = newOwner;
     balances[newOwner] += 1;
-    Transfer(oldOwner, newOwner, _tokenId);
+    emit Transfer(oldOwner, newOwner, _tokenId);
   }
 
 
-  function tokenOfOwnerByIndex(address _owner, uint256 _index) constant returns (uint tokenId){
+  function tokenOfOwnerByIndex(address _owner, uint256 _index) view public returns (uint tokenId){
     return ownerTokens[_owner][_index];
   }
 
 
   mapping(uint256 => string) tokenLinks;
-  function tokenMetadata(uint256 _tokenId) constant returns (string infoUrl) {
+  function tokenMetadata(uint256 _tokenId) view public returns (string memory infoUrl) {
     return tokenLinks[_tokenId];
   }
    // Events

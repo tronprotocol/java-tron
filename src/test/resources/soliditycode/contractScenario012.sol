@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+//pragma solidity ^0.4.0;
 contract PayTest {
 
 uint256 public n;
@@ -15,7 +15,7 @@ function getBalance() payable public returns (uint) {
 return address(this).balance;
 }
 
-function getSenderBalance() public constant returns(address, uint) {
+function getSenderBalance() public view returns(address, uint) {
 return (msg.sender, msg.sender.balance);
 }
 
@@ -46,11 +46,11 @@ return msg.sender.send(money);
 // msg.sender.send(1);
 // }
 
-function sendToAddress(address _receiver) payable public{
+function sendToAddress(address payable _receiver) payable public{
 _receiver.transfer(msg.value);
 }
 
-function sendToAddress2(address _receiver) payable public{
+function sendToAddress2(address payable _receiver) payable public{
 _receiver.transfer(5);
 }
 
