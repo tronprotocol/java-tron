@@ -14,7 +14,7 @@ contract Ownable {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function Ownable() {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -32,74 +32,13 @@ contract Ownable {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) public onlyOwner {
     if (newOwner != address(0)) {
       owner = newOwner;
     }
   }
 
 }
-
-
-
-/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
-/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
-contract ERC721 {
-    // Required methods
-    function totalSupply() public view returns (uint256 total);
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-    function approve(address _to, uint256 _tokenId) external;
-    function transfer(address _to, uint256 _tokenId) external;
-    function transferFrom(address _from, address _to, uint256 _tokenId) external;
-
-    // Events
-    event Transfer(address from, address to, uint256 tokenId);
-    event Approval(address owner, address approved, uint256 tokenId);
-
-    // Optional
-    // function name() public view returns (string name);
-    // function symbol() public view returns (string symbol);
-    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
-    // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
-
-    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
-    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
-}
-
-
-// // Auction wrapper functions
-
-
-// Auction wrapper functions
-
-
-
-
-
-
-
-/// @title SEKRETOOOO
-contract GeneScienceInterface {
-
-    function isGeneScience() public pure returns (bool){
-        return true;
-    }
-
-    /// @dev given genes of kitten 1 & 2, return a genetic combination - may have a random factor
-    /// @param genes1 genes of mom
-    /// @param genes2 genes of sire
-    /// @return the genes that are supposed to be passed down the child
-    function mixGenes(uint256 genes1, uint256 genes2, uint256 targetBlock) public pure returns (uint256){
-
-        return (genes1+genes2+targetBlock)/2;
-
-
-}
-}
-
-
-
 
 
 
@@ -130,7 +69,7 @@ contract KittyAccessControl {
 
     // The addresses of the accounts (or contracts) that can execute actions within each roles.
     address public ceoAddress;
-    address public cfoAddress;
+    address payable public cfoAddress;
     address public cooAddress;
 
     // @dev Keeps track whether the contract is paused. When that is true, most actions are blocked
@@ -173,7 +112,7 @@ contract KittyAccessControl {
 
     /// @dev Assigns a new address to act as the CFO. Only available to the current CEO.
     /// @param _newCFO The address of the new CFO
-    function setCFO(address _newCFO) external onlyCEO {
+    function setCFO(address payable _newCFO) external onlyCEO {
         require(_newCFO != address(0));
 
         cfoAddress = _newCFO;
@@ -366,7 +305,7 @@ contract KittyBase is KittyAccessControl {
             delete kittyIndexToApproved[_tokenId];
         }
         // Emit the transfer event.
-        Transfer(_from, _to, _tokenId);
+        emit Transfer(_from, _to, _tokenId);
     }
 
     /// @dev An internal method that creates a new kitty and stores it. This
@@ -419,7 +358,7 @@ contract KittyBase is KittyAccessControl {
         require(newKittenId == uint256(uint32(newKittenId)));
 
         // emit the birth event
-        Birth(
+        emit Birth(
             _owner,
             newKittenId,
             uint256(_kitty.matronId),
@@ -429,7 +368,7 @@ contract KittyBase is KittyAccessControl {
 
         // This will assign ownership, and also emit the Transfer event as
         // per ERC721 draft
-        _transfer(0, _owner, newKittenId);
+        _transfer(address(0), _owner, newKittenId);
 
         return newKittenId;
     }
@@ -442,29 +381,29 @@ contract KittyBase is KittyAccessControl {
 }
 
 
+/// @title Interface for contracts conforming to ERC-721: Non-Fungible Tokens
+/// @author Dieter Shirley <dete@axiomzen.co> (https://github.com/dete)
+contract ERC721 {
+    // Required methods
+    function totalSupply() public view returns (uint256 total);
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function ownerOf(uint256 _tokenId) external view returns (address owner);
+    function approve(address _to, uint256 _tokenId) external;
+    function transfer(address _to, uint256 _tokenId) external;
+    function transferFrom(address _from, address _to, uint256 _tokenId) external;
 
+    // Events
+    event Transfer(address from, address to, uint256 tokenId);
+    event Approval(address owner, address approved, uint256 tokenId);
 
+    // Optional
+    // function name() public view returns (string name);
+    // function symbol() public view returns (string symbol);
+    // function tokensOfOwner(address _owner) external view returns (uint256[] tokenIds);
+    // function tokenMetadata(uint256 _tokenId, string _preferredTransport) public view returns (string infoUrl);
 
-/// @title The external contract that is responsible for generating metadata for the kitties,
-///  it has one function that will return the data as bytes.
-contract ERC721Metadata {
-    /// @dev Given a token Id, returns a byte array that is supposed to be converted into string.
-    function getMetadata(uint256 _tokenId, string) public view returns (bytes32[4] buffer, uint256 count) {
-        if (_tokenId == 1) {
-            buffer[0] = "Hello World! :D";
-            count = 15;
-        } else if (_tokenId == 2) {
-            buffer[0] = "I would definitely choose a medi";
-            buffer[1] = "um length string.";
-            count = 49;
-        } else if (_tokenId == 3) {
-            buffer[0] = "Lorem ipsum dolor sit amet, mi e";
-            buffer[1] = "st accumsan dapibus augue lorem,";
-            buffer[2] = " tristique vestibulum id, libero";
-            buffer[3] = " suscipit varius sapien aliquam.";
-            count = 128;
-        }
-    }
+    // ERC-165 Compatibility (https://github.com/ethereum/EIPs/issues/165)
+    function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
 
@@ -472,7 +411,7 @@ contract ERC721Metadata {
 /// @author Axiom Zen (https://www.axiomzen.co)
 /// @dev Ref: https://github.com/ethereum/EIPs/issues/721
 ///  See the KittyCore contract documentation to understand how the various contract facets are arranged.
-contract KittyOwnership is KittyBase, ERC721 {
+contract KittyOwnership is ERC721, KittyBase {
 
     /// @notice Name and symbol of the non fungible token, as defined in ERC721.
     string public constant name = "CryptoKitties";
@@ -599,7 +538,7 @@ contract KittyOwnership is KittyBase, ERC721 {
         _approve(_tokenId, _to);
 
         // Emit approval event.
-        Approval(msg.sender, _to, _tokenId);
+        emit Approval(msg.sender, _to, _tokenId);
     }
 
     /// @notice Transfer a Kitty owned by another address, for which the calling address
@@ -655,7 +594,7 @@ contract KittyOwnership is KittyBase, ERC721 {
     ///  expensive (it walks the entire Kitty array looking for cats belonging to owner),
     ///  but it also returns a dynamic array, which is only supported for web3 calls, and
     ///  not contract-to-contract calls.
-    function tokensOfOwner(address _owner) external view returns(uint256[] ownerTokens) {
+    function tokensOfOwner(address _owner) external view returns(uint256[] memory ownerTokens) {
         uint256 tokenCount = balanceOf(_owner);
 
         if (tokenCount == 0) {
@@ -706,8 +645,8 @@ contract KittyOwnership is KittyBase, ERC721 {
     /// @dev Adapted from toString(slice) by @arachnid (Nick Johnson <arachnid@notdot.net>)
     ///  This method is licenced under the Apache License.
     ///  Ref: https://github.com/Arachnid/solidity-stringutils/blob/2f6ca9accb48ae14c66f1437ec50ed19a0616f78/strings.sol
-    function _toString(bytes32[4] _rawBytes, uint256 _stringLength) private view returns (string) {
-        var outputString = new string(_stringLength);
+    function _toString(bytes32[4] memory _rawBytes, uint256 _stringLength) private view returns (string memory) {
+        string memory outputString = new string(_stringLength);
         uint256 outputPtr;
         uint256 bytesPtr;
 
@@ -724,8 +663,8 @@ contract KittyOwnership is KittyBase, ERC721 {
     /// @notice Returns a URI pointing to a metadata package for this token conforming to
     ///  ERC-721 (https://github.com/ethereum/EIPs/issues/721)
     /// @param _tokenId The ID number of the Kitty whose metadata should be returned.
-    function tokenMetadata(uint256 _tokenId, string _preferredTransport) external view returns (string infoUrl) {
-        require(erc721Metadata != address(0));
+    function tokenMetadata(uint256 _tokenId, string calldata _preferredTransport) external view returns (string memory infoUrl) {
+        require( address(erc721Metadata) != address(0));
         bytes32[4] memory buffer;
         uint256 count;
         (buffer, count) = erc721Metadata.getMetadata(_tokenId, _preferredTransport);
@@ -733,6 +672,7 @@ contract KittyOwnership is KittyBase, ERC721 {
         return _toString(buffer, count);
     }
 }
+
 
 
 
@@ -772,7 +712,7 @@ contract KittyBreeding is KittyOwnership {
     /// @dev Checks that a given kitten is able to breed. Requires that the
     ///  current cooldown is finished (for sires) and also checks that there is
     ///  no pending pregnancy.
-    function _isReadyToBreed(Kitty _kit) internal view returns (bool) {
+    function _isReadyToBreed(Kitty memory _kit) internal view returns (bool) {
         // In addition to checking the cooldownEndBlock, we also need to check to see if
         // the cat has a pending birth; there can be some period of time between the end
         // of the pregnacy timer and the birth event.
@@ -827,7 +767,7 @@ contract KittyBreeding is KittyOwnership {
 
     /// @dev Checks to see if a given Kitty is pregnant and (if so) if the gestation
     ///  period has passed.
-    function _isReadyToGiveBirth(Kitty _matron) private view returns (bool) {
+    function _isReadyToGiveBirth(Kitty memory _matron) private view returns (bool) {
         return (_matron.siringWithId != 0) && (_matron.cooldownEndBlock <= uint64(block.number));
     }
 
@@ -957,7 +897,7 @@ contract KittyBreeding is KittyOwnership {
         pregnantKitties++;
 
         // Emit the pregnancy event.
-        Pregnant(kittyIndexToOwner[_matronId], _matronId, _sireId, matron.cooldownEndBlock);
+        emit Pregnant(kittyIndexToOwner[_matronId], _matronId, _sireId, matron.cooldownEndBlock);
     }
 
     /// @notice Breed a Kitty you own (as matron) with a sire that you own, or for which you
@@ -1063,12 +1003,440 @@ contract KittyBreeding is KittyOwnership {
         pregnantKitties--;
 
         // Send the balance fee to the person who made birth happen.
-        msg.sender.send(autoBirthFee);
+        msg.sender.transfer(autoBirthFee);
 
         // return the new kitten's ID
         return kittenId;
     }
 }
+
+
+
+/// @title Handles creating auctions for sale and siring of kitties.
+///  This wrapper of ReverseAuction exists only so that users can create
+///  auctions with only one transaction.
+contract KittyAuction is KittyBreeding {
+
+    // @notice The auction contract variables are defined in KittyBase to allow
+    //  us to refer to them in KittyOwnership to prevent accidental transfers.
+    // `saleAuction` refers to the auction for gen0 and p2p sale of kitties.
+    // `siringAuction` refers to the auction for siring rights of kitties.
+
+    /// @dev Sets the reference to the sale auction.
+    /// @param _address - Address of sale contract.
+    function setSaleAuctionAddress(address _address) external onlyCEO {
+        SaleClockAuction candidateContract = SaleClockAuction(_address);
+
+        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
+        require(candidateContract.isSaleClockAuction());
+
+        // Set the new contract address
+        saleAuction = candidateContract;
+    }
+
+    /// @dev Sets the reference to the siring auction.
+    /// @param _address - Address of siring contract.
+    function setSiringAuctionAddress(address _address) external onlyCEO {
+        SiringClockAuction candidateContract = SiringClockAuction(_address);
+
+        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
+        require(candidateContract.isSiringClockAuction());
+
+        // Set the new contract address
+        siringAuction = candidateContract;
+    }
+
+    /// @dev Put a kitty up for auction.
+    ///  Does some ownership trickery to create auctions in one tx.
+    function createSaleAuction(
+        uint256 _kittyId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration
+    )
+        external
+        whenNotPaused
+    {
+        // Auction contract checks input sizes
+        // If kitty is already on any auction, this will throw
+        // because it will be owned by the auction contract.
+        require(_owns(msg.sender, _kittyId));
+        // Ensure the kitty is not pregnant to prevent the auction
+        // contract accidentally receiving ownership of the child.
+        // NOTE: the kitty IS allowed to be in a cooldown.
+        require(!isPregnant(_kittyId));
+        _approve(_kittyId, address(saleAuction));
+        // Sale auction throws if inputs are invalid and clears
+        // transfer and sire approval after escrowing the kitty.
+        saleAuction.createAuction(
+            _kittyId,
+            _startingPrice,
+            _endingPrice,
+            _duration,
+            msg.sender
+        );
+    }
+
+    /// @dev Put a kitty up for auction to be sire.
+    ///  Performs checks to ensure the kitty can be sired, then
+    ///  delegates to reverse auction.
+    function createSiringAuction(
+        uint256 _kittyId,
+        uint256 _startingPrice,
+        uint256 _endingPrice,
+        uint256 _duration
+    )
+        external
+        whenNotPaused
+    {
+        // Auction contract checks input sizes
+        // If kitty is already on any auction, this will throw
+        // because it will be owned by the auction contract.
+        require(_owns(msg.sender, _kittyId));
+        require(isReadyToBreed(_kittyId));
+        _approve(_kittyId, address(siringAuction));
+        // Siring auction throws if inputs are invalid and clears
+        // transfer and sire approval after escrowing the kitty.
+        siringAuction.createAuction(
+            _kittyId,
+            _startingPrice,
+            _endingPrice,
+            _duration,
+            msg.sender
+        );
+    }
+
+    /// @dev Completes a siring auction by bidding.
+    ///  Immediately breeds the winning matron with the sire on auction.
+    /// @param _sireId - ID of the sire on auction.
+    /// @param _matronId - ID of the matron owned by the bidder.
+    function bidOnSiringAuction(
+        uint256 _sireId,
+        uint256 _matronId
+    )
+        external
+        payable
+        whenNotPaused
+    {
+        // Auction contract checks input sizes
+        require(_owns(msg.sender, _matronId));
+        require(isReadyToBreed(_matronId));
+        require(_canBreedWithViaAuction(_matronId, _sireId));
+
+        // Define the current price of the auction.
+        uint256 currentPrice = siringAuction.getCurrentPrice(_sireId);
+        require(msg.value >= currentPrice + autoBirthFee);
+
+        // Siring auction will throw if the bid fails.
+        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
+        _breedWith(uint32(_matronId), uint32(_sireId));
+    }
+
+    /// @dev Transfers the balance of the sale auction contract
+    /// to the KittyCore contract. We use two-step withdrawal to
+    /// prevent two transfer calls in the auction bid function.
+    function withdrawAuctionBalances() external onlyCLevel {
+        saleAuction.withdrawBalance();
+        siringAuction.withdrawBalance();
+    }
+}
+
+
+/// @title all functions related to creating kittens
+contract KittyMinting is KittyAuction {
+
+    // Limits the number of cats the contract owner can ever create.
+    uint256 public constant PROMO_CREATION_LIMIT = 5000;
+    uint256 public constant GEN0_CREATION_LIMIT = 45000;
+
+    // Constants for gen0 auctions.
+    uint256 public constant GEN0_STARTING_PRICE = 10 finney;
+    uint256 public constant GEN0_AUCTION_DURATION = 1 days;
+
+    // Counts the number of cats the contract owner has created.
+    uint256 public promoCreatedCount;
+    uint256 public gen0CreatedCount;
+
+    /// @dev we can create promo kittens, up to a limit. Only callable by COO
+    /// @param _genes the encoded genes of the kitten to be created, any value is accepted
+    /// @param _owner the future owner of the created kittens. Default to contract COO
+    function createPromoKitty(uint256 _genes, address _owner) external onlyCOO {
+        address kittyOwner = _owner;
+        if (kittyOwner == address(0)) {
+             kittyOwner = cooAddress;
+        }
+        require(promoCreatedCount < PROMO_CREATION_LIMIT);
+
+        promoCreatedCount++;
+        _createKitty(0, 0, 0, _genes, kittyOwner);
+    }
+
+    /// @dev Creates a new gen0 kitty with the given genes and
+    ///  creates an auction for it.
+    function createGen0Auction(uint256 _genes) external onlyCOO {
+        require(gen0CreatedCount < GEN0_CREATION_LIMIT);
+
+        uint256 kittyId = _createKitty(0, 0, 0, _genes, address(this));
+        _approve(kittyId, address(saleAuction));
+
+        saleAuction.createAuction(
+            kittyId,
+            _computeNextGen0Price(),
+            0,
+            GEN0_AUCTION_DURATION,
+            address(uint160(address(this)))
+        );
+
+        gen0CreatedCount++;
+    }
+
+    /// @dev Computes the next gen0 auction starting price, given
+    ///  the average of the past 5 prices + 50%.
+    function _computeNextGen0Price() internal view returns (uint256) {
+        uint256 avePrice = saleAuction.averageGen0SalePrice();
+
+        // Sanity check to ensure we don't overflow arithmetic
+        require(avePrice == uint256(uint128(avePrice)));
+
+        uint256 nextPrice = avePrice + (avePrice / 2);
+
+        // We never auction for less than starting price
+        if (nextPrice < GEN0_STARTING_PRICE) {
+            nextPrice = GEN0_STARTING_PRICE;
+        }
+
+        return nextPrice;
+    }
+}
+
+
+
+/// @title CryptoKitties: Collectible, breedable, and oh-so-adorable cats on the Ethereum blockchain.
+/// @author Axiom Zen (https://www.axiomzen.co)
+/// @dev The main CryptoKitties contract, keeps track of kittens so they don't wander around and get lost.
+contract KittyCore is KittyMinting {
+
+    // This is the main CryptoKitties contract. In order to keep our code seperated into logical sections,
+    // we've broken it up in two ways. First, we have several seperately-instantiated sibling contracts
+    // that handle auctions and our super-top-secret genetic combination algorithm. The auctions are
+    // seperate since their logic is somewhat complex and there's always a risk of subtle bugs. By keeping
+    // them in their own contracts, we can upgrade them without disrupting the main contract that tracks
+    // kitty ownership. The genetic combination algorithm is kept seperate so we can open-source all of
+    // the rest of our code without making it _too_ easy for folks to figure out how the genetics work.
+    // Don't worry, I'm sure someone will reverse engineer it soon enough!
+    //
+    // Secondly, we break the core contract into multiple files using inheritence, one for each major
+    // facet of functionality of CK. This allows us to keep related code bundled together while still
+    // avoiding a single giant file with everything in it. The breakdown is as follows:
+    //
+    //      - KittyBase: This is where we define the most fundamental code shared throughout the core
+    //             functionality. This includes our main data storage, constants and data types, plus
+    //             internal functions for managing these items.
+    //
+    //      - KittyAccessControl: This contract manages the various addresses and constraints for operations
+    //             that can be executed only by specific roles. Namely CEO, CFO and COO.
+    //
+    //      - KittyOwnership: This provides the methods required for basic non-fungible token
+    //             transactions, following the draft ERC-721 spec (https://github.com/ethereum/EIPs/issues/721).
+    //
+    //      - KittyBreeding: This file contains the methods necessary to breed cats together, including
+    //             keeping track of siring offers, and relies on an external genetic combination contract.
+    //
+    //      - KittyAuctions: Here we have the public methods for auctioning or bidding on cats or siring
+    //             services. The actual auction functionality is handled in two sibling contracts (one
+    //             for sales and one for siring), while auction creation and bidding is mostly mediated
+    //             through this facet of the core contract.
+    //
+    //      - KittyMinting: This final facet contains the functionality we use for creating new gen0 cats.
+    //             We can make up to 5000 "promo" cats that can be given away (especially important when
+    //             the community is new), and all others can only be created and then immediately put up
+    //             for auction via an algorithmically determined starting price. Regardless of how they
+    //             are created, there is a hard limit of 50k gen0 cats. After that, it's all up to the
+    //             community to breed, breed, breed!
+
+    // Set in case the core contract is broken and an upgrade is required
+    address public newContractAddress;
+
+    /// @notice Creates the main CryptoKitties smart contract instance.
+    constructor() public {
+        // Starts paused.
+        paused = true;
+
+        // the creator of the contract is the initial CEO
+        ceoAddress = msg.sender;
+
+        // the creator of the contract is also the initial COO
+        cooAddress = msg.sender;
+
+        // start with the mythical kitten 0 - so we don't have generation-0 parent issues
+        _createKitty(0, 0, 0, uint256(-1), address(0));
+    }
+
+    /// @dev Used to mark the smart contract as upgraded, in case there is a serious
+    ///  breaking bug. This method does nothing but keep track of the new contract and
+    ///  emit a message indicating that the new address is set. It's up to clients of this
+    ///  contract to update to the new contract address in that case. (This contract will
+    ///  be paused indefinitely if such an upgrade takes place.)
+    /// @param _v2Address new address
+    function setNewAddress(address _v2Address) external onlyCEO whenPaused {
+        // See README.md for updgrade plan
+        newContractAddress = _v2Address;
+        emit ContractUpgrade(_v2Address);
+    }
+
+    /// @notice No tipping!
+    /// @dev Reject all Ether from being sent here, unless it's from one of the
+    ///  two auction contracts. (Hopefully, we can prevent user accidents.)
+    function() external payable {
+        require(
+            msg.sender == address(saleAuction) ||
+            msg.sender == address(siringAuction)
+        );
+    }
+
+    /// @notice Returns all the relevant information about a specific kitty.
+    /// @param _id The ID of the kitty of interest.
+    function getKitty(uint256 _id)
+        external
+        view
+        returns (
+        bool isGestating,
+        bool isReady,
+        uint256 cooldownIndex,
+        uint256 nextActionAt,
+        uint256 siringWithId,
+        uint256 birthTime,
+        uint256 matronId,
+        uint256 sireId,
+        uint256 generation,
+        uint256 genes
+    ) {
+        Kitty storage kit = kitties[_id];
+
+        // if this variable is 0 then it's not gestating
+        isGestating = (kit.siringWithId != 0);
+        isReady = (kit.cooldownEndBlock <= block.number);
+        cooldownIndex = uint256(kit.cooldownIndex);
+        nextActionAt = uint256(kit.cooldownEndBlock);
+        siringWithId = uint256(kit.siringWithId);
+        birthTime = uint256(kit.birthTime);
+        matronId = uint256(kit.matronId);
+        sireId = uint256(kit.sireId);
+        generation = uint256(kit.generation);
+        genes = kit.genes;
+    }
+
+    /// @dev Override unpause so it requires all external contract addresses
+    ///  to be set before contract can be unpaused. Also, we can't have
+    ///  newContractAddress set either, because then the contract was upgraded.
+    /// @notice This is public rather than external so we can call super.unpause
+    ///  without using an expensive CALL.
+
+    function unpause() public onlyCEO whenPaused {
+        require(address(saleAuction) != address(0));
+        require(address(siringAuction) != address(0));
+        require(address(geneScience) != address(0));
+        require(newContractAddress == address(0));
+
+        // Actually unpause the contract.
+        super.unpause();
+    }
+
+    // @dev Allows the CFO to capture the balance available to the contract.
+    function withdrawBalance() external onlyCFO {
+        uint256 balance = address(this).balance;
+        // Subtract all the currently pregnant kittens we have, plus 1 of margin.
+        uint256 subtractFees = (pregnantKitties + 1) * autoBirthFee;
+
+        if (balance > subtractFees) {
+            cfoAddress.transfer(balance - subtractFees);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // Auction wrapper functions
+
+
+// Auction wrapper functions
+
+
+
+
+
+
+
+/// @title SEKRETOOOO
+contract GeneScienceInterface {
+
+    function isGeneScience() public pure returns (bool){
+        return true;
+    }
+
+    /// @dev given genes of kitten 1 & 2, return a genetic combination - may have a random factor
+    /// @param genes1 genes of mom
+    /// @param genes2 genes of sire
+    /// @return the genes that are supposed to be passed down the child
+    function mixGenes(uint256 genes1, uint256 genes2, uint256 targetBlock) public pure returns (uint256){
+
+        return (genes1+genes2+targetBlock)/2;
+
+
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// @title The external contract that is responsible for generating metadata for the kitties,
+///  it has one function that will return the data as bytes.
+contract ERC721Metadata {
+    /// @dev Given a token Id, returns a byte array that is supposed to be converted into string.
+    function getMetadata(uint256 _tokenId, string memory) public view returns (bytes32[4] memory buffer, uint256 count) {
+        if (_tokenId == 1) {
+            buffer[0] = "Hello World! :D";
+            count = 15;
+        } else if (_tokenId == 2) {
+            buffer[0] = "I would definitely choose a medi";
+            buffer[1] = "um length string.";
+            count = 49;
+        } else if (_tokenId == 3) {
+            buffer[0] = "Lorem ipsum dolor sit amet, mi e";
+            buffer[1] = "st accumsan dapibus augue lorem,";
+            buffer[2] = " tristique vestibulum id, libero";
+            buffer[3] = " suscipit varius sapien aliquam.";
+            count = 128;
+        }
+    }
+}
+
+
+
+
+
 
 
 
@@ -1087,7 +1455,7 @@ contract ClockAuctionBase {
     // Represents an auction on an NFT
     struct Auction {
         // Current owner of NFT
-        address seller;
+        address payable seller;
         // Price (in wei) at beginning of auction
         uint128 startingPrice;
         // Price (in wei) at end of auction
@@ -1126,7 +1494,7 @@ contract ClockAuctionBase {
     /// @param _tokenId - ID of token whose approval to verify.
     function _escrow(address _owner, uint256 _tokenId) internal {
         // it will throw if transfer fails
-        nonFungibleContract.transferFrom(_owner, this, _tokenId);
+        nonFungibleContract.transferFrom(_owner, address(this), _tokenId);
     }
 
     /// @dev Transfers an NFT owned by this contract to another address.
@@ -1142,14 +1510,14 @@ contract ClockAuctionBase {
     ///  AuctionCreated event.
     /// @param _tokenId The ID of the token to be put on auction.
     /// @param _auction Auction to add.
-    function _addAuction(uint256 _tokenId, Auction _auction) internal {
+    function _addAuction(uint256 _tokenId, Auction memory _auction) internal {
         // Require that all auctions have a duration of
         // at least one minute. (Keeps our math from getting hairy!)
         require(_auction.duration >= 1 minutes);
 
         tokenIdToAuction[_tokenId] = _auction;
 
-        AuctionCreated(
+        emit AuctionCreated(
             uint256(_tokenId),
             uint256(_auction.startingPrice),
             uint256(_auction.endingPrice),
@@ -1161,7 +1529,7 @@ contract ClockAuctionBase {
     function _cancelAuction(uint256 _tokenId, address _seller) internal {
         _removeAuction(_tokenId);
         _transfer(_seller, _tokenId);
-        AuctionCancelled(_tokenId);
+        emit AuctionCancelled(_tokenId);
     }
 
     /// @dev Computes the price and transfers winnings.
@@ -1185,7 +1553,7 @@ contract ClockAuctionBase {
 
         // Grab a reference to the seller before the auction struct
         // gets deleted.
-        address seller = auction.seller;
+        address payable seller = auction.seller;
 
         // The bid is good! Remove the auction before sending the fees
         // to the sender so we can't have a reentrancy attack.
@@ -1222,7 +1590,7 @@ contract ClockAuctionBase {
         msg.sender.transfer(bidExcess);
 
         // Tell the world!
-        AuctionSuccessful(_tokenId, price, msg.sender);
+        emit AuctionSuccessful(_tokenId, price, msg.sender);
 
         return price;
     }
@@ -1355,18 +1723,18 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlyOwner whenNotPaused returns (bool) {
+  function pause() onlyOwner whenNotPaused public returns (bool) {
     paused = true;
-    Pause();
+    emit Pause();
     return true;
   }
 
   /**
    * @dev called by the owner to unpause, returns to normal state
    */
-  function unpause() onlyOwner whenPaused returns (bool) {
+  function unpause() onlyOwner whenPaused public returns (bool) {
     paused = false;
-    Unpause();
+    emit Unpause();
     return true;
   }
 }
@@ -1387,7 +1755,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  the Nonfungible Interface.
     /// @param _cut - percent cut the owner takes on each auction, must be
     ///  between 0-10,000.
-    function ClockAuction(address _nftAddress, uint256 _cut) public {
+    constructor(address _nftAddress, uint256 _cut) public {
         require(_cut <= 10000);
         ownerCut = _cut;
 
@@ -1401,14 +1769,14 @@ contract ClockAuction is Pausable, ClockAuctionBase {
     ///  Always transfers to the NFT contract, but can be called either by
     ///  the owner or the NFT contract.
     function withdrawBalance() external {
-        address nftAddress = address(nonFungibleContract);
+        address payable nftAddress = address(uint160(address(nonFungibleContract)));
 
         require(
             msg.sender == owner ||
             msg.sender == nftAddress
         );
         // We are using this boolean method to make sure that even if one fails it will still work
-        bool res = nftAddress.send(this.balance);
+        bool res = nftAddress.send(address(this).balance);
     }
 
     /// @dev Creates and begins a new auction.
@@ -1423,7 +1791,7 @@ contract ClockAuction is Pausable, ClockAuctionBase {
         uint256 _startingPrice,
         uint256 _endingPrice,
         uint256 _duration,
-        address _seller
+        address payable _seller
     )
         external
         whenNotPaused
@@ -1536,7 +1904,7 @@ contract SiringClockAuction is ClockAuction {
     bool public isSiringClockAuction = true;
 
     // Delegate constructor
-    function SiringClockAuction(address _nftAddr, uint256 _cut) public
+    constructor(address _nftAddr, uint256 _cut) public
         ClockAuction(_nftAddr, _cut) {}
 
     /// @dev Creates and begins a new auction. Since this function is wrapped,
@@ -1551,7 +1919,7 @@ contract SiringClockAuction is ClockAuction {
         uint256 _startingPrice,
         uint256 _endingPrice,
         uint256 _duration,
-        address _seller
+        address payable _seller
     )
         external
     {
@@ -1609,7 +1977,7 @@ contract SaleClockAuction is ClockAuction {
     uint256[5] public lastGen0SalePrices;
 
     // Delegate constructor
-    function SaleClockAuction(address _nftAddr, uint256 _cut) public
+    constructor(address _nftAddr, uint256 _cut) public
         ClockAuction(_nftAddr, _cut) {}
 
     /// @dev Creates and begins a new auction.
@@ -1623,7 +1991,7 @@ contract SaleClockAuction is ClockAuction {
         uint256 _startingPrice,
         uint256 _endingPrice,
         uint256 _duration,
-        address _seller
+        address payable _seller
     )
         external
     {
@@ -1675,342 +2043,8 @@ contract SaleClockAuction is ClockAuction {
 }
 
 
-/// @title Handles creating auctions for sale and siring of kitties.
-///  This wrapper of ReverseAuction exists only so that users can create
-///  auctions with only one transaction.
-contract KittyAuction is KittyBreeding {
-
-    // @notice The auction contract variables are defined in KittyBase to allow
-    //  us to refer to them in KittyOwnership to prevent accidental transfers.
-    // `saleAuction` refers to the auction for gen0 and p2p sale of kitties.
-    // `siringAuction` refers to the auction for siring rights of kitties.
-
-    /// @dev Sets the reference to the sale auction.
-    /// @param _address - Address of sale contract.
-    function setSaleAuctionAddress(address _address) external onlyCEO {
-        SaleClockAuction candidateContract = SaleClockAuction(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        require(candidateContract.isSaleClockAuction());
-
-        // Set the new contract address
-        saleAuction = candidateContract;
-    }
-
-    /// @dev Sets the reference to the siring auction.
-    /// @param _address - Address of siring contract.
-    function setSiringAuctionAddress(address _address) external onlyCEO {
-        SiringClockAuction candidateContract = SiringClockAuction(_address);
-
-        // NOTE: verify that a contract is what we expect - https://github.com/Lunyr/crowdsale-contracts/blob/cfadd15986c30521d8ba7d5b6f57b4fefcc7ac38/contracts/LunyrToken.sol#L117
-        require(candidateContract.isSiringClockAuction());
-
-        // Set the new contract address
-        siringAuction = candidateContract;
-    }
-
-    /// @dev Put a kitty up for auction.
-    ///  Does some ownership trickery to create auctions in one tx.
-    function createSaleAuction(
-        uint256 _kittyId,
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration
-    )
-        external
-        whenNotPaused
-    {
-        // Auction contract checks input sizes
-        // If kitty is already on any auction, this will throw
-        // because it will be owned by the auction contract.
-        require(_owns(msg.sender, _kittyId));
-        // Ensure the kitty is not pregnant to prevent the auction
-        // contract accidentally receiving ownership of the child.
-        // NOTE: the kitty IS allowed to be in a cooldown.
-        require(!isPregnant(_kittyId));
-        _approve(_kittyId, saleAuction);
-        // Sale auction throws if inputs are invalid and clears
-        // transfer and sire approval after escrowing the kitty.
-        saleAuction.createAuction(
-            _kittyId,
-            _startingPrice,
-            _endingPrice,
-            _duration,
-            msg.sender
-        );
-    }
-
-    /// @dev Put a kitty up for auction to be sire.
-    ///  Performs checks to ensure the kitty can be sired, then
-    ///  delegates to reverse auction.
-    function createSiringAuction(
-        uint256 _kittyId,
-        uint256 _startingPrice,
-        uint256 _endingPrice,
-        uint256 _duration
-    )
-        external
-        whenNotPaused
-    {
-        // Auction contract checks input sizes
-        // If kitty is already on any auction, this will throw
-        // because it will be owned by the auction contract.
-        require(_owns(msg.sender, _kittyId));
-        require(isReadyToBreed(_kittyId));
-        _approve(_kittyId, siringAuction);
-        // Siring auction throws if inputs are invalid and clears
-        // transfer and sire approval after escrowing the kitty.
-        siringAuction.createAuction(
-            _kittyId,
-            _startingPrice,
-            _endingPrice,
-            _duration,
-            msg.sender
-        );
-    }
-
-    /// @dev Completes a siring auction by bidding.
-    ///  Immediately breeds the winning matron with the sire on auction.
-    /// @param _sireId - ID of the sire on auction.
-    /// @param _matronId - ID of the matron owned by the bidder.
-    function bidOnSiringAuction(
-        uint256 _sireId,
-        uint256 _matronId
-    )
-        external
-        payable
-        whenNotPaused
-    {
-        // Auction contract checks input sizes
-        require(_owns(msg.sender, _matronId));
-        require(isReadyToBreed(_matronId));
-        require(_canBreedWithViaAuction(_matronId, _sireId));
-
-        // Define the current price of the auction.
-        uint256 currentPrice = siringAuction.getCurrentPrice(_sireId);
-        require(msg.value >= currentPrice + autoBirthFee);
-
-        // Siring auction will throw if the bid fails.
-        siringAuction.bid.value(msg.value - autoBirthFee)(_sireId);
-        _breedWith(uint32(_matronId), uint32(_sireId));
-    }
-
-    /// @dev Transfers the balance of the sale auction contract
-    /// to the KittyCore contract. We use two-step withdrawal to
-    /// prevent two transfer calls in the auction bid function.
-    function withdrawAuctionBalances() external onlyCLevel {
-        saleAuction.withdrawBalance();
-        siringAuction.withdrawBalance();
-    }
-}
 
 
-/// @title all functions related to creating kittens
-contract KittyMinting is KittyAuction {
-
-    // Limits the number of cats the contract owner can ever create.
-    uint256 public constant PROMO_CREATION_LIMIT = 5000;
-    uint256 public constant GEN0_CREATION_LIMIT = 45000;
-
-    // Constants for gen0 auctions.
-    uint256 public constant GEN0_STARTING_PRICE = 10 finney;
-    uint256 public constant GEN0_AUCTION_DURATION = 1 days;
-
-    // Counts the number of cats the contract owner has created.
-    uint256 public promoCreatedCount;
-    uint256 public gen0CreatedCount;
-
-    /// @dev we can create promo kittens, up to a limit. Only callable by COO
-    /// @param _genes the encoded genes of the kitten to be created, any value is accepted
-    /// @param _owner the future owner of the created kittens. Default to contract COO
-    function createPromoKitty(uint256 _genes, address _owner) external onlyCOO {
-        address kittyOwner = _owner;
-        if (kittyOwner == address(0)) {
-             kittyOwner = cooAddress;
-        }
-        require(promoCreatedCount < PROMO_CREATION_LIMIT);
-
-        promoCreatedCount++;
-        _createKitty(0, 0, 0, _genes, kittyOwner);
-    }
-
-    /// @dev Creates a new gen0 kitty with the given genes and
-    ///  creates an auction for it.
-    function createGen0Auction(uint256 _genes) external onlyCOO {
-        require(gen0CreatedCount < GEN0_CREATION_LIMIT);
-
-        uint256 kittyId = _createKitty(0, 0, 0, _genes, address(this));
-        _approve(kittyId, saleAuction);
-
-        saleAuction.createAuction(
-            kittyId,
-            _computeNextGen0Price(),
-            0,
-            GEN0_AUCTION_DURATION,
-            address(this)
-        );
-
-        gen0CreatedCount++;
-    }
-
-    /// @dev Computes the next gen0 auction starting price, given
-    ///  the average of the past 5 prices + 50%.
-    function _computeNextGen0Price() internal view returns (uint256) {
-        uint256 avePrice = saleAuction.averageGen0SalePrice();
-
-        // Sanity check to ensure we don't overflow arithmetic
-        require(avePrice == uint256(uint128(avePrice)));
-
-        uint256 nextPrice = avePrice + (avePrice / 2);
-
-        // We never auction for less than starting price
-        if (nextPrice < GEN0_STARTING_PRICE) {
-            nextPrice = GEN0_STARTING_PRICE;
-        }
-
-        return nextPrice;
-    }
-}
 
 
-/// @title CryptoKitties: Collectible, breedable, and oh-so-adorable cats on the Ethereum blockchain.
-/// @author Axiom Zen (https://www.axiomzen.co)
-/// @dev The main CryptoKitties contract, keeps track of kittens so they don't wander around and get lost.
-contract KittyCore is KittyMinting {
 
-    // This is the main CryptoKitties contract. In order to keep our code seperated into logical sections,
-    // we've broken it up in two ways. First, we have several seperately-instantiated sibling contracts
-    // that handle auctions and our super-top-secret genetic combination algorithm. The auctions are
-    // seperate since their logic is somewhat complex and there's always a risk of subtle bugs. By keeping
-    // them in their own contracts, we can upgrade them without disrupting the main contract that tracks
-    // kitty ownership. The genetic combination algorithm is kept seperate so we can open-source all of
-    // the rest of our code without making it _too_ easy for folks to figure out how the genetics work.
-    // Don't worry, I'm sure someone will reverse engineer it soon enough!
-    //
-    // Secondly, we break the core contract into multiple files using inheritence, one for each major
-    // facet of functionality of CK. This allows us to keep related code bundled together while still
-    // avoiding a single giant file with everything in it. The breakdown is as follows:
-    //
-    //      - KittyBase: This is where we define the most fundamental code shared throughout the core
-    //             functionality. This includes our main data storage, constants and data types, plus
-    //             internal functions for managing these items.
-    //
-    //      - KittyAccessControl: This contract manages the various addresses and constraints for operations
-    //             that can be executed only by specific roles. Namely CEO, CFO and COO.
-    //
-    //      - KittyOwnership: This provides the methods required for basic non-fungible token
-    //             transactions, following the draft ERC-721 spec (https://github.com/ethereum/EIPs/issues/721).
-    //
-    //      - KittyBreeding: This file contains the methods necessary to breed cats together, including
-    //             keeping track of siring offers, and relies on an external genetic combination contract.
-    //
-    //      - KittyAuctions: Here we have the public methods for auctioning or bidding on cats or siring
-    //             services. The actual auction functionality is handled in two sibling contracts (one
-    //             for sales and one for siring), while auction creation and bidding is mostly mediated
-    //             through this facet of the core contract.
-    //
-    //      - KittyMinting: This final facet contains the functionality we use for creating new gen0 cats.
-    //             We can make up to 5000 "promo" cats that can be given away (especially important when
-    //             the community is new), and all others can only be created and then immediately put up
-    //             for auction via an algorithmically determined starting price. Regardless of how they
-    //             are created, there is a hard limit of 50k gen0 cats. After that, it's all up to the
-    //             community to breed, breed, breed!
-
-    // Set in case the core contract is broken and an upgrade is required
-    address public newContractAddress;
-
-    /// @notice Creates the main CryptoKitties smart contract instance.
-    function KittyCore() public {
-        // Starts paused.
-        paused = true;
-
-        // the creator of the contract is the initial CEO
-        ceoAddress = msg.sender;
-
-        // the creator of the contract is also the initial COO
-        cooAddress = msg.sender;
-
-        // start with the mythical kitten 0 - so we don't have generation-0 parent issues
-        _createKitty(0, 0, 0, uint256(-1), address(0));
-    }
-
-    /// @dev Used to mark the smart contract as upgraded, in case there is a serious
-    ///  breaking bug. This method does nothing but keep track of the new contract and
-    ///  emit a message indicating that the new address is set. It's up to clients of this
-    ///  contract to update to the new contract address in that case. (This contract will
-    ///  be paused indefinitely if such an upgrade takes place.)
-    /// @param _v2Address new address
-    function setNewAddress(address _v2Address) external onlyCEO whenPaused {
-        // See README.md for updgrade plan
-        newContractAddress = _v2Address;
-        ContractUpgrade(_v2Address);
-    }
-
-    /// @notice No tipping!
-    /// @dev Reject all Ether from being sent here, unless it's from one of the
-    ///  two auction contracts. (Hopefully, we can prevent user accidents.)
-    function() external payable {
-        require(
-            msg.sender == address(saleAuction) ||
-            msg.sender == address(siringAuction)
-        );
-    }
-
-    /// @notice Returns all the relevant information about a specific kitty.
-    /// @param _id The ID of the kitty of interest.
-    function getKitty(uint256 _id)
-        external
-        view
-        returns (
-        bool isGestating,
-        bool isReady,
-        uint256 cooldownIndex,
-        uint256 nextActionAt,
-        uint256 siringWithId,
-        uint256 birthTime,
-        uint256 matronId,
-        uint256 sireId,
-        uint256 generation,
-        uint256 genes
-    ) {
-        Kitty storage kit = kitties[_id];
-
-        // if this variable is 0 then it's not gestating
-        isGestating = (kit.siringWithId != 0);
-        isReady = (kit.cooldownEndBlock <= block.number);
-        cooldownIndex = uint256(kit.cooldownIndex);
-        nextActionAt = uint256(kit.cooldownEndBlock);
-        siringWithId = uint256(kit.siringWithId);
-        birthTime = uint256(kit.birthTime);
-        matronId = uint256(kit.matronId);
-        sireId = uint256(kit.sireId);
-        generation = uint256(kit.generation);
-        genes = kit.genes;
-    }
-
-    /// @dev Override unpause so it requires all external contract addresses
-    ///  to be set before contract can be unpaused. Also, we can't have
-    ///  newContractAddress set either, because then the contract was upgraded.
-    /// @notice This is public rather than external so we can call super.unpause
-    ///  without using an expensive CALL.
-    function unpause() public onlyCEO whenPaused {
-        require(saleAuction != address(0));
-        require(siringAuction != address(0));
-        require(geneScience != address(0));
-        require(newContractAddress == address(0));
-
-        // Actually unpause the contract.
-        super.unpause();
-    }
-
-    // @dev Allows the CFO to capture the balance available to the contract.
-    function withdrawBalance() external onlyCFO {
-        uint256 balance = this.balance;
-        // Subtract all the currently pregnant kittens we have, plus 1 of margin.
-        uint256 subtractFees = (pregnantKitties + 1) * autoBirthFee;
-
-        if (balance > subtractFees) {
-            cfoAddress.send(balance - subtractFees);
-        }
-    }
-}
