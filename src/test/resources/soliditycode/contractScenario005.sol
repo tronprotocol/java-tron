@@ -1,11 +1,11 @@
 //pragma solidity ^0.4.16;
 
 interface token {
-    function transfer(address receiver, uint amount);
+    function transfer(address receiver, uint amount) external;
 }
 
 contract Crowdsale {
-    address public beneficiary = 0x1B228F5D9F934C7BB18AAA86F90418932888E7B4;  // 募资成功后的收款方
+    address payable public beneficiary = 0x1b228F5D9f934c7bb18Aaa86F90418932888E7b4;  // 募资成功后的收款方
     uint public fundingGoal = 10000000;   // 募资额度
     uint public amountRaised = 1000000;   // 参与数量
     uint public deadline;      // 募资截止期
@@ -27,12 +27,12 @@ contract Crowdsale {
     /**
      * 构造函数, 设置相关属性
      */
-    function Crowdsale(
-        address ifSuccessfulSendTo,
+    constructor(
+        address payable ifSuccessfulSendTo,
         uint fundingGoalInEthers,
         uint durationInMinutes,
         uint finneyCostOfEachToken,
-        address addressOfTokenUsedAsReward) {
+        address addressOfTokenUsedAsReward) public{
             beneficiary = ifSuccessfulSendTo;
             fundingGoal = fundingGoalInEthers * 1 ether;
             deadline = now + durationInMinutes * 1 minutes;
@@ -44,13 +44,13 @@ contract Crowdsale {
      * 无函数名的Fallback函数，
      * 在向合约转账时，这个函数会被调用
      */
-    function () payable {
+    function () payable external{
         require(!crowdsaleClosed);
         uint amount = msg.value;
         balanceOf[msg.sender] += amount;
         amountRaised += amount;
         tokenReward.transfer(msg.sender, amount / price);
-        FundTransfer(msg.sender, amount, true);
+        emit FundTransfer(msg.sender, amount, true);
     }
 
     /**
@@ -64,10 +64,10 @@ contract Crowdsale {
      * 判断众筹是否完成融资目标， 这个方法使用了afterDeadline函数修改器
      *
      */
-    function checkGoalReached() afterDeadline {
+    function checkGoalReached() afterDeadline public{
         if (amountRaised >= fundingGoal) {
             fundingGoalReached = true;
-            GoalReached(beneficiary, amountRaised);
+            emit GoalReached(beneficiary, amountRaised);
         }
         crowdsaleClosed = true;
     }
@@ -78,13 +78,13 @@ contract Crowdsale {
      * 未完成融资目标时，执行退款
      *
      */
-    function safeWithdrawal() afterDeadline {
+    function safeWithdrawal() afterDeadline public{
         if (!fundingGoalReached) {
             uint amount = balanceOf[msg.sender];
             balanceOf[msg.sender] = 0;
             if (amount > 0) {
                 if (msg.sender.send(amount)) {
-                    FundTransfer(msg.sender, amount, false);
+                    emit FundTransfer(msg.sender, amount, false);
                 } else {
                     balanceOf[msg.sender] = amount;
                 }
@@ -92,8 +92,8 @@ contract Crowdsale {
         }
 
         if (fundingGoalReached && beneficiary == msg.sender) {
-            if (beneficiary.send(amountRaised)) {
-                FundTransfer(beneficiary, amountRaised, false);
+            if (address(beneficiary).send(amountRaised)) {
+                emit FundTransfer(beneficiary, amountRaised, false);
             } else {
                 //If we fail to send the funds to beneficiary, unlock funders balance
                 fundingGoalReached = false;

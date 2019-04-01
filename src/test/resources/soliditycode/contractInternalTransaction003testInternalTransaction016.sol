@@ -83,7 +83,7 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             B  b1=(new B).value(1)();//1
-            b1.suicide(this);
+            b1.selfdestruct(address(this));
         }
         function transfer2()  payable public{
             (new B).value(1)();//1
@@ -166,29 +166,29 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             B  b1=(new B).value(1)();//1
-            b1.suicide(this);
+            b1.selfdestruct(address(this));
         }
-        function getBalance() returns(uint256){
-            return this.balance;
+        function getBalance() public returns(uint256){
+            return address(this).balance;
         }
     }
     contract B{
         uint256 public num = 0;
-        function f() payable returns(bool) {
+        function f() payable public returns(bool) {
             return true;
         }
         constructor() public payable {}
-        function payC(address c, bool isRevert) public{
+        function payC(address payable c, bool isRevert) public{
             c.transfer(1);//4
             if (isRevert) {
                 revert();
             }
         }
-        function getBalance() returns(uint256){
-            return this.balance;
+        function getBalance() public returns(uint256){
+            return address(this).balance;
         }
-        function () payable{}
-        function suicide(address toAddress) public payable{
+        function () payable external{}
+        function selfdestruct(address toAddress) public payable{
         selfdestruct(toAddress);
     }
     }
