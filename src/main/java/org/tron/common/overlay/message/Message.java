@@ -92,16 +92,20 @@ public abstract class Message {
   }
 
   private boolean isFilter() {
-    if (filter) {
-      return filter;
-    }
-    if (System.currentTimeMillis() - time > duration) {
-      long allowNum = manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
-      if (allowNum > 0 && allowNum <= manager.getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum()) {
-        filter = true;
+    try {
+      if (filter || manager == null) {
+        return filter;
       }
-      time = System.currentTimeMillis();
+      if (System.currentTimeMillis() - time > duration) {
+        long allowNum = manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
+        if (allowNum > 0 && allowNum <= manager.getDynamicPropertiesStore()
+            .getLatestSolidifiedBlockNum()) {
+          filter = true;
+        }
+        time = System.currentTimeMillis();
+      }
+    } catch (Exception e) {
+      logger.error("filter protobuf data error : {}", e.getMessage());
     }
     return filter;
   }

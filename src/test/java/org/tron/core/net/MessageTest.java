@@ -1,9 +1,13 @@
 package org.tron.core.net;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.overlay.message.DisconnectMessage;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.message.PingMessage;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -13,6 +17,7 @@ public class MessageTest {
 
   @Test
   public void test1() throws Exception {
+    ReflectUtils.setFieldValue(new PingMessage(), "filter", true);
     byte[] bytes = new DisconnectMessage(ReasonCode.TOO_MANY_PEERS).getData();
     DisconnectMessageTest disconnectMessageTest = new DisconnectMessageTest();
     disconnectMessage = new DisconnectMessage(MessageTypes.P2P_DISCONNECT.asByte(),
@@ -20,7 +25,6 @@ public class MessageTest {
     Assert.assertTrue(Arrays.equals(bytes, disconnectMessage.getData()));
   }
 
-  @Test
   public void test2() throws Exception {
     DisconnectMessageTest disconnectMessageTest = new DisconnectMessageTest();
     long startTime = System.currentTimeMillis();
