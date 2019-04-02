@@ -32,6 +32,10 @@ public class EventPluginConfig {
   @Setter
   private int bindPort;
 
+  @Getter
+  @Setter
+  private int sendQueueLength;
+
 
   @Getter
   @Setter
@@ -43,6 +47,7 @@ public class EventPluginConfig {
     dbConfig = "";
     useNativeQueue = false;
     bindPort = 0;
+    sendQueueLength = 0;
     triggerConfigList = new ArrayList<>();
   }
 }

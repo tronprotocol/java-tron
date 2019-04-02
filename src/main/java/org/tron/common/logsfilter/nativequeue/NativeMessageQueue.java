@@ -10,6 +10,7 @@ public class NativeMessageQueue {
   private ZMQ.Socket publisher = null;
   private static NativeMessageQueue instance;
   private static final int DEFAULT_BIND_PORT = 5555;
+  private static final int DEFAULT_QUEUE_LENGTH = 1000;
   public static NativeMessageQueue getInstance() {
       if (Objects.isNull(instance)) {
           synchronized (NativeMessageQueue.class) {
@@ -21,7 +22,7 @@ public class NativeMessageQueue {
       return instance;
   }
 
-  public boolean start(int bindPort) {
+  public boolean start(int bindPort, int sendQueueLength) {
     context = new ZContext();
     publisher = context.createSocket(SocketType.PUB);
 
@@ -29,9 +30,15 @@ public class NativeMessageQueue {
       return false;
     }
 
-    if (bindPort == 0) {
+    if (bindPort == 0 || bindPort < 0) {
       bindPort = DEFAULT_BIND_PORT;
     }
+
+    if (sendQueueLength ==0 || sendQueueLength < 0){
+      sendQueueLength = DEFAULT_QUEUE_LENGTH;
+    }
+
+    context.setSndHWM(sendQueueLength);
 
     String bindAddress = String.format("tcp://*:%d", bindPort);
     publisher.bind(bindAddress);

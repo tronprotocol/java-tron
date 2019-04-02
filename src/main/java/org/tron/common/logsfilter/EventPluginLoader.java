@@ -60,7 +60,7 @@ public class EventPluginLoader {
 
   private boolean launchNativeQueue(EventPluginConfig config){
 
-    if (!NativeMessageQueue.getInstance().start(config.getBindPort())){
+    if (!NativeMessageQueue.getInstance().start(config.getBindPort(), config.getSendQueueLength())){
       return false;
     }
 
