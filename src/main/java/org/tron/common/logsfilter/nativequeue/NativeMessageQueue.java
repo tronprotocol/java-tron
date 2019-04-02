@@ -63,8 +63,5 @@ public class NativeMessageQueue {
 
     publisher.sendMore(topic);
     publisher.send(data);
-
-    System.out.println("topic " + topic);
-    System.out.println("trigger " + data);
   }
 }

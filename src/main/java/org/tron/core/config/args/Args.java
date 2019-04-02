@@ -948,21 +948,6 @@ public class Args {
     return this.outputDirectory;
   }
 
-  public Map<String, String> getBlacklist() {
-    Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, Constant.TESTNET_CONF);
-    if (!config.hasPath("blacklist")) {
-      return Collections.emptyMap();
-    }
-
-    return config.getObjectList("blacklist").stream()
-        .map((ConfigObject e) -> Maps.immutableEntry(
-            e.get("from") == null ? "" : e.get("from").unwrapped().toString(),
-            e.get("to") == null ? "" : e.get("to").unwrapped().toString()))
-        .filter(e -> e.getKey() != null)
-        .filter(e -> e.getValue() != null)
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (k1, k2) -> k2));
-  }
-
   private static List<Node> getNodes(final com.typesafe.config.Config config, String path) {
     if (!config.hasPath(path)) {
       return Collections.emptyList();
