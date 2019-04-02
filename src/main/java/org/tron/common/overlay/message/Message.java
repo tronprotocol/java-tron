@@ -5,11 +5,14 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import lombok.Setter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.db.Manager;
 import org.tron.core.net.message.MessageTypes;
 
 public abstract class Message {
@@ -18,6 +21,12 @@ public abstract class Message {
 
   protected byte[] data;
   protected byte type;
+  @Setter
+  private static Manager manager;
+
+  private static volatile boolean filter = false;
+  private static volatile long time = 0;
+  private static final long duration = ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
   public Message() {
   }
@@ -73,11 +82,28 @@ public abstract class Message {
 
   public CodedInputStream getCodedInputStream() {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
-    Field field = ReflectionUtils
-        .findField(codedInputStream.getClass(), "explicitDiscardUnknownFields");
-    ReflectionUtils.makeAccessible(field);
-    ReflectionUtils.setField(field, codedInputStream, true);
+    if (isFilter()) {
+      Field field = ReflectionUtils
+          .findField(codedInputStream.getClass(), "explicitDiscardUnknownFields");
+      ReflectionUtils.makeAccessible(field);
+      ReflectionUtils.setField(field, codedInputStream, true);
+    }
     return codedInputStream;
+  }
+
+  private boolean isFilter() {
+    if (filter) {
+      return filter;
+    }
+    if (System.currentTimeMillis() - time > duration) {
+      long allowNum = manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
+      if (allowNum > 0 && allowNum <= manager.getDynamicPropertiesStore()
+          .getLatestSolidifiedBlockNum()) {
+        filter = true;
+      }
+      time = System.currentTimeMillis();
+    }
+    return filter;
   }
 
 }

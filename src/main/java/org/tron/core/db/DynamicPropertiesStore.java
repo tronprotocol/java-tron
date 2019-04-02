@@ -162,6 +162,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
+  //Used only for protobuf data filter , once，value is block num
+  private static final byte[] ALLOW_PROTO_FILTER_BLOCK_NUM = "ALLOW_PROTO_FILTER_BLOCK_NUM".getBytes();
+
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
 
@@ -568,6 +571,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBlockEnergyUsage();
     } catch (IllegalArgumentException e) {
       this.saveBlockEnergyUsage(0);
+    }
+
+    try {
+      this.getAllowProtoFilterBlockNum();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowProtoFilterBlockNum(-1);
     }
   }
 
@@ -1574,5 +1583,23 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean getForked() {
     byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
     return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
+  }
+
+  /**
+   * get allow protobuf block number.
+   */
+  public long getAllowProtoFilterBlockNum() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PROTO_FILTER_BLOCK_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found allow protobuf block number"));
+  }
+
+  /**
+   * save allow protobuf block number.
+   */
+  public void saveAllowProtoFilterBlockNum(long num) {
+    logger.info("update allow protobuf block number = {}", num);
+    this.put(ALLOW_PROTO_FILTER_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
 }
