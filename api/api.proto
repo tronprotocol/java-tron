@@ -406,6 +406,9 @@ service Wallet {
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
+  
+  rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
+  }
 
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
