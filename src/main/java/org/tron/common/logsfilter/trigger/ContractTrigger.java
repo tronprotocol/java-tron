@@ -69,5 +69,5 @@ public class ContractTrigger extends Trigger {
 
   @Getter
   @Setter
-  private List<LogInfo> rawData;
+  private LogInfo rawData;
 }

@@ -67,6 +67,7 @@ public class LogInfoTriggerParser {
       if (abi != null && abi.getEntrysCount() > 0) {
         for (ABI.Entry entry : abi.getEntrysList()) {
           if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
+            // TODO: add empty abi
             continue;
           }
           String signature = getEntrySignature(entry);
@@ -79,7 +80,6 @@ public class LogInfoTriggerParser {
 
     int index = 1;
     for (LogInfo logInfo : logInfos) {
-
       byte[] contractAddress = MUtil.convertToTronAddress(logInfo.getAddress());
       String strContractAddr =
           ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
@@ -116,10 +116,12 @@ public class LogInfoTriggerParser {
       event.setCreatorAddress(StringUtils.isEmpty(creatorAddr) ? "" : creatorAddr);
       event.setBlockNumber(blockNum);
       event.setTimeStamp(blockTimestamp);
+      event.setRawData(logInfo);
 
       list.add(event);
       index++;
     }
+
     return list;
   }
 
