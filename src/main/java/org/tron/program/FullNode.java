@@ -181,7 +181,7 @@ public class FullNode {
       Integer i = 0;
       while ((transaction = Transaction.parseDelimitedFrom(fis)) != null) {
         trxCount++;
-        logger.info(i++ + "   " + transaction.toString());
+        //logger.info(i++ + "   " + transaction.toString());
         Message message = new TransactionMessage(transaction);
         // 单线程广播交易
         while (true) {
