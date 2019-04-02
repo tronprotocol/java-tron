@@ -124,7 +124,7 @@ public class Manager {
   @Autowired
   private TransactionStore transactionStore;
   @Autowired(required = false)
-  public TransactionCache transactionCache;
+  private TransactionCache transactionCache;
   @Autowired
   private DeferredTransactionStore deferredTransactionStore;
   @Autowired
@@ -1211,11 +1211,6 @@ public class Manager {
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
       TransactionTrace transactionTrace) throws ContractValidateException {
-    if (getDynamicPropertiesStore().getAllowDeferredTransaction() != 1) {
-      throw new ContractValidateException("deferred transaction is not allowed, "
-          + "need to be opened by the committee");
-    }
-
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1263,6 +1258,11 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+    if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
+      throw new ContractValidateException("deferred transaction is not allowed, "
+          + "need to be opened by the committee");
+    }
+
     if (trxCap == null) {
       return false;
     }
@@ -1279,10 +1279,6 @@ public class Manager {
 
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-      if (getDynamicPropertiesStore().getAllowDeferredTransaction() != 1) {
-        throw new ContractValidateException("deferred transaction is not allowed, "
-            + "need to be opened by the committee");
-      }
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
     }else if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
@@ -2090,12 +2086,14 @@ public class Manager {
   }
 
   private void addDeferredTransactionToPending(final BlockCapsule blockCapsule) {
-    synchronized (lockObj) {
-      for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
-        if (deferredTransaction.getDelayUntil() <= blockCapsule.getTimeStamp()) {
-          TransactionCapsule trxCapsule = new TransactionCapsule(
-              deferredTransaction.getDeferredTransaction().getTransaction());
-          pendingTransactions.add(0, trxCapsule);
+    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1) {
+      synchronized (lockObj) {
+        for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
+          if (deferredTransaction.getDelayUntil() <= blockCapsule.getTimeStamp()) {
+            TransactionCapsule trxCapsule = new TransactionCapsule(
+                deferredTransaction.getDeferredTransaction().getTransaction());
+            pendingTransactions.add(0, trxCapsule);
+          }
         }
       }
     }
