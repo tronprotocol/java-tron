@@ -58,26 +58,26 @@ public class WireTrafficStats implements Runnable {
   @ChannelHandler.Sharable
   static class TrafficStatHandler extends ChannelDuplexHandler {
 
-    private long outSizeTot;
-    private long inSizeTot;
+//    private long outSizeTot;
+//    private long inSizeTot;
     private AtomicLong outSize = new AtomicLong();
     private AtomicLong inSize = new AtomicLong();
     private AtomicLong outPackets = new AtomicLong();
     private AtomicLong inPackets = new AtomicLong();
-    private long lastTime = System.currentTimeMillis();
+//    private long lastTime = System.currentTimeMillis();
 
     public String stats() {
-      long out = outSize.getAndSet(0);
-      long outPac = outPackets.getAndSet(0);
-      long in = inSize.getAndSet(0);
-      long inPac = inPackets.getAndSet(0);
-      outSizeTot += out;
-      inSizeTot += in;
+//      long out = outSize.getAndSet(0);
+//      long outPac = outPackets.getAndSet(0);
+//      long in = inSize.getAndSet(0);
+//      long inPac = inPackets.getAndSet(0);
+//      outSizeTot += out;
+//      inSizeTot += in;
       long curTime = System.currentTimeMillis();
-      long d = (curTime - lastTime);
-      long outSpeed = out * 1000 / d;
-      long inSpeed = in * 1000 / d;
-      lastTime = curTime;
+//      long d = (curTime - lastTime);
+//      long outSpeed = out * 1000 / d;
+//      long inSpeed = in * 1000 / d;
+//      lastTime = curTime;
       return "";
     }
 

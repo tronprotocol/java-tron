@@ -40,15 +40,11 @@ public class PeerServer {
 
   private ApplicationContext ctx;
 
-  public TronChannelInitializer tronChannelInitializer;
-
   private boolean listening;
 
   @Autowired
   private NodeImpl p2pNode;
 
-  private EventLoopGroup bossGroup;
-  private EventLoopGroup workerGroup;
   private ChannelFuture channelFuture;
 
   @Autowired
@@ -58,10 +54,9 @@ public class PeerServer {
 
   public void start(int port) {
 
-    bossGroup = new NioEventLoopGroup(1);
-    workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
-    tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
-
+    EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+    EventLoopGroup workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
+    TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
     tronChannelInitializer.setNodeImpl(p2pNode);
 
     try {
