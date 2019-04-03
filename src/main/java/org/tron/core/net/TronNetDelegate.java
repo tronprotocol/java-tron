@@ -223,14 +223,14 @@ public class TronNetDelegate {
       }
       boolean flag = false;
       List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
-      for (WitnessCapsule witness: witnesses){
+      for (WitnessCapsule witness : witnesses) {
         if (witness.getAddress().equals(block.getWitnessAddress())) {
           flag = true;
           break;
         }
       }
       return flag;
-    }catch (ValidateSignatureException e) {
+    } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
   }
