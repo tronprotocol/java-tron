@@ -1,6 +1,5 @@
 package org.tron.common.overlay.server;
 
-import com.beust.jcommander.internal.Lists;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -44,7 +43,6 @@ public class FastForward {
   private List<Node> fastForwardNodes = args.getFastForwardNodes();
   private byte[] witnessAddress = args.getLocalWitnesses().getWitnessAccountAddress();
   private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
-
 
   public void init() {
 
