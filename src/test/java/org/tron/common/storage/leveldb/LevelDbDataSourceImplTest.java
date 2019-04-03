@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteOptions;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -63,7 +65,7 @@ public class LevelDbDataSourceImplTest {
   @Before
   public void initDb() {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
+    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb", new Options(), new WriteOptions());
   }
 
   /**
@@ -99,7 +101,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testReset() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_reset");
+        Args.getInstance().getOutputDirectory(), "test_reset", new Options(), new WriteOptions());
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
     dataSource.closeDB();
@@ -108,7 +110,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testupdateByBatchInner() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_updateByBatch");
+        Args.getInstance().getOutputDirectory(), "test_updateByBatch", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
     String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
@@ -131,7 +133,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testdeleteData() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_delete");
+        Args.getInstance().getOutputDirectory(), "test_delete", new Options(), new WriteOptions());
     dataSource.initDB();
     String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
     byte[] key = key1.getBytes();
@@ -145,7 +147,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void testallKeys() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_find_key");
+        Args.getInstance().getOutputDirectory(), "test_find_key", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
 
@@ -184,7 +186,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void allKeysTest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_allKeysTest_key");
+        Args.getInstance().getOutputDirectory(), "test_allKeysTest_key", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
 
@@ -228,7 +230,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void seekTest() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_seek_key");
+        Args.getInstance().getOutputDirectory(), "test_seek_key", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
 
@@ -240,7 +242,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void getValuesNext() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesNext_key");
+        Args.getInstance().getOutputDirectory(), "test_getValuesNext_key", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
 
@@ -257,7 +259,7 @@ public class LevelDbDataSourceImplTest {
   @Test
   public void getValuesPrev() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key");
+        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key", new Options(), new WriteOptions());
     dataSource.initDB();
     dataSource.resetDb();
 
