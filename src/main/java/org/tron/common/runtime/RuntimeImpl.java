@@ -59,7 +59,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -89,6 +88,9 @@ public class RuntimeImpl implements Runtime {
 
   //tx trace
   private TransactionTrace trace;
+
+  @Getter
+  @Setter
   private boolean isStaticCall = false;
 
   @Setter
@@ -445,7 +447,7 @@ public class RuntimeImpl implements Runtime {
           this.blockCap);
       byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
       this.program.setRootTransactionId(txId);
-      this.program.setRootCallConstant(isCallConstant());
+//      this.program.setStaticCall(isStaticCall());
       if (enableEventLinstener &&
           (EventPluginLoader.getInstance().isContractEventTriggerEnable()
               || EventPluginLoader.getInstance().isContractLogTriggerEnable())
@@ -548,6 +550,7 @@ public class RuntimeImpl implements Runtime {
             .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
         energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
+
       long maxCpuTimeOfOneTx = deposit.getDbManager().getDynamicPropertiesStore()
           .getMaxCpuTimeOfOneTx() * Constant.ONE_THOUSAND;
       long thisTxCPULimitInUs =
@@ -567,7 +570,6 @@ public class RuntimeImpl implements Runtime {
           this.blockCap);
       byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
       this.program.setRootTransactionId(txId);
-      this.program.setRootCallConstant(isCallConstant());
 
       if (enableEventLinstener &&
           (EventPluginLoader.getInstance().isContractEventTriggerEnable()
@@ -703,10 +705,6 @@ public class RuntimeImpl implements Runtime {
     }
     return BigInteger.valueOf(callerEnergyFrozen).multiply(BigInteger.valueOf(callerEnergyUsage))
         .divide(BigInteger.valueOf(callerEnergyTotal)).longValueExact();
-  }
-
-  public boolean isCallConstant() {
-    return isStaticCall;
   }
 
   public void finalization() {

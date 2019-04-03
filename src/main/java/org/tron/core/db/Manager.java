@@ -1218,7 +1218,6 @@ public class Manager {
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     trace.init(blockCap, eventPluginLoaded);
-    trace.checkIsConstant();
     trace.exec();
 
     if (Objects.nonNull(blockCap)) {
@@ -1228,7 +1227,6 @@ public class Manager {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
           trace.init(blockCap, eventPluginLoaded);
-          trace.checkIsConstant();
           trace.exec();
           trace.setResult();
           logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
