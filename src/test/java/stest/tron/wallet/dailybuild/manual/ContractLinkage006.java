@@ -215,6 +215,7 @@ public class ContractLinkage006 {
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
