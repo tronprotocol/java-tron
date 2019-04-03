@@ -1,7 +1,11 @@
 package stest.tron.wallet.solidityadd;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -20,11 +24,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
 
 
 
@@ -53,6 +52,14 @@ public class addTrcToken001Assemble {
   private String fullnode1 = Configuration.getByPath("testng.conf")
             .getStringList("fullnode.ip.list").get(0);
 
+  private static final long now = System.currentTimeMillis();
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
+  private static final long TotalSupply = 1000L;
+  private String description = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetDescription");
+  private String url = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetUrl");
 
   byte[] contractAddress = null;
 
@@ -63,6 +70,7 @@ public class addTrcToken001Assemble {
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] toAddress = ecKey2.getAddress();
   String toAddressKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -95,7 +103,17 @@ public class addTrcToken001Assemble {
     Assert.assertTrue(PublicMethed
             .sendcoin(toAddress, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    //Create a new AssetIssue success.
+    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L, 100000L,
+            1L, 1L, contractExcKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Protocol.Account getAssetIdFromThisAccount = PublicMethed
+            .queryAccount(contractExcAddress, blockingStubFull);
+    assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
     String filePath = "src/test/resources/soliditycode/addTrcToken001Assemble.sol";
     String contractName = "InAssemble";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -109,13 +127,18 @@ public class addTrcToken001Assemble {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
              0L, 100, null, contractExcKey,
                 contractExcAddress, blockingStubFull);
-    Protocol.Account info;
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
               .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                       testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+            assetAccountId.toByteArray(), 100L, contractExcAddress,
+            contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
+    Protocol.Account info;
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
@@ -142,7 +165,7 @@ public class addTrcToken001Assemble {
     logger.info("energyUsed:" + energyUsed);
   }
 
-  @Test(enabled = true, description = "Support function type")
+  @Test(enabled = false, description = "Support function type")
   public void test1Grammar002() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
@@ -162,7 +185,7 @@ public class addTrcToken001Assemble {
     logger.info("energyUsed:" + energyUsed);
   }
 
-  @Test(enabled = true, description = "Support function type")
+  @Test(enabled = false, description = "Support function type")
   public void test1Grammar003() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
@@ -186,8 +209,8 @@ public class addTrcToken001Assemble {
   public void test1Grammar004() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenid = "";
-    String tokenvalue = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    Long tokenvalue = Long.valueOf(1);
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -207,11 +230,12 @@ public class addTrcToken001Assemble {
   public void test1Grammar005() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenvalue = "";
-    String para = "\"" + Base58.encode58Check(toAddress)
+    String tokenid = assetAccountId.toStringUtf8();;
+    Long tokenvalue = Long.valueOf(1);
+    String para = "\"" + tokenid
             + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-            "trcTokenInMap(address,uint256)", para, false,
+            "trcTokenInMap(trcToken,uint256)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
@@ -223,7 +247,7 @@ public class addTrcToken001Assemble {
     logger.info("energyUsed:" + energyUsed);
   }
 
-  @Test(enabled = true, description = "Support function type")
+  @Test(enabled = false, description = "Support function type")
   public void test1Grammar006() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";

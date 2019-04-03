@@ -1,7 +1,11 @@
 package stest.tron.wallet.solidityadd;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,13 +22,8 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-
-
 
 
 @Slf4j
@@ -51,6 +50,14 @@ public class contractTrcTokenToOther {
   private String fullnode1 = Configuration.getByPath("testng.conf")
             .getStringList("fullnode.ip.list").get(0);
 
+  private static final long now = System.currentTimeMillis();
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
+  private static final long TotalSupply = 1000L;
+  private String description = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetDescription");
+  private String url = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetUrl");
 
   byte[] contractAddress = null;
 
@@ -94,6 +101,18 @@ public class contractTrcTokenToOther {
             .sendcoin(toAddress, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    //Create a new AssetIssue success.
+    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L, 100000L,
+            1L, 1L, contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Protocol.Account getAssetIdFromThisAccount = PublicMethed
+            .queryAccount(contractExcAddress, blockingStubFull);
+    assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
     String filePath = "src/test/resources/soliditycode/contractTrcTokenToOther.sol";
     String contractName = "ConvertType";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -123,9 +142,10 @@ public class contractTrcTokenToOther {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
-    String tokenStr = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    logger.info("tokenid" + tokenid);
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
                 "trcTokenToString(trcToken)", para, false,
                 0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -145,9 +165,9 @@ public class contractTrcTokenToOther {
   public void test1Grammar002() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenInt = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
             "trcTokenToUint256(trcToken)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -167,9 +187,9 @@ public class contractTrcTokenToOther {
   public void test1Grammar003() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenInt = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
             "trcTokenToAddress(trcToken)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -189,9 +209,9 @@ public class contractTrcTokenToOther {
   public void test1Grammar004() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenInt = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
             "trcTokenToBytes(trcToken)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -211,9 +231,9 @@ public class contractTrcTokenToOther {
   public void test1Grammar005() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenInt = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
             "trcTokenToBytes32(trcToken)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -233,9 +253,9 @@ public class contractTrcTokenToOther {
   public void test1Grammar006() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenInt = "";
-    String value = "";
-    String para = "";
+    String tokenid = assetAccountId.toStringUtf8();
+    String para = "\"" + tokenid
+            + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
             "trcTokenToArray(trcToken)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
