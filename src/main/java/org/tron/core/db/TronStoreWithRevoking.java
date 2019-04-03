@@ -12,7 +12,9 @@ import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
@@ -21,8 +23,9 @@ import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.core.ITronChainBase;
-import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -38,31 +41,34 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   private RevokingDatabase revokingDatabase;
   @Autowired(required = false)
   protected IndexHelper indexHelper;
-  @Getter
-  private String dbName;
 
   protected TronStoreWithRevoking(String dbName) {
-    this.dbName = dbName;
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     String dbEngine = Args.getInstance().getStorage().getDbEngine();
     if (dbVersion == 1) {
       this.revokingDB = new RevokingDBWithCachingOldValue(dbName);
     } else if (dbVersion == 2) {
       if ("LEVELDB".equals(dbEngine.toUpperCase())) {
-        this.revokingDB = new RevokingDBWithCachingNewValue(dbName, LevelDB.class);
+        this.revokingDB = new Chainbase(new SnapshotRoot(
+            new LevelDB(
+                new LevelDbDataSourceImpl(Args.getInstance().getStorage().getPathByDbName(dbName),
+                    dbName,
+                    Args.getInstance().getStorage().getOptionsByDbName(dbName),
+                    new WriteOptions().sync(Args.getInstance().getStorage().isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
-        this.revokingDB = new RevokingDBWithCachingNewValue(dbName, RocksDB.class);
+        this.revokingDB = new Chainbase(
+            new SnapshotRoot(
+                new RocksDB(Args.getInstance().getStorage().getPathByDbName(dbName), dbName)));
       }
     } else {
       throw new RuntimeException("db version is error.");
     }
   }
 
-  protected TronStoreWithRevoking(String dbName, Class<? extends DB> clz) {
-    this.dbName = dbName;
+  protected TronStoreWithRevoking(DB<byte[], byte[]> db) {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion == 2) {
-      this.revokingDB = new RevokingDBWithCachingNewValue(dbName, clz);
+      this.revokingDB = new Chainbase(new SnapshotRoot(db));
     } else {
       throw new RuntimeException("db version is only 2.(" + dbVersion + ")");
     }
@@ -128,6 +134,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   @Override
   public String getName() {
     return getClass().getSimpleName();
+  }
+
+  @Override
+  public String getDbName() {
+    return null;
   }
 
   @Override

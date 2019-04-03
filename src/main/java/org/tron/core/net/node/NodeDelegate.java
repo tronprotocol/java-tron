@@ -26,7 +26,7 @@ public interface NodeDelegate {
   LinkedList<BlockId> getLostBlockIds(List<BlockId> blockChainSummary) throws StoreException;
 
   Deque<BlockId> getBlockChainSummary(BlockId beginBLockId, Deque<BlockId> blockIds)
-      throws TronException;
+      throws TronException,  StoreException;
 
   Message getData(Sha256Hash msgId, MessageTypes type) throws StoreException;
 

@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.BlockBasedTableConfig;
@@ -26,11 +27,10 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
-import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.RocksDbSettings;
-import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
+import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 
 @Slf4j
@@ -41,6 +41,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
+  @Getter
   private String parentName;
   ReadOptions readOpts;
 
@@ -266,21 +267,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   @Override
-  public void putData(byte[] key, byte[] value, WriteOptionsWrapper optionsWrapper) {
-    if (quitIfNotAlive()) {
-      return;
-    }
-    resetDbLock.readLock().lock();
-    try {
-      database.put(optionsWrapper.rocks, key, value);
-    } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
-  @Override
   public byte[] getData(byte[] key) {
     if (quitIfNotAlive()) {
       return null;
@@ -304,21 +290,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     resetDbLock.readLock().lock();
     try {
       database.delete(key);
-    } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
-  @Override
-  public void deleteData(byte[] key, WriteOptionsWrapper optionsWrapper) {
-    if (quitIfNotAlive()) {
-      return;
-    }
-    resetDbLock.readLock().lock();
-    try {
-      database.delete(optionsWrapper.rocks, key);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -377,25 +348,6 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     resetDbLock.readLock().lock();
     try {
       updateByBatchInner(rows);
-    } catch (Exception e) {
-      try {
-        updateByBatchInner(rows);
-      } catch (Exception e1) {
-        throw new RuntimeException(e);
-      }
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
-  }
-
-  @Override
-  public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper optionsWrapper) {
-    if (quitIfNotAlive()) {
-      return;
-    }
-    resetDbLock.readLock().lock();
-    try {
-      updateByBatchInner(rows, optionsWrapper.rocks);
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);

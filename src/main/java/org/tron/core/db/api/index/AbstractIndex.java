@@ -13,7 +13,7 @@ import java.util.Objects;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.index.Index.Iface;
-import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db.common.WrappedResultSet;
 import org.tron.core.db2.core.ITronChainBase;
 

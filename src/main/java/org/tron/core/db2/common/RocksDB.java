@@ -8,7 +8,6 @@ import lombok.Getter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class RocksDB implements DB<byte[], byte[]>, Flusher {
@@ -50,6 +49,11 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
   }
 
   @Override
+  public String getDbName() {
+    return null;
+  }
+
+  @Override
   public DBIterator iterator() {
     return db.iterator();
   }
@@ -59,7 +63,7 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
-    db.updateByBatch(rows, optionsWrapper);
+    db.updateByBatch(rows);
   }
 
   @Override
@@ -70,5 +74,10 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
   @Override
   public void reset() {
     db.resetDb();
+  }
+
+  @Override
+  public DB<byte[], byte[]> newInstance() {
+    return new RocksDB(db.getParentName(), db.getDBName());
   }
 }

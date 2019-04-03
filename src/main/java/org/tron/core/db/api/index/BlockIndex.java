@@ -12,7 +12,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.db.common.WrappedByteArray;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.protos.Protocol.Block;
 

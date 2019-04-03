@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.storage.DbSourceInter;
-import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 
 @Component
 public class PeersStore extends TronDatabase<Set<Node>> {
