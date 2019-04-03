@@ -73,7 +73,7 @@ public class WireTrafficStats implements Runnable {
 //      long inPac = inPackets.getAndSet(0);
 //      outSizeTot += out;
 //      inSizeTot += in;
-      long curTime = System.currentTimeMillis();
+//      long curTime = System.currentTimeMillis();
 //      long d = (curTime - lastTime);
 //      long outSpeed = out * 1000 / d;
 //      long inSpeed = in * 1000 / d;
