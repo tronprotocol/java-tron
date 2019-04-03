@@ -1,6 +1,5 @@
 #!/bin/bash
-
-if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BRANCH" = "sonar_repair" ]];then
+if [[ "$TRAVIS_BRANCH" = "sonar_repair" || "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     stest_server=""
     docker_num_in_67=`ssh -p 22008 -t java-tron@47.94.231.67 'docker ps -a | wc -l'`
