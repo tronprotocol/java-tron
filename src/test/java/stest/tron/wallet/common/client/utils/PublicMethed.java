@@ -6,6 +6,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +63,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
+import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 
@@ -3345,6 +3353,91 @@ public class PublicMethed {
       logger.info("Message = " + response.getMessage().toStringUtf8());
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String exec(String command) throws InterruptedException {
+    String returnString = "";
+    Process pro = null;
+    Runtime runTime = Runtime.getRuntime();
+    if (runTime == null) {
+      logger.error("Create runtime false!");
+    }
+    try {
+      pro = runTime.exec(command);
+      BufferedReader input = new BufferedReader(new InputStreamReader(pro.getInputStream()));
+      PrintWriter output = new PrintWriter(new OutputStreamWriter(pro.getOutputStream()));
+      String line;
+      while ((line = input.readLine()) != null) {
+        returnString = returnString + line + "\n";
+      }
+      input.close();
+      output.close();
+      pro.destroy();
+    } catch (IOException ex) {
+      logger.error(null, ex);
+    }
+    return returnString;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String fileRead(String filePath) throws Exception {
+    File file = new File(filePath);
+    FileReader reader = new FileReader(file);
+    BufferedReader breader = new BufferedReader(reader);
+    StringBuilder sb = new StringBuilder();
+    String s = "";
+    while ((s = breader.readLine()) != null) {
+      sb.append(s + "\n");
+    }
+    breader.close();
+    return sb.toString();
+  }
+
+  /**
+   * constructor.
+   */
+  public static HashMap<String, String> getBycodeAbi(String solFile, String contractName) {
+    final String compile = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.solidityCompile");
+
+    String outputPath = "src/test/resources/soliditycode/output";
+
+    HashMap<String, String> retMap = new HashMap<>();
+    String absolutePath = System.getProperty("user.dir");
+    logger.debug("absolutePath: " + absolutePath);
+    logger.debug("solFile: " + solFile);
+    logger.debug("outputPath: " + outputPath);
+    String cmd =
+        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
+            + absolutePath + "/" + outputPath;
+    logger.debug("cmd: " + cmd);
+
+    String byteCode = null;
+    String abI = null;
+
+    // compile solidity file
+    try {
+      exec(cmd);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    // get byteCode and ABI
+    try {
+      byteCode = fileRead(outputPath + "/" + contractName + ".bin");
+      retMap.put("byteCode", byteCode);
+      logger.debug("byteCode: " + byteCode);
+      abI = fileRead(outputPath + "/" + contractName + ".abi");
+      retMap.put("abI", abI);
+      logger.debug("abI: " + abI);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return retMap;
   }
 
 }
