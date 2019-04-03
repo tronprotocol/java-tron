@@ -35,6 +35,7 @@ import org.iq80.leveldb.WriteOptions;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
@@ -62,8 +63,8 @@ public class LevelDbDataSourceImplTest {
   private byte[] key5 = "00000005aa".getBytes();
   private byte[] key6 = "00000006aa".getBytes();
 
-  @Before
-  public void initDb() {
+  @BeforeClass
+  public static void initDb() {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb", new Options(), new WriteOptions());
   }
