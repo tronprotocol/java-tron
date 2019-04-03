@@ -39,7 +39,6 @@ public class Parameter {
   }
 
   public class NetConstants {
-
     public static final long GRPC_IDLE_TIME_OUT = 60000L;
     public static final long ADV_TIME_OUT = 20000L;
     public static final long SYNC_TIME_OUT = 5000L;
@@ -50,6 +49,8 @@ public class Parameter {
     public static final long MAX_TRX_PER_PEER = 200L;
     public static final int NET_MAX_INV_SIZE_IN_MINUTES = 2;
     public static final int MSG_CACHE_DURATION_IN_BLOCKS = 5;
+    public static final int MAX_BLOCK_FETCH_PER_PEER = 100;
+    public static final int MAX_TRX_FETCH_PER_PEER = 1000;
   }
 
   public class DatabaseConstants {
