@@ -2,6 +2,7 @@ package org.tron.core.net;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
@@ -14,7 +15,9 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -52,6 +55,9 @@ public class TronNetDelegate {
 
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private WitnessStore witnessStore;
 
   @Getter
   private Object blockLock = new Object();
@@ -207,6 +213,25 @@ public class TronNetDelegate {
         | TooBigTransactionResultException
         | AccountResourceInsufficientException e) {
       throw new P2pException(TypeEnum.TRX_EXE_FAILED, e);
+    }
+  }
+
+  public boolean validBlock(BlockCapsule block) throws P2pException {
+    try {
+      if (!block.validateSignature(dbManager)) {
+        return false;
+      }
+      boolean flag = false;
+      List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
+      for (WitnessCapsule witness : witnesses) {
+        if (witness.getAddress().equals(block.getWitnessAddress())) {
+          flag = true;
+          break;
+        }
+      }
+      return flag;
+    } catch (ValidateSignatureException e) {
+      throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
   }
 }
