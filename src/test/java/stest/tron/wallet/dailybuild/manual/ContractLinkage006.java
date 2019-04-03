@@ -177,7 +177,7 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeNetUsed + netUsed) >= afterNetUsed);
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
     PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
-        linkage006Address, blockingStubFull);
+        null, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Boundary value for contract stack(63 is the largest level)")
