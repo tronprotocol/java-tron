@@ -296,6 +296,7 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
               "This value[ALLOW_DEFERRED_TRANSACTION] is only allowed to be 1");
         }
+        break;
       }
       case (25): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
