@@ -1,20 +1,3 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.common.overlay.server;
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -30,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.node.NodeImpl;
 
 @Slf4j(topic = "net")
 @Component
@@ -41,9 +23,6 @@ public class PeerServer {
   private ApplicationContext ctx;
 
   private boolean listening;
-
-  @Autowired
-  private NodeImpl p2pNode;
 
   private ChannelFuture channelFuture;
 
@@ -57,7 +36,6 @@ public class PeerServer {
     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
     EventLoopGroup workerGroup = new NioEventLoopGroup(args.getTcpNettyWorkThreadNum());
     TronChannelInitializer tronChannelInitializer = ctx.getBean(TronChannelInitializer.class, "");
-    tronChannelInitializer.setNodeImpl(p2pNode);
 
     try {
       ServerBootstrap b = new ServerBootstrap();

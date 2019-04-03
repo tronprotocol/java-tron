@@ -27,6 +27,7 @@ import org.junit.Test;
 
 @Slf4j
 public class TypeConversionTest {
+
   @Test
   public void testLongToBytes() {
     byte[] result = longToBytes(123L);

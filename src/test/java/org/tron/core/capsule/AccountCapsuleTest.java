@@ -153,77 +153,76 @@ public class AccountCapsuleTest {
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
 
     Contract.AssetIssueContract assetIssueContract =
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
-                    .setId(Long.toString(id))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(START_TIME)
-                    .setEndTime(END_TIME)
-                    .setVoteScore(VOTE_SCORE)
-                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-                    .build();
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setId(Long.toString(id))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(START_TIME)
+            .setEndTime(END_TIME)
+            .setVoteScore(VOTE_SCORE)
+            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+            .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
     Contract.AssetIssueContract assetIssueContract2 =
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
-                    .setId(Long.toString(id+1))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(START_TIME)
-                    .setEndTime(END_TIME)
-                    .setVoteScore(VOTE_SCORE)
-                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-                    .build();
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
+            .setId(Long.toString(id + 1))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(START_TIME)
+            .setEndTime(END_TIME)
+            .setVoteScore(VOTE_SCORE)
+            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+            .build();
     AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(assetIssueContract2);
     dbManager.getAssetIssueStore().put(assetIssueCapsule2.createDbKey(), assetIssueCapsule2);
 
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFromUtf8("owner"),
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    AccountType.Normal,
-                    10000);
-    accountCapsule.addAsset(ByteArray.fromString(ASSET_NAME),1000L);
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.Normal,
+            10000);
+    accountCapsule.addAsset(ByteArray.fromString(ASSET_NAME), 1000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
-
 
     accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 1000L);
     Assert.assertEquals(accountCapsule.getAssetMap().get(ASSET_NAME).longValue(), 1000L);
     Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(),
-            1000L);
+        1000L);
 
     //assetBalanceEnoughV2
     Assert.assertTrue(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(ASSET_NAME),
-            999, dbManager));
+        999, dbManager));
     Assert.assertFalse(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(ASSET_NAME),
-            1001, dbManager));
+        1001, dbManager));
 
     //reduceAssetAmountV2
     Assert.assertTrue(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
-            999, dbManager));
+        999, dbManager));
     Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
-            0, dbManager));
+        0, dbManager));
     Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(ASSET_NAME),
-            1001, dbManager));
+        1001, dbManager));
     Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString("abc"),
-            1001, dbManager));
+        1001, dbManager));
 
     //addAssetAmountV2
     Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(ASSET_NAME),
-            500, dbManager));
+        500, dbManager));
     // 1000-999 +500
     Assert.assertEquals(accountCapsule.getAssetMap().get(ASSET_NAME).longValue(), 501L);
     Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString("abc"),
-            500, dbManager));
+        500, dbManager));
     Assert.assertEquals(accountCapsule.getAssetMap().get("abc").longValue(), 500L);
   }
 
@@ -237,77 +236,79 @@ public class AccountCapsuleTest {
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
 
     Contract.AssetIssueContract assetIssueContract =
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
-                    .setId(Long.toString(id))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(START_TIME)
-                    .setEndTime(END_TIME)
-                    .setVoteScore(VOTE_SCORE)
-                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-                    .build();
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+            .setId(Long.toString(id))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(START_TIME)
+            .setEndTime(END_TIME)
+            .setVoteScore(VOTE_SCORE)
+            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+            .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
     Contract.AssetIssueContract assetIssueContract2 =
-            Contract.AssetIssueContract.newBuilder()
-                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
-                    .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
-                    .setId(Long.toString(id+1))
-                    .setTotalSupply(TOTAL_SUPPLY)
-                    .setTrxNum(TRX_NUM)
-                    .setNum(NUM)
-                    .setStartTime(START_TIME)
-                    .setEndTime(END_TIME)
-                    .setVoteScore(VOTE_SCORE)
-                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
-                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
-                    .build();
+        Contract.AssetIssueContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
+            .setId(Long.toString(id + 1))
+            .setTotalSupply(TOTAL_SUPPLY)
+            .setTrxNum(TRX_NUM)
+            .setNum(NUM)
+            .setStartTime(START_TIME)
+            .setEndTime(END_TIME)
+            .setVoteScore(VOTE_SCORE)
+            .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+            .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+            .build();
     AssetIssueCapsule assetIssueCapsule2 = new AssetIssueCapsule(assetIssueContract2);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule2.createDbV2Key(), assetIssueCapsule2);
 
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFromUtf8("owner"),
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    AccountType.Normal,
-                    10000);
-    accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)),1000L);
+        new AccountCapsule(
+            ByteString.copyFromUtf8("owner"),
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            AccountType.Normal,
+            10000);
+    accountCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), 1000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
     Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(),
-            1000L);
+        1000L);
 
     //assetBalanceEnoughV2
     Assert.assertTrue(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(String.valueOf(id)),
-            999, dbManager));
+        999, dbManager));
 
     Assert.assertFalse(accountCapsule.assetBalanceEnoughV2(ByteArray.fromString(String.valueOf(id)),
-            1001, dbManager));
+        1001, dbManager));
 
     //reduceAssetAmountV2
     Assert.assertTrue(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
-            999, dbManager));
+        999, dbManager));
     Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
-            0, dbManager));
+        0, dbManager));
     Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
-            1001, dbManager));
+        1001, dbManager));
     // abc
-    Assert.assertFalse(accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id+1)),
+    Assert.assertFalse(
+        accountCapsule.reduceAssetAmountV2(ByteArray.fromString(String.valueOf(id + 1)),
             1001, dbManager));
 
     //addAssetAmountV2
     Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id)),
-            500, dbManager));
+        500, dbManager));
     // 1000-999 +500
     Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id)).longValue(), 501L);
     //abc
-    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id+1)),
-            500, dbManager));
-    Assert.assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id+1)).longValue(), 500L);
+    Assert.assertTrue(accountCapsule.addAssetAmountV2(ByteArray.fromString(String.valueOf(id + 1)),
+        500, dbManager));
+    Assert
+        .assertEquals(accountCapsule.getAssetMapV2().get(String.valueOf(id + 1)).longValue(), 500L);
   }
 
   @Test

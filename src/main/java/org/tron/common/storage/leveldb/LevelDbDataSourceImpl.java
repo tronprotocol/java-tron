@@ -72,7 +72,9 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public boolean checkOrInitEngine() {
-    String dir = Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory() + File.separator + dataBaseName;
+    String dir =
+        Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory()
+            + File.separator + dataBaseName;
     String enginePath = dir + File.separator + "engine.properties";
 
     if (FileUtil.createDirIfNotExists(dir)) {
@@ -90,7 +92,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
     }
     engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("LEVELDB")) {
+    if ("LEVELDB".equals(engine)) {
       return true;
     } else {
       return false;

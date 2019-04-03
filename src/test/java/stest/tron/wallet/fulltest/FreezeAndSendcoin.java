@@ -39,7 +39,7 @@ public class FreezeAndSendcoin {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final long now = System.currentTimeMillis();
   private final Long sendAmount = 10000000L;
@@ -92,14 +92,14 @@ public class FreezeAndSendcoin {
 
   //@Test(enabled = false)
 
-  @Test(enabled = false,threadPoolSize = 500, invocationCount = 1000)
+  @Test(enabled = false, threadPoolSize = 500, invocationCount = 1000)
   public void freezeAndSendcoin() throws InterruptedException {
 
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] freezeAddress = ecKey1.getAddress();
     String testKeyForFreeze = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Account toAccountInfo = PublicMethed.queryAccount(testKey003, blockingStubFull);
-    Account freezeAccountInfo = PublicMethed.queryAccount(testKeyForFreeze,blockingStubFull);
+    Account freezeAccountInfo = PublicMethed.queryAccount(testKeyForFreeze, blockingStubFull);
 
     Integer i = 0;
     Boolean ret = false;
@@ -120,21 +120,21 @@ public class FreezeAndSendcoin {
           .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
-      freezeBalance(freezeAddress,3000000L,3L,testKeyForFreeze,blockingStubFull);
+      freezeBalance(freezeAddress, 3000000L, 3L, testKeyForFreeze, blockingStubFull);
       PublicMethed
           .sendcoin(freezeAddress, sendAmount, toAddress, testKey003, blockingStubFull);
 
-      ret = freezeBalance(freezeAddress,1000000L,3L,testKeyForFreeze,blockingStubFull);
-      freezeBalance(freezeAddress,1000000L,3L,testKeyForFreeze,blockingStubFull);
-      freezeBalance(freezeAddress,1000000L,3L,testKeyForFreeze,blockingStubFull);
+      ret = freezeBalance(freezeAddress, 1000000L, 3L, testKeyForFreeze, blockingStubFull);
+      freezeBalance(freezeAddress, 1000000L, 3L, testKeyForFreeze, blockingStubFull);
+      freezeBalance(freezeAddress, 1000000L, 3L, testKeyForFreeze, blockingStubFull);
 
       if (ret) {
         logger.info("New account freeze success " + Integer.toString(i));
-        sendRet = PublicMethed.sendcoin(toAddress,6000000L,freezeAddress,
-            testKeyForFreeze,blockingStubFull);
+        sendRet = PublicMethed.sendcoin(toAddress, 6000000L, freezeAddress,
+            testKeyForFreeze, blockingStubFull);
         if (sendRet) {
           logger.info("This account transfer coin back. " + Integer.toString(i));
-          freezeAccountInfo = PublicMethed.queryAccount(testKeyForFreeze,blockingStubFull);
+          freezeAccountInfo = PublicMethed.queryAccount(testKeyForFreeze, blockingStubFull);
           logger.info("This account now has balance is " + Long
               .toString(freezeAccountInfo.getBalance()));
 
@@ -142,8 +142,8 @@ public class FreezeAndSendcoin {
 
       }
 
-      unFreezeBalance(freezeAddress,testKeyForFreeze);
-      withdrawBalance(freezeAddress,testKeyForFreeze);
+      unFreezeBalance(freezeAddress, testKeyForFreeze);
+      withdrawBalance(freezeAddress, testKeyForFreeze);
 
       ecKey1 = new ECKey(Utils.getRandom());
       freezeAddress = ecKey1.getAddress();
@@ -168,9 +168,9 @@ public class FreezeAndSendcoin {
 
       }*/
 
-
     }
   }
+
   /**
    * constructor.
    */
@@ -181,6 +181,7 @@ public class FreezeAndSendcoin {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -238,6 +239,7 @@ public class FreezeAndSendcoin {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -278,6 +280,7 @@ public class FreezeAndSendcoin {
       return true;
     }
   }
+
   /**
    * constructor.
    */

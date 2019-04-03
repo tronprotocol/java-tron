@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileUtil {
+
   /**
    * constructor.
    */
@@ -53,6 +54,7 @@ public class FileUtil {
 
     return files;
   }
+
   /**
    * constructor.
    */
@@ -77,6 +79,7 @@ public class FileUtil {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -100,6 +103,7 @@ public class FileUtil {
       }
     }
   }
+
   /**
    * constructor.
    */
@@ -118,7 +122,7 @@ public class FileUtil {
       int offset = 0;
       int numRead;
       while (offset < buffer.length
-        && (numRead = fi.read(buffer, offset, buffer.length - offset)) >= 0) {
+          && (numRead = fi.read(buffer, offset, buffer.length - offset)) >= 0) {
         offset += numRead;
       }
       if (offset != buffer.length) {

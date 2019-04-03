@@ -148,9 +148,9 @@ public class ContractEventParser {
         return new BigInteger(startBytes).toString();
       } else if (type == Type.BOOL) {
         return String.valueOf(!DataWord.isZero(startBytes));
-      } else if (type == Type.FIXED_BYTES){
+      } else if (type == Type.FIXED_BYTES) {
         return Hex.toHexString(startBytes);
-      } else if (type == Type.ADDRESS){
+      } else if (type == Type.ADDRESS) {
         byte[] last20Bytes = Arrays.copyOfRange(startBytes, 12, startBytes.length);
         return Wallet.encode58Check(MUtil.convertToTronAddress(last20Bytes));
       } else if (type == Type.STRING || type == Type.BYTES) {
@@ -179,9 +179,9 @@ public class ContractEventParser {
         return Type.ADDRESS;
       } else if (Pattern.matches("^bytes\\d+$", type)) {
         return Type.FIXED_BYTES;
-      } else if (type.equals("string")){
+      } else if (type.equals("string")) {
         return Type.STRING;
-      } else if (type.equals("bytes")){
+      } else if (type.equals("bytes")) {
         return Type.BYTES;
       }
     }

@@ -72,13 +72,10 @@ public class Storage {
   private static final String DEFAULT_INDEX_SWTICH = "on";
 
   /**
-   * Default values of db options:
-   * <p>
-   * DEFAULT_COMPRESSION_TYPE: compressed with snappy
-   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B
-   * DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_MAX_OPEN_FILES:   100
+   * Default values of db options: <p> DEFAULT_COMPRESSION_TYPE: compressed with snappy
+   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 *
+   * 1024 * 1024 B DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B DEFAULT_MAX_OPEN_FILES:
+   * 100
    */
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;

@@ -99,7 +99,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 26275;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -149,7 +150,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 26275;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -204,7 +206,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 57905;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -268,7 +271,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 97341;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -325,7 +329,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 42687;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -391,7 +396,8 @@ public class EnergyWhenRequireStyleTest {
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
 
     result = TVMTestUtils
         .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
@@ -415,7 +421,8 @@ public class EnergyWhenRequireStyleTest {
     Assert.assertTrue(
         result.getRuntime().getResult().getException() == null);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
-        totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
+        totalBalance
+            - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
 
   }
 
@@ -463,7 +470,8 @@ public class EnergyWhenRequireStyleTest {
 
     long expectEnergyUsageTotal = 36481;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
@@ -486,6 +494,7 @@ public class EnergyWhenRequireStyleTest {
   public void reach64CallDepth() {
     // done in ChargeTest
   }
+
   /**
    * Release resources.
    */

@@ -67,6 +67,10 @@ public class DbBackupConfig {
         throw new RuntimeException("failure to mkdir: " + bak2path);
       }
 
+      if (bak1path.equals(bak2path)) {
+        throw new RuntimeException("bak1path and bak2path must be different.");
+      }
+
       if (frequency <= 0) {
         throw new IllegalArgumentException("frequency must be positive number.");
       }
@@ -76,7 +80,8 @@ public class DbBackupConfig {
       setBak2path(bak2path);
       setFrequency(frequency);
       logger.info(
-          "success to enable the db backup plugin. bak1path:{}, bak2path:{}, backup once every {} blocks handled",
+          "success to enable the db backup plugin. bak1path:{}, bak2path:{}, "
+              + "backup once every {} blocks handled",
           bak1path, bak2path, frequency);
     }
 

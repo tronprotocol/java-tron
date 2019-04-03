@@ -26,7 +26,6 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
@@ -177,15 +176,9 @@ public class PublicMethedForMutiSign {
    */
   public static boolean broadcastTransaction(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      logger.info(Integer.toString(response.getCode().getNumber()));
-      logger.info(Integer.toString(response.getCodeValue()));
-      return false;
-    } else {
-      return true;
-    }
+
+    Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
+    return response.getResult();
   }
 
 
@@ -1310,13 +1303,8 @@ public class PublicMethedForMutiSign {
       logger.info("transaction == null");
     }
     transaction = signTransaction(ecKey, transaction);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
+    return response.getResult();
   }
 
   /**
@@ -1602,25 +1590,10 @@ public class PublicMethedForMutiSign {
     byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
-      //logger.info("brodacast succesfully");
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     }
   }
@@ -2424,22 +2397,8 @@ public class PublicMethedForMutiSign {
     byte[] contractAddress = PublicMethed.generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -2592,23 +2551,7 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     return response.getResult();
   }
 
@@ -2633,22 +2576,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesspermission = permissions.getJSONObject("witness_permission");
+    JSONArray activepermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownerpermission != null) {
+      Permission ownerPermission = json2Permission(ownerpermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesspermission != null) {
+      Permission witnessPermission = json2Permission(witnesspermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activepermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activepermissions.size(); j++) {
+        JSONObject permission = activepermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -2677,22 +2620,8 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -2721,22 +2650,22 @@ public class PublicMethedForMutiSign {
         Contract.AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
-    JSONObject owner_permission = permissions.getJSONObject("owner_permission");
-    JSONObject witness_permission = permissions.getJSONObject("witness_permission");
-    JSONArray active_permissions = permissions.getJSONArray("active_permissions");
+    JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
+    JSONObject witnesspermission = permissions.getJSONObject("witness_permission");
+    JSONArray activepermissions = permissions.getJSONArray("active_permissions");
 
-    if (owner_permission != null) {
-      Permission ownerPermission = json2Permission(owner_permission);
+    if (ownerpermission != null) {
+      Permission ownerPermission = json2Permission(ownerpermission);
       builder.setOwner(ownerPermission);
     }
-    if (witness_permission != null) {
-      Permission witnessPermission = json2Permission(witness_permission);
+    if (witnesspermission != null) {
+      Permission witnessPermission = json2Permission(witnesspermission);
       builder.setWitness(witnessPermission);
     }
-    if (active_permissions != null) {
+    if (activepermissions != null) {
       List<Permission> activePermissionList = new ArrayList<>();
-      for (int j = 0; j < active_permissions.size(); j++) {
-        JSONObject permission = active_permissions.getJSONObject(j);
+      for (int j = 0; j < activepermissions.size(); j++) {
+        JSONObject permission = activepermissions.getJSONObject(j);
         activePermissionList.add(json2Permission(permission));
       }
       builder.addAllActives(activePermissionList);
@@ -2770,22 +2699,8 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
@@ -3002,9 +2917,8 @@ public class PublicMethedForMutiSign {
    */
   public static Return broadcastTransaction1(Transaction transaction,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Return response = blockingStubFull.broadcastTransaction(transaction);
 
-    return response;
+    return PublicMethed.broadcastTransaction(transaction, blockingStubFull);
   }
 
   /**
@@ -3081,23 +2995,7 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     return response.getResult();
   }
 
@@ -3181,9 +3079,8 @@ public class PublicMethedForMutiSign {
     } catch (Exception ex) {
       ex.printStackTrace();
     }
-    ECKey ecKey = temKey;
 
-//      transaction = setPermissionId(transaction, permissionId);
+    //transaction = setPermissionId(transaction, permissionId);
     Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
     Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
         .setPermissionId(permissionId);
@@ -3193,7 +3090,7 @@ public class PublicMethedForMutiSign {
 
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-
+    ECKey ecKey = temKey;
     ECDSASignature signature = ecKey.sign(hash);
     ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
     transactionBuilderSigned.addSignature(bsSign);
@@ -3400,23 +3297,7 @@ public class PublicMethedForMutiSign {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
 
     transaction = signTransaction(transaction, blockingStubFull, priKeys);
-    int i = 10;
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeat times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
-    if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
-    }
+    Return response = broadcastTransaction1(transaction, blockingStubFull);
     return response;
   }
 
@@ -3793,23 +3674,8 @@ public class PublicMethedForMutiSign {
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
-    int i = 10;
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-
-    while (response.getResult() == false && response.getCode() == response_code.SERVER_BUSY
-        && i > 0) {
-      i--;
-      response = blockingStubFull.broadcastTransaction(transaction);
-      logger.info("repeate times = " + (11 - i));
-      try {
-        Thread.sleep(300);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-    }
+    GrpcAPI.Return response = broadcastTransaction1(transaction, blockingStubFull);
     if (response.getResult() == false) {
-      logger.info("Code = " + response.getCode());
-      logger.info("Message = " + response.getMessage().toStringUtf8());
       return null;
     } else {
       //logger.info("brodacast succesfully");
@@ -4298,13 +4164,15 @@ public class PublicMethedForMutiSign {
       e.printStackTrace();
     }
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
-    Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      return true;
-    }
+    return broadcastTransaction(transaction, blockingStubFull);
+    //Return response = broadcastTransaction1(transaction, blockingStubFull);
+    //if (response.getResult() == false) {
+    // logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
+    // return false;
+    //} else {
+    //  return true;
+    //}
+    //return response.getResult();
   }
 
 

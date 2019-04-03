@@ -27,6 +27,20 @@ import org.tron.protos.Protocol.ReasonCode;
 @Component
 public class ChannelManager {
 
+  @Autowired
+  private PeerServer peerServer;
+
+  @Autowired
+  private PeerClient peerClient;
+
+  @Autowired
+  private SyncPool syncPool;
+
+  @Autowired
+  private FastForward fastForward;
+
+  private Args args = Args.getInstance();
+
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
 
   private Cache<InetAddress, ReasonCode> badPeers = CacheBuilder.newBuilder().maximumSize(10000)
@@ -36,26 +50,17 @@ public class ChannelManager {
       .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   @Getter
-  private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
+  private Map<InetAddress, Node> trustNodes = new ConcurrentHashMap();
 
-  private Args args = Args.getInstance();
+  @Getter
+  private Map<InetAddress, Node> activeNodes = new ConcurrentHashMap();
+
+  @Getter
+  private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
   private int getMaxActivePeersWithSameIp = args.getNodeMaxActiveNodesWithSameIp();
-
-  private PeerServer peerServer;
-
-  private PeerClient peerClient;
-
-  @Autowired
-  private SyncPool syncPool;
-
-  @Autowired
-  private ChannelManager(final PeerServer peerServer, final PeerClient peerClient) {
-    this.peerServer = peerServer;
-    this.peerClient = peerClient;
-  }
 
   public void init() {
     if (this.args.getNodeListenPort() > 0) {
@@ -63,10 +68,29 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
+    InetAddress address;
     for (Node node : args.getPassiveNodes()) {
-      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
     }
-    logger.info("Trust peer size {}", trustPeers.size());
+
+    for (Node node : args.getActiveNodes()) {
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
+      activeNodes.put(address, node);
+    }
+
+    for (Node node : args.getFastForwardNodes()) {
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
+      fastForwardNodes.put(address, node);
+    }
+
+    logger.info("Node config, trust {}, active {}, forward {}.",
+        trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
+
+    syncPool.init();
+    fastForward.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {
@@ -102,7 +126,7 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (!trustPeers.containsKey(peer.getInetAddress())) {
+    if (!trustNodes.containsKey(peer.getInetAddress())) {
       if (recentlyDisconnected.getIfPresent(peer) != null) {
         logger.info("Peer {} recently disconnected.", peer.getInetAddress());
         return false;
@@ -164,5 +188,6 @@ public class ChannelManager {
   public void close() {
     peerServer.close();
     peerClient.close();
+    syncPool.close();
   }
 }

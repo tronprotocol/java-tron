@@ -50,9 +50,8 @@ public class ProposalApproveActuator extends AbstractActuator {
       }
       if (Objects.isNull(deposit)) {
         dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      }
-      else {
-        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+      } else {
+        deposit.putProposalValue(proposalCapsule.createDbKey(), proposalCapsule);
       }
       ret.setStatus(fee, code.SUCESS);
     } catch (ItemNotFoundException e) {
@@ -94,7 +93,7 @@ public class ProposalApproveActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if(!Objects.isNull(getDeposit())) {
+    if (!Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getAccount(ownerAddress))) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
@@ -104,12 +103,12 @@ public class ProposalApproveActuator extends AbstractActuator {
           + NOT_EXIST_STR);
     }
 
-    if( !Objects.isNull(getDeposit())) {
+    if (!Objects.isNull(getDeposit())) {
       if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
         throw new ContractValidateException(
             WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
       }
-    }else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+    } else if (!dbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(WITNESS_EXCEPTION_STR + readableOwnerAddress
           + NOT_EXIST_STR);
     }

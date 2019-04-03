@@ -42,7 +42,7 @@ public class InternalTransaction {
   private byte[] parentHash;
   /* the amount of trx to transfer (calculated as sun) */
   private long value;
-  
+
   private Map<String, Long> tokenInfo = new HashMap<>();
 
   /* the address of the destination account (for message)

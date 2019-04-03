@@ -98,7 +98,7 @@ public class MultiSign12 {
   public void testActiveType01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -429,7 +429,7 @@ public class MultiSign12 {
   public void testActiveType02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     long needCoin = updateAccountPermissionFee;
 

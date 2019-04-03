@@ -1,4 +1,5 @@
 #!/bin/bash
+
 if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BRANCH" = "sonar_repair" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     stest_server=""

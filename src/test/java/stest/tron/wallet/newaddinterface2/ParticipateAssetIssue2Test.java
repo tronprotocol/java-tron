@@ -148,6 +148,7 @@ public class ParticipateAssetIssue2Test {
         toAddress, testKey003, blockingStubFull);
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
   }
+
   /**
    * constructor.
    */
@@ -158,6 +159,7 @@ public class ParticipateAssetIssue2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -195,6 +197,7 @@ public class ParticipateAssetIssue2Test {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -249,6 +252,7 @@ public class ParticipateAssetIssue2Test {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -284,6 +288,7 @@ public class ParticipateAssetIssue2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -293,6 +298,7 @@ public class ParticipateAssetIssue2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -312,6 +318,7 @@ public class ParticipateAssetIssue2Test {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
