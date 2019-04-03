@@ -8,7 +8,7 @@ function() payable external{}
 
 event log(uint256);
 
-function transferTokenWithPure(address payable toAddress, uint256 tokenValue) payable public {
+function transferTokenWithPure(address payable toAddress, uint256 tokenValue) public pure{
 emit log(msg.value);
 emit log(msg.tokenvalue);
 emit log(msg.tokenid);

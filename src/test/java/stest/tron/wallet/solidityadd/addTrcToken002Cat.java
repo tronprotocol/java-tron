@@ -50,22 +50,10 @@ public class addTrcToken002Cat {
             .getStringList("fullnode.ip.list").get(0);
 
 
-  byte[] contractAddressOwnable = null;
-  byte[] contractAddressKittyAccessControl = null;
-  byte[] contractAddressKittyBase = null;
-  byte[] contractAddressERC721 = null;
-  byte[] contractAddressKittyOwnership = null;
-  byte[] contractAddressKittyBreeding = null;
-  byte[] contractAddressKittyMinting = null;
   byte[] contractAddressKittyCore = null;
   byte[] contractAddressGeneScienceInterface = null;
-  byte[] contractAddressERC721Metadata = null;
-  byte[] contractAddressClockAuctionBase = null;
-  byte[] contractAddressPausable = null;
-  byte[] contractAddressClockAuction = null;
-  byte[] contractAddressSiringClockAuction = null;
   byte[] contractAddressSaleClockAuction = null;
-  byte[] contractAddressKittyAuction = null;
+  byte[] contractAddressSiringClockAuction = null;
 
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -102,7 +90,7 @@ public class addTrcToken002Cat {
                  testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "Ownable";
+    String contractName = "KittyCore";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -111,7 +99,7 @@ public class addTrcToken002Cat {
     logger.info("abi:" + abi);
 
 
-    contractAddressOwnable = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+    contractAddressKittyCore = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
              0L, 100, null, contractExcKey,
                 contractExcAddress, blockingStubFull);
     Protocol.Account info;
@@ -131,255 +119,6 @@ public class addTrcToken002Cat {
 
   @Test(enabled = true, description = "Support function type")
   public void test1Grammar002() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyAccessControl";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyAccessControl = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar003() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyBase";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyBase = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar004() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "ERC721";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressERC721 = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar005() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyOwnership";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyOwnership = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar006() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyBreeding";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyBreeding = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar008() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyMinting";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyMinting = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar009() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyCore";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressKittyCore = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar010() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
             .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
@@ -415,186 +154,7 @@ public class addTrcToken002Cat {
   }
 
   @Test(enabled = true, description = "Support function type")
-  public void test1Grammar011() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "ERC721Metadata";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressERC721Metadata = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar012() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "ClockAuctionBase";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressClockAuctionBase = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar013() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "Pausable";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressPausable = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar014() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "ClockAuction";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressClockAuction = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar015() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                    testNetAccountKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "SiringClockAuction";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    logger.info("code:" + code);
-    logger.info("abi:" + abi);
-
-
-    contractAddressSiringClockAuction = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
-    Protocol.Account info;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-  }
-
-  @Test(enabled = true, description = "Support function type")
-  public void test1Grammar016() {
+  public void test1Grammar003() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
             .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
@@ -610,8 +170,7 @@ public class addTrcToken002Cat {
     logger.info("abi:" + abi);
 
 
-    contractAddressSaleClockAuction = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
+    contractAddressSaleClockAuction = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     Protocol.Account info;
@@ -630,14 +189,14 @@ public class addTrcToken002Cat {
   }
 
   @Test(enabled = true, description = "Support function type")
-  public void test1Grammar017() {
+  public void test1Grammar004() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
             .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/addTrcToken002Cat.sol";
-    String contractName = "KittyAuction";
+    String contractName = "SiringClockAuction";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -645,9 +204,7 @@ public class addTrcToken002Cat {
     logger.info("code:" + code);
     logger.info("abi:" + abi);
 
-
-    contractAddressKittyAuction = PublicMethed.deployContract(
-            contractName, abi, code, "", maxFeeLimit,
+    contractAddressSiringClockAuction = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     Protocol.Account info;

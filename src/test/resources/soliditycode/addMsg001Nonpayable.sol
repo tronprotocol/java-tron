@@ -7,7 +7,7 @@ constructor() payable public{}
 
 function() payable external{}
 
-function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue) payable public {
+function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue)public {
 // function transferTokenWithValue(address toAddress, uint256 tokenValue) payable public {
 emit log(msg.value);
 emit log(msg.tokenvalue);

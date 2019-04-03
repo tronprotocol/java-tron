@@ -6,10 +6,8 @@
 
     function() payable external{}
 
-    function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue)public {
+    function transferTokenWithOutPayable(address payable toAddress,trcToken id, uint256 tokenValue)public {
 
-        toAddress.transferToken(tokenValue, 0x6e6d62);
-
+        toAddress.transferToken(tokenValue, id);
     }
-
 }

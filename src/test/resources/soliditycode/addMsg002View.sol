@@ -8,7 +8,7 @@ function() payable external{}
 
 event log(uint256);
 
-function transferTokenWithView(address payable toAddress, uint256 tokenValue) payable public {
+function transferTokenWithView(address payable toAddress, uint256 tokenValue) public view{
 emit log(msg.value);
 emit log(msg.tokenvalue);
 emit log(msg.tokenid);

@@ -6,9 +6,9 @@ contract IllegalDecorate {
 
     function() payable external{}
 
-    function transferTokenWithView(address payable toAddress, uint256 tokenValue) public {
+    function transferTokenWithView(address payable toAddress,trcToken id, uint256 tokenValue) public view{
 
-        toAddress.transferToken(tokenValue, 0x6e6d62);
+        toAddress.transferToken(tokenValue, id);
 
     }
 
