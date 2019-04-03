@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -80,11 +81,14 @@ public class ContractScenario006 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "Fomo3D";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario006_deployFomo3D");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario006_deployFomo3D");
+
+    String filePath = "./src/test/resources/soliditycode/ContractScenario006.sol";
+    String contractName = "FoMo3Dlong";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract006Key, contract006Address, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);

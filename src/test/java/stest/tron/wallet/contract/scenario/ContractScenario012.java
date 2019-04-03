@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -88,13 +89,22 @@ public class ContractScenario012 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "TransactionCoin";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario012_deployTransactionCoin");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario012_deployTransactionCoin");
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contract012Key, contract012Address, blockingStubFull);
+    String filePath = "./src/test/resources/soliditycode/ContractScenario012.sol";
+    String contractName = "PayTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+//    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+//        0L, 100, null, contract012Key, contract012Address, blockingStubFull);
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
+            null, contract012Key, contract012Address, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
+    contractAddress = infoById.get().getContractAddress().toByteArray();
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
   }
@@ -139,6 +149,7 @@ public class ContractScenario012 {
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("result is " + infoById.get().getResultValue());
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
@@ -161,6 +172,7 @@ public class ContractScenario012 {
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("result is " + infoById.get().getResultValue());
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());

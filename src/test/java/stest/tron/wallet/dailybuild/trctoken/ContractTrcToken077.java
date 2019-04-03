@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -78,11 +79,14 @@ public class ContractTrcToken077 {
     PublicMethed
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
-    String contractName = "AddressTest";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken077_AddressTest");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken077_AddressTest");
+
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken077.sol";
+    String contractName = "trcToken077";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
@@ -105,11 +109,13 @@ public class ContractTrcToken077 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName = "AddressTest";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken077_AddressTest1");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken077_AddressTest1");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken077.sol";
+    String contractName = "trcToken077";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);

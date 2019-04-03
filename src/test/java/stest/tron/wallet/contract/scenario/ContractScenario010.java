@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -71,14 +72,18 @@ public class ContractScenario010 {
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
     Long energyUsage = accountResource.getEnergyUsed();
+    Long netUsage = accountResource.getNetUsed();
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "Tron_ERC721_Token";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario010_deployContainLibraryContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario010_deployContainLibraryContract");
+    logger.info("before Net usage is " + Long.toString(netUsage));
+    String filePath = "./src/test/resources/soliditycode/ContractScenario010.sol";
+    String contractName = "TRON_ERC721";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     byte[] libraryAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract009Key, contract009Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -91,11 +96,13 @@ public class ContractScenario010 {
     accountResource = PublicMethed.getAccountResource(contract009Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
+    netUsage = accountResource.getNetUsed();
     Assert.assertTrue(energyLimit > 0);
     Assert.assertTrue(energyUsage > 0);
 
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
+    logger.info("after Net usage is " + Long.toString(netUsage));
   }
 
   /**

@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -89,18 +90,12 @@ public class ContractScenario001 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before balance is " + Long.toString(balanceBefore));
 
-    String contractName = "addressDemo";
-    String code = "608060405234801561001057600080fd5b5060bf8061001f6000396000f3006080604052600436"
-        + "1060485763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041"
-        + "66313d1aa2e8114604d5780637995b15b146067575b600080fd5b348015605857600080fd5b506065600435"
-        + "602435608b565b005b348015607257600080fd5b506079608f565b60408051918252519081900360200190f"
-        + "35b5050565b42905600a165627a7a72305820086db30620ef850edcb987d91625ecf5a1c342dc87dbabb4fe"
-        + "4b29ec8c1623c10029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"start\",\"type\":\"uint256\"},{\"na"
-        + "me\":\"daysAfter\",\"type\":\"uint256\"}],\"name\":\"f\",\"outputs\":[],\"payable\":fal"
-        + "se,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inpu"
-        + "ts\":[],\"name\":\"nowInSeconds\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\""
-        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String filePath = "./src/test/resources/soliditycode/ContractScenario001.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contract001Key, contract001Address, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
