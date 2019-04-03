@@ -849,7 +849,7 @@ public class HttpMethed {
     Integer times = 0;
 
     while (times++ <= 10 && responseContent.getString("code") != null && responseContent
-      .getString("code").equalsIgnoreCase("SERVER_BUSY")) {
+        .getString("code").equalsIgnoreCase("SERVER_BUSY")) {
       logger.info("retry num are " + times);
       try {
         response = httpClient.execute(httppost);
@@ -2049,7 +2049,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
