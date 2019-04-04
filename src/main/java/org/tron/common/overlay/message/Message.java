@@ -3,15 +3,15 @@ package org.tron.common.overlay.message;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.Arrays;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.MessageTypes;
 
-@Slf4j(topic = "net")
 public abstract class Message {
+
+  protected static final Logger logger = LoggerFactory.getLogger("Message");
 
   protected byte[] data;
   protected byte type;
