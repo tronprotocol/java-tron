@@ -25,7 +25,7 @@ import org.tron.common.overlay.discover.node.Node;
 public class NodeEntry {
 
   private byte[] ownerId;
-  Node node;
+  private Node node;
   private String entryId;
   private int distance;
   private long modified;
@@ -84,8 +84,6 @@ public class NodeEntry {
   }
 
   public static int distance(byte[] ownerId, byte[] targetId) {
-//        byte[] h1 = keccak(targetId);
-//        byte[] h2 = keccak(ownerId);
     byte[] h1 = targetId;
     byte[] h2 = ownerId;
 
@@ -103,7 +101,7 @@ public class NodeEntry {
       } else {
         int count = 0;
         for (int i = 7; i >= 0; i--) {
-          boolean a = (b & (1 << i)) == 0;
+          boolean a = ((b & 0xff) & (1 << i)) == 0;
           if (a) {
             count++;
           } else {

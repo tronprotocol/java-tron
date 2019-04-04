@@ -54,7 +54,7 @@ public class Node implements Serializable {
   public static Node instanceOf(String addressOrEnode) {
     try {
       URI uri = new URI(addressOrEnode);
-      if (uri.getScheme().equals("enode")) {
+      if ("enode".equals(uri.getScheme())) {
         return new Node(addressOrEnode);
       }
     } catch (URISyntaxException e) {
@@ -78,7 +78,7 @@ public class Node implements Serializable {
   public Node(String enodeURL) {
     try {
       URI uri = new URI(enodeURL);
-      if (!uri.getScheme().equals("enode")) {
+      if (!"enode".equals(uri.getScheme())) {
         throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT");
       }
       this.id = Hex.decode(uri.getUserInfo());
