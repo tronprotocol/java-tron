@@ -43,7 +43,6 @@ public class LogInfoTriggerParser {
       return list;
     }
 
-    Map<String, ABI.Entry> fullMap = new HashMap<>();
     Map<String, String> signMap = new HashMap<>();
     Map<String, String> abiMap = new HashMap<>();
 
@@ -58,6 +57,7 @@ public class LogInfoTriggerParser {
       ContractCapsule contract = deposit.getContract(contractAddress);
       if (contract == null) {
         signMap.put(strContractAddr, originAddress); // mark as found.
+        abiMap.put(strContractAddr, "");
         continue;
       }
       ABI abi = contract.getInstance().getAbi();
@@ -65,18 +65,7 @@ public class LogInfoTriggerParser {
           MUtil.convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
       signMap.put(strContractAddr, creatorAddr); // mark as found.
 
-      // calculate the sha3 of the event signature first.
       if (abi != null && abi.getEntrysCount() > 0) {
-        for (ABI.Entry entry : abi.getEntrysList()) {
-          if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
-            // TODO: add empty abi
-            continue;
-          }
-          String signature = getEntrySignature(entry);
-          String sha3 = Hex.toHexString(Hash.sha3(signature.getBytes()));
-          fullMap.put(strContractAddr + "_" + sha3, entry);
-          signMap.put(strContractAddr + "_" + sha3, signature);
-        }
         abiMap.put(strContractAddr, JsonFormat.printToString(abi));
       } else {
         abiMap.put(strContractAddr, "");
@@ -89,35 +78,12 @@ public class LogInfoTriggerParser {
       String strContractAddr =
           ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
 
-      List<DataWord> topics = logInfo.getTopics();
-      ABI.Entry entry = null;
-      String signature = "";
-      String abiString = "";
-      if (topics != null && topics.size() > 0 && !ArrayUtils.isEmpty(topics.get(0).getData())
-          && fullMap.size() > 0) {
-        String firstTopic = topics.get(0).toString();
-        entry = fullMap.get(strContractAddr + "_" + firstTopic);
-        signature = signMap.get(strContractAddr + "_" + firstTopic);
-        abiString = abiMap.get(strContractAddr);
-      }
-
-      boolean isEvent = (entry != null);
-      ContractTrigger event;
-      if (isEvent) {
-        event = new LogEventWrapper();
-        ((LogEventWrapper) event).setTopicList(logInfo.getClonedTopics());
-        ((LogEventWrapper) event).setData(logInfo.getClonedData());
-        ((LogEventWrapper) event).setEventSignature(signature);
-        ((LogEventWrapper) event).setAbiEntry(entry);
-      } else {
-        event = new ContractLogTrigger();
-        ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
-        ((ContractLogTrigger) event).setData(logInfo.getHexData());
-      }
+      String abiString = abiMap.get(strContractAddr);
+      ContractTrigger event = new ContractTrigger();
       String creatorAddr = signMap.get(strContractAddr);
       event.setUniqueId(txId + "_" + index);
       event.setTransactionId(txId);
-      event.setContractAddress(strContractAddr);
+      event.setContractAddress("");
       event.setOriginAddress(originAddress);
       event.setCallerAddress("");
       event.setCreatorAddress(StringUtils.isEmpty(creatorAddr) ? "" : creatorAddr);
