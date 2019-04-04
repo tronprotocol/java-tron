@@ -79,11 +79,11 @@ public abstract class FastByteComparisons {
    */
   private static class LexicographicalComparerHolder {
 
-    static final String UNSAFE_COMPARER_NAME =
+    private static final String UNSAFE_COMPARER_NAME =
         LexicographicalComparerHolder.class.getName() +
             "$UnsafeComparer";
 
-    static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
+    private static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
 
     /**
      * Returns the Unsafe-using Comparer, or falls back to the pure-Java implementation if unable to
