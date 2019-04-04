@@ -11,8 +11,8 @@ import org.tron.core.db.TransactionTrace.TimeResultType;
 public class PendingManager implements AutoCloseable {
 
   @Getter
-  static List<TransactionCapsule> tmpTransactions = new ArrayList<>();
-  Manager dbManager;
+  private List<TransactionCapsule> tmpTransactions = new ArrayList<>();
+  private Manager dbManager;
 
   public PendingManager(Manager db) {
 
@@ -25,7 +25,7 @@ public class PendingManager implements AutoCloseable {
   @Override
   public void close() {
 
-    for (TransactionCapsule tx : PendingManager.tmpTransactions) {
+    for (TransactionCapsule tx : tmpTransactions) {
       try {
         if (tx.getTrxTrace() != null &&
             tx.getTrxTrace().getTimeResultType().equals(TimeResultType.NORMAL)) {

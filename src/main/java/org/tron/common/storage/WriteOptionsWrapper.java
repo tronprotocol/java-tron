@@ -9,17 +9,12 @@ public class WriteOptionsWrapper {
   @Getter
   private org.iq80.leveldb.WriteOptions level = null;
 
-  private WriteOptionsWrapper() {
-
-  }
-
   public static WriteOptionsWrapper getInstance() {
     WriteOptionsWrapper wapper = new WriteOptionsWrapper();
     wapper.level = new org.iq80.leveldb.WriteOptions();
     wapper.rocks = new org.rocksdb.WriteOptions();
     return wapper;
   }
-
 
   public WriteOptionsWrapper sync(boolean bool) {
     this.level.sync(bool);

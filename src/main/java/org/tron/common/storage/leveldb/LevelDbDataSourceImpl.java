@@ -17,6 +17,7 @@ package org.tron.common.storage.leveldb;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
 import org.iq80.leveldb.DBException;
@@ -54,9 +56,11 @@ import org.tron.core.db.common.iterator.StoreIterator;
 public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {
 
-  String dataBaseName;
-  DB database;
-  boolean alive;
+  private static final String ENGINE = "ENGINE";
+
+  private String dataBaseName;
+  private DB database;
+  private boolean alive;
   private String parentName;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
@@ -85,18 +89,12 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       return false;
     }
 
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "LEVELDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if ("LEVELDB".equals(engine)) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, ENGINE);
+    if (StringUtils.isEmpty(engine) && !PropUtil.writeProperty(enginePath, ENGINE, "LEVELDB")) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, ENGINE);
+    return "LEVELDB".equals(engine);
   }
 
   @Override
@@ -113,9 +111,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
         return;
       }
 
-      if (dataBaseName == null) {
-        throw new NullPointerException("no name set to the dbStore");
-      }
+      Preconditions.checkNotNull(dataBaseName, "no name set to the dbStore");
 
       Options dbOptions = Args.getInstance().getStorage().getOptionsByDbName(dataBaseName);
 
