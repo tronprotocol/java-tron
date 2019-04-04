@@ -56,11 +56,7 @@ public class Key {
     }
 
     Key key = (Key) o;
-    boolean result = false;
-    if (Arrays.equals(key.getData(), this.data)) {
-      result = true;
-    }
-    return result;
+    return Arrays.equals(key.getData(), this.data);
   }
 
   @Override

@@ -79,12 +79,7 @@ public class Type {
    * @return
    */
   public boolean isValidType(int type) {
-    boolean result = true;
-    if ((type & VALUE_TYPE_UNKNOWN) != VALUE_TYPE_NORMAL) {
-      result = false;
-    }
-
-    return result;
+    return (type & VALUE_TYPE_UNKNOWN) == VALUE_TYPE_NORMAL;
   }
 
   /**
@@ -122,12 +117,7 @@ public class Type {
     }
 
     Type T = (Type) obj;
-    boolean result = true;
-    if (this.type != T.getType()) {
-      result = false;
-    }
-
-    return result;
+    return this.type == T.getType();
   }
 
   @Override
