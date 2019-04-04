@@ -30,16 +30,6 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
     return Streams.stream(revokingDB.iterator()).count();
   }
 
-  private static ContractStore instance;
-
-  public static void destory() {
-    instance = null;
-  }
-
-  void destroy() {
-    instance = null;
-  }
-
   /**
    * find a transaction  by it's id.
    */

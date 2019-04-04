@@ -30,7 +30,7 @@ public class BackupRocksDBAspect {
   @Before("pointPushBlock(block)")
   public void backupDb(BlockCapsule block) {
     //SR-Master Node do not backup db;
-    if (Args.getInstance().isWitness() && !(backupManager.getStatus() == BackupStatusEnum.SLAVER)) {
+    if (Args.getInstance().isWitness() && backupManager.getStatus() != BackupStatusEnum.SLAVER) {
       return;
     }
 
@@ -39,7 +39,7 @@ public class BackupRocksDBAspect {
       try {
         util.doBackup(block);
       } catch (Exception e) {
-        logger.error("backup db failure: {}", e);
+        logger.error("backup db failure:", e);
       }
     }
   }
