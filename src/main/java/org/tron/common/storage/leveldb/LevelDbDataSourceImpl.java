@@ -244,7 +244,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void putData(byte[] key, byte[] value, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      database.put(key, value, options.level);
+      database.put(key, value, options.getLevel());
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -264,7 +264,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void deleteData(byte[] key, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      database.delete(key, options.level);
+      database.delete(key, options.getLevel());
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -453,10 +453,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper options) {
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, options.level);
+      updateByBatchInner(rows, options.getLevel());
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows, options.level);
+        updateByBatchInner(rows, options.getLevel());
       } catch (Exception e1) {
         throw new RuntimeException(e);
       }

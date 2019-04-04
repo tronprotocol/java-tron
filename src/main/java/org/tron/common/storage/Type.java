@@ -5,10 +5,10 @@ public class Type {
   /**
    * Default Mode : VALUE_TYPE_NORMAL
    */
-  public static int VALUE_TYPE_NORMAL = 0;
-  public static int VALUE_TYPE_DIRTY = 1 << 0;
-  public static int VALUE_TYPE_CREATE = 1 << 1;
-  public static int VALUE_TYPE_UNKNOWN = 0xFFFFFFFC;
+  public static final int VALUE_TYPE_NORMAL = 0;
+  public static final int VALUE_TYPE_DIRTY = 1 << 0;
+  public static final int VALUE_TYPE_CREATE = 1 << 1;
+  public static final int VALUE_TYPE_UNKNOWN = 0xFFFFFFFC;
 
   protected int type = VALUE_TYPE_NORMAL;
 
@@ -79,11 +79,12 @@ public class Type {
    * @return
    */
   public boolean isValidType(int type) {
+    boolean result = true;
     if ((type & VALUE_TYPE_UNKNOWN) != VALUE_TYPE_NORMAL) {
-      return false;
+      result = false;
     }
 
-    return true;
+    return result;
   }
 
   /**
@@ -121,11 +122,12 @@ public class Type {
     }
 
     Type T = (Type) obj;
+    boolean result = true;
     if (this.type != T.getType()) {
-      return false;
+      result = false;
     }
 
-    return true;
+    return result;
   }
 
   @Override

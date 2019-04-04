@@ -272,7 +272,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.put(optionsWrapper.rocks, key, value);
+      database.put(optionsWrapper.getRocks(), key, value);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -318,7 +318,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.delete(optionsWrapper.rocks, key);
+      database.delete(optionsWrapper.getRocks(), key);
     } catch (RocksDBException e) {
       logger.error("RocksDBException:{}", e);
     } finally {
@@ -395,7 +395,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, optionsWrapper.rocks);
+      updateByBatchInner(rows, optionsWrapper.getRocks());
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);

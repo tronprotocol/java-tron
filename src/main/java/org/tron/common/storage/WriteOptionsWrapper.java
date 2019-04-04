@@ -1,9 +1,13 @@
 package org.tron.common.storage;
 
+import lombok.Getter;
+
 public class WriteOptionsWrapper {
 
-  public org.rocksdb.WriteOptions rocks = null;
-  public org.iq80.leveldb.WriteOptions level = null;
+  @Getter
+  private org.rocksdb.WriteOptions rocks = null;
+  @Getter
+  private org.iq80.leveldb.WriteOptions level = null;
 
   private WriteOptionsWrapper() {
 
