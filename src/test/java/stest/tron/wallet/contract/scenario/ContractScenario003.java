@@ -102,6 +102,8 @@ public class ContractScenario003 {
     logger.info(txid);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     com.google.protobuf.ByteString contractAddress = infoById.get().getContractAddress();
     SmartContract smartContract = PublicMethed
         .getContract(contractAddress.toByteArray(), blockingStubFull);
