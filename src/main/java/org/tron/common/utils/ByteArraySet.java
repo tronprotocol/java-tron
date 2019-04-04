@@ -27,6 +27,7 @@ import org.tron.core.db.ByteArrayWrapper;
 
 
 public class ByteArraySet implements Set<byte[]> {
+  private static final String RUNTIME_EXCEPTION_MSG = "Not implemented";
 
   private Set<ByteArrayWrapper> delegate;
 
@@ -104,7 +105,7 @@ public class ByteArraySet implements Set<byte[]> {
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
   }
 
   @Override
@@ -118,12 +119,12 @@ public class ByteArraySet implements Set<byte[]> {
 
   @Override
   public boolean retainAll(Collection<?> c) {
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
   }
 
   @Override
   public boolean removeAll(Collection<?> c) {
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
   }
 
   @Override
@@ -133,11 +134,11 @@ public class ByteArraySet implements Set<byte[]> {
 
   @Override
   public boolean equals(Object o) {
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
   }
 
   @Override
   public int hashCode() {
-    throw new RuntimeException("Not implemented");
+    throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
   }
 }

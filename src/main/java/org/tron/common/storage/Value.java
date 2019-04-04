@@ -75,7 +75,7 @@ public class Value {
    * @return
    */
   public byte[] getAny() {
-    return any.clone();
+    return any;
   }
 
   /**
