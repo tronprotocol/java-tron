@@ -158,7 +158,7 @@ public class ContractEventParser {
         byte[] lengthBytes = subBytes(data, start, DATAWORD_UNIT_SIZE);
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
-        byte[] realBytes = subBytes(data, start + DATAWORD_UNIT_SIZE, length);
+        byte[] realBytes = length > 0 ? subBytes(data, start + DATAWORD_UNIT_SIZE, length) : new byte[0];
         return type == Type.STRING ? new String(realBytes) : Hex.toHexString(realBytes);
       }
     } catch (OutputLengthException | ArithmeticException e) {
