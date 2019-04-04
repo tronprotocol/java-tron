@@ -70,4 +70,8 @@ public class ContractTrigger extends Trigger {
   @Getter
   @Setter
   private LogInfo rawData;
+
+  @Getter
+  @Setter
+  private String abiString;
 }

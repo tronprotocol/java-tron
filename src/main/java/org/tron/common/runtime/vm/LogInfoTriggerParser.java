@@ -14,6 +14,7 @@ import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.services.http.JsonFormat;
 import org.tron.protos.Protocol.SmartContract.ABI;
 
 public class LogInfoTriggerParser {
@@ -44,6 +45,7 @@ public class LogInfoTriggerParser {
 
     Map<String, ABI.Entry> fullMap = new HashMap<>();
     Map<String, String> signMap = new HashMap<>();
+    Map<String, String> abiMap = new HashMap<>();
 
     for (LogInfo logInfo : logInfos) {
 
@@ -75,6 +77,9 @@ public class LogInfoTriggerParser {
           fullMap.put(strContractAddr + "_" + sha3, entry);
           signMap.put(strContractAddr + "_" + sha3, signature);
         }
+        abiMap.put(strContractAddr, JsonFormat.printToString(abi));
+      } else {
+        abiMap.put(strContractAddr, "");
       }
     }
 
@@ -87,11 +92,13 @@ public class LogInfoTriggerParser {
       List<DataWord> topics = logInfo.getTopics();
       ABI.Entry entry = null;
       String signature = "";
+      String abiString = "";
       if (topics != null && topics.size() > 0 && !ArrayUtils.isEmpty(topics.get(0).getData())
           && fullMap.size() > 0) {
         String firstTopic = topics.get(0).toString();
         entry = fullMap.get(strContractAddr + "_" + firstTopic);
         signature = signMap.get(strContractAddr + "_" + firstTopic);
+        abiString = abiMap.get(strContractAddr);
       }
 
       boolean isEvent = (entry != null);
@@ -117,6 +124,7 @@ public class LogInfoTriggerParser {
       event.setBlockNumber(blockNum);
       event.setTimeStamp(blockTimestamp);
       event.setRawData(logInfo);
+      event.setAbiString(abiString);
 
       list.add(event);
       index++;
