@@ -29,12 +29,12 @@ public class ClearABIContractActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       ClearABIContract usContract = contract.unpack(ClearABIContract.class);
+
       byte[] contractAddress = usContract.getContractAddress().toByteArray();
       ContractCapsule deployedContract = dbManager.getContractStore().get(contractAddress);
 
-      dbManager.getContractStore().put(contractAddress, new ContractCapsule(
-          deployedContract.getInstance().toBuilder().setAbi(org.tron.protos.Protocol.SmartContract.ABI.getDefaultInstance())
-              .build()));
+      deployedContract.clearABI();
+      dbManager.getContractStore().put(contractAddress, deployedContract);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
