@@ -54,6 +54,7 @@ public class WitnessService implements Service {
       .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
   private Thread generateThread;
 
+  @Getter
   private volatile boolean isRunning = false;
   private Map<ByteString, byte[]> privateKeyMap = Maps
       .newHashMap();//<witnessAccountAddress,privateKey>

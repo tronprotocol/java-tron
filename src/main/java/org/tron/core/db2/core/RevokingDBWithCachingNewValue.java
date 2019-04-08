@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -154,23 +155,25 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       ((SnapshotImpl) head).collect(collection);
     }
 
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+    Map<WrappedByteArray, WrappedByteArray> levelDbMap = new HashMap<>();
 
     if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
       ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
           .map(e -> Maps
-              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+              .immutableEntry(WrappedByteArray.of(e.getKey()),
+                  WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
     } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
       ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().getNext(key, limit).entrySet().stream()
           .map(e -> Maps
-              .immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-          .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+              .immutableEntry(WrappedByteArray.of(e.getKey()),
+                  WrappedByteArray.of(e.getValue())))
+          .forEach(e -> levelDbMap.put(e.getKey(), e.getValue()));
     }
 
-    levelDBMap.putAll(collection);
+    levelDbMap.putAll(collection);
 
-    return levelDBMap.entrySet().stream()
+    return levelDbMap.entrySet().stream()
         .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
         .filter(e -> ByteUtil.greaterOrEquals(e.getKey().getBytes(), key))
         .limit(limit)
@@ -182,5 +185,51 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return getValuesNext(head(), key, limit);
+  }
+
+  @Override
+  public Set<byte[]> getValuesPrevious(byte[] key, long limit) {
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+    int precision = Long.SIZE / Byte.SIZE;
+    Set<byte[]> result = new HashSet<>();
+    for (WrappedByteArray p : collection.keySet()) {
+      if (ByteUtil.lessOrEquals(ByteUtil.parseBytes(p.getBytes(), 0, precision), key)
+          && limit > 0) {
+        result.add(collection.get(p).getBytes());
+        limit--;
+      }
+    }
+    if (limit <= 0) {
+      return result;
+    }
+    List<byte[]> list = null;
+    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
+      list = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb()
+          .getPrevious(key, limit, precision).values().stream()
+          .collect(Collectors.toList());
+    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
+      list = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb()
+          .getPrevious(key, limit, precision).values().stream()
+          .collect(Collectors.toList());
+    }
+    result.addAll(list);
+    return result.stream().limit(limit).collect(Collectors.toSet());
+  }
+
+  public Map<WrappedByteArray, WrappedByteArray> getAllValues() {
+    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
+    if (head.getPrevious() != null) {
+      ((SnapshotImpl) head).collect(collection);
+    }
+    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
+    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll().entrySet().stream()
+        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()),
+            WrappedByteArray.of(e.getValue())))
+        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
+    levelDBMap.putAll(collection);
+    return levelDBMap;
   }
 }
