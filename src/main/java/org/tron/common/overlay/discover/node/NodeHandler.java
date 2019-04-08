@@ -21,6 +21,7 @@ package org.tron.common.overlay.discover.node;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.net.udp.handler.UdpEvent;
 import org.tron.common.net.udp.message.Message;
@@ -83,9 +84,9 @@ public class NodeHandler {
   private NodeStatistics nodeStatistics;
   private NodeHandler replaceCandidate;
   private InetSocketAddress inetSocketAddress;
+  private AtomicInteger pingTrials = new AtomicInteger(3);
   private volatile boolean waitForPong = false;
   private volatile boolean waitForNeighbors = false;
-  private volatile int pingTrials = 3;
   private long pingSent;
 
   public NodeHandler(Node node, NodeManager nodeManager) {
@@ -230,7 +231,7 @@ public class NodeHandler {
 
   public void handleTimedOut() {
     waitForPong = false;
-    if (--pingTrials > 0) {
+    if (pingTrials.getAndDecrement() > 0) {
       sendPing();
     } else {
       if (state == State.Discovered) {

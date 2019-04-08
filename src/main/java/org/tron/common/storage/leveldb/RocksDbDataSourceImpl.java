@@ -1,5 +1,6 @@
 package org.tron.common.storage.leveldb;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.DBIterator;
+import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
@@ -40,12 +42,13 @@ import org.tron.core.db.common.iterator.RockStoreIterator;
 @NoArgsConstructor
 public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {
+  private static final String ENGINE = "ENGINE";
 
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentName;
-  ReadOptions readOpts;
+  private ReadOptions readOpts;
 
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
@@ -156,18 +159,12 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if ("ROCKSDB".equals(engine)) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, ENGINE);
+    if (StringUtils.isEmpty(engine) && !PropUtil.writeProperty(enginePath, ENGINE, "ROCKSDB")) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, ENGINE);
+    return "ROCKSDB".equals(engine);
   }
 
   public void initDB() {
@@ -184,9 +181,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       if (isAlive()) {
         return;
       }
-      if (dataBaseName == null) {
-        throw new NullPointerException("no name set to the dbStore");
-      }
+
+      Preconditions.checkNotNull(dataBaseName, "no name set to the dbStore");
 
       try (Options options = new Options()) {
 
@@ -262,7 +258,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       database.put(key, value);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -275,9 +271,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.put(optionsWrapper.rocks, key, value);
+      database.put(optionsWrapper.getRocks(), key, value);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -292,7 +288,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       return database.get(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException: {}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -308,7 +304,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       database.delete(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -321,9 +317,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.delete(optionsWrapper.rocks, key);
+      database.delete(optionsWrapper.getRocks(), key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -398,7 +394,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, optionsWrapper.rocks);
+      updateByBatchInner(rows, optionsWrapper.getRocks());
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);

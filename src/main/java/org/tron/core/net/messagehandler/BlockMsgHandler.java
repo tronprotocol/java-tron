@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -37,6 +38,8 @@ public class BlockMsgHandler implements TronMsgHandler {
   private WitnessProductBlockService witnessProductBlockService;
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
+
+  private boolean fastForward = Args.getInstance().isFastForward();
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
@@ -81,6 +84,11 @@ public class BlockMsgHandler implements TronMsgHandler {
       syncService.startSync(peer);
       return;
     }
+
+    if (fastForward && tronNetDelegate.validBlock(block)) {
+      advService.broadcast(new BlockMessage(block));
+    }
+
     tronNetDelegate.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
     tronNetDelegate.getActivePeer().forEach(p -> {
@@ -88,7 +96,10 @@ public class BlockMsgHandler implements TronMsgHandler {
         p.setBlockBothHave(blockId);
       }
     });
-    advService.broadcast(new BlockMessage(block));
+
+    if (!fastForward) {
+      advService.broadcast(new BlockMessage(block));
+    }
   }
 
 }

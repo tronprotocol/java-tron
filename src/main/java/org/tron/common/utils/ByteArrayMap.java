@@ -30,6 +30,7 @@ import org.tron.core.db.ByteArrayWrapper;
 
 
 public class ByteArrayMap<V> implements Map<byte[], V> {
+  private static final String RUNTIME_EXCEPTION_MSG = "Not implemented";
 
   private final Map<ByteArrayWrapper, V> delegate;
 
@@ -138,7 +139,7 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
 
     @Override
     public boolean contains(Object o) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
@@ -166,47 +167,47 @@ public class ByteArrayMap<V> implements Map<byte[], V> {
 
     @Override
     public Object[] toArray() {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public <T> T[] toArray(T[] a) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean add(Entry<byte[], V> vEntry) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean remove(Object o) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean containsAll(Collection<?> c) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean addAll(Collection<? extends Entry<byte[], V>> c) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean retainAll(Collection<?> c) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public boolean removeAll(Collection<?> c) {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
     }
 
     @Override
     public void clear() {
-      throw new RuntimeException("Not implemented");
+      throw new RuntimeException(RUNTIME_EXCEPTION_MSG);
 
     }
   }

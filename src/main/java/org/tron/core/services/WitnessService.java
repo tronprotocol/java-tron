@@ -45,6 +45,9 @@ public class WitnessService implements Service {
   private static final int MIN_PARTICIPATION_RATE = Args.getInstance()
       .getMinParticipationRate(); // MIN_PARTICIPATION_RATE * 1%
   private static final int PRODUCE_TIME_OUT = 500; // ms
+  @Getter
+  private static volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
+
   private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
@@ -57,7 +60,6 @@ public class WitnessService implements Service {
       .newHashMap();//<witnessAccountAddress,privateKey>
   private Map<byte[], byte[]> privateKeyToAddressMap = Maps
       .newHashMap();//<privateKey,witnessPermissionAccountAddress>
-  private volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
 
   private Manager manager;
 

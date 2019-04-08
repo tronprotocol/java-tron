@@ -878,6 +878,12 @@ public class Wallet {
             .setKey("getAllowAdaptiveEnergy")
             .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
             .build());
+    //    ALLOW_DEFERRED_TRANSACTION, // 1, 24
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowDeferredTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowDeferredTransaction())
+            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
@@ -902,6 +908,16 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("maxDeferredTransactionProcessTime")
         .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDeferredTransactionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getCancelDeferredTransactionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
