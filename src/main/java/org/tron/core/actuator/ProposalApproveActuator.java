@@ -41,7 +41,6 @@ public class ProposalApproveActuator extends AbstractActuator {
               .get(ByteArray.fromLong(proposalApproveContract.getProposalId())) :
               getDeposit().getProposalCapsule(ByteArray.fromLong(proposalApproveContract
                   .getProposalId()));
-
       ByteString committeeAddress = proposalApproveContract.getOwnerAddress();
       if (proposalApproveContract.getIsAddApproval()) {
         proposalCapsule.addApproval(committeeAddress);
