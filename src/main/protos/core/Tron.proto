@@ -405,6 +405,7 @@ message BlockHeader {
     int64 witness_id = 8;
     bytes witness_address = 9;
     int32 version = 10;
+    bytes accountStateRoot = 11;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;

@@ -262,6 +262,15 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
 
+  public void setAccountStateRoot(byte[] root) {
+    BlockHeader.raw blockHeaderRaw =
+        this.block.getBlockHeader().getRawData().toBuilder()
+            .setAccountStateRoot(ByteString.copyFrom(root)).build();
+
+    this.block = this.block.toBuilder().setBlockHeader(
+        this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
+  }
+
   /* only for genisis */
   public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
@@ -274,6 +283,14 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public Sha256Hash getMerkleRoot() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getTxTrieRoot());
+  }
+
+  public Sha256Hash getAccountRoot() {
+    if (this.block.getBlockHeader().getRawData().getAccountStateRoot() != null
+        && !this.block.getBlockHeader().getRawData().getAccountStateRoot().isEmpty()) {
+      return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getAccountStateRoot());
+    }
+    return Sha256Hash.ZERO_HASH;
   }
 
   public ByteString getWitnessAddress() {
@@ -328,6 +345,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
     if (!getTransactions().isEmpty()) {
       toStringBuff.append("merkle root=").append(getMerkleRoot()).append("\n");
+      toStringBuff.append("account root=").append(getAccountRoot()).append("\n");
       toStringBuff.append("txs size=").append(getTransactions().size()).append("\n");
     } else {
       toStringBuff.append("txs are empty\n");

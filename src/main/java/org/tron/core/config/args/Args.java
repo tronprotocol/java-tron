@@ -1252,7 +1252,6 @@ public class Args {
         .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
 
-
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")
         ? config.getInt("node.backup.priority") : 0;
