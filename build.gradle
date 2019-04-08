@@ -88,6 +88,10 @@ if (isWindows()) {
     }
 }
 
+task version(type: Exec) {
+    commandLine 'bash', '-c', './ver.sh'
+}
+
 dependencies {
     //local libraries
     compile fileTree(dir: 'libs', include: '*.jar')
