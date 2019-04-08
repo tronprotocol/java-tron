@@ -198,6 +198,14 @@ public class ContractLinkage004 {
     logger.info("beforeNetLimit1:" + beforeNetLimit1);
     logger.info("beforeNetUsed1:" + beforeNetUsed1);
     logger.info("beforeFreeNetUsed1:" + beforeFreeNetUsed1);
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage004.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 50, null, linkage004Key, linkage004Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);

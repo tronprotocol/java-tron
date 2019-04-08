@@ -13,11 +13,11 @@ contract contract2 {
     }
 
     function triggerContract1(address _receiver) payable public{
-        payContract.call(abi.encode(bytes4(keccak256("send5SunToReceiver(address)")),_receiver));
+        payContract.call(abi.encodeWithSignature("send5SunToReceiver(address)",_receiver));
     }
 
     function triggerContract1ButRevert(address _receiver) payable public{
-        payContract.call(abi.encode(bytes4(keccak256("send5SunToReceiver(address)")),_receiver));
+        payContract.call(abi.encodeWithSignature("send5SunToReceiver(address)",_receiver));
         require(1 == 2);
     }
 
@@ -29,6 +29,6 @@ contract contract3 {
     }
 
     function triggerContract2(address _receiver) payable public{
-        payContract.call(abi.encode(bytes4(keccak256("triggerContract1(address)")),_receiver));
+        payContract.call(abi.encodeWithSignature("triggerContract1(address)",_receiver));
     }
 }

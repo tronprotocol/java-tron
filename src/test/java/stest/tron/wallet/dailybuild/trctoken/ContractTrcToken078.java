@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -12,12 +13,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -53,6 +56,7 @@ public class ContractTrcToken078 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] internalTxsAddress = ecKey1.getAddress();
   String testKeyForinternalTxsAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  String priKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
 
   @BeforeSuite
@@ -84,24 +88,35 @@ public class ContractTrcToken078 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed
+        .freezeBalanceGetEnergy(internalTxsAddress, 10000000000L, 0L, 1, priKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName = "AAContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest1");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest1");
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100, null, testKeyForinternalTxsAddress,
-        internalTxsAddress, blockingStubFull);
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName = "callerContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            1000000L, 100, null, testKeyForinternalTxsAddress,
+            internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName1 = "BContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest2");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest2");
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+
+    String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName1 = "calledContract";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
+
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
+
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
@@ -109,11 +124,14 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName2 = "CContract";
-    String code2 = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest3");
-    String abi2 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest3");
+
+    String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName2 = "c";
+    HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
+
+    String code2 = retMap2.get("byteCode").toString();
+    String abi2 = retMap2.get("abI").toString();
+
     byte[] contractAddress2 = PublicMethed
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
@@ -133,6 +151,12 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById2.get().getReceipt().getEnergyUsageTotal());
+    Account info1 = PublicMethed.queryAccount(internalTxsAddress, blockingStubFull);
+    AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(internalTxsAddress,
+        blockingStubFull);
+    logger.info("getEnergyUsed  " + resourceInfo1.getEnergyUsed());
+    logger.info("getEnergyLimit  " + resourceInfo1.getEnergyLimit());
     Assert.assertTrue(infoById2.get().getResultValue() == 0);
 
 
@@ -145,11 +169,13 @@ public class ContractTrcToken078 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName = "AAContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest4");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest4");
+
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName = "callerContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         1000000L, 100, null, testKeyForinternalTxsAddress,
@@ -157,11 +183,12 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName1 = "BContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest5");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest5");
+    String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName1 = "calledContract";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
+
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
@@ -169,11 +196,13 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName2 = "CContract";
-    String code2 = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken078_AddressTest6");
-    String abi2 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken078_AddressTest6");
+
+    String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
+    String contractName2 = "c";
+    HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
+
+    String code2 = retMap2.get("byteCode").toString();
+    String abi2 = retMap2.get("abI").toString();
     byte[] contractAddress2 = PublicMethed
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,

@@ -3,13 +3,13 @@ contract callerContract {
     constructor() public payable{}
     function() external payable{}
     function sendToB(address called_address, address c) public payable{
-       called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
+       called_address.delegatecall(abi.encodeWithSignature("transferTo(address)",c));
     }
     function sendToB2(address called_address,address c) public payable{
-        called_address.call(abi.encode(bytes4(keccak256("transferTo(address)")),c));
+        called_address.call(abi.encodeWithSignature("transferTo(address)",c));
     }
     function sendToB3(address called_address,address c) public payable{
-        called_address.delegatecall(abi.encode(bytes4(keccak256("transferTo(address)")),c));
+        called_address.delegatecall(abi.encodeWithSignature("transferTo(address)",c));
     }
 }
    contract calledContract {

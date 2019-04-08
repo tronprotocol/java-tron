@@ -32,6 +32,9 @@ contract transferTokenContract {
     function transferTokenTestValueMaxLong(address payable toAddress) payable public  {
         toAddress.transferToken(9223372036854775807, 1000001);
     }
+    function transferTokenTestValue0IdBigInteger(address payable toAddress) payable public  {
+            toAddress.transferToken(0, 9223372036854775809);
+    }
 }
 
 
