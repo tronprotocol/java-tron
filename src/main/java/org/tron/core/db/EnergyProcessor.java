@@ -84,7 +84,6 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
 
-
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
     long energyUsage = accountCapsule.getEnergyUsage();
@@ -117,11 +116,11 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
-    if (frozeBalance < 1000_000L) {
+    if (frozeBalance < 1_000_000L) {
       return 0;
     }
 
-    long energyWeight = frozeBalance / 1000_000L;
+    long energyWeight = frozeBalance / 1_000_000L;
     long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
 

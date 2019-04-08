@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.DB;
@@ -18,6 +17,7 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PropUtil;
 
 @Slf4j
 public class DBConvert {
@@ -60,7 +60,7 @@ public class DBConvert {
     return dbOptions;
   }
 
-  public DB newLevelDB(Path db) throws IOException {
+  public DB newLevelDb(Path db) throws IOException {
     DB database = null;
     File file = db.toFile();
     org.iq80.leveldb.Options dbOptions = newDefaultLevelDbOptions();
@@ -89,17 +89,6 @@ public class DBConvert {
     options.setMaxBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
-    options.setCompressionPerLevel(new ArrayList<org.rocksdb.CompressionType>() {
-      {
-        add(org.rocksdb.CompressionType.NO_COMPRESSION);
-        add(org.rocksdb.CompressionType.NO_COMPRESSION);
-        add(org.rocksdb.CompressionType.NO_COMPRESSION);
-        add(org.rocksdb.CompressionType.LZ4_COMPRESSION);
-        add(org.rocksdb.CompressionType.LZ4_COMPRESSION);
-        add(org.rocksdb.CompressionType.ZSTD_COMPRESSION);
-        add(org.rocksdb.CompressionType.ZSTD_COMPRESSION);
-      }
-    });
     final BlockBasedTableConfig tableCfg;
     options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
     tableCfg.setBlockSize(64 * 1024);
@@ -110,7 +99,7 @@ public class DBConvert {
     return options;
   }
 
-  public RocksDB newRocksDB(Path db) {
+  public RocksDB newRocksDb(Path db) {
     RocksDB database = null;
     try (Options options = newDefaultRocksDbOptions()) {
       database = RocksDB.open(options, db.toString());
@@ -158,6 +147,16 @@ public class DBConvert {
         && dstDbValueSum == srcDbValueSum;
   }
 
+  public boolean createEngine(String dir) {
+    String enginePath = dir + File.separator + "engine.properties";
+
+    if (!FileUtil.createFileIfNotExists(enginePath)) {
+      return false;
+    }
+
+    return PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
+  }
+
   public boolean doConvert() {
 
     File levelDbFile = srcDbPath.toFile();
@@ -168,21 +167,21 @@ public class DBConvert {
 
     DB level = null;
     try {
-      level = newLevelDB(srcDbPath);
+      level = newLevelDb(srcDbPath);
     } catch (IOException e) {
       e.printStackTrace();
     }
 
     FileUtil.createDirIfNotExists(dstDir);
     RocksDB rocks = null;
-    rocks = newRocksDB(dstDbPath);
+    rocks = newRocksDb(dstDbPath);
 
-    return convertLevelToRocks(level, rocks);
+    return convertLevelToRocks(level, rocks) && createEngine(dstDbPath.toString());
   }
 
   public int byteArrayToIntWithOne(int sum, byte[] b) {
-    for (byte aByte : b) {
-      sum += (int) aByte;
+    for (byte oneByte : b) {
+      sum += (int) oneByte;
     }
     return sum;
   }
@@ -217,7 +216,8 @@ public class DBConvert {
         DBConvert convert = new DBConvert(dbSrc, dbDst, file.getName());
         if (convert.doConvert()) {
           System.out.println(String
-              .format("Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
+              .format(
+                  "Convert database %s successful with %s key-value. keySum: %d, valueSum: %d",
                   convert.dbName,
                   convert.srcDbKeyCount, convert.dstDbKeySum, convert.dstDbValueSum));
         } else {
@@ -229,6 +229,7 @@ public class DBConvert {
       }
     }
     System.out.println(String
-        .format("database convert use %d seconds total.", (System.currentTimeMillis() - time) / 1000));
+        .format("database convert use %d seconds total.",
+            (System.currentTimeMillis() - time) / 1000));
   }
 }

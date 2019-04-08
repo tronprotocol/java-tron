@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import org.tron.common.utils.Sha256Hash;
 
 public class Base58 {
+
   private static final int BASE58CHECK_ADDRESS_SIZE = 35;
   private static final int ADDRESS_SIZE = 21;
   private static final byte ADD_PRE_FIX_BYTE = (byte) 0xa0;
@@ -13,7 +14,7 @@ public class Base58 {
    */
 
   public static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-            .toCharArray();
+      .toCharArray();
   private static final int[] INDEXES = new int[128];
 
   static {
@@ -24,6 +25,7 @@ public class Base58 {
       INDEXES[ALPHABET[i]] = i;
     }
   }
+
   /**
    * constructor.
    */
@@ -65,6 +67,7 @@ public class Base58 {
       throw new RuntimeException(e);  // Cannot happen.
     }
   }
+
   /**
    * constructor.
    */
@@ -152,6 +155,7 @@ public class Base58 {
 
     return range;
   }
+
   /**
    * constructor.
    */
@@ -163,9 +167,9 @@ public class Base58 {
     }
     if (addressBase58.length() != BASE58CHECK_ADDRESS_SIZE) {
       System.out.println(
-                    "Warning: Base58 address length need " + BASE58CHECK_ADDRESS_SIZE + " but "
-                            + addressBase58.length()
-                            + " !!");
+          "Warning: Base58 address length need " + BASE58CHECK_ADDRESS_SIZE + " but "
+              + addressBase58.length()
+              + " !!");
       return null;
     }
     byte[] address = decode58Check(addressBase58);
@@ -192,6 +196,7 @@ public class Base58 {
     }
     return null;
   }
+
   /**
    * constructor.
    */
@@ -203,19 +208,20 @@ public class Base58 {
     }
     if (address.length != ADDRESS_SIZE) {
       System.out.println(
-                    "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
-                            + " !!");
+          "Warning: Address length need " + ADDRESS_SIZE + " but " + address.length
+              + " !!");
       return false;
     }
     byte preFixbyte = address[0];
     if (preFixbyte != ADD_PRE_FIX_BYTE) {
       System.out.println("Warning: Address need prefix with " + ADD_PRE_FIX_BYTE + " but "
-                    + preFixbyte + " !!");
+          + preFixbyte + " !!");
       return false;
     }
     //Other rule;
     return true;
   }
+
   /**
    * constructor.
    */

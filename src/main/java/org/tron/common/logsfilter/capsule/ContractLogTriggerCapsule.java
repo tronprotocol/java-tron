@@ -7,6 +7,7 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 
 public class ContractLogTriggerCapsule extends TriggerCapsule {
+
   @Getter
   @Setter
   ContractLogTrigger contractLogTrigger;

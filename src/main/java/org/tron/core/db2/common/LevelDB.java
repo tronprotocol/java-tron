@@ -12,6 +12,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db.common.iterator.DBIterator;
 
 public class LevelDB implements DB<byte[], byte[]>, Flusher {
+
   @Getter
   private LevelDbDataSourceImpl db;
   private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
@@ -65,6 +66,7 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
   public void close() {
     db.closeDB();
   }
+
   @Override
   public void reset() {
     db.resetDb();

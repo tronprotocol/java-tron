@@ -92,7 +92,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         .distinct()
         .collect(toList());
     if (addressList.size() != permission.getKeysList().size()) {
-      throw new ContractValidateException("address should be distinct in permission " + permission.getType());
+      throw new ContractValidateException(
+          "address should be distinct in permission " + permission.getType());
     }
     for (Key key : permission.getKeysList()) {
       if (!Wallet.addressValid(key.getAddress().toByteArray())) {
@@ -109,7 +110,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     }
     if (weightSum < permission.getThreshold()) {
       throw new ContractValidateException(
-          "sum of all key's weight should not be less than threshold in permission " + permission.getType());
+          "sum of all key's weight should not be less than threshold in permission " + permission
+              .getType());
     }
 
     ByteString operations = permission.getOperations();

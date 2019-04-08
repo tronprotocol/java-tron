@@ -58,12 +58,12 @@ public class WalletTestAssetIssue001 {
   String noBandwitch = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
 
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -76,7 +76,7 @@ public class WalletTestAssetIssue001 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,description = "Transfer asset use Bandwitch")
+  @Test(enabled = true, description = "Transfer asset use Bandwitch")
   public void testTransferAssetBandwitchDecreaseWithin10Second() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -93,14 +93,13 @@ public class WalletTestAssetIssue001 {
 
     //Create a new AssetIssue success.
     Assert.assertTrue(PublicMethed.createAssetIssue(noBandwitchAddress, name, totalSupply, 1,
-        100, start, end, 1, description, url, 10000L,10000L,
-        1L,1L,noBandwitch,blockingStubFull));
+        100, start, end, 1, description, url, 10000L, 10000L,
+        1L, 1L, noBandwitch, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(noBandwitch,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(noBandwitch, blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
-
 
     Assert.assertTrue(transferAsset(toAddress, assetAccountId.toByteArray(), 100L,
         noBandwitchAddress, noBandwitch));
@@ -132,6 +131,7 @@ public class WalletTestAssetIssue001 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -142,6 +142,7 @@ public class WalletTestAssetIssue001 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -191,6 +192,7 @@ public class WalletTestAssetIssue001 {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -218,6 +220,7 @@ public class WalletTestAssetIssue001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -227,6 +230,7 @@ public class WalletTestAssetIssue001 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -246,6 +250,7 @@ public class WalletTestAssetIssue001 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -287,6 +292,7 @@ public class WalletTestAssetIssue001 {
     }
 
   }
+
   /**
    * constructor.
    */

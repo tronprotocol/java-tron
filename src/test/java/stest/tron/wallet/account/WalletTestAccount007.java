@@ -28,6 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount007 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -82,19 +83,19 @@ public class WalletTestAccount007 {
 
   @Test(enabled = true)
   public void testCreateAccount() {
-    Assert.assertTrue(PublicMethed.sendcoin(account007Address,10000000,
-        fromAddress,testKey002,blockingStubFull));
-    Account accountInfo = PublicMethed.queryAccount(account007Key,blockingStubFull);
+    Assert.assertTrue(PublicMethed.sendcoin(account007Address, 10000000,
+        fromAddress, testKey002, blockingStubFull));
+    Account accountInfo = PublicMethed.queryAccount(account007Key, blockingStubFull);
     final Long beforeBalance = accountInfo.getBalance();
 
     AccountNetMessage accountNetInfo = PublicMethed.getAccountNet(account007Address,
         blockingStubFull);
     final Long beforeFreeNet = accountNetInfo.getFreeNetUsed();
 
-    Assert.assertTrue(PublicMethed.createAccount(account007Address,newAccountAddress,
-        account007Key,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createAccount(account007Address, newAccountAddress,
+        account007Key, blockingStubFull));
 
-    accountInfo = PublicMethed.queryAccount(account007Key,blockingStubFull);
+    accountInfo = PublicMethed.queryAccount(account007Key, blockingStubFull);
     Long afterBalance = accountInfo.getBalance();
 
     accountNetInfo = PublicMethed.getAccountNet(account007Address,
@@ -114,14 +115,16 @@ public class WalletTestAccount007 {
   @Test(enabled = true)
   public void testExceptionCreateAccount() {
     //Try to create an exist account
-    Assert.assertFalse(PublicMethed.createAccount(account007Address,account007Address,account007Key,
-        blockingStubFull));
+    Assert
+        .assertFalse(PublicMethed.createAccount(account007Address, account007Address, account007Key,
+            blockingStubFull));
 
     //Try to create an invalid account
     byte[] wrongAddress = "wrongAddress".getBytes();
-    Assert.assertFalse(PublicMethed.createAccount(account007Address,wrongAddress,account007Key,
+    Assert.assertFalse(PublicMethed.createAccount(account007Address, wrongAddress, account007Key,
         blockingStubFull));
   }
+
   /**
    * constructor.
    */

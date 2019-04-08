@@ -28,8 +28,8 @@ public class P2pMessageFactory extends MessageFactory {
   @Override
   public P2pMessage create(byte[] data) throws Exception {
     if (data.length <= 1) {
-      throw new P2pException(TypeEnum.MESSAGE_WITH_WRONG_LENGTH, "len=" + data.length
-          + ", MessageType=" + (data.length == 1 ? data[0] : "unknow"));
+      throw new P2pException(TypeEnum.MESSAGE_WITH_WRONG_LENGTH,
+          "messageType=" + (data.length == 1 ? data[0] : "unknow"));
     }
     try {
       byte type = data[0];
@@ -39,15 +39,17 @@ public class P2pMessageFactory extends MessageFactory {
       if (e instanceof P2pException) {
         throw e;
       } else {
-        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED, "type=" + data[0] + ", len=" + data.length);
+        throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
+            "type=" + data[0] + ", len=" + data.length);
       }
     }
   }
 
-  private P2pMessage create(byte type, byte[] rawData) throws  Exception {
+  private P2pMessage create(byte type, byte[] rawData) throws Exception {
     MessageTypes messageType = MessageTypes.fromByte(type);
     if (messageType == null) {
-      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type=" + type + ", len=" + rawData.length);
+      throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,
+          "type=" + type + ", len=" + rawData.length);
     }
     switch (messageType) {
       case P2P_HELLO:
@@ -59,7 +61,7 @@ public class P2pMessageFactory extends MessageFactory {
       case P2P_PONG:
         return new PongMessage(type, rawData);
       default:
-        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, messageType.toString()  + ", len=" + rawData.length);
+        throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, messageType.toString());
     }
   }
 }

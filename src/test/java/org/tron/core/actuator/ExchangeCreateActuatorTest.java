@@ -195,7 +195,8 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(0L, assetMap.get(secondTokenId).longValue());
 
       // check V2 version
-      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsuleV2);
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
@@ -203,7 +204,8 @@ public class ExchangeCreateActuatorTest {
       // convert
       firstTokenId = dbManager.getAssetIssueStore().get(firstTokenId.getBytes()).getId();
       secondTokenId = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -279,13 +281,15 @@ public class ExchangeCreateActuatorTest {
       Assert.assertEquals(100_000_000L, assetMap.get(secondTokenId).longValue());
 
       // check V2 version
-      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsuleV2);
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
       secondTokenId = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -347,13 +351,15 @@ public class ExchangeCreateActuatorTest {
       // V1,Data is no longer update
       Assert.assertFalse(dbManager.getExchangeStore().has(ByteArray.fromLong(id)));
       // check V2 version
-      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsuleV2);
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
       secondTokenId = dbManager.getAssetIssueStore().get(secondTokenId.getBytes()).getId();
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -427,13 +433,15 @@ public class ExchangeCreateActuatorTest {
       Assert.assertFalse(dbManager.getExchangeStore().has(ByteArray.fromLong(id)));
 
       // check V2 version
-      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsuleV2);
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
 
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -477,7 +485,7 @@ public class ExchangeCreateActuatorTest {
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.setBalance(200_000_000_000000L);
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), 200_000_000L, dbManager );
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), 200_000_000L, dbManager);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
     ExchangeCreateActuator actuator = new ExchangeCreateActuator(getContract(
@@ -494,12 +502,14 @@ public class ExchangeCreateActuatorTest {
       // V1,Data is no longer update
       Assert.assertFalse(dbManager.getExchangeStore().has(ByteArray.fromLong(id)));
       // check V2 version
-      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store().get(ByteArray.fromLong(id));
+      ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
+          .get(ByteArray.fromLong(id));
       Assert.assertNotNull(exchangeCapsuleV2);
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(id, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenBalance, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));

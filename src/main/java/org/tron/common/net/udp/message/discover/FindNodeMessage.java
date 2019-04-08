@@ -14,7 +14,7 @@ public class FindNodeMessage extends Message {
 
   private Discover.FindNeighbours findNeighbours;
 
-  public FindNodeMessage(byte[] data) throws Exception{
+  public FindNodeMessage(byte[] data) throws Exception {
     super(DISCOVER_FIND_NODE, data);
     this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
   }

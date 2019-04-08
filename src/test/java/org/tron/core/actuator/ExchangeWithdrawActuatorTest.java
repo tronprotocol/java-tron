@@ -439,7 +439,8 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(exchangeId, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(0L, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -576,7 +577,8 @@ public class ExchangeWithdrawActuatorTest {
       Assert.assertEquals(ByteString.copyFrom(ownerAddress), exchangeCapsuleV2.getCreatorAddress());
       Assert.assertEquals(exchangeId, exchangeCapsuleV2.getID());
       Assert.assertEquals(1000000, exchangeCapsuleV2.getCreateTime());
-      Assert.assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
+      Assert
+          .assertTrue(Arrays.equals(firstTokenId.getBytes(), exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(firstTokenId, ByteArray.toStr(exchangeCapsuleV2.getFirstTokenId()));
       Assert.assertEquals(0L, exchangeCapsuleV2.getFirstTokenBalance());
       Assert.assertEquals(secondTokenId, ByteArray.toStr(exchangeCapsuleV2.getSecondTokenId()));
@@ -687,7 +689,8 @@ public class ExchangeWithdrawActuatorTest {
   }
 
   /**
-   * SameTokenName close, use AccountStore not exists, result is failed, exception is "account not exists".
+   * SameTokenName close, use AccountStore not exists, result is failed, exception is "account not
+   * exists".
    */
   @Test
   public void SameTokenNameCloseNoAccount() {
@@ -730,7 +733,8 @@ public class ExchangeWithdrawActuatorTest {
   }
 
   /**
-   * SameTokenName open, use AccountStore not exists, result is failed, exception is "account not exists".
+   * SameTokenName open, use AccountStore not exists, result is failed, exception is "account not
+   * exists".
    */
   @Test
   public void SameTokenNameOpenNoAccount() {
@@ -1003,7 +1007,7 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager );
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager);
     accountCapsule.setBalance(firstTokenQuant);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
@@ -1096,8 +1100,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant, dbManager );
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager );
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), firstTokenQuant, dbManager);
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager);
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
@@ -1190,8 +1194,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager );
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager );
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager);
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager);
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
@@ -1276,8 +1280,8 @@ public class ExchangeWithdrawActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager );
-    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager );
+    accountCapsule.addAssetAmountV2(firstTokenId.getBytes(), 1000L, dbManager);
+    accountCapsule.addAssetAmountV2(secondTokenId.getBytes(), secondTokenQuant, dbManager);
     accountCapsule.setBalance(10000_000000L);
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
@@ -1687,8 +1691,7 @@ public class ExchangeWithdrawActuatorTest {
   }
 
   /**
-   * SameTokenName open, Invalid param
-   * "token id is not a valid number"
+   * SameTokenName open, Invalid param "token id is not a valid number"
    */
   @Test
   public void SameTokenNameOpenInvalidParam() {

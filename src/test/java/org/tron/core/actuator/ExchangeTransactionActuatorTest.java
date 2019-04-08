@@ -438,7 +438,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     } catch (ItemNotFoundException e) {
       Assert.assertFalse(e instanceof ItemNotFoundException);
-    }finally {
+    } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
@@ -521,7 +521,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     } catch (ItemNotFoundException e) {
       Assert.assertFalse(e instanceof ItemNotFoundException);
-    }finally {
+    } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
@@ -543,7 +543,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager );
+    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager);
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -690,7 +690,8 @@ public class ExchangeTransactionActuatorTest {
   }
 
   /**
-   * SameTokenName close,use AccountStore not exists, result is failed, exception is "account not exists".
+   * SameTokenName close,use AccountStore not exists, result is failed, exception is "account not
+   * exists".
    */
   @Test
   public void SameTokenNameCloseNoAccount() {
@@ -747,7 +748,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager );
+    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager);
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -833,7 +834,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager );
+    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager);
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -919,7 +920,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager );
+    accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000, dbManager);
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -1458,7 +1459,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmountV2(tokenId.getBytes(), quant, dbManager );
+    accountCapsule.addAssetAmountV2(tokenId.getBytes(), quant, dbManager);
     Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
@@ -1497,9 +1498,8 @@ public class ExchangeTransactionActuatorTest {
   }
 
   /**
-   * SameTokenName open,invalid param
-   * "token id is not a valid number"
-   * "token expected must greater than zero"
+   * SameTokenName open,invalid param "token id is not a valid number" "token expected must greater
+   * than zero"
    */
   @Test
   public void SameTokenNameOpenInvalidParam() {

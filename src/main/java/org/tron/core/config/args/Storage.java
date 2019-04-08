@@ -72,13 +72,10 @@ public class Storage {
   private static final String DEFAULT_INDEX_SWTICH = "on";
 
   /**
-   * Default values of db options:
-   * <p>
-   * DEFAULT_COMPRESSION_TYPE: compressed with snappy
-   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B
-   * DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_MAX_OPEN_FILES:   100
+   * Default values of db options: <p> DEFAULT_COMPRESSION_TYPE: compressed with snappy
+   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 *
+   * 1024 * 1024 B DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B DEFAULT_MAX_OPEN_FILES:
+   * 100
    */
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
@@ -126,6 +123,7 @@ public class Storage {
   @Getter
   @Setter
   private static class Property {
+
     private String name;
     private String path;
     private Options dbOptions;
@@ -148,7 +146,7 @@ public class Storage {
 
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
     return config.hasPath(DB_SYNC_CONFIG_KEY) ?
-      config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+        config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {
@@ -168,8 +166,8 @@ public class Storage {
   }
 
   public static String getTransactionHistoreSwitchFromConfig(final Config config) {
-    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)?
-      config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
+    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) ?
+        config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   /**
@@ -254,11 +252,13 @@ public class Storage {
 
       File file = new File(path);
       if (!file.exists() && !file.mkdirs()) {
-        throw new IllegalArgumentException("[storage.properties] can not create storage path: " + path);
+        throw new IllegalArgumentException(
+            "[storage.properties] can not create storage path: " + path);
       }
 
       if (!file.canWrite()) {
-        throw new IllegalArgumentException("[storage.properties] permission denied to write to: " + path);
+        throw new IllegalArgumentException(
+            "[storage.properties] permission denied to write to: " + path);
       }
 
       property.setPath(path);
@@ -301,7 +301,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] compressionType must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] compressionType must be Integer type.");
       }
     }
 
@@ -325,7 +326,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] writeBufferSize must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] writeBufferSize must be Integer type.");
       }
     }
 
@@ -349,7 +351,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] maxOpenFiles must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] maxOpenFiles must be Integer type.");
       }
     }
 

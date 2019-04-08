@@ -7,6 +7,7 @@ import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.core.capsule.BlockCapsule;
 
 public class BlockLogTriggerCapsule extends TriggerCapsule {
+
   @Getter
   @Setter
   BlockLogTrigger blockLogTrigger;

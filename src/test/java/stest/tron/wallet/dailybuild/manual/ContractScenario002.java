@@ -68,13 +68,12 @@ public class ContractScenario002 {
 
   }
 
-  @Test(enabled = true,description = "Deploy contract with java-tron support interface")
+  @Test(enabled = true, description = "Deploy contract with java-tron support interface")
   public void deployTronNative() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] contract002Address = ecKey1.getAddress();
     String contract002Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    logger.info("From balance is "
-        + PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
+
     Assert.assertTrue(PublicMethed.sendcoin(contract002Address, 50000000L, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -194,7 +193,7 @@ public class ContractScenario002 {
 
   }
 
-  @Test(enabled = true,description = "Get smart contract with invalid address")
+  @Test(enabled = true, description = "Get smart contract with invalid address")
   public void getContractWithInvalidAddress() {
     byte[] contractAddress = contract002Address;
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);

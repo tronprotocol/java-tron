@@ -314,6 +314,7 @@ public class MultiSign25 {
     Assert.assertEquals(5, txWeight.getCurrentWeight());
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     logger.info("transaction hex string is " + ByteArray.toHexString(transaction2.toByteArray()));
     txWeight = PublicMethedForMutiSign.getTransactionSignWeight(transaction2, blockingStubFull);

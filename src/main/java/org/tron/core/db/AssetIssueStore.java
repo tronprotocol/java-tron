@@ -60,8 +60,8 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     });
     limit = limit > ASSET_ISSUE_COUNT_LIMIT_MAX ? ASSET_ISSUE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
-    end = end > assetIssueList.size() ? assetIssueList.size() : end ;
-    return assetIssueList.subList((int)offset,(int)end);
+    end = end > assetIssueList.size() ? assetIssueList.size() : end;
+    return assetIssueList.subList((int) offset, (int) end);
   }
 
   public List<AssetIssueCapsule> getAssetIssuesPaginated(long offset, long limit) {

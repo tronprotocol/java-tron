@@ -20,6 +20,7 @@ import org.junit.Test;
 
 @Slf4j
 public class LoggerTest {
+
   @Test
   public void testLogger() {
     logger.debug("test debug: {}", "success");
