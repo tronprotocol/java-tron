@@ -232,7 +232,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
-      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()), getNum());
+      blockId = new BlockId(Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray()),
+          getNum());
     }
     return blockId;
   }
@@ -260,8 +261,9 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     this.block = this.block.toBuilder().setBlockHeader(
         this.block.getBlockHeader().toBuilder().setRawData(blockHeaderRaw)).build();
   }
+
   /* only for genisis */
-  public void  setWitness(String witness) {
+  public void setWitness(String witness) {
     BlockHeader.raw blockHeaderRaw =
         this.block.getBlockHeader().getRawData().toBuilder().setWitnessAddress(
             ByteString.copyFrom(witness.getBytes())).build();

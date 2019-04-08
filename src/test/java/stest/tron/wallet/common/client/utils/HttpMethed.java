@@ -15,6 +15,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
@@ -24,7 +25,7 @@ import stest.tron.wallet.common.client.Configuration;
 @Slf4j
 public class HttpMethed {
 
-  static HttpClient httpClient = new DefaultHttpClient();
+  static HttpClient httpClient;
   static HttpPost httppost;
   static HttpResponse response;
   static Integer connectionTimeout = Configuration.getByPath("testng.conf")
@@ -36,6 +37,14 @@ public class HttpMethed {
   static JSONObject responseContent;
   static JSONObject signResponseContent;
   static JSONObject transactionApprovedListContent;
+
+  static {
+    PoolingClientConnectionManager pccm = new PoolingClientConnectionManager();
+    pccm.setDefaultMaxPerRoute(20);
+    pccm.setMaxTotal(100);
+
+    httpClient = new DefaultHttpClient(pccm);
+  }
 
   /**
    * constructor.
@@ -204,7 +213,7 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
-                                      Long amount, String[] managerKeys) {
+      Long amount, String[] managerKeys) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
       JsonObject userBaseObj2 = new JsonObject();
@@ -835,6 +844,27 @@ public class HttpMethed {
       httppost.releaseConnection();
       return null;
     }
+
+    responseContent = HttpMethed.parseResponseContent(response);
+    Integer times = 0;
+
+    while (times++ <= 10 && responseContent.getString("code") != null && responseContent
+        .getString("code").equalsIgnoreCase("SERVER_BUSY")) {
+      logger.info("retry num are " + times);
+      try {
+        response = httpClient.execute(httppost);
+      } catch (Exception e) {
+        e.printStackTrace();
+        httppost.releaseConnection();
+        return null;
+      }
+      responseContent = HttpMethed.parseResponseContent(response);
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
     httppost.releaseConnection();
     return response;
   }
@@ -1281,7 +1311,8 @@ public class HttpMethed {
   public static HttpResponse getTransactionCountByBlocknumFromSolidity(String httpSolidityNode,
       long blocknum) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/gettransactioncountbyblocknum";
+      String requestUrl =
+          "http://" + httpSolidityNode + "/walletsolidity/gettransactioncountbyblocknum";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("num", blocknum);
       response = createConnect(requestUrl, userBaseObj2);
@@ -1503,7 +1534,7 @@ public class HttpMethed {
       response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
       responseContent = HttpMethed.parseResponseContent(response);
       responseContent = HttpMethed.parseStringContent(responseContent.get("block_header")
-              .toString());
+          .toString());
       responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
       nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
       try {
@@ -1605,13 +1636,13 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getDelegatedResource(
-          String httpNode,byte[] fromAddress,byte[] toAddress) {
+      String httpNode, byte[] fromAddress, byte[] toAddress) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getdelegatedresource";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("fromAddress", ByteArray.toHexString(fromAddress));
       userBaseObj2.addProperty("toAddress", ByteArray.toHexString(toAddress));
-      response = createConnect(requestUrl,userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -1624,13 +1655,13 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getDelegatedResourceFromSolidity(
-          String httpSolidityNode,byte[] fromAddress,byte[] toAddress) {
+      String httpSolidityNode, byte[] fromAddress, byte[] toAddress) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getdelegatedresource";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("fromAddress", ByteArray.toHexString(fromAddress));
       userBaseObj2.addProperty("toAddress", ByteArray.toHexString(toAddress));
-      response = createConnect(requestUrl,userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -1642,12 +1673,13 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getDelegatedResourceAccountIndex(String httpNode,byte[] queryAddress) {
+  public static HttpResponse getDelegatedResourceAccountIndex(String httpNode,
+      byte[] queryAddress) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getdelegatedresourceaccountindex";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("value", ByteArray.toHexString(queryAddress));
-      response = createConnect(requestUrl,userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -1662,10 +1694,11 @@ public class HttpMethed {
   public static HttpResponse getDelegatedResourceAccountIndexFromSolidity(String httpSolidityNode,
       byte[] queryAddress) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getdelegatedresourceaccountindex";
+      String requestUrl =
+          "http://" + httpSolidityNode + "/walletsolidity/getdelegatedresourceaccountindex";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("value", ByteArray.toHexString(queryAddress));
-      response = createConnect(requestUrl,userBaseObj2);
+      response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
@@ -1763,7 +1796,8 @@ public class HttpMethed {
   public static HttpResponse getPaginatedAssetissueListFromSolidity(String httpSolidityNode,
       Integer offset, Integer limit) {
     try {
-      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getpaginatedassetissuelist";
+      String requestUrl =
+          "http://" + httpSolidityNode + "/walletsolidity/getpaginatedassetissuelist";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("offset", offset);
       userBaseObj2.addProperty("limit", limit);
@@ -2030,6 +2064,8 @@ public class HttpMethed {
   public static JSONObject parseResponseContent(HttpResponse response) {
     try {
       String result = EntityUtils.toString(response.getEntity());
+      StringEntity entity = new StringEntity(result, Charset.forName("UTF-8"));
+      response.setEntity(entity);
       JSONObject obj = JSONObject.parseObject(result);
       return obj;
     } catch (Exception e) {

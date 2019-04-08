@@ -172,7 +172,7 @@ public class HttpTestBlock001 {
     JSONArray jsonArray = JSONArray.parseArray(responseContent.get("chainParameter").toString());
     Assert.assertTrue(jsonArray.size() >= 26);
     Boolean exsistDelegated = false;
-    for (int i = 0;i < jsonArray.size();i++) {
+    for (int i = 0; i < jsonArray.size(); i++) {
       if (jsonArray.getJSONObject(i).getString("key").equals("getAllowDelegateResource")) {
         exsistDelegated = true;
         Assert.assertTrue(jsonArray.getJSONObject(i).getString("value").equals("1"));

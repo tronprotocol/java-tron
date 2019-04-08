@@ -25,6 +25,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class TestExchangeTransaction {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("mainWitness.key17");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -69,7 +70,7 @@ public class TestExchangeTransaction {
 
   }
 
-  @Test(enabled = true,threadPoolSize = 20, invocationCount = 20)
+  @Test(enabled = true, threadPoolSize = 20, invocationCount = 20)
   public void testExchangeTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] exchangeAddress = ecKey1.getAddress();
@@ -82,14 +83,14 @@ public class TestExchangeTransaction {
     PublicMethed.printAddress(exchangeKey);
     PublicMethed.printAddress(transactionKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(exchangeAddress,1500000000000000L,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(transactionAddress,1500000000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(exchangeAddress, 1500000000000000L, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(transactionAddress, 1500000000000000L, fromAddress,
+        testKey002, blockingStubFull));
     Long totalSupply = 1500000000000000L;
     Random rand = new Random();
     Integer randNum = rand.nextInt(900000000) + 1;
-    String name = "exchange_" +  Long.toString(randNum);
+    String name = "exchange_" + Long.toString(randNum);
     Long start = System.currentTimeMillis() + 20000;
     Long end = System.currentTimeMillis() + 10000000000L;
     String description = "This asset issue is use for exchange transaction stress";
@@ -102,16 +103,16 @@ public class TestExchangeTransaction {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    Assert.assertTrue(PublicMethed.transferAsset(transactionAddress,name.getBytes(),
-        1500000000L,exchangeAddress,exchangeKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(transactionAddress, name.getBytes(),
+        1500000000L, exchangeAddress, exchangeKey, blockingStubFull));
     try {
       Thread.sleep(30000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
     //500000000000000L  //5000000L
-    Assert.assertTrue(PublicMethed.exchangeCreate(name.getBytes(),500000000000000L,
-            "_".getBytes(),500000000000000L,exchangeAddress,exchangeKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.exchangeCreate(name.getBytes(), 500000000000000L,
+        "_".getBytes(), 500000000000000L, exchangeAddress, exchangeKey, blockingStubFull));
     try {
       Thread.sleep(300000);
     } catch (InterruptedException e) {

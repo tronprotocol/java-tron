@@ -113,7 +113,7 @@ public class MerkleTreeTest {
    */
   public void testAnyHashNum() {
     int maxNum = 128;
-    for (int hashNum = 1; hashNum <= maxNum; hashNum++){
+    for (int hashNum = 1; hashNum <= maxNum; hashNum++) {
       int maxRank = getRank(hashNum);
       List<Sha256Hash> hashList = getHash(hashNum);
       MerkleTree tree = MerkleTree.getInstance().createTree(hashList);
@@ -132,12 +132,14 @@ public class MerkleTreeTest {
       number = number << 1;
       pareTree(left, hashList, maxRank, curBank, number);
       number++;
-      if ( (number<<(maxRank-curBank)) >= hashList.size()) {    //The smallest leaf child number = number<<(maxRank-curBank)
+      if ((number << (maxRank - curBank)) >= hashList
+          .size()) {    //The smallest leaf child number = number<<(maxRank-curBank)
         Assert.assertTrue(right == null);
         Assert.assertEquals(head.getHash(), left.getHash());  //No right, leaf = left
       } else {
         pareTree(right, hashList, maxRank, curBank, number);
-        Assert.assertEquals(head.getHash(), computeHash(left.getHash(), right.getHash())); //hash = sha256(left || right)
+        Assert.assertEquals(head.getHash(),
+            computeHash(left.getHash(), right.getHash())); //hash = sha256(left || right)
       }
     } else {
       // last rank, no child, it is real leaf. Its hash in hashList.

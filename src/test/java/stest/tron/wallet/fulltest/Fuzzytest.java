@@ -45,14 +45,14 @@ public class Fuzzytest {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
 
   private static long start;
   private static long end;
-  private static  long now = System.currentTimeMillis();
+  private static long now = System.currentTimeMillis();
   private static String name = "AssetIssue016_" + Long.toString(now);
-  private static  long totalSupply = now;
+  private static long totalSupply = now;
   private static final long sendAmount = 10000000000L;
   private static final long netCostMeasure = 200L;
 
@@ -105,7 +105,7 @@ public class Fuzzytest {
 
     AssetIssueList assetIssueList = blockingStubFull
         .getAssetIssueList(GrpcAPI.EmptyMessage.newBuilder().build());
-    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress,10000000, 3, testKey002,
+    Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 10000000, 3, testKey002,
         blockingStubFull));
     while (assetIssueList.getAssetIssueCount() <= 1) {
       //Sendcoin to this account
@@ -129,7 +129,7 @@ public class Fuzzytest {
     }
   }
 
-  @Test(enabled = false,threadPoolSize = 5, invocationCount = 5)
+  @Test(enabled = false, threadPoolSize = 5, invocationCount = 5)
   public void tooManyChannelFull() {
     Integer i = 0;
     while (i++ < 20000) {
@@ -148,8 +148,8 @@ public class Fuzzytest {
     }
 
 
-
   }
+
   /**
    * constructor.
    */
@@ -163,6 +163,7 @@ public class Fuzzytest {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }*/
   }
+
   /**
    * constructor.
    */
@@ -221,6 +222,7 @@ public class Fuzzytest {
       return false;
     }
   }
+
   /**
    * constructor.
    */

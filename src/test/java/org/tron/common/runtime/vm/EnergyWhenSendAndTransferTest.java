@@ -125,7 +125,8 @@ public class EnergyWhenSendAndTransferTest {
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal3);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
-        totalBalance - value - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
+        totalBalance - value
+            - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
   }
 
   // solidity for sendTest and transferTest
@@ -159,7 +160,6 @@ public class EnergyWhenSendAndTransferTest {
   //   }
   //
   // }
-
 
 
   @Test

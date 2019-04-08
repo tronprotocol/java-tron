@@ -28,6 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class TestApproveProposal {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -96,8 +97,8 @@ public class TestApproveProposal {
   public void testApproveProposal() {
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(21L, 1L);
-    Assert.assertTrue(PublicMethed.createProposal(witness001Address,witnessKey001,
-        proposalMap,blockingStubFull));
+    Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
+        proposalMap, blockingStubFull));
     try {
       Thread.sleep(20000);
     } catch (InterruptedException e) {
@@ -105,16 +106,14 @@ public class TestApproveProposal {
     }
     //Get proposal list
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
+    Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
     final Integer proposalId = listProposals.get().getProposalsCount();
     logger.info(Integer.toString(proposalId));
 
     //Get proposal list after approve
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    listProposals =  Optional.ofNullable(proposalList);
+    listProposals = Optional.ofNullable(proposalList);
     logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
-
-
 
     String[] witnessKey = {
         "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04",
@@ -124,7 +123,7 @@ public class TestApproveProposal {
         "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68",
     };
     byte[] witnessAddress;
-    for (String key: witnessKey) {
+    for (String key : witnessKey) {
       witnessAddress = PublicMethed.getFinalAddress(key);
       PublicMethed.approveProposal(witnessAddress, key, proposalId,
           true, blockingStubFull);
@@ -142,13 +141,13 @@ public class TestApproveProposal {
         "47.93.14.253:50051",
         "39.105.28.73:50051",
         "101.200.51.70:50051",
-      "47.94.209.241:50051",
+        "47.94.209.241:50051",
         "47.94.148.150:50051",
         "47.94.9.222:50051",
         "39.107.87.203:50051"
     };
 
-    for (String ip: nodeIp) {
+    for (String ip : nodeIp) {
       fullnode = ip;
       channelFull = ManagedChannelBuilder.forTarget(fullnode)
           .usePlaintext(true)
@@ -158,8 +157,6 @@ public class TestApproveProposal {
       Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
       logger.info("ip " + ip + ", block num is : " + currentBlockNum);
 
-
-
       Integer times = 0;
       while (times++ <= -100) {
         currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -167,7 +164,7 @@ public class TestApproveProposal {
         TransferContract transferContract;
         Integer triggerNum = 0;
         Integer transactionNum = 0;
-        for (Transaction transaction: currentBlock.getTransactionsList()) {
+        for (Transaction transaction : currentBlock.getTransactionsList()) {
           if (transaction.getRawData().getContract(0).getContractName().isEmpty()) {
             transactionNum++;
           } else {
@@ -201,15 +198,15 @@ public class TestApproveProposal {
   public void testGetChainParameters() {
     //Set the default map
     HashMap<String, Long> defaultCommitteeMap = new HashMap<String, Long>();
-    defaultCommitteeMap.put("MAINTENANCE_TIME_INTERVAL",300000L);
-    defaultCommitteeMap.put("ACCOUNT_UPGRADE_COST",9999000000L);
-    defaultCommitteeMap.put("CREATE_ACCOUNT_FEE",100000L);
-    defaultCommitteeMap.put("TRANSACTION_FEE",10L);
-    defaultCommitteeMap.put("ASSET_ISSUE_FEE",1024000000L);
-    defaultCommitteeMap.put("WITNESS_PAY_PER_BLOCK",32000000L);
-    defaultCommitteeMap.put("WITNESS_STANDBY_ALLOWANCE",115200000000L);
-    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT",0L);
-    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_BANDWIDTH_RATE",1L);
+    defaultCommitteeMap.put("MAINTENANCE_TIME_INTERVAL", 300000L);
+    defaultCommitteeMap.put("ACCOUNT_UPGRADE_COST", 9999000000L);
+    defaultCommitteeMap.put("CREATE_ACCOUNT_FEE", 100000L);
+    defaultCommitteeMap.put("TRANSACTION_FEE", 10L);
+    defaultCommitteeMap.put("ASSET_ISSUE_FEE", 1024000000L);
+    defaultCommitteeMap.put("WITNESS_PAY_PER_BLOCK", 32000000L);
+    defaultCommitteeMap.put("WITNESS_STANDBY_ALLOWANCE", 115200000000L);
+    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT", 0L);
+    defaultCommitteeMap.put("CREATE_NEW_ACCOUNT_BANDWIDTH_RATE", 1L);
 
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -221,6 +218,7 @@ public class TestApproveProposal {
     }
 
   }
+
   /**
    * constructor.
    */

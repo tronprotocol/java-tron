@@ -105,7 +105,7 @@ public class WalletTestMutiSign003 {
 
     Assert.assertTrue(
         PublicMethed.sendcoin(ownerAddress, needCoin + 100000000L, fromAddress, testKey002,
-        blockingStubFull));
+            blockingStubFull));
 
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
@@ -137,7 +137,7 @@ public class WalletTestMutiSign003 {
     logger.info(accountPermissionJson);
     String txid = PublicMethedForMutiSign
         .accountPermissionUpdateForTransactionId(accountPermissionJson, ownerAddress, ownerKey,
-        blockingStubFull,ownerKeyString);
+            blockingStubFull, ownerKeyString);
 
     final String updateName = Long.toString(System.currentTimeMillis());
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -170,7 +170,7 @@ public class WalletTestMutiSign003 {
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergy(
         ownerAddress, 1000000L, 0, 1, ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiver(
-            ownerAddress,1000000L,0,0,ByteString.copyFrom(newAddress),
+        ownerAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
         ownerKey, blockingStubFull, ownerKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalance(
         ownerAddress, ownerKey, 0, null, blockingStubFull, ownerKeyString));

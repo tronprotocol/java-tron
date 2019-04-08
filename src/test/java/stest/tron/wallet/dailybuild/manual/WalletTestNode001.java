@@ -30,13 +30,14 @@ public class WalletTestNode001 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
-          .getStringList("fullnode.ip.list").get(1);
+      .getStringList("fullnode.ip.list").get(1);
 
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -48,14 +49,14 @@ public class WalletTestNode001 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     channelFull1 = ManagedChannelBuilder.forTarget(fullnode1)
-            .usePlaintext(true)
-            .build();
+        .usePlaintext(true)
+        .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
   }
 
 
-  @Test(enabled = true,description = "List all nodes")
+  @Test(enabled = true, description = "List all nodes")
   public void testGetAllNode() {
     GrpcAPI.NodeList nodeList = blockingStubFull
         .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -64,7 +65,7 @@ public class WalletTestNode001 {
     Integer times = 0;
     while (nodeList.getNodesCount() == 0 && times++ < 5) {
       nodeList = blockingStubFull
-              .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
+          .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
       nodeList1 = blockingStubFull1
           .listNodes(GrpcAPI.EmptyMessage.newBuilder().build());
       if (nodeList.getNodesCount() != 0 || nodeList1.getNodesCount() != 0) {
@@ -92,6 +93,7 @@ public class WalletTestNode001 {
     nodeList.isInitialized();
 
   }
+
   /**
    * constructor.
    */

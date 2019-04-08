@@ -30,7 +30,8 @@ import org.tron.protos.Protocol.Transaction.Contract;
 public class TransactionUtils {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private static final  int RESERVE_BALANCE = 10;
+  private static final int RESERVE_BALANCE = 10;
+
   /**
    * constructor.
    */
@@ -41,6 +42,7 @@ public class TransactionUtils {
 
     return Sha256Hash.hash(tmp.build().toByteArray());
   }
+
   /**
    * constructor.
    */
@@ -95,6 +97,7 @@ public class TransactionUtils {
       return null;
     }
   }
+
   /**
    * constructor.
    */
@@ -116,6 +119,7 @@ public class TransactionUtils {
    * 3. check sign
    * 4. check balance
    */
+
   /**
    * constructor.
    */
@@ -145,6 +149,7 @@ public class TransactionUtils {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -165,6 +170,7 @@ public class TransactionUtils {
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
+
   /**
    * constructor.
    */

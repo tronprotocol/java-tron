@@ -932,7 +932,6 @@ public class Manager {
     }
   }
 
-
   /**
    * save a block.
    */
@@ -1248,6 +1247,7 @@ public class Manager {
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
+
     return true;
   }
 
@@ -1893,7 +1893,8 @@ public class Manager {
           postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
-        logger.error("block header hash not exists or bad: {}", getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        logger.error("block header hash not exists or bad: {}",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
   }

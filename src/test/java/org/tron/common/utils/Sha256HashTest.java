@@ -30,16 +30,16 @@ public class Sha256HashTest {
     AtomicLong countAll = new AtomicLong(0);
     IntStream.range(0, 7).parallel().forEach(index -> {
       Thread thread =
-      new Thread(() -> {
-        for (int i = 0; i < 10000; i++) {
-          byte[] hash0 = Sha256Hash.hash(input);
-          countAll.incrementAndGet();
-          if (!Arrays.equals(hash, hash0)) {
-            countFailed.incrementAndGet();
-            Assert.assertTrue(false);
-          }
-        }
-      });
+          new Thread(() -> {
+            for (int i = 0; i < 10000; i++) {
+              byte[] hash0 = Sha256Hash.hash(input);
+              countAll.incrementAndGet();
+              if (!Arrays.equals(hash, hash0)) {
+                countFailed.incrementAndGet();
+                Assert.assertTrue(false);
+              }
+            }
+          });
       thread.start();
       try {
         thread.join();

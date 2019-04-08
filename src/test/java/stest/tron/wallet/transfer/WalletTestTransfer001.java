@@ -98,30 +98,30 @@ public class WalletTestTransfer001 {
     final byte[] receiptAccountAddress = ecKey2.getAddress();
     receiptAccountKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-    Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress,90000000000L,
-        fromAddress,testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(sendAccountAddress, 90000000000L,
+        fromAddress, testKey002, blockingStubFull));
 
     logger.info(receiptAccountKey);
     //Test send coin.
-    Account sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
+    Account sendAccount = PublicMethed.queryAccount(sendAccountKey, blockingStubFull);
     Long sendAccountBeforeBalance = sendAccount.getBalance();
     Assert.assertTrue(sendAccountBeforeBalance == 90000000000L);
-    Account receiptAccount = PublicMethed.queryAccount(receiptAccountKey,blockingStubFull);
+    Account receiptAccount = PublicMethed.queryAccount(receiptAccountKey, blockingStubFull);
     Long receiptAccountBeforeBalance = receiptAccount.getBalance();
     Assert.assertTrue(receiptAccountBeforeBalance == 0);
 
     //Test send coin
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(receiptAccountAddress,49880000000L,
-        sendAccountAddress,sendAccountKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(receiptAccountAddress, 49880000000L,
+        sendAccountAddress, sendAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    sendAccount = PublicMethed.queryAccount(sendAccountKey,blockingStubFull);
+    sendAccount = PublicMethed.queryAccount(sendAccountKey, blockingStubFull);
     Long sendAccountAfterBalance = sendAccount.getBalance();
     logger.info(Long.toString(sendAccountAfterBalance));
     Assert.assertTrue(sendAccountAfterBalance == 90000000000L - 49880000000L - 100000L);
 
-    receiptAccount = PublicMethed.queryAccount(receiptAccountKey,blockingStubFull);
+    receiptAccount = PublicMethed.queryAccount(receiptAccountKey, blockingStubFull);
     Long receiptAccountAfterBalance = receiptAccount.getBalance();
     logger.info(Long.toString(receiptAccountAfterBalance));
     Assert.assertTrue(receiptAccountAfterBalance == 49880000000L);
@@ -133,6 +133,7 @@ public class WalletTestTransfer001 {
     //Send coin failed due to the amount is -1Trx.
     Assert.assertFalse(sendcoin(toAddress, -1000000L, fromAddress, testKey002));
   }
+
   /**
    * constructor.
    */
@@ -146,6 +147,7 @@ public class WalletTestTransfer001 {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -230,6 +232,7 @@ public class WalletTestTransfer001 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -267,6 +270,7 @@ public class WalletTestTransfer001 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -294,6 +298,7 @@ public class WalletTestTransfer001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -303,6 +308,7 @@ public class WalletTestTransfer001 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

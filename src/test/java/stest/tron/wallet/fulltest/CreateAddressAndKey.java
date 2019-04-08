@@ -28,6 +28,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class CreateAddressAndKey {
+
   //testng001、testng002、testng003、testng004
   private final String testKey002 =
       "FC8BF0238748587B9617EB6D15D47A66C0E07C1A1959033CF249C6532DC29FE6";
@@ -35,7 +36,7 @@ public class CreateAddressAndKey {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
 
   private static String path = "/Users/wangzihe/Documents/";
@@ -74,8 +75,8 @@ public class CreateAddressAndKey {
       logger.info(ByteArray.toStr(Base64.encode(key)));
       logger.info(ByteArray.toStr(Base64.encode(address)));
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",addressString);
-      userBaseObj2.addProperty("key",keyString);
+      userBaseObj2.addProperty("address", addressString);
+      userBaseObj2.addProperty("key", keyString);
       //userBaseObj2.addProperty("address",ByteArray.toStr(Base64.encode(address)));
       //userBaseObj2.addProperty("key", ByteArray.toStr(Base64.encode(key)));
       jsonarray.add(userBaseObj2);
@@ -83,7 +84,7 @@ public class CreateAddressAndKey {
     Gson gson = new Gson();
     String jsonMap = gson.toJson(addressAndKey);
     //createFile(filename,jsonobject.toString());
-    createFile(filename,jsonarray.toString());
+    createFile(filename, jsonarray.toString());
 
   }
 
@@ -103,14 +104,14 @@ public class CreateAddressAndKey {
       ArrayList<String> accountList = new ArrayList<String>();
       accountList = PublicMethed.getAddressInfo(key);
       JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("address",accountList.get(1));
-      userBaseObj2.addProperty("key",accountList.get(0));
+      userBaseObj2.addProperty("address", accountList.get(1));
+      userBaseObj2.addProperty("key", accountList.get(0));
       jsonarray.add(userBaseObj2);
     }
     Gson gson = new Gson();
     String jsonMap = gson.toJson(addressAndKey);
     //createFile(filename,jsonobject.toString());
-    createFile(filename,jsonarray.toString());
+    createFile(filename, jsonarray.toString());
 
   }
 
@@ -123,7 +124,7 @@ public class CreateAddressAndKey {
   /**
    * constructor.
    */
-  public static boolean createFile(String fileName,String filecontent) {
+  public static boolean createFile(String fileName, String filecontent) {
     Boolean bool = false;
     filenameTemp = fileName;//文件路径+名称+文件类型
     File file = new File(filenameTemp);
@@ -169,16 +170,16 @@ public class CreateAddressAndKey {
 
   /**
    * constructor.
-  */
-  public static boolean writeFileContent(String filepath,String newstr) throws IOException {
+   */
+  public static boolean writeFileContent(String filepath, String newstr) throws IOException {
     Boolean bool = false;
     String filein = newstr + "\r\n";
-    String temp  = "";
+    String temp = "";
 
     FileInputStream fis = null;
     InputStreamReader isr = null;
     BufferedReader br = null;
-    FileOutputStream fos  = null;
+    FileOutputStream fos = null;
     PrintWriter pw = null;
     try {
       File file = new File(filepath);
@@ -187,7 +188,7 @@ public class CreateAddressAndKey {
       br = new BufferedReader(isr);
       StringBuffer buffer = new StringBuffer();
 
-      for (int i = 0;(temp = br.readLine()) != null;i++) {
+      for (int i = 0; (temp = br.readLine()) != null; i++) {
         buffer.append(temp);
         buffer = buffer.append(System.getProperty("line.separator"));
       }
@@ -220,6 +221,7 @@ public class CreateAddressAndKey {
     }
     return bool;
   }
+
   /**
    * constructor.
    */
@@ -227,7 +229,7 @@ public class CreateAddressAndKey {
   public static boolean delFile(String fileName) {
     Boolean bool = false;
     filenameTemp = path + fileName + ".txt";
-    File file  = new File(filenameTemp);
+    File file = new File(filenameTemp);
     try {
       if (file.exists()) {
         file.delete();

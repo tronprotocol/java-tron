@@ -81,7 +81,7 @@ public class WalletTestAssetIssue005 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true,description = "Get asset issue by name")
+  @Test(enabled = true, description = "Get asset issue by name")
   public void testGetAssetIssueByName() {
     ByteString addressBS1 = ByteString.copyFrom(fromAddress);
     Account request1 = Account.newBuilder().setAddress(addressBS1).build();
@@ -93,8 +93,8 @@ public class WalletTestAssetIssue005 {
       Long end = System.currentTimeMillis() + 1000000000;
       //Create a new asset issue
       Assert.assertTrue(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 100,
-          start, end, 1, description, url,10000L,10000L,
-          1L, 1L, testKey002,blockingStubFull));
+          start, end, 1, description, url, 10000L, 10000L,
+          1L, 1L, testKey002, blockingStubFull));
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     } else {
       logger.info("This account already create an assetisue");
@@ -103,9 +103,8 @@ public class WalletTestAssetIssue005 {
     }
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(testKey002, blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
-
 
     //Get asset issue by name success.
 
@@ -131,6 +130,7 @@ public class WalletTestAssetIssue005 {
     Assert.assertTrue(assetIssueByName.getUrl().isEmpty());
     Assert.assertTrue(assetIssueByName.getDescription().isEmpty());
   }
+
   /**
    * constructor.
    */
@@ -144,6 +144,7 @@ public class WalletTestAssetIssue005 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -199,6 +200,7 @@ public class WalletTestAssetIssue005 {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -226,6 +228,7 @@ public class WalletTestAssetIssue005 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -235,6 +238,7 @@ public class WalletTestAssetIssue005 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -254,6 +258,7 @@ public class WalletTestAssetIssue005 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */

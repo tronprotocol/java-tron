@@ -128,8 +128,8 @@ public class WalletTestAccount003 {
     }
     //Create AssetIssue failed when there is no enough balance.
     Assert.assertFalse(PublicMethed.createAssetIssue(lowBalAddress, name, TotalSupply, 1, 1,
-        now + 100000000L, now + 10000000000L, 2, description, url,10000L,
-        10000L,1L,1L,lowBalTest,blockingStubFull));
+        now + 100000000L, now + 10000000000L, 2, description, url, 10000L,
+        10000L, 1L, 1L, lowBalTest, blockingStubFull));
     logger.info("nobalancecreateassetissue");
   }
 
@@ -155,6 +155,7 @@ public class WalletTestAccount003 {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
+
   /**
    * constructor.
    */
@@ -165,6 +166,7 @@ public class WalletTestAccount003 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -233,6 +235,7 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -288,6 +291,7 @@ public class WalletTestAccount003 {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
+
   /**
    * constructor.
    */
@@ -324,6 +328,7 @@ public class WalletTestAccount003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -333,6 +338,7 @@ public class WalletTestAccount003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -352,6 +358,7 @@ public class WalletTestAccount003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -391,6 +398,7 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -429,6 +437,7 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -475,6 +484,7 @@ public class WalletTestAccount003 {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -519,6 +529,7 @@ public class WalletTestAccount003 {
 
 
   }
+
   /**
    * constructor.
    */

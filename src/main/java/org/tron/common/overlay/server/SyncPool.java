@@ -43,7 +43,6 @@ import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.discover.node.statistics.NodeStatistics;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.peer.PeerConnectionDelegate;
 
 @Slf4j(topic = "net")
 @Component
@@ -68,8 +67,6 @@ public class SyncPool {
 
   private ChannelManager channelManager;
 
-  private PeerConnectionDelegate peerDel;
-
   private Args args = Args.getInstance();
 
   private int maxActiveNodes = args.getNodeMaxActiveNodes();
@@ -82,17 +79,11 @@ public class SyncPool {
 
   private PeerClient peerClient;
 
-  public void init(PeerConnectionDelegate peerDel) {
-    this.peerDel = peerDel;
+  public void init() {
 
     channelManager = ctx.getBean(ChannelManager.class);
-    channelManager.init();
 
     peerClient = ctx.getBean(PeerClient.class);
-
-    for (Node node : args.getActiveNodes()) {
-      nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
 
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -111,28 +102,35 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
+    List<NodeHandler> connectNodes = new ArrayList<>();
+    Set<InetAddress> addressInUse = new HashSet<>();
+    Set<String> nodesInUse = new HashSet<>();
+    channelManager.getActivePeers().forEach(channel -> {
+      nodesInUse.add(channel.getPeerId());
+      addressInUse.add(channel.getInetAddress());
+    });
+
+    channelManager.getActiveNodes().forEach((address, node) -> {
+      nodesInUse.add(node.getHexId());
+      if (!addressInUse.contains(address)) {
+        connectNodes.add(nodeManager.getNodeHandler(node));
+      }
+    });
+
+    int size = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
         (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
-    if (lackSize <= 0) {
-      return;
+    int lackSize = size - connectNodes.size();
+    if (lackSize > 0) {
+      nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
+      List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
+      connectNodes.addAll(newNodes);
     }
 
-    final Set<String> nodesInUse = new HashSet<>();
-    channelManager.getActivePeers().forEach(channel -> nodesInUse.add(channel.getPeerId()));
-    nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
-
-    List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> {
+    connectNodes.forEach(n -> {
       peerClient.connectAsync(n, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
   }
-
-  // for test only
-  public void addActivePeers(PeerConnection p) {
-    activePeers.add(p);
-  }
-
 
   synchronized void logActivePeers() {
 
@@ -149,7 +147,7 @@ public class SyncPool {
       sb.append("============\n");
       Set<Node> activeSet = new HashSet<>();
       for (PeerConnection peer : new ArrayList<>(activePeers)) {
-        sb.append(peer.logSyncStats()).append('\n');
+        sb.append(peer.log()).append('\n');
         activeSet.add(peer.getNode());
       }
       sb.append("Other connected peers\n");
@@ -174,27 +172,29 @@ public class SyncPool {
   }
 
   public synchronized void onConnect(Channel peer) {
-    if (!activePeers.contains(peer)) {
-      if (!peer.isActive()) {
+    PeerConnection peerConnection = (PeerConnection) peer;
+    if (!activePeers.contains(peerConnection)) {
+      if (!peerConnection.isActive()) {
         passivePeersCount.incrementAndGet();
       } else {
         activePeersCount.incrementAndGet();
       }
-      activePeers.add((PeerConnection) peer);
+      activePeers.add(peerConnection);
       activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
-      peerDel.onConnectPeer((PeerConnection) peer);
+      peerConnection.onConnect();
     }
   }
 
   public synchronized void onDisconnect(Channel peer) {
-    if (activePeers.contains(peer)) {
-      if (!peer.isActive()) {
+    PeerConnection peerConnection = (PeerConnection) peer;
+    if (activePeers.contains(peerConnection)) {
+      if (!peerConnection.isActive()) {
         passivePeersCount.decrementAndGet();
       } else {
         activePeersCount.decrementAndGet();
       }
-      activePeers.remove(peer);
-      peerDel.onDisconnectPeer((PeerConnection) peer);
+      activePeers.remove(peerConnection);
+      peerConnection.onDisconnect();
     }
   }
 

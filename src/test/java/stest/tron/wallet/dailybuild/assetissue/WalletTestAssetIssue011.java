@@ -78,13 +78,12 @@ public class WalletTestAssetIssue011 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,description = "Transfer asset to create account")
+  @Test(enabled = true, description = "Transfer asset to create account")
   public void testTransferAssetCreateAccount() {
     //get account
     ecKey1 = new ECKey(Utils.getRandom());
     asset011Address = ecKey1.getAddress();
     testKeyForAssetIssue011 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-
 
     ecKey2 = new ECKey(Utils.getRandom());
     transferAssetCreateAddress = ecKey2.getAddress();
@@ -106,9 +105,8 @@ public class WalletTestAssetIssue011 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset011Address,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset011Address, blockingStubFull);
     ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
-
 
     //Transfer asset to create an account.
     Assert.assertTrue(PublicMethed
