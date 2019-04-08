@@ -40,7 +40,7 @@ SubC(addr).receiveToken.value(10)();
 
 function trigger6(address payable addr) payable public {
 
-address(SubC(addr)).call.value(1000)( abi.encode(bytes4(keccak256("transferToken(uint256, trcToken)")), 10, 0x6e6d62));
+address(SubC(addr)).call.value(1000)(abi.encode(bytes4(keccak256("transferToken(uint256, trcToken)")), 10, 0x6e6d62));
 }
 
 function trigger7(address addr) payable public {

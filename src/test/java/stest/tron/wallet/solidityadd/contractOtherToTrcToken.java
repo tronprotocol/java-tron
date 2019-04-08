@@ -350,10 +350,6 @@ public class contractOtherToTrcToken {
     System.arraycopy(tokenId, 0, paramBytes, toAddress.length + tokenValue.length, tokenId.length);
 
     String param = Hex.toHexString(paramBytes);
-//    String param = toAddress.getData() + tokenValue.getData() + tokenIdDataword.getData();
-
-//    String param = "\"" + Base58.encode58Check(user001Address)
-//        + "\",\"" + tokenValue + "\",\"" + tokenIdDataword.getData() + "\"";
 
     final String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "addressToTrctoken(address,uint256,address)", param, true, callValue,
