@@ -51,15 +51,15 @@ public class HttpTestMutiSign001 {
   @Test(enabled = true, description = "Account Permission Up Date by http")
   public void test1AccountPermissionUpDate() {
     PublicMethed.printAddress(ownerKey);
-    response = HttpMethed.sendCoin(httpnode,fromAddress,ownerAddress,amount,testKey002);
+    response = HttpMethed.sendCoin(httpnode, fromAddress, ownerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-    manager1Wight.addProperty("address",ByteArray.toHexString(manager1Address));
-    manager1Wight.addProperty("weight",1);
+    manager1Wight.addProperty("address", ByteArray.toHexString(manager1Address));
+    manager1Wight.addProperty("weight", 1);
 
     logger.info(manager1Wight.toString());
-    manager2Wight.addProperty("address",ByteArray.toHexString(manager2Address));
-    manager2Wight.addProperty("weight",1);
+    manager2Wight.addProperty("address", ByteArray.toHexString(manager2Address));
+    manager2Wight.addProperty("weight", 1);
 
     logger.info(manager2Wight.toString());
 
@@ -78,8 +78,8 @@ public class HttpTestMutiSign001 {
         "7fff1fc0037e0000000000000000000000000000000000000000000000000000");
     activeObject.add("keys", keys);
 
-    response = HttpMethed.accountPermissionUpdate(httpnode,ownerAddress,ownerObject,
-        witnessObject,activeObject,ownerKey);
+    response = HttpMethed.accountPermissionUpdate(httpnode, ownerAddress, ownerObject,
+        witnessObject, activeObject, ownerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
   }
 
@@ -94,7 +94,7 @@ public class HttpTestMutiSign001 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
 
-    response = HttpMethed.sendCoin(httpnode,ownerAddress,fromAddress,10L,permissionKeyString);
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, permissionKeyString);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
 

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
@@ -140,6 +141,7 @@ public class HttpTestEasyAccount001 {
             1000000L);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Send trx to easy account
     afterEasyBalance = HttpMethed.getBalance(httpnode, Wallet.decodeFromBase58Check(easyAddress));
@@ -166,6 +168,7 @@ public class HttpTestEasyAccount001 {
             1000000L);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     //Send trx to easy account
     afterEasyBalance = HttpMethed.getBalance(httpnode, Wallet.decodeFromBase58Check(easyAddress));
@@ -189,7 +192,7 @@ public class HttpTestEasyAccount001 {
     Long amount = 2048000000L;
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
-
+    HttpMethed.waitToProduceOneBlock(httpnode);
     //Create an asset issue
     response = HttpMethed
         .assetIssue(httpnode, assetAddress, assetName, assetName, totalSupply, 1, 1,
@@ -230,6 +233,7 @@ public class HttpTestEasyAccount001 {
             10L, assetIssueId);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.getAccount(httpnode, Wallet.decodeFromBase58Check(easyAddress));
     responseContent = HttpMethed.parseResponseContent(response);
@@ -259,6 +263,7 @@ public class HttpTestEasyAccount001 {
             5L, assetIssueId);
     logger.info("code is " + response.getStatusLine().getStatusCode());
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    HttpMethed.waitToProduceOneBlock(httpnode);
 
     response = HttpMethed.getAccount(httpnode, Wallet.decodeFromBase58Check(easyAddress));
     responseContent = HttpMethed.parseResponseContent(response);
@@ -276,6 +281,14 @@ public class HttpTestEasyAccount001 {
     logger.info("afterGenerateAsset:" + afterGenerateAsset);
     Assert
         .assertEquals(beforeGenerateAsset - afterGenerateAsset, afterEasyAsset - beforeEasyAsset);
+  }
+
+  /**
+   * constructor.
+   */
+  @AfterClass
+  public void shutdown() throws InterruptedException {
+    HttpMethed.disConnect();
   }
 
 }

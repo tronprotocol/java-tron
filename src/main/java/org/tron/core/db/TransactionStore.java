@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import java.util.List;
 import java.util.Objects;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,7 +58,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   private TransactionCapsule getTransactionFromKhaosDatabase(byte[] key, long high) {
     List<KhaosBlock> khaosBlocks = khaosDatabase.getMiniStore().getBlockByNum(high);
     for (KhaosBlock bl : khaosBlocks) {
-      for (TransactionCapsule e : bl.blk.getTransactions()) {
+      for (TransactionCapsule e : bl.getBlk().getTransactions()) {
         if (e.getTransactionId().equals(Sha256Hash.wrap(key))) {
           return e;
         }
@@ -118,7 +117,7 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
           indexHelper.remove(item.getInstance());
         }
       } catch (StoreException e) {
-        return;
+        logger.error("deleteIndex: ", e);
       }
     }
   }

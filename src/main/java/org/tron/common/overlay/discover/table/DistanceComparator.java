@@ -24,7 +24,7 @@ import java.util.Comparator;
  */
 public class DistanceComparator implements Comparator<NodeEntry> {
 
-  byte[] targetId;
+  private byte[] targetId;
 
   DistanceComparator(byte[] targetId) {
     this.targetId = targetId;

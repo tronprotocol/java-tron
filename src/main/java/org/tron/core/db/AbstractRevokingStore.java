@@ -36,6 +36,8 @@ import org.tron.core.exception.RevokingStoreIllegalStateException;
 @Getter // only for unit test
 public abstract class AbstractRevokingStore implements RevokingDatabase {
 
+  private static String ACTIVE_DIALOG_POSITIVE = "activeDialog has to be greater than 0";
+
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
 
   private Deque<RevokingState> stack = new LinkedList<>();
@@ -168,7 +170,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void merge() {
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     if (activeDialog == 1 && stack.size() == 1) {
@@ -224,7 +226,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
     }
 
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     disabled = true;
@@ -248,7 +250,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void commit() {
     if (activeDialog <= 0) {
-      throw new RevokingStoreIllegalStateException("activeDialog has to be greater than 0");
+      throw new RevokingStoreIllegalStateException(ACTIVE_DIALOG_POSITIVE);
     }
 
     --activeDialog;
@@ -451,9 +453,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Getter // only for unit test
   static class RevokingState {
 
-    Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
-    Set<RevokingTuple> newIds = new HashSet<>();
-    Map<RevokingTuple, byte[]> removed = new HashMap<>();
+    private Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
+    private Set<RevokingTuple> newIds = new HashSet<>();
+    private Map<RevokingTuple, byte[]> removed = new HashMap<>();
   }
 
   @AllArgsConstructor

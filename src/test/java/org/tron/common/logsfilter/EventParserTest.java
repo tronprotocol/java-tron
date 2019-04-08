@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class EventParserTest {
+
   @Test
   public synchronized void testEventParser() {
 
@@ -37,19 +38,21 @@ public class EventParserTest {
     byte[] data = ByteArray.fromHexString(dataStr);
     List<byte[]> topicList = new LinkedList<>();
     topicList.add(Hash.sha3(eventSign.getBytes()));
-    topicList.add(ByteArray.fromHexString("0xb7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b"));
+    topicList.add(ByteArray
+        .fromHexString("0xb7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b"));
 
     ABI.Entry entry = null;
-    for (ABI.Entry e: abi.getEntrysList()) {
+    for (ABI.Entry e : abi.getEntrysList()) {
       System.out.println(e.getName());
-      if (e.getName().equalsIgnoreCase("eventBytesL")){
+      if (e.getName().equalsIgnoreCase("eventBytesL")) {
         entry = e;
         break;
       }
     }
 
     Assert.assertEquals(LogInfoTriggerParser.getEntrySignature(entry), eventSign);
-    Assert.assertEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()), topicList.get(0));
+    Assert.assertEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
+        topicList.get(0));
     Assert.assertNotNull(entry);
     Map<String, String> dataMap = ContractEventParser.parseEventData(data, topicList, entry);
     Map<String, String> topicMap = ContractEventParser.parseTopics(topicList, entry);
@@ -60,8 +63,10 @@ public class EventParserTest {
     Assert.assertEquals(dataMap.get("1"), "0109");
     Assert.assertEquals(dataMap.get("random"), "0109");
 
-    Assert.assertEquals(topicMap.get("2"), "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
-    Assert.assertEquals(topicMap.get("last1"), "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
+    Assert.assertEquals(topicMap.get("2"),
+        "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
+    Assert.assertEquals(topicMap.get("last1"),
+        "b7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b");
 
     Assert.assertEquals(dataMap.get("3"), "1");
     Assert.assertEquals(dataMap.get("t2"), "1");

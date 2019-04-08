@@ -50,5 +50,5 @@ public class RevokingStoreIllegalStateException extends TronRuntimeException {
     super("", cause);
   }
 
-  static final long serialVersionUID = -1848914673093119416L;
+  public static final long serialVersionUID = -1848914673093119416L;
 }

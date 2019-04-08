@@ -182,7 +182,7 @@ public class ContractTrcToken029 {
         .copyFromUtf8(Long.toString(Long.valueOf(assetAccountDev.toStringUtf8()) + 100));
     String param = "\"" + fakeTokenId.toStringUtf8() + "\",\"1\"";
 
-    String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
+    final String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenWithSameName(trcToken,uint256)",
         param, false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,

@@ -63,6 +63,7 @@ public class WalletTestWitness001 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -103,7 +104,7 @@ public class WalletTestWitness001 {
 
     //Freeze balance to get vote ability.
     Assert.assertTrue(PublicMethed.freezeBalance(fromAddress, 1200000L, 3L,
-            testKey002,blockingStubFull));
+        testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Vote failed when the vote is large than the freeze balance.
     Assert.assertFalse(voteWitness(veryLargeMap, fromAddress, testKey002));
@@ -119,6 +120,7 @@ public class WalletTestWitness001 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -132,6 +134,7 @@ public class WalletTestWitness001 {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -206,6 +209,7 @@ public class WalletTestWitness001 {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -278,7 +282,6 @@ public class WalletTestWitness001 {
       }
     }
 
-
     Account afterFronzen = queryAccount(ecKey, searchBlockingStubFull);
     Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
     //Long afterBandwidth     = afterFronzen.getBandwidth();
@@ -301,6 +304,7 @@ public class WalletTestWitness001 {
 
 
   }
+
   /**
    * constructor.
    */
@@ -369,6 +373,7 @@ public class WalletTestWitness001 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -378,6 +383,7 @@ public class WalletTestWitness001 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

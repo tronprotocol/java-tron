@@ -41,11 +41,11 @@ public class KhaosDatabase extends TronDatabase {
     }
 
     @Getter
-    BlockCapsule blk;
-    Reference<KhaosBlock> parent = new WeakReference<>(null);
-    BlockId id;
-    Boolean invalid;
-    long num;
+    private BlockCapsule blk;
+    private Reference<KhaosBlock> parent = new WeakReference<>(null);
+    private BlockId id;
+    private Boolean invalid;
+    private long num;
 
     public KhaosBlock getParent() {
       return parent == null ? null : parent.get();
@@ -270,7 +270,8 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
-  public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1, Sha256Hash block2)
+  public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1,
+      Sha256Hash block2)
       throws NonCommonBlockException {
     LinkedList<KhaosBlock> list1 = new LinkedList<>();
     LinkedList<KhaosBlock> list2 = new LinkedList<>();
@@ -312,6 +313,7 @@ public class KhaosDatabase extends TronDatabase {
       throw new NonCommonBlockException();
     }
   }
+
   /**
    * Find two block's most recent common parent block.
    */

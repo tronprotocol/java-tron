@@ -2,6 +2,7 @@ package org.tron.core.db.backup;
 
 import java.util.List;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDBException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,18 +20,18 @@ import org.tron.core.db2.core.SnapshotRoot;
 public class BackupDbUtil {
 
   @Getter
-  private static String DB_BACKUP_STATE = "DB";
+  private static final String DB_BACKUP_STATE = "DB";
   private static final int DB_BACKUP_INDEX1 = 1;
   private static final int DB_BACKUP_INDEX2 = 2;
 
   @Getter
   private static final int DB_BACKUP_STATE_DEFAULT = 11;
 
-  public enum STATE {
+  public enum State {
     BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
-    public int status;
+    private int status;
 
-    private STATE(int status) {
+    State(int status) {
       this.status = status;
     }
 
@@ -38,7 +39,7 @@ public class BackupDbUtil {
       return status;
     }
 
-    public static STATE valueOf(int value) {
+    public static State valueOf(int value) {
       switch (value) {
         case 1:
           return BAKINGONE;
@@ -76,18 +77,18 @@ public class BackupDbUtil {
   }
 
   private void switchBackupState() {
-    switch (STATE.valueOf(getBackupState())) {
+    switch (State.valueOf(getBackupState())) {
       case BAKINGONE:
-        setBackupState(STATE.BAKEDONE.getStatus());
+        setBackupState(State.BAKEDONE.getStatus());
         break;
       case BAKEDONE:
-        setBackupState(STATE.BAKEDTWO.getStatus());
+        setBackupState(State.BAKEDTWO.getStatus());
         break;
       case BAKINGTWO:
-        setBackupState(STATE.BAKEDTWO.getStatus());
+        setBackupState(State.BAKEDTWO.getStatus());
         break;
       case BAKEDTWO:
-        setBackupState(STATE.BAKEDONE.getStatus());
+        setBackupState(State.BAKEDONE.getStatus());
         break;
       default:
         break;
@@ -95,12 +96,9 @@ public class BackupDbUtil {
   }
 
   public void doBackup(BlockCapsule block) {
-    if (block.getNum() % args.getDbBackupConfig().getFrequency() != 0) {
-      return;
-    }
     long t1 = System.currentTimeMillis();
     try {
-      switch (STATE.valueOf(getBackupState())) {
+      switch (State.valueOf(getBackupState())) {
         case BAKINGONE:
           deleteBackup(DB_BACKUP_INDEX1);
           backup(DB_BACKUP_INDEX1);
@@ -128,11 +126,15 @@ public class BackupDbUtil {
         default:
           logger.warn("invalid backup state");
       }
-    } catch (RocksDBException e) {
-      logger.warn("backup db error");
+    } catch (RocksDBException | SecurityException e) {
+      logger.warn("backup db error:" + e);
     }
-    logger.info("current block number is {}, backup all store use {} ms!", block.getNum(),
-        System.currentTimeMillis() - t1);
+    long timeUsed = System.currentTimeMillis() - t1;
+    logger
+        .info("current block number is {}, backup all store use {} ms!", block.getNum(), timeUsed);
+    if (timeUsed >= 3000) {
+      logger.warn("backup db use too much time.");
+    }
   }
 
   private void backup(int i) throws RocksDBException {
@@ -167,8 +169,7 @@ public class BackupDbUtil {
     for (RevokingDBWithCachingNewValue store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
           == org.tron.core.db2.common.RocksDB.class) {
-        ((org.tron.core.db2.common.RocksDB) (((SnapshotRoot) (store.getHead().getRoot()))
-            .getDb()))
+        ((org.tron.core.db2.common.RocksDB) (((SnapshotRoot) (store.getHead().getRoot())).getDb()))
             .getDb().deleteDbBakPath(path);
       }
     }

@@ -419,8 +419,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveMultiSignFee(1000000L);
     }
 
-
-
     try {
       this.getExchangeCreateFee();
     } catch (IllegalArgumentException e) {
@@ -454,7 +452,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalStoragePool();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStoragePool(100_000_000_000000L);
+      this.saveTotalStoragePool(100_000_000_000_000L);
     }
 
     try {
@@ -508,7 +506,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       byte[] bytes = ByteArray.fromHexString(contractType);
       this.saveActiveDefaultOperations(bytes);
     }
-
 
     try {
       this.getAllowSameTokenName();
@@ -1095,7 +1092,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
@@ -1289,7 +1285,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found ACTIVE_DEFAULT_OPERATIONS"));
   }
-
 
 
   public boolean supportDR() {

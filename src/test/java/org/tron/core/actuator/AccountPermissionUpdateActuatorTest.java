@@ -1088,7 +1088,8 @@ public class AccountPermissionUpdateActuatorTest {
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, witnessPermission, activeList),
+        new AccountPermissionUpdateActuator(
+            getContract(address, ownerPermission, witnessPermission, activeList),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 

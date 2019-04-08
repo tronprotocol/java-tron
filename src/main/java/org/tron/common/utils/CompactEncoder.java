@@ -23,6 +23,7 @@ import static java.util.Arrays.copyOfRange;
 import static org.spongycastle.util.Arrays.concatenate;
 import static org.spongycastle.util.encoders.Hex.encode;
 import static org.tron.common.utils.ByteUtil.appendByte;
+
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;

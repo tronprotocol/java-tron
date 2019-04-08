@@ -19,6 +19,7 @@
 package org.tron.common.crypto;
 
 import static java.util.Arrays.copyOfRange;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -27,6 +28,7 @@ import java.security.Security;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.utils.RLP;
 
 @Slf4j(topic = "crypto")
 public class Hash {
@@ -36,11 +38,14 @@ public class Hash {
   private static final String HASH_256_ALGORITHM_NAME;
   private static final String HASH_512_ALGORITHM_NAME;
 
+  public static final byte[] EMPTY_TRIE_HASH;
+
   static {
     Security.addProvider(TronCastleProvider.getInstance());
     CRYPTO_PROVIDER = Security.getProvider("SC");
     HASH_256_ALGORITHM_NAME = "TRON-KECCAK-256";
     HASH_512_ALGORITHM_NAME = "TRON-KECCAK-512";
+    EMPTY_TRIE_HASH = sha3(RLP.encodeElement(EMPTY_BYTE_ARRAY));
   }
 
   public static byte[] sha3(byte[] input) {

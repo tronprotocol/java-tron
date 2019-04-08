@@ -54,18 +54,16 @@ public class ContractEventParser {
     if (topicsMatched(topicList, entry)) {
       for (int i = 0; i < list.size(); ++i) {
         ABI.Entry.Param param = list.get(i);
-        if (!param.getIndexed()) {
-          continue;
+        if (param.getIndexed()) {
+          if (index >= topicList.size()) {
+            break;
+          }
+          String str = parseTopic(topicList.get(index++), param.getType());
+          if (StringUtils.isNotNullOrEmpty(param.getName())) {
+            map.put(param.getName(), str);
+          }
+          map.put("" + i, str);
         }
-
-        if (index >= topicList.size()) {
-          break;
-        }
-        String str = parseTopic(topicList.get(index++), param.getType());
-        if (StringUtils.isNotNullOrEmpty(param.getName())) {
-          map.put(param.getName(), str);
-        }
-        map.put("" + i, str);
       }
     } else {
       for (int i = 1; i < topicList.size(); ++i) {
@@ -148,9 +146,9 @@ public class ContractEventParser {
         return new BigInteger(startBytes).toString();
       } else if (type == Type.BOOL) {
         return String.valueOf(!DataWord.isZero(startBytes));
-      } else if (type == Type.FIXED_BYTES){
+      } else if (type == Type.FIXED_BYTES) {
         return Hex.toHexString(startBytes);
-      } else if (type == Type.ADDRESS){
+      } else if (type == Type.ADDRESS) {
         byte[] last20Bytes = Arrays.copyOfRange(startBytes, 12, startBytes.length);
         return Wallet.encode58Check(MUtil.convertToTronAddress(last20Bytes));
       } else if (type == Type.STRING || type == Type.BYTES) {
@@ -173,15 +171,15 @@ public class ContractEventParser {
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
       if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
         return Type.INT_NUMBER;
-      } else if (type.equals("bool")) {
+      } else if ("bool".equals(type)) {
         return Type.BOOL;
-      } else if (type.equals("address")) {
+      } else if ("address".equals(type)) {
         return Type.ADDRESS;
       } else if (Pattern.matches("^bytes\\d+$", type)) {
         return Type.FIXED_BYTES;
-      } else if (type.equals("string")){
+      } else if ("string".equals(type)) {
         return Type.STRING;
-      } else if (type.equals("bytes")){
+      } else if ("bytes".equals(type)) {
         return Type.BYTES;
       }
     }

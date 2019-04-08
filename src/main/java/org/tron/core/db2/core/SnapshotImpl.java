@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
+
   @Getter
   protected Snapshot root;
 
@@ -25,7 +26,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     root = snapshot.getRoot();
     previous = snapshot;
     snapshot.setNext(this);
-    synchronized (this){
+    synchronized (this) {
       db = new HashDB();
     }
 
@@ -141,7 +142,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
           } else {
             throw new IllegalStateException();
           }
-  });
+        });
   }
 
   @Override
@@ -155,7 +156,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
     collect(all);
     Set<WrappedByteArray> keys = new HashSet<>(all.keySet());

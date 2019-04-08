@@ -29,6 +29,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount012 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("mainWitness.key25");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -60,7 +61,6 @@ public class WalletTestAccount012 {
   Long currentBlockNum;
 
   //get account
-
 
 
   /**
@@ -95,14 +95,15 @@ public class WalletTestAccount012 {
     beforeTime = System.currentTimeMillis();
   }
 
-  @Test(enabled = false,threadPoolSize = 20, invocationCount = 20)
+  @Test(enabled = false, threadPoolSize = 20, invocationCount = 20)
   public void storageAndCpu() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] asset011Address = ecKey1.getAddress();
     String testKeyForAssetIssue011 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     PublicMethed.printAddress(testKeyForAssetIssue011);
 
-    PublicMethed.sendcoin(asset011Address,100000000000000L,fromAddress,testKey002,blockingStubFull);
+    PublicMethed
+        .sendcoin(asset011Address, 100000000000000L, fromAddress, testKey002, blockingStubFull);
     Random rand = new Random();
     Integer randNum = rand.nextInt(30) + 1;
     randNum = rand.nextInt(4000);
@@ -110,16 +111,16 @@ public class WalletTestAccount012 {
     Long maxFeeLimit = 1000000000L;
     String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_WalletTestAccount012_storageAndCpu");
+        .getString("code.code_WalletTestAccount012_storageAndCpu");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_WalletTestAccount012_storageAndCpu");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,
-        "",maxFeeLimit,
-        0L, 100,null,testKeyForAssetIssue011,asset011Address,blockingStubFull);
+        .getString("abi.abi_WalletTestAccount012_storageAndCpu");
+    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code,
+        "", maxFeeLimit,
+        0L, 100, null, testKeyForAssetIssue011, asset011Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     String txid;
 
     Integer i = 1;
@@ -130,7 +131,7 @@ public class WalletTestAccount012 {
     Long beforeEnergyLimit = accountResource.getEnergyLimit();
     Long afterEnergyLimit;
     Long beforeTotalEnergyLimit = accountResource.getTotalEnergyLimit();
-    Account account = PublicMethed.queryAccount(testKeyForAssetIssue011,blockingStubFull);
+    Account account = PublicMethed.queryAccount(testKeyForAssetIssue011, blockingStubFull);
     Long afterTotalEnergyLimit;
     while (i++ < 20000) {
       accountResource = PublicMethed.getAccountResource(asset011Address,
@@ -158,8 +159,9 @@ public class WalletTestAccount012 {
       afterEnergyLimit = accountResource.getEnergyLimit();
       afterTotalEnergyLimit = accountResource.getTotalEnergyLimit();
 
-      logger.info("Total energy limit is " + (float)afterTotalEnergyLimit / 50000000000L);
-      Float rate = (float)(afterTotalEnergyLimit - beforeTotalEnergyLimit) / beforeTotalEnergyLimit;
+      logger.info("Total energy limit is " + (float) afterTotalEnergyLimit / 50000000000L);
+      Float rate =
+          (float) (afterTotalEnergyLimit - beforeTotalEnergyLimit) / beforeTotalEnergyLimit;
       //logger.info("rate is " + rate);
       //Assert.assertTrue(rate >= 0.001001000 && rate <= 0.001001002);
       //txidList.add(txid);
@@ -168,16 +170,17 @@ public class WalletTestAccount012 {
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
-      account = PublicMethed.queryAccount(testKeyForAssetIssue011,blockingStubFull);
-      Float energyrate = (float)(beforeEnergyLimit) / account.getAccountResource()
+      account = PublicMethed.queryAccount(testKeyForAssetIssue011, blockingStubFull);
+      Float energyrate = (float) (beforeEnergyLimit) / account.getAccountResource()
           .getFrozenBalanceForEnergy().getFrozenBalance();
       //logger.info("energy rate is " + energyrate);
       if (i % 20 == 0) {
-        PublicMethed.freezeBalanceForReceiver(fromAddress,1000000L,3,1,
-            ByteString.copyFrom(asset011Address),testKey002,blockingStubFull);
+        PublicMethed.freezeBalanceForReceiver(fromAddress, 1000000L, 3, 1,
+            ByteString.copyFrom(asset011Address), testKey002, blockingStubFull);
       }
     }
   }
+
   /**
    * constructor.
    */

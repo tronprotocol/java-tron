@@ -74,49 +74,21 @@ public class ProgramResultTest {
   }
 
   /**
-   * pragma solidity ^0.4.8;
-   * contract B{
-   *     address public calledAddress;
-   *     constructor (address d) payable{calledAddress = d;}
-   *     function setB() payable returns(address,address){
-   *         calledContract c1 = new calledContract();
-   *         calledContract c2 = new calledContract();
-   *         calledAddress.call(bytes4(keccak256("getZero()")));
-   *         return (address(c1),address(c2));
-   *     }
-   * }
-   * contract A {
-   *     address public calledAddress;
-   *     constructor(address d) payable{
-   *         calledAddress = d;
-   *     }
-   *
-   *     address public b1;
-   *     address public b2;
-   *     address public b3;
-   *     address public b4;
-   *     address public b5;
-   *     address public b6;
-   *     address public b7;
-   *     address public b8;
-   *
-   *     function create(){
-   *         B b= new B(calledAddress);
-   *         B bb = new B(calledAddress);
-   *         b1 = address(b);
-   *         b2 = address(bb);
-   *         (b3,b4)=b.setB();
-   *         (b5,b6)=bb.setB();
-   *         (b7,b8)=bb.setB();
-   *         calledAddress.call(bytes4(keccak256("getZero()")));
-   *     }
+   * pragma solidity ^0.4.8; contract B{ address public calledAddress; constructor (address d)
+   * payable{calledAddress = d;} function setB() payable returns(address,address){ calledContract c1
+   * = new calledContract(); calledContract c2 = new calledContract();
+   * calledAddress.call(bytes4(keccak256("getZero()"))); return (address(c1),address(c2)); } }
+   * contract A { address public calledAddress; constructor(address d) payable{ calledAddress = d;
    * }
    *
-   * contract calledContract {
-   *     function getZero() returns(uint256){
-   *         return 0;
-   *     }
-   * }
+   * address public b1; address public b2; address public b3; address public b4; address public b5;
+   * address public b6; address public b7; address public b8;
+   *
+   * function create(){ B b= new B(calledAddress); B bb = new B(calledAddress); b1 = address(b); b2
+   * = address(bb); (b3,b4)=b.setB(); (b5,b6)=bb.setB(); (b7,b8)=bb.setB();
+   * calledAddress.call(bytes4(keccak256("getZero()"))); } }
+   *
+   * contract calledContract { function getZero() returns(uint256){ return 0; } }
    */
 
   @Test
@@ -130,15 +102,19 @@ public class ProgramResultTest {
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
             contractAAddress, triggerData1,
             0, 100000000, deposit, null);
-    List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
+    List<InternalTransaction> internalTransactionsList = runtime.getResult()
+        .getInternalTransactions();
     // 15 internalTransactions in total
-    Assert.assertEquals(internalTransactionsList.size(),15);
+    Assert.assertEquals(internalTransactionsList.size(), 15);
     List<String> hashList = new ArrayList<>();
-    internalTransactionsList.forEach(internalTransaction ->hashList.add(Hex.toHexString(internalTransaction.getHash())));
+    internalTransactionsList.forEach(
+        internalTransaction -> hashList.add(Hex.toHexString(internalTransaction.getHash())));
     // No dup
-    List<String> dupHash = hashList.stream().collect(Collectors.toMap(e -> e, e->1 , (a,b) -> a+b)).
-        entrySet().stream().filter(entry->entry.getValue() > 1).map(entry -> entry.getKey()).collect(Collectors.toList());
-    Assert.assertEquals(dupHash.size(),0);
+    List<String> dupHash = hashList.stream()
+        .collect(Collectors.toMap(e -> e, e -> 1, (a, b) -> a + b)).
+            entrySet().stream().filter(entry -> entry.getValue() > 1).map(entry -> entry.getKey())
+        .collect(Collectors.toList());
+    Assert.assertEquals(dupHash.size(), 0);
   }
 
   private byte[] deployCalledContractAndGetItsAddress()
@@ -148,10 +124,11 @@ public class ProgramResultTest {
     String ABI =
         "[{\"constant\":false,\"inputs\":[],\"name\":\"getZero\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],"
             + "\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
-    String code = "6080604052348015600f57600080fd5b5060988061001e6000396000f300608060405260043610603e5763ffffffff7c01"
-        + "000000000000000000000000000000000000000000000000000000006000350416639f3f89dc81146043575b600080fd5b34801560"
-        + "4e57600080fd5b5060556067565b60408051918252519081900360200190f35b6000905600a165627a7a72305820fa4124f68cd4c9"
-        + "2df5362cb343d4831acd8ed666b72eb497974cdf511ae642a90029";
+    String code =
+        "6080604052348015600f57600080fd5b5060988061001e6000396000f300608060405260043610603e5763ffffffff7c01"
+            + "000000000000000000000000000000000000000000000000000000006000350416639f3f89dc81146043575b600080fd5b34801560"
+            + "4e57600080fd5b5060556067565b60408051918252519081900360200190f35b6000905600a165627a7a72305820fa4124f68cd4c9"
+            + "2df5362cb343d4831acd8ed666b72eb497974cdf511ae642a90029";
     long value = 0;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
@@ -162,7 +139,8 @@ public class ProgramResultTest {
             deposit, null);
   }
 
-  private byte[] deployContractAAndGetItsAddress(byte[] calledContractAddress) throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
+  private byte[] deployContractAAndGetItsAddress(byte[] calledContractAddress)
+      throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
     String contractName = "calledContract";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI =
@@ -240,46 +218,15 @@ public class ProgramResultTest {
   /**
    * pragma solidity ^0.4.24;
    *
-   * contract A{
-   *     uint256 public num = 0;
-   *     constructor() public payable{}
-   *     function transfer(address c, bool isRevert)  payable public returns(address){
-   *         B b = (new B).value(10)();//1
-   *         address(b).transfer(5);//2
-   *         b.payC(c, isRevert);//3
-   *         // b.payC(c,isRevert);
-   *         return address(b);
-   *     }
-   *     function getBalance() returns(uint256){
-   *         return this.balance;
-   *     }
-   * }
-   * contract B{
-   *     uint256 public num = 0;
-   *     function f() payable returns(bool) {
-   *         return true;
-   *     }
-   *     constructor() public payable {}
-   *     function payC(address c, bool isRevert) public{
-   *         c.transfer(1);//4
-   *         if (isRevert) {
-   *             revert();
-   *         }
-   *     }
-   *     function getBalance() returns(uint256){
-   *         return this.balance;
-   *     }
-   *     function () payable{}
-   * }
+   * contract A{ uint256 public num = 0; constructor() public payable{} function transfer(address c,
+   * bool isRevert)  payable public returns(address){ B b = (new B).value(10)();//1
+   * address(b).transfer(5);//2 b.payC(c, isRevert);//3 // b.payC(c,isRevert); return address(b); }
+   * function getBalance() returns(uint256){ return this.balance; } } contract B{ uint256 public num
+   * = 0; function f() payable returns(bool) { return true; } constructor() public payable {}
+   * function payC(address c, bool isRevert) public{ c.transfer(1);//4 if (isRevert) { revert(); } }
+   * function getBalance() returns(uint256){ return this.balance; } function () payable{} }
    *
-   * contract C{
-   *     constructor () public payable{}
-   *     function () payable{}
-   * }
-   * @throws ContractExeException
-   * @throws ReceiptCheckErrException
-   * @throws VMIllegalException
-   * @throws ContractValidateException
+   * contract C{ constructor () public payable{} function () payable{} }
    */
   @Test
   public void successAndFailResultTest()
@@ -287,39 +234,50 @@ public class ProgramResultTest {
     byte[] cContract = deployC();
     byte[] aContract = deployA();
     //false
-    String params = Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData()) +
-        "0000000000000000000000000000000000000000000000000000000000000000";
+    String params =
+        Hex.toHexString(new DataWord(new DataWord(cContract).getLast20Bytes()).getData()) +
+            "0000000000000000000000000000000000000000000000000000000000000000";
 
     // ======================================= Test Success =======================================
     byte[] triggerData1 = TVMTestUtils.parseABI("transfer(address,bool)",
         params);
-    Transaction trx1 = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
-        triggerData1, 0, 100000000);
-    TransactionTrace traceSuccess = TVMTestUtils.processTransactionAndReturnTrace(trx1, deposit, null);
+    Transaction trx1 = TVMTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
+            triggerData1, 0, 100000000);
+    TransactionTrace traceSuccess = TVMTestUtils
+        .processTransactionAndReturnTrace(trx1, deposit, null);
     runtime = traceSuccess.getRuntime();
     byte[] bContract = runtime.getResult().getHReturn();
-    List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
+    List<InternalTransaction> internalTransactionsList = runtime.getResult()
+        .getInternalTransactions();
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 10);
     Assert.assertEquals(internalTransactionsList.get(0).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsList.get(0).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "create");
     Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
     Assert.assertEquals(internalTransactionsList.get(1).getValue(), 5);
     Assert.assertEquals(internalTransactionsList.get(1).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(1).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsList.get(1).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(1).getNote(), "call");
     Assert.assertEquals(internalTransactionsList.get(1).isRejected(), false);
     Assert.assertEquals(internalTransactionsList.get(2).getValue(), 0);
     Assert.assertEquals(internalTransactionsList.get(2).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(2).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsList.get(2).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract).getLast20Bytes());
     Assert.assertEquals(internalTransactionsList.get(2).getNote(), "call");
     Assert.assertEquals(internalTransactionsList.get(2).isRejected(), false);
     Assert.assertEquals(internalTransactionsList.get(3).getValue(), 1);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(3).getSender()).getLast20Bytes(), new DataWord(bContract).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsList.get(3).getTransferToAddress() , cContract);
+    Assert.assertEquals(new DataWord(internalTransactionsList.get(3).getSender()).getLast20Bytes(),
+        new DataWord(bContract).getLast20Bytes());
+    Assert.assertEquals(internalTransactionsList.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsList.get(3).getNote(), "call");
     Assert.assertEquals(internalTransactionsList.get(3).isRejected(), false);
-    checkTransactionInfo(traceSuccess,trx1,null, internalTransactionsList);
+    checkTransactionInfo(traceSuccess, trx1, null, internalTransactionsList);
 
     // ======================================= Test Fail =======================================
     // set revert == true
@@ -327,33 +285,45 @@ public class ProgramResultTest {
         "0000000000000000000000000000000000000000000000000000000000000001";
     byte[] triggerData2 = TVMTestUtils.parseABI("transfer(address,bool)",
         params);
-    Transaction trx2 = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
-        triggerData2, 0, 100000000);
-    TransactionTrace traceFailed = TVMTestUtils.processTransactionAndReturnTrace(trx2, deposit, null);
+    Transaction trx2 = TVMTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), aContract,
+            triggerData2, 0, 100000000);
+    TransactionTrace traceFailed = TVMTestUtils
+        .processTransactionAndReturnTrace(trx2, deposit, null);
     runtime = traceFailed.getRuntime();
-    byte[] bContract2 = Wallet.generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
-    List<InternalTransaction> internalTransactionsListFail = runtime.getResult().getInternalTransactions();
+    byte[] bContract2 = Wallet
+        .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
+    List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
+        .getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
     Assert.assertEquals(internalTransactionsListFail.get(0).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsListFail.get(0).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract2).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsListFail.get(0).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(0).getNote(), "create");
     Assert.assertEquals(internalTransactionsListFail.get(0).isRejected(), true);
     Assert.assertEquals(internalTransactionsListFail.get(1).getValue(), 5);
     Assert.assertEquals(internalTransactionsListFail.get(1).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsListFail.get(1).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract2).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsListFail.get(1).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(1).getNote(), "call");
     Assert.assertEquals(internalTransactionsListFail.get(1).isRejected(), true);
     Assert.assertEquals(internalTransactionsListFail.get(2).getValue(), 0);
     Assert.assertEquals(internalTransactionsListFail.get(2).getSender(), aContract);
-    Assert.assertEquals(new DataWord(internalTransactionsListFail.get(2).getTransferToAddress()).getLast20Bytes() , new DataWord(bContract2).getLast20Bytes());
+    Assert.assertEquals(
+        new DataWord(internalTransactionsListFail.get(2).getTransferToAddress()).getLast20Bytes(),
+        new DataWord(bContract2).getLast20Bytes());
     Assert.assertEquals(internalTransactionsListFail.get(2).getNote(), "call");
     Assert.assertEquals(internalTransactionsListFail.get(2).isRejected(), true);
     Assert.assertEquals(internalTransactionsListFail.get(3).getValue(), 1);
-    Assert.assertEquals(new DataWord(internalTransactionsListFail.get(3).getSender()).getLast20Bytes(), new DataWord(bContract2).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsListFail.get(3).getTransferToAddress() , cContract);
+    Assert.assertEquals(
+        new DataWord(internalTransactionsListFail.get(3).getSender()).getLast20Bytes(),
+        new DataWord(bContract2).getLast20Bytes());
+    Assert.assertEquals(internalTransactionsListFail.get(3).getTransferToAddress(), cContract);
     Assert.assertEquals(internalTransactionsListFail.get(3).getNote(), "call");
     Assert.assertEquals(internalTransactionsListFail.get(3).isRejected(), true);
-    checkTransactionInfo(traceFailed,trx2,null, internalTransactionsListFail);
+    checkTransactionInfo(traceFailed, trx2, null, internalTransactionsListFail);
   }
 
 
@@ -386,24 +356,25 @@ public class ProgramResultTest {
             + "\"},{\"constant\":false,\"inputs\":[{\"name\":\"c\",\"type\":\"address\"},{\"name\":\"isRevert\",\"type\":\"bool\"}],"
             + "\"name\":\"transfer\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":true,\"stateMutability\":\"payable"
             + "\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
-    String code = "6080604052600080556103c3806100176000396000f3006080604052600436106100565763ffffffff7c01000000000000000000"
-        + "0000000000000000000000000000000000000060003504166312065fe0811461005b5780634e70b1dc1461008257806377ad25dd14610097"
-        + "575b600080fd5b34801561006757600080fd5b506100706100e6565b60408051918252519081900360200190f35b34801561008e57600080"
-        + "fd5b506100706100eb565b6100bd73ffffffffffffffffffffffffffffffffffffffff6004351660243515156100f1565b6040805173ffff"
-        + "ffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b303190565b60005481565b600080600a6100fe6101f7"
-        + "565b6040518091039082f080158015610119573d6000803e3d6000fd5b5060405190925073ffffffffffffffffffffffffffffffffffffff"
-        + "ff8316915060009060059082818181858883f1935050505015801561015d573d6000803e3d6000fd5b50604080517f1d1537e50000000000"
-        + "0000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff86811660048301528515"
-        + "156024830152915191831691631d1537e59160448082019260009290919082900301818387803b1580156101d757600080fd5b505af11580"
-        + "156101eb573d6000803e3d6000fd5b50929695505050505050565b6040516101908061020883390190560060806040526000805561017980"
-        + "6100176000396000f3006080604052600436106100615763ffffffff7c010000000000000000000000000000000000000000000000000000"
-        + "000060003504166312065fe081146100635780631d1537e51461008a57806326121ff0146100bd5780634e70b1dc146100d9575b005b3480"
-        + "1561006f57600080fd5b506100786100ee565b60408051918252519081900360200190f35b34801561009657600080fd5b5061006173ffff"
-        + "ffffffffffffffffffffffffffffffffffff6004351660243515156100f3565b6100c5610142565b60408051911515825251908190036020"
-        + "0190f35b3480156100e557600080fd5b50610078610147565b303190565b60405173ffffffffffffffffffffffffffffffffffffffff8316"
-        + "9060009060019082818181858883f19350505050158015610132573d6000803e3d6000fd5b50801561013e57600080fd5b5050565b600190"
-        + "565b600054815600a165627a7a72305820cbf128dce414d0a9770665be2c1a3af3cc6a642352ee077cef1427a88fa712350029a165627a7a"
-        + "7230582044968955c360128fedfc823b2c8ab2a92ab470f3085e67c816bc507926e626e90029";
+    String code =
+        "6080604052600080556103c3806100176000396000f3006080604052600436106100565763ffffffff7c01000000000000000000"
+            + "0000000000000000000000000000000000000060003504166312065fe0811461005b5780634e70b1dc1461008257806377ad25dd14610097"
+            + "575b600080fd5b34801561006757600080fd5b506100706100e6565b60408051918252519081900360200190f35b34801561008e57600080"
+            + "fd5b506100706100eb565b6100bd73ffffffffffffffffffffffffffffffffffffffff6004351660243515156100f1565b6040805173ffff"
+            + "ffffffffffffffffffffffffffffffffffff9092168252519081900360200190f35b303190565b60005481565b600080600a6100fe6101f7"
+            + "565b6040518091039082f080158015610119573d6000803e3d6000fd5b5060405190925073ffffffffffffffffffffffffffffffffffffff"
+            + "ff8316915060009060059082818181858883f1935050505015801561015d573d6000803e3d6000fd5b50604080517f1d1537e50000000000"
+            + "0000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff86811660048301528515"
+            + "156024830152915191831691631d1537e59160448082019260009290919082900301818387803b1580156101d757600080fd5b505af11580"
+            + "156101eb573d6000803e3d6000fd5b50929695505050505050565b6040516101908061020883390190560060806040526000805561017980"
+            + "6100176000396000f3006080604052600436106100615763ffffffff7c010000000000000000000000000000000000000000000000000000"
+            + "000060003504166312065fe081146100635780631d1537e51461008a57806326121ff0146100bd5780634e70b1dc146100d9575b005b3480"
+            + "1561006f57600080fd5b506100786100ee565b60408051918252519081900360200190f35b34801561009657600080fd5b5061006173ffff"
+            + "ffffffffffffffffffffffffffffffffffff6004351660243515156100f3565b6100c5610142565b60408051911515825251908190036020"
+            + "0190f35b3480156100e557600080fd5b50610078610147565b303190565b60405173ffffffffffffffffffffffffffffffffffffffff8316"
+            + "9060009060019082818181858883f19350505050158015610132573d6000803e3d6000fd5b50801561013e57600080fd5b5050565b600190"
+            + "565b600054815600a165627a7a72305820cbf128dce414d0a9770665be2c1a3af3cc6a642352ee077cef1427a88fa712350029a165627a7a"
+            + "7230582044968955c360128fedfc823b2c8ab2a92ab470f3085e67c816bc507926e626e90029";
 
     long value = 100000;
     long feeLimit = 1000000000;
@@ -419,38 +390,38 @@ public class ProgramResultTest {
   /**
    * pragma solidity ^0.4.24;
    *
-   * contract A{
-   *     constructor () payable public{}
-   *     function suicide(address toAddress) public payable{
-   *         selfdestruct(toAddress);
-   *     }
-   *     function () payable public{}
-   * }s
+   * contract A{ constructor () payable public{} function suicide(address toAddress) public payable{
+   * selfdestruct(toAddress); } function () payable public{} }s
    */
   @Test
   public void suicideResultTest()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     byte[] suicideContract = deploySuicide();
     Assert.assertEquals(deposit.getAccount(suicideContract).getBalance(), 1000);
-    String params = Hex.toHexString(new DataWord(new DataWord(TRANSFER_TO).getLast20Bytes()).getData());
-
+    String params = Hex
+        .toHexString(new DataWord(new DataWord(TRANSFER_TO).getLast20Bytes()).getData());
 
     // ======================================= Test Suicide =======================================
     byte[] triggerData1 = TVMTestUtils.parseABI("suicide(address)",
         params);
-    Transaction trx = TVMTestUtils.generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
-        triggerData1, 0, 100000000);
+    Transaction trx = TVMTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
+            triggerData1, 0, 100000000);
     TransactionTrace trace = TVMTestUtils.processTransactionAndReturnTrace(trx, deposit, null);
     runtime = trace.getRuntime();
-    List<InternalTransaction> internalTransactionsList = runtime.getResult().getInternalTransactions();
-    Assert.assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
+    List<InternalTransaction> internalTransactionsList = runtime.getResult()
+        .getInternalTransactions();
+    Assert
+        .assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);
     Assert.assertEquals(dbManager.getAccountStore().get(suicideContract), null);
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 1000);
-    Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(), new DataWord(suicideContract).getLast20Bytes());
-    Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress() , Hex.decode(TRANSFER_TO));
+    Assert.assertEquals(new DataWord(internalTransactionsList.get(0).getSender()).getLast20Bytes(),
+        new DataWord(suicideContract).getLast20Bytes());
+    Assert.assertEquals(internalTransactionsList.get(0).getTransferToAddress(),
+        Hex.decode(TRANSFER_TO));
     Assert.assertEquals(internalTransactionsList.get(0).getNote(), "suicide");
     Assert.assertEquals(internalTransactionsList.get(0).isRejected(), false);
-    checkTransactionInfo(trace, trx,null, internalTransactionsList);
+    checkTransactionInfo(trace, trx, null, internalTransactionsList);
   }
 
   private byte[] deploySuicide()
@@ -462,10 +433,11 @@ public class ProgramResultTest {
             + "\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs"
             + "\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"},{\"payable\":"
             + "true,\"stateMutability\":\"payable\",\"type\":\"fallback\"}]";
-    String code = "6080604052608a8060116000396000f300608060405260043610603e5763ffffffff7c0100000000000000000"
-        + "000000000000000000000000000000000000000600035041663dbc1f22681146040575b005b603e60043573ffffffffff"
-        + "ffffffffffffffffffffffffffffff1680ff00a165627a7a72305820e382f1dabb1c53705abe0c3e99497025ffbf78b73"
-        + "c079471d8984a745b3218720029";
+    String code =
+        "6080604052608a8060116000396000f300608060405260043610603e5763ffffffff7c0100000000000000000"
+            + "000000000000000000000000000000000000000600035041663dbc1f22681146040575b005b603e60043573ffffffffff"
+            + "ffffffffffffffffffffffffffffff1680ff00a165627a7a72305820e382f1dabb1c53705abe0c3e99497025ffbf78b73"
+            + "c079471d8984a745b3218720029";
     long value = 1000;
     long feeLimit = 1000000000;
     long consumeUserResourcePercent = 0;
@@ -476,18 +448,31 @@ public class ProgramResultTest {
             deposit, null);
   }
 
-  public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block, List<InternalTransaction> internalTransactionsList ){
-    TransactionInfoCapsule trxInfoCapsule = TransactionInfoCapsule.buildInstance(new TransactionCapsule(trx),null, trace);
-    List<Protocol.InternalTransaction> internalTransactionListFromProtocol  = trxInfoCapsule.getInstance().getInternalTransactionsList();
-    for(int i=0; i< internalTransactionListFromProtocol.size(); i++){
-      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getRejected(), internalTransactionsList.get(i).isRejected());
-      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getCallerAddress().toByteArray(),internalTransactionsList.get(i).getSender());
-      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getHash().toByteArray(), internalTransactionsList.get(i).getHash());
-      Assert.assertEquals(new String(internalTransactionListFromProtocol.get(i).getNote().toByteArray()), internalTransactionsList.get(i).getNote());
-      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getTransferToAddress().toByteArray(), internalTransactionsList.get(i).getTransferToAddress());
-      List<Protocol.InternalTransaction.CallValueInfo> callValueInfoListFromProtocol = internalTransactionListFromProtocol.get(i).getCallValueInfoList();
+  public void checkTransactionInfo(TransactionTrace trace, Transaction trx, BlockCapsule block,
+      List<InternalTransaction> internalTransactionsList) {
+    TransactionInfoCapsule trxInfoCapsule = TransactionInfoCapsule
+        .buildInstance(new TransactionCapsule(trx), null, trace);
+    List<Protocol.InternalTransaction> internalTransactionListFromProtocol = trxInfoCapsule
+        .getInstance().getInternalTransactionsList();
+    for (int i = 0; i < internalTransactionListFromProtocol.size(); i++) {
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getRejected(),
+          internalTransactionsList.get(i).isRejected());
+      Assert
+          .assertEquals(internalTransactionListFromProtocol.get(i).getCallerAddress().toByteArray(),
+              internalTransactionsList.get(i).getSender());
+      Assert.assertEquals(internalTransactionListFromProtocol.get(i).getHash().toByteArray(),
+          internalTransactionsList.get(i).getHash());
+      Assert.assertEquals(
+          new String(internalTransactionListFromProtocol.get(i).getNote().toByteArray()),
+          internalTransactionsList.get(i).getNote());
+      Assert.assertEquals(
+          internalTransactionListFromProtocol.get(i).getTransferToAddress().toByteArray(),
+          internalTransactionsList.get(i).getTransferToAddress());
+      List<Protocol.InternalTransaction.CallValueInfo> callValueInfoListFromProtocol = internalTransactionListFromProtocol
+          .get(i).getCallValueInfoList();
       // for now only one callValue. will be change to list in future.
-      Assert.assertEquals(callValueInfoListFromProtocol.get(0).getCallValue(), internalTransactionsList.get(i).getValue());
+      Assert.assertEquals(callValueInfoListFromProtocol.get(0).getCallValue(),
+          internalTransactionsList.get(i).getValue());
     }
   }
 

@@ -89,7 +89,6 @@ public class SuperWitnessAllowance {
     logger.info(ByteArray.toHexString(PublicMethed.getFinalAddress(lowBalTest)));
     logger.info(Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest)));
 
-
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
@@ -114,8 +113,8 @@ public class SuperWitnessAllowance {
       String lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
       logger.info(lowBalTest);
       Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-      Assert.assertTrue(PublicMethed.freezeBalance(lowBalAddress,1000000,
-          3,lowBalTest,blockingStubFull));
+      Assert.assertTrue(PublicMethed.freezeBalance(lowBalAddress, 1000000,
+          3, lowBalTest, blockingStubFull));
       Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
       String voteStr = Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest));
       HashMap<String, String> smallVoteMap = new HashMap<String, String>();
@@ -168,6 +167,7 @@ public class SuperWitnessAllowance {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -200,6 +200,7 @@ public class SuperWitnessAllowance {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -308,6 +309,7 @@ public class SuperWitnessAllowance {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -317,6 +319,7 @@ public class SuperWitnessAllowance {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -336,6 +339,7 @@ public class SuperWitnessAllowance {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -350,7 +354,7 @@ public class SuperWitnessAllowance {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Account beforeVote  = PublicMethed.queryAccount(priKey,blockingStubFull);
+    Account beforeVote = PublicMethed.queryAccount(priKey, blockingStubFull);
     //Account beforeVote = queryAccount(ecKey, blockingStubFull);
     Long beforeVoteNum = 0L;
     if (beforeVote.getVotesCount() != 0) {
