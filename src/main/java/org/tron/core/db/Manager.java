@@ -494,7 +494,7 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread repushThread = new Thread(repushLoop);
     repushThread.start();
-    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1 && witnessService.isRunning()) {
+    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1) {
       deferredTransactionTask = deferredTransactionTimer.scheduleAtFixedRate(() -> {
         synchronized (lockObj) {
           deferredTransactionList = getDeferredTransactionStore()
