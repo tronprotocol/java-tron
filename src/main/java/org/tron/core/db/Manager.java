@@ -1239,7 +1239,7 @@ public class Manager {
         getDeferredTransactionStore()
             .getByTransactionId(recoveryTransactionId(transactionCapsule));
     if (Objects.isNull(deferredTransactionCapsule)) {
-      throw new DeferredTransactionException("unknow deferred transaction");
+      throw new DeferredTransactionException("unknown deferred transaction");
     }
     if (deferredTransactionCapsule.getDelayUntil() > blockCap.getTimeStamp()) {
       throw new DeferredTransactionException("this transaction isn't ready");
