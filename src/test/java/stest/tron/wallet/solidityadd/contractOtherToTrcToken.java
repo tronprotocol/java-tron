@@ -130,7 +130,7 @@ public class contractOtherToTrcToken {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String filePath = "./src/test/resources/soliditycode/contractOtherToTrcToken_oldSolidity.sol";
+    String filePath = "./src/test/resources/soliditycode/contractOtherToTrcToken.sol";
     String contractName = "ConvertType";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
