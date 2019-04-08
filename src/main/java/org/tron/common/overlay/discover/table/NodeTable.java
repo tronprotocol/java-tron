@@ -32,8 +32,8 @@ public class NodeTable {
   private final Node node;  // our node
   private transient NodeBucket[] buckets;
   private transient List<NodeEntry> nodes;
-  private Map<Node, Node> evictedCandidates = new HashMap<>();
-  private Map<Node, Date> expectedPongs = new HashMap<>();
+//  private Map<Node, Node> evictedCandidates = new HashMap<>();
+//  private Map<Node, Date> expectedPongs = new HashMap<>();
 
   public NodeTable(Node n) {
     this.node = n;
