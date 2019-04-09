@@ -89,7 +89,7 @@ public class contractToMathedFeed {
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
     String contractName = "ToMathedFeed";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -141,7 +141,7 @@ public class contractToMathedFeed {
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
     String contractName = "ToMathedUseINContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -191,6 +191,9 @@ public class contractToMathedFeed {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("energyUsed:" + energyUsed);
     logger.info("netUsed:" + netUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 0);
   }
 
 
@@ -201,7 +204,7 @@ public class contractToMathedFeed {
                 .sendcoin(contractToMathedFeed, 100000000000L,
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
     String contractName = "ToMathedUseINContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -252,6 +255,10 @@ public class contractToMathedFeed {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("energyUsed:" + energyUsed);
     logger.info("netUsed:" + netUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    logger.info("returnnumber:" + returnnumber);
+    Assert.assertTrue(returnnumber == 1);
   }
 
   /**

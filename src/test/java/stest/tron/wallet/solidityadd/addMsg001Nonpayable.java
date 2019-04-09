@@ -126,9 +126,14 @@ public class addMsg001Nonpayable {
     Assert.assertTrue(PublicMethed
               .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                       testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+            assetAccountId.toByteArray(), 100L, contractExcAddress,
+            contractExcKey, blockingStubFull));
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+
+
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -139,7 +144,7 @@ public class addMsg001Nonpayable {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     Long tokenvalue = 10L;
-    String tokenid = assetAccountId.toStringUtf8() ;
+    String tokenid = assetAccountId.toStringUtf8();
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,

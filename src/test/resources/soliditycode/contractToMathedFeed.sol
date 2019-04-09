@@ -8,12 +8,14 @@ contract ToMathedFeed {
 }
 
 contract ToMathedUseINContract {
-    function ToMathedIUseNR(address a,uint256 n) public returns(bool,bytes memory){
+    function ToMathedIUseNR(address a,uint256 n) public returns(bool){
         address payContract=a;
-        return payContract.call(abi.encode(bytes4(keccak256("ToMathedNot(uint256)")),n));
+        (bool success, bytes memory data) = payContract.call(abi.encodeWithSignature("ToMathedNot(uint256)",n));
+        return success;
     }
-    function ToMathedIUseNRE(address a,uint256 value) public returns(bool,bytes memory){
+    function ToMathedIUseNRE(address a,uint256 value) public returns(bool){
         address payContract=a;
-        return payContract.call(abi.encode(bytes4(keccak256("ToMathed(uint256)")),value));
+        (bool success, bytes memory data) = payContract.call(abi.encodeWithSignature("ToMathed(uint256)",value));
+        return success;
     }
 }

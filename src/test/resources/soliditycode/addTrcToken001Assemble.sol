@@ -48,25 +48,6 @@ x, // output stored at input location, save space
 mstore(0x40, add(x,0x20)) // update free memory pointer
 }
 
-// assembly {
-// let x := mload(0x40) //Find empty storage location using "free memory pointer"
-// mstore(x,sig) //Place signature at begining of empty storage
-// mstore(add(x,0x04),a) //Place first argument directly next to signature
-// mstore(add(x,0x24),b) //Place second argument next to first, padded to 32 bytes
-
-// let success := call( //This is the critical change (Pop the top stack value)
-// 5000, //5k gas
-// addr, //To addr
-// 0, //No value
-// x, /Inputs are stored at location x
-// 0x44, //Inputs are 68 bytes long
-// x, //Store output over input (saves space)
-// 0x20) //Outputs are 32 bytes long
-
-// c := mload(x) //Assign output value to c
-// mstore(0x40,add(x,0x44)) // Set storage pointer to empty space
-// }
-
 }
 
 function trcTokenInMap(trcToken tokenId, uint256 tokenValue) public returns(uint256 r) {

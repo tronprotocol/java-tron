@@ -97,8 +97,11 @@ public class addTransferToken001Nonpayable {
   public void test1Grammar001() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
-         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
-                 testNetAccountKey, blockingStubFull));
+            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
+                    testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+            .sendcoin(toAddress, 100000000000L, testNetAccountAddress,
+                    testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
@@ -128,6 +131,9 @@ public class addTransferToken001Nonpayable {
     Assert.assertTrue(PublicMethed
               .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                       testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+            assetAccountId.toByteArray(), 100L, contractExcAddress,
+            contractExcKey, blockingStubFull));
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
@@ -142,6 +148,10 @@ public class addTransferToken001Nonpayable {
     String txid = "";
     String tokenvalue = "10";
     String tokenid = assetAccountId.toStringUtf8();
+
+    logger.info("tokenId: {}", tokenid);
+
+
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\" ,\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,

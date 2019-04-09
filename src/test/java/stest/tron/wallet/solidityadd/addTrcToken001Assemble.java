@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +25,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
-
-
 
 
 @Slf4j
@@ -54,7 +53,9 @@ public class addTrcToken001Assemble {
 
   private static final long now = System.currentTimeMillis();
   private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static String tokenName2 = "testAssetIssue2_" + Long.toString(now);
   private static ByteString assetAccountId = null;
+  private static ByteString assetAccountId2 = null;
   private static final long TotalSupply = 1000L;
   private String description = Configuration.getByPath("testng.conf")
           .getString("defaultParameter.assetDescription");
@@ -71,6 +72,12 @@ public class addTrcToken001Assemble {
   byte[] toAddress = ecKey2.getAddress();
   String toAddressKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress2 = ecKey3.getAddress();
+  String contractExcKey2 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
+  private static long beforeCreateAssetIssueBalance;
+  private static long afterCreateAssetIssueBalance;
 
   @BeforeSuite
   public void beforeSuite() {
@@ -95,11 +102,14 @@ public class addTrcToken001Assemble {
   }
 
   @Test(enabled = true, description = "Support function type")
-  public void test1Grammar001() {
+  public void test1deployandgetBalance() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
          .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
                  testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+            .sendcoin(contractExcAddress2, 100000000000L, testNetAccountAddress,
+                    testNetAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed
             .sendcoin(toAddress, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
@@ -113,6 +123,16 @@ public class addTrcToken001Assemble {
     Protocol.Account getAssetIdFromThisAccount = PublicMethed
             .queryAccount(contractExcAddress, blockingStubFull);
     assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+
+    long start2 = System.currentTimeMillis() + 2000;
+    long end2 = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress2, tokenName2, TotalSupply, 1,
+            10000, start2, end2, 1, description, url, 100000L, 100000L,
+            1L, 1L, contractExcKey2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Protocol.Account getAssetIdFromThisAccount2 = PublicMethed
+            .queryAccount(contractExcAddress2, blockingStubFull);
+    assetAccountId2 = getAssetIdFromThisAccount2.getAssetIssuedID();
 
     String filePath = "src/test/resources/soliditycode/addTrcToken001Assemble.sol";
     String contractName = "InAssemble";
@@ -139,21 +159,15 @@ public class addTrcToken001Assemble {
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
     Protocol.Account info;
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    info = PublicMethed.queryAccount(toAddressKey, blockingStubFull);
     Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
     logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     String tokenvalue = "";
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-                "getBalance(address,uint256)", para, false,
+                "getBalance(address)", para, false,
                 0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
@@ -165,11 +179,11 @@ public class addTrcToken001Assemble {
     logger.info("energyUsed:" + energyUsed);
   }
 
-  @Test(enabled = false, description = "Support function type")
-  public void test1Grammar002() {
+  @Test(enabled = true, description = "Support function type")
+  public void test2getTokenBalanceConstant() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenid = "";
+    String tokenid = assetAccountId.toStringUtf8();
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -185,11 +199,11 @@ public class addTrcToken001Assemble {
     logger.info("energyUsed:" + energyUsed);
   }
 
-  @Test(enabled = false, description = "Support function type")
-  public void test1Grammar003() {
+  @Test(enabled = true, description = "Support function type")
+  public void test3getTokenBalance() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenid = "";
+    String tokenid = assetAccountId.toStringUtf8();
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -203,14 +217,21 @@ public class addTrcToken001Assemble {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 0);
   }
 
   @Test(enabled = true, description = "Support function type")
-  public void test1Grammar004() {
+  public void test4transferTokenInAssembly() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long beforeAssetIssuetoAddress = PublicMethed
+            .getAssetIssueValue(toAddress, assetAccountId, blockingStubFull);
+    Long beforeAssetIssuecontractAddress = PublicMethed
+            .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
     String txid = "";
     String tokenid = assetAccountId.toStringUtf8();
-    Long tokenvalue = Long.valueOf(1);
+    Long tokenvalue = 1L;
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -224,14 +245,24 @@ public class addTrcToken001Assemble {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long afterAssetIssuetoAddress = PublicMethed
+            .getAssetIssueValue(toAddress, assetAccountId, blockingStubFull);
+    Long afterAssetIssuecontractAddress = PublicMethed
+            .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("beforeAssetIssuetoAddress:" + beforeAssetIssuetoAddress);
+    logger.info("beforeAssetIssuecontractAddress:" + beforeAssetIssuecontractAddress);
+    logger.info("afterAssetIssuetoAddress:" + afterAssetIssuetoAddress);
+    logger.info("afterAssetIssuecontractAddress:" + afterAssetIssuecontractAddress);
+    Assert.assertTrue(beforeAssetIssuetoAddress == afterAssetIssuetoAddress - 1L);
+    Assert.assertTrue(beforeAssetIssuecontractAddress == afterAssetIssuecontractAddress + 1L);
   }
 
   @Test(enabled = true, description = "Support function type")
-  public void test1Grammar005() {
+  public void test5trcTokenInMap() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenid = assetAccountId.toStringUtf8();;
-    Long tokenvalue = Long.valueOf(1);
+    String tokenid = assetAccountId.toStringUtf8();
+    Long tokenvalue = 1L;
     String para = "\"" + tokenid
             + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -245,18 +276,22 @@ public class addTrcToken001Assemble {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 1);
   }
 
-  @Test(enabled = false, description = "Support function type")
-  public void test1Grammar006() {
+  @Test(enabled = true, description = "Support function type")
+  public void test6cntTokenTokenInMap() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
-    String tokenid = "";
-    String tokenvalue = "";
-    String para = "\"" + Base58.encode58Check(toAddress)
-            + "\",\"" + tokenid + "\",\"" + tokenvalue + "\"";
+    String tokenid1 = assetAccountId.toStringUtf8();
+    String tokenid2 = assetAccountId2.toStringUtf8();
+    Long tokenvalue = 10L;
+    String para = "\"" + tokenid1
+            + "\",\"" + tokenid2 + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-            "cntTokenTokenInMap(address,trcToken,uint256)", para, false,
+            "cntTokenTokenInMap(trcToken,trcToken,uint256)", para, false,
             0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
@@ -266,6 +301,10 @@ public class addTrcToken001Assemble {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    logger.info("returnnumber:" + returnnumber);
+    Assert.assertTrue(returnnumber == Long.parseLong(assetAccountId2.toStringUtf8()));
   }
 
   /**
