@@ -1,10 +1,10 @@
 package org.tron.core.db.fast.callback;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -25,7 +25,7 @@ import org.tron.core.trie.TrieImpl;
 public class FastSyncCallBack {
 
   private BlockCapsule blockCapsule;
-  private boolean execute = false;
+  private volatile boolean execute = false;
   private TrieImpl trie;
 
   @Setter
@@ -34,6 +34,37 @@ public class FastSyncCallBack {
   @Autowired
   private AccountStateStoreTrie db;
 
+  private List<TrieEntry> trieEntryList = new ArrayList<>();
+
+  private static class TrieEntry {
+
+    private byte[] key;
+    private byte[] data;
+
+    public byte[] getKey() {
+      return key;
+    }
+
+    public TrieEntry setKey(byte[] key) {
+      this.key = key;
+      return this;
+    }
+
+    public byte[] getData() {
+      return data;
+    }
+
+    public TrieEntry setData(byte[] data) {
+      this.data = data;
+      return this;
+    }
+
+    public static TrieEntry build(byte[] key, byte[] data) {
+      TrieEntry trieEntry = new TrieEntry();
+      return trieEntry.setKey(key).setKey(data);
+    }
+  }
+
   public void accountCallBack(byte[] key, AccountCapsule item) {
     if (!exe()) {
       return;
@@ -41,7 +72,14 @@ public class FastSyncCallBack {
     if (item == null || ArrayUtils.isEmpty(item.getData())) {
       return;
     }
-    trie.put(RLP.encodeElement(key), item.getData());
+    trieEntryList.add(TrieEntry.build(key, item.getData()));
+  }
+
+  public void exeTransFinish() {
+    for (TrieEntry trieEntry : trieEntryList) {
+      trie.put(RLP.encodeElement(trieEntry.getKey()), trieEntry.getData());
+    }
+    trieEntryList.clear();
   }
 
   public void deleteAccount(byte[] key) {
@@ -52,6 +90,7 @@ public class FastSyncCallBack {
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
+    this.trieEntryList.clear();
     this.blockCapsule = blockCapsule;
     this.execute = true;
     if (!exe()) {
@@ -79,6 +118,8 @@ public class FastSyncCallBack {
         .getAccountStateRoot();
     execute = false;
     //
+    exeTransFinish();
+    //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
@@ -97,6 +138,8 @@ public class FastSyncCallBack {
     if (!exe()) {
       return;
     }
+    //
+    exeTransFinish();
     //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
