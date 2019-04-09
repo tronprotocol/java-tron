@@ -19,6 +19,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -72,15 +73,28 @@ public class ContractScenario009 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String filePath = "./src/test/resources/soliditycode/contractScenario009.sol";
-    String contractName = "C";
+    String contractName = "Set";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] libraryAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contract009Key, contract009Address, blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(libraryAddress, blockingStubFull);
+    byte[] libraryContractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contract009Key, contract009Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    contractName = "C";
+    retMap = PublicMethed.getBycodeAbiForLibrary(filePath, contractName);
+    code = retMap.get("byteCode").toString();
+    abi = retMap.get("abI").toString();
+    String libraryAddress =
+        "/Users/tron/git/java-tron/./src/test/resources/soliditycode/contractScenario009.sol:Set:"
+            + Base58.encode58Check(libraryContractAddress);
+
+    byte[] contractAddress = PublicMethed
+        .deployContractForLibrary(contractName, abi, code, "", maxFeeLimit, 0L, 100, libraryAddress,
+            contract009Key, contract009Address, blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
