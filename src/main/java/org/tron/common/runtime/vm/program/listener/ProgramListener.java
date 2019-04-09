@@ -21,17 +21,17 @@ import org.tron.common.runtime.vm.DataWord;
 
 public interface ProgramListener {
 
-    void onMemoryExtend(int delta);
+  void onMemoryExtend(int delta);
 
-    void onMemoryWrite(int address, byte[] data, int size);
+  void onMemoryWrite(int address, byte[] data, int size);
 
-    void onStackPop();
+  void onStackPop();
 
-    void onStackPush(DataWord value);
+  void onStackPush(DataWord value);
 
-    void onStackSwap(int from, int to);
+  void onStackSwap(int from, int to);
 
-    void onStoragePut(DataWord key, DataWord value);
+  void onStoragePut(DataWord key, DataWord value);
 
-    void onStorageClear();
+  void onStorageClear();
 }

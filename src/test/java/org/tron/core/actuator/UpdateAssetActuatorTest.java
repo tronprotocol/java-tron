@@ -4,6 +4,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -32,6 +34,7 @@ import static junit.framework.TestCase.fail;
 public class UpdateAssetActuatorTest {
 
   private static TronApplicationContext context;
+  private static Application AppT;
   private static Manager dbManager;
   private static final String dbPath = "output_updateAsset_test";
   private static final String OWNER_ADDRESS;
@@ -45,8 +48,9 @@ public class UpdateAssetActuatorTest {
   private static final String URL = "tron-my.com";
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -54,13 +58,17 @@ public class UpdateAssetActuatorTest {
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d427122222";
   }
 
-  /** Init data. */
+  /**
+   * Init data.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
   }
 
-  /** create temp Capsule test need. */
+  /**
+   * create temp Capsule test need.
+   */
   @Before
   public void createCapsule() {
     // address in accountStore not the owner of contract
@@ -75,16 +83,20 @@ public class UpdateAssetActuatorTest {
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS_NOTEXIST));
   }
 
-  /** Release resources. */
+  /**
+   * Release resources.
+   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+    AppT.shutdownServices();
+    AppT.shutdown();
+    context.destroy();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
       logger.info("Release resources failure.");
     }
-    context.destroy();
   }
 
   private Any getContract(
@@ -124,10 +136,10 @@ public class UpdateAssetActuatorTest {
 
     // address in accountStore and the owner of contract
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
 
     // add asset issue
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(getAssetIssueContract());
@@ -148,10 +160,10 @@ public class UpdateAssetActuatorTest {
 
     // address in accountStore and the owner of contract
     AccountCapsule accountCapsule =
-            new AccountCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
-                    ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
-                    Protocol.AccountType.Normal);
+        new AccountCapsule(
+            ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+            ByteString.copyFromUtf8(OWNER_ADDRESS_ACCOUNT_NAME),
+            Protocol.AccountType.Normal);
 
     // add asset issue
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(getAssetIssueContract());
@@ -188,10 +200,10 @@ public class UpdateAssetActuatorTest {
       Assert.assertEquals(assetIssueCapsule.getPublicFreeAssetNetLimit(), 8000L);
       //V2
       AssetIssueCapsule assetIssueCapsuleV2 =
-              dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
+          dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
       Assert.assertNotNull(assetIssueCapsuleV2);
       Assert.assertEquals(
-              DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
+          DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
       Assert.assertEquals(URL, assetIssueCapsuleV2.getInstance().getUrl().toStringUtf8());
       Assert.assertEquals(assetIssueCapsuleV2.getFreeAssetNetLimit(), 500L);
       Assert.assertEquals(assetIssueCapsuleV2.getPublicFreeAssetNetLimit(), 8000L);
@@ -217,26 +229,26 @@ public class UpdateAssetActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAssetActuator actuator;
     actuator = new UpdateAssetActuator(
-      getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+        getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       //V1 old version exist but  not updata
       AssetIssueCapsule assetIssueCapsule =
-              dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
+          dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNotNull(assetIssueCapsule);
       Assert.assertNotEquals(
-              DESCRIPTION, assetIssueCapsule.getInstance().getDescription().toStringUtf8());
+          DESCRIPTION, assetIssueCapsule.getInstance().getDescription().toStringUtf8());
       Assert.assertNotEquals(URL, assetIssueCapsule.getInstance().getUrl().toStringUtf8());
       Assert.assertNotEquals(assetIssueCapsule.getFreeAssetNetLimit(), 500L);
       Assert.assertNotEquals(assetIssueCapsule.getPublicFreeAssetNetLimit(), 8000L);
       //V2
       AssetIssueCapsule assetIssueCapsuleV2 =
-              dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
+          dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
       Assert.assertNotNull(assetIssueCapsuleV2);
       Assert.assertEquals(
-              DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
+          DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
       Assert.assertEquals(URL, assetIssueCapsuleV2.getInstance().getUrl().toStringUtf8());
       Assert.assertEquals(assetIssueCapsuleV2.getFreeAssetNetLimit(), 500L);
       Assert.assertEquals(assetIssueCapsuleV2.getPublicFreeAssetNetLimit(), 8000L);
@@ -258,21 +270,21 @@ public class UpdateAssetActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAssetActuator actuator;
     actuator = new UpdateAssetActuator(getContract(OWNER_ADDRESS, DESCRIPTION, URL,
-            500L, 8000L), dbManager);
+        500L, 8000L), dbManager);
     try {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), Protocol.Transaction.Result.code.SUCESS);
       //V1，Data is no longer update
       AssetIssueCapsule assetIssueCapsule =
-              dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
+          dbManager.getAssetIssueStore().get(ByteString.copyFromUtf8(NAME).toByteArray());
       Assert.assertNull(assetIssueCapsule);
       //V2
       AssetIssueCapsule assetIssueCapsuleV2 =
-              dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
+          dbManager.getAssetIssueV2Store().get(ByteArray.fromString(String.valueOf(tokenId)));
       Assert.assertNotNull(assetIssueCapsuleV2);
       Assert.assertEquals(
-              DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
+          DESCRIPTION, assetIssueCapsuleV2.getInstance().getDescription().toStringUtf8());
       Assert.assertEquals(URL, assetIssueCapsuleV2.getInstance().getUrl().toStringUtf8());
       Assert.assertEquals(assetIssueCapsuleV2.getFreeAssetNetLimit(), 500L);
       Assert.assertEquals(assetIssueCapsuleV2.getPublicFreeAssetNetLimit(), 8000L);

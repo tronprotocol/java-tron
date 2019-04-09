@@ -2,7 +2,6 @@ package org.tron.core.db2.core;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -15,25 +14,21 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.TxCacheDB;
-import org.tron.core.exception.BadItemException;
 
 public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Getter
   private Snapshot solidity;
 
-  public SnapshotRoot(String parentName, String name) {
-    db = new LevelDB(parentName, name);
-    solidity = this;
-  }
-
   public SnapshotRoot(String parentName, String name, Class<? extends DB> clz) {
     try {
-      if (clz == LevelDB.class) {
+      if (clz == LevelDB.class || clz == RocksDB.class) {
         Constructor constructor = clz.getConstructor(String.class, String.class);
         @SuppressWarnings("unchecked")
-        DB<byte[], byte[]> db = (DB<byte[], byte[]>) constructor.newInstance((Object) parentName, (Object) name);
+        DB<byte[], byte[]> db = (DB<byte[], byte[]>) constructor
+            .newInstance((Object) parentName, (Object) name);
         this.db = db;
       } else if (clz == TxCacheDB.class) {
         @SuppressWarnings("unchecked")
@@ -98,7 +93,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   @Override
-  public Iterator<Map.Entry<byte[],byte[]>> iterator() {
+  public Iterator<Map.Entry<byte[], byte[]>> iterator() {
     return db.iterator();
   }
 

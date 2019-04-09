@@ -379,14 +379,14 @@ public class ManagerTest {
 
   @Test
   public void testLastHeadBlockIsMaintenance()
-          throws ValidateSignatureException, ContractValidateException, ContractExeException,
-          UnLinkedBlockException, ValidateScheduleException, BadItemException,
-          ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
-          TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-          BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
-           ReceiptCheckErrException, VMIllegalException,
-          TooBigTransactionResultException {
-    Args.setParam(new String[] {"--witness"}, Constant.TEST_CONF);
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, BadItemException,
+      ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
+      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
+      ReceiptCheckErrException, VMIllegalException,
+      TooBigTransactionResultException {
+    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";

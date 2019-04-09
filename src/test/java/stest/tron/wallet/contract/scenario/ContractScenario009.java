@@ -59,10 +59,10 @@ public class ContractScenario009 {
 
   @Test(enabled = true)
   public void deployContainLibraryContract() {
-    Assert.assertTrue(PublicMethed.sendcoin(contract009Address,20000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract009Address, 20000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract009Address, 1000000L,
-        3,1,contract009Key,blockingStubFull));
+        3, 1, contract009Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract009Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -72,18 +72,18 @@ public class ContractScenario009 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "Library";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario009_deployContainLibraryContract");
+        .getString("code.code_ContractScenario009_deployContainLibraryContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario009_deployContainLibraryContract");
-    byte[] libraryAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract009Key,contract009Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(libraryAddress,blockingStubFull);
+        .getString("abi.abi_ContractScenario009_deployContainLibraryContract");
+    byte[] libraryAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contract009Key, contract009Address, blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(libraryAddress, blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
     logger.info(ByteArray.toHexString(smartContract.getContractAddress().toByteArray()));
-    accountResource = PublicMethed.getAccountResource(contract009Address,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract009Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
     Assert.assertTrue(energyLimit > 0);
@@ -92,6 +92,7 @@ public class ContractScenario009 {
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
   }
+
   /**
    * constructor.
    */

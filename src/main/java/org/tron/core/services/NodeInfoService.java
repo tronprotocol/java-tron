@@ -125,16 +125,16 @@ public class NodeInfoService {
     List<PeerInfo> peerInfoList = new ArrayList<>();
     for (PeerConnection peerConnection : syncPool.getActivePeers()) {
       PeerInfo peerInfo = new PeerInfo();
-      peerInfo.setHeadBlockWeBothHave(peerConnection.getHeadBlockWeBothHave().getString());
+      peerInfo.setHeadBlockWeBothHave(peerConnection.getBlockBothHave().getString());
       peerInfo.setActive(peerConnection.isActive());
       peerInfo.setAvgLatency(peerConnection.getPeerStats().getAvgLatency());
-      peerInfo.setBlockInPorcSize(peerConnection.getBlockInProc().size());
+      peerInfo.setBlockInPorcSize(peerConnection.getSyncBlockInProcess().size());
       peerInfo.setConnectTime(peerConnection.getStartTime());
       peerInfo.setDisconnectTimes(peerConnection.getNodeStatistics().getDisconnectTimes());
-      peerInfo.setHeadBlockTimeWeBothHave(peerConnection.getHeadBlockTimeWeBothHave());
+      //peerInfo.setHeadBlockTimeWeBothHave(peerConnection.getHeadBlockTimeWeBothHave());
       peerInfo.setHost(peerConnection.getNode().getHost());
       peerInfo.setInFlow(peerConnection.getNodeStatistics().tcpFlow.getTotalCount());
-      peerInfo.setLastBlockUpdateTime(peerConnection.getLastBlockUpdateTime());
+      peerInfo.setLastBlockUpdateTime(peerConnection.getBlockBothHaveUpdateTime());
       peerInfo.setLastSyncBlock(peerConnection.getLastSyncBlockId() == null ? ""
           : peerConnection.getLastSyncBlockId().getString());
       ReasonCode reasonCode = peerConnection.getNodeStatistics()
@@ -150,11 +150,11 @@ public class NodeInfoService {
       peerInfo.setRemainNum(peerConnection.getRemainNum());
       peerInfo.setScore(peerConnection.getNodeStatistics().getReputation());
       peerInfo.setSyncBlockRequestedSize(peerConnection.getSyncBlockRequested().size());
-      peerInfo.setSyncFlag(peerConnection.getSyncFlag());
+      peerInfo.setSyncFlag(peerConnection.isDisconnect());
       peerInfo.setSyncToFetchSize(peerConnection.getSyncBlockToFetch().size());
       peerInfo.setSyncToFetchSizePeekNum(peerConnection.getSyncBlockToFetch().size() > 0
           ? peerConnection.getSyncBlockToFetch().peek().getNum() : -1);
-      peerInfo.setUnFetchSynNum(peerConnection.getUnfetchSyncNum());
+      peerInfo.setUnFetchSynNum(peerConnection.getRemainNum());
       totalFlow += peerConnection.getNodeStatistics().tcpFlow.getTotalCount();
       peerInfoList.add(peerInfo);
     }
@@ -165,6 +165,8 @@ public class NodeInfoService {
   private void setConfigNodeInfo(NodeInfo nodeInfo) {
     ConfigNodeInfo configNodeInfo = new ConfigNodeInfo();
     configNodeInfo.setCodeVersion(Version.getVersion());
+    configNodeInfo.setVersionName(Version.versionName);
+    configNodeInfo.setVersionNum(Version.versionCode);
     configNodeInfo.setP2pVersion(String.valueOf(args.getNodeP2pVersion()));
     configNodeInfo.setListenPort(args.getNodeListenPort());
     configNodeInfo.setDiscoverEnable(args.isNodeDiscoveryEnable());

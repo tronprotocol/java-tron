@@ -187,7 +187,7 @@ public class ContractTrcToken075 {
         "getToken(trcToken)", tokenId, false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
@@ -202,6 +202,7 @@ public class ContractTrcToken075 {
         "getToken(trcToken)", tokenId, false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);

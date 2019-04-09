@@ -18,21 +18,19 @@
 package org.tron.common.storage;
 
 
-import org.iq80.leveldb.WriteOptions;
-
 public interface SourceInter<K, V> {
 
 
   void putData(K key, V val);
 
-  void putData(K k, V v, WriteOptions options);
+  void putData(K k, V v, WriteOptionsWrapper options);
 
   V getData(K key);
 
 
   void deleteData(K key);
 
-  void deleteData(K k, WriteOptions options);
+  void deleteData(K k, WriteOptionsWrapper options);
 
   boolean flush();
 

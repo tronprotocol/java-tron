@@ -23,7 +23,7 @@ import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "backup")
 @Component
-public class BackupManager implements EventHandler{
+public class BackupManager implements EventHandler {
 
   private Args args = Args.getInstance();
 
@@ -51,7 +51,7 @@ public class BackupManager implements EventHandler{
     this.messageHandler = messageHandler;
   }
 
-  public enum BackupStatusEnum{
+  public enum BackupStatusEnum {
     INIT,
     SLAVER,
     MASTER
@@ -68,19 +68,19 @@ public class BackupManager implements EventHandler{
 
   public void init() {
 
-    if (isInit){
+    if (isInit) {
       return;
     }
     isInit = true;
 
-    try{
+    try {
       localIp = InetAddress.getLocalHost().getHostAddress();
-    }catch (Exception e){
+    } catch (Exception e) {
       logger.warn("Get local ip failed.");
     }
 
     for (String member : args.getBackupMembers()) {
-      if (!localIp.equals(member)){
+      if (!localIp.equals(member)) {
         members.add(member);
       }
     }
@@ -93,21 +93,23 @@ public class BackupManager implements EventHandler{
 
     executorService.scheduleWithFixedDelay(() -> {
       try {
-        if (!status.equals(MASTER) && System.currentTimeMillis() - lastKeepAliveTime > keepAliveTimeout){
-          if (status.equals(SLAVER)){
+        if (!status.equals(MASTER)
+            && System.currentTimeMillis() - lastKeepAliveTime > keepAliveTimeout) {
+          if (status.equals(SLAVER)) {
             setStatus(INIT);
             lastKeepAliveTime = System.currentTimeMillis();
-          }else {
+          } else {
             setStatus(MASTER);
           }
         }
-        if (status.equals(SLAVER)){
+        if (status.equals(SLAVER)) {
           return;
         }
-        members.forEach(member -> messageHandler.accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
-            new InetSocketAddress(member, port))));
+        members.forEach(member -> messageHandler
+            .accept(new UdpEvent(new KeepAliveMessage(status.equals(MASTER), priority),
+                new InetSocketAddress(member, port))));
       } catch (Throwable t) {
-        logger.error("Exception in send keep alive message:{}" , t.getMessage());
+        logger.error("Exception in send keep alive message:{}", t.getMessage());
       }
     }, 1, 1, TimeUnit.SECONDS);
   }
@@ -116,11 +118,12 @@ public class BackupManager implements EventHandler{
   public void handleEvent(UdpEvent udpEvent) {
     InetSocketAddress sender = udpEvent.getAddress();
     Message msg = udpEvent.getMessage();
-    if (!msg.getType().equals(BACKUP_KEEP_ALIVE)){
-      logger.warn("Receive not keep alive message from {}, type {}", sender.getHostString(), msg.getType());
+    if (!msg.getType().equals(BACKUP_KEEP_ALIVE)) {
+      logger.warn("Receive not keep alive message from {}, type {}", sender.getHostString(),
+          msg.getType());
       return;
     }
-    if (!members.contains(sender.getHostString())){
+    if (!members.contains(sender.getHostString())) {
       logger.warn("Receive keep alive message from {} is not my member.", sender.getHostString());
       return;
     }
@@ -131,22 +134,22 @@ public class BackupManager implements EventHandler{
     int peerPriority = keepAliveMessage.getPriority();
     String peerIp = sender.getAddress().getHostAddress();
 
-    if (status.equals(INIT) && (keepAliveMessage.getFlag() || peerPriority > priority)){
+    if (status.equals(INIT) && (keepAliveMessage.getFlag() || peerPriority > priority)) {
       setStatus(SLAVER);
       return;
     }
 
-    if (status.equals(MASTER) && keepAliveMessage.getFlag()){
-      if (peerPriority > priority){
+    if (status.equals(MASTER) && keepAliveMessage.getFlag()) {
+      if (peerPriority > priority) {
         setStatus(SLAVER);
-      }else if (peerPriority == priority && localIp.compareTo(peerIp) < 0){
+      } else if (peerPriority == priority && localIp.compareTo(peerIp) < 0) {
         setStatus(SLAVER);
       }
     }
   }
 
   @Override
-  public void channelActivated(){
+  public void channelActivated() {
     init();
   }
 

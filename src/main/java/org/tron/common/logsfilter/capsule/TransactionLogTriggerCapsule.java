@@ -51,20 +51,20 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     TransactionTrace trxTrace = trxCasule.getTrxTrace();
 
     //result
-    if (Objects.nonNull(trxCasule.getContractRet())){
+    if (Objects.nonNull(trxCasule.getContractRet())) {
       transactionLogTrigger.setResult(trxCasule.getContractRet().toString());
     }
 
-    if (Objects.nonNull(trxCasule.getInstance().getRawData())){
+    if (Objects.nonNull(trxCasule.getInstance().getRawData())) {
       // feelimit
       transactionLogTrigger.setFeeLimit(trxCasule.getInstance().getRawData().getFeeLimit());
 
       Protocol.Transaction.Contract contract = trxCasule.getInstance().getRawData().getContract(0);
       Any contractParameter = null;
       // contract type
-      if (Objects.nonNull(contract)){
+      if (Objects.nonNull(contract)) {
         Protocol.Transaction.Contract.ContractType contractType = contract.getType();
-        if (Objects.nonNull(contractType)){
+        if (Objects.nonNull(contractType)) {
           transactionLogTrigger.setContractType(contractType.toString());
         }
 
@@ -74,44 +74,48 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       }
 
       if (Objects.nonNull(contractParameter) && Objects.nonNull(contract)) {
-        try{
+        try {
           if (contract.getType() == TransferContract) {
-              TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
+            TransferContract contractTransfer = contractParameter.unpack(TransferContract.class);
 
-              if (Objects.nonNull(contractTransfer)){
-                transactionLogTrigger.setAssetName("trx");
+            if (Objects.nonNull(contractTransfer)) {
+              transactionLogTrigger.setAssetName("trx");
 
-                if (Objects.nonNull(contractTransfer.getOwnerAddress())){
-                  transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
-                }
-
-                if (Objects.nonNull(contractTransfer.getToAddress())){
-                  transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
-                }
-
-                transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+              if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
+                transactionLogTrigger.setFromAddress(
+                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
-          } else if (contract.getType() == TransferAssetContract) {
-            TransferAssetContract contractTransfer = contractParameter.unpack(TransferAssetContract.class);
+              if (Objects.nonNull(contractTransfer.getToAddress())) {
+                transactionLogTrigger.setToAddress(
+                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+              }
 
-            if (Objects.nonNull(contractTransfer)){
-              if (Objects.nonNull(contractTransfer.getAssetName())){
+              transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
+            }
+
+          } else if (contract.getType() == TransferAssetContract) {
+            TransferAssetContract contractTransfer = contractParameter
+                .unpack(TransferAssetContract.class);
+
+            if (Objects.nonNull(contractTransfer)) {
+              if (Objects.nonNull(contractTransfer.getAssetName())) {
                 transactionLogTrigger.setAssetName(contractTransfer.getAssetName().toStringUtf8());
               }
 
-              if (Objects.nonNull(contractTransfer.getOwnerAddress())){
-                transactionLogTrigger.setFromAddress(Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
+              if (Objects.nonNull(contractTransfer.getOwnerAddress())) {
+                transactionLogTrigger.setFromAddress(
+                    Wallet.encode58Check(contractTransfer.getOwnerAddress().toByteArray()));
               }
 
-              if (Objects.nonNull(contractTransfer.getToAddress())){
-                transactionLogTrigger.setToAddress(Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
+              if (Objects.nonNull(contractTransfer.getToAddress())) {
+                transactionLogTrigger.setToAddress(
+                    Wallet.encode58Check(contractTransfer.getToAddress().toByteArray()));
               }
               transactionLogTrigger.setAssetAmount(contractTransfer.getAmount());
             }
           }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
           logger.error("failed to load transferAssetContract, error'{}'", e);
         }
       }
@@ -129,24 +133,27 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
 
     // program result
     ProgramResult programResult = trxTrace.getRuntime().getResult();
-    if (Objects.nonNull(trxTrace) && Objects.nonNull(programResult)){
+    if (Objects.nonNull(trxTrace) && Objects.nonNull(programResult)) {
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 
-      if (Objects.nonNull(contractResult) && contractResult.size() > 0){
+      if (Objects.nonNull(contractResult) && contractResult.size() > 0) {
         transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
       }
 
-      if (Objects.nonNull(contractAddress) && contractAddress.size() > 0){
-        transactionLogTrigger.setContractAddress(Wallet.encode58Check((contractAddress.toByteArray())));
+      if (Objects.nonNull(contractAddress) && contractAddress.size() > 0) {
+        transactionLogTrigger
+            .setContractAddress(Wallet.encode58Check((contractAddress.toByteArray())));
       }
 
       // internal transaction
-      transactionLogTrigger.setInternalTrananctionList(getInternalTransactionList(programResult.getInternalTransactions()));
+      transactionLogTrigger.setInternalTrananctionList(
+          getInternalTransactionList(programResult.getInternalTransactions()));
     }
   }
 
-  private List<InternalTransactionPojo> getInternalTransactionList(List<InternalTransaction> internalTransactionList){
+  private List<InternalTransactionPojo> getInternalTransactionList(
+      List<InternalTransaction> internalTransactionList) {
     List<InternalTransactionPojo> pojoList = new ArrayList<>();
 
     internalTransactionList.forEach(internalTransaction -> {

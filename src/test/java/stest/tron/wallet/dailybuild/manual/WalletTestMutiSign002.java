@@ -108,7 +108,7 @@ public class WalletTestMutiSign002 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true,description = "MutiSign for create token")
+  @Test(enabled = true, description = "MutiSign for create token")
   public void test1CreateUsedAsset() {
     ecKey1 = new ECKey(Utils.getRandom());
     exchange001Address = ecKey1.getAddress();
@@ -125,6 +125,7 @@ public class WalletTestMutiSign002 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(secondExchange001Address, 10240000000L, fromAddress,
         testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
             ByteString.copyFrom(exchange001Address),
@@ -142,7 +143,7 @@ public class WalletTestMutiSign002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true,description = "MutiSign for create exchange")
+  @Test(enabled = true, description = "MutiSign for create exchange")
   public void test2CreateExchange() {
     ecKey3 = new ECKey(Utils.getRandom());
     manager1Address = ecKey3.getAddress();
@@ -152,7 +153,6 @@ public class WalletTestMutiSign002 {
     manager2Address = ecKey4.getAddress();
     manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-    long needCoin = updateAccountPermissionFee + multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -177,8 +177,8 @@ public class WalletTestMutiSign002 {
             + "]}]}";
     logger.info(accountPermissionJson);
     PublicMethedForMutiSign.accountPermissionUpdate(
-        accountPermissionJson,exchange001Address,exchange001Key,
-        blockingStubFull,ownerKeyString);
+        accountPermissionJson, exchange001Address, exchange001Key,
+        blockingStubFull, ownerKeyString);
 
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
@@ -220,11 +220,12 @@ public class WalletTestMutiSign002 {
     Long balanceAfter = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
+    long needCoin = updateAccountPermissionFee + multiSignFee;
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1024_000_000L);
 
   }
 
-  @Test(enabled = true,description = "List exchange after create exchange by MutiSign")
+  @Test(enabled = true, description = "List exchange after create exchange by MutiSign")
   public void test3ListExchange() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
@@ -238,12 +239,12 @@ public class WalletTestMutiSign002 {
     }
   }
 
-  @Test(enabled = true,description = "Mutisign for inject exchange")
+  @Test(enabled = true, description = "Mutisign for inject exchange")
   public void test4InjectExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
     final Long beforeExchangeToken2Balance = exchangeIdInfo.get().getSecondTokenBalance();
-    long needCoin = multiSignFee;
+
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -294,12 +295,13 @@ public class WalletTestMutiSign002 {
     Long balanceAfter = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
+    long needCoin = multiSignFee;
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
-  @Test(enabled = true,description = "MutiSign for withdraw exchange")
+  @Test(enabled = true, description = "MutiSign for withdraw exchange")
   public void test5WithdrawExchange() {
-    long needCoin = multiSignFee;
+
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -355,13 +357,13 @@ public class WalletTestMutiSign002 {
     Long balanceAfter = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
+    long needCoin = multiSignFee;
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
 
   }
 
-  @Test(enabled = true,description = "MutiSign for transaction exchange")
+  @Test(enabled = true, description = "MutiSign for transaction exchange")
   public void test6TransactionExchange() {
-    long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -418,10 +420,14 @@ public class WalletTestMutiSign002 {
     Long balanceAfter = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
+    long needCoin = multiSignFee;
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
   }
 
-  @Test(enabled = true,description = "GetExchangeListPaginated after MutiSign exchange kind of transaction")
+
+  @Test(enabled = true, description = "GetExchangeListPaginated after "
+      + "MutiSign exchange kind of transaction")
+
   public void test7GetExchangeListPaginated() {
     PaginatedMessage.Builder pageMessageBuilder = PaginatedMessage.newBuilder();
     pageMessageBuilder.setOffset(0);
@@ -429,10 +435,10 @@ public class WalletTestMutiSign002 {
     ExchangeList exchangeList = blockingStubFull
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
 
     //Solidity support getExchangeId
-    exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
+    exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
     Assert.assertTrue(exchangeIdInfo.get().getCreateTime() > 0);
 
@@ -442,6 +448,7 @@ public class WalletTestMutiSign002 {
     PublicMethed
         .unFreezeBalance(fromAddress, testKey002, 0, exchange001Address, blockingStubFull);
   }
+
   /**
    * constructor.
    */

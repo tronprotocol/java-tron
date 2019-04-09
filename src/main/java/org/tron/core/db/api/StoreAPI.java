@@ -89,7 +89,7 @@ public class StoreAPI {
       throw new NonUniqueObjectException(e);
     }
   }
-  
+
   public List<Transaction> getTransactionsFromThis(String address, long offset, long limit) {
     if (StringUtils.isEmpty(address)) {
       logger.info("address is empty");

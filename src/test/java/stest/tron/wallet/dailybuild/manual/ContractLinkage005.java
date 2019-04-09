@@ -86,13 +86,14 @@ public class ContractLinkage005 {
 
   @Test(enabled = true, description = "Every same trigger use same energy and net")
   public void testEnergyCostDetail() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Assert.assertTrue(PublicMethed.sendcoin(linkage005Address, 5000000000000L, fromAddress,
         testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage005Address, 250000000000L,
         0, linkage005Key, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
         0, 1, linkage005Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     contractName = "EnergyCost";
@@ -153,7 +154,7 @@ public class ContractLinkage005 {
         linkage005Address, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Account infoafter = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);

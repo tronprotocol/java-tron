@@ -74,7 +74,9 @@ public class ProgramResult {
     return hReturn;
   }
 
-  public List<ContractTrigger> getTriggerList() { return triggerList != null ? triggerList : new LinkedList<>();}
+  public List<ContractTrigger> getTriggerList() {
+    return triggerList != null ? triggerList : new LinkedList<>();
+  }
 
   public TransactionResultCapsule getRet() {
     return ret;
@@ -163,9 +165,11 @@ public class ProgramResult {
   }
 
   public InternalTransaction addInternalTransaction(byte[] parentHash, int deep,
-      byte[] senderAddress, byte[] transferAddress, long value, byte[] data, String note, long nonce, Map<String, Long> token) {
+      byte[] senderAddress, byte[] transferAddress, long value, byte[] data, String note,
+      long nonce, Map<String, Long> token) {
     InternalTransaction transaction = new InternalTransaction(parentHash, deep,
-        size(internalTransactions), senderAddress, transferAddress, value, data, note, nonce, token);
+        size(internalTransactions), senderAddress, transferAddress, value, data, note, nonce,
+        token);
     getInternalTransactions().add(transaction);
     return transaction;
   }

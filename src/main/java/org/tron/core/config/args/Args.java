@@ -1,5 +1,8 @@
 package org.tron.core.config.args;
 
+import static java.lang.Math.max;
+import static java.lang.System.exit;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.typesafe.config.Config;
@@ -37,6 +40,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -44,6 +48,7 @@ import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.db.AccountStore;
+import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -119,7 +124,12 @@ public class Args {
   @Parameter(names = {"--storage-db-version"}, description = "Storage db version.(1 or 2)")
   private String storageDbVersion = "";
 
-  @Parameter(names = {"--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+  @Parameter(names = {
+      "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
+  private String storageDbEngine = "";
+
+  @Parameter(names = {
+      "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
@@ -128,8 +138,13 @@ public class Args {
   @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
   private String storageIndexSwitch = "";
 
-  @Parameter(names = {"--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
+  @Parameter(names = {
+      "--storage-transactionHistory-switch"}, description = "Storage transaction history switch.(on or off)")
   private String storageTransactionHistoreSwitch = "";
+
+  @Getter
+  @Parameter(names = {"--fast-forward"})
+  private boolean fastForward = false;
 
   @Getter
   private Storage storage;
@@ -177,6 +192,10 @@ public class Args {
 
   @Getter
   @Setter
+  private List<Node> fastForwardNodes;
+
+  @Getter
+  @Setter
   private int nodeChannelReadTimeout;
 
   @Getter
@@ -211,7 +230,7 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-//  @Getter
+  //  @Getter
 //  @Setter
 //  private long syncNodeCount;
   @Getter
@@ -419,6 +438,15 @@ public class Args {
   @Setter
   private long trxExpirationTimeInMilliseconds; // (ms)
 
+  @Getter
+  private DbBackupConfig dbBackupConfig;
+
+  @Getter
+  private RocksDbSettings rocksDBCustomSettings;
+
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  private boolean version;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -448,6 +476,7 @@ public class Args {
     INSTANCE.nodeConnectionTimeout = 0;
     INSTANCE.activeNodes = Collections.emptyList();
     INSTANCE.passiveNodes = Collections.emptyList();
+    INSTANCE.fastForwardNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 30;
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
@@ -497,6 +526,11 @@ public class Args {
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    if (INSTANCE.version) {
+      JCommander.getConsole().println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
@@ -567,11 +601,11 @@ public class Args {
           } catch (IOException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           } catch (CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           }
         }
       }
@@ -605,10 +639,19 @@ public class Args {
         .map(Integer::valueOf)
         .orElse(Storage.getDbVersionFromConfig(config)));
 
+    INSTANCE.storage.setDbEngine(Optional.ofNullable(INSTANCE.storageDbEngine)
+        .filter(StringUtils::isNotEmpty)
+        .orElse(Storage.getDbEngineFromConfig(config)));
+
+    if ("ROCKSDB".equals(INSTANCE.storage.getDbEngine().toUpperCase())
+        && INSTANCE.storage.getDbVersion() == 1) {
+      throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
+    }
+
     INSTANCE.storage.setDbSync(Optional.ofNullable(INSTANCE.storageDbSynchronous)
-      .filter(StringUtils::isNotEmpty)
-      .map(Boolean::valueOf)
-      .orElse(Storage.getDbVersionSyncFromConfig(config)));
+        .filter(StringUtils::isNotEmpty)
+        .map(Boolean::valueOf)
+        .orElse(Storage.getDbVersionSyncFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
@@ -622,10 +665,10 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getIndexSwitchFromConfig(config)));
 
-    INSTANCE.storage.setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
-      .filter(StringUtils::isNotEmpty)
-      .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
-
+    INSTANCE.storage
+        .setTransactionHistoreSwitch(Optional.ofNullable(INSTANCE.storageTransactionHistoreSwitch)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(Storage.getTransactionHistoreSwitchFromConfig(config)));
 
     INSTANCE.storage.setPropertyMapFromConfig(config);
 
@@ -667,6 +710,8 @@ public class Args {
     INSTANCE.activeNodes = getNodes(config, "node.active");
 
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
+
+    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
@@ -824,13 +869,14 @@ public class Args {
         config.hasPath("storage.needToUpdateAsset") ? config
             .getBoolean("storage.needToUpdateAsset")
             : true;
-
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
     INSTANCE.trxExpirationTimeInMilliseconds =
-        config.hasPath("trx.expiration.timeInMilliseconds") && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
-            config.getLong("trx.expiration.timeInMilliseconds") : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
+        config.hasPath("trx.expiration.timeInMilliseconds")
+            && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
+            config.getLong("trx.expiration.timeInMilliseconds")
+            : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
 
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
@@ -846,13 +892,17 @@ public class Args {
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
     INSTANCE.eventPluginConfig =
-            config.hasPath("event.subscribe")?
-                    getEventPluginConfig(config) : null;
+        config.hasPath("event.subscribe") ?
+            getEventPluginConfig(config) : null;
 
     INSTANCE.eventFilter =
-            config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+        config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
+    if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
+      initRocksDbBackupProperty(config);
+      initRocksDbSettings(config);
+    }
 
     logConfig();
   }
@@ -940,35 +990,35 @@ public class Args {
     }
   }
 
-  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config){
+  private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
-    if (config.hasPath("event.subscribe.path")){
+    if (config.hasPath("event.subscribe.path")) {
       String pluginPath = config.getString("event.subscribe.path");
-      if (StringUtils.isNotEmpty(pluginPath)){
+      if (StringUtils.isNotEmpty(pluginPath)) {
         eventPluginConfig.setPluginPath(pluginPath.trim());
       }
     }
 
-
-    if (config.hasPath("event.subscribe.server")){
+    if (config.hasPath("event.subscribe.server")) {
       String serverAddress = config.getString("event.subscribe.server");
-      if (StringUtils.isNotEmpty(serverAddress)){
+      if (StringUtils.isNotEmpty(serverAddress)) {
         eventPluginConfig.setServerAddress(serverAddress.trim());
       }
     }
 
-    if (config.hasPath("event.subscribe.dbconfig")){
+    if (config.hasPath("event.subscribe.dbconfig")) {
       String dbConfig = config.getString("event.subscribe.dbconfig");
-      if (StringUtils.isNotEmpty(dbConfig)){
+      if (StringUtils.isNotEmpty(dbConfig)) {
         eventPluginConfig.setDbConfig(dbConfig.trim());
       }
     }
 
-    if (config.hasPath("event.subscribe.topics")){
-      List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics").stream()
-              .map(Args::createTriggerConfig)
-              .collect(Collectors.toCollection(ArrayList::new));
+    if (config.hasPath("event.subscribe.topics")) {
+      List<TriggerConfig> triggerConfigList = config.getObjectList("event.subscribe.topics")
+          .stream()
+          .map(Args::createTriggerConfig)
+          .collect(Collectors.toCollection(ArrayList::new));
 
       eventPluginConfig.setTriggerConfigList(triggerConfigList);
     }
@@ -976,8 +1026,8 @@ public class Args {
     return eventPluginConfig;
   }
 
-  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject){
-    if (Objects.isNull(triggerObject)){
+  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
+    if (Objects.isNull(triggerObject)) {
       return null;
     }
 
@@ -987,7 +1037,7 @@ public class Args {
     triggerConfig.setTriggerName(triggerName);
 
     String enabled = triggerObject.get("enable").unwrapped().toString();
-    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true: false);
+    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled) ? true : false);
 
     String topic = triggerObject.get("topic").unwrapped().toString();
     triggerConfig.setTopic(topic);
@@ -995,14 +1045,14 @@ public class Args {
     return triggerConfig;
   }
 
-  private static FilterQuery getEventFilter(final com.typesafe.config.Config config){
+  private static FilterQuery getEventFilter(final com.typesafe.config.Config config) {
     FilterQuery filter = new FilterQuery();
-    long fromBlockLong = 0,  toBlockLong = 0;
+    long fromBlockLong = 0, toBlockLong = 0;
 
     String fromBlock = config.getString("event.subscribe.filter.fromblock").trim();
     try {
-       fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
-    } catch (Exception e){
+      fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
+    } catch (Exception e) {
       logger.error("{}", e);
       return null;
     }
@@ -1011,7 +1061,7 @@ public class Args {
     String toBlock = config.getString("event.subscribe.filter.toblock").trim();
     try {
       toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
-    } catch (Exception e){
+    } catch (Exception e) {
       logger.error("{}", e);
       return null;
     }
@@ -1019,12 +1069,12 @@ public class Args {
 
     List<String> addressList = config.getStringList("event.subscribe.filter.contractAddress");
     addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
-      Collectors.toList());
+        Collectors.toList());
     filter.setContractAddressList(addressList);
 
     List<String> topicList = config.getStringList("event.subscribe.filter.contractTopic");
     topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
-      Collectors.toList());
+        Collectors.toList());
     filter.setContractTopicList(topicList);
 
     return filter;
@@ -1132,6 +1182,51 @@ public class Args {
     return 5.0;
   }
 
+
+  private static void initRocksDbSettings(Config config) {
+    String prefix = "storage.dbSettings.";
+    int levelNumber = config.hasPath(prefix + "levelNumber")
+        ? config.getInt(prefix + "levelNumber") : 7;
+    int compactThreads = config.hasPath(prefix + "compactThreads")
+        ? config.getInt(prefix + "compactThreads")
+        : max(Runtime.getRuntime().availableProcessors(), 1);
+    int blocksize = config.hasPath(prefix + "blocksize")
+        ? config.getInt(prefix + "blocksize") : 16;
+    long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
+        ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
+    double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
+        ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
+    int level0FileNumCompactionTrigger =
+        config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
+            .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
+    long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
+        .getLong(prefix + "targetFileSizeBase") : 64;
+    int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
+        .getInt(prefix + "targetFileSizeMultiplier") : 1;
+
+    INSTANCE.rocksDBCustomSettings = RocksDbSettings
+        .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
+            maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
+            targetFileSizeBase, targetFileSizeMultiplier);
+    RocksDbSettings.loggingSettings();
+  }
+
+  private static void initRocksDbBackupProperty(Config config) {
+    boolean enable =
+        config.hasPath("storage.backup.enable") && config.getBoolean("storage.backup.enable");
+    String propPath = config.hasPath("storage.backup.propPath")
+        ? config.getString("storage.backup.propPath") : "prop.properties";
+    String bak1path = config.hasPath("storage.backup.bak1path")
+        ? config.getString("storage.backup.bak1path") : "bak1/database/";
+    String bak2path = config.hasPath("storage.backup.bak2path")
+        ? config.getString("storage.backup.bak2path") : "bak2/database/";
+    int frequency = config.hasPath("storage.backup.frequency")
+        ? config.getInt("storage.backup.frequency") : 10000;
+    INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
+        .initArgs(enable, propPath, bak1path, bak2path, frequency);
+  }
+
+
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")
         ? config.getInt("node.backup.priority") : 0;
@@ -1162,8 +1257,11 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("Version name: {}", Version.versionName);
+    logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
+    logger.info("DB engine : {}", args.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
   }

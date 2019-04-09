@@ -198,6 +198,7 @@ public class ContractScenario014 {
     txid = PublicMethed.triggerContract(contractAddress3,
         "triggerContract2(address)", receiveAddress, false,
         0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contract3AccountInfo = PublicMethed.queryAccount(contractAddress3, blockingStubFull);

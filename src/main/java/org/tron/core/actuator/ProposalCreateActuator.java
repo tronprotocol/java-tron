@@ -269,7 +269,8 @@ public class ProposalCreateActuator extends AbstractActuator {
       }
       case (22): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
-          throw new ContractValidateException("Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
+          throw new ContractValidateException(
+              "Bad chain parameter id: UPDATE_ACCOUNT_PERMISSION_FEE");
         }
         if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000L) {
           throw new ContractValidateException(

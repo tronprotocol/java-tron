@@ -96,12 +96,12 @@ public class WalletTestTransfer005 {
     accountPaginated.setLimit(0);
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsFromThis(accountPaginated.build());
-    Optional<GrpcAPI.TransactionList>  gettransactionsfromthis = Optional
+    Optional<GrpcAPI.TransactionList> gettransactionsfromthis = Optional
         .ofNullable(transactionList);
 
     if (gettransactionsfromthis.get().getTransactionCount() == 0) {
-      Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000L,fromAddress,
-          testKey002,blockingStubFull));
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000L, fromAddress,
+          testKey002, blockingStubFull));
       Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
           blockingStubSolidity));
     }
@@ -125,7 +125,7 @@ public class WalletTestTransfer005 {
     accountPaginated.setLimit(0);
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsFromThis(accountPaginated.build());
-    Optional<GrpcAPI.TransactionList>  gettransactionsfromthisByInvaildAddress = Optional
+    Optional<GrpcAPI.TransactionList> gettransactionsfromthisByInvaildAddress = Optional
         .ofNullable(transactionList);
 
     Assert.assertTrue(gettransactionsfromthisByInvaildAddress.get().getTransactionCount() == 0);
@@ -171,11 +171,12 @@ public class WalletTestTransfer005 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
 
-  public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
     if (ecKey == null) {
       String pubKey = loadPubKey(); //04 PubKey[128]
@@ -198,6 +199,7 @@ public class WalletTestTransfer005 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -207,6 +209,7 @@ public class WalletTestTransfer005 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

@@ -168,6 +168,7 @@ public class MultiSign13 {
 
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
@@ -541,6 +542,7 @@ public class MultiSign13 {
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
@@ -618,6 +620,8 @@ public class MultiSign13 {
 
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -709,11 +713,14 @@ public class MultiSign13 {
     String ownerKey = witnessKey001;
     byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
 
-    long needCoin = updateAccountPermissionFee;
+    long needCoin = updateAccountPermissionFee * 2;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1000000, fromAddress,
         testKey002, blockingStubFull));
-
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 100000000L, 0, 0,
+            ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
@@ -731,7 +738,8 @@ public class MultiSign13 {
         "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(testKey002)
             + "\",\"weight\":1}]},"
-            + "\"witness_permission\":{\"permission_name\":\"abcdefghijklmnopqrstuvwxyzabcdef\",\"type\":1,"
+            + "\"witness_permission\":"
+            + "{\"permission_name\":\"abcdefghijklmnopqrstuvwxyzabcdef\",\"type\":1,"
             + "\"threshold\":1,\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02)
             + "\",\"weight\":1}]},"
@@ -767,11 +775,16 @@ public class MultiSign13 {
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
 
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+
+    PublicMethed
+        .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
 
   }
 

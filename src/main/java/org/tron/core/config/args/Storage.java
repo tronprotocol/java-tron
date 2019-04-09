@@ -42,6 +42,7 @@ public class Storage {
    */
   private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
   private static final String DB_VERSION_CONFIG_KEY = "storage.db.version";
+  private static final String DB_ENGINE_CONFIG_KEY = "storage.db.engine";
   private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
   private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
   private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
@@ -64,19 +65,17 @@ public class Storage {
    * Default values of directory
    */
   private static final int DEFAULT_DB_VERSION = 2;
+  private static final String DEFAULT_DB_ENGINE = "LEVELDB";
   private static final boolean DEFAULT_DB_SYNC = false;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";
 
   /**
-   * Default values of db options:
-   * <p>
-   * DEFAULT_COMPRESSION_TYPE: compressed with snappy
-   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B
-   * DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B
-   * DEFAULT_MAX_OPEN_FILES:   100
+   * Default values of db options: <p> DEFAULT_COMPRESSION_TYPE: compressed with snappy
+   * DEFAULT_BLOCK_SIZE:         4 KB =         4 * 1024 B DEFAULT_WRITE_BUFFER_SIZE: 10 MB = 10 *
+   * 1024 * 1024 B DEFAULT_CACHE_SIZE:        10 MB = 10 * 1024 * 1024 B DEFAULT_MAX_OPEN_FILES:
+   * 100
    */
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
@@ -94,6 +93,10 @@ public class Storage {
   @Getter
   @Setter
   private int dbVersion;
+
+  @Getter
+  @Setter
+  private String dbEngine;
 
   @Getter
   @Setter
@@ -120,6 +123,7 @@ public class Storage {
   @Getter
   @Setter
   private static class Property {
+
     private String name;
     private String path;
     private Options dbOptions;
@@ -135,9 +139,14 @@ public class Storage {
         config.getInt(DB_VERSION_CONFIG_KEY) : DEFAULT_DB_VERSION;
   }
 
+  public static String getDbEngineFromConfig(final Config config) {
+    return config.hasPath(DB_ENGINE_CONFIG_KEY) ?
+        config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
+  }
+
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
     return config.hasPath(DB_SYNC_CONFIG_KEY) ?
-      config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+        config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {
@@ -157,8 +166,8 @@ public class Storage {
   }
 
   public static String getTransactionHistoreSwitchFromConfig(final Config config) {
-    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)?
-      config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
+    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) ?
+        config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY) : DEFAULT_TRANSACTIONHISTORY_SWITCH;
   }
 
   /**
@@ -243,11 +252,13 @@ public class Storage {
 
       File file = new File(path);
       if (!file.exists() && !file.mkdirs()) {
-        throw new IllegalArgumentException("[storage.properties] can not create storage path: " + path);
+        throw new IllegalArgumentException(
+            "[storage.properties] can not create storage path: " + path);
       }
 
       if (!file.canWrite()) {
-        throw new IllegalArgumentException("[storage.properties] permission denied to write to: " + path);
+        throw new IllegalArgumentException(
+            "[storage.properties] permission denied to write to: " + path);
       }
 
       property.setPath(path);
@@ -290,7 +301,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] compressionType must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] compressionType must be Integer type.");
       }
     }
 
@@ -314,7 +326,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] writeBufferSize must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] writeBufferSize must be Integer type.");
       }
     }
 
@@ -338,7 +351,8 @@ public class Storage {
             )
         );
       } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("[storage.properties] maxOpenFiles must be Integer type.");
+        throw new IllegalArgumentException(
+            "[storage.properties] maxOpenFiles must be Integer type.");
       }
     }
 

@@ -105,7 +105,7 @@ public class WalletTestMutiSign001 {
 
     Assert.assertTrue(
         PublicMethed.sendcoin(ownerAddress, needCoin + 2048000000L, fromAddress, testKey002,
-        blockingStubFull));
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull).getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -129,7 +129,7 @@ public class WalletTestMutiSign001 {
     logger.info(accountPermissionJson);
     String txid = PublicMethedForMutiSign
         .accountPermissionUpdateForTransactionId(accountPermissionJson, ownerAddress, ownerKey,
-        blockingStubFull,ownerKeyString);
+            blockingStubFull, ownerKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = PublicMethed
@@ -156,7 +156,7 @@ public class WalletTestMutiSign001 {
 
     txid = PublicMethedForMutiSign
         .createAssetIssueForTransactionId(ownerAddress, name, totalSupply, 1,
-        1,start,end,1,description,url,2000L,2000L,
+            1, start, end, 1, description, url, 2000L, 2000L,
             1L, 1L, ownerKey, blockingStubFull, ownerKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -179,6 +179,7 @@ public class WalletTestMutiSign001 {
 
     logger.info(" create asset end");
   }
+
   /**
    * constructor.
    */
@@ -231,7 +232,7 @@ public class WalletTestMutiSign001 {
 
     Assert.assertTrue(
         PublicMethed.sendcoin(participateAddress, needCoin + 2048000000L, fromAddress, testKey002,
-        blockingStubFull));
+            blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(participateAddress, blockingStubFull)
@@ -253,7 +254,7 @@ public class WalletTestMutiSign001 {
     logger.info(accountPermissionJson);
     String txid = PublicMethedForMutiSign
         .accountPermissionUpdateForTransactionId(accountPermissionJson, participateAddress,
-        participateKey, blockingStubFull,ownerKeyString);
+            participateKey, blockingStubFull, ownerKeyString);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

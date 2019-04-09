@@ -128,7 +128,6 @@ public class WalletExchange001 {
     final Integer beforeCreateExchangeNum = listExchange.get().getExchangesCount();
     exchangeId = listExchange.get().getExchangesCount();
 
-
     Account getAssetIdFromThisAccount;
     getAssetIdFromThisAccount = PublicMethed.queryAccount(exchange001Address, blockingStubFull);
     assetAccountId1 = getAssetIdFromThisAccount.getAssetIssuedID();
@@ -341,9 +340,9 @@ public class WalletExchange001 {
         .getPaginatedExchangeList(pageMessageBuilder.build());
     Assert.assertTrue(exchangeList.getExchangesCount() >= 1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     //Solidity support getExchangeId
-    exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(),blockingStubSolidity);
+    exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubSolidity);
     logger.info("createtime is" + exchangeIdInfo.get().getCreateTime());
     Assert.assertTrue(exchangeIdInfo.get().getCreateTime() > 0);
 
@@ -351,6 +350,7 @@ public class WalletExchange001 {
     listExchange = PublicMethed.getExchangeList(blockingStubSolidity);
     Assert.assertTrue(listExchange.get().getExchangesCount() > 0);
   }
+
   /**
    * constructor.
    */
