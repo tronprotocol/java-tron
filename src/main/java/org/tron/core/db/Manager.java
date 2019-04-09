@@ -1361,6 +1361,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        fastSyncCallBack.preExeTrx();
         processTransaction(trx, blockCapsule);
         tmpSeesion.merge();
         // push into block
@@ -1368,6 +1369,7 @@ public class Manager {
         if (fromPending) {
           iterator.remove();
         }
+        fastSyncCallBack.exeTrxFinish();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
@@ -1511,7 +1513,9 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        fastSyncCallBack.preExeTrx();
         processTransaction(transactionCapsule, block);
+        fastSyncCallBack.exeTrxFinish();
       }
       fastSyncCallBack.executePushFinish();
     } finally {
