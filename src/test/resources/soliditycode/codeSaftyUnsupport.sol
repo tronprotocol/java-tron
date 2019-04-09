@@ -50,7 +50,7 @@ function trigger8(address addr) public payable returns(bytes memory r){
 // r = msg.data;  // compile success, no necessary to trigger
 }
 
-function getBalance() view public returns (uint256 r){
+function getBalance() public returns (uint256 r){
 r = address(this).balance;
 }
 }
