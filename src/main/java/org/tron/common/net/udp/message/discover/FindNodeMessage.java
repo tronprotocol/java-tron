@@ -39,6 +39,11 @@ public class FindNodeMessage extends Message {
   }
 
   @Override
+  public long getTimestamp() {
+    return this.findNeighbours.getTimestamp();
+  }
+
+  @Override
   public Node getFrom() {
     return Message.getNode(findNeighbours.getFrom());
   }
