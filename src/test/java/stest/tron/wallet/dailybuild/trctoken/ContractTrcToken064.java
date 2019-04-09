@@ -298,20 +298,19 @@ public class ContractTrcToken064 {
         + assetAccountId.toStringUtf8() + ", Count is " + receiveAssetBefore);
 
     Long callValue = Long.valueOf(0);
-
     String param = "\"" + Base58.encode58Check(resultContractAddress) + "\"";
     String triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "transferTokenTestValue0IdBigInteger(address)", param, false, callValue,
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     logger.info(infoById.get().getResMessage().toStringUtf8());
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
+        //Assert.assertEquals("BigInteger out of long range",
         infoById.get().getResMessage().toStringUtf8());
 
     //transfer to a normal account
@@ -325,7 +324,8 @@ public class ContractTrcToken064 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    //Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     String tokenId = Long.toString(Long.MIN_VALUE);
@@ -345,7 +345,7 @@ public class ContractTrcToken064 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     tokenId = Long.toString(100_0000);
@@ -365,7 +365,7 @@ public class ContractTrcToken064 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     tokenId = Long.toString(-1);
@@ -385,7 +385,7 @@ public class ContractTrcToken064 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     tokenId = Long.toString(0);
@@ -405,7 +405,7 @@ public class ContractTrcToken064 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     callValue = Long.valueOf(0);

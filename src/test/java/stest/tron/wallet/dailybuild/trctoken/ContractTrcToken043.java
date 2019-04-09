@@ -327,7 +327,7 @@ public class ContractTrcToken043 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -360,7 +360,8 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    //Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -387,7 +388,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -415,7 +416,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -442,7 +443,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -464,7 +465,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -500,7 +501,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -527,7 +528,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -551,7 +552,7 @@ public class ContractTrcToken043 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
@@ -572,7 +573,7 @@ public class ContractTrcToken043 {
     infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,

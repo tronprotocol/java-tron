@@ -3,6 +3,7 @@ package stest.tron.wallet.contract.scenario;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -17,6 +18,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -82,15 +84,22 @@ public class ContractScenario006 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
 
-    String filePath = "./src/test/resources/soliditycode/ContractScenario006.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario006.sol";
     String contractName = "FoMo3Dlong";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contract006Key, contract006Address, blockingStubFull);
+    byte[] contractAddress;
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contract006Key, contract006Address, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));

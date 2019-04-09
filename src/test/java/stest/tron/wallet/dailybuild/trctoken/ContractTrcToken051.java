@@ -222,7 +222,7 @@ public class ContractTrcToken051 {
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertFalse(infoById.get().getResultValue() == 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertEquals(beforeAssetIssueCount, afterAssetIssueCount);

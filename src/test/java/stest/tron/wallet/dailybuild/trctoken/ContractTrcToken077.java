@@ -87,9 +87,15 @@ public class ContractTrcToken077 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForGrammarAddress,
-        grammarAddress, blockingStubFull);
+    String deployTxid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, testKeyForGrammarAddress,
+            grammarAddress, blockingStubFull);
+    Optional<TransactionInfo> deployInfo = PublicMethed
+        .getTransactionInfoById(deployTxid, blockingStubFull);
+    contractAddress = deployInfo.get().getContractAddress().toByteArray();
+    logger.info("Deploy energy is " + deployInfo.get().getReceipt().getEnergyUsageTotal());
+
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "addressTest()", "#", false,
@@ -97,7 +103,7 @@ public class ContractTrcToken077 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById:" + infoById);
-
+    logger.info("Trigger energy is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
   }
 
@@ -116,9 +122,14 @@ public class ContractTrcToken077 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, testKeyForGrammarAddress,
-        grammarAddress, blockingStubFull);
+    String deploytxid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, testKeyForGrammarAddress,
+            grammarAddress, blockingStubFull);
+    Optional<TransactionInfo> deployById = PublicMethed
+        .getTransactionInfoById(deploytxid, blockingStubFull);
+    contractAddress = deployById.get().getContractAddress().toByteArray();
+    logger.info("infoById:" + deployById);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

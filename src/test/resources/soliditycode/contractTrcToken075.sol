@@ -5,7 +5,6 @@ contract Dest {
  event logGetToken(uint256 indexed, uint256 indexed, uint256 indexed, uint256);
 
  constructor() payable public {}
- function() external payable{}
 
  function getToken(trcToken tokenId) payable public{
         emit logGetToken(msg.sender.tokenBalance(tokenId), msg.tokenid, msg.tokenvalue, msg.value);

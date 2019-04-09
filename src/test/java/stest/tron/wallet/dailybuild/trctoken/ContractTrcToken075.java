@@ -197,7 +197,7 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -214,7 +214,7 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -232,7 +232,7 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -248,7 +248,7 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -264,7 +264,7 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -274,14 +274,14 @@ public class ContractTrcToken075 {
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    //Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     // unfreeze resource

@@ -107,7 +107,7 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    logger.info("deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    logger.info("infoById : " + infoById);
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
     String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
@@ -117,10 +117,16 @@ public class ContractTrcToken078 {
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
 
-    byte[] contractAddress1 = PublicMethed
-        .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
+    byte[] contractAddress1;
+    txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName1, abi1, code1, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById : " + infoById);
+    contractAddress1 = infoById.get().getContractAddress().toByteArray();
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -132,13 +138,20 @@ public class ContractTrcToken078 {
     String code2 = retMap2.get("byteCode").toString();
     String abi2 = retMap2.get("abI").toString();
 
-    byte[] contractAddress2 = PublicMethed
-        .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
+    byte[] contractAddress2;
+    txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    contractAddress2 = infoById.get().getContractAddress().toByteArray();
+    logger.info("infoById : " + infoById);
+
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
 
@@ -151,7 +164,7 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
-    logger.info("Trigger energytotal is " + infoById2.get().getReceipt().getEnergyUsageTotal());
+    logger.info("Trigger InfobyId: " + infoById2);
     Account info1 = PublicMethed.queryAccount(internalTxsAddress, blockingStubFull);
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(internalTxsAddress,
         blockingStubFull);
@@ -177,9 +190,15 @@ public class ContractTrcToken078 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        1000000L, 100, null, testKeyForinternalTxsAddress,
-        internalTxsAddress, blockingStubFull);
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            1000000L, 100, null, testKeyForinternalTxsAddress,
+            internalTxsAddress, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById : " + infoById);
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -189,13 +208,18 @@ public class ContractTrcToken078 {
 
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
-    byte[] contractAddress1 = PublicMethed
-        .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
+    byte[] contractAddress1;
+    txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName1, abi1, code1, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById : " + infoById);
+    contractAddress1 = infoById.get().getContractAddress().toByteArray();
 
     String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName2 = "c";
@@ -203,13 +227,19 @@ public class ContractTrcToken078 {
 
     String code2 = retMap2.get("byteCode").toString();
     String abi2 = retMap2.get("abI").toString();
-    byte[] contractAddress2 = PublicMethed
-        .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
+    byte[] contractAddress2;
+    txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById : " + infoById);
+    contractAddress2 = infoById.get().getContractAddress().toByteArray();
+
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
 
@@ -222,6 +252,8 @@ public class ContractTrcToken078 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
+    logger.info("infoById : " + infoById2);
+
     Assert.assertTrue(infoById2.get().getResultValue() == 0);
 
 
