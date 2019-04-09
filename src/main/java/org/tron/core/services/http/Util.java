@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -23,6 +24,7 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -47,6 +49,7 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 
@@ -159,6 +162,13 @@ public class Util {
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
     return Hash.sha3omit12(combined);
+  }
+
+  public static String printDeferredTransactionToJSON(DeferredTransaction deferredTransaction) {
+    String string = JsonFormat.printToString(deferredTransaction);
+    JSONObject jsonObject = JSONObject.parseObject(string);
+    jsonObject.put("transaction", printTransactionToJSON(deferredTransaction.getTransaction()));
+    return jsonObject.toJSONString();
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction) {
@@ -313,6 +323,12 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
             break;
+          case CancelDeferredTransactionContract:
+            CancelDeferredTransactionContract cancelDeferredTransactionContract = contractParameter
+                .unpack(CancelDeferredTransactionContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(cancelDeferredTransactionContract));
+            break;
           // todo add other contract
           default:
         }
@@ -335,6 +351,13 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
+
+    if (Objects.nonNull(transaction.getRawData().getDeferredStage()) &&
+        transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
+      jsonTransaction.put("delaySeconds", transaction.getRawData().getDeferredStage().getDelaySeconds());
+      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
+    }
+
     return jsonTransaction;
   }
 
@@ -554,6 +577,15 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     UpdateEnergyLimitContractBuilder);
             any = Any.pack(UpdateEnergyLimitContractBuilder.build());
+            break;
+
+          case "CancelDeferredTransactionContract":
+            CancelDeferredTransactionContract.Builder CancelDeferredTransactionContractBuilder =
+                CancelDeferredTransactionContract.newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    CancelDeferredTransactionContractBuilder);
+            any = Any.pack(CancelDeferredTransactionContractBuilder.build());
             break;
           // todo add other contract
           default:

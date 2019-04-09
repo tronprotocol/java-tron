@@ -45,6 +45,8 @@ public class Constant {
   public static final long TRANSACTION_MAX_BYTE_SIZE = 500 * 1_024L;
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
+  public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 3_600L; //45 days
+  public static final String DELAY_SECONDS = "delaySeconds";
 
   // config for smart contract
   public static final long SUN_PER_ENERGY = 100; // 1 us = 100 DROP = 100 * 10^-6 TRX
@@ -58,4 +60,13 @@ public class Constant {
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
 
+
+  /**
+   * normal transaction is 0 representing normal transaction
+   * unexecuted deferred transaction is 1 representing unexecuted deferred transaction
+   * executing deferred transaction is 2 representing executing deferred transaction
+   */
+  public static final int NORMALTRANSACTION = 0;
+  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
+  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
 }

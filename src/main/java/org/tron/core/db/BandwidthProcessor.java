@@ -65,13 +65,25 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new TooBigTransactionResultException();
     }
 
-    long bytesSize;
+    long bytesSize = 0;
+
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
       bytesSize = trx.getSerializedSize();
     }
 
+    if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
+      // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
+      bytesSize += trx.getTransactionId().getBytes().length;
+    } else if (trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      // don't charge bandwidth twice when executing deferred tranaction
+      bytesSize = 0;
+    }
+
+    // when transaction type is equal to EXECUTINGDEFERREDTRANSACTION, meaning fee already charged.
+    boolean charged = trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION;
     for (Contract contract : contracts) {
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
@@ -86,13 +98,13 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      if (contractCreateNewAccount(contract)) {
+      if (contractCreateNewAccount(contract) && !charged) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
       if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
-          accountCapsule, now, bytesSize)) {
+          accountCapsule, now, bytesSize) && !charged) {
         continue;
       }
 

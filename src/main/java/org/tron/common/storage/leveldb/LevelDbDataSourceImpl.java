@@ -45,6 +45,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
@@ -378,6 +379,48 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
       for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getPrevious(byte[] key, long limit, int precision) {
+    if (limit <= 0 || key.length < precision) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seekToFirst(); iterator.hasNext() && i++ < limit; iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+
+        if (entry.getKey().length >= precision) {
+          if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
+              ByteUtil.parseBytes(entry.getKey(), 0, precision))) {
+            break;
+          }
+          result.put(entry.getKey(), entry.getValue());
+        }
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getAll() {
+    resetDbLock.readLock().lock();
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        result.put(iterator.peekNext().getKey(), iterator.peekNext().getValue());
       }
       return result;
     } catch (IOException e) {
