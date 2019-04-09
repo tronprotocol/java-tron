@@ -447,7 +447,6 @@ public class RuntimeImpl implements Runtime {
           this.blockCap);
       byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
       this.program.setRootTransactionId(txId);
-//      this.program.setStaticCall(isStaticCall());
       if (enableEventLinstener &&
           (EventPluginLoader.getInstance().isContractEventTriggerEnable()
               || EventPluginLoader.getInstance().isContractLogTriggerEnable())

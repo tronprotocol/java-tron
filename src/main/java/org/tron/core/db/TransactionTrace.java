@@ -12,7 +12,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
@@ -27,6 +29,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -39,6 +42,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -102,6 +106,7 @@ public class TransactionTrace {
   public void init(BlockCapsule blockCap) {
     init(blockCap, false);
   }
+
   //pre transaction check
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
     txStartTimeInMs = System.currentTimeMillis();
@@ -110,11 +115,23 @@ public class TransactionTrace {
     runtime.setEnableEventLinstener(eventPluginLoaded);
   }
 
-//  public void checkIsConstant() throws VMIllegalException {
-//    if (runtime.isCallConstant()) {
-//      throw new VMIllegalException("cannot call constant method ");
-//    }
-//  }
+  public void checkIsConstant() throws ContractValidateException, VMIllegalException {
+    if (VMConfig.allowTvmConstantinople()) {
+      return;
+    }
+
+    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
+        .getTriggerContractFromTransaction(this.getTrx().getInstance());
+    if (TrxType.TRX_CONTRACT_CALL_TYPE == this.trxType) {
+      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+      ContractCapsule contract = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
+      ABI abi = contract.getInstance().getAbi();
+      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
+        throw new VMIllegalException("cannot call constant method");
+      }
+    }
+  }
 
   //set bill
   public void setBill(long energyUsage) {
@@ -223,7 +240,8 @@ public class TransactionTrace {
     if (!trx.getContractRet().equals(receipt.getResult())) {
       logger.info(
           "this tx id: {}, the resultCode in received block: {}, the resultCode in self: {}",
-          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(), receipt.getResult());
+          Hex.toHexString(trx.getTransactionId().getBytes()), trx.getContractRet(),
+          receipt.getResult());
       throw new ReceiptCheckErrException("Different resultCode");
     }
   }
