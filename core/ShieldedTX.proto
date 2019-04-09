@@ -63,9 +63,9 @@ message SpendDescription {
 message OutputDescription {
   bytes cv = 1;
   bytes cm = 2;
-  bytes ephemeralKey = 3;
-  bytes encCiphertext = 4;
-  bytes outCiphertext = 5;
+  bytes epk = 3;
+  bytes c_enc = 4;
+  bytes c_out = 5;
   bytes zkproof = 6;
 }
 
