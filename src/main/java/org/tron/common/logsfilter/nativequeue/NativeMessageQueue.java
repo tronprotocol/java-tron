@@ -34,16 +34,14 @@ public class NativeMessageQueue {
       bindPort = DEFAULT_BIND_PORT;
     }
 
-    if (sendQueueLength ==0 || sendQueueLength < 0){
+    if (sendQueueLength < 0){
       sendQueueLength = DEFAULT_QUEUE_LENGTH;
     }
 
     context.setSndHWM(sendQueueLength);
 
     String bindAddress = String.format("tcp://*:%d", bindPort);
-    publisher.bind(bindAddress);
-
-    return true;
+    return publisher.bind(bindAddress);
   }
 
   public void stop(){
