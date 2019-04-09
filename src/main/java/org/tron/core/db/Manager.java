@@ -1361,9 +1361,7 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        fastSyncCallBack.preExeTrx();
         processTransaction(trx, blockCapsule);
-        fastSyncCallBack.exeTrxFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1513,9 +1511,7 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
-        fastSyncCallBack.preExeTrx();
         processTransaction(transactionCapsule, block);
-        fastSyncCallBack.exeTrxFinish();
       }
       fastSyncCallBack.executePushFinish();
     } finally {
