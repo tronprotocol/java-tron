@@ -1363,13 +1363,13 @@ public class Manager {
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         fastSyncCallBack.preExeTrx();
         processTransaction(trx, blockCapsule);
+        fastSyncCallBack.exeTrxFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
         if (fromPending) {
           iterator.remove();
         }
-        fastSyncCallBack.exeTrxFinish();
       } catch (ContractExeException e) {
         logger.info("contract not processed during execute");
         logger.debug(e.getMessage(), e);
