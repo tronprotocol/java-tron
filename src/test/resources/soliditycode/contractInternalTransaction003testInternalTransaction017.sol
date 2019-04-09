@@ -79,18 +79,7 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
+
             B b=(new B).value(1)();//1
             selfdestruct(Address);
         }
@@ -186,7 +175,7 @@
            (new B).value(1)();//1
 
         }
-        function getBalance() public returns(uint256){
+        function getBalance()  public returns(uint256){
             return address(this).balance;
         }
     }

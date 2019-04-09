@@ -9,15 +9,14 @@ contract transferTrc10 {
         rec.transferToken(aamount,msg.tokenid);
         require(0==address(this).tokenBalance(msg.tokenid));
         require(bamount+aamount==rec.tokenBalance(msg.tokenid));
-        //require(rec.call(abi.encode(bytes4(keccak256("checkTrc10(uint256,trcToken,uint256)")),bamount+aamount,msg.tokenid,0)));
-        (bool suc, bytes memory data) = rec.call(abi.encode(bytes4(keccak256("checkTrc10(uint256,trcToken,uint256)")),bamount+aamount,msg.tokenid,0));
-        require(suc);
+        (bool success, bytes memory data) =rec.call(abi.encodeWithSignature("checkTrc10(uint256,trcToken,uint256)",bamount+aamount,msg.tokenid,0));
+        require(success);
+
     }
 }
 
 contract receiveTrc10 {
-    function() payable external {
-    }
+    function() external payable {}
     function checkTrc10(uint256 amount,trcToken tid,uint256 meamount) public{
         require(amount==address(this).tokenBalance(tid));
         require(meamount==msg.sender.tokenBalance(tid));

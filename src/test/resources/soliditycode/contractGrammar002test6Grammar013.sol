@@ -1,7 +1,7 @@
 //pragma solidity ^0.4.4;
 contract Counter {
 uint count = 0;
-address owner;
+address payable owner;
 //function Counter() public{
 constructor() public{
 owner = msg.sender;
@@ -17,7 +17,7 @@ return count;
 }
 function kill() public{
 if (owner == msg.sender) {
-//selfdestruct(owner);
+selfdestruct(owner);
 //selfdestruct(address(owner));
 }
 }

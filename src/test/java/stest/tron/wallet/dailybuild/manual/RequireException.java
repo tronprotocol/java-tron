@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -99,20 +100,11 @@ public class RequireException {
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
 
-    String contractName = "TestRequireContract";
-    String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"
-        + "0605c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
-        + "632b813bc081146061578063357815c414607557806350bff6bf146075578063a26388bb146075575b60008"
-        + "0fd5b348015606c57600080fd5b5060736087565b005b348015608057600080fd5b506073605c565bfe00a1"
-        + "65627a7a723058209284d2c51e121903dde36db88dae131b1b20dc83b987a6f491dcac2d9b2d30db0029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"testAssert\",\"outputs\":[],\""
-        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant"
-        + "\":false,\"inputs\":[],\"name\":\"testRequire\",\"outputs\":[],\"payable\":false,\""
-        + "stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs"
-        + "\":[],\"name\":\"testThrow\",\"outputs\":[],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\""
-        + "testRevert\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\""
-        + "type\":\"function\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
+    String contractName = "TestThrowsContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -173,20 +165,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "Throw Exception")
   public void test2TestThrowsContract() {
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest2TestThrowsContract.sol";
     String contractName = "TestThrowsContract";
-    String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f30060806040526004361"
-        + "0605c5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
-        + "632b813bc081146061578063357815c414607557806350bff6bf146075578063a26388bb146075575b60008"
-        + "0fd5b348015606c57600080fd5b5060736087565b005b348015608057600080fd5b506073605c565bfe00a1"
-        + "65627a7a723058209284d2c51e121903dde36db88dae131b1b20dc83b987a6f491dcac2d9b2d30db0029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"testAssert\",\"outputs\":[],\""
-        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant"
-        + "\":false,\"inputs\":[],\"name\":\"testRequire\",\"outputs\":[],\"payable\":false,\""
-        + "stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs"
-        + "\":[],\"name\":\"testThrow\",\"outputs\":[],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\""
-        + "testRevert\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"function\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -247,21 +230,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "Call Revert ")
   public void test3TestRevertContract() {
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest3TestRevertContract.sol";
     String contractName = "TestThrowsContract";
-    String code = "608060405234801561001057600080fd5b5060b58061001f6000396000f3006080604052600436"
-        + "10605c5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504"
-        + "16632b813bc081146061578063357815c414607557806350bff6bf146075578063a26388bb146075575b60"
-        + "0080fd5b348015606c57600080fd5b5060736087565b005b348015608057600080fd5b506073605c565bfe"
-        + "00a165627a7a723058209284d2c51e121903dde36db88dae131b1b20dc83b987a6f491dcac2d9b2d30db0"
-        + "029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"testAssert\",\"outputs\":[],\""
-        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant"
-        + "\":false,\"inputs\":[],\"name\":\"testRequire\",\"outputs\":[],\"payable\":false,\""
-        + "stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\""
-        + ":[],\"name\":\"testThrow\",\"outputs\":[],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\""
-        + "testRevert\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"function\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -322,15 +295,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "No payable function call value")
   public void test4noPayableContract() {
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest4noPayableContract.sol";
     String contractName = "noPayableContract";
-    String code = "6080604052348015600f57600080fd5b5060978061001e6000396000f3006080604052600436106"
-        + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
-        + "2380bf0581146043575b600080fd5b348015604e57600080fd5b5060556067565b604080519182525190819"
-        + "00360200190f35b34905600a165627a7a72305820c15441923f769bff9193db8304db516b768651d3eb0861"
-        + "a38163b3e7e6174ee50029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"noPayable\",\"outputs\":[{\"name"
-        + "\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"function\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -404,12 +373,11 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String contractName = "noPayableConstructor";
-    String code = "6080604052348015600f57600080fd5b506040516020806071833981016040525134811115602c5"
-        + "7600080fd5b600055603580603c6000396000f3006080604052600080fd00a165627a7a72305820cb20f649"
-        + "31c41844749c1571bfc4dfdd268a58ed29b7446dd817ce3c54b014150029";
-    String abi = "[{\"inputs\":[{\"name\":\"_money\",\"type\":\"uint256\"}],\"payable\":false,\""
-        + "stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest5noPayableConstructor.sol";
+    String contractName = "MyContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     final String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             22L, 100, null,
@@ -451,16 +419,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "Transfer failed")
   public void test6transferTestContract() {
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest6transferTestContract.sol";
     String contractName = "transferTestContract";
-    String code = "608060405234801561001057600080fd5b5060d28061001f6000396000f30060806040526004361"
-        + "0603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
-        + "6319b357c581146043575b600080fd5b606273ffffffffffffffffffffffffffffffffffffffff600435166"
-        + "064565b005b60405173ffffffffffffffffffffffffffffffffffffffff821690600090600a908281818185"
-        + "8883f1935050505015801560a2573d6000803e3d6000fd5b50505600a165627a7a7230582078c54bf20a44a"
-        + "5fecf3e03a7e6daf7b712dc71db7ec24840549f1655c55123760029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\""
-        + "name\":\"tranferTest\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable"
-        + "\",\"type\":\"function\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -524,17 +487,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "No payable fallback call value")
   public void test7payableFallbakContract() {
-    String contractName = "payableFallbak";
-    String code = "6080604052348015600f57600080fd5b5060fb8061001e6000396000f3006080604052600436106"
-        + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
-        + "32eb12f181146043575b600080fd5b348015604e57600080fd5b50606e73fffffffffffffffffffffffffff"
-        + "fffffffffffff600435166070565b005b8073ffffffffffffffffffffffffffffffffffffffff1663abcdef"
-        + "016040518163ffffffff167c010000000000000000000000000000000000000000000000000000000002815"
-        + "26004016000604051808303816000875af150505050505600a165627a7a723058202930f27ada1f076de1a8"
-        + "57ded5f8b46ef335b465a8edae1b487947d3d7dedcc30029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"test\",\"type\":\"address\"}],\""
-        + "name\":\"callTest\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable"
-        + "\",\"type\":\"function\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest7payableFallbakContract.sol";
+    String contractName = "Caller";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -542,11 +499,10 @@ public class RequireException {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Integer times = 0;
-    String contractName1 = "TestContract";
-    String code1 = "6080604052348015600f57600080fd5b50604380601d6000396000f3006080604052348015600f"
-        + "57600080fd5b5060016000550000a165627a7a723058205718ecb0cace0afa330fc9447eff8556c5829aeb8"
-        + "256c62364aaf58efa5bd96c0029";
-    String abi1 = "[{\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"fallback\"}]";
+    String contractName1 = "Test";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
     byte[] contractAddress1;
     contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit, 0L,
@@ -609,16 +565,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "New contract gas not enough")
   public void test8newContractGasNoenough() {
-    String contractName = "ContractGasNoenough";
-    String code = "60806040526040516020806100bf83398101604052516000556099806100266000396000f300608"
-        + "060405260043610603e5763ffffffff7c010000000000000000000000000000000000000000000000000000"
-        + "000060003504166396964a2281146043575b600080fd5b348015604e57600080fd5b5060556067565b60408"
-        + "051918252519081900360200190f35b600054815600a165627a7a72305820cb66b6d0ad40d2f5906f6a159f"
-        + "47bc1a0c7b36676df34078edad0671caabd2370029";
-    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"accId\",\"outputs\":[{\"name"
-        + "\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type"
-        + "\":\"function\"},{\"inputs\":[{\"name\":\"accountId\",\"type\":\"uint256\"}],\"payable"
-        + "\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest8newContractGasNoenough.sol";
+    String contractName = "Account";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -626,19 +577,10 @@ public class RequireException {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName1 = "ContractGasNoenough";
-    String code1 = "608060405234801561001057600080fd5b50610182806100206000396000f30060806040526004"
-        + "3610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350"
-        + "41663bf335e6281146043575b600080fd5b348015604e57600080fd5b5060556057565b005b600060016061"
-        + "6088565b90815260405190819003602001906000f0801580156083573d6000803e3d6000fd5b505050565b6"
-        + "0405160bf8061009883390190560060806040526040516020806100bf833981016040525160005560998061"
-        + "00266000396000f300608060405260043610603e5763ffffffff7c010000000000000000000000000000000"
-        + "000000000000000000000000060003504166396964a2281146043575b600080fd5b348015604e57600080fd"
-        + "5b5060556067565b60408051918252519081900360200190f35b600054815600a165627a7a72305820cb66b"
-        + "6d0ad40d2f5906f6a159f47bc1a0c7b36676df34078edad0671caabd2370029a165627a7a72305820b664e1"
-        + "3ade4d346e9d9b848e75b8ded8d382d2ecacd77561561c3d6b189ad13f0029";
-    String abi1 = "[{\"constant\":false,\"inputs\":[],\"name\":\"newAccount\",\"outputs\":[],\""
-        + "payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String contractName1 = "Initialize";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
 
     final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
@@ -699,15 +641,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "Message used error")
   public void test9MessageUsedErrorFeed() {
-    String contractName = "MessageFeed";
-    String code = "6080604052348015600f57600080fd5b50609c8061001e6000396000f300608060405260043610"
-        + "603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416"
-        + "639138fd4c81146043575b600080fd5b348015604e57600080fd5b5060556067565b604080519182525190"
-        + "81900360200190f35b60006001818082fe00a165627a7a72305820ebb23e69381b99dba3118ec3b715d619"
-        + "ca395ecfd88820f7e5338579530fb54f0029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"divideMathed\",\"outputs\":"
-        + "[{\"name\":\"ret\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"function\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest9MessageUsedErrorFeed.sol";
+    String contractName = "MathedFeed";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -716,19 +654,10 @@ public class RequireException {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    String contractName1 = "MessageUseContract";
-    String code1 = "608060405234801561001057600080fd5b50610149806100206000396000f30060806040526004"
-        + "36106100405763ffffffff7c010000000000000000000000000000000000000000000000000000000060003"
-        + "5041663ff04eb898114610045575b600080fd5b34801561005157600080fd5b5061007373ffffffffffffff"
-        + "ffffffffffffffffffffffffff60043516610085565b60408051918252519081900360200190f35b600081"
-        + "73ffffffffffffffffffffffffffffffffffffffff16639138fd4c6040518163ffffffff167c0100000000"
-        + "000000000000000000000000000000000000000000000000028152600401602060405180830381600087803"
-        + "b1580156100eb57600080fd5b505af11580156100ff573d6000803e3d6000fd5b505050506040513d602081"
-        + "101561011557600080fd5b5051929150505600a165627a7a72305820733f086bcd980c277618750fe75cdd8"
-        + "c6faf8f0b01de9521ac9531e8ec3589030029";
-    String abi1 = "[{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}]"
-        + ",\"name\":\"MathedUse\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable"
-        + "\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String contractName1 = "MathedUseContract";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
 
     final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
@@ -788,14 +717,11 @@ public class RequireException {
 
   @Test(enabled = true, description = "Function used error")
   public void testFunctionUsedErrorFeed() {
-    String contractName = "FunctionFeed";
-    String code = "6080604052348015600f57600080fd5b50608b8061001e6000396000f3006080604052600436106"
-        + "03e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663"
-        + "19e1aef981146043575b600080fd5b6049605b565b60408051918252519081900360200190f35b34905600a"
-        + "165627a7a7230582058a5ea8675d6e5710e5b539601c5567f746c197c90a6d6c2fa4626bfd6c107b30029";
-    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"mValue\",\"outputs\":[{\"name\":"
-        + "\"ret\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\""
-        + "type\":\"function\"}]";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontestFunctionUsedErrorFeed.sol";
+    String contractName = "MessageFeed";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForAssetIssue016,
         asset016Address, blockingStubFull);
@@ -805,19 +731,10 @@ public class RequireException {
 
     final String saleContractString = "\"" + Base58.encode58Check(contractAddress) + "\"";
 
-    String contractName1 = "FunctionUseContract";
-    String code1 = "608060405234801561001057600080fd5b5061013f806100206000396000f3006080604052600"
-        + "436106100405763ffffffff7c0100000000000000000000000000000000000000000000000000000000600"
-        + "0350416637b77267a8114610045575b600080fd5b61006673fffffffffffffffffffffffffffffffffffff"
-        + "fff60043516610078565b60408051918252519081900360200190f35b60008173fffffffffffffffffffff"
-        + "fffffffffffffffffff166319e1aef960016040518263ffffffff167c01000000000000000000000000000"
-        + "00000000000000000000000000000028152600401602060405180830381600088803b1580156100e057600"
-        + "080fd5b5087f11580156100f4573d6000803e3d6000fd5b50505050506040513d602081101561010b57600"
-        + "080fd5b5051929150505600a165627a7a723058207dcdb1b3c42bfc00674f226c36b1bbf2ee54a6a6ae6f"
-        + "2eeace876b0370d83f5b0029";
-    String abi1 = "[{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],"
-        + "\"name\":\"messageUse\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable"
-        + "\":true,\"stateMutability\":\"payable\",\"type\":\"function\"}]";
+    String contractName1 = "MessageUseContract";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
     final byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit, 0L,
             100, null, testKeyForAssetIssue016,

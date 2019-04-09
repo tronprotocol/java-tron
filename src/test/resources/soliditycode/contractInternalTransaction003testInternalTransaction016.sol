@@ -3,6 +3,7 @@
     contract A{
         uint256 public num = 0;
         constructor() public payable{}
+        function () payable external{}
         function transfer()  payable public{
             (new B).value(1)();//1
             (new B).value(1)();//1
@@ -70,20 +71,9 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
             B  b1=(new B).value(1)();//1
-            b1.selfdestruct(address(this));
+            address payable aaa=address(this);
+            b1.suicide1(aaa);
         }
         function transfer2()  payable public{
             (new B).value(1)();//1
@@ -153,22 +143,11 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
             B  b1=(new B).value(1)();//1
-            b1.selfdestruct(address(this));
+            address payable aaa=address(this);
+            b1.suicide1(aaa);
         }
-        function getBalance() public returns(uint256){
+        function getBalance() public  returns(uint256){
             return address(this).balance;
         }
     }
@@ -188,7 +167,7 @@
             return address(this).balance;
         }
         function () payable external{}
-        function selfdestruct(address toAddress) public payable{
+        function suicide1(address payable toAddress) public payable{
         selfdestruct(toAddress);
     }
     }

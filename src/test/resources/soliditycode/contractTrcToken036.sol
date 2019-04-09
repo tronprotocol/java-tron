@@ -42,7 +42,7 @@ contract IllegalDecorate3 {
 event log(uint256);
 constructor() payable public{}
 function() payable external{}
-function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue) public payable{
+function transferTokenWithOutPayable(address payable toAddress, uint256 tokenValue) public {
 emit log(msg.value);
 emit log(msg.tokenvalue);
 emit log(msg.tokenid);

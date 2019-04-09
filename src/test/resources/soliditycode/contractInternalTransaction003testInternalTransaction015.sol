@@ -10,7 +10,7 @@ contract A{
         // E  e1 = (new E).value(1)();//1.2
     }
     function test2(address cAddress,uint256 amount) public payable{
-        cAddress.call.value(amount)(abi.encode(bytes4(keccak256("newBAndTransfer()"))));//2.1
+        cAddress.call.value(amount)(abi.encodeWithSignature("newBAndTransfer()"));//2.1
     }
 }
 
@@ -22,7 +22,7 @@ contract B{
     }
     function testNN(address dAddress,uint256 amount,address eAddress) public payable{
         // D d1=(new D)();
-        dAddress.call.value(amount)(abi.encode(bytes4(keccak256("getOne(address)")),address(this)));//2.1
+        dAddress.call.value(amount)(abi.encodeWithSignature("getOne(address)",address(this)));//2.1
     }
 }
 

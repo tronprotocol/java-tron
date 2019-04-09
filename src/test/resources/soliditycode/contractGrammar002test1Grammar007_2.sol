@@ -1,7 +1,7 @@
 //pragma solidity ^0.4.19;
 contract Doug{
  mapping (bytes32 => uint) public contracts;
- constructor() public {
+ constructor() public{
  contracts['hww'] = 1;
  contracts['brian'] = 2;
  contracts['zzy'] = 7;
@@ -24,16 +24,21 @@ contract main{
 
  event FetchContract(address dogInterfaceAddress, address sender, bytes32 name);
 
- address DOUG;
+ address public DOUG;
 
- address payable dogInterfaceAddress = 0x7cDfa76B1C4566259734353C05af2Eac2959714A;
- DogInterface dogContract = DogInterface(dogInterfaceAddress);
+ address dogInterfaceAddress;
+ DogInterface dogContract ;
 
- function setDOUG(address _doug) public {
+ function setDOUG(address _doug) public  {
  DOUG = _doug;
  }
 
- function dougOfage(uint _age) public payable returns(uint) {
+ constructor(address addr) public{
+     dogInterfaceAddress = addr;
+     dogContract = DogInterface(dogInterfaceAddress);
+ }
+
+ function dougOfage(uint _age) public  returns(uint) {
 
  uint num = dogContract.getDougAge(_age);
  return _age+num;

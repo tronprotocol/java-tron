@@ -2,7 +2,7 @@
 
 contract A{
     constructor () payable public{}
-    function selfdestruct(address toAddress) public payable{
+    function test(address payable  toAddress) public payable{
         selfdestruct(toAddress);
     }
     function () payable external{}
@@ -11,12 +11,13 @@ contract A{
     }
 }
 contract B{
+    function() external payable{}
     function kill(address contractAddres, address toAddress) payable public {
-        contractAddres.call(abi.encode(bytes4(keccak256("suicide(address)")),address(this)));
+        contractAddres.call(abi.encodeWithSignature("test(address)",address(this)));
     }
     function kill2() public{
         A a = new A();
-        a.selfdestruct(address(this));
+        a.test(address(this));
     }
     function getBalance() public view returns(uint256){
         return address(this).balance;
