@@ -22,9 +22,7 @@ public class EventLoaderTest {
     blockTriggerConfig.setTopic("block");
     triggerConfigList.add(blockTriggerConfig);
 
-
     config.setTriggerConfigList(triggerConfigList);
-
 
     Assert.assertEquals(true,EventPluginLoader.getInstance().start(config));
 

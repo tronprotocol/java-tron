@@ -16,7 +16,6 @@ public class NativeMessageQueueTest {
   public void publishTrigger(){
 
     int sendLength = 0;
-
     boolean bRet = NativeMessageQueue.getInstance().start(bindPort, sendLength);
     Assert.assertEquals(true, bRet);
 
