@@ -202,6 +202,24 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
           break;
         }
+        case (24): {
+          if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
+          }
+          break;
+        }
+        case (25): {
+          manager.getDynamicPropertiesStore().saveDeferredTransactionFee(entry.getValue());
+          break;
+        }
+        case (26): {
+          manager.getDynamicPropertiesStore().saveCancelDeferredTransactionFee(entry.getValue());
+          break;
+        }
+        case (27): {
+          manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
+          break;
+        }
         case (29): {
           manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
           break;

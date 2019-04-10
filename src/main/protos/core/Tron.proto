@@ -236,6 +236,11 @@ message ResourceReceipt {
   Transaction.Result.contractResult result = 7;
 }
 
+message DeferredStage {
+  int64 delaySeconds = 1;
+  int32 stage = 2;
+}
+
 message Transaction {
   message Contract {
     enum ContractType {
@@ -272,6 +277,7 @@ message Transaction {
       ExchangeTransactionContract = 44;
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
+      CancelDeferredTransactionContract = 47;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -328,6 +334,7 @@ message Transaction {
     bytes scripts = 12;
     int64 timestamp = 14;
     int64 fee_limit = 18;
+    DeferredStage deferredStage = 19;
   }
 
   raw raw_data = 1;
@@ -365,6 +372,17 @@ message TransactionInfo {
   int64 exchange_inject_another_amount = 19;
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
+}
+
+message DeferredTransaction {
+  bytes transactionId = 1;
+  int64 publishTime = 2;
+  int64 delaySeconds = 3;
+  int64 delayUntil = 4;
+  int64 expiration = 5;
+  bytes senderAddress = 6;
+  bytes receiverAddress = 7;
+  Transaction transaction = 8;
 }
 
 message Transactions {

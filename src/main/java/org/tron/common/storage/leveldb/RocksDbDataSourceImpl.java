@@ -10,12 +10,14 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.DBIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
@@ -31,6 +33,7 @@ import org.rocksdb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.iterator.RockStoreIterator;
@@ -481,6 +484,33 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
         result.add(iter.value());
+      }
+      return result;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getPrevious(byte[] key, long limit, int precision) {
+    if (quitIfNotAlive()) {
+      return null;
+    }
+    if (limit <= 0 || key.length < precision) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iterator = database.newIterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seekToFirst(); iterator.isValid() && i++ < limit; iterator.next()) {
+
+        if (iterator.key().length >= precision) {
+          if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
+              ByteUtil.parseBytes(iterator.key(), 0, precision))) {
+            break;
+          }
+          result.put(iterator.key(), iterator.value());
+        }
       }
       return result;
     } finally {
