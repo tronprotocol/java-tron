@@ -42,7 +42,6 @@ public class contractTest {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -128,7 +127,7 @@ public class contractTest {
     Long netFee = infoById.get().getReceipt().getNetFee();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
-
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
 
 

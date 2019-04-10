@@ -89,7 +89,7 @@ public class contractToMathedFeed {
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
     String contractName = "ToMathedFeed";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -182,8 +182,6 @@ public class contractToMathedFeed {
     Long fee = infoById.get().getFee();
 
     Long netFee = infoById.get().getReceipt().getNetFee();
-    Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
-    Assert.assertTrue(0 == vaule1);
     String note = ByteArray
                 .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
     Assert.assertEquals("call", note);
@@ -246,8 +244,6 @@ public class contractToMathedFeed {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
-    Long vaule1 = infoById.get().getInternalTransactions(0).getCallValueInfo(0).getCallValue();
-    Assert.assertTrue(0 == vaule1);
     String note = ByteArray
             .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
     Assert.assertEquals("call", note);

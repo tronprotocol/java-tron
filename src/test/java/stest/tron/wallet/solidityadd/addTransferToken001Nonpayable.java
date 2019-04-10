@@ -146,17 +146,18 @@ public class addTransferToken001Nonpayable {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
-    String tokenvalue = "10";
+    Long tokenvalue = 10L;
     String tokenid = assetAccountId.toStringUtf8();
-
+    Long beforecontractAssetCount = PublicMethed.getAssetIssueValue(contractAddress,
+            assetAccountId, blockingStubFull);
+    Long beforeAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
+            assetAccountId, blockingStubFull);
     logger.info("tokenId: {}", tokenid);
-
 
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\" ,\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-                "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,
-                0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+                "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,0,maxFeeLimit,assetAccountId.toStringUtf8(),10, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<Protocol.TransactionInfo> infoById = null;
@@ -167,6 +168,17 @@ public class addTransferToken001Nonpayable {
     Long netFee = infoById.get().getReceipt().getNetFee();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long AftercontractAssetCount = PublicMethed.getAssetIssueValue(contractAddress,
+            assetAccountId, blockingStubFull);
+    Long AfterAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
+            assetAccountId, blockingStubFull);
+
+    logger.info("contractAssetCountcontractAssetCount"+AftercontractAssetCount);
+//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount + tokenvalue);
+//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue);
+    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount);
+    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
 
 
