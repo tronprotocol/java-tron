@@ -351,7 +351,7 @@ message Note {
   bytes value = 1;
   bytes d = 2;
   bytes pk_d = 3;
-  bytes r = 4;
+  bytes rcm = 4;
 }
 
 message SpendStatement {
@@ -360,7 +360,7 @@ message SpendStatement {
   Note note = 3;
   bytes alpha = 4;
   bytes anchor = 5;
-  bytes witness = 6;
+  bytes path = 6;
 }
 
 message OutputStatement {
@@ -369,31 +369,31 @@ message OutputStatement {
 }
 
 message SpendDescription {
-  bytes cv = 1;
+  bytes value_commitment = 1;
   bytes anchor = 2;
   bytes nullifier = 3;
   bytes rk = 4;
   bytes zkproof = 5;
-  bytes spendAuthSig = 6;
+  bytes spend_authority_sign = 6;
 }
 
 message OutputDescription {
-  bytes cv = 1;
-  bytes cm = 2;
+  bytes value_commitment = 1;
+  bytes note_commitment = 2;
   bytes epk = 3;
   bytes c_enc = 4;
   bytes c_out = 5;
   bytes zkproof = 6;
 }
 
-message ShieldedTransactionContract {
-  bytes t_from_address = 1; //transparent address
+message ShieldedTransferContract {
+  bytes transparent_from_address = 1; //transparent address
   bytes from_amount = 2;
-  repeated SpendDescription shieldedSpend = 3;
-  repeated OutputDescription shieldedOutput = 4;
-  bytes bindingSig = 5;
-  bytes valueBalance = 6;
-  bytes t_to_address = 7; //transparent address
+  repeated SpendDescription spend_description = 3;
+  repeated OutputDescription output_description = 4;
+  bytes binding_sign = 5;
+  bytes value_balance = 6;
+  bytes transparent_to_address = 7; //transparent address
   bytes to_amount = 8; //the amount to transparent to_address
 }
 // end shielded transaction
