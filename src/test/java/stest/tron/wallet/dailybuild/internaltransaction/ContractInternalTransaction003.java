@@ -301,7 +301,7 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName1 = "B";
+    String contractName1 = "D";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
