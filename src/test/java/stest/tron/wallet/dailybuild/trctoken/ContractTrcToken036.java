@@ -79,7 +79,7 @@ public class ContractTrcToken036 {
   }
 
 
-  @Test(enabled = true, description = "Deploy contract")
+  @Test(enabled = false, description = "Deploy contract")
   public void deploy01TransferTokenContract() {
 
     Assert
@@ -115,32 +115,32 @@ public class ContractTrcToken036 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // deploy transferTokenContract
-    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
-    String contractName = "IllegalDecorate";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    transferTokenContractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 0, originEnergyLimit, "0",
-            0, null, dev001Key, dev001Address,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    // devAddress transfer token to userAddress
-    PublicMethed
-        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-            dev001Address,
-            dev001Key,
-            blockingStubFull);
-    Assert
-        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 100, fromAddress,
-            testKey002, blockingStubFull));
+//    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
+//    String contractName = "IllegalDecorate";
+//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+//    String code = retMap.get("byteCode").toString();
+//    String abi = retMap.get("abI").toString();
+//    transferTokenContractAddress = PublicMethed
+//        .deployContract(contractName, abi, code, "", maxFeeLimit,
+//            0L, 0, originEnergyLimit, "0",
+//            0, null, dev001Key, dev001Address,
+//            blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//
+//    // devAddress transfer token to userAddress
+//    PublicMethed
+//        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
+//            dev001Address,
+//            dev001Key,
+//            blockingStubFull);
+//    Assert
+//        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 100, fromAddress,
+//            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Trigger transferTokenWithPure contract")
+  @Test(enabled = false, description = "Trigger transferTokenWithPure contract")
   public void deploy02TransferTokenContract() {
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(dev001Address,
@@ -246,7 +246,7 @@ public class ContractTrcToken036 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Trigger transferTokenWithConstant contract")
+  @Test(enabled = false, description = "Trigger transferTokenWithConstant contract")
   public void deploy03TransferTokenContract() {
     Account info1;
     AccountResourceMessage resourceInfo1 = PublicMethed.getAccountResource(dev001Address,
@@ -328,7 +328,7 @@ public class ContractTrcToken036 {
     Assert.assertEquals(user001AddressAddressBalance1, afteruser001AddressAddressBalance1);
   }
 
-  @Test(enabled = true, description = "Trigger transferTokenWithView contract")
+  @Test(enabled = false, description = "Trigger transferTokenWithView contract")
   public void deploy04TransferTokenContract() {
     String filePath2 = "src/test/resources/soliditycode/contractTrcToken036.sol";
     String contractName2 = "IllegalDecorate2";
@@ -424,7 +424,7 @@ public class ContractTrcToken036 {
     Assert.assertEquals(user001AddressAddressBalance2, afteruser001AddressAddressBalance2);
   }
 
-  @Test(enabled = true, description = "Trigger transferTokenWithNoPayable contract")
+  @Test(enabled = false, description = "Trigger transferTokenWithNoPayable contract")
   public void deploy05TransferTokenContract() {
     String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
     String contractName3 = "IllegalDecorate3";

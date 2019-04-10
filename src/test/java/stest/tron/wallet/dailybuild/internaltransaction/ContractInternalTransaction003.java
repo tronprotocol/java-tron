@@ -301,7 +301,7 @@ public class ContractInternalTransaction003 {
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName1 = "D";
+    String contractName1 = "B";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -450,7 +450,7 @@ public class ContractInternalTransaction003 {
     dupInternalTrsansactionHash(infoById.get().getInternalTransactionsList());
   }
 
-  @Test(enabled = false, description = "Test maxfeelimit can trigger call create call max time")
+  @Test(enabled = true, description = "Test maxfeelimit can trigger call create call max time")
   public void testInternalTransaction018() {
     Assert.assertTrue(PublicMethed
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
@@ -470,7 +470,7 @@ public class ContractInternalTransaction003 {
         internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName1 = "B";
-    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName);
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
 
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -495,20 +495,21 @@ public class ContractInternalTransaction003 {
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1)
         + "\",\"" + Base58.encode58Check(contractAddress2) + "\"";
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "test1(address,address)", initParmes, false,
-        0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
+        100000, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     int transactionsCount = infoById.get().getInternalTransactionsCount();
-    Assert.assertEquals(388, transactionsCount);
+    Assert.assertEquals(184, transactionsCount);
     for (int i = 0; i < transactionsCount; i++) {
       Assert.assertFalse(infoById.get().getInternalTransactions(i).getRejected());
     }
@@ -531,7 +532,7 @@ public class ContractInternalTransaction003 {
     Assert.assertEquals("call", note2);
     Assert.assertEquals("call", note3);
     Assert.assertTrue(1 == vaule1);
-    Assert.assertTrue(1000 == vaule2);
+    Assert.assertTrue(100 == vaule2);
     Assert.assertTrue(0 == vaule3);
     Assert.assertTrue(1 == vaule4);
 
