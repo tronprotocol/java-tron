@@ -354,19 +354,19 @@ message Note {
   bytes r = 4;
 }
 
-//message SpendStatement {
-//  bytes ak = 1;
-//  bytes nsk = 2;
-//  Note note = 3;
-//  bytes alpha = 4;
-//  bytes anchor = 5;
-//  bytes witness = 6;
-//}
-//
-//message OutputStatement {
-//  bytes esk = 1;
-//  Note note = 2;
-//}
+message SpendStatement {
+  bytes ak = 1;
+  bytes nsk = 2;
+  Note note = 3;
+  bytes alpha = 4;
+  bytes anchor = 5;
+  bytes witness = 6;
+}
+
+message OutputStatement {
+  bytes esk = 1;
+  Note note = 2;
+}
 
 message SpendDescription {
   bytes cv = 1;
