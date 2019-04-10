@@ -90,6 +90,7 @@ public class WithdrawBalance2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : witnessAccount does not have any allowance");
   }
+
   /**
    * constructor.
    */
@@ -104,6 +105,7 @@ public class WithdrawBalance2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -138,6 +140,7 @@ public class WithdrawBalance2Test {
     return true;
 
   }
+
   /**
    * constructor.
    */
@@ -185,6 +188,7 @@ public class WithdrawBalance2Test {
     return ret;
 
   }
+
   /**
    * constructor.
    */
@@ -246,6 +250,7 @@ public class WithdrawBalance2Test {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -273,6 +278,7 @@ public class WithdrawBalance2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -282,6 +288,7 @@ public class WithdrawBalance2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

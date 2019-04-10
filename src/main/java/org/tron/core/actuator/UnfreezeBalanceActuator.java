@@ -48,7 +48,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     long oldBalance = accountCapsule.getBalance();
 
-    long unfreezeBalance = 0L;;
+    long unfreezeBalance = 0L;
+    ;
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
     //If the receiver is not included in the contract, unfreeze frozen balance for this account.
@@ -167,7 +168,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         dbManager.getDynamicPropertiesStore()
             .addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
         break;
-        default:
+      default:
         //this should never happen
         break;
     }
@@ -185,7 +186,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
 
     dbManager.getVotesStore().put(ownerAddress, votesCapsule);
-
 
     ret.setUnfreezeAmount(unfreezeBalance);
     ret.setStatus(fee, code.SUCESS);

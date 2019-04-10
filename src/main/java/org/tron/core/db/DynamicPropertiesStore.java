@@ -427,8 +427,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveMultiSignFee(1000000L);
     }
 
-
-
     try {
       this.getExchangeCreateFee();
     } catch (IllegalArgumentException e) {
@@ -462,7 +460,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTotalStoragePool();
     } catch (IllegalArgumentException e) {
-      this.saveTotalStoragePool(100_000_000_000000L);
+      this.saveTotalStoragePool(100_000_000_000_000L);
     }
 
     try {
@@ -516,7 +514,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       byte[] bytes = ByteArray.fromHexString(contractType);
       this.saveActiveDefaultOperations(bytes);
     }
-
 
     try {
       this.getAllowSameTokenName();
@@ -1103,19 +1100,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-
   public void saveZksnarkTransactionFee(long fee) {
     this.put(ZKSNARK_TRANSACTION_FEE,
-            new BytesCapsule(ByteArray.fromLong(fee)));
+        new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
   public long getZksnarkTransactionFee() {
     return Optional.ofNullable(getUnchecked(ZKSNARK_TRANSACTION_FEE))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ZKSNARK_TRANSACTION_FEE"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ZKSNARK_TRANSACTION_FEE"));
   }
+
 
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
@@ -1312,7 +1309,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-
   public boolean supportDR() {
     return getAllowDelegateResource() == 1L;
   }
@@ -1388,15 +1384,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAllowZksnarkTransaction(long allowZkSnarkTransaction) {
     this.put(DynamicPropertiesStore.ALLOW_ZKSNARK_TRANSACTION,
-            new BytesCapsule(ByteArray.fromLong(allowZkSnarkTransaction)));
+        new BytesCapsule(ByteArray.fromLong(allowZkSnarkTransaction)));
   }
 
   public long getAllowZksnarkTransaction() {
     return Optional.ofNullable(getUnchecked(ALLOW_ZKSNARK_TRANSACTION))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
   }
 
   public boolean supportZKSnarkTransaction() {

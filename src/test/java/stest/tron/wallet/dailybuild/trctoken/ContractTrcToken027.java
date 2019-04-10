@@ -393,7 +393,8 @@ public class ContractTrcToken027 {
   }
 
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken token value not enough")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken token value"
+      + " not enough")
   public void deploy04TransferTokenContract() {
     //4. user trigger A to transfer token to B
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -489,7 +490,8 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress1 == afterAssetIssueCAddress2);
   }
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken ID not exist")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken ID"
+      + " not exist")
   public void deploy05TransferTokenContract() {
     Account infoafter2 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter2 = PublicMethed.getAccountResource(dev001Address,
@@ -586,7 +588,8 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress2 == afterAssetIssueCAddress3);
   }
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken value not enough")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken calltoken value "
+      + "not enough")
   public void deploy06TransferTokenContract() {
     Account infoafter3 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter3 = PublicMethed.getAccountResource(dev001Address,
@@ -683,7 +686,8 @@ public class ContractTrcToken027 {
     Assert.assertTrue(afterAssetIssueCAddress3 == afterAssetIssueCAddress4);
   }
 
-  @Test(enabled = true, description = "Multistage delegatecall transferToken use right tokenID,tokenvalue")
+  @Test(enabled = true, description = "Multistage delegatecall transferToken use right tokenID,"
+      + "tokenvalue")
   public void deploy07TransferTokenContract() {
     Account infoafter4 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter4 = PublicMethed.getAccountResource(dev001Address,

@@ -84,7 +84,6 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
 
-
   public boolean useEnergy(AccountCapsule accountCapsule, long energy, long now) {
 
     long energyUsage = accountCapsule.getEnergyUsage();

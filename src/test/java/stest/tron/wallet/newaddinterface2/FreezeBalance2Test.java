@@ -138,6 +138,7 @@ public class FreezeBalance2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : no frozenBalance");
   }
+
   /**
    * constructor.
    */
@@ -151,6 +152,7 @@ public class FreezeBalance2Test {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -232,6 +234,7 @@ public class FreezeBalance2Test {
 
 
   }
+
   /**
    * constructor.
    */
@@ -329,6 +332,7 @@ public class FreezeBalance2Test {
 
 
   }
+
   /**
    * constructor.
    */
@@ -424,6 +428,7 @@ public class FreezeBalance2Test {
     }
     return ret;
   }
+
   /**
    * constructor.
    */
@@ -451,6 +456,7 @@ public class FreezeBalance2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -460,6 +466,7 @@ public class FreezeBalance2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

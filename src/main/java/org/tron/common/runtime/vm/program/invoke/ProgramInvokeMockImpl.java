@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program.invoke;
 
+import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
@@ -45,7 +46,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
-    this.msgData = msgDataRaw;
+    this.msgData = Arrays.clone(msgDataRaw);
   }
 
   private long energyLimit = 50;
@@ -105,8 +106,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
 
   /*          CALLVALUE op    */
   public DataWord getCallValue() {
-    byte[] balance = Hex.decode("0DE0B6B3A7640000");
-    return new DataWord(balance);
+    return getBalance();
   }
 
   @Override
@@ -213,7 +213,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   public void setOwnerAddress(byte[] ownerAddress) {
-    this.ownerAddress = ownerAddress;
+    this.ownerAddress = Arrays.clone(ownerAddress);
   }
 
   @Override

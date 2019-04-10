@@ -17,6 +17,7 @@ public class Configuration {
   private static Config config;
 
   private static final Logger logger = LoggerFactory.getLogger("Configuration");
+
   /**
    * constructor.
    */

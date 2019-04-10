@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class Trigger {
+
   @Getter
   @Setter
   protected long timeStamp;

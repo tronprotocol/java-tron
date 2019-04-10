@@ -125,8 +125,9 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
@@ -166,7 +167,9 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetService tronNetService;
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -434,7 +437,8 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance().getTrxExpirationTimeInMilliseconds();
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -453,14 +457,14 @@ public class Wallet {
 
     try {
       if (minEffectiveConnection != 0) {
-        if (p2pNode.getActivePeer().isEmpty()) {
+        if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
         }
 
-        int count = (int) p2pNode.getActivePeer().stream()
+        int count = (int) tronNetDelegate.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
             .count();
 
@@ -495,7 +499,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
@@ -599,7 +603,7 @@ public class Wallet {
           throw new PermissionException("Permission type is error");
         }
         //check oprations
-        if (!checkPermissionOprations(permission, contract)){
+        if (!checkPermissionOprations(permission, contract)) {
           throw new PermissionException("Permission denied");
         }
       }
@@ -1686,7 +1690,8 @@ public class Wallet {
       Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
           new ProgramInvokeFactoryImpl(), true);
       VMConfig.initVmHardFork();
-      VMConfig.initAllowTvmTransferTrc10(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+      VMConfig.initAllowTvmTransferTrc10(
+          dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
       VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
       runtime.execute();
       runtime.go();

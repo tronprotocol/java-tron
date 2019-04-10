@@ -41,7 +41,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? dbManager.getAccountStore().
-        get(withdrawBalanceContract.getOwnerAddress().toByteArray()) : getDeposit().getAccount(withdrawBalanceContract.getOwnerAddress().toByteArray());
+        get(withdrawBalanceContract.getOwnerAddress().toByteArray())
+        : getDeposit().getAccount(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
@@ -53,10 +54,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         .build());
     if (Objects.isNull(getDeposit())) {
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    }
-    else{
+    } else {
       // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(),accountCapsule);
+      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
     }
 
     ret.setWithdrawAmount(allowance);
@@ -90,7 +90,9 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    AccountCapsule accountCapsule = Objects.isNull(getDeposit()) ? dbManager.getAccountStore().get(ownerAddress) : getDeposit().getAccount(ownerAddress);
+    AccountCapsule accountCapsule =
+        Objects.isNull(getDeposit()) ? dbManager.getAccountStore().get(ownerAddress)
+            : getDeposit().getAccount(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -115,7 +117,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     long now = dbManager.getHeadBlockTimeStamp();
     long witnessAllowanceFrozenTime = Objects.isNull(getDeposit()) ?
         dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L :
-        getDeposit().getWitnessAllowanceFrozenTime() * 86_400_000L ;
+        getDeposit().getWitnessAllowanceFrozenTime() * 86_400_000L;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "

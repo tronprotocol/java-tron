@@ -67,7 +67,6 @@ public class StorageMarket {
         balance * (Math.pow(1.0 + (double) supplyQuant / supply, 2000.0) - 1.0);
     logger.info("exchangeBalance: " + exchangeBalance);
     long out = (long) exchangeBalance;
-    long newBalance = balance - out;
 
     if (isTRX) {
       out = Math.round(exchangeBalance / 100000) * 100000;

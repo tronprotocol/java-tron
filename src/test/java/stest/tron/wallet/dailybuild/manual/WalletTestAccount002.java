@@ -24,6 +24,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount002 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -83,6 +84,7 @@ public class WalletTestAccount002 {
 
 
     }*/
+
   /**
    * constructor.
    */
@@ -103,6 +105,7 @@ public class WalletTestAccount002 {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
+
   /**
    * constructor.
    */
@@ -139,6 +142,7 @@ public class WalletTestAccount002 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -148,6 +152,7 @@ public class WalletTestAccount002 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

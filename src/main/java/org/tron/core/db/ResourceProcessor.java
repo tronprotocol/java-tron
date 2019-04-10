@@ -55,10 +55,6 @@ abstract class ResourceProcessor {
     return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
   }
 
-  private long getUsage(long usage) {
-    return usage * windowSize / precision;
-  }
-
   private long getUsage(long usage, long windowSize) {
     return usage * windowSize / precision;
   }

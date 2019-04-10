@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static java.lang.Math.max;
+import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -39,7 +40,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.storage.DBSettings;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -142,6 +143,10 @@ public class Args {
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
+  @Parameter(names = {"--fast-forward"})
+  private boolean fastForward = false;
+
+  @Getter
   private Storage storage;
 
   @Getter
@@ -184,6 +189,10 @@ public class Args {
   @Getter
   @Setter
   private List<Node> passiveNodes;
+
+  @Getter
+  @Setter
+  private List<Node> fastForwardNodes;
 
   @Getter
   @Setter
@@ -436,7 +445,10 @@ public class Args {
   private DbBackupConfig dbBackupConfig;
 
   @Getter
-  private DBSettings rocksDBCustomSettings;
+  private RocksDbSettings rocksDBCustomSettings;
+
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  private boolean version;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -467,6 +479,7 @@ public class Args {
     INSTANCE.nodeConnectionTimeout = 0;
     INSTANCE.activeNodes = Collections.emptyList();
     INSTANCE.passiveNodes = Collections.emptyList();
+    INSTANCE.fastForwardNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 30;
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
@@ -517,6 +530,11 @@ public class Args {
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    if (INSTANCE.version) {
+      JCommander.getConsole().println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
@@ -587,11 +605,11 @@ public class Args {
           } catch (IOException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           } catch (CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           }
         }
       }
@@ -629,7 +647,7 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
-    if (INSTANCE.storage.getDbEngine().toUpperCase().equals("ROCKSDB")
+    if ("ROCKSDB".equals(INSTANCE.storage.getDbEngine().toUpperCase())
         && INSTANCE.storage.getDbVersion() == 1) {
       throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
     }
@@ -696,6 +714,8 @@ public class Args {
     INSTANCE.activeNodes = getNodes(config, "node.active");
 
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
+
+    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
@@ -887,7 +907,7 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
-    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+    if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -1184,8 +1204,6 @@ public class Args {
         ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
     double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
         ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
-    String compressionStr = config.hasPath(prefix + "compressionTypeListStr")
-        ? config.getString(prefix + "compressionTypeListStr") : "no:no:lz4:lz4:lz4:zstd:zstd";
     int level0FileNumCompactionTrigger =
         config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
             .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
@@ -1194,11 +1212,11 @@ public class Args {
     int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
         .getInt(prefix + "targetFileSizeMultiplier") : 1;
 
-    INSTANCE.rocksDBCustomSettings = DBSettings
+    INSTANCE.rocksDBCustomSettings = RocksDbSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
-            maxBytesForLevelMultiplier, compressionStr, level0FileNumCompactionTrigger,
+            maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
             targetFileSizeBase, targetFileSizeMultiplier);
-    DBSettings.loggingSettings();
+    RocksDbSettings.loggingSettings();
   }
 
   private static void initRocksDbBackupProperty(Config config) {
@@ -1247,6 +1265,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("Version name: {}", Version.versionName);
+    logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("DB engine : {}", args.getStorage().getDbEngine());

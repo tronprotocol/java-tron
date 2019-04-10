@@ -151,12 +151,12 @@ public class WitnessController {
   public boolean validateWitnessSchedule(BlockCapsule block) {
 
     ByteString witnessAddress = block.getInstance().getBlockHeader().getRawData()
-            .getWitnessAddress();
+        .getWitnessAddress();
     long timeStamp = block.getTimeStamp();
-    return validateWitnessSchedule(witnessAddress,timeStamp);
+    return validateWitnessSchedule(witnessAddress, timeStamp);
   }
 
-  public boolean validateWitnessSchedule(ByteString witnessAddress,long timeStamp) {
+  public boolean validateWitnessSchedule(ByteString witnessAddress, long timeStamp) {
 
     //to deal with other condition later
     if (manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
@@ -294,7 +294,6 @@ public class WitnessController {
         }
       });
 
-
       sizeCount++;
       votesStore.delete(next.getKey());
     }
@@ -382,14 +381,15 @@ public class WitnessController {
     }
   }
 
-  public void tryRemoveThePowerOfTheGr(){
-    if(manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 1){
+  public void tryRemoveThePowerOfTheGr() {
+    if (manager.getDynamicPropertiesStore().getRemoveThePowerOfTheGr() == 1) {
 
       WitnessStore witnessStore = manager.getWitnessStore();
 
       Args.getInstance().getGenesisBlock().getWitnesses().forEach(witnessInGenesisBlock -> {
         WitnessCapsule witnessCapsule = witnessStore.get(witnessInGenesisBlock.getAddress());
-        witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() - witnessInGenesisBlock.getVoteCount());
+        witnessCapsule
+            .setVoteCount(witnessCapsule.getVoteCount() - witnessInGenesisBlock.getVoteCount());
 
         witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
       });

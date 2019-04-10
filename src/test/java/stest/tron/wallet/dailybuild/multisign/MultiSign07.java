@@ -570,7 +570,6 @@ public class MultiSign07 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getOwnerPermission()));
 
-
     logger.info("** trigger a normal transaction");
     Assert.assertTrue(PublicMethedForMutiSign
         .sendcoinWithPermissionId(fromAddress, 1_000000, ownerAddress, 2, ownerKey,

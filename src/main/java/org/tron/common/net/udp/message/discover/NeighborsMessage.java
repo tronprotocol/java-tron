@@ -17,7 +17,7 @@ public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] data) throws Exception{
+  public NeighborsMessage(byte[] data) throws Exception {
     super(DISCOVER_NEIGHBORS, data);
     this.neighbours = Discover.Neighbours.parseFrom(data);
   }

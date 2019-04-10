@@ -109,6 +109,7 @@ public class CreateAccount2Test {
     Assert.assertEquals(ret1.getMessage().toStringUtf8(),
         "contract validate error : Invalid account address");
   }
+
   /**
    * constructor.
    */

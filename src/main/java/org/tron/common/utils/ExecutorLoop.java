@@ -27,12 +27,12 @@ public class ExecutorLoop<In> {
 
     this.queue = new LimitedQueue<>(queueSize);
     this.exec = new ThreadPoolExecutor(
-      threads,
-      threads,
-      0L,
-      TimeUnit.MILLISECONDS,
-      queue,
-      r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement())
+        threads,
+        threads,
+        0L,
+        TimeUnit.MILLISECONDS,
+        queue,
+        r -> new Thread(r, threadPoolName + "-" + threadNumber.getAndIncrement())
     );
 
     this.consumer = consumer;

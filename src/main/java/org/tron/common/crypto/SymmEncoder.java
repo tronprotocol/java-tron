@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j(topic = "crypto")
 public class SymmEncoder {
+
   public static SecretKey restoreSecretKey(byte[] secretBytes, String algorithm) {
     SecretKey secretKey = new SecretKeySpec(secretBytes, algorithm);
     return secretKey;
