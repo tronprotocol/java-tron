@@ -66,7 +66,6 @@ message ChainParameters {
   }
 }
 
-
 /* Account */
 message Account {
   /* frozen balance */
@@ -178,11 +177,11 @@ message Permission {
     Active = 2;
   }
   PermissionType type = 1;
-  int32 id = 2;     //Owner id=0, Witness id=1, Active id start by 2
+  int32 id = 2; //Owner id=0, Witness id=1, Active id start by 2
   string permission_name = 3;
   int64 threshold = 4;
   int32 parent_id = 5;
-  bytes operations = 6;   //1 bit 1 contract
+  bytes operations = 6; //1 bit 1 contract
   repeated Key keys = 7;
 }
 
@@ -274,6 +273,7 @@ message Transaction {
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
       ZksnarkV0TransferContract = 50;
+      ShieldedTransactionContract = 51;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -335,7 +335,7 @@ message Transaction {
   raw raw_data = 1;
   // only support size = 1,  repeated list here for muti-sig extension
   repeated bytes signature = 2;
-  repeated bytes signature_zk = 3;
+  // repeated bytes signature_zk = 3;
   repeated Result ret = 5;
 }
 
