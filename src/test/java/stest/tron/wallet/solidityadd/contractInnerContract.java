@@ -55,6 +55,8 @@ public class contractInnerContract {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  Long sendcoinAmount = 100000000000L;
+  Long callvalue = 100L;
 
   @BeforeSuite
   public void beforeSuite() {
@@ -82,7 +84,7 @@ public class contractInnerContract {
   @Test(enabled = true, description = "Support function type")
   public void test1Grammar001() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(contractExcAddress, 100000000000L,
+    Assert.assertTrue(PublicMethed.sendcoin(contractExcAddress, sendcoinAmount,
             testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -97,7 +99,7 @@ public class contractInnerContract {
 
 
     contractAddressInner = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
+            callvalue, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     Protocol.Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -127,6 +129,9 @@ public class contractInnerContract {
     Long netFee = infoById.get().getReceipt().getNetFee();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 0);
 
   }
 
@@ -134,7 +139,7 @@ public class contractInnerContract {
   public void test1Grammar002() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
-            .sendcoin(contractAddressInner, 100000000000L, testNetAccountAddress, testNetAccountKey,
+            .sendcoin(contractAddressInner, sendcoinAmount, testNetAccountAddress, testNetAccountKey,
                     blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -149,7 +154,7 @@ public class contractInnerContract {
 
 
     contractAddressOutter = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
+            callvalue, 100, null, contractExcKey,
             contractExcAddress, blockingStubFull);
     Protocol.Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -187,7 +192,15 @@ public class contractInnerContract {
     Long energyUsed = infoById.get().getReceipt().getEnergyUsageTotal();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
-
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 0);
+    Long InnerBalance = PublicMethed.queryAccount(contractAddressInner,blockingStubFull).getBalance();
+    Long OutterBalance = PublicMethed.queryAccount(contractAddressOutter,blockingStubFull).getBalance();
+    logger.info("contractAddressInner"+ InnerBalance);
+    logger.info("contractAddressOutter"+ OutterBalance);
+    Assert.assertTrue(InnerBalance == sendcoinAmount + callvalue + 1L );
+    Assert.assertTrue(OutterBalance == sendcoinAmount + callvalue - 1L );
   }
 
   /**

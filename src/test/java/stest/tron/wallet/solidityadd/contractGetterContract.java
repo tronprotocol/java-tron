@@ -96,7 +96,7 @@ public class contractGetterContract {
 
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-             0L, 100, null, contractExcKey,
+             1L, 100, null, contractExcKey,
                 contractExcAddress, blockingStubFull);
     Protocol.Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -125,6 +125,9 @@ public class contractGetterContract {
     Long netFee = infoById.get().getReceipt().getNetFee();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long returnnumber = ByteArray.toLong(ByteArray
+            .fromHexString(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
+    Assert.assertTrue(returnnumber == 1);
   }
 
 
