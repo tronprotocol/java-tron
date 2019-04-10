@@ -141,7 +141,7 @@ public class contractToMathedFeed {
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
     String contractName = "ToMathedUseINContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -202,7 +202,7 @@ public class contractToMathedFeed {
                 .sendcoin(contractToMathedFeed, 100000000000L,
                         testNetAccountAddress, testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractToMathedFeed_old.sol";
+    String filePath = "src/test/resources/soliditycode/contractToMathedFeed.sol";
     String contractName = "ToMathedUseINContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
