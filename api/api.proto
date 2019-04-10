@@ -659,6 +659,17 @@ service Wallet {
 
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
+
+  // for shiededTransaction
+  rpc CreateSpendProof (SpendStatement) returns (SpendDescription) {
+  };
+
+  rpc CreateOutPutProof (OutputStatement) returns (OutputDescription) {
+  };
+
+  rpc CreateShieldedTransaction(ShieldedTransactionContract) returns (TransactionExtention) {
+  };
+  // end for shiededTransaction
 };
 
 
