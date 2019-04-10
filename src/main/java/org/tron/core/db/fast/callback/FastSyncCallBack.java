@@ -2,6 +2,7 @@ package org.tron.core.db.fast.callback;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
@@ -19,6 +21,9 @@ import org.tron.core.db.Manager;
 import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
+import org.tron.core.trie.TrieImpl.Node;
+import org.tron.core.trie.TrieImpl.ScanAction;
+import org.tron.protos.Protocol.Account;
 
 @Slf4j
 @Component
@@ -61,7 +66,7 @@ public class FastSyncCallBack {
 
     public static TrieEntry build(byte[] key, byte[] data) {
       TrieEntry trieEntry = new TrieEntry();
-      return trieEntry.setKey(key).setKey(data);
+      return trieEntry.setKey(key).setData(data);
     }
   }
 
@@ -128,10 +133,11 @@ public class FastSyncCallBack {
     if (oldRoot.isEmpty()) {
 //      blockCapsule.setAccountStateRoot(newRoot);
     } else if (!Arrays.equals(oldRoot.toByteArray(), newRoot)) {
-      logger.error("The accountStateRoot hash is not validated. {}, oldRoot: {}, newRoot: {}",
+      logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
           blockCapsule.getBlockId().getString(), ByteUtil.toHexString(oldRoot.toByteArray()),
           ByteUtil.toHexString(newRoot));
-      throw new BadBlockException("The accountStateRoot hash is not validated");
+      printErrorLog(trie);
+      throw new BadBlockException("the accountStateRoot hash is error");
     }
   }
 
@@ -158,6 +164,26 @@ public class FastSyncCallBack {
       return false;
     }
     return true;
+  }
+
+  private void printErrorLog(TrieImpl trie) {
+    trie.scanTree(new ScanAction() {
+      @Override
+      public void doOnNode(byte[] hash, Node node) {
+
+      }
+
+      @Override
+      public void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value) {
+        try {
+          Account account = Account.parseFrom(value);
+          logger.info("account address : {} ; account info : {}",
+              Wallet.encode58Check(account.getAddress().toByteArray()), account.toString());
+        } catch (InvalidProtocolBufferException e) {
+          logger.error("", e);
+        }
+      }
+    });
   }
 
 }
