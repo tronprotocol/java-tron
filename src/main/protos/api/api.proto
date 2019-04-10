@@ -1,4 +1,3 @@
-
 syntax = "proto3";
 package protocol;
 
@@ -631,7 +630,8 @@ service Wallet {
   }
 
   //Get the specified height block merkleTree
-  rpc GetMerkleTreeOfBlock ( NumberMessage ) returns ( BlockIncrementalMerkleTree ) { }
+  rpc GetMerkleTreeOfBlock (NumberMessage) returns (BlockIncrementalMerkleTree) {
+  }
 
 
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
@@ -653,7 +653,7 @@ service Wallet {
 
   }
 
-  rpc GetTransactionApprovedList(Transaction) returns (TransactionApprovedList) {
+  rpc GetTransactionApprovedList (Transaction) returns (TransactionApprovedList) {
 
   }
 
@@ -667,7 +667,7 @@ service Wallet {
   rpc CreateOutPutProof (OutputStatement) returns (OutputDescription) {
   };
 
-  rpc CreateShieldedTransaction(ShieldedTransactionContract) returns (TransactionExtention) {
+  rpc CreateShieldedTransaction (ShieldedTransactionContract) returns (TransactionExtention) {
   };
   // end for shiededTransaction
 };
@@ -905,7 +905,6 @@ message DelegatedResourceMessage {
 message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
 }
-
 
 // Gossip node list
 message NodeList {
