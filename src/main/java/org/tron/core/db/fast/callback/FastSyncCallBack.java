@@ -2,7 +2,6 @@ package org.tron.core.db.fast.callback;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,18 +11,18 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteUtil;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;
+import org.tron.core.db.fast.AccountStateEntity;
 import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 import org.tron.core.trie.TrieImpl.ScanAction;
-import org.tron.protos.Protocol.Account;
 
 @Slf4j
 @Component
@@ -31,6 +30,7 @@ public class FastSyncCallBack {
 
   private BlockCapsule blockCapsule;
   private volatile boolean execute = false;
+  private volatile boolean allowGenerateRoot = false;
   private TrieImpl trie;
 
   @Setter
@@ -77,7 +77,7 @@ public class FastSyncCallBack {
     if (item == null || ArrayUtils.isEmpty(item.getData())) {
       return;
     }
-    trieEntryList.add(TrieEntry.build(key, item.getData()));
+    trieEntryList.add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
   }
 
   public void preExeTrans() {
@@ -101,6 +101,7 @@ public class FastSyncCallBack {
   public void preExecute(BlockCapsule blockCapsule) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
+    this.allowGenerateRoot = manager.getDynamicPropertiesStore().allowAccountStateRoot();
     if (!exe()) {
       return;
     }
@@ -130,9 +131,7 @@ public class FastSyncCallBack {
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    if (oldRoot.isEmpty()) {
-//      blockCapsule.setAccountStateRoot(newRoot);
-    } else if (!Arrays.equals(oldRoot.toByteArray(), newRoot)) {
+    if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
       logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
           blockCapsule.getBlockId().getString(), ByteUtil.toHexString(oldRoot.toByteArray()),
           ByteUtil.toHexString(newRoot));
@@ -159,8 +158,9 @@ public class FastSyncCallBack {
   }
 
   private boolean exe() {
-    if (!execute || blockCapsule.getNum() < 1) {
+    if (!execute || !allowGenerateRoot) {
       //Agreement same block high to generate account state root
+      execute = false;
       return false;
     }
     return true;
@@ -176,10 +176,8 @@ public class FastSyncCallBack {
       @Override
       public void doOnValue(byte[] nodeHash, Node node, byte[] key, byte[] value) {
         try {
-          Account account = Account.parseFrom(value);
-          logger.info("account address : {} ; account info : {}",
-              Wallet.encode58Check(account.getAddress().toByteArray()), account.toString());
-        } catch (InvalidProtocolBufferException e) {
+          logger.info("account info : {}", AccountStateEntity.parse(value));
+        } catch (Exception e) {
           logger.error("", e);
         }
       }

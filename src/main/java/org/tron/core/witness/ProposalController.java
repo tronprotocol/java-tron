@@ -202,6 +202,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
           break;
         }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
+          break;
+        }
         default:
           break;
       }

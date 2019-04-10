@@ -6,10 +6,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.db.fast.AccountStateEntity;
 import org.tron.core.db.fast.TrieService;
 import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
@@ -32,18 +32,18 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
     trieService.setAccountStateStoreTrie(this);
   }
 
-  public AccountCapsule getAccount(byte[] key) {
+  public AccountStateEntity getAccount(byte[] key) {
     return getAccount(key, trieService.getFullAccountStateRootHash());
   }
 
-  public AccountCapsule getSolidityAccount(byte[] key) {
+  public AccountStateEntity getSolidityAccount(byte[] key) {
     return getAccount(key, trieService.getSolidityAccountStateRootHash());
   }
 
-  public AccountCapsule getAccount(byte[] key, byte[] rootHash) {
+  public AccountStateEntity getAccount(byte[] key, byte[] rootHash) {
     TrieImpl trie = new TrieImpl(this, rootHash);
     byte[] value = trie.get(RLP.encodeElement(key));
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    return ArrayUtils.isEmpty(value) ? null : AccountStateEntity.parse(value);
   }
 
   @Override
