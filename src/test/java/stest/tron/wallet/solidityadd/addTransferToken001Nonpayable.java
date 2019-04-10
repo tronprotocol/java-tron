@@ -71,6 +71,10 @@ public class addTransferToken001Nonpayable {
   byte[] toAddress = ecKey2.getAddress();
   String toAddressKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
+  ECKey ecKey3 = new ECKey(Utils.getRandom());
+  byte[] contractExcAddress2 = ecKey3.getAddress();
+  String contractExcKey2 = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -185,7 +189,7 @@ public class addTransferToken001Nonpayable {
   public void test2Payable() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
-            .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
+            .sendcoin(contractExcAddress2, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed
             .sendcoin(toAddress, 100000000000L, testNetAccountAddress,
@@ -195,12 +199,12 @@ public class addTransferToken001Nonpayable {
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
     //Create a new AssetIssue success.
-    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress2, tokenName, TotalSupply, 1,
             10000, start, end, 1, description, url, 100000L, 100000L,
-            1L, 1L, contractExcKey, blockingStubFull));
+            1L, 1L, contractExcKey2, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account getAssetIdFromThisAccount = PublicMethed
-            .queryAccount(contractExcAddress, blockingStubFull);
+            .queryAccount(contractExcAddress2, blockingStubFull);
     assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
     String filePath = "src/test/resources/soliditycode/addTransferToken001payable.sol";
@@ -212,19 +216,19 @@ public class addTransferToken001Nonpayable {
     logger.info("code:" + code);
     logger.info("abi:" + abi);
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-            0L, 100, null, contractExcKey,
-            contractExcAddress, blockingStubFull);
+            0L, 100, null, contractExcKey2,
+            contractExcAddress2, blockingStubFull);
     Protocol.Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
             .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                     testNetAccountKey, blockingStubFull));
     Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
-            assetAccountId.toByteArray(), 100L, contractExcAddress,
-            contractExcKey, blockingStubFull));
+            assetAccountId.toByteArray(), 100L, contractExcAddress2,
+            contractExcKey2, blockingStubFull));
     GrpcAPI.AccountResourceMessage resourceInfo =
-            PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+            PublicMethed.getAccountResource(contractExcAddress2, blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey2, blockingStubFull);
     Long beforeBalance = info.getBalance();
     Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
     Long beforeNetUsed = resourceInfo.getNetUsed();
@@ -241,14 +245,14 @@ public class addTransferToken001Nonpayable {
             assetAccountId, blockingStubFull);
     Long beforeAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
             assetAccountId, blockingStubFull);
-    Long beforecontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress,
+    Long beforecontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress2,
             assetAccountId, blockingStubFull);
     logger.info("tokenId: {}", tokenid);
 
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\" ,\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-            "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,0,maxFeeLimit,assetAccountId.toStringUtf8(),Tokenvalue, contractExcAddress, contractExcKey, blockingStubFull);
+            "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,0,maxFeeLimit,assetAccountId.toStringUtf8(),Tokenvalue, contractExcAddress2, contractExcKey2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<Protocol.TransactionInfo> infoById = null;
@@ -263,7 +267,7 @@ public class addTransferToken001Nonpayable {
             assetAccountId, blockingStubFull);
     Long AfterAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
             assetAccountId, blockingStubFull);
-    Long AftercontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress,
+    Long AftercontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress2,
             assetAccountId, blockingStubFull);
 
     logger.info("beforecontractAssetCount:"+beforecontractAssetCount);
