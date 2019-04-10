@@ -28,12 +28,12 @@ public class GetAccountServlet extends HttpServlet {
   @Autowired
   private Manager dbManager;
 
-  private String convertOutput(Account account, boolean selfType) {
+  private String convertOutput(Account account) {
     // convert asset id
     if (account.getAssetIssuedID().isEmpty()) {
-      return JsonFormat.printToString(account, selfType);
+      return JsonFormat.printToString(account, false);
     } else {
-      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, selfType ));
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false ));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put(
           "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
@@ -53,7 +53,11 @@ public class GetAccountServlet extends HttpServlet {
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        response.getWriter().println(convertOutput(reply, visible));
+        if ( visible ) {
+          response.getWriter().println(JsonFormat.printToString(reply, true));
+        } else {
+          response.getWriter().println(convertOutput(reply));
+        }
       } else {
         response.getWriter().println("{}");
       }
@@ -78,7 +82,11 @@ public class GetAccountServlet extends HttpServlet {
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        response.getWriter().println(convertOutput(reply, visible ));
+        if ( visible ) {
+          response.getWriter().println(JsonFormat.printToString(reply, true));
+        } else {
+          response.getWriter().println(convertOutput(reply));
+        }
       } else {
         response.getWriter().println("{}");
       }
