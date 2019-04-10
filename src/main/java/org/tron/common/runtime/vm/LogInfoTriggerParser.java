@@ -7,8 +7,6 @@ import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.storage.Deposit;
@@ -83,7 +81,7 @@ public class LogInfoTriggerParser {
       String creatorAddr = signMap.get(strContractAddr);
       event.setUniqueId(txId + "_" + index);
       event.setTransactionId(txId);
-      event.setContractAddress("");
+      event.setContractAddress(strContractAddr);
       event.setOriginAddress(originAddress);
       event.setCallerAddress("");
       event.setCreatorAddress(StringUtils.isEmpty(creatorAddr) ? "" : creatorAddr);

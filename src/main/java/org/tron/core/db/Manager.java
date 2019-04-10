@@ -48,15 +48,12 @@ import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
-import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -1908,21 +1905,11 @@ public class Manager {
       boolean result = false;
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
-        if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance()
-            .isContractEventTriggerEnable()) {
-          ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
-              (LogEventWrapper) trigger);
-          contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
-          contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-          result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
-        } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
-            .isContractLogTriggerEnable()) {
-          ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
-              (ContractLogTrigger) trigger);
-          contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
-          contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-          result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
-        }
+        ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
+        contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
+        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+        result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
+
         if (!result) {
           logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
