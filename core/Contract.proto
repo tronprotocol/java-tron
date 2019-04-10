@@ -72,11 +72,11 @@ message zkv0proof {
 }
 
 message AuthenticationPath {
-  repeated bool  value = 1;
+  repeated bool value = 1;
 }
 
 message MerklePath {
-  repeated AuthenticationPath  authentication_paths= 1;
+  repeated AuthenticationPath authentication_paths = 1;
   repeated bool index = 2;
   bytes rt = 3;
 }
@@ -341,7 +341,59 @@ message ExchangeTransactionContract {
 
 message AccountPermissionUpdateContract {
   bytes owner_address = 1;
-  Permission owner = 2;  //Empty is invalidate
-  Permission witness = 3;//Can be empty
-  repeated Permission actives = 4;//Empty is invalidate
+  Permission owner = 2; //Empty is invalidate
+  Permission witness = 3; //Can be empty
+  repeated Permission actives = 4; //Empty is invalidate
 }
+
+// for shielded transaction
+message Note {
+  bytes value = 1;
+  bytes d = 2;
+  bytes pk_d = 3;
+  bytes r = 4;
+}
+
+//message SpendStatement {
+//  bytes ak = 1;
+//  bytes nsk = 2;
+//  Note note = 3;
+//  bytes alpha = 4;
+//  bytes anchor = 5;
+//  bytes witness = 6;
+//}
+//
+//message OutputStatement {
+//  bytes esk = 1;
+//  Note note = 2;
+//}
+
+message SpendDescription {
+  bytes cv = 1;
+  bytes anchor = 2;
+  bytes nullifier = 3;
+  bytes rk = 4;
+  bytes zkproof = 5;
+  bytes spendAuthSig = 6;
+}
+
+message OutputDescription {
+  bytes cv = 1;
+  bytes cm = 2;
+  bytes epk = 3;
+  bytes c_enc = 4;
+  bytes c_out = 5;
+  bytes zkproof = 6;
+}
+
+message ShieldedTransactionContract {
+  bytes t_from_address = 1; //transparent address
+  bytes from_amount = 2;
+  repeated SpendDescription shieldedSpend = 3;
+  repeated OutputDescription shieldedOutput = 4;
+  bytes bindingSig = 5;
+  bytes valueBalance = 6;
+  bytes t_to_address = 7; //transparent address
+  bytes to_amount = 8; //the amount to transparent to_address
+}
+// end shielded transaction
