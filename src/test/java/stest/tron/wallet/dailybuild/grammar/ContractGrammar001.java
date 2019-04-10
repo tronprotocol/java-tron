@@ -144,9 +144,10 @@ public class ContractGrammar001 {
     HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath1, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
-    String libraryAddress =
-        "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol:Set:"
-            + Base58.encode58Check(contractAddress);
+    String library = retMap1.get("library").toString();
+    String libraryAddress = library + Base58.encode58Check(contractAddress);
+    //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol:Set:"
+    //        + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
@@ -181,9 +182,10 @@ public class ContractGrammar001 {
     HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
-    String libraryAddress =
-        "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol:Set:"
-            + Base58.encode58Check(contractAddress);
+    String library = retMap1.get("library").toString();
+    String libraryAddress = library
+        //"/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol:Set:"
+        + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
@@ -203,6 +205,14 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Extended type")
   public void test4Grammar004() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    grammarAddress = ecKey1.getAddress();
+    testKeyForGrammarAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol";
     String contractName = "Search";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -217,11 +227,12 @@ public class ContractGrammar001 {
     String contractName1 = "C";
     HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
-    String abi1 = retMap.get("abI").toString();
+    String abi1 = retMap1.get("abI").toString();
+    String library = retMap1.get("library").toString();
     String libraryAddress = null;
-    libraryAddress =
-        "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol:Search:"
-            + Base58.encode58Check(contractAddress);
+    libraryAddress = library
+        //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol:Search:"
+        + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,

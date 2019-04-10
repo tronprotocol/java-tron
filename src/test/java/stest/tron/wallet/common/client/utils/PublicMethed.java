@@ -3620,6 +3620,32 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static String fileRead1(String filePath, boolean isLibrary) throws Exception {
+    File file = new File(filePath);
+    FileReader reader = new FileReader(file);
+    BufferedReader breader = new BufferedReader(reader);
+    StringBuilder sb = new StringBuilder();
+    String s = "";
+    if (!isLibrary) {
+      if ((s = breader.readLine()) != null) {
+        sb.append(s);
+      }
+      breader.close();
+    } else {
+      breader.readLine();
+      breader.readLine();
+      if ((s = breader.readLine()) != null) {
+        s = s.substring(s.indexOf("-> ") + 3);
+        sb.append(s + ":");
+      }
+      breader.close();
+    }
+    return sb.toString();
+  }
+
+  /**
+   * constructor.
+   */
   public static HashMap<String, String> getBycodeAbiForLibrary(String solFile,
       String contractName) {
     final String compile = Configuration.getByPath("testng.conf")
@@ -3639,6 +3665,7 @@ public class PublicMethed {
 
     String byteCode = null;
     String abI = null;
+    String library = null;
 
     // compile solidity file
     try {
@@ -3651,6 +3678,9 @@ public class PublicMethed {
       byteCode = fileRead1(outputPath + "/" + contractName + ".bin");
       retMap.put("byteCode", byteCode);
       logger.debug("byteCode: " + byteCode);
+      library = fileRead1(outputPath + "/" + contractName + ".bin", true);
+      retMap.put("library", library);
+      logger.debug("library: " + library);
       abI = fileRead1(outputPath + "/" + contractName + ".abi");
       retMap.put("abI", abI);
       logger.debug("abI: " + abI);
