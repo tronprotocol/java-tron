@@ -3546,22 +3546,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static String fileRead(String filePath) throws Exception {
-    File file = new File(filePath);
-    FileReader reader = new FileReader(file);
-    BufferedReader breader = new BufferedReader(reader);
-    StringBuilder sb = new StringBuilder();
-    String s = "";
-    while ((s = breader.readLine()) != null) {
-      sb.append(s + "\n");
-    }
-    breader.close();
-    return sb.toString();
-  }
-
-  /**
-   * constructor.
-   */
   public static HashMap<String, String> getBycodeAbi(String solFile, String contractName) {
     final String compile = Configuration.getByPath("testng.conf")
         .getString("defaultParameter.solidityCompile");
@@ -3589,10 +3573,10 @@ public class PublicMethed {
     }
     // get byteCode and ABI
     try {
-      byteCode = fileRead(outputPath + "/" + contractName + ".bin");
+      byteCode = fileRead(outputPath + "/" + contractName + ".bin", false);
       retMap.put("byteCode", byteCode);
       logger.debug("byteCode: " + byteCode);
-      abI = fileRead(outputPath + "/" + contractName + ".abi");
+      abI = fileRead(outputPath + "/" + contractName + ".abi", false);
       retMap.put("abI", abI);
       logger.debug("abI: " + abI);
     } catch (Exception e) {
@@ -3604,23 +3588,7 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static String fileRead1(String filePath) throws Exception {
-    File file = new File(filePath);
-    FileReader reader = new FileReader(file);
-    BufferedReader breader = new BufferedReader(reader);
-    StringBuilder sb = new StringBuilder();
-    String s = "";
-    if ((s = breader.readLine()) != null) {
-      sb.append(s);
-    }
-    breader.close();
-    return sb.toString();
-  }
-
-  /**
-   * constructor.
-   */
-  public static String fileRead1(String filePath, boolean isLibrary) throws Exception {
+  public static String fileRead(String filePath, boolean isLibrary) throws Exception {
     File file = new File(filePath);
     FileReader reader = new FileReader(file);
     BufferedReader breader = new BufferedReader(reader);
@@ -3675,13 +3643,13 @@ public class PublicMethed {
     }
     // get byteCode and ABI
     try {
-      byteCode = fileRead1(outputPath + "/" + contractName + ".bin");
+      byteCode = fileRead(outputPath + "/" + contractName + ".bin", false);
       retMap.put("byteCode", byteCode);
       logger.debug("byteCode: " + byteCode);
-      library = fileRead1(outputPath + "/" + contractName + ".bin", true);
+      library = fileRead(outputPath + "/" + contractName + ".bin", true);
       retMap.put("library", library);
       logger.debug("library: " + library);
-      abI = fileRead1(outputPath + "/" + contractName + ".abi");
+      abI = fileRead(outputPath + "/" + contractName + ".abi", false);
       retMap.put("abI", abI);
       logger.debug("abI: " + abI);
     } catch (Exception e) {
