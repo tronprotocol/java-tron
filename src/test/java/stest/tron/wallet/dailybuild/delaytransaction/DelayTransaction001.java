@@ -70,6 +70,14 @@ public class DelayTransaction001 {
   byte[] receiverAccountAddress = ecKey3.getAddress();
   String receiverAccountKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] delayAccount3Address = ecKey4.getAddress();
+  String delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
+  ECKey ecKey5 = new ECKey(Utils.getRandom());
+  byte[] receiverAccount4Address = ecKey5.getAddress();
+  String receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -199,7 +207,7 @@ public class DelayTransaction001 {
 
 
 
-    //Query balance after delay sen coin.
+    //Query balance after delay send coin.
     Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount2Address, blockingStubFull).getBalance();
     Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccountAddress, blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
@@ -208,6 +216,96 @@ public class DelayTransaction001 {
     Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == sendCoinAmout + 100000L);
     Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
 
+  }
+
+  @Test(enabled = true, description = "Delay send coin")
+  public void test3DelaySendCoin() {
+    ecKey4 = new ECKey(Utils.getRandom());
+    delayAccount3Address = ecKey4.getAddress();
+    delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+    PublicMethed.printAddress(delayAccount3Key);
+
+    ecKey5 = new ECKey(Utils.getRandom());
+    receiverAccount4Address = ecKey5.getAddress();
+    receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+    PublicMethed.printAddress(receiverAccount4Key);
+
+    Long sendCoinAmount = 100000000L;
+    //Pre sendcoin to the test account
+    Assert.assertTrue(PublicMethed.sendcoin(delayAccount3Address, sendCoinAmount,fromAddress,
+        testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Do delay send coin transaction.
+    Long delaySecond = 4L;
+    Long createAccountFee = 100000L;
+    Long delayTransactionFee = 100000L;
+
+    logger.info("----------------No balance to send coin--------------------");
+    //Test no balance to send coin.
+    //Query balance before send coin.
+    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
+    logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
+    Assert.assertFalse(PublicMethed.sendcoinDelayed(receiverAccount4Address, sendCoinAmount, delaySecond,delayAccount3Address,
+        delayAccount3Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Query balance after delay send coin.
+    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
+    logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
+
+    Assert.assertTrue(recevierAccountAfterDelayalance == 0);
+    logger.info("deplayAccountBeforeBalance: " + deplayAccountBeforeBalance);
+    logger.info("deplayAccountAfterBalance: " + deplayAccountAfterBalance);
+
+    Assert.assertEquals(deplayAccountBeforeBalance,deplayAccountAfterBalance);
+
+
+    logger.info("----------------No balance to create account send coin--------------------");
+    //Test delay send coin to create account.
+    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
+    logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
+    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address, deplayAccountBeforeBalance - createAccountFee, delaySecond,delayAccount3Address,
+        delayAccount3Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Query balance after delay send coin.
+    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
+    logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
+
+    Assert.assertTrue(recevierAccountAfterDelayalance == 0);
+    Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == 100000);
+
+
+    logger.info("---------------Balance enough to create account send coin--------------------");
+    //Test delay send coin to create account.
+    createAccountFee = 100000L;
+    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
+    logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
+    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address, deplayAccountBeforeBalance - createAccountFee - delayTransactionFee, delaySecond,delayAccount3Address,
+        delayAccount3Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Query balance after delay send coin.
+    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
+    logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
+    Long receiverBalanceShouldBe = deplayAccountBeforeBalance - createAccountFee - delayTransactionFee;
+
+    Assert.assertEquals(recevierAccountAfterDelayalance, receiverBalanceShouldBe);
+    Assert.assertTrue(deplayAccountAfterBalance == 0);
   }
 
 
