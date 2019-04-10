@@ -13,6 +13,8 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -23,6 +25,7 @@ public class GetContractServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("value", input);
@@ -30,7 +33,7 @@ public class GetContractServlet extends HttpServlet {
       JsonFormat.merge(jsonObject.toJSONString(), build);
       SmartContract smartContract = wallet.getContract(build.build());
       JSONObject jsonSmartContract = JSONObject
-          .parseObject(JsonFormat.printToString(smartContract));
+          .parseObject(JsonFormat.printToString(smartContract, visible ));
       response.getWriter().println(jsonSmartContract.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -44,6 +47,7 @@ public class GetContractServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -51,7 +55,7 @@ public class GetContractServlet extends HttpServlet {
       JsonFormat.merge(input, build);
       SmartContract smartContract = wallet.getContract(build.build());
       JSONObject jsonSmartContract = JSONObject
-          .parseObject(JsonFormat.printToString(smartContract));
+          .parseObject(JsonFormat.printToString(smartContract, visible ));
       response.getWriter().println(jsonSmartContract.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

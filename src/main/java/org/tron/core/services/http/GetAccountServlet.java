@@ -15,6 +15,8 @@ import org.tron.core.Wallet;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Account;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -26,12 +28,12 @@ public class GetAccountServlet extends HttpServlet {
   @Autowired
   private Manager dbManager;
 
-  private String convertOutput(Account account) {
+  private String convertOutput(Account account, boolean selfType) {
     // convert asset id
     if (account.getAssetIssuedID().isEmpty()) {
-      return JsonFormat.printToString(account);
+      return JsonFormat.printToString(account, selfType);
     } else {
-      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account));
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, selfType ));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put(
           "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
@@ -42,6 +44,7 @@ public class GetAccountServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String address = request.getParameter("address");
       Account.Builder build = Account.newBuilder();
       JSONObject jsonObject = new JSONObject();
@@ -50,7 +53,7 @@ public class GetAccountServlet extends HttpServlet {
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        response.getWriter().println(convertOutput(reply));
+        response.getWriter().println(convertOutput(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -66,6 +69,7 @@ public class GetAccountServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
@@ -74,7 +78,7 @@ public class GetAccountServlet extends HttpServlet {
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
-        response.getWriter().println(convertOutput(reply));
+        response.getWriter().println(convertOutput(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

@@ -12,6 +12,8 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -26,13 +28,14 @@ public class GetTransactionApprovedListServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       Transaction transaction = Util.packTransaction(input);
       TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
       if (reply != null) {
-        response.getWriter().println(Util.printTransactionApprovedList(reply));
+        response.getWriter().println(Util.printTransactionApprovedList(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

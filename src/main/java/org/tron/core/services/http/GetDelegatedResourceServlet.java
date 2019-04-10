@@ -14,6 +14,8 @@ import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 @Component
 @Slf4j(topic = "API")
 public class GetDelegatedResourceServlet extends HttpServlet {
@@ -23,6 +25,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String fromAddress = request.getParameter("fromAddress");
       String toAddress = request.getParameter("toAddress");
 
@@ -31,7 +34,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
               ByteString.copyFrom(ByteArray.fromHexString(fromAddress)),
               ByteString.copyFrom(ByteArray.fromHexString(toAddress)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -47,6 +50,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input =
           request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -55,7 +59,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
       DelegatedResourceList reply =
           wallet.getDelegatedResource(build.getFromAddress(), build.getToAddress());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

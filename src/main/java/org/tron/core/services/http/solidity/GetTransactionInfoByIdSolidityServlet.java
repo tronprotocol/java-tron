@@ -16,6 +16,8 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -27,13 +29,14 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
       TransactionInfo transInfo = wallet.getTransactionInfoById(ByteString.copyFrom(
           ByteArray.fromHexString(input)));
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible));
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -48,6 +51,7 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -57,7 +61,7 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible ));
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

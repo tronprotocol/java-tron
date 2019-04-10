@@ -12,6 +12,8 @@ import org.tron.api.GrpcAPI.BlockLimit;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 @Component
 @Slf4j(topic = "API")
 public class GetBlockByLimitNextServlet extends HttpServlet {
@@ -22,12 +24,13 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       long startNum = Long.parseLong(request.getParameter("startNum"));
       long endNum = Long.parseLong(request.getParameter("endNum"));
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
         if (reply != null) {
-          response.getWriter().println(Util.printBlockList(reply));
+          response.getWriter().println(Util.printBlockList(reply, visible ));
           return;
         }
       }
@@ -44,6 +47,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -54,7 +58,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlocksByLimitNext(startNum, endNum - startNum);
         if (reply != null) {
-          response.getWriter().println(JsonFormat.printToString(reply));
+          response.getWriter().println(JsonFormat.printToString(reply, visible ));
           return;
         }
       }

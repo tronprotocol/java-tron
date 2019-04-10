@@ -14,6 +14,8 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 @Component
 @Slf4j(topic = "API")
 public class GetAssetIssueListByNameServlet extends HttpServlet {
@@ -23,11 +25,12 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
       AssetIssueList reply = wallet
           .getAssetIssueListByName(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -43,6 +46,7 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -50,7 +54,7 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
       JsonFormat.merge(input, build);
       AssetIssueList reply = wallet.getAssetIssueListByName(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

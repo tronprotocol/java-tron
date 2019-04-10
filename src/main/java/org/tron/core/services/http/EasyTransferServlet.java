@@ -21,6 +21,8 @@ import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -36,6 +38,7 @@ public class EasyTransferServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+    boolean visible = getVisible(request);
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
@@ -57,7 +60,7 @@ public class EasyTransferServlet extends HttpServlet {
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
       responseBuild.setResult(retur);
-      response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build()));
+      response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build(), visible ));
     } catch (ParseException e) {
       logger.debug("ParseException: {}", e.getMessage());
     } catch (IOException e) {
@@ -67,7 +70,7 @@ public class EasyTransferServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
       try {
-        response.getWriter().println(JsonFormat.printToString(responseBuild.build()));
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible ));
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }

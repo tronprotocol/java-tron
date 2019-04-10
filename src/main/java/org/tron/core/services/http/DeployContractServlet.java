@@ -20,6 +20,8 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -33,6 +35,7 @@ public class DeployContractServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
@@ -84,7 +87,7 @@ public class DeployContractServlet extends HttpServlet {
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
-      response.getWriter().println(Util.printTransaction(txBuilder.build()));
+      response.getWriter().println(Util.printTransaction(txBuilder.build(), visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

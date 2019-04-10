@@ -24,6 +24,8 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -51,6 +53,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
+    boolean visible = getVisible(request);
 
     try {
       String contract = request.getReader().lines()
@@ -86,6 +89,6 @@ public class TriggerSmartContractServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build()));
+    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
   }
 }

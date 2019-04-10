@@ -49,8 +49,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.util.StringUtil;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.services.RpcApiService;
+
+import static org.tron.core.Wallet.addressValid;
 
 
 /**
@@ -76,28 +84,28 @@ public class JsonFormat {
    * (This representation is the new version of the classic "ProtocolPrinter" output from the
    * original Protocol Buffer system)
    */
-  public static void print(Message message, Appendable output) throws IOException {
+  public static void print(Message message, Appendable output, boolean selfType) throws IOException {
     JsonGenerator generator = new JsonGenerator(output);
     generator.print("{");
-    print(message, generator);
+    print(message, generator, selfType);
     generator.print("}");
   }
 
   /**
    * Outputs a textual representation of {@code fields} to {@code output}.
    */
-  public static void print(UnknownFieldSet fields, Appendable output) throws IOException {
+  public static void print(UnknownFieldSet fields, Appendable output, boolean selfType) throws IOException {
     JsonGenerator generator = new JsonGenerator(output);
     generator.print("{");
-    printUnknownFields(fields, generator);
+    printUnknownFields(fields, generator, selfType);
     generator.print("}");
   }
 
-  protected static void print(Message message, JsonGenerator generator) throws IOException {
+  protected static void print(Message message, JsonGenerator generator, boolean selfType ) throws IOException {
     for (Iterator<Map.Entry<FieldDescriptor, Object>> iter = message.getAllFields().entrySet()
         .iterator(); iter.hasNext(); ) {
       Map.Entry<FieldDescriptor, Object> field = iter.next();
-      printField(field.getKey(), field.getValue(), generator);
+      printField(field.getKey(), field.getValue(), generator, selfType);
       if (iter.hasNext()) {
         generator.print(",");
       }
@@ -105,16 +113,16 @@ public class JsonFormat {
     if (message.getUnknownFields().asMap().size() > 0) {
       generator.print(", ");
     }
-    printUnknownFields(message.getUnknownFields(), generator);
+    printUnknownFields(message.getUnknownFields(), generator, selfType);
   }
 
   /**
    * Like {@code print()}, but writes directly to a {@code String} and returns it.
    */
-  public static String printToString(Message message) {
+  public static String printToString(Message message, boolean selfType ) {
     try {
       StringBuilder text = new StringBuilder();
-      print(message, text);
+      print(message, text, selfType);
       return text.toString();
     } catch (IOException e) {
       throw new RuntimeException(
@@ -126,10 +134,10 @@ public class JsonFormat {
   /**
    * Like {@code print()}, but writes directly to a {@code String} and returns it.
    */
-  public static String printToString(UnknownFieldSet fields) {
+  public static String printToString(UnknownFieldSet fields, boolean selfType) {
     try {
       StringBuilder text = new StringBuilder();
-      print(fields, text);
+      print(fields, text, selfType);
       return text.toString();
     } catch (IOException e) {
       throw new RuntimeException(
@@ -149,15 +157,14 @@ public class JsonFormat {
     return text.toString();
   }
 
-  public static void printField(FieldDescriptor field, Object value, JsonGenerator generator)
+  public static void printField(FieldDescriptor field, Object value, JsonGenerator generator, boolean selfType )
       throws IOException {
 
-    printSingleField(field, value, generator);
+    printSingleField(field, value, generator, selfType );
   }
 
   private static void printSingleField(FieldDescriptor field,
-      Object value,
-      JsonGenerator generator) throws IOException {
+      Object value, JsonGenerator generator, boolean selfType ) throws IOException {
     if (field.isExtension()) {
       generator.print("\"");
       // We special-case MessageSet elements for compatibility with proto1.
@@ -194,21 +201,22 @@ public class JsonFormat {
       // Repeated field. Print each element.
       generator.print("[");
       for (Iterator<?> iter = ((List<?>) value).iterator(); iter.hasNext(); ) {
-        printFieldValue(field, iter.next(), generator);
+        printFieldValue(field, iter.next(), generator, selfType);
         if (iter.hasNext()) {
           generator.print(",");
         }
       }
       generator.print("]");
     } else {
-      printFieldValue(field, value, generator);
+      printFieldValue(field, value, generator, selfType );
       if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
         generator.outdent();
       }
     }
   }
 
-  private static void printFieldValue(FieldDescriptor field, Object value, JsonGenerator generator)
+  private static void printFieldValue(FieldDescriptor field, Object value,
+                                      JsonGenerator generator, boolean selfType )
       throws IOException {
     switch (field.getType()) {
       case INT32:
@@ -242,7 +250,7 @@ public class JsonFormat {
 
       case BYTES: {
         generator.print("\"");
-        generator.print(escapeBytes((ByteString) value));
+        generator.print(escapeBytes((ByteString) value, field.getName(), selfType ));
         generator.print("\"");
         break;
       }
@@ -257,15 +265,15 @@ public class JsonFormat {
       case MESSAGE:
       case GROUP:
         generator.print("{");
-        print((Message) value, generator);
+        print((Message) value, generator, selfType);
         generator.print("}");
         break;
       default:
     }
   }
 
-  protected static void printUnknownFields(UnknownFieldSet unknownFields, JsonGenerator generator)
-      throws IOException {
+  protected static void printUnknownFields(UnknownFieldSet unknownFields, JsonGenerator generator,
+                                           boolean selfType) throws IOException {
     boolean firstField = true;
     for (Map.Entry<Integer, UnknownFieldSet.Field> entry : unknownFields.asMap().entrySet()) {
       final UnknownFieldSet.Field field = entry.getValue();
@@ -312,7 +320,7 @@ public class JsonFormat {
           generator.print(", ");
         }
         generator.print("\"");
-        generator.print(escapeBytes(value));
+        generator.print(escapeBytes(value, "Hex", selfType)); //Just to HEX
         generator.print("\"");
       }
       for (UnknownFieldSet value : field.getGroupList()) {
@@ -322,7 +330,7 @@ public class JsonFormat {
           generator.print(", ");
         }
         generator.print("{");
-        printUnknownFields(value, generator);
+        printUnknownFields(value, generator, selfType);
         generator.print("}");
       }
       generator.print("]");
@@ -701,6 +709,29 @@ public class JsonFormat {
    * sequences.
    */
   static String escapeBytes(ByteString input) {
+    return ByteArray.toHexString(input.toByteArray());
+  }
+
+  static String escapeBytes( ByteString input, final String fliedName, boolean selfType ) {
+    if ( !selfType ) {
+      return ByteArray.toHexString(input.toByteArray());
+    } else {
+      return escapeBytesSelfType(input, fliedName );
+    }
+  }
+
+  static String escapeBytesSelfType(ByteString input, final String fliedName) {
+    //Address
+    if (HttpSelfFormatFieldName.isAddressFormat( fliedName )) {
+        return Wallet.encode58Check(input.toByteArray());
+    }
+
+    //Normal String
+    if (HttpSelfFormatFieldName.isNameStringFormat( fliedName )) {
+        return new String(input.toByteArray());
+    }
+
+    //HEX
     return ByteArray.toHexString(input.toByteArray());
   }
 

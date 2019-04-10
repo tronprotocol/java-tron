@@ -12,6 +12,8 @@ import org.tron.api.GrpcAPI;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 @Component
 @Slf4j(topic = "API")
 public class BroadcastServlet extends HttpServlet {
@@ -21,12 +23,13 @@ public class BroadcastServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       Transaction transaction = Util.packTransaction(input);
       GrpcAPI.Return retur = wallet.broadcastTransaction(transaction);
-      response.getWriter().println(JsonFormat.printToString(retur));
+      response.getWriter().println(JsonFormat.printToString(retur, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

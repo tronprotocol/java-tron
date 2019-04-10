@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -23,6 +25,7 @@ public class GetExchangeByIdServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
@@ -30,7 +33,8 @@ public class GetExchangeByIdServlet extends HttpServlet {
       long id = jsonObject.getLong("id");
       response.getWriter()
           .println(JsonFormat
-              .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id)))));
+              .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),
+               visible       ));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -43,10 +47,12 @@ public class GetExchangeByIdServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("id");
       response.getWriter()
           .println(JsonFormat.printToString(wallet
-              .getExchangeById(ByteString.copyFrom(ByteArray.fromLong(Long.parseLong(input))))));
+              .getExchangeById(ByteString.copyFrom(ByteArray.fromLong(Long.parseLong(input)))),
+                  visible ));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

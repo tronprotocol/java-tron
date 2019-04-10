@@ -14,6 +14,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -24,11 +26,12 @@ public class GetAssetIssueByAccountServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String address = request.getParameter("address");
       AssetIssueList reply = wallet
           .getAssetIssueByAccount(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply,visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -44,6 +47,7 @@ public class GetAssetIssueByAccountServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
@@ -51,7 +55,7 @@ public class GetAssetIssueByAccountServlet extends HttpServlet {
       JsonFormat.merge(account, build);
       AssetIssueList reply = wallet.getAssetIssueByAccount(build.getAddress());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
