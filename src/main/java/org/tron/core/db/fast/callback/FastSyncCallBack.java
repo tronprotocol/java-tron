@@ -75,6 +75,10 @@ public class FastSyncCallBack {
     trieEntryList.add(TrieEntry.build(key, item.getData()));
   }
 
+  public void preExeTrans() {
+    trieEntryList.clear();
+  }
+
   public void exeTransFinish() {
     for (TrieEntry trieEntry : trieEntryList) {
       trie.put(RLP.encodeElement(trieEntry.getKey()), trieEntry.getData());
@@ -90,7 +94,6 @@ public class FastSyncCallBack {
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
-    this.trieEntryList.clear();
     this.blockCapsule = blockCapsule;
     this.execute = true;
     if (!exe()) {
@@ -118,8 +121,6 @@ public class FastSyncCallBack {
         .getAccountStateRoot();
     execute = false;
     //
-    exeTransFinish();
-    //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
@@ -138,8 +139,6 @@ public class FastSyncCallBack {
     if (!exe()) {
       return;
     }
-    //
-    exeTransFinish();
     //
     byte[] newRoot = trie.getRootHash();
     if (ArrayUtils.isEmpty(newRoot)) {
