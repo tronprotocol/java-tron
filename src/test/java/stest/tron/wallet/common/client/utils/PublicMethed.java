@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -48,6 +49,7 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
@@ -702,8 +704,84 @@ public class PublicMethed {
       return response.getResult();
     }
     return false;
-
   }
+
+  /**
+   * constructor.
+   */
+
+  public static Boolean sendcoinDelayed(byte[] to, long amount, long delaySeconds, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+      Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+      ByteString bsTo = ByteString.copyFrom(to);
+      ByteString bsOwner = ByteString.copyFrom(owner);
+      builder.setToAddress(bsTo);
+      builder.setOwnerAddress(bsOwner);
+      builder.setAmount(amount);
+
+      Contract.TransferContract contract = builder.build();
+      Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+
+      transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+
+      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+        logger.info("transaction ==null");
+        return false;
+      }
+      transaction = signTransaction(ecKey, transaction);
+      logger.info("Txid is " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+      GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+      return response.getResult();
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static String sendcoinDelayedGetTxid(byte[] to, long amount, long delaySeconds, byte[] owner, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    Contract.TransferContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
+
+    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return null;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    logger.info("Txid is " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+  }
+
 
   /**
    * constructor.
@@ -819,6 +897,7 @@ public class PublicMethed {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
     BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
     Transaction transaction = blockingStubFull.getTransactionById(request);
+
     return Optional.ofNullable(transaction);
   }
 
@@ -833,6 +912,22 @@ public class PublicMethed {
     Transaction transaction = blockingStubFull.getTransactionById(request);
     return Optional.ofNullable(transaction);
   }
+
+  /**
+   * constructor.
+   */
+  public static Optional<DeferredTransaction> getDeferredTransactionById(String txId,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    DeferredTransaction transaction = blockingStubFull.getDeferredTransactionById(request);
+    if (Objects.isNull(transaction)) {
+      transaction = blockingStubFull.getDeferredTransactionById(request);
+    }
+    return Optional.ofNullable(transaction);
+  }
+
+
 
   /**
    * constructor.
