@@ -220,6 +220,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
           break;
         }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
+          break;
+        }
         default:
           break;
       }

@@ -175,6 +175,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
+  //Used only for account state root, once，value is {0,1} allow is 1
+  private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -599,6 +601,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getBlockEnergyUsage();
     } catch (IllegalArgumentException e) {
       this.saveBlockEnergyUsage(0);
+    }
+
+    try {
+      this.getAllowAccountStateRoot();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowAccountStateRoot(0);
     }
   }
 
@@ -1660,5 +1668,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean getForked() {
     byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
     return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
+  }
+
+  public void saveAllowAccountStateRoot(long allowAccountStateRoot) {
+    this.put(ALLOW_ACCOUNT_STATE_ROOT,
+        new BytesCapsule(ByteArray.fromLong(allowAccountStateRoot)));
+  }
+
+  public long getAllowAccountStateRoot() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_STATE_ROOT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_STATE_ROOT"));
+  }
+
+  public boolean allowAccountStateRoot() {
+    return getAllowAccountStateRoot() == 1;
   }
 }
