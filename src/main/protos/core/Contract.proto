@@ -374,7 +374,7 @@ message SpendDescription {
   bytes nullifier = 3;
   bytes rk = 4;
   bytes zkproof = 5;
-  bytes spend_authority_sign = 6;
+  bytes spend_authority_signature = 6;
 }
 
 message OutputDescription {
@@ -391,7 +391,7 @@ message ShieldedTransferContract {
   bytes from_amount = 2;
   repeated SpendDescription spend_description = 3;
   repeated OutputDescription output_description = 4;
-  bytes binding_sign = 5;
+  bytes binding_signature = 5;
   bytes value_balance = 6;
   bytes transparent_to_address = 7; //transparent address
   bytes to_amount = 8; //the amount to transparent to_address
