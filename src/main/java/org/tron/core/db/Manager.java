@@ -1267,13 +1267,13 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+    if (trxCap == null) {
+      return false;
+    }
+
     if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
       throw new ContractValidateException("deferred transaction is not allowed, "
           + "need to be opened by the committee");
-    }
-
-    if (trxCap == null) {
-      return false;
     }
 
     validateTapos(trxCap);
@@ -1485,7 +1485,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        fastSyncCallBack.preExeTrans();
         processTransaction(trx, blockCapsule);
+        fastSyncCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1657,7 +1659,9 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        fastSyncCallBack.preExeTrans();
         processTransaction(transactionCapsule, block);
+        fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
     } finally {

@@ -30,6 +30,11 @@ public class KeepAliveMessage extends Message {
   }
 
   @Override
+  public long getTimestamp() {
+    return 0;
+  }
+
+  @Override
   public Node getFrom() {
     return null;
   }
