@@ -12,8 +12,9 @@ import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
 import org.tron.common.zksnark.sapling.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.sapling.note.SaplingOutgoingPlaintext;
-import org.tron.common.zksnark.sapling.transaction.OutDesc;
-import org.tron.common.zksnark.sapling.transaction.SpendDescription;
+import org.tron.common.zksnark.sapling.transaction.OutputDescriptionCapsule;
+import org.tron.common.zksnark.sapling.transaction.SpendDescriptionCapsule;
+import org.tron.protos.Contract.ShieldedTransferContract;
 
 public class TransactionBuilder {
 
@@ -64,6 +65,7 @@ public class TransactionBuilder {
   //  void SendChangeTo(CTxDestination&changeAddr);
 
   public TransactionBuilderResult Build() {
+    ShieldedTransferContract.Builder zkBuilder = ShieldedTransferContract.newBuilder();
 
     //
     // Sapling spends and outputs
@@ -83,7 +85,9 @@ public class TransactionBuilder {
 
       byte[] voucherPath = spend.voucher.path().encode();
 
-      SpendDescription sdesc = new SpendDescription();
+      byte[] cv = new byte[32];
+      byte[] rk = new byte[32];
+      byte[] zkproof = new byte[32];
       if (!Librustzcash.librustzcashSaplingSpendProof(
           ctx,
           spend.expsk.fullViewingKey().getAk(),
@@ -94,15 +98,18 @@ public class TransactionBuilder {
           spend.note.value,
           spend.anchor,
           voucherPath,
-          sdesc.cv,
-          sdesc.rk,
-          sdesc.zkproof.value)) {
+          cv,
+          rk,
+          zkproof)) {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         throw new RuntimeException("Spend proof failed");
       }
-
-      sdesc.anchor = spend.anchor;
-      sdesc.nullifier = nf;
+      SpendDescriptionCapsule sdesc = new SpendDescriptionCapsule();
+      sdesc.setValueCommitment(cv);
+      sdesc.setRk(rk);
+      sdesc.setZkproof(zkproof);
+      sdesc.setAnchor(spend.anchor);
+      sdesc.setNullifier(nf);
       // todo: add sdesc into tx
       //      mtx.vShieldedSpend.push_back(sdesc);
     }
@@ -126,7 +133,8 @@ public class TransactionBuilder {
       SaplingNotePlaintextEncryptionResult enc = res.get();
       SaplingNoteEncryption encryptor = enc.noteEncryption;
 
-      OutDesc odesc = new OutDesc();
+      byte[] cv = new byte[32];
+      byte[] zkproof = new byte[32];
       if (!Librustzcash.librustzcashSaplingOutputProof(
           ctx,
           encryptor.esk,
@@ -134,19 +142,25 @@ public class TransactionBuilder {
           output.note.pk_d,
           output.note.r,
           output.note.value,
-          odesc.cv,
-          odesc.zkproof.value)) {
+          cv,
+          zkproof)) {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         throw new RuntimeException("Output proof failed");
       }
 
-      odesc.cm = cm;
-      odesc.ephemeralKey = encryptor.epk;
-      odesc.encCiphertext = enc.encCiphertext;
+      OutputDescriptionCapsule odesc = new OutputDescriptionCapsule();
+      odesc.setValueCommitment(cv);
+      odesc.setNoteCommitment(cm);
+      odesc.setEpk(encryptor.epk);
+      odesc.setCEnc(enc.encCiphertext);
+      odesc.setZkproof(zkproof);
 
       SaplingOutgoingPlaintext outPlaintext =
           new SaplingOutgoingPlaintext(output.note.pk_d, encryptor.esk);
-      odesc.outCiphertext = outPlaintext.encrypt(output.ovk, odesc.cv, odesc.cm, encryptor);
+      odesc.setCOut(outPlaintext
+          .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
+              odesc.getCm().toByteArray(),
+              encryptor).data);
       //todo: add odesc into tx
 //      mtx.vShieldedOutput.push_back(odesc);
 

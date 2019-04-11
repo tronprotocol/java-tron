@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
@@ -22,9 +21,9 @@ import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.sapling.note.NoteData;
 import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
-import org.tron.common.zksnark.sapling.transaction.OutDesc;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
+import org.tron.protos.Contract.OutputDescription;
 
 public class ShieldWallet {
 
@@ -104,12 +103,12 @@ public class ShieldWallet {
       NoteData nd = entry.getValue();
 
       //todo: tx.vShieldedOutput[op.n]
-      OutDesc description = null;
+      OutputDescription description = null;
       Optional<NotePlaintext> maybe_pt = NotePlaintext.decrypt(
-          description.encCiphertext,
+          description.getCEnc().toByteArray(),
           nd.ivk.value,
-          description.ephemeralKey,
-          description.cm);
+          description.getEpk().toByteArray(),
+          description.getNoteCommitment().toByteArray());
       if (!maybe_pt.isPresent()) {
         throw new RuntimeException("");
       }
