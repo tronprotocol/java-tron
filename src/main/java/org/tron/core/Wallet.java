@@ -312,6 +312,15 @@ public class Wallet {
     return Hash.sha3omit12(combined);
   }
 
+
+  public static byte[] tryDecodeFromBase58Check(String address) {
+    try {
+      return Wallet.decodeFromBase58Check(address);
+    } catch (Exception ex) {
+      return null;
+    }
+  }
+
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
       logger.warn("Warning: Address is empty !!");

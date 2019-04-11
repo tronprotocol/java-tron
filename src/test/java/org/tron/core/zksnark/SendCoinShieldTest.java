@@ -7,6 +7,7 @@ import org.tron.common.zksnark.sapling.KeyStore;
 import org.tron.common.zksnark.sapling.RpcWallet;
 import org.tron.common.zksnark.sapling.ShieldCoinConstructor;
 import org.tron.common.zksnark.sapling.ShieldWallet;
+import org.tron.common.zksnark.sapling.TransactionBuilder;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
@@ -27,9 +28,11 @@ public class SendCoinShieldTest {
     recipient.address = wallet.getNewAddress();
     recipient.value = 1000_000L;
     recipient.memo = "demo";
+    outputs.add(recipient);
 
-    ShieldCoinConstructor constructor =
-        new ShieldCoinConstructor(fromAddr, outputs);
+    ShieldCoinConstructor constructor = new ShieldCoinConstructor();
+    constructor.setFromAddress(fromAddr);
+    constructor.setZOutputs(outputs);
     TransactionBuilderResult result = constructor.build();
   }
 
@@ -47,5 +50,9 @@ public class SendCoinShieldTest {
     System.out.print(ShieldWallet.getSpendingKeyForPaymentAddress(address).isPresent());
   }
 
+  @Test
+  public void testTransactionBuilder() {
+    TransactionBuilder builder = new TransactionBuilder();
+  }
 
 }
