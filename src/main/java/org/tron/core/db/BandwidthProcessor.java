@@ -82,8 +82,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       bytesSize = 0;
     }
 
-    // when transaction type is equal to EXECUTINGDEFERREDTRANSACTION, meaning fee already charged.
-    boolean charged = trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION;
+    // charged is true indicates that the deferred transaction is executed for the first time, false indicates that it is executed for the second time
+    boolean charged = trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION;
     for (Contract contract : contracts) {
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
@@ -98,13 +98,13 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      if (contractCreateNewAccount(contract) && !charged) {
+      if (!charged && contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
-          accountCapsule, now, bytesSize) && !charged) {
+      if (!charged && contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
+          accountCapsule, now, bytesSize)) {
         continue;
       }
 
