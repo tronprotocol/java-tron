@@ -15,7 +15,6 @@ public class MessageTest {
 
   @Test
   public void test1() throws Exception {
-    ReflectUtils.setFieldValue(new PingMessage(), "filter", true);
     byte[] bytes = new DisconnectMessage(ReasonCode.TOO_MANY_PEERS).getData();
     DisconnectMessageTest disconnectMessageTest = new DisconnectMessageTest();
     try {

@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.ReflectionUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
@@ -26,11 +25,7 @@ public abstract class Message {
   protected byte type;
   @Setter
   private static Manager manager;
-
-  private static volatile boolean filter = false;
-  private static volatile long time = 0;
-  private static final long duration = ChainConstant.BLOCK_PRODUCED_INTERVAL;
-
+  
   public Message() {
   }
 
@@ -101,21 +96,7 @@ public abstract class Message {
   }
 
   private boolean isFilter() {
-    try {
-      if (filter || manager == null) {
-        return filter;
-      }
-      if (System.currentTimeMillis() - time > duration) {
-        long allowNum = 1;//manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
-        if (allowNum == 1) {
-          filter = true;
-        }
-        time = System.currentTimeMillis();
-      }
-    } catch (Exception e) {
-      logger.error("filter protobuf data error : {}", e.getMessage());
-    }
-    return filter;
+    return manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum() == 1;
   }
 
 }
