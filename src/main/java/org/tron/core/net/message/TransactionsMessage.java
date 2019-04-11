@@ -20,7 +20,7 @@ public class TransactionsMessage extends TronMessage {
     super(data);
     this.type = MessageTypes.TRXS.asByte();
     this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream());
-    this.data = transactions.toByteArray();
+    compareBytes(data, transactions.toByteArray());
   }
 
   public Protocol.Transactions getTransactions() {

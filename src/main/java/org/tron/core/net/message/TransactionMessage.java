@@ -3,17 +3,18 @@ package org.tron.core.net.message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol.Transaction;
 
 public class TransactionMessage extends TronMessage {
 
   private TransactionCapsule transactionCapsule;
 
-  public TransactionMessage(byte[] data) throws BadItemException {
+  public TransactionMessage(byte[] data) throws BadItemException, P2pException {
     super(data);
     this.transactionCapsule = new TransactionCapsule(getCodedInputStream());
-    this.data = transactionCapsule.getData();
     this.type = MessageTypes.TRX.asByte();
+    compareBytes(data, transactionCapsule.getData());
   }
 
   public TransactionMessage(Transaction trx) {

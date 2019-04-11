@@ -16,7 +16,7 @@ public class BlocksMessage extends TronMessage {
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }
-    this.data = items.toByteArray();
+    compareBytes(data, items.toByteArray());
   }
 
   public List<Block> getBlocks() {

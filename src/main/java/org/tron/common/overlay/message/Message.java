@@ -1,5 +1,7 @@
 package org.tron.common.overlay.message;
 
+import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
+
 import com.google.protobuf.CodedInputStream;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -13,6 +15,7 @@ import org.springframework.util.ReflectionUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 
 public abstract class Message {
@@ -80,6 +83,12 @@ public abstract class Message {
     return Arrays.equals(data, message.data);
   }
 
+  public void compareBytes(byte[] src, byte[] dest) throws P2pException {
+    if (!Arrays.equals(src, dest)) {
+      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    }
+  }
+
   public CodedInputStream getCodedInputStream() {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
     if (isFilter()) {
@@ -97,9 +106,8 @@ public abstract class Message {
         return filter;
       }
       if (System.currentTimeMillis() - time > duration) {
-        long allowNum = manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
-        if (allowNum > 0 && allowNum <= manager.getDynamicPropertiesStore()
-            .getLatestSolidifiedBlockNum()) {
+        long allowNum = 1;//manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum();
+        if (allowNum == 1) {
           filter = true;
         }
         time = System.currentTimeMillis();

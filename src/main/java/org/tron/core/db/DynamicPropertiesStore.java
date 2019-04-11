@@ -173,7 +173,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
-  //Used only for protobuf data filter , once，value is block num
+  //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_BLOCK_NUM = "ALLOW_PROTO_FILTER_BLOCK_NUM".getBytes();
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
@@ -607,7 +607,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowProtoFilterBlockNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterBlockNum(-1);
+      this.saveAllowProtoFilterBlockNum(0);
     }
   }
 

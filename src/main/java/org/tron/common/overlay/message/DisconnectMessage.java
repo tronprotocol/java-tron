@@ -11,8 +11,7 @@ public class DisconnectMessage extends P2pMessage {
 
   public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(getCodedInputStream());
-    data = disconnectMessage.toByteArray();
+    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(data);
   }
 
   public DisconnectMessage(ReasonCode reasonCode) {
