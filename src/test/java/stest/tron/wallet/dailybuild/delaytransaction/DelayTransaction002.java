@@ -126,7 +126,7 @@ public class DelayTransaction002 {
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(finalTxid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
-    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
     PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
     PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
     PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
