@@ -748,7 +748,7 @@ contract KittyBreeding is KittyOwnership {
     /// @notice The minimum payment required to use breedWithAuto(). This fee goes towards
     ///  the gas cost paid by whatever calls giveBirth(), and can be dynamically updated by
     ///  the COO role as the gas price changes.
-    uint256 public autoBirthFee = 2 sun;
+    uint256 public autoBirthFee = 2 finny;
 
     // Keeps track of number of pregnant kitties.
     uint256 public pregnantKitties;
@@ -1813,7 +1813,7 @@ contract KittyMinting is KittyAuction {
     uint256 public constant GEN0_CREATION_LIMIT = 45000;
 
     // Constants for gen0 auctions.
-    uint256 public constant GEN0_STARTING_PRICE = 10 sun;
+    uint256 public constant GEN0_STARTING_PRICE = 10 finny;
     uint256 public constant GEN0_AUCTION_DURATION = 1 days;
 
     // Counts the number of cats the contract owner has created.

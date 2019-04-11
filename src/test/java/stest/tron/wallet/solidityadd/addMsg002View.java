@@ -146,8 +146,7 @@ public class addMsg002View {
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-                "transferTokenWithView(address,uint256)", para, false,
-                0, maxFeeLimit,tokenid,tokenvalue, contractExcAddress, contractExcKey, blockingStubFull);
+            "transferTokenWithOutPayable(address,uint256)", para, false,0,maxFeeLimit,assetAccountId.toStringUtf8(),10, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<Protocol.TransactionInfo> infoById = null;

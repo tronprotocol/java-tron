@@ -5,7 +5,8 @@
 contract InnerContract {
 
 
-
+    constructor() public payable{}
+    function() external payable{}
     function messageI() payable returns (uint ret) {
 
 
@@ -18,7 +19,8 @@ contract InnerContract {
 
 contract OuterContract {
 
-
+    constructor() public payable{}
+    function() external payable{}
 
     function callInner(address addr) payable returns (uint) {
 

@@ -161,7 +161,7 @@ public class addTransferToken001Nonpayable {
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenid + "\" ,\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
-                "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,0,maxFeeLimit,assetAccountId.toStringUtf8(),10, contractExcAddress, contractExcKey, blockingStubFull);
+                "transferTokenWithOutPayable(address,trcToken,uint256)", para, false,0,maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<Protocol.TransactionInfo> infoById = null;
@@ -178,11 +178,11 @@ public class addTransferToken001Nonpayable {
             assetAccountId, blockingStubFull);
 
     logger.info("contractAssetCountcontractAssetCount"+AftercontractAssetCount);
-//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount + tokenvalue);
-//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue);
-    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount);
-    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
+    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount + tokenvalue);
+    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue);
+//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount);
+//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
+//    Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
 
   @Test(enabled = true, description = "Support function type")

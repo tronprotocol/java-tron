@@ -1,5 +1,6 @@
 package stest.tron.wallet.solidityadd;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -51,7 +52,17 @@ public class addTransferToken004Pure {
             .getStringList("fullnode.ip.list").get(0);
 
 
+  private static final long now = System.currentTimeMillis();
+  private static String tokenName = "testAssetIssue_" + Long.toString(now);
+  private static ByteString assetAccountId = null;
+  private static final long TotalSupply = 1000L;
+  private String description = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetDescription");
+  private String url = Configuration.getByPath("testng.conf")
+          .getString("defaultParameter.assetUrl");
+
   byte[] contractAddress = null;
+
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -90,6 +101,16 @@ public class addTransferToken004Pure {
          .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress,
                  testNetAccountKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    //Create a new AssetIssue success.
+    Assert.assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L, 100000L,
+            1L, 1L, contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Protocol.Account getAssetIdFromThisAccount = PublicMethed
+            .queryAccount(contractExcAddress, blockingStubFull);
+    assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
     String filePath = "src/test/resources/soliditycode/addTransferToken004Pure.sol";
     String contractName = "IllegalDecorate";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -120,7 +141,7 @@ public class addTransferToken004Pure {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
-    String tokenvalue = "";
+    Long tokenvalue = 10L;
     String para = "\"" + Base58.encode58Check(toAddress)
             + "\",\"" + tokenvalue + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
