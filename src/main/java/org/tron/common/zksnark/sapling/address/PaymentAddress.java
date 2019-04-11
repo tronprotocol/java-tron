@@ -20,7 +20,7 @@ public class PaymentAddress {
     byte[] mBytes = new byte[11 + 32];
 
     System.arraycopy(d.getData(), 0, mBytes, 0, 11);
-    System.arraycopy(pkD, 0, mBytes, 1, 32);
+    System.arraycopy(pkD, 0, mBytes, 11, 32);
     return mBytes;
   }
 
