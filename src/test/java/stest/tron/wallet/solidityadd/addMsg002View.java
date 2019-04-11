@@ -129,6 +129,9 @@ public class addMsg002View {
     Assert.assertTrue(PublicMethed
               .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                       testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+            assetAccountId.toByteArray(), 100L, contractExcAddress,
+            contractExcKey, blockingStubFull));
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
@@ -140,6 +143,12 @@ public class addMsg002View {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+    Long beforecontractAssetCount = PublicMethed.getAssetIssueValue(contractAddress,
+            assetAccountId, blockingStubFull);
+    Long beforeAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
+            assetAccountId, blockingStubFull);
+    Long beforecontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress,
+            assetAccountId, blockingStubFull);
     String txid = "";
     Long tokenvalue = 10L;
     String tokenid = assetAccountId.toStringUtf8() ;
@@ -157,6 +166,22 @@ public class addMsg002View {
     Long netFee = infoById.get().getReceipt().getNetFee();
     logger.info("netUsed:" + netUsed);
     logger.info("energyUsed:" + energyUsed);
+    Long AftercontractAssetCount = PublicMethed.getAssetIssueValue(contractAddress,
+            assetAccountId, blockingStubFull);
+    Long AfterAddressAssetCount = PublicMethed.getAssetIssueValue(toAddress,
+            assetAccountId, blockingStubFull);
+    Long AftercontractExcAddress =  PublicMethed.getAssetIssueValue(contractExcAddress,
+            assetAccountId, blockingStubFull);
+
+    logger.info("beforecontractAssetCount:"+beforecontractAssetCount);
+    logger.info("AftercontractAssetCount:"+AftercontractAssetCount);
+    logger.info("beforeAddressAssetCount:"+beforeAddressAssetCount);
+    logger.info("AfterAddressAssetCount:"+AfterAddressAssetCount);
+    logger.info("beforecontractExcAddress:"+beforecontractExcAddress);
+    logger.info("AftercontractExcAddress:"+AftercontractExcAddress);
+
+    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
+
   }
 
 

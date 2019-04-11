@@ -180,9 +180,7 @@ public class addTransferToken001Nonpayable {
     logger.info("contractAssetCountcontractAssetCount"+AftercontractAssetCount);
     Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount + tokenvalue);
     Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue);
-//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount);
-//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
-//    Assert.assertTrue(infoById.get().getResultValue() == 1);
+
   }
 
   @Test(enabled = true, description = "Support function type")
@@ -281,11 +279,6 @@ public class addTransferToken001Nonpayable {
     Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue );
     Assert.assertTrue(beforecontractExcAddress == AftercontractExcAddress + Tokenvalue );
 
-//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount + tokenvalue);
-//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount - tokenvalue);
-//    Assert.assertTrue(beforecontractAssetCount == AftercontractAssetCount);
-//    Assert.assertTrue(beforeAddressAssetCount == AfterAddressAssetCount);
-//    Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
 
 

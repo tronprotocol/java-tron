@@ -130,6 +130,9 @@ public class addTransferToken002View {
     Assert.assertTrue(PublicMethed
               .sendcoin(contractAddress, 100000000000L, testNetAccountAddress,
                       testNetAccountKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+            assetAccountId.toByteArray(), 100L, contractExcAddress,
+            contractExcKey, blockingStubFull));
     GrpcAPI.AccountResourceMessage resourceInfo =
             PublicMethed.getAccountResource(contractExcAddress, blockingStubFull);
     info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
