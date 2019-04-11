@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+pragma solidity ^0.4.24;
 
 contract A{
     constructor() payable public{}
@@ -114,7 +114,7 @@ contract B{
         return 1;
     }
     function testNN(address eAddress) public payable{
-         D d1=(new D).value(1000)();
+         D d1=(new D).value(100)();
          d1.getOne(eAddress);
     }
 }

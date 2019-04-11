@@ -1,8 +1,7 @@
-//pragma solidity ^0.4.0;
-contract timetest {
+pragma solidity ^0.4.0;
+contract trxtest {
 
-function timetest() public {
-require(1 TRX == 1000000 SUN)；
-
+function test() public {
+require(1 trx == 1000000 sun);
 }
 }

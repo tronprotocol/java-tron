@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.4;
+pragma solidity ^0.4.4;
 contract Counter {
 uint count = 0;
 address owner;

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+pragma solidity ^0.4.24;
 
     contract A{
         uint256 public num = 0;
@@ -80,18 +80,7 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
+
         }
         function transfer2()  payable public{
             (new B).value(1)();//1
@@ -173,16 +162,6 @@
             (new B).value(1)();//1
             (new B).value(1)();//1
             (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-            (new B).value(1)();//1
-           (new B).value(1)();//1
 
         }
         function getBalance() returns(uint256){

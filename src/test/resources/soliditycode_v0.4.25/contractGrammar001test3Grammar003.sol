@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.11;
+pragma solidity ^0.4.11;
 
 library Set {
  struct Data { mapping(uint => bool) flags; }

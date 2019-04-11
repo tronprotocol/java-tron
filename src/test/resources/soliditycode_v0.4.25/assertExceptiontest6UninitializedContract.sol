@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+pragma solidity ^0.4.0;
 contract uni {
 function b(int x, int y) internal  returns (int)
 {

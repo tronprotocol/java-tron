@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.0;
+pragma solidity ^0.4.0;
 
 contract  findArgsContractTest{
     function findArgsByIndexTest(uint i) public returns (uint z) {

@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+pragma solidity ^0.4.24;
 /*
  * 1. caller账户issue一个token
  * 2. caller部署proxy,   传入1000 token，1000 trx

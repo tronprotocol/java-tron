@@ -1,4 +1,4 @@
-// pragma solidity ^0.4.0;
+ pragma solidity ^0.4.0;
 contract InfoFeed {
 function d1(uint x){
         assembly{

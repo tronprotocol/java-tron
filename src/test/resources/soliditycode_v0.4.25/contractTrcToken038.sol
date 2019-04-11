@@ -1,4 +1,4 @@
-//pragma solidity ^0.4.24;
+pragma solidity ^0.4.24;
 
 contract transferTrc10 {
     function receive(address rec) public payable {
