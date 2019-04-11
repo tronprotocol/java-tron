@@ -12,7 +12,7 @@ public class BlocksMessage extends TronMessage {
   public BlocksMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.BLOCKS.asByte();
-    Items items = Items.parseFrom(getCodedInputStream());
+    Items items = Items.parseFrom(getCodedInputStream(data));
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }

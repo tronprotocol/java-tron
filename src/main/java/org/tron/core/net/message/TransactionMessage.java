@@ -12,7 +12,7 @@ public class TransactionMessage extends TronMessage {
 
   public TransactionMessage(byte[] data) throws BadItemException, P2pException {
     super(data);
-    this.transactionCapsule = new TransactionCapsule(getCodedInputStream());
+    this.transactionCapsule = new TransactionCapsule(data);
     this.type = MessageTypes.TRX.asByte();
     compareBytes(data, transactionCapsule.getData());
   }

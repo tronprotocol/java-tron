@@ -19,7 +19,7 @@ public class TransactionsMessage extends TronMessage {
   public TransactionsMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.TRXS.asByte();
-    this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream());
+    this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream(data));
     compareBytes(data, transactions.toByteArray());
   }
 

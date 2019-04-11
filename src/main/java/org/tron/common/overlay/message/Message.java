@@ -84,7 +84,7 @@ public abstract class Message {
     }
   }
 
-  public CodedInputStream getCodedInputStream() {
+  public static CodedInputStream getCodedInputStream(byte[] data) {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
     if (isFilter()) {
       Field field = ReflectionUtils
@@ -95,7 +95,7 @@ public abstract class Message {
     return codedInputStream;
   }
 
-  private boolean isFilter() {
+  private static boolean isFilter() {
     return manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum() == 1;
   }
 
