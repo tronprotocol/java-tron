@@ -12,7 +12,6 @@ import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
-import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
 import org.tron.core.Wallet;
 
 public class RpcWallet {
@@ -36,7 +35,7 @@ public class RpcWallet {
 //  { "wallet",             "z_importwallet",           &z_importwallet,           true  },
 
 
-  public void getNewAddress() {
+  public String getNewAddress() {
     //seed
     //AccountCounter
 
@@ -99,6 +98,7 @@ public class RpcWallet {
     // return default sapling payment address.
 
     System.out.println(KeyIo.EncodePaymentAddress(addr));
+    return KeyIo.EncodePaymentAddress(addr);
   }
 
   public void sendCoinShield(String[] params) {
@@ -153,7 +153,12 @@ public class RpcWallet {
     // Check that the from address is valid.
     String fromAddress = params[0];
     boolean fromTaddr = false;
-    byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddress);
+    byte[] tFromAddrBytes = null;
+    try {
+      tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddress);
+    } catch (Exception ex) {
+    }
+
     if (tFromAddrBytes != null) {
       fromTaddr = true;
     } else {

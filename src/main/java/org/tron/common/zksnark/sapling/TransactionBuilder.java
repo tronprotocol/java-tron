@@ -239,7 +239,7 @@ public class TransactionBuilder {
     public byte[] memo; // 256
   }
 
-  class TransactionBuilderResult {
+  public static class TransactionBuilderResult {
 
   }
 }
