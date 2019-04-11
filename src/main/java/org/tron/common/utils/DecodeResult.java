@@ -54,8 +54,8 @@ public class DecodeResult implements Serializable {
       return Hex.toHexString((byte[]) decoded);
     } else if (decoded instanceof Object[]) {
       return Arrays.stream((Object[]) decoded)
-              .map(this::asString)
-              .collect(Collectors.joining());
+          .map(this::asString)
+          .collect(Collectors.joining());
     }
     throw new RuntimeException("Not a valid type. Should not occur");
   }

@@ -24,23 +24,23 @@ import java.util.Map;
 
 public class ProgramStorageChangeListener extends ProgramListenerAdaptor {
 
-    private Map<DataWord, DataWord> diff = new HashMap<>();
+  private Map<DataWord, DataWord> diff = new HashMap<>();
 
-    @Override
-    public void onStoragePut(DataWord key, DataWord value) {
-        diff.put(key, value);
-    }
+  @Override
+  public void onStoragePut(DataWord key, DataWord value) {
+    diff.put(key, value);
+  }
 
-    @Override
-    public void onStorageClear() {
-        // do nothing
-    }
+  @Override
+  public void onStorageClear() {
+    // do nothing
+  }
 
-    public Map<DataWord, DataWord> getDiff() {
-        return new HashMap<>(diff);
-    }
+  public Map<DataWord, DataWord> getDiff() {
+    return new HashMap<>(diff);
+  }
 
-    public void merge(Map<DataWord, DataWord> diff) {
-        this.diff.putAll(diff);
-    }
+  public void merge(Map<DataWord, DataWord> diff) {
+    this.diff.putAll(diff);
+  }
 }

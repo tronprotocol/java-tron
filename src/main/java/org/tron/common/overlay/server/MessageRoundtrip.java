@@ -29,9 +29,9 @@ import org.tron.common.overlay.message.Message;
 public class MessageRoundtrip {
 
   private final Message msg;
-  long lastTimestamp = 0;
-  long retryTimes = 0;
-  boolean answered = false;
+  private long lastTimestamp = 0;
+  private long retryTimes = 0;
+  private boolean answered = false;
 
   public MessageRoundtrip(Message msg) {
     this.msg = msg;

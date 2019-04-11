@@ -55,7 +55,7 @@ public abstract class Message {
     return getMessageId().hashCode();
   }
 
-  public static Node getNode(Endpoint endpoint){
+  public static Node getNode(Endpoint endpoint) {
     Node node = new Node(endpoint.getNodeId().toByteArray(),
         ByteArray.toStr(endpoint.getAddress().toByteArray()), endpoint.getPort());
     return node;

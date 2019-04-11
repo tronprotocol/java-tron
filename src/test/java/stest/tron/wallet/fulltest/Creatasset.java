@@ -29,7 +29,7 @@ public class Creatasset {
       "6815B367FDDE637E53E9ADC8E69424E07724333C9A2B973CFA469975E20753FC";
 
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
-  private final byte[] toAddress   = PublicMethed.getFinalAddress(testKey003);
+  private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
 
   private static final String tooLongDescription =
       "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqa"
@@ -91,7 +91,7 @@ public class Creatasset {
   }
 
   //@Test(enabled = false)
-  @Test(enabled = false,threadPoolSize = 20, invocationCount = 20)
+  @Test(enabled = false, threadPoolSize = 20, invocationCount = 20)
   public void createAssetissue() throws InterruptedException {
 
     ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -111,7 +111,6 @@ public class Creatasset {
     Boolean participateRet = false;
     Random rand = new Random();
     Integer randNum;
-
 
     while (fromAccountInfo.getBalance() > 1025000000) {
       randNum = rand.nextInt(4);
@@ -189,6 +188,7 @@ public class Creatasset {
 
     }
   }
+
   /**
    * constructor.
    */

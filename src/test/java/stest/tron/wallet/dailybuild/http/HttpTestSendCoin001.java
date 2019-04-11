@@ -20,6 +20,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class HttpTestSendCoin001 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -30,7 +31,7 @@ public class HttpTestSendCoin001 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] receiverAddress = ecKey1.getAddress();
   String receiverKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  Long amount  = 1000L;
+  Long amount = 1000L;
   private JSONObject responseContent;
   private HttpResponse response;
 
@@ -48,7 +49,7 @@ public class HttpTestSendCoin001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get transaction by id from solidity by http")
+  @Test(enabled = true, description = "Get transaction by id from solidity by http")
   public void test2GetTransactionByIdFromSolidity() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
@@ -67,7 +68,7 @@ public class HttpTestSendCoin001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "Get transaction info by id from solidity by http")
+  @Test(enabled = true, description = "Get transaction info by id from solidity by http")
   public void test3GetTransactionInfoByIdFromSolidity() {
     String txid = HttpMethed.sendCoinGetTxid(httpnode, fromAddress, receiverAddress, amount,
         testKey002);
@@ -84,7 +85,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transactions from this from solidity by http")
   public void test4GetTransactionsFromThisFromSolidity() {
-    response = HttpMethed.getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0,100);
+    response = HttpMethed
+        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -96,7 +98,8 @@ public class HttpTestSendCoin001 {
    */
   @Test(enabled = true, description = "Get transactions to this from solidity by http")
   public void test5GetTransactionsToThisFromSolidity() {
-    response = HttpMethed.getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0,100);
+    response = HttpMethed
+        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

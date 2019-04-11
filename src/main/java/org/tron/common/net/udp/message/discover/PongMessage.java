@@ -14,7 +14,7 @@ public class PongMessage extends Message {
 
   private Discover.PongMessage pongMessage;
 
-  public PongMessage(byte[] data) throws Exception{
+  public PongMessage(byte[] data) throws Exception {
     super(DISCOVER_PONG, data);
     this.pongMessage = Discover.PongMessage.parseFrom(data);
   }

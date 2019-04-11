@@ -63,9 +63,9 @@ public class ECKeyTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPrivateKey() throws Exception {
     new ECKey(
-            Security.getProvider("SunEC"),
-            KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
-            ECKey.fromPublicOnly(pubKey).getPubKeyPoint());
+        Security.getProvider("SunEC"),
+        KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
+        ECKey.fromPublicOnly(pubKey).getPubKeyPoint());
     fail("Expecting an IllegalArgumentException for using an non EC private key");
   }
 
@@ -134,7 +134,9 @@ public class ECKeyTest {
   @Test
   public void testToString() {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN); // An example private key.
-    assertEquals("pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7", key.toString());
+    assertEquals(
+        "pub:04a0434d9e47f3c86235477c7b1ae6ae5d3442d49b1943c2b752a68e2a47e247c7893aba425419bc27a3b6c7e693a24c696f794c2ed877a1593cbee53b037368d7",
+        key.toString());
   }
 
   @Test
@@ -201,8 +203,9 @@ public class ECKeyTest {
   }
 
   @Test
-  public void decryptAECSIC(){
-    ECKey key = ECKey.fromPrivate(Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
+  public void decryptAECSIC() {
+    ECKey key = ECKey.fromPrivate(
+        Hex.decode("abb51256c1324a1350598653f46aa3ad693ac3cf5d05f36eba3f495a1f51590f"));
     byte[] payload = key.decryptAES(Hex.decode("84a727bc81fa4b13947dc9728b88fd08"));
     System.out.println(Hex.toHexString(payload));
   }

@@ -1210,7 +1210,7 @@ public class ECKey implements Serializable {
 
       return ByteUtil.merge(
           ByteUtil.bigIntegerToBytes(this.r, 32),
-          ByteUtil.bigIntegerToBytes(this.s,32),
+          ByteUtil.bigIntegerToBytes(this.s, 32),
           new byte[]{fixedV});
     }
 

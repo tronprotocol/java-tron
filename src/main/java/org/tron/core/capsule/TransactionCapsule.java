@@ -80,6 +80,7 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -331,7 +332,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }
@@ -441,6 +442,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case UpdateEnergyLimitContract:
           owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
+              .getOwnerAddress();
+          break;
+        case ClearABIContract:
+          owner = contractParameter.unpack(ClearABIContract.class)
               .getOwnerAddress();
           break;
         case ExchangeCreateContract:
@@ -578,7 +583,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new PermissionException("Permission type is error");
       }
       //check oprations
-      if (!Wallet.checkPermissionOprations(permission, contract)){
+      if (!Wallet.checkPermissionOprations(permission, contract)) {
         throw new PermissionException("Permission denied");
       }
     }

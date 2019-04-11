@@ -223,11 +223,8 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
-        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
-      return true;
-    }
-    return false;
+    return trx.getContractRet() != contractResult.OUT_OF_TIME && receipt.getResult()
+        == contractResult.OUT_OF_TIME;
   }
 
   public void check() throws ReceiptCheckErrException {

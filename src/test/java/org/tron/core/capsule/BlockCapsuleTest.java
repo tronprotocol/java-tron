@@ -22,8 +22,8 @@ public class BlockCapsuleTest {
 
   private static BlockCapsule blockCapsule0 = new BlockCapsule(1,
       Sha256Hash.wrap(ByteString
-      .copyFrom(ByteArray
-          .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+          .copyFrom(ByteArray
+              .fromHexString("9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
       1234,
       ByteString.copyFrom("1234567".getBytes()));
   private static String dbPath = "output_bloackcapsule_test";

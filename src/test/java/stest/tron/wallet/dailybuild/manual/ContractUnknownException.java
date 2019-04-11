@@ -91,6 +91,7 @@ public class ContractUnknownException {
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress, 204800000,
         0, 1, testKeyForGrammarAddress, blockingStubFull));
     Account info;
@@ -150,9 +151,10 @@ public class ContractUnknownException {
 
   @Test(enabled = true, description = "trigger revert method")
   public void testGrammar002() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress2, 100000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress2, 10000000L,
         0, 1, testKeyForGrammarAddress2, blockingStubFull));
     Account info;
@@ -218,9 +220,10 @@ public class ContractUnknownException {
 
   @Test(enabled = true, description = "trigger assert method")
   public void testGrammar003() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress3, 1000000000L,
         0, 1, testKeyForGrammarAddress3, blockingStubFull));
     Account info;
@@ -284,9 +287,10 @@ public class ContractUnknownException {
 
   @Test(enabled = true, description = "trigger require method")
   public void testGrammar004() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress4, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress4, 100000000L,
         0, 1, testKeyForGrammarAddress4, blockingStubFull));
     Account info;

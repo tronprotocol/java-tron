@@ -75,7 +75,6 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.actuator.Actuator;
@@ -115,6 +114,8 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
@@ -146,7 +147,9 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetService tronNetService;
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -280,13 +283,6 @@ public class Wallet {
 
   }
 
-  // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] code, byte[] salt) {
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
-    return Hash.sha3omit12(mergedData);
-  }
-
-  // for `CREATE`
   public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
     byte[] nonceBytes = Longs.toByteArray(nonce);
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
@@ -424,14 +420,14 @@ public class Wallet {
 
     try {
       if (minEffectiveConnection != 0) {
-        if (p2pNode.getActivePeer().isEmpty()) {
+        if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
         }
 
-        int count = (int) p2pNode.getActivePeer().stream()
+        int count = (int) tronNetDelegate.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
             .count();
 
@@ -466,7 +462,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
@@ -896,12 +892,7 @@ public class Wallet {
         .setKey("getMultiSignFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
         .build());
-//    ALLOW_TVM_CONSTANTINOPLE, // 1, 24
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmConstantinople")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
-            .build());
+
     return builder.build();
   }
 

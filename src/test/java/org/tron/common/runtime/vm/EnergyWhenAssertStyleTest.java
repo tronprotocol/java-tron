@@ -105,7 +105,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 39487;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testOutOfIndex()", null);
@@ -155,7 +156,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 31875;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testbytesN()", null);
@@ -204,7 +206,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 27875;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testDivZero()", null);
@@ -254,7 +257,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 28475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testShiftByNegative()", null);
@@ -305,7 +309,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 27475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testEnumType()", null);
@@ -354,7 +359,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 30475;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testFunctionPointer()", null);
@@ -403,7 +409,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 26675;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     byte[] triggerData = TVMTestUtils.parseABI("testAssert()", null);
@@ -457,7 +464,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 89214;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
 
     String params =
@@ -510,7 +518,8 @@ public class EnergyWhenAssertStyleTest {
 
     long expectEnergyUsageTotal = 40487;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal);
-    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(), totalBalance - expectEnergyUsageTotal * 100);
+    Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
+        totalBalance - expectEnergyUsageTotal * 100);
     byte[] contractAddress = result.getContractAddress();
     String params = "0000000000000000000000000000000000000000000000000000000000000001";
     byte[] triggerData = TVMTestUtils.parseABI("testMem(uint256)", params);

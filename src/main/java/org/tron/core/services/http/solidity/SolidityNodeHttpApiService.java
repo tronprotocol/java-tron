@@ -109,9 +109,12 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getassetissuelistbyname");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/walletsolidity/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/walletsolidity/getblockbynum");
-      context.addServlet(new ServletHolder(getDelegatedResourceServlet), "/walletsolidity/getdelegatedresource");
-      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet), "/walletsolidity/getdelegatedresourceaccountindex");
-      context.addServlet(new ServletHolder(getExchangeByIdServlet), "/walletsolidity/getexchangebyid");
+      context.addServlet(new ServletHolder(getDelegatedResourceServlet),
+          "/walletsolidity/getdelegatedresource");
+      context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),
+          "/walletsolidity/getdelegatedresourceaccountindex");
+      context
+          .addServlet(new ServletHolder(getExchangeByIdServlet), "/walletsolidity/getexchangebyid");
       context.addServlet(new ServletHolder(listExchangesServlet), "/walletsolidity/listexchanges");
 
       // only for SolidityNode

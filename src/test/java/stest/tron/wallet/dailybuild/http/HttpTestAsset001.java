@@ -93,7 +93,7 @@ public class HttpTestAsset001 {
   /**
    * constructor.
    */
-  @Test(enabled = false, description = "GetAssetIssueById from solidity by http")
+  @Test(enabled = true, description = "GetAssetIssueById from solidity by http")
   public void test03GetAssetIssueByIdFromSolidity() {
     HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueByIdFromSolidity(httpSoliditynode, assetIssueId);
@@ -110,6 +110,7 @@ public class HttpTestAsset001 {
     response = HttpMethed.getAssetIssueByName(httpnode, name);
     getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByNameContent);
+    Assert.assertTrue(totalSupply == getAssetIssueByNameContent.getLong("total_supply"));
   }
 
   /**
@@ -120,6 +121,7 @@ public class HttpTestAsset001 {
     response = HttpMethed.getAssetIssueByNameFromSolidity(httpSoliditynode, name);
     getAssetIssueByNameContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(getAssetIssueByNameContent);
+    Assert.assertTrue(totalSupply == getAssetIssueByNameContent.getLong("total_supply"));
   }
 
   /**
@@ -198,7 +200,7 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "Get asset issue list from solidity by http")
   public void test10GetAssetissueListFromSolidity() {
-    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSoliditynode);
     response = HttpMethed.getAssetIssueListFromSolidity(httpSoliditynode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);

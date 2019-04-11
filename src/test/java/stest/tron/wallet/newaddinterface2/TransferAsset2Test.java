@@ -144,6 +144,7 @@ public class TransferAsset2Test {
     Assert.assertFalse(unFreezeAsset(toAddress, testKey003));
     logger.info("Test not create asset issue, try to unfreeze asset, no exception. Test OK!!!");
   }
+
   /**
    * constructor.
    */
@@ -154,6 +155,7 @@ public class TransferAsset2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -203,6 +205,7 @@ public class TransferAsset2Test {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -230,6 +233,7 @@ public class TransferAsset2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -239,6 +243,7 @@ public class TransferAsset2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -258,6 +263,7 @@ public class TransferAsset2Test {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -299,6 +305,7 @@ public class TransferAsset2Test {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -356,6 +363,7 @@ public class TransferAsset2Test {
     }
     return ret;
   }
+
   /**
    * constructor.
    */

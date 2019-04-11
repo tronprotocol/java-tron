@@ -153,7 +153,7 @@ public class WalletTestMutiSign016 {
     manager2Address = ecKey4.getAddress();
     manager2Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
 
-    long needCoin = updateAccountPermissionFee + multiSignFee;
+    final long needCoin = updateAccountPermissionFee + multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -224,27 +224,14 @@ public class WalletTestMutiSign016 {
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin + 1024_000_000L);
 
   }
-//
-//  @Test(enabled = true, description = "List exchange after create exchange by MutiSign")
-//  public void test3ListExchange() {
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    listExchange = PublicMethed.getExchangeList(blockingStubFull);
-//    for (Integer i = 0; i < listExchange.get().getExchangesCount(); i++) {
-//      Assert.assertFalse(ByteArray.toHexString(listExchange.get().getExchanges(i)
-//          .getCreatorAddress().toByteArray()).isEmpty());
-//      Assert.assertTrue(listExchange.get().getExchanges(i).getExchangeId() > 0);
-//      Assert.assertFalse(ByteArray.toStr(listExchange.get().getExchanges(i).getFirstTokenId()
-//          .toByteArray()).isEmpty());
-//      Assert.assertTrue(listExchange.get().getExchanges(i).getFirstTokenBalance() > 0);
-//    }
-//  }
+
 
   @Test(enabled = false, description = "Mutisign for inject exchange")
   public void test4InjectExchange() {
     exchangeIdInfo = PublicMethed.getExchange(exchangeId.toString(), blockingStubFull);
     final Long beforeExchangeToken1Balance = exchangeIdInfo.get().getFirstTokenBalance();
     final Long beforeExchangeToken2Balance = exchangeIdInfo.get().getSecondTokenBalance();
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -300,7 +287,7 @@ public class WalletTestMutiSign016 {
 
   @Test(enabled = false, description = "MutiSign for withdraw exchange")
   public void test5WithdrawExchange() {
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -362,7 +349,7 @@ public class WalletTestMutiSign016 {
 
   @Test(enabled = false, description = "MutiSign for transaction exchange")
   public void test6TransactionExchange() {
-    long needCoin = multiSignFee;
+    final long needCoin = multiSignFee;
     Long balanceBefore = PublicMethed.queryAccount(exchange001Address, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);

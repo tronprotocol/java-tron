@@ -89,6 +89,7 @@ public class Program {
   private static final int MAX_DEPTH = 64;
   //Max size for stack checks
   private static final int MAX_STACK_SIZE = 1024;
+  public static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE = "validateForSmartContract failure";
 
   private BlockCapsule blockCap;
 
@@ -480,7 +481,7 @@ public class Program {
       try {
         TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
-        throw new BytecodeExecutionException("validateForSmartContract failure");
+        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
       }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
@@ -661,7 +662,7 @@ public class Program {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException("validateForSmartContract failure");
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -670,7 +671,7 @@ public class Program {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException("validateForSmartContract failure");
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1181,8 +1182,8 @@ public class Program {
 
   static class ByteCodeIterator {
 
-    byte[] code;
-    int pc;
+    private byte[] code;
+    private int pc;
 
     public ByteCodeIterator(byte[] code) {
       this.code = code;
@@ -1357,7 +1358,7 @@ public class Program {
           TransferAssetActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException("validateForSmartContract failure");
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1410,27 +1411,23 @@ public class Program {
   /**
    * check TokenId
    *
-   * TokenId  \ isTransferToken
-   * ---------------------------------------------------------------------------------------------
-   *                       false                                     true
-   * ---------------------------------------------------------------------------------------------
+   * TokenId  \ isTransferToken ---------------------------------------------------------------------------------------------
+   * false                                     true ---------------------------------------------------------------------------------------------
    * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------
    * [Long.Min, 0)        Not possible                               error
-   * ---------------------------------------------------------------------------------------------
-   * 0                   allowed and only allowed                    error
-   *                    (guaranteed in CALLTOKEN)   transfertoken id=0 should not transfer trx）
-   * ---------------------------------------------------------------------------------------------
+   * --------------------------------------------------------------------------------------------- 0
+   *                   allowed and only allowed                    error (guaranteed in CALLTOKEN)
+   * transfertoken id=0 should not transfer trx） ---------------------------------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed
    * ---------------------------------------------------------------------------------------------
    * (Long.Max,+∞)         Not possible          error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------
-   * @param msg
    */
   public void checkTokenId(MessageCall msg) {
-    if(VMConfig.allowMultiSign()){ //allowMultiSign proposal
+    if (VMConfig.allowMultiSign()) { //allowMultiSign proposal
       // tokenid should not get Long type overflow
       long tokenId = msg.getTokenId().sValue().longValueExact();
       // tokenId can only be 0 when isTokenTransferMsg == false
@@ -1438,27 +1435,28 @@ public class Program {
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) ||
           (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
-        throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
+        throw new BytecodeExecutionException(
+            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
       }
     }
   }
 
   public boolean isTokenTransfer(MessageCall msg) {
-    if(VMConfig.allowMultiSign()) { //allowMultiSign proposal
+    if (VMConfig.allowMultiSign()) { //allowMultiSign proposal
       return msg.isTokenTransferMsg();
-    }
-    else {
+    } else {
       return msg.getTokenId().longValue() != 0;
     }
   }
 
   public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
-    if(VMConfig.allowMultiSign()){ //allowMultiSigns proposal
+    if (VMConfig.allowMultiSign()) { //allowMultiSigns proposal
       // tokenid should not get Long type overflow
       long tokenId = tokenIdDataWord.sValue().longValueExact();
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
-      if (tokenId <= VMConstant.MIN_TOKEN_ID ) {
-        throw new BytecodeExecutionException("validateForSmartContract failure, not valid token id");
+      if (tokenId <= VMConstant.MIN_TOKEN_ID) {
+        throw new BytecodeExecutionException(
+            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
       }
     }
   }
