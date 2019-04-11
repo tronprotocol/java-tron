@@ -3,7 +3,6 @@ package stest.tron.wallet.dailybuild.delaytransaction;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -17,16 +16,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class DelayTransaction004 {
+public class DelayTransaction005 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -75,7 +71,7 @@ public class DelayTransaction004 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delay update setting contract")
+  @Test(enabled = true, description = "Delay update energy limit contract")
   public void test1DelayUpdateSetting() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -99,24 +95,25 @@ public class DelayTransaction004 {
         smartContractOwnerKey, smartContractOwnerAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    Long oldContractPercent = smartContract.getConsumeUserResourcePercent();
-    Assert.assertTrue(PublicMethed.updateSetting(contractAddress,oldContractPercent,
+    Long oldOriginEnergyLimit = 567L;
+    Assert.assertTrue(PublicMethed.updateEnergyLimit(contractAddress,oldOriginEnergyLimit,
         smartContractOwnerKey,smartContractOwnerAddress,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
+    Assert.assertTrue(smartContract.getOriginEnergyLimit() == oldOriginEnergyLimit);
 
-    Long newContractPercent = 39L;
-    final String txid = PublicMethed.updateSettingDelayGetTxid(contractAddress,newContractPercent,
-        delaySecond,smartContractOwnerKey,smartContractOwnerAddress,blockingStubFull);
+    Long newOriginEnergyLimit = 8765L;
+    final String txid = PublicMethed.updateEnergyLimitDelayGetTxid(contractAddress,
+        newOriginEnergyLimit, delaySecond,smartContractOwnerKey,smartContractOwnerAddress,
+        blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
+    Assert.assertTrue(smartContract.getOriginEnergyLimit() == oldOriginEnergyLimit);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    logger.info("newContractPercent: " + smartContract.getConsumeUserResourcePercent());
-    Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == newContractPercent);
+    logger.info("newOriginEnergyLimit: " + smartContract.getOriginEnergyLimit());
+    Assert.assertTrue(smartContract.getOriginEnergyLimit() == newOriginEnergyLimit);
 
     Long netFee = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getReceipt()
         .getNetFee();
@@ -125,13 +122,13 @@ public class DelayTransaction004 {
 
   }
 
-  @Test(enabled = true, description = "Cancel delay update setting contract")
+  @Test(enabled = true, description = "Cancel delay energy limit contract")
   public void test2CancelDelayUpdateSetting() {
     //get account
-    final Long oldContractPercent = smartContract.getConsumeUserResourcePercent();
-    final Long newContractPercent = 46L;
+    final Long oldOriginEnergyLimit = smartContract.getOriginEnergyLimit();
+    final Long newOriginEnergyLimit = 466L;
 
-    String txid = PublicMethed.updateSettingDelayGetTxid(contractAddress,newContractPercent,
+    String txid = PublicMethed.updateEnergyLimitDelayGetTxid(contractAddress,newOriginEnergyLimit,
         delaySecond,smartContractOwnerKey,smartContractOwnerAddress,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account ownerAccount = PublicMethed.queryAccount(smartContractOwnerKey,blockingStubFull);
@@ -148,8 +145,8 @@ public class DelayTransaction004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
-    logger.info("newContractPercent: " + smartContract.getConsumeUserResourcePercent());
-    Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
+    logger.info("newOriginEnergyLimit: " + smartContract.getOriginEnergyLimit());
+    Assert.assertTrue(smartContract.getOriginEnergyLimit() == oldOriginEnergyLimit);
 
     final Long netFee = PublicMethed.getTransactionInfoById(cancelTxid,blockingStubFull).get()
         .getReceipt().getNetFee();
@@ -168,10 +165,6 @@ public class DelayTransaction004 {
     logger.info("beforeCancelBalance: " + beforeCancelBalance);
     logger.info("afterCancelBalance : " + afterCancelBalance);
   }
-
-
-
-
 
   /**
    * constructor.
