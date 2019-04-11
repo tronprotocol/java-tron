@@ -166,7 +166,7 @@ public class RpcWallet {
       if (shieldFromAddr == null) {
         throw new RuntimeException("Invalid from address, should be a taddr or zaddr.");
       }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
+      if (!ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).isPresent()) {
         throw new RuntimeException(
                 "From address does not belong to this node, spending key or viewing key not found.");
       }

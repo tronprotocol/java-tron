@@ -56,11 +56,11 @@ public class ShieldCoinConstructor {
       if (shieldFromAddr == null) {
         throw new RuntimeException("unknown address type ");
       }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
+      if (!ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).isPresent()) {
         throw new RuntimeException(
             "From address does not belong to this wallet, spending key not found.");
       }
-      this.spendingKey = ShieldWallet.GetSpendingKeyForPaymentAddress(shieldFromAddr);
+      this.spendingKey = ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).get();
       this.isFromTAddress = false;
     }
 
