@@ -370,9 +370,9 @@ message OutputStatement {
 
 message SpendDescription {
   bytes value_commitment = 1;
-  bytes anchor = 2;  // merkle root
-  bytes nullifier = 3;  // used for check double spend
-  bytes rk = 4;  // used for check spend authority signature
+  bytes anchor = 2; // merkle root
+  bytes nullifier = 3; // used for check double spend
+  bytes rk = 4; // used for check spend authority signature
   bytes zkproof = 5;
   bytes spend_authority_signature = 6;
 }
@@ -380,20 +380,20 @@ message SpendDescription {
 message OutputDescription {
   bytes value_commitment = 1;
   bytes note_commitment = 2;
-  bytes epk = 3;  // for Encryption
-  bytes c_enc = 4;  // Encryption for incoming, decrypt it with ivk
-  bytes c_out = 5;  // Encryption for audit, decrypt it with ovk
+  bytes epk = 3; // for Encryption
+  bytes c_enc = 4; // Encryption for incoming, decrypt it with ivk
+  bytes c_out = 5; // Encryption for audit, decrypt it with ovk
   bytes zkproof = 6;
 }
 
 message ShieldedTransferContract {
-  bytes transparent_from_address = 1;  // transparent address
+  bytes transparent_from_address = 1; // transparent address
   bytes from_amount = 2;
   repeated SpendDescription spend_description = 3;
   repeated OutputDescription output_description = 4;
   bytes binding_signature = 5;
   bytes value_balance = 6;
-  bytes transparent_to_address = 7;  // transparent address
-  bytes to_amount = 8;  // the amount to transparent to_address
+  bytes transparent_to_address = 7; // transparent address
+  bytes to_amount = 8; // the amount to transparent to_address
 }
 // end shielded transaction
