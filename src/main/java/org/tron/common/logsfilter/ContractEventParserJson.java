@@ -51,7 +51,12 @@ public class ContractEventParserJson {
     if (topicsMatched(topicList, entry)) {
       for (int i = 0; i < inputs.size(); ++i) {
         JSONObject param = inputs.getJSONObject(i);
-        if (!param.getBoolean("indexed")) {
+
+        if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+          if (!inputs.getJSONObject(i).getBoolean("indexed")) {
+            continue;
+          }
+        } else {
           continue;
         }
 
@@ -99,9 +104,13 @@ public class ContractEventParserJson {
       if (inputs != null) {
         for (Integer i = 0; i < inputs.size(); ++i) {
           JSONObject param = inputs.getJSONObject(i);
-          if (param.getBoolean("indexed")) {
-            continue;
+
+          if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+            if (inputs.getJSONObject(i).getBoolean("indexed")) {
+              continue;
+            }
           }
+
           if (startIndex == 0) {
             startIndex = i;
           }
@@ -131,8 +140,10 @@ public class ContractEventParserJson {
     int inputSize = 1;
     JSONArray inputs = entry.getJSONArray("inputs");
     for (int i = 0; i < inputs.size(); i++) {
-      if (inputs.getJSONObject(i).getBoolean("indexed")) {
-        inputSize++;
+      if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+        if (inputs.getJSONObject(i).getBoolean("indexed")) {
+          inputSize++;
+        }
       }
     }
     return inputSize == topicList.size();

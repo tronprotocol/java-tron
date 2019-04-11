@@ -47,9 +47,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
 
-        if (!entry.getString("type").equalsIgnoreCase("event") || entry
-            .getBoolean("anonymous")) {
+        if (!entry.getString("type").equalsIgnoreCase("event")) {
           continue;
+        }
+
+        if (entry.getBoolean("anonymous") != null) {
+          if (entry.getBoolean("anonymous")) {
+            continue;
+          }
         }
 
         String signature = entry.getString("name") + "(";
@@ -87,6 +92,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     }
 
     if (isEvent) {
+      if (!EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
+        return;
+      }
       event = new ContractEventTrigger();
       ((ContractEventTrigger) event).setEventSignature(eventSignature);
       ((ContractEventTrigger) event).setEventSignatureFull(eventSignatureFull);
@@ -100,6 +108,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserJson.parseEventData(data, topicList, entryObj));
     } else {
+      if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
+        return;
+      }
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
