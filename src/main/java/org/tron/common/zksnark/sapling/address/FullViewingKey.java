@@ -25,7 +25,7 @@ public class FullViewingKey {
     return CBLAKE2bWriter.GetHash(this);
   }
 
-  public IncomingViewingKey in_viewing_key() {
+  public IncomingViewingKey inViewingKey() {
 
     byte[] ivk = new byte[32]; // the incoming viewing key
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);

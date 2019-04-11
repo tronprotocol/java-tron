@@ -38,7 +38,7 @@ public class KeyStore {
   }
 
   public static boolean addFullViewingKey(FullViewingKey fvk, PaymentAddress defaultAddr) {
-    IncomingViewingKey ivk = fvk.in_viewing_key();
+    IncomingViewingKey ivk = fvk.inViewingKey();
     mapFullViewingKeys.put(ivk, fvk);
 
     return addIncomingViewingKey(ivk, defaultAddr);

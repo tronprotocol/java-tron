@@ -115,7 +115,6 @@ public class SaplingExtendedFullViewingKey {
    public PaymentAddress DefaultAddress() {
      // 88 / 8 = 11
      byte[] j0 = new byte[11];
-     // byte[] j0 = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
      Map.Entry addr = getAddress(j0);
      // If we can't obtain a default address, we are *very* unlucky...
      if (addr == null) {

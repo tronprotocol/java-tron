@@ -43,41 +43,30 @@ public class RpcWallet {
     long nCreationTime = System.currentTimeMillis();
     CKeyMetadata metadata = new CKeyMetadata(nCreationTime);
 
-    ///
-    byte [] aa = {
-        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52,
-        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52,
-        0x16, 0x52, 0x52, 0x16, 0x52, 0x52, 0x16, 0x52
-    };
-
     // Try to get the seed
     HDSeed seed = KeyStore.seed;
-
     // init data for test
     seed.random(32);
-    // RawHDSeed rawHDSeed = new RawHDSeed();
-    // seed.rawSeed = rawHDSeed;
-    // seed.rawSeed.data = aa;
 
     if (seed == null) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
     }
 
-    ExtendedSpendingKey m = ExtendedSpendingKey.Master(seed);
+    ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
     int bip44CoinType = ZkChainParams.BIP44CoinType;
 
     // We use a fixed keypath scheme of m/32'/coin_type'/account'
     // Derive m/32'
-    ExtendedSpendingKey m_32h = m.Derive(32 | ZIP32_HARDENED_KEY_LIMIT );
+    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT );
     // Derive m/32'/coin_type'
-    ExtendedSpendingKey m_32h_cth = m_32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT );
+    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT );
 
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
     while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
       //
-      xsk = m_32h_cth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT );
+      xsk = master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT );
       metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
       metadata.seedFp = HdChain.seedFp;
       // Increment childkey index
@@ -88,17 +77,18 @@ public class RpcWallet {
 //    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
 //      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
 
-    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().in_viewing_key();
+    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().inViewingKey();
     ShieldWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
 
     PaymentAddress addr = xsk.DefaultAddress();
     if (!ShieldWallet.AddSaplingZKey(xsk, addr)) {
       throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
     }
-    // return default sapling payment address.
 
-    System.out.println(KeyIo.EncodePaymentAddress(addr));
-    return KeyIo.EncodePaymentAddress(addr);
+    // return default sapling payment address.
+    String paymentAddress = KeyIo.EncodePaymentAddress(addr);
+    System.out.println(paymentAddress);
+    return paymentAddress;
   }
 
   public void sendCoinShield(String[] params) {

@@ -34,7 +34,7 @@ public class SpendingKey {
   PaymentAddress default_address() {
     // Iterates within defaultDiversifier to ensure a valid address is returned
     Optional<PaymentAddress> addrOpt =
-        full_viewing_key().in_viewing_key().address(defaultDiversifier(this));
+        full_viewing_key().inViewingKey().address(defaultDiversifier(this));
     //    assert (addrOpt != boost::none);
     return addrOpt.get();
   }
