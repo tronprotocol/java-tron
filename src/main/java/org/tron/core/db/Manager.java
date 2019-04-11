@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -1262,6 +1263,23 @@ public class Manager {
     return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
   }
 
+  void validateDeferredTransactionType(TransactionCapsule trxCap) throws ContractValidateException{
+    switch (trxCap.getInstance().getRawData().getContractList().get(0).getType()) {
+      case TransferContract:
+      case AccountUpdateContract:
+      case TransferAssetContract:
+      case AccountCreateContract:
+      case UnfreezeAssetContract:
+      case UpdateAssetContract:
+      case SetAccountIdContract:
+      case UpdateSettingContract:
+      case UpdateEnergyLimitContract:
+        break;
+      default:
+        throw new ContractValidateException("Contract type not support deferred transaction");
+    }
+  }
+
   /**
    * Process transaction.
    */
@@ -1284,6 +1302,10 @@ public class Manager {
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
+    }
+
+    if (trxCap.getDeferredSeconds() != 0 || trxCap.getDeferredStage() != Constant.NORMALTRANSACTION) {
+      validateDeferredTransactionType(trxCap);
     }
 
     validateDup(trxCap);
