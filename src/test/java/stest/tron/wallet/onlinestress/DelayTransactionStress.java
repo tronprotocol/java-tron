@@ -87,26 +87,25 @@ public class DelayTransactionStress {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delayed send coin to test delayed second")
-  public void test1DelayedSecond() {
-    //get account
-    ecKey = new ECKey(Utils.getRandom());
-    delayAccount1Address = ecKey.getAddress();
-    delayAccount1Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-    PublicMethed.printAddress(delayAccount1Key);
-    Assert.assertTrue(PublicMethed.sendcoin(delayAccount1Address, 100000000L,fromAddress,
-        testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoinDelayed(fromAddress, 100000000L, 23L,delayAccount1Address,
-        delayAccount1Key, blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoinDelayed(fromAddress, 1L, 0L,delayAccount1Address,
-        delayAccount1Key, blockingStubFull));
-    Assert.assertFalse(PublicMethed.sendcoinDelayed(fromAddress, 1L, -1L,delayAccount1Address,
-        delayAccount1Key, blockingStubFull));
-    Assert.assertFalse(PublicMethed.sendcoinDelayed(fromAddress, 1L, MAX_DEFERRED_TRANSACTION_DELAY_SECONDS + 1L,delayAccount1Address,
-        delayAccount1Key, blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoinDelayed(fromAddress, 1L, MAX_DEFERRED_TRANSACTION_DELAY_SECONDS,delayAccount1Address,
-        delayAccount1Key, blockingStubFull));
+  @Test(enabled = true, threadPoolSize = 30, invocationCount = 2000)
+  public void test1DelaySendcoinStress() {
+    String txid = "";
+    Integer i = 0;
+    while (i++  <= 10000000) {
+      ECKey ecKey2 = new ECKey(Utils.getRandom());
+      byte[] delayAccount2Address = ecKey2.getAddress();
+      String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+       txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20,fromAddress,
+          testKey002, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      if (i % 4 == 0) {
+        PublicMethed.cancelDeferredTransactionById(txid,fromAddress,testKey002,blockingStubFull);
+      }
+
+    }
+
+
   }
 
   @Test(enabled = true, description = "Get deferred transaction by id")

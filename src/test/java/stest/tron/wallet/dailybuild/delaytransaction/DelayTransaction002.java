@@ -109,7 +109,7 @@ public class DelayTransaction002 {
 
     //Do delay send coin transaction.
     Long delaySecond = 10L;
-    Long sendCoinAmount = 1000L;
+    Long sendCoinAmount = 1L;
 
     //Query balance before send coin.
     Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount1Address, blockingStubFull).getBalance();
@@ -119,16 +119,35 @@ public class DelayTransaction002 {
     String txid = PublicMethed.sendcoinDelayedGetTxid(receiverAccountAddress, sendCoinAmount, delaySecond,delayAccount1Address,
         delayAccount1Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
+    DeferredTransaction transaction = deferredTransactionById.get();
+    String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
+
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(finalTxid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount1Address, blockingStubFull).getBalance();
     Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccountAddress, blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
     logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
+    //PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    //PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    //PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    //PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
+    //PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull);
 
 
     Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == delayTransactionFee + cancleDelayTransactionFee);
@@ -136,8 +155,7 @@ public class DelayTransaction002 {
 
   }
 
-  //@Test(enabled = true, description = "Cancel deferred transaction")
-  @Test(enabled = true, threadPoolSize = 30, invocationCount = 30)
+  @Test(enabled = true, description = "Cancel deferred transaction")
   public void test2CancleDeferredTransactionQuickly() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
