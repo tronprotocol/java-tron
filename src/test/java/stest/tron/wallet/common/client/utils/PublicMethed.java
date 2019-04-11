@@ -3625,54 +3625,17 @@ public class PublicMethed {
    */
   public static HashMap<String, String> getBycodeAbiForLibrary(String solFile,
       String contractName) {
-    final String compile = Configuration.getByPath("testng.conf")
-        .getString("defaultParameter.solidityCompile");
-
+    HashMap retMap = null;
     String outputPath = "src/test/resources/soliditycode/output";
-
-    File binFile = new File(outputPath + "/" + contractName + ".bin");
-    File abiFile = new File(outputPath + "/" + contractName + ".abi");
-    if (binFile.exists()) {
-      binFile.delete();
-    }
-    if (abiFile.exists()) {
-      abiFile.delete();
-    }
-
-    HashMap<String, String> retMap = new HashMap<>();
-    String absolutePath = System.getProperty("user.dir");
-    logger.debug("absolutePath: " + absolutePath);
-    logger.debug("solFile: " + solFile);
-    logger.debug("outputPath: " + outputPath);
-    String cmd =
-        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
-            + absolutePath + "/" + outputPath;
-    logger.debug("cmd: " + cmd);
-
-    String byteCode = null;
-    String abI = null;
-    String library = null;
-
-    // compile solidity file
     try {
-      exec(cmd);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    // get byteCode and ABI
-    try {
-      byteCode = fileRead(outputPath + "/" + contractName + ".bin", false);
-      retMap.put("byteCode", byteCode);
-      logger.debug("byteCode: " + byteCode);
-      library = fileRead(outputPath + "/" + contractName + ".bin", true);
+      retMap = PublicMethed.getBycodeAbi(solFile, contractName);
+      String library = fileRead(outputPath + "/" + contractName + ".bin", true);
       retMap.put("library", library);
       logger.debug("library: " + library);
-      abI = fileRead(outputPath + "/" + contractName + ".abi", false);
-      retMap.put("abI", abI);
-      logger.debug("abI: " + abI);
     } catch (Exception e) {
       e.printStackTrace();
     }
+
     return retMap;
   }
 
