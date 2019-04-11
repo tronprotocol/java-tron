@@ -60,7 +60,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
 
       deferredTransactionCapsule = new DeferredTransactionCapsule(value);
     } catch (Exception e) {
-      logger.error("{}", e);
+      logger.error("get deferred transaction by transaction id failed");
     }
     return deferredTransactionCapsule;
   }
