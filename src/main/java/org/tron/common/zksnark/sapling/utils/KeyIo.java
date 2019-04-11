@@ -17,15 +17,13 @@
 package org.tron.common.zksnark.sapling.utils;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.zksnark.sapling.ZkChainParams;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
 import org.tron.common.zksnark.sapling.core.Bech32;
 import org.tron.common.zksnark.sapling.core.Bech32.Bech32Data;
-import org.tron.core.Wallet;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class KeyIo {
@@ -34,7 +32,13 @@ public class KeyIo {
 
   public static PaymentAddress decodePaymentAddress(String str) {
     byte[] data;
-    Bech32Data bech = Bech32.decode(str);
+    Bech32Data bech = null;
+    try {
+      bech = Bech32.decode(str);
+    } catch (Exception ex) {
+      return null;
+    }
+
     if (bech.hrp.equals(ZkChainParams.APLING_PAYMENT_ADDRESS)
         && bech.data.length == ConvertedSaplingPaymentAddressSize) {
       // Bech32 decoding

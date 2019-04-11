@@ -168,7 +168,7 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashSaplingBindingSig(
-      ProvingContext ctx,long valueBalance,byte[] sighash,byte[] result) {
+      ProvingContext ctx, long valueBalance, byte[] sighash, byte[] result) {
     return false;
   }
 

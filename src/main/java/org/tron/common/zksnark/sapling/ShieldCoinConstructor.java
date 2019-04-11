@@ -37,14 +37,18 @@ public class ShieldCoinConstructor {
   private long targetAmount = 10_000_000L;
 
   public ShieldCoinConstructor(String fromAddr, List<Recipient> outputs) {
-
     init(fromAddr, outputs);
   }
 
   private void init(String fromAddr, List<Recipient> outputs) {
 
     this.fromAddress = fromAddr;
-    byte[] tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
+    byte[] tFromAddrBytes = null;
+    try {
+      tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
+    } catch (Exception ex) {
+    }
+
     if (tFromAddrBytes != null) {
       this.isFromTAddress = true;
     } else {
