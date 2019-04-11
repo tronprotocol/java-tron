@@ -1,10 +1,13 @@
 package org.tron.common.zksnark.sapling;
 
+import static org.tron.core.Wallet.tryDecodeFromBase58Check;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
@@ -17,7 +20,6 @@ import org.tron.common.zksnark.sapling.transaction.Recipient;
 import org.tron.common.zksnark.sapling.utils.KeyIo;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
-import org.tron.core.Wallet;
 
 public class ShieldCoinConstructor {
 
@@ -25,9 +27,10 @@ public class ShieldCoinConstructor {
 
   private PaymentAddress shieldFromAddr;
   private ExtendedSpendingKey spendingKey;
-
+  @Setter
   private String fromAddress;
   private List<Recipient> tOutputs;
+  @Setter
   private List<Recipient> zOutputs;
   private List<NoteEntry> zSaplingInputs;
 
@@ -36,6 +39,9 @@ public class ShieldCoinConstructor {
 
   private long targetAmount = 10_000_000L;
 
+  public ShieldCoinConstructor() {
+  }
+
   public ShieldCoinConstructor(String fromAddr, List<Recipient> outputs) {
     init(fromAddr, outputs);
   }
@@ -43,24 +49,20 @@ public class ShieldCoinConstructor {
   private void init(String fromAddr, List<Recipient> outputs) {
 
     this.fromAddress = fromAddr;
-    byte[] tFromAddrBytes = null;
-    try {
-      tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddr);
-    } catch (Exception ex) {
-    }
+    byte[] tFromAddrBytes = tryDecodeFromBase58Check(fromAddr);
 
     if (tFromAddrBytes != null) {
       this.isFromTAddress = true;
     } else {
-      this.shieldFromAddr = KeyIo.decodePaymentAddress(fromAddr);
+      this.shieldFromAddr = KeyIo.tryDecodePaymentAddress(fromAddr);
       if (shieldFromAddr == null) {
         throw new RuntimeException("unknown address type ");
       }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
+      if (!ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).isPresent()) {
         throw new RuntimeException(
             "From address does not belong to this wallet, spending key not found.");
       }
-      this.spendingKey = ShieldWallet.GetSpendingKeyForPaymentAddress(shieldFromAddr);
+      this.spendingKey = ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).get();
       this.isFromTAddress = false;
     }
 
@@ -81,12 +83,12 @@ public class ShieldCoinConstructor {
       }
       allToAddress.add(recipient.address);
 
-      byte[] tToAddrBytes = Wallet.decodeFromBase58Check(recipient.address);
+      byte[] tToAddrBytes = tryDecodeFromBase58Check(recipient.address);
       if (tToAddrBytes != null) {
         tOutputs.add(recipient);
         isToTAddress = true;
       } else {
-        PaymentAddress shieldToAddr = KeyIo.decodePaymentAddress(recipient.address);
+        PaymentAddress shieldToAddr = KeyIo.tryDecodePaymentAddress(recipient.address);
         if (shieldToAddr == null) {
           throw new RuntimeException("unknown address type.");
         }
@@ -115,6 +117,7 @@ public class ShieldCoinConstructor {
       throw new RuntimeException("Transparent transfer is not supported");
     }
   }
+
 
   public TransactionBuilderResult build() {
 
@@ -178,7 +181,7 @@ public class ShieldCoinConstructor {
         Long value = r.value;
         String hexMemo = r.memo;
 
-        PaymentAddress addr = KeyIo.decodePaymentAddress(address);
+        PaymentAddress addr = KeyIo.tryDecodePaymentAddress(address);
         if (addr == null) {
           throw new RuntimeException("");
         }

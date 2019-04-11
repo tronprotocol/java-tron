@@ -30,14 +30,17 @@ public class KeyIo {
 
   public static int ConvertedSaplingPaymentAddressSize = ((32 + 11) * 8 + 4) / 5;
 
-  public static PaymentAddress decodePaymentAddress(String str) {
-    byte[] data;
-    Bech32Data bech = null;
+  public static PaymentAddress tryDecodePaymentAddress(String str) {
     try {
-      bech = Bech32.decode(str);
+      return decodePaymentAddress(str);
     } catch (Exception ex) {
       return null;
     }
+  }
+
+  public static PaymentAddress decodePaymentAddress(String str) {
+    byte[] data;
+    Bech32Data bech = Bech32.decode(str);
 
     if (bech.hrp.equals(ZkChainParams.APLING_PAYMENT_ADDRESS)
         && bech.data.length == ConvertedSaplingPaymentAddressSize) {

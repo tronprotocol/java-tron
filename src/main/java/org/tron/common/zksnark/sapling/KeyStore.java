@@ -2,6 +2,7 @@ package org.tron.common.zksnark.sapling;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
@@ -12,9 +13,9 @@ public class KeyStore {
 
   static HDSeed seed = new HDSeed();
 
-  static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys = new HashMap<>();
-  static Map<IncomingViewingKey, FullViewingKey> mapFullViewingKeys;
-  static Map<PaymentAddress, IncomingViewingKey> mapIncomingViewingKeys;
+  private static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys = new HashMap<>();
+  private static Map<IncomingViewingKey, FullViewingKey> mapFullViewingKeys = new HashMap<>();
+  private static Map<PaymentAddress, IncomingViewingKey> mapIncomingViewingKeys = new HashMap<>();
 
   public static boolean haveSpendingKey(FullViewingKey fvk) {
     boolean result;
@@ -24,33 +25,39 @@ public class KeyStore {
     return result;
   }
 
-  public static boolean AddSpendingKey(ExtendedSpendingKey sk, PaymentAddress defaultAddr) {
+  public static boolean addSpendingKey(ExtendedSpendingKey sk, PaymentAddress address) {
     FullViewingKey fvk = sk.getExpsk().fullViewingKey();
 
     // if SaplingFullViewingKey is not in SaplingFullViewingKeyMap, add it
-    if (!addFullViewingKey(fvk, defaultAddr)) {
+    if (!addFullViewingKey(fvk, address)) {
       return false;
     }
 
-    mapSpendingKeys.put(fvk, sk);
+    addSpendingKey(fvk, sk);
 
     return true;
   }
 
-  public static boolean addFullViewingKey(FullViewingKey fvk, PaymentAddress defaultAddr) {
-    IncomingViewingKey ivk = fvk.inViewingKey();
-    mapFullViewingKeys.put(ivk, fvk);
+  public static void addSpendingKey(FullViewingKey fvk, ExtendedSpendingKey sk) {
+    mapSpendingKeys.put(fvk, sk);
+  }
 
-    return addIncomingViewingKey(ivk, defaultAddr);
+  public static boolean addFullViewingKey(FullViewingKey fvk, PaymentAddress address) {
+    IncomingViewingKey ivk = fvk.inViewingKey();
+    addFullViewingKey(ivk, fvk);
+
+    return addIncomingViewingKey(address, ivk);
+  }
+
+  public static void addFullViewingKey(IncomingViewingKey ivk, FullViewingKey fvk) {
+    mapFullViewingKeys.put(ivk, fvk);
   }
 
   // This function updates the wallet's internal address->ivk map.
   // If we add an address that is already in the map, the map will
   // remain unchanged as each address only has one ivk.
-  public static boolean addIncomingViewingKey(IncomingViewingKey ivk, PaymentAddress addr) {
-
+  public static boolean addIncomingViewingKey(PaymentAddress addr, IncomingViewingKey ivk) {
     mapIncomingViewingKeys.put(addr, ivk);
-
     return true;
   }
 
@@ -62,42 +69,37 @@ public class KeyStore {
     return mapIncomingViewingKeys.get(addr) != null;
   }
 
-  public static boolean getFullViewingKey(IncomingViewingKey ivk, FullViewingKey fvkOut) {
+  public static FullViewingKey getFullViewingKey(IncomingViewingKey ivk) {
 
-    fvkOut = mapFullViewingKeys.get(ivk);
-    if (fvkOut == null) {
-      return false;
-    }
-    return true;
+    FullViewingKey fvkOut = mapFullViewingKeys.get(ivk);
+    return fvkOut;
   }
 
-  public static boolean getIncomingViewingKey(
-      PaymentAddress addr, IncomingViewingKey ivkOut) {
+  public static IncomingViewingKey getIncomingViewingKey(
+      PaymentAddress addr) {
 
-    ivkOut = mapIncomingViewingKeys.get(addr);
-
-    if (ivkOut == null) {
-      return false;
-    }
-    return true;
+    IncomingViewingKey ivkOut = mapIncomingViewingKeys.get(addr);
+    return ivkOut;
   }
 
-  public static boolean getSpendingKey(FullViewingKey fvk, ExtendedSpendingKey skOut) {
-    skOut = mapSpendingKeys.get(fvk);
-    if (skOut == null) {
-      return false;
-    }
-    return false;
+  public static ExtendedSpendingKey getSpendingKey(FullViewingKey fvk) {
+    ExtendedSpendingKey skOut = mapSpendingKeys.get(fvk);
+    return skOut;
   }
 
-  public static boolean getExtendedSpendingKey(
-      PaymentAddress addr, ExtendedSpendingKey extskOut) {
+  public static Optional<ExtendedSpendingKey> getExtendedSpendingKey(PaymentAddress addr) {
 
-    IncomingViewingKey ivk = null;
-    FullViewingKey fvk = null;
+    IncomingViewingKey ivk = getIncomingViewingKey(addr);
+    if (ivk == null) {
+      return Optional.empty();
+    }
 
-    return getIncomingViewingKey(addr, ivk)
-        & getFullViewingKey(ivk, fvk)
-        & getSpendingKey(fvk, extskOut);
+    FullViewingKey fvk = getFullViewingKey(ivk);
+    if (fvk == null) {
+      return Optional.empty();
+    }
+
+    ExtendedSpendingKey extskOut = getSpendingKey(fvk);
+    return Optional.of(extskOut);
   }
 }

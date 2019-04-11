@@ -143,20 +143,16 @@ public class RpcWallet {
     // Check that the from address is valid.
     String fromAddress = params[0];
     boolean fromTaddr = false;
-    byte[] tFromAddrBytes = null;
-    try {
-      tFromAddrBytes = Wallet.decodeFromBase58Check(fromAddress);
-    } catch (Exception ex) {
-    }
+    byte[] tFromAddrBytes = Wallet.tryDecodeFromBase58Check(fromAddress);
 
     if (tFromAddrBytes != null) {
       fromTaddr = true;
     } else {
-      PaymentAddress shieldFromAddr = KeyIo.decodePaymentAddress(fromAddress);
+      PaymentAddress shieldFromAddr = KeyIo.tryDecodePaymentAddress(fromAddress);
       if (shieldFromAddr == null) {
         throw new RuntimeException("Invalid from address, should be a taddr or zaddr.");
       }
-      if (!ShieldWallet.haveSpendingKeyForPaymentAddress(shieldFromAddr)) {
+      if (!ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).isPresent()) {
         throw new RuntimeException(
                 "From address does not belong to this node, spending key or viewing key not found.");
       }

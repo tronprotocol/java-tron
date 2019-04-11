@@ -55,4 +55,16 @@ public class FullViewingKey {
 
     return m_bytes;
   }
+
+  public static FullViewingKey decode(byte[] data) {
+
+    byte[] ak = new byte[32];
+    byte[] nk = new byte[32];
+    byte[] ovk = new byte[32];
+    System.arraycopy(data, 0, ak, 0, 32);
+    System.arraycopy(data, 32, nk, 0, 32);
+    System.arraycopy(data, 64, ovk, 0, 32);
+
+    return new FullViewingKey(ak, nk, ovk);
+  }
 }
