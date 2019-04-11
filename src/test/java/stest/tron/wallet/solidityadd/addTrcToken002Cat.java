@@ -70,6 +70,10 @@ public class addTrcToken002Cat {
   byte[] AssetIssueAddress = ecKey3.getAddress();
   String AssetIssueKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
+  ECKey ecKey4 = new ECKey(Utils.getRandom());
+  byte[] CatOwnerAddress = ecKey4.getAddress();
+  String CatOwnerKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -543,6 +547,149 @@ public class addTrcToken002Cat {
     PublicMethed
             .unFreezeBalance(triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey, 1,
                     triggerUseTriggerEnergyUsageAddress, blockingStubFull);
+  }
+
+  @Test(enabled = true, description = "Create Gen0 cat")
+  public void triggerZbreedCat() {
+    Assert.assertTrue(PublicMethed.sendcoin(CatOwnerAddress, 500000000000L, fromAddress,
+            testKey002, blockingStubFull));
+    String txid = "";
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "paused()", "", false,
+            0, 1000000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "gen0CreatedCount()", "", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(saleClockAuctionContractAddress,
+            "getCurrentPrice(uint256)", "1", false,
+            0, 10000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(saleClockAuctionContractAddress,
+            "bid(uint256)", "1", false,
+            10000000, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    txid = PublicMethed.triggerContract(saleClockAuctionContractAddress,
+            "bid(uint256)", "2", false,
+            10000000, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "ownerOf(uint256)", "1", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "ownerOf(uint256)", "2", false,
+            0, 10000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isReadyToBreed(uint256)", "1", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isReadyToBreed(uint256)", "2", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "breedWithAuto(uint256,uint256)", "1,2", false,
+            1000000000, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isPregnant(uint256)", "1", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isPregnant(uint256)", "2", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "giveBirth(uint256)", "1", false,
+            0, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "getKitty(uint256)", "4", false,
+            0, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "kittyIndexToOwner(uint256)", "4", false,
+            0, 1000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "kittyIndexToOwner(uint256)", "3", false,
+            0, 1000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(saleClockAuctionContractAddress,
+            "bid(uint256)", "3", false,
+            10000000, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "createSiringAuction(uint256,uint256,uint256,uint256)", "3,10000000,20000000,70", false,
+            0, 100000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(saleClockAuctionContractAddress,
+            "getCurrentPrice(uint256)", "3", false,
+            0, 10000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "bidOnSiringAuction(uint256,uint256)", "3,4", false,
+            40000000, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isPregnant(uint256)", "3", false,
+            0, 10000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "isPregnant(uint256)", "4", false,
+            0, 10000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "giveBirth(uint256)", "4", false,
+            0, 1000000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "getKitty(uint256)", "5", false,
+            0, 1000000000,CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
+    txid = PublicMethed.triggerContract(kittyCoreContractAddress,
+            "kittyIndexToOwner(uint256)", "5", false,
+            0, 1000000, CatOwnerAddress, CatOwnerKey, blockingStubFull);
+
   }
 
   /**
