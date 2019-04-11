@@ -3552,6 +3552,15 @@ public class PublicMethed {
 
     String outputPath = "src/test/resources/soliditycode/output";
 
+    File binFile = new File(outputPath + "/" + contractName + ".bin");
+    File abiFile = new File(outputPath + "/" + contractName + ".abi");
+    if (binFile.exists()) {
+      binFile.delete();
+    }
+    if (abiFile.exists()) {
+      abiFile.delete();
+    }
+
     HashMap<String, String> retMap = new HashMap<>();
     String absolutePath = System.getProperty("user.dir");
     logger.debug("absolutePath: " + absolutePath);
@@ -3620,6 +3629,15 @@ public class PublicMethed {
         .getString("defaultParameter.solidityCompile");
 
     String outputPath = "src/test/resources/soliditycode/output";
+
+    File binFile = new File(outputPath + "/" + contractName + ".bin");
+    File abiFile = new File(outputPath + "/" + contractName + ".abi");
+    if (binFile.exists()) {
+      binFile.delete();
+    }
+    if (abiFile.exists()) {
+      abiFile.delete();
+    }
 
     HashMap<String, String> retMap = new HashMap<>();
     String absolutePath = System.getProperty("user.dir");
