@@ -87,13 +87,17 @@ public class ContractScenario009 {
     retMap = PublicMethed.getBycodeAbiForLibrary(filePath, contractName);
     code = retMap.get("byteCode").toString();
     abi = retMap.get("abI").toString();
-    String libraryAddress =
-        "/Users/tron/git/java-tron/./src/test/resources/soliditycode/contractScenario009.sol:Set:"
-            + Base58.encode58Check(libraryContractAddress);
+    String library = retMap.get("library").toString();
+
+    //String libraryAddress =
+    //    "browser/TvmTest_p1_Grammar_002.sol:Set:" + Base58.encode58Check(libraryContractAddress);
+    String libraryAddress = library
+        //    "/Users/tron/git/java-tron/./src/test/resources/soliditycode/contractScenario009.sol:Set:"
+        + Base58.encode58Check(libraryContractAddress);
 
     byte[] contractAddress = PublicMethed
         .deployContractForLibrary(contractName, abi, code, "", maxFeeLimit, 0L, 100, libraryAddress,
-            contract009Key, contract009Address, blockingStubFull);
+            contract009Key, contract009Address, "v5", blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());

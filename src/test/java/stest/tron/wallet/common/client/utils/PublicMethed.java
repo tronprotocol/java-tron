@@ -1614,6 +1614,7 @@ public class PublicMethed {
   public static byte[] deployContractForLibrary(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
+      String compilerVersion,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
@@ -1646,7 +1647,13 @@ public class PublicMethed {
 
     byte[] byteCode;
     if (null != libraryAddress) {
-      byteCode = replaceLibraryAddresscompilerVersion(code, libraryAddress, "v5");
+      if (compilerVersion.equals("v5") || compilerVersion.equals("V5")) {
+        byteCode = replaceLibraryAddresscompilerVersion(code, libraryAddress, "v5");
+      } else {
+        //old version
+        byteCode = replaceLibraryAddresscompilerVersion(code, libraryAddress, null);
+      }
+
     } else {
       byteCode = Hex.decode(code);
     }

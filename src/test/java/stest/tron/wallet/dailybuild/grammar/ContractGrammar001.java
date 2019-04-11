@@ -151,7 +151,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, blockingStubFull);
+            grammarAddress, "#", blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -189,7 +189,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, blockingStubFull);
+            grammarAddress, "v5", blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -236,7 +236,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, blockingStubFull);
+            grammarAddress, "v5", blockingStubFull);
     String txid = "";
     String num = "1";
     PublicMethed.waitProduceNextBlock(blockingStubFull);

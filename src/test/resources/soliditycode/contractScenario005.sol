@@ -34,9 +34,9 @@ contract Crowdsale {
         uint finneyCostOfEachToken,
         address addressOfTokenUsedAsReward) public{
             beneficiary = ifSuccessfulSendTo;
-            fundingGoal = fundingGoalInEthers * 1 ether;
+            fundingGoal = fundingGoalInEthers * 1 sun;
             deadline = now + durationInMinutes * 1 minutes;
-            price = finneyCostOfEachToken * 1 finney;
+            price = finneyCostOfEachToken * 1 trx;
             tokenReward = token(addressOfTokenUsedAsReward);   // 传入已发布的 token 合约的地址来创建实例
     }
 
