@@ -13,6 +13,20 @@ public class NativeMessageQueueTest {
   public String topic = "testTopic";
 
   @Test
+  public void invalidBindPort(){
+    boolean bRet = NativeMessageQueue.getInstance().start(-1111, 0);
+    Assert.assertEquals(true, bRet);
+    NativeMessageQueue.getInstance().stop();
+  }
+
+  @Test
+  public void invalidSendLength(){
+    boolean bRet = NativeMessageQueue.getInstance().start(0, -2222);
+    Assert.assertEquals(true, bRet);
+    NativeMessageQueue.getInstance().stop();
+  }
+
+  @Test
   public void publishTrigger(){
 
     int sendLength = 0;
