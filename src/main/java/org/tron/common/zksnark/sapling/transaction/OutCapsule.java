@@ -10,10 +10,10 @@ import org.tron.protos.Contract.OutputDescription;
 @Slf4j(topic = "capsule")
 public class OutCapsule implements ProtoCapsule<OutputDescription> {
 
-
   private OutputDescription outputDescription;
 
-  public OutCapsule() {}
+  public OutCapsule() {
+  }
 
   public OutCapsule(final OutputDescription outputDescription) {
     this.outputDescription = outputDescription;
@@ -35,10 +35,10 @@ public class OutCapsule implements ProtoCapsule<OutputDescription> {
       ByteString outCiphertext,
       GrothProof zkproof) {
     this.outputDescription =
-        OutputDescription.newBuilder() 
-            .setValueCommitment(cv) 
-            .setNoteCommitment(cm) 
-            .setEpk(ephemeralKey) 
+        OutputDescription.newBuilder()
+            .setValueCommitment(cv)
+            .setNoteCommitment(cm)
+            .setEpk(ephemeralKey)
             .setCEnc(encCiphertext)
             .setCEnc(encCiphertext)
             .setCOut(outCiphertext)
