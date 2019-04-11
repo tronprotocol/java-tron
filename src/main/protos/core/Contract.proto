@@ -358,21 +358,21 @@ message SpendStatement {
   bytes ak = 1;
   bytes nsk = 2;
   Note note = 3;
-  bytes alpha = 4;
-  bytes anchor = 5;
-  bytes path = 6;
+  bytes alpha = 4; // random number for spend authority signature
+  bytes anchor = 5; // merkle root
+  bytes path = 6; // path for cm to root in merkle tree
 }
 
 message OutputStatement {
-  bytes esk = 1;
+  bytes esk = 1; // for Encryption
   Note note = 2;
 }
 
 message SpendDescription {
   bytes value_commitment = 1;
-  bytes anchor = 2;
-  bytes nullifier = 3;
-  bytes rk = 4;
+  bytes anchor = 2; // merkle root
+  bytes nullifier = 3; // used for check double spend
+  bytes rk = 4; // used for check spend authority signature
   bytes zkproof = 5;
   bytes spend_authority_signature = 6;
 }
@@ -380,9 +380,9 @@ message SpendDescription {
 message OutputDescription {
   bytes value_commitment = 1;
   bytes note_commitment = 2;
-  bytes epk = 3;
-  bytes c_enc = 4;
-  bytes c_out = 5;
+  bytes epk = 3; //for Encryption
+  bytes c_enc = 4; // Encryption for incoming, decrypt it with ivk
+  bytes c_out = 5; // Encryption for audit, decrypt it with ovk
   bytes zkproof = 6;
 }
 
