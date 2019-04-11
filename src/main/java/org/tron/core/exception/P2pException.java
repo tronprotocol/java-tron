@@ -37,6 +37,7 @@ public class P2pException extends Exception {
     BAD_TRX(11, "bad trx"),
     TRX_EXE_FAILED(12, "trx exe failed"),
     DB_ITEM_NOT_FOUND(13, "DB item not found"),
+    PROTOBUF_ERROR(14, "protobuf inconsistent"),
 
     DEFAULT(100, "default exception");
 

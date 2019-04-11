@@ -3,15 +3,14 @@ package org.tron.core.net.message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.exception.BadItemException;
 
 public class BlockMessage extends TronMessage {
 
   private BlockCapsule block;
 
-  public BlockMessage(byte[] data) throws BadItemException {
+  public BlockMessage(byte[] data) throws Exception {
+    super(data);
     this.type = MessageTypes.BLOCK.asByte();
-    this.data = data;
     this.block = new BlockCapsule(data);
   }
 

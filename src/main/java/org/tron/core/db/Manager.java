@@ -57,6 +57,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
@@ -453,6 +454,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    Message.setManager(this);
     fastSyncCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
