@@ -667,7 +667,7 @@ service Wallet {
   rpc CreateOutPutProof (OutputStatement) returns (OutputDescription) {
   };
 
-  rpc CreateShieldedTransaction (ShieldedTransactionContract) returns (TransactionExtention) {
+  rpc CreateShieldedTransaction (ShieldedTransferContract) returns (TransactionExtention) {
   };
   // end for shiededTransaction
 };

@@ -273,7 +273,7 @@ message Transaction {
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
       ZksnarkV0TransferContract = 50;
-      ShieldedTransactionContract = 51;
+      ShieldedTransferContract = 51;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
