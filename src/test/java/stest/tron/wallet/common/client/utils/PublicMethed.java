@@ -3616,10 +3616,13 @@ public class PublicMethed {
       }
       breader.close();
     } else {
+      String fistLine = breader.readLine();
       breader.readLine();
-      breader.readLine();
-      if ((s = breader.readLine()) != null) {
+      if ((s = breader.readLine()) != null && !s.equals("")) {
         s = s.substring(s.indexOf("-> ") + 3);
+        sb.append(s + ":");
+      } else {
+        s = fistLine.substring(fistLine.indexOf("__") + 2, fistLine.lastIndexOf("__"));
         sb.append(s + ":");
       }
       breader.close();
