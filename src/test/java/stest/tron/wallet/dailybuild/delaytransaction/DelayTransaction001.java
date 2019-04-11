@@ -220,6 +220,7 @@ public class DelayTransaction001 {
     Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == sendCoinAmout + 100000L);
     Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
 
+
   }
 
   @Test(enabled = true, description = "Delay send coin")
@@ -310,6 +311,8 @@ public class DelayTransaction001 {
 
     Assert.assertEquals(recevierAccountAfterDelayalance, receiverBalanceShouldBe);
     Assert.assertTrue(deplayAccountAfterBalance == 0);
+
+
   }
 
 

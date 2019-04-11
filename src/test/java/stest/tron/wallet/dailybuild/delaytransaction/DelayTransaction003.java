@@ -64,21 +64,10 @@ public class DelayTransaction003 {
   byte[] assetOwnerAddress = ecKey.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] delayAccount2Address = ecKey2.getAddress();
-  String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
   ECKey ecKey3 = new ECKey(Utils.getRandom());
   byte[] receiverAssetAddress = ecKey3.getAddress();
   String receiverassetKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
-  ECKey ecKey4 = new ECKey(Utils.getRandom());
-  byte[] delayAccount3Address = ecKey4.getAddress();
-  String delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
-
-  ECKey ecKey5 = new ECKey(Utils.getRandom());
-  byte[] receiverAccount4Address = ecKey5.getAddress();
-  String receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
