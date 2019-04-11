@@ -1267,13 +1267,13 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+    if (trxCap == null) {
+      return false;
+    }
+
     if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
       throw new ContractValidateException("deferred transaction is not allowed, "
           + "need to be opened by the committee");
-    }
-
-    if (trxCap == null) {
-      return false;
     }
 
     validateTapos(trxCap);
