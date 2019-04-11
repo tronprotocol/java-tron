@@ -5,8 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.logsfilter.ContractEventParserJson;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
@@ -38,8 +40,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     String eventSignature = "";
     String eventSignatureFull = "fallback()";
     String entryName = "";
+    JSONObject entryObj = new JSONObject();
 
     if (entrys != null) {
+      String logHash = logInfo.getTopics().get(0).toString();
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
 
@@ -59,17 +63,23 @@ public class ContractTriggerCapsule extends TriggerCapsule {
               signBuilder.append(",");
               signFullBuilder.append(",");
             }
-            signBuilder.append(inputs.getJSONObject(j).getString("type"));
-            signFullBuilder.append(" ").append(inputs.getJSONObject(j).getString("name"));
+            String type = inputs.getJSONObject(j).getString("type");
+            String name = inputs.getJSONObject(j).getString("name");
+            signBuilder.append(type);
+            signFullBuilder.append(type);
+            if (StringUtils.isNotNullOrEmpty(name)) {
+              signFullBuilder.append(" ").append(name);
+            }
           }
         }
         signature += signBuilder.toString() + ")";
         signatureFull += signFullBuilder.toString() + ")";
         String sha3 = Hex.toHexString(Hash.sha3(signature.getBytes()));
-        if (sha3.equals(logInfo.getTopics().get(0).toString())) {
+        if (sha3.equals(logHash)) {
           eventSignature = signature;
           eventSignatureFull = signatureFull;
           entryName = entry.getString("name");
+          entryObj = entry;
           isEvent = true;
           break;
         }
@@ -85,13 +95,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       List<byte[]> topicList = logInfo.getClonedTopics();
       byte[] data = logInfo.getClonedData();
 
-//      this.abiEntry = log.getAbiEntry();
-//
-//      ((ContractEventTrigger) event)
-//          .setTopicMap(ContractEventParser.parseTopics(topicList, abiEntry));
-//      ((ContractEventTrigger) event)
-//          .setDataMap(ContractEventParser.parseEventData(data, topicList, abiEntry));
-
+      ((ContractEventTrigger) event)
+          .setTopicMap(ContractEventParserJson.parseTopics(topicList, entryObj));
+      ((ContractEventTrigger) event)
+          .setDataMap(ContractEventParserJson.parseEventData(data, topicList, entryObj));
     } else {
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
