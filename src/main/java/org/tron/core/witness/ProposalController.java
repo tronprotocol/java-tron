@@ -203,7 +203,29 @@ public class ProposalController {
           break;
         }
         case (24): {
-          manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
+          if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
+          }
+          break;
+        }
+        case (25): {
+          manager.getDynamicPropertiesStore().saveDeferredTransactionFee(entry.getValue());
+          break;
+        }
+        case (26): {
+          manager.getDynamicPropertiesStore().saveCancelDeferredTransactionFee(entry.getValue());
+          break;
+        }
+        case (27): {
+          manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
+          break;
+        }
+        case (28): {
+          manager.getDynamicPropertiesStore().saveAllowProtoFilterBlockNum(entry.getValue());
+          break;
+        }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
           break;
         }
         default:

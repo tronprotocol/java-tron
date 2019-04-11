@@ -64,7 +64,7 @@ public class AdvService {
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
-  public void init () {
+  public void init() {
     if (!fastForward) {
       spreadExecutor.scheduleWithFixedDelay(() -> {
         try {

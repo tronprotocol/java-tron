@@ -25,6 +25,7 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -185,6 +186,7 @@ public class TronNetDelegate {
           | TooBigTransactionException
           | TooBigTransactionResultException
           | DupTransactionException
+          | DeferredTransactionException
           | TransactionExpirationException
           | BadNumberBlockException
           | BadBlockException
@@ -206,6 +208,7 @@ public class TronNetDelegate {
     } catch (ContractValidateException
         | ContractExeException
         | DupTransactionException
+        | DeferredTransactionException
         | TaposException
         | TooBigTransactionException
         | TransactionExpirationException
@@ -223,14 +226,14 @@ public class TronNetDelegate {
       }
       boolean flag = false;
       List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
-      for (WitnessCapsule witness: witnesses){
+      for (WitnessCapsule witness : witnesses) {
         if (witness.getAddress().equals(block.getWitnessAddress())) {
           flag = true;
           break;
         }
       }
       return flag;
-    }catch (ValidateSignatureException e) {
+    } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
   }

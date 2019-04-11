@@ -10,8 +10,8 @@ public class TransactionMessage extends TronMessage {
   private TransactionCapsule transactionCapsule;
 
   public TransactionMessage(byte[] data) throws BadItemException {
+    super(data);
     this.transactionCapsule = new TransactionCapsule(data);
-    this.data = data;
     this.type = MessageTypes.TRX.asByte();
   }
 

@@ -38,7 +38,6 @@ public class ProposalDeleteActuator extends AbstractActuator {
       ProposalCapsule proposalCapsule = (Objects.isNull(deposit)) ? dbManager.getProposalStore().
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId())) :
           deposit.getProposalCapsule(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
-
       proposalCapsule.setState(State.CANCELED);
       if (Objects.isNull(deposit)) {
         dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);

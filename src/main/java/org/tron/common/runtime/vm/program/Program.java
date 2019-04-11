@@ -1417,8 +1417,8 @@ public class Program {
    * ---------------------------------------------------------------------------------------------
    * [Long.Min, 0)        Not possible                               error
    * --------------------------------------------------------------------------------------------- 0
-   *                   allowed and only allowed                    error (guaranteed in CALLTOKEN)
-   * transfertoken id=0 should not transfer trx） ---------------------------------------------------------------------------------------------
+   * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
+   * should not transfer trx） ---------------------------------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed

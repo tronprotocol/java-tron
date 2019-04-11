@@ -27,7 +27,6 @@ public class AssetIssueStore extends TronStoreWithRevoking<AssetIssueCapsule> {
     return super.getUnchecked(key);
   }
 
-
   /**
    * get all asset issues.
    */

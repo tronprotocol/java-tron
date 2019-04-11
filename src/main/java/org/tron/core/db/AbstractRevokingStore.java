@@ -453,9 +453,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Getter // only for unit test
   static class RevokingState {
 
-    Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
-    Set<RevokingTuple> newIds = new HashSet<>();
-    Map<RevokingTuple, byte[]> removed = new HashMap<>();
+    private Map<RevokingTuple, byte[]> oldValues = new HashMap<>();
+    private Set<RevokingTuple> newIds = new HashSet<>();
+    private Map<RevokingTuple, byte[]> removed = new HashMap<>();
   }
 
   @AllArgsConstructor
