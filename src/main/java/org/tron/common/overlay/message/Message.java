@@ -25,7 +25,7 @@ public abstract class Message {
   protected byte type;
   @Setter
   private static Manager manager;
-  
+
   public Message() {
   }
 
@@ -79,7 +79,7 @@ public abstract class Message {
   }
 
   public void compareBytes(byte[] src, byte[] dest) throws P2pException {
-    if (!Arrays.equals(src, dest)) {
+    if (src.length != dest.length) {
       throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
     }
   }
