@@ -12,7 +12,6 @@ public class BlockMessage extends TronMessage {
     super(data);
     this.type = MessageTypes.BLOCK.asByte();
     this.block = new BlockCapsule(data);
-    compareBytes(data, block.getData());
   }
 
   public BlockMessage(BlockCapsule block) {

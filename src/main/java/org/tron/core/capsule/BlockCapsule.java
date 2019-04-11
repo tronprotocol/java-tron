@@ -17,8 +17,6 @@ package org.tron.core.capsule;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.CodedInputStream;
-import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -175,8 +173,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public BlockCapsule(byte[] data) throws BadItemException {
     try {
       this.block = Block.parseFrom(Message.getCodedInputStream(data));
+      Message.compareBytes(data, block.toByteArray());
       initTxs();
     } catch (Exception e) {
+      logger.error("constructor block error : {}", e.getMessage());
       throw new BadItemException("Block proto data parse exception");
     }
   }
