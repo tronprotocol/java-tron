@@ -12,7 +12,7 @@ import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
 import org.tron.common.zksnark.sapling.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.sapling.note.SaplingOutgoingPlaintext;
-import org.tron.common.zksnark.sapling.transaction.OutCapsule;
+import org.tron.common.zksnark.sapling.transaction.OutputDescriptionCapsule;
 import org.tron.common.zksnark.sapling.transaction.SpendDescriptionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
 
@@ -148,7 +148,7 @@ public class TransactionBuilder {
         throw new RuntimeException("Output proof failed");
       }
 
-      OutCapsule odesc = new OutCapsule();
+      OutputDescriptionCapsule odesc = new OutputDescriptionCapsule();
       odesc.setValueCommitment(cv);
       odesc.setNoteCommitment(cm);
       odesc.setEpk(encryptor.epk);
