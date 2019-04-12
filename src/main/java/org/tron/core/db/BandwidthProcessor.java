@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.CancelDeferredTransactionContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
@@ -85,6 +86,9 @@ public class BandwidthProcessor extends ResourceProcessor {
     // charged is true indicates that the deferred transaction is executed for the first time, false indicates that it is executed for the second time
     boolean charged = trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION;
     for (Contract contract : contracts) {
+      if (contract.getType() == CancelDeferredTransactionContract) {
+        continue;
+      }
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }
