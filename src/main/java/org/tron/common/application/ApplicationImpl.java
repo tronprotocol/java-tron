@@ -7,32 +7,22 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
-import org.tron.core.net.node.Node;
-import org.tron.core.net.node.NodeDelegate;
-import org.tron.core.net.node.NodeDelegateImpl;
-import org.tron.core.net.node.NodeImpl;
+import org.tron.core.net.TronNetService;
 
 @Slf4j(topic = "app")
 @Component
 public class ApplicationImpl implements Application {
 
-  @Autowired
-  private NodeImpl p2pNode;
-
   private BlockStore blockStoreDb;
   private ServiceContainer services;
-  private NodeDelegate nodeDelegate;
+
+  @Autowired
+  private TronNetService tronNetService;
 
   @Autowired
   private Manager dbManager;
 
   private boolean isProducer;
-
-
-  private void resetP2PNode() {
-    p2pNode.listen();
-    p2pNode.syncFrom(null);
-  }
 
   @Override
   public void setOptions(Args args) {
@@ -44,7 +34,6 @@ public class ApplicationImpl implements Application {
   public void init(Args args) {
     blockStoreDb = dbManager.getBlockStore();
     services = new ServiceContainer();
-    nodeDelegate = new NodeDelegateImpl(dbManager);
   }
 
   @Override
@@ -61,19 +50,21 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
-    p2pNode.setNodeDelegate(nodeDelegate);
-    resetP2PNode();
+    tronNetService.start();
   }
 
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
-    //p2pNode.shutDown();
+    tronNetService.close();
+    if (dbManager.getDeferredTransactionTask() != null
+        && !dbManager.getDeferredTransactionTask().isCancelled()) {
+      dbManager.getDeferredTransactionTask().cancel(false);
+    }
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();
     }
-    closeConnection();
     dbManager.stopRepushThread();
     dbManager.stopRepushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
@@ -88,11 +79,6 @@ public class ApplicationImpl implements Application {
   @Override
   public void shutdownServices() {
     services.stop();
-  }
-
-  @Override
-  public Node getP2pNode() {
-    return p2pNode;
   }
 
   @Override
@@ -111,17 +97,6 @@ public class ApplicationImpl implements Application {
 
   public void setIsProducer(boolean producer) {
     isProducer = producer;
-  }
-
-  private void closeConnection() {
-    logger.info("******** begin to shutdown connection ********");
-    try {
-      p2pNode.close();
-    } catch (Exception e) {
-      logger.info("failed to close p2pNode. " + e);
-    } finally {
-      logger.info("******** end to shutdown connection ********");
-    }
   }
 
   private void closeRevokingStore() {

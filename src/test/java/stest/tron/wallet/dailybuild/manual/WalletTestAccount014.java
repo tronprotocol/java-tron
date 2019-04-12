@@ -23,6 +23,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount014 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -82,7 +83,7 @@ public class WalletTestAccount014 {
     blockingStubSoliInFull = WalletSolidityGrpc.newBlockingStub(channelSoliInFull);
   }
 
-  @Test(enabled = true,description = "Query freeNetUsage in 50061")
+  @Test(enabled = true, description = "Query freeNetUsage in 50061")
   public void fullAndSoliMerged1ForFreeNetUsage() {
     //Create account014
     ecKey1 = new ECKey(Utils.getRandom());
@@ -94,15 +95,15 @@ public class WalletTestAccount014 {
 
     PublicMethed.printAddress(account014Key);
     PublicMethed.printAddress(account014SecondKey);
-    Assert.assertTrue(PublicMethed.sendcoin(account014Address,1000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(account014Address, 1000000000L, fromAddress,
+        testKey002, blockingStubFull));
 
     //Test freeNetUsage in fullnode and soliditynode.
-    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress,5000000L,
-        account014Address,account014Key,
+    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress, 5000000L,
+        account014Address, account014Key,
         blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress,5000000L,
-        account014Address,account014Key,
+    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress, 5000000L,
+        account014Address, account014Key,
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
@@ -110,7 +111,7 @@ public class WalletTestAccount014 {
     final long createTimeInFullnode = account014.getCreateTime();
     final long lastOperationTimeInFullnode = account014.getLatestOprationTime();
     final long lastCustomeFreeTimeInFullnode = account014.getLatestConsumeFreeTime();
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSoliInFull);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSoliInFull);
     final long freeNetUsageInSoliInFull = account014.getFreeNetUsage();
     final long createTimeInSoliInFull = account014.getCreateTime();
@@ -139,29 +140,29 @@ public class WalletTestAccount014 {
     Assert.assertTrue(lastCustomeFreeTimeInSoliInFull != 0);
   }
 
-  @Test(enabled = true,description = "Query net usage in 50061")
+  @Test(enabled = true, description = "Query net usage in 50061")
   public void fullAndSoliMerged2ForNetUsage() {
 
-    Assert.assertTrue(PublicMethed.freezeBalance(account014Address,1000000L,3,
-        account014Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress,1000000L,
-        account014Address,account014Key, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account014Address,1000000,
-        3,1,account014Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014Address,1000000,
-        3,0,ByteString.copyFrom(
-        account014SecondAddress),account014Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014Address,1000000,
-        3,1,ByteString.copyFrom(
-        account014SecondAddress),account014Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014SecondAddress,1000000,
-        3,0,ByteString.copyFrom(
-        account014Address),account014SecondKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014SecondAddress,1000000,
-        3,1,ByteString.copyFrom(
-        account014Address),account014SecondKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(account014Address, 1000000L, 3,
+        account014Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(account014SecondAddress, 1000000L,
+        account014Address, account014Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(account014Address, 1000000,
+        3, 1, account014Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014Address, 1000000,
+        3, 0, ByteString.copyFrom(
+            account014SecondAddress), account014Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014Address, 1000000,
+        3, 1, ByteString.copyFrom(
+            account014SecondAddress), account014Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014SecondAddress, 1000000,
+        3, 0, ByteString.copyFrom(
+            account014Address), account014SecondKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(account014SecondAddress, 1000000,
+        3, 1, ByteString.copyFrom(
+            account014Address), account014SecondKey, blockingStubFull));
 
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSoliInFull);
     Account account014 = PublicMethed.queryAccount(account014Address, blockingStubFull);
     final long lastCustomeTimeInFullnode = account014.getLatestConsumeTime();
     final long netUsageInFullnode = account014.getNetUsage();
@@ -173,7 +174,7 @@ public class WalletTestAccount014 {
     final long delegatedForEnergyInFullnode = account014
         .getAccountResource().getDelegatedFrozenBalanceForEnergy();
     logger.info("delegatedForEnergyInFullnode " + delegatedForEnergyInFullnode);
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSoliInFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSoliInFull);
     account014 = PublicMethed.queryAccount(account014Address, blockingStubSoliInFull);
     final long lastCustomeTimeInSoliInFull = account014.getLatestConsumeTime();
     logger.info("freeNetUsageInSoliInFull " + lastCustomeTimeInSoliInFull);

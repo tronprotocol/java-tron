@@ -30,10 +30,10 @@ public class DefaultConfig {
   }
 
   @Autowired
-  ApplicationContext appCtx;
+  public ApplicationContext appCtx;
 
   @Autowired
-  CommonConfig commonConfig;
+  public CommonConfig commonConfig;
 
   public DefaultConfig() {
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));

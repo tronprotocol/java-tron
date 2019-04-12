@@ -183,8 +183,6 @@ public class WalletTestMutiSign011 {
     logger.info("netFee: " + netFee);
     logger.info("fee: " + fee);
 
-//    Assert.assertEquals(balanceBefore - balanceAfter, fee);
-//    Assert.assertEquals(fee, energyFee + netFee + multiSignFee);
 
   }
 

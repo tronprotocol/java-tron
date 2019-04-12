@@ -51,7 +51,6 @@ public class WalletTestTransfer006 {
   private WalletExtensionGrpc.WalletExtensionBlockingStub blockingStubExtension = null;
 
 
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String soliditynode = Configuration.getByPath("testng.conf")
@@ -86,11 +85,8 @@ public class WalletTestTransfer006 {
   @Test(enabled = false)
   public void testgetTransactionsToThis() {
     //Create a transfer.
-    Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000,fromAddress,
-        testKey002,blockingStubFull));
-
-
-
+    Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000, fromAddress,
+        testKey002, blockingStubFull));
 
     ByteString addressBs = ByteString.copyFrom(toAddress);
     Account account = Account.newBuilder().setAddress(addressBs).build();
@@ -100,11 +96,11 @@ public class WalletTestTransfer006 {
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsToThis(accountPaginated.build());
 
-    Optional<GrpcAPI.TransactionList>  gettransactionstothis = Optional
+    Optional<GrpcAPI.TransactionList> gettransactionstothis = Optional
         .ofNullable(transactionList);
 
     if (gettransactionstothis.get().getTransactionCount() == 0) {
-      Assert.assertTrue(PublicMethed.sendcoin(toAddress,1000000L,fromAddress,testKey002,
+      Assert.assertTrue(PublicMethed.sendcoin(toAddress, 1000000L, fromAddress, testKey002,
           blockingStubFull));
       Assert.assertTrue(PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,
           blockingStubSolidity));
@@ -130,7 +126,7 @@ public class WalletTestTransfer006 {
     accountPaginated.setLimit(0);
     GrpcAPI.TransactionList transactionList = blockingStubExtension
         .getTransactionsToThis(accountPaginated.build());
-    Optional<GrpcAPI.TransactionList>  gettransactionstothisByInvaildAddress = Optional
+    Optional<GrpcAPI.TransactionList> gettransactionstothisByInvaildAddress = Optional
         .ofNullable(transactionList);
 
     Assert.assertTrue(gettransactionstothisByInvaildAddress.get().getTransactionCount() == 0);
@@ -176,11 +172,12 @@ public class WalletTestTransfer006 {
       channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
 
-  public Account queryAccount(ECKey ecKey,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public Account queryAccount(ECKey ecKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     byte[] address;
     if (ecKey == null) {
       String pubKey = loadPubKey(); //04 PubKey[128]
@@ -203,6 +200,7 @@ public class WalletTestTransfer006 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -212,6 +210,7 @@ public class WalletTestTransfer006 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

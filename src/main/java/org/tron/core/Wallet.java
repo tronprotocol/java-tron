@@ -85,6 +85,7 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -93,6 +94,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -115,8 +117,9 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -124,6 +127,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
@@ -146,7 +150,9 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetService tronNetService;
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -420,18 +426,22 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
+      return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
+    }
+
     Message message = new TransactionMessage(signaturedTransaction);
 
     try {
       if (minEffectiveConnection != 0) {
-        if (p2pNode.getActivePeer().isEmpty()) {
+        if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
         }
 
-        int count = (int) p2pNode.getActivePeer().stream()
+        int count = (int) tronNetDelegate.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
             .count();
 
@@ -466,7 +476,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
@@ -876,6 +886,12 @@ public class Wallet {
             .setKey("getAllowAdaptiveEnergy")
             .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
             .build());
+    //    ALLOW_DEFERRED_TRANSACTION, // 1, 24
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowDeferredTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowDeferredTransaction())
+            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
@@ -895,6 +911,26 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMultiSignFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("maxDeferredTransactionProcessTime")
+        .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getDeferredTransactionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getCancelDeferredTransactionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getUpdateAccountPermissionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());
 //    ALLOW_TVM_CONSTANTINOPLE, // 1, 24
     builder.addChainParameter(
@@ -1204,6 +1240,37 @@ public class Wallet {
     return null;
   }
 
+  public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+
+    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore()
+        .getByTransactionId(transactionId);
+    if (deferredTransactionCapsule != null) {
+      return deferredTransactionCapsule.getDeferredTransaction();
+    }
+
+    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
+        .getUnchecked(transactionId.toByteArray());
+
+    if (Objects.nonNull(transactionCapsule)) {
+      transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+      TransactionCapsule generateTransaction = dbManager.getTransactionStore()
+          .getUnchecked(transactionCapsule.getTransactionId().getBytes());
+      if (Objects.nonNull(generateTransaction)) {
+        DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+        deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+        deferredTransaction.setSenderAddress(transactionCapsule.getSenderAddress());
+        deferredTransaction.setReceiverAddress(transactionCapsule.getToAddress());
+        deferredTransaction.setTransaction(transactionCapsule.getInstance());
+        return deferredTransaction.build();
+      }
+    }
+    return null;
+  }
+
+
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1218,6 +1285,45 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     return null;
+  }
+
+  public TransactionInfo getDeferredTransactionInfoById(ByteString transactionId) {
+    if (Objects.isNull(transactionId)) {
+      return null;
+    }
+    try {
+      TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
+          .getUnchecked(transactionId.toByteArray());
+      if (Objects.nonNull(transactionCapsule)) {
+        transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+        if (Objects.isNull(transactionCapsule.getTransactionId())) {
+          return null;
+        }
+        TransactionInfoCapsule transactionInfo = dbManager.getTransactionHistoryStore()
+            .get(transactionCapsule.getTransactionId().getBytes());
+        if (Objects.nonNull(transactionInfo)) {
+          return transactionInfo.getInstance();
+        }
+      }
+
+    } catch (StoreException e) {
+    }
+
+    return null;
+  }
+
+  public Return cancelDeferredTransaction(ByteString transactionId) {
+    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
+
+    if (Objects.isNull(transactionId)) {
+      return builder.setResult(false).build();
+    }
+
+    if (dbManager.cancelDeferredTransaction(transactionId)) {
+      return builder.setResult(true).build();
+    } else {
+      return builder.setResult(false).build();
+    }
   }
 
   public Proposal getProposalById(ByteString proposalId) {

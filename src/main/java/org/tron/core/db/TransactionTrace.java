@@ -8,6 +8,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
@@ -35,6 +36,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -67,6 +69,10 @@ public class TransactionTrace {
   public TransactionCapsule getTrx() {
     return trx;
   }
+
+  @Getter
+  @Setter
+  private int deferredStage = 0;
 
   public enum TimeResultType {
     NORMAL,
@@ -223,11 +229,8 @@ public class TransactionTrace {
     if (!needVM()) {
       return false;
     }
-    if (!trx.getContractRet().equals(contractResult.OUT_OF_TIME)
-        && receipt.getResult().equals(contractResult.OUT_OF_TIME)) {
-      return true;
-    }
-    return false;
+    return trx.getContractRet() != contractResult.OUT_OF_TIME && receipt.getResult()
+        == contractResult.OUT_OF_TIME;
   }
 
   public void check() throws ReceiptCheckErrException {
@@ -313,5 +316,30 @@ public class TransactionTrace {
 
   public Runtime getRuntime() {
     return runtime;
+  }
+
+  public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule)
+      throws ContractValidateException {
+    byte[] ownerAddress = TransactionCapsule
+        .getOwner(trx.getInstance().getRawData().getContract(0));
+    if (ArrayUtils.isEmpty(ownerAddress)) {
+      logger.error("empty owner address");
+      return false;
+    }
+
+    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (
+        delaySeconds / (24 * 60 * 60) + 1);
+    try {
+      dbManager.adjustBalance(ownerAddress, -fee);
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      resultCapsule.setStatus(fee, Transaction.Result.code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      e.printStackTrace();
+      resultCapsule.setStatus(fee, Transaction.Result.code.FAILED);
+      throw new ContractValidateException(
+          "create deferred transaction error, insufficient fee.");
+    }
+
+    return true;
   }
 }

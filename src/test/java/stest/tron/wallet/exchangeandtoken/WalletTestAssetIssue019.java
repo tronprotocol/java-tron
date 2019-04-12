@@ -76,95 +76,93 @@ public class WalletTestAssetIssue019 {
     asset019SecondKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
     PublicMethed.printAddress(asset019SecondKey);
 
-
-
-    Assert.assertTrue(PublicMethed.sendcoin(asset019Address,2048000000,fromAddress,
-        testKey002,blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(asset019SecondAddress,2048000000,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(asset019Address, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(asset019SecondAddress, 2048000000, fromAddress,
+        testKey002, blockingStubFull));
 
     //Can create 32 char token name.
     Long start = System.currentTimeMillis() + 20000000;
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "trx", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "TRX", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "Trx", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "tRx", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "trX", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "TRx", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "TrX", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertFalse(PublicMethed.createAssetIssue(asset019Address,
         "tRX", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.createAssetIssue(asset019Address,
         "trxtrx", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019Key,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019Key, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.createAssetIssue(asset019SecondAddress,
         "_", totalSupply, 1, 1, start, end, 1, description, url,
-        2000L,2000L, 1L,1L,asset019SecondKey,blockingStubFull));
+        2000L, 2000L, 1L, 1L, asset019SecondKey, blockingStubFull));
   }
 
   @Test(enabled = true)
   public void testGetAssetLastOperationTimeAndAssetIssueFreeNetUsed() {
-    Assert.assertTrue(PublicMethed.freezeBalance(asset019Address,100000000L,3,
-        asset019Key,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(asset019SecondAddress,100000000L,3,
-        asset019SecondKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(asset019Address, 100000000L, 3,
+        asset019Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(asset019SecondAddress, 100000000L, 3,
+        asset019SecondKey, blockingStubFull));
     Account getAssetIdFromThisAccount;
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address, blockingStubFull);
     ByteString asset019AccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019SecondAddress,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019SecondAddress, blockingStubFull);
     ByteString asset019SecondAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
-    PublicMethed.transferAsset(asset019SecondAddress,asset019AccountId.toByteArray(),100L,
-        asset019Address,asset019Key,blockingStubFull);
-    PublicMethed.transferAsset(asset019Address,asset019SecondAccountId.toByteArray(),100L,
-        asset019SecondAddress,asset019SecondKey,blockingStubFull);
+    PublicMethed.transferAsset(asset019SecondAddress, asset019AccountId.toByteArray(), 100L,
+        asset019Address, asset019Key, blockingStubFull);
+    PublicMethed.transferAsset(asset019Address, asset019SecondAccountId.toByteArray(), 100L,
+        asset019SecondAddress, asset019SecondKey, blockingStubFull);
 
+    PublicMethed.transferAsset(asset019Address, asset019AccountId.toByteArray(), 10L,
+        asset019SecondAddress, asset019SecondKey, blockingStubFull);
+    PublicMethed.transferAsset(asset019SecondAddress, asset019SecondAccountId.toByteArray(),
+        10L, asset019Address, asset019Key, blockingStubFull);
 
-    PublicMethed.transferAsset(asset019Address,asset019AccountId.toByteArray(),10L,
-        asset019SecondAddress,asset019SecondKey,blockingStubFull);
-    PublicMethed.transferAsset(asset019SecondAddress,asset019SecondAccountId.toByteArray(),
-        10L,asset019Address,asset019Key,blockingStubFull);
-
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019Address, blockingStubFull);
     for (String id : getAssetIdFromThisAccount.getFreeAssetNetUsageV2Map().keySet()) {
       if (asset019SecondAccountId.toStringUtf8().equalsIgnoreCase(id)) {
         Assert.assertTrue(getAssetIdFromThisAccount.getFreeAssetNetUsageV2Map().get(id) > 0);
       }
     }
 
-    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019SecondAddress,blockingStubFull);
+    getAssetIdFromThisAccount = PublicMethed.queryAccount(asset019SecondAddress, blockingStubFull);
     for (String id : getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().keySet()) {
       if (asset019AccountId.toStringUtf8().equalsIgnoreCase(id)) {
         Assert.assertTrue(getAssetIdFromThisAccount.getLatestAssetOperationTimeV2Map().get(id) > 0);
       }
     }
   }
+
   /**
    * constructor.
    */

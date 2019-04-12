@@ -4,6 +4,7 @@ import static java.lang.Math.max;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -21,7 +22,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -39,7 +42,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.storage.DBSettings;
+import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -142,6 +145,10 @@ public class Args {
   private String storageTransactionHistoreSwitch = "";
 
   @Getter
+  @Parameter(names = {"--fast-forward"})
+  private boolean fastForward = false;
+
+  @Getter
   private Storage storage;
 
   @Getter
@@ -184,6 +191,10 @@ public class Args {
   @Getter
   @Setter
   private List<Node> passiveNodes;
+
+  @Getter
+  @Setter
+  private List<Node> fastForwardNodes;
 
   @Getter
   @Setter
@@ -400,6 +411,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int allowDeferredTransaction;
+
+  @Getter
+  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -437,7 +452,7 @@ public class Args {
   private DbBackupConfig dbBackupConfig;
 
   @Getter
-  private DBSettings rocksDBCustomSettings;
+  private RocksDbSettings rocksDBCustomSettings;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -468,6 +483,7 @@ public class Args {
     INSTANCE.nodeConnectionTimeout = 0;
     INSTANCE.activeNodes = Collections.emptyList();
     INSTANCE.passiveNodes = Collections.emptyList();
+    INSTANCE.fastForwardNodes = Collections.emptyList();
     INSTANCE.nodeChannelReadTimeout = 0;
     INSTANCE.nodeMaxActiveNodes = 30;
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
@@ -510,6 +526,7 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowMultiSign = 0;
+    INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
   }
 
@@ -630,7 +647,7 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .orElse(Storage.getDbEngineFromConfig(config)));
 
-    if (INSTANCE.storage.getDbEngine().toUpperCase().equals("ROCKSDB")
+    if ("ROCKSDB".equals(INSTANCE.storage.getDbEngine().toUpperCase())
         && INSTANCE.storage.getDbVersion() == 1) {
       throw new RuntimeException("db.version = 1 is not supported by ROCKSDB engine.");
     }
@@ -697,6 +714,8 @@ public class Args {
     INSTANCE.activeNodes = getNodes(config, "node.active");
 
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
+
+    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
@@ -803,6 +822,11 @@ public class Args {
     INSTANCE.allowMultiSign =
         config.hasPath("committee.allowMultiSign") ? config
             .getInt("committee.allowMultiSign") : 0;
+
+    INSTANCE.allowDeferredTransaction =
+        config.hasPath("committee.allowDeferredTransaction") ? config
+            .getInt("committee.allowDeferredTransaction") : 0;
+
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
@@ -888,7 +912,7 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     initBackupProperty(config);
-    if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
+    if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
       initRocksDbSettings(config);
     }
@@ -982,24 +1006,46 @@ public class Args {
   private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
-    if (config.hasPath("event.subscribe.path")) {
-      String pluginPath = config.getString("event.subscribe.path");
-      if (StringUtils.isNotEmpty(pluginPath)) {
-        eventPluginConfig.setPluginPath(pluginPath.trim());
+    boolean useNativeQueue = false;
+    int bindPort = 0;
+    int sendQueueLength = 0;
+    if (config.hasPath("event.subscribe.native.useNativeQueue")){
+      useNativeQueue = config.getBoolean("event.subscribe.native.useNativeQueue");
+
+      if(config.hasPath("event.subscribe.native.bindport")){
+        bindPort = config.getInt("event.subscribe.native.bindport");
       }
+
+      if(config.hasPath("event.subscribe.native.sendqueuelength")){
+        sendQueueLength = config.getInt("event.subscribe.native.sendqueuelength");
+      }
+
+      eventPluginConfig.setUseNativeQueue(useNativeQueue);
+      eventPluginConfig.setBindPort(bindPort);
+      eventPluginConfig.setSendQueueLength(sendQueueLength);
     }
 
-    if (config.hasPath("event.subscribe.server")) {
-      String serverAddress = config.getString("event.subscribe.server");
-      if (StringUtils.isNotEmpty(serverAddress)) {
-        eventPluginConfig.setServerAddress(serverAddress.trim());
+    // use event plugin
+    if (!useNativeQueue) {
+      if (config.hasPath("event.subscribe.path")) {
+        String pluginPath = config.getString("event.subscribe.path");
+        if (StringUtils.isNotEmpty(pluginPath)) {
+          eventPluginConfig.setPluginPath(pluginPath.trim());
+        }
       }
-    }
 
-    if (config.hasPath("event.subscribe.dbconfig")) {
-      String dbConfig = config.getString("event.subscribe.dbconfig");
-      if (StringUtils.isNotEmpty(dbConfig)) {
-        eventPluginConfig.setDbConfig(dbConfig.trim());
+      if (config.hasPath("event.subscribe.server")) {
+        String serverAddress = config.getString("event.subscribe.server");
+        if (StringUtils.isNotEmpty(serverAddress)) {
+          eventPluginConfig.setServerAddress(serverAddress.trim());
+        }
+      }
+
+      if (config.hasPath("event.subscribe.dbconfig")) {
+        String dbConfig = config.getString("event.subscribe.dbconfig");
+        if (StringUtils.isNotEmpty(dbConfig)) {
+          eventPluginConfig.setDbConfig(dbConfig.trim());
+        }
       }
     }
 
@@ -1193,11 +1239,11 @@ public class Args {
     int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
         .getInt(prefix + "targetFileSizeMultiplier") : 1;
 
-    INSTANCE.rocksDBCustomSettings = DBSettings
+    INSTANCE.rocksDBCustomSettings = RocksDbSettings
         .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
             maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
             targetFileSizeBase, targetFileSizeMultiplier);
-    DBSettings.loggingSettings();
+    RocksDbSettings.loggingSettings();
   }
 
   private static void initRocksDbBackupProperty(Config config) {
@@ -1214,7 +1260,6 @@ public class Args {
     INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
         .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
-
 
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")

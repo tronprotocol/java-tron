@@ -152,6 +152,7 @@ public class WalletTestWitness002 {
           .compare(((Protocol.Witness) o2).getVoteCount(), ((Protocol.Witness) o1).getVoteCount());
     }
   }
+
   /**
    * constructor.
    */
@@ -189,6 +190,7 @@ public class WalletTestWitness002 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

@@ -32,9 +32,9 @@ import org.tron.protos.Protocol.TransactionInfo.Log;
  */
 public class LogInfo {
 
-  byte[] address = new byte[]{};
-  List<DataWord> topics = new ArrayList<>();
-  byte[] data = new byte[]{};
+  private byte[] address = new byte[]{};
+  private List<DataWord> topics = new ArrayList<>();
+  private byte[] data = new byte[]{};
 
   public LogInfo(byte[] address, List<DataWord> topics, byte[] data) {
     this.address = (address != null) ? address : new byte[]{};
@@ -52,8 +52,8 @@ public class LogInfo {
 
   public List<String> getHexTopics() {
     List<String> list = new LinkedList<>();
-    if (topics != null && !topics.isEmpty()){
-      for (DataWord bytes: topics) {
+    if (topics != null && !topics.isEmpty()) {
+      for (DataWord bytes : topics) {
         list.add(bytes.toHexString());
       }
     }
@@ -62,8 +62,8 @@ public class LogInfo {
 
   public List<byte[]> getClonedTopics() {
     List<byte[]> list = new LinkedList<>();
-    if (topics != null && topics.size() > 0){
-      for (DataWord dataword: topics) {
+    if (topics != null && topics.size() > 0) {
+      for (DataWord dataword : topics) {
         list.add(dataword.getClonedData());
       }
     }

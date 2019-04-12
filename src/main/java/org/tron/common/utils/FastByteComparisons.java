@@ -16,21 +16,18 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements.  See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership.  The ASF licenses this file to you under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with the License.  You may obtain
+ * a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package org.tron.common.utils;
@@ -38,9 +35,8 @@ package org.tron.common.utils;
 import com.google.common.primitives.UnsignedBytes;
 
 /**
- * Utility code to do optimized byte-array comparison.
- * This is borrowed and slightly modified from Guava's {@link UnsignedBytes}
- * class to be able to compare arrays that start at non-zero offsets.
+ * Utility code to do optimized byte-array comparison. This is borrowed and slightly modified from
+ * Guava's {@link UnsignedBytes} class to be able to compare arrays that start at non-zero offsets.
  */
 @SuppressWarnings("restriction")
 public abstract class FastByteComparisons {
@@ -72,24 +68,26 @@ public abstract class FastByteComparisons {
   }
 
   private interface Comparer<T> {
+
     int compareTo(T buffer1, int offset1, int length1,
         T buffer2, int offset2, int length2);
   }
 
   /**
-   * <p>Uses reflection to gracefully fall back to the Java implementation if
-   * {@code Unsafe} isn't available.
+   * <p>Uses reflection to gracefully fall back to the Java implementation if {@code Unsafe} isn't
+   * available.
    */
   private static class LexicographicalComparerHolder {
-    static final String UNSAFE_COMPARER_NAME =
+
+    private static final String UNSAFE_COMPARER_NAME =
         LexicographicalComparerHolder.class.getName() +
             "$UnsafeComparer";
 
-    static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
+    private static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
 
     /**
-     * Returns the Unsafe-using Comparer, or falls back to the pure-Java
-     * implementation if unable to do so.
+     * Returns the Unsafe-using Comparer, or falls back to the pure-Java implementation if unable to
+     * do so.
      */
     static Comparer<byte[]> getBestComparer() {
       try {

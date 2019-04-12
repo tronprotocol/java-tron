@@ -146,6 +146,7 @@ public class CreateaAndUpdateWitness2Test {
       logger.info("Update witness case had been test.This time skip it.");
     }
   }
+
   /**
    * constructor.
    */
@@ -156,6 +157,7 @@ public class CreateaAndUpdateWitness2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -188,6 +190,7 @@ public class CreateaAndUpdateWitness2Test {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -237,6 +240,7 @@ public class CreateaAndUpdateWitness2Test {
     return ret;
 
   }
+
   /**
    * constructor.
    */
@@ -271,6 +275,7 @@ public class CreateaAndUpdateWitness2Test {
     }
 
   }
+
   /**
    * constructor.
    */
@@ -320,6 +325,7 @@ public class CreateaAndUpdateWitness2Test {
     }
     return ret;
   }
+
   /**
    * constructor.
    */
@@ -393,6 +399,7 @@ public class CreateaAndUpdateWitness2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -402,6 +409,7 @@ public class CreateaAndUpdateWitness2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

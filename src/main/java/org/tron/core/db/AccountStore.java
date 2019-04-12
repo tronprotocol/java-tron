@@ -11,12 +11,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 
 @Slf4j(topic = "DB")
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
+
+  @Autowired
+  private FastSyncCallBack fastSyncCallBack;
+
+  @Autowired
+  private AccountStateStoreTrie accountStateStoreTrie;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -27,6 +35,13 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   public AccountCapsule get(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
     return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+  }
+
+
+  @Override
+  public void put(byte[] key, AccountCapsule item) {
+    super.put(key, item);
+    fastSyncCallBack.accountCallBack(key, item);
   }
 
   /**
@@ -60,4 +75,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
   }
 
+  @Override
+  public void close() {
+    super.close();
+    accountStateStoreTrie.close();
+  }
 }

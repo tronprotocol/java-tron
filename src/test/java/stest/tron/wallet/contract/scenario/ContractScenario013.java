@@ -66,8 +66,8 @@ public class ContractScenario013 {
 
   @Test(enabled = true)
   public void deployTronTrxAndSunContract() {
-    Assert.assertTrue(PublicMethed.sendcoin(contract013Address,20000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract013Address, 20000000000L, fromAddress,
+        testKey002, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract013Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -77,11 +77,11 @@ public class ContractScenario013 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "TronTrxAndSunContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario013_deployTronTrxAndSunContract");
+        .getString("code.code_ContractScenario013_deployTronTrxAndSunContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario013_deployTronTrxAndSunContract");
-    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName,abi,code,"",
-        maxFeeLimit, 0L, 100,null,contract013Key,contract013Address,blockingStubFull);
+        .getString("abi.abi_ContractScenario013_deployTronTrxAndSunContract");
+    txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
+        maxFeeLimit, 0L, 100, null, contract013Key, contract013Address, blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
@@ -100,11 +100,11 @@ public class ContractScenario013 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     String contractName = "TronTrxAndSunContract";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario013_triggerTronTrxAndSunContract");
+        .getString("code.code_ContractScenario013_triggerTronTrxAndSunContract");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario013_triggerTronTrxAndSunContract");
-    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract013Key,contract013Address,blockingStubFull);
+        .getString("abi.abi_ContractScenario013_triggerTronTrxAndSunContract");
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contract013Key, contract013Address, blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress,
         "time()", "#", false,
         0, 100000000L, contract013Address, contract013Key, blockingStubFull);
@@ -116,6 +116,7 @@ public class ContractScenario013 {
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
   }
+
   /**
    * constructor.
    */

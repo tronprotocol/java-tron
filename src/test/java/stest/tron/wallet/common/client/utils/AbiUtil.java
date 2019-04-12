@@ -19,9 +19,12 @@ public class AbiUtil {
   private static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)]$");
 
   static abstract class Coder {
+
     boolean dynamic = false;
-    //    DataWord[] encode
+
+    // DataWord[] encode
     abstract byte[] encode(String value);
+
     abstract byte[] decode();
 
   }
@@ -30,7 +33,7 @@ public class AbiUtil {
     int start = methodSign.indexOf('(') + 1;
     int end = methodSign.indexOf(')');
 
-    String typeString = methodSign.subSequence(start,end).toString();
+    String typeString = methodSign.subSequence(start, end).toString();
 
     return typeString.split(",");
   }
@@ -71,8 +74,10 @@ public class AbiUtil {
   }
 
   static class CoderArray extends Coder {
+
     private String elementType;
     private int length;
+
     CoderArray(String arrayType, int length) {
       this.elementType = arrayType;
       this.length = length;
@@ -121,7 +126,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderNumber extends  Coder {
+  static class CoderNumber extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -139,7 +144,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderFixedBytes extends  Coder {
+  static class CoderFixedBytes extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -164,7 +169,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderDynamicBytes extends  Coder {
+  static class CoderDynamicBytes extends Coder {
 
     CoderDynamicBytes() {
       dynamic = true;
@@ -181,7 +186,7 @@ public class AbiUtil {
     }
   }
 
-  static class CoderBool extends  Coder {
+  static class CoderBool extends Coder {
 
     @Override
     byte[] encode(String value) {
@@ -216,7 +221,8 @@ public class AbiUtil {
     }
   }
 
-  static class CoderString extends  Coder {
+  static class CoderString extends Coder {
+
     CoderString() {
       dynamic = true;
     }
@@ -277,6 +283,7 @@ public class AbiUtil {
     ret.add(new DataWord(data.length));
     return encodeDynamicBytes(data);
   }
+
   public static byte[] pack(List<Coder> codes, List<Object> values) {
 
     int staticSize = 0;
@@ -284,13 +291,13 @@ public class AbiUtil {
 
     List<byte[]> encodedList = new ArrayList<>();
 
-    for (int idx = 0;idx < codes.size();  idx++) {
+    for (int idx = 0; idx < codes.size(); idx++) {
       Coder coder = codes.get(idx);
       Object parameter = values.get(idx);
       String value;
       if (parameter instanceof List) {
         StringBuilder sb = new StringBuilder();
-        for (Object item: (List) parameter) {
+        for (Object item : (List) parameter) {
           if (sb.length() != 0) {
             sb.append(",");
           }
@@ -320,13 +327,13 @@ public class AbiUtil {
       Coder coder = codes.get(idx);
 
       if (coder.dynamic) {
-        System.arraycopy(new DataWord(dynamicOffset).getData(), 0,data, offset, 32);
+        System.arraycopy(new DataWord(dynamicOffset).getData(), 0, data, offset, 32);
         offset += 32;
 
-        System.arraycopy(encodedList.get(idx), 0,data, dynamicOffset, encodedList.get(idx).length );
+        System.arraycopy(encodedList.get(idx), 0, data, dynamicOffset, encodedList.get(idx).length);
         dynamicOffset += encodedList.get(idx).length;
       } else {
-        System.arraycopy(encodedList.get(idx), 0,data, offset, encodedList.get(idx).length);
+        System.arraycopy(encodedList.get(idx), 0, data, offset, encodedList.get(idx).length);
         offset += encodedList.get(idx).length;
       }
     }
@@ -340,7 +347,7 @@ public class AbiUtil {
 
   public static String parseMethod(String methodSign, String input, boolean isHex) {
     byte[] selector = new byte[4];
-    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector,0, 4);
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     System.out.println(methodSign + ":" + Hex.toHexString(selector));
     if (input.length() == 0) {
       return Hex.toHexString(selector);
@@ -365,7 +372,7 @@ public class AbiUtil {
     }
 
     List<Coder> coders = new ArrayList<>();
-    for (String s: getTypes(methodSign)) {
+    for (String s : getTypes(methodSign)) {
       Coder c = getParamCoder(s);
       coders.add(c);
     }
@@ -376,10 +383,10 @@ public class AbiUtil {
   public static String parseMethod(String methodSign, List<Object> parameters) {
     String[] inputArr = new String[parameters.size()];
     int i = 0;
-    for (Object parameter: parameters) {
-      if (parameter instanceof  List) {
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
         StringBuilder sb = new StringBuilder();
-        for (Object item: (List) parameter) {
+        for (Object item : (List) parameter) {
           if (sb.length() != 0) {
             sb.append(",");
           }
@@ -387,13 +394,14 @@ public class AbiUtil {
         }
         inputArr[i++] = "[" + sb.toString() + "]";
       } else {
-        inputArr[i++] = (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
       }
     }
     return parseMethod(methodSign, StringUtils.join(inputArr, ','));
   }
 
-  public  static void main(String[] args) {
+  public static void main(String[] args) {
     String method = "test(string,int2,string)";
     String params = "asdf,3123,adf";
 
@@ -406,9 +414,8 @@ public class AbiUtil {
 
     System.out.println("token:" + parseMethod(tokenMethod, tokenParams));
 
-
     String method1 = "test(uint256,string,string,uint256[])";
-    String expected1  = "db103cf30000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000014200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000143000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
+    String expected1 = "db103cf30000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000014200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000143000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
     String method2 = "test(uint256,string,string,uint256[3])";
     String expected2 = "000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003";
     String listString = "1 ,\"B\",\"C\", [1, 2, 3]";
@@ -419,8 +426,4 @@ public class AbiUtil {
 
     System.out.println(parseMethod(byteMethod1, bytesValue1));
   }
-
-
-
-
 }

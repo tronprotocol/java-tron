@@ -16,7 +16,6 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class ExtCodeHashTest extends VMTestBase {
@@ -60,55 +59,57 @@ contract TestExtCodeHash {
     String methodByAddr = "getCodeHashByAddr(address)";
     String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
-    TVMTestResult result =  TVMTestUtils
+    TVMTestResult result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue), "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals(Hex.toHexString(returnValue),
+        "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
     String existentAccount = "27WtBq2KoSy5v8VnVZBZHHJcDuWNiSgjbE3";
     hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(existentAccount));
-    result =  TVMTestUtils
+    result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
     // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue), "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
-
+    Assert.assertEquals(Hex.toHexString(returnValue),
+        "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
 
     // trigger deployed contract
     String methodByUint = "getCodeHashByUint(uint256)";
     byte[] fullHexAddr = new DataWord(factoryAddress).getData();
     hexInput = AbiUtil.parseMethod(methodByUint, Hex.toHexString(fullHexAddr), true);
-    result =  TVMTestUtils
+    result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
     // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue), "0837cd5e284138b633cd976ea6fcb719d61d7bc33d946ec5a2d0c7da419a0bd4");
-
+    Assert.assertEquals(Hex.toHexString(returnValue),
+        "0837cd5e284138b633cd976ea6fcb719d61d7bc33d946ec5a2d0c7da419a0bd4");
 
     // trigger deployed contract
     BigInteger bigIntAddr = new DataWord(factoryAddress).sValue();
     String bigIntAddrChange = BigInteger.valueOf(2).pow(160).add(bigIntAddr).toString(16);
     fullHexAddr = new DataWord(bigIntAddrChange).getData();
     hexInput = AbiUtil.parseMethod(methodByUint, Hex.toHexString(fullHexAddr), true);
-    result =  TVMTestUtils
+    result = TVMTestUtils
         .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
     // check deployed contract
-    Assert.assertEquals(Hex.toHexString(returnValue), "0837cd5e284138b633cd976ea6fcb719d61d7bc33d946ec5a2d0c7da419a0bd4");
+    Assert.assertEquals(Hex.toHexString(returnValue),
+        "0837cd5e284138b633cd976ea6fcb719d61d7bc33d946ec5a2d0c7da419a0bd4");
 
   }
 

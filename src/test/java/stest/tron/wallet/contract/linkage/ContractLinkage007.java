@@ -355,6 +355,7 @@ public class ContractLinkage007 {
     logger.info(Integer.toString(infoById.get().getResultValue()));
     Assert.assertTrue(infoById.get().getFee() == 0);
   }
+
   /**
    * constructor.
    */

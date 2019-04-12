@@ -123,7 +123,7 @@ public class HandshakeHandler extends ByteToMessageDecoder {
 
     if (remoteId.length != 64) {
       InetAddress address = ((InetSocketAddress) ctx.channel().remoteAddress()).getAddress();
-      if (!channelManager.getTrustPeers().keySet().contains(address) && !syncPool.isCanConnect()) {
+      if (!channelManager.getTrustNodes().keySet().contains(address) && !syncPool.isCanConnect()) {
         channel.disconnect(ReasonCode.TOO_MANY_PEERS);
         return;
       }

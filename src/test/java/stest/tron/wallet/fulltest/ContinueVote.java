@@ -51,7 +51,6 @@ public class ContinueVote {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
 
 
-
   private ManagedChannel channelFull = null;
   private ManagedChannel searchChannelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -88,7 +87,7 @@ public class ContinueVote {
     searchBlockingStubFull = WalletGrpc.newBlockingStub(searchChannelFull);
   }
 
-  @Test(enabled = false,threadPoolSize = 30, invocationCount = 30)
+  @Test(enabled = false, threadPoolSize = 30, invocationCount = 30)
   public void testVoteWitness() {
     ByteString addressBs = ByteString.copyFrom(fromAddress);
     Account request = Account.newBuilder().setAddress(addressBs).build();
@@ -100,7 +99,7 @@ public class ContinueVote {
     String voteStr = "TB4B1RMhoPeivkj4Hebm6tttHjRY9yQFes";
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
-    Account fromInfo = PublicMethed.queryAccount(testKey002,blockingStubFull);
+    Account fromInfo = PublicMethed.queryAccount(testKey002, blockingStubFull);
 
     Boolean ret = false;
     Integer i = 0;
@@ -110,7 +109,7 @@ public class ContinueVote {
       smallVoteMap = new HashMap<String, String>();
       smallVoteMap.put(voteStr, Integer.toString(randNum));
       if (fromInfo.getFrozen(0).getFrozenBalance() < 10000000) {
-        PublicMethed.freezeBalance(fromAddress,10000000000L,3,testKey002,blockingStubFull);
+        PublicMethed.freezeBalance(fromAddress, 10000000000L, 3, testKey002, blockingStubFull);
       }
       ret = voteWitness(smallVoteMap, fromAddress, testKey002);
       if (ret) {
@@ -119,13 +118,14 @@ public class ContinueVote {
             .getVotes(0).getVoteCount()));
         logger.info(Integer.toString(i++));
       }
-      fromInfo = PublicMethed.queryAccount(testKey002,blockingStubFull);
+      fromInfo = PublicMethed.queryAccount(testKey002, blockingStubFull);
       accountNetMessage = blockingStubFull.getAccountNet(request);
       logger.info("Now the from net used is " + Long.toString(accountNetMessage.getNetUsed()));
 
     }
 
   }
+
   /**
    * constructor.
    */
@@ -139,6 +139,7 @@ public class ContinueVote {
       searchChannelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -213,6 +214,7 @@ public class ContinueVote {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -285,7 +287,6 @@ public class ContinueVote {
       }
     }
 
-
     Account afterFronzen = queryAccount(ecKey, searchBlockingStubFull);
     Long afterFrozenBalance = afterFronzen.getFrozen(0).getFrozenBalance();
     //Long afterBandwidth     = afterFronzen.getBandwidth();
@@ -308,6 +309,7 @@ public class ContinueVote {
 
 
   }
+
   /**
    * constructor.
    */
@@ -376,6 +378,7 @@ public class ContinueVote {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -385,6 +388,7 @@ public class ContinueVote {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

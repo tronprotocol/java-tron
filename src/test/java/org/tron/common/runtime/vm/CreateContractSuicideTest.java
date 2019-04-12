@@ -19,7 +19,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
-public class CreateContractSuicideTest extends  VMTestBase {
+public class CreateContractSuicideTest extends VMTestBase {
 
   /*
 

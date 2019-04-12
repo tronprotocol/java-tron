@@ -253,11 +253,12 @@ public class RocksDbDataSourceImplTest {
 
   @Test
   public void testCheckOrInitEngine() {
-    String dir = Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory();
+    String dir =
+        Args.getInstance().getOutputDirectory() + Args.getInstance().getStorage().getDbDirectory();
     String enginePath = dir + File.separator + "test_engine" + File.separator + "engine.properties";
     FileUtil.createDirIfNotExists(dir + File.separator + "test_engine");
     FileUtil.createFileIfNotExists(enginePath);
-    boolean b = PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
+    PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB");
     Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
         "ROCKSDB");
 
@@ -269,7 +270,7 @@ public class RocksDbDataSourceImplTest {
 
     dataSource = null;
     System.gc();
-    b = PropUtil.writeProperty(enginePath, "ENGINE", "LEVELDB");
+    PropUtil.writeProperty(enginePath, "ENGINE", "LEVELDB");
     Assert.assertEquals(PropUtil.readProperty(enginePath, "ENGINE"),
         "LEVELDB");
     dataSource = new RocksDbDataSourceImpl(dir, "test_engine");

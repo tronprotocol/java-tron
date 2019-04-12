@@ -18,8 +18,8 @@
 package org.tron.common.runtime.vm;
 
 /**
- * A wrapper for a message call from a contract to another account.
- * This can either be a normal CALL, CALLCODE, DELEGATECALL or POST call.
+ * A wrapper for a message call from a contract to another account. This can either be a normal
+ * CALL, CALLCODE, DELEGATECALL or POST call.
  */
 public class MessageCall {
 
@@ -114,7 +114,11 @@ public class MessageCall {
     return outDataSize;
   }
 
-  public DataWord getTokenId() { return tokenId; }
+  public DataWord getTokenId() {
+    return tokenId;
+  }
 
-  public boolean isTokenTransferMsg() {return isTokenTransferMsg;}
+  public boolean isTokenTransferMsg() {
+    return isTokenTransferMsg;
+  }
 }

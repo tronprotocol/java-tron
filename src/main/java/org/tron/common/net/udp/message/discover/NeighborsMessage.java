@@ -17,15 +17,15 @@ public class NeighborsMessage extends Message {
 
   private Discover.Neighbours neighbours;
 
-  public NeighborsMessage(byte[] data) throws Exception{
+  public NeighborsMessage(byte[] data) throws Exception {
     super(DISCOVER_NEIGHBORS, data);
     this.neighbours = Discover.Neighbours.parseFrom(data);
   }
 
-  public NeighborsMessage(Node from, List<Node> neighbours) {
+  public NeighborsMessage(Node from, List<Node> neighbours, long sequence) {
     super(DISCOVER_NEIGHBORS, null);
     Builder builder = Neighbours.newBuilder()
-        .setTimestamp(System.currentTimeMillis());
+        .setTimestamp(sequence);
 
     neighbours.forEach(neighbour -> {
       Endpoint endpoint = Endpoint.newBuilder()
@@ -57,6 +57,11 @@ public class NeighborsMessage extends Message {
             ByteArray.toStr(neighbour.getAddress().toByteArray()),
             neighbour.getPort())));
     return nodes;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return this.neighbours.getTimestamp();
   }
 
   @Override

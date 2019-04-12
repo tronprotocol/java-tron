@@ -26,11 +26,13 @@ public class AccountVoteWitnessTest {
   private static String dbPath = "output_witness_test";
 
   static {
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
-  /** init db. */
+  /**
+   * init db.
+   */
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
@@ -39,7 +41,9 @@ public class AccountVoteWitnessTest {
     //  dbManager.init();
   }
 
-  /** remo db when after test. */
+  /**
+   * remo db when after test.
+   */
   @AfterClass
   public static void removeDb() {
     Args.clearParam();
