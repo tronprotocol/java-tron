@@ -18,17 +18,27 @@ public class Librustzcash {
   }
 
   public interface ILibrustzcash extends Library {
+
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
+
     void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
+
     boolean librustzcash_zip32_xfvk_address(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret);
+
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
+
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
+
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
+
     boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
+
     boolean librustzcash_check_diversifier(byte[] diversifier);
 
     boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] diversifier, byte[] result);
-    boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r, byte[] result);
+
+    boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r,
+        byte[] result);
     //bool librustzcash_ivk_to_pkd(const unsigned char *ivk, const unsigned char *diversifier, unsigned char *result);
 //    bool librustzcash_sapling_compute_cm(
 //        const unsigned char *diversifier,
@@ -132,7 +142,8 @@ public class Librustzcash {
   //         unsigned char *j_ret,
   //         unsigned char *addr_ret
   //     );
-  public static boolean librustzcashZip32XfvkAddress(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret) {
+  public static boolean librustzcashZip32XfvkAddress(byte[] xfvk, byte[] j, byte[] j_ret,
+      byte[] addr_ret) {
     return INSTANCE.librustzcash_zip32_xfvk_address(xfvk, j, j_ret, addr_ret);
   }
 
@@ -269,7 +280,7 @@ public class Librustzcash {
   public static void main(String[] args) throws Exception {
     Librustzcash librustzcash = new Librustzcash();
 
-    byte [] aa = {0x16,      0x52,      0x52};
+    byte[] aa = {0x16, 0x52, 0x52};
 
     HDSeed seed = KeyStore.seed;
     RawHDSeed rawHDSeed = new RawHDSeed();

@@ -3,6 +3,7 @@ package org.tron.common.zksnark.sapling;
 import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import java.util.List;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
 import org.tron.common.zksnark.sapling.address.PaymentAddress;
@@ -57,17 +58,21 @@ public class RpcWallet {
 
     // We use a fixed keypath scheme of m/32'/coin_type'/account'
     // Derive m/32'
-    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT );
+    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
     // Derive m/32'/coin_type'
-    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT );
+    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+
+    System.out.println("depth=" + ByteArray.toInt(master32hCth.getDepth()));
+    System.out.println("depth=" + ByteArray.toStr(master32hCth.getParentFVKTag()));
+    System.out.println("depth=" + ByteArray.toInt(master32hCth.getChildIndex()));
 
     // Derive account key at next index, skip keys already known to the wallet
     ExtendedSpendingKey xsk = null;
 
     while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
       //
-      xsk = master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT );
-      metadata.hdKeypath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
+      xsk = master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+      metadata.hdKeyPath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
       metadata.seedFp = HdChain.seedFp;
       // Increment childkey index
       HdChain.saplingAccountCounter++;
@@ -87,7 +92,7 @@ public class RpcWallet {
 
     // return default sapling payment address.
     String paymentAddress = KeyIo.EncodePaymentAddress(addr);
-    System.out.println(paymentAddress);
+    System.out.println("paymentAddress = " + paymentAddress);
     return paymentAddress;
   }
 
@@ -125,8 +130,7 @@ public class RpcWallet {
     return 0;
   }
 
-  public long getBalance(String[] params, boolean fHelp)
-  {
+  public long getBalance(String[] params, boolean fHelp) {
 
 //    if (fHelp || params.length==0 || params.length >2) {
 //      throw new RuntimeException("z_getbalance \"address\" ( minconf )\n"
@@ -154,7 +158,7 @@ public class RpcWallet {
       }
       if (!ShieldWallet.getSpendingKeyForPaymentAddress(shieldFromAddr).isPresent()) {
         throw new RuntimeException(
-                "From address does not belong to this node, spending key or viewing key not found.");
+            "From address does not belong to this node, spending key or viewing key not found.");
       }
     }
 
@@ -169,7 +173,6 @@ public class RpcWallet {
 
     return nBalance;
   }
-
 
 //  UniValue z_importkey(  UniValue params, boolean fHelp) {
 //    // We want to scan for transactions and notes
@@ -192,7 +195,6 @@ public class RpcWallet {
 //    }
 //  }
 
-
   /**
    *   RPC call to generate a payment disclosure
    */
@@ -202,12 +204,11 @@ public class RpcWallet {
 //  }
 
   /**
-   *   RPC call to validate a payment disclosure data blob.
+   * RPC call to validate a payment disclosure data blob.
    */
 //  UniValue z_validatepaymentdisclosure(  UniValue params, boolean fHelp) {
 //
 //  }
-
   public static void main(String[] args) throws Exception {
     RpcWallet rpcWallet = new RpcWallet();
     rpcWallet.getNewAddress();
