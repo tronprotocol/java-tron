@@ -257,8 +257,6 @@ public class Librustzcash {
     return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
   }
 
-<<<<<<< HEAD
-=======
   public static String getLibraryByName(String name) {
     String platform;
     String extension;
@@ -278,7 +276,6 @@ public class Librustzcash {
     return Librustzcash.class.getClassLoader().getResource(
         "native-package" + File.separator + platform + File.separator + name +extension).getFile();
   }
->>>>>>> d011180c6c2f038e5eb9e11ab4d822f5df8c1164
 
   public static void main(String[] args) throws Exception {
     Librustzcash librustzcash = new Librustzcash();
