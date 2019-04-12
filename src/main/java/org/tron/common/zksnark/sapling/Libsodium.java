@@ -11,7 +11,7 @@ public class Libsodium {
     public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
 
     static {
-        INSTANCE = (ILibsodium)Native.loadLibrary("/Users/tron/xiefei/code/java/java-tron/src/main/resources/libsodium/libsodium.dylib", ILibsodium.class);
+        INSTANCE = (ILibsodium)Native.loadLibrary(Librustzcash.getLibraryByName("libsodium"), ILibsodium.class);
     }
 
     public interface ILibsodium extends Library {
