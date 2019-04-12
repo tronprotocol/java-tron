@@ -328,7 +328,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (28): {
+      case (30): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");

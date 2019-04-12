@@ -932,7 +932,7 @@ public class Wallet {
         .setKey("getUpdateAccountPermissionFee")
         .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());
-//    ALLOW_TVM_CONSTANTINOPLE, // 1, 24
+    // ALLOW_TVM_CONSTANTINOPLE, // 1, 30
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowTvmConstantinople")
