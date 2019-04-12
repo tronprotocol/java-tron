@@ -34,7 +34,7 @@ public class UpdateWitnessServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract)
           .getInstance();

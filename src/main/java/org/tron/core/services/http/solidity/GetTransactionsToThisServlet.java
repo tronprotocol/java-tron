@@ -31,7 +31,7 @@ public class GetTransactionsToThisServlet extends HttpServlet {
       String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       AccountPaginated.Builder builder = AccountPaginated.newBuilder();
-      JsonFormat.merge(input, builder);
+      JsonFormat.merge(input, builder, visible );
       AccountPaginated accountPaginated = builder.build();
       ByteString toAddress = accountPaginated.getAccount().getAddress();
       long offset = accountPaginated.getOffset();

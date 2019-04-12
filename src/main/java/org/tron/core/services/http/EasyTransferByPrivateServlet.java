@@ -42,7 +42,7 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build,visible );
       byte[] privateKey = build.getPrivateKey().toByteArray();
       ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] owner = ecKey.getAddress();

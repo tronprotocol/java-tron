@@ -34,7 +34,7 @@ public class UpdateAssetServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       UpdateAssetContract.Builder build = UpdateAssetContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.UpdateAssetContract).getInstance();
       response.getWriter().println(Util.printTransaction(tx, visible));

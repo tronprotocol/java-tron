@@ -13,6 +13,9 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getHexString;
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -23,11 +26,15 @@ public class CreateAddressServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
+      if ( visible ) {
+        input = getHexString( input );
+      }
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(jsonObject.toJSONString(), build);
+      JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
@@ -45,13 +52,24 @@ public class CreateAddressServlet extends HttpServlet {
     }
   }
 
+  private String CovertStringToHex(String input ) {
+    JSONObject jsonObject = JSONObject.parseObject(input);
+    String value = jsonObject.getString("value");
+    jsonObject.put("value", getHexString(value) );
+    return jsonObject.toJSONString();
+  }
+
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      if ( visible ) {
+        input = CovertStringToHex( input );
+      }
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       byte[] address = wallet.createAdresss(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);

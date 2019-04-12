@@ -56,7 +56,7 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
       if (transInfo == null) {
         response.getWriter().println("{}");

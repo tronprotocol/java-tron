@@ -34,7 +34,7 @@ public class ProposalCreateServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       ProposalCreateContract.Builder build = ProposalCreateContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.ProposalCreateContract)
           .getInstance();

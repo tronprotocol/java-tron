@@ -30,7 +30,7 @@ public class CreateAccountServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       AccountCreateContract.Builder build = AccountCreateContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.AccountCreateContract)
           .getInstance();

@@ -30,7 +30,7 @@ public class ExchangeWithdrawServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       ExchangeWithdrawContract.Builder build = ExchangeWithdrawContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.ExchangeWithdrawContract)
           .getInstance();

@@ -53,7 +53,7 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       Transaction reply = wallet.getTransactionById(build.build().getValue());
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply, visible));

@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -14,6 +15,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
+import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
 
 @Component
@@ -27,6 +29,9 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String address = request.getParameter("value");
+      if ( visible ) {
+        address = getHexAddress( address );
+      }
       DelegatedResourceAccountIndex reply =
           wallet.getDelegatedResourceAccountIndex(
               ByteString.copyFrom(ByteArray.fromHexString(address)));
@@ -50,9 +55,16 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
       boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      if ( visible ) {
+        JSONObject jsonObject = JSONObject.parseObject(input);
+        String value = jsonObject.getString("value");
+        jsonObject.put("value", getHexAddress( value ));
+        input = jsonObject.toJSONString();
+      }
+
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       DelegatedResourceAccountIndex reply =
           wallet.getDelegatedResourceAccountIndex(build.getValue());
       if (reply != null) {

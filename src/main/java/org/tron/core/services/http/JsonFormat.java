@@ -367,15 +367,15 @@ public class JsonFormat {
   /**
    * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
    */
-  public static void merge(Readable input, Message.Builder builder) throws IOException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder);
+  public static void merge(Readable input, Message.Builder builder, boolean selfType) throws IOException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
   /**
    * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
    */
-  public static void merge(CharSequence input, Message.Builder builder) throws ParseException {
-    merge(input, ExtensionRegistry.getEmptyRegistry(), builder);
+  public static void merge(CharSequence input, Message.Builder builder, boolean selfType) throws ParseException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, selfType);
   }
 
   /**
@@ -384,7 +384,7 @@ public class JsonFormat {
    */
   public static void merge(Readable input,
       ExtensionRegistry extensionRegistry,
-      Message.Builder builder) throws IOException {
+      Message.Builder builder, boolean selfType) throws IOException {
     // Read the entire input to a String then parse that.
 
     // If StreamTokenizer were not quite so crippled, or if there were a kind
@@ -393,7 +393,7 @@ public class JsonFormat {
     // we would not have to read to one big String. Alas, none of these is
     // the case. Oh well.
 
-    merge(toStringBuilder(input), extensionRegistry, builder);
+    merge(toStringBuilder(input), extensionRegistry, builder, selfType);
   }
 
   /**
@@ -402,14 +402,14 @@ public class JsonFormat {
    */
   public static void merge(CharSequence input,
       ExtensionRegistry extensionRegistry,
-      Message.Builder builder) throws ParseException {
+      Message.Builder builder, boolean selfType) throws ParseException {
     Tokenizer tokenizer = new Tokenizer(input);
 
     // Based on the state machine @ http://json.org/
 
     tokenizer.consume("{"); // Needs to happen when the object starts.
     while (!tokenizer.tryConsume("}")) { // Continue till the object is done
-      mergeField(tokenizer, extensionRegistry, builder);
+      mergeField(tokenizer, extensionRegistry, builder, selfType);
     }
     // Test to make sure the tokenizer has reached the end of the stream.
     if (!tokenizer.atEnd()) {
@@ -441,7 +441,7 @@ public class JsonFormat {
    */
   protected static void mergeField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry,
-      Message.Builder builder) throws ParseException {
+      Message.Builder builder, boolean selfType) throws ParseException {
     FieldDescriptor field;
     Descriptor type = builder.getDescriptorForType();
     final ExtensionRegistry.ExtensionInfo extension;
@@ -501,17 +501,17 @@ public class JsonFormat {
 
       if (array) {
         while (!tokenizer.tryConsume("]")) {
-          handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown);
+          handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
           tokenizer.tryConsume(",");
         }
       } else {
-        handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown);
+        handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
       }
     }
 
     if (tokenizer.tryConsume(",")) {
       // Continue with the next field
-      mergeField(tokenizer, extensionRegistry, builder);
+      mergeField(tokenizer, extensionRegistry, builder, selfType);
     }
   }
 
@@ -553,13 +553,14 @@ public class JsonFormat {
       Message.Builder builder,
       FieldDescriptor field,
       ExtensionRegistry.ExtensionInfo extension,
-      boolean unknown) throws ParseException {
+      boolean unknown, boolean selfType) throws ParseException {
 
     Object value = null;
     if (field.getJavaType() == FieldDescriptor.JavaType.MESSAGE) {
-      value = handleObject(tokenizer, extensionRegistry, builder, field, extension, unknown);
+      value = handleObject(tokenizer, extensionRegistry, builder, field, extension, unknown,
+              selfType );
     } else {
-      value = handlePrimitive(tokenizer, field);
+      value = handlePrimitive(tokenizer, field, selfType);
     }
     if (value != null) {
       if (field.isRepeated()) {
@@ -570,7 +571,7 @@ public class JsonFormat {
     }
   }
 
-  private static Object handlePrimitive(Tokenizer tokenizer, FieldDescriptor field)
+  private static Object handlePrimitive(Tokenizer tokenizer, FieldDescriptor field, boolean selfType)
       throws ParseException {
     Object value = null;
     if ("null".equals(tokenizer.currentToken())) {
@@ -617,7 +618,7 @@ public class JsonFormat {
         break;
 
       case BYTES:
-        value = tokenizer.consumeByteString();
+        value = tokenizer.consumeByteString(field.getName(), selfType);
         break;
 
       case ENUM: {
@@ -665,7 +666,7 @@ public class JsonFormat {
       Message.Builder builder,
       FieldDescriptor field,
       ExtensionRegistry.ExtensionInfo extension,
-      boolean unknown) throws ParseException {
+      boolean unknown, boolean selfType ) throws ParseException {
 
     Message.Builder subBuilder;
     if (extension == null) {
@@ -675,7 +676,7 @@ public class JsonFormat {
     }
 
     if (unknown) {
-      ByteString data = tokenizer.consumeByteString();
+      ByteString data = tokenizer.consumeByteString("", selfType);
       try {
         subBuilder.mergeFrom(data);
         return subBuilder.build();
@@ -691,7 +692,7 @@ public class JsonFormat {
       if (tokenizer.atEnd()) {
         throw tokenizer.parseException("Expected \"" + endToken + "\".");
       }
-      mergeField(tokenizer, extensionRegistry, subBuilder);
+      mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
       if (tokenizer.tryConsume(",")) {
         // there are more fields in the object, so continue
         continue;
@@ -1570,6 +1571,47 @@ public class JsonFormat {
       } catch (InvalidEscapeSequence e) {
         throw parseException(e.getMessage());
       }
+    }
+
+    public ByteString consumeByteString(final String fieldName, boolean selfType ) throws ParseException {
+      char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
+      if ((quote != '\"') && (quote != '\'')) {
+        throw parseException("Expected string.");
+      }
+
+      if ((currentToken.length() < 2)
+              || (currentToken.charAt(currentToken.length() - 1) != quote)) {
+        throw parseException("String missing ending quote.");
+      }
+
+      try {
+        String escaped = currentToken.substring(1, currentToken.length() - 1);
+        ByteString result;
+        if ( !selfType ) {
+          result = unescapeBytes(escaped);
+        } else {
+          result = unescapeBytesSelfType(escaped, fieldName);
+        }
+        nextToken();
+        return result;
+      } catch (InvalidEscapeSequence e) {
+        throw parseException(e.getMessage());
+      }
+    }
+
+    static ByteString unescapeBytesSelfType(String input, final String fliedName )
+            throws InvalidEscapeSequence {
+      //Address base58 -> ByteString
+      if (HttpSelfFormatFieldName.isAddressFormat( fliedName )) {
+        return ByteString.copyFrom( Wallet.decodeFromBase58Check(input) );
+      }
+
+      //Normal String -> ByteString
+      if (HttpSelfFormatFieldName.isNameStringFormat( fliedName )) {
+        return ByteString.copyFromUtf8( input );
+      }
+
+      return unescapeBytes(input);
     }
 
     /**

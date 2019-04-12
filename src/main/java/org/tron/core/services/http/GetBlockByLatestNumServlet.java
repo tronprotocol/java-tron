@@ -51,7 +51,7 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       long getNum = build.getNum();
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlockByLatestNum(getNum);

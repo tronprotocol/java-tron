@@ -44,7 +44,7 @@ public class GetAccountByIdServlet extends HttpServlet {
       Account.Builder build = Account.newBuilder();
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("accountId", accountId);
-      JsonFormat.merge(jsonObject.toJSONString(), build);
+      JsonFormat.merge(jsonObject.toJSONString(), build, visible);
 
       Account reply = wallet.getAccountById(build.build());
       if (reply != null) {
@@ -73,7 +73,7 @@ public class GetAccountByIdServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build);
+      JsonFormat.merge(account, build, visible);
 
       Account reply = wallet.getAccountById(build.build());
       if (reply != null) {

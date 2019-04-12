@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
+import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
 
 
@@ -28,6 +29,9 @@ public class GetAccountNetServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String address = request.getParameter("address");
+      if ( visible ) {
+        address = getHexAddress( address );
+      }
       AccountNetMessage reply = wallet
           .getAccountNet(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
@@ -52,7 +56,7 @@ public class GetAccountNetServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build);
+      JsonFormat.merge(account, build, visible);
       AccountNetMessage reply = wallet.getAccountNet(build.getAddress());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));

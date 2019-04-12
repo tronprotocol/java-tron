@@ -30,7 +30,7 @@ public class FreezeBalanceServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       FreezeBalanceContract.Builder build = FreezeBalanceContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.FreezeBalanceContract)
           .getInstance();

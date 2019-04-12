@@ -14,6 +14,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getHexString;
 import static org.tron.core.services.http.Util.getVisible;
 
 @Component
@@ -27,6 +28,9 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String input = request.getParameter("value");
+      if ( visible ) {
+        input = getHexString( input );
+      }
       AssetIssueList reply = wallet
           .getAssetIssueListByName(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
@@ -51,7 +55,7 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       AssetIssueList reply = wallet.getAssetIssueListByName(build.getValue());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));

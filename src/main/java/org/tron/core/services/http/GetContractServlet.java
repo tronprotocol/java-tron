@@ -13,6 +13,7 @@ import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
 
+import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
 
 
@@ -27,10 +28,14 @@ public class GetContractServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String input = request.getParameter("value");
+      if ( visible ) {
+        input = getHexAddress( input );
+      }
+
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(jsonObject.toJSONString(), build);
+      JsonFormat.merge(jsonObject.toJSONString(), build, visible);
       SmartContract smartContract = wallet.getContract(build.build());
       JSONObject jsonSmartContract = JSONObject
           .parseObject(JsonFormat.printToString(smartContract, visible ));
@@ -50,9 +55,16 @@ public class GetContractServlet extends HttpServlet {
       boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      if ( visible ) {
+        JSONObject jsonObject = JSONObject.parseObject(input);
+        String value = jsonObject.getString("value");
+        jsonObject.put("value", getHexAddress( value ));
+        input = jsonObject.toJSONString();
+      }
+
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       SmartContract smartContract = wallet.getContract(build.build());
       JSONObject jsonSmartContract = JSONObject
           .parseObject(JsonFormat.printToString(smartContract, visible ));

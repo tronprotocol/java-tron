@@ -33,7 +33,7 @@ public class GetPaginatedProposalListServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       ProposalList reply = wallet.getPaginatedProposalList(build.getOffset(), build.getLimit());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));

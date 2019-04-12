@@ -14,6 +14,7 @@ import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
 
 @Component
@@ -28,6 +29,10 @@ public class GetDelegatedResourceServlet extends HttpServlet {
       boolean visible = getVisible(request);
       String fromAddress = request.getParameter("fromAddress");
       String toAddress = request.getParameter("toAddress");
+      if ( visible ) {
+          fromAddress = getHexAddress(fromAddress);
+          toAddress = getHexAddress(toAddress);
+      }
 
       DelegatedResourceList reply =
           wallet.getDelegatedResource(
@@ -55,7 +60,7 @@ public class GetDelegatedResourceServlet extends HttpServlet {
           request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       DelegatedResourceMessage.Builder build = DelegatedResourceMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       DelegatedResourceList reply =
           wallet.getDelegatedResource(build.getFromAddress(), build.getToAddress());
       if (reply != null) {

@@ -27,7 +27,7 @@ public class BroadcastServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      Transaction transaction = Util.packTransaction(input);
+      Transaction transaction = Util.packTransaction(input, visible );
       GrpcAPI.Return retur = wallet.broadcastTransaction(transaction);
       response.getWriter().println(JsonFormat.printToString(retur, visible));
     } catch (Exception e) {

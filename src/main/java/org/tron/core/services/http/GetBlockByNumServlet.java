@@ -48,7 +48,7 @@ public class GetBlockByNumServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       Block reply = wallet.getBlockByNum(build.getNum());
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply, visible ));

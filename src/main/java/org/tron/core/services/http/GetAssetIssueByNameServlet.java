@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Contract.AssetIssueContract;
 
+import static org.tron.core.services.http.Util.getHexString;
 import static org.tron.core.services.http.Util.getVisible;
 
 @Component
@@ -27,6 +28,9 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String input = request.getParameter("value");
+      if ( visible ) {
+        input = getHexString( input );
+      }
       AssetIssueContract reply =
           wallet.getAssetIssueByName(ByteString.copyFrom(ByteArray.fromHexString(input)));
 
@@ -52,7 +56,7 @@ public class GetAssetIssueByNameServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       AssetIssueContract reply = wallet.getAssetIssueByName(build.getValue());
 
       if (reply != null) {

@@ -36,11 +36,11 @@ public class AddTransactionSignServlet extends HttpServlet {
       Util.checkBodySize(contract);
       JSONObject input = JSONObject.parseObject(contract);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
-      Transaction transaction = Util.packTransaction(strTransaction);
+      Transaction transaction = Util.packTransaction(strTransaction, visible);
       JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction, visible));
       input.put("transaction", jsonTransaction);
       TransactionSign.Builder build = TransactionSign.newBuilder();
-      JsonFormat.merge(input.toJSONString(), build);
+      JsonFormat.merge(input.toJSONString(), build, visible);
       TransactionCapsule reply = wallet.addSign(build.build());
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply.getInstance(), visible));

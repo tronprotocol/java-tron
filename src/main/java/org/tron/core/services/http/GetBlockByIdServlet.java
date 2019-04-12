@@ -50,7 +50,7 @@ public class GetBlockByIdServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       Block reply = wallet.getBlockById(build.getValue());
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply, visible ));

@@ -34,7 +34,7 @@ public class ProposalApproveServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       ProposalApproveContract.Builder build = ProposalApproveContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.ProposalApproveContract)
           .getInstance();

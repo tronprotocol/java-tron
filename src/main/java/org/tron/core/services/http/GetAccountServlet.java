@@ -39,7 +39,6 @@ public class GetAccountServlet extends HttpServlet {
           "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
-
   }
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
@@ -49,7 +48,7 @@ public class GetAccountServlet extends HttpServlet {
       Account.Builder build = Account.newBuilder();
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("address", address);
-      JsonFormat.merge(jsonObject.toJSONString(), build);
+      JsonFormat.merge(jsonObject.toJSONString(), build, visible);
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
@@ -78,7 +77,7 @@ public class GetAccountServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build);
+      JsonFormat.merge(account, build, visible);
 
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {

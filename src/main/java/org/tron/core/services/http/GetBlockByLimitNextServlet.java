@@ -52,7 +52,7 @@ public class GetBlockByLimitNextServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       BlockLimit.Builder build = BlockLimit.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       long startNum = build.getStartNum();
       long endNum = build.getEndNum();
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {

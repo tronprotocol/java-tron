@@ -32,7 +32,7 @@ public class GetTransactionApprovedListServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      Transaction transaction = Util.packTransaction(input);
+      Transaction transaction = Util.packTransaction(input, visible );
       TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionApprovedList(reply, visible));

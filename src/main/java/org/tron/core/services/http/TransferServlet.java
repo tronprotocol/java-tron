@@ -34,7 +34,7 @@ public class TransferServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       TransferContract.Builder build = TransferContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract)
           .getInstance();
       response.getWriter().println(Util.printTransaction(tx, visible));

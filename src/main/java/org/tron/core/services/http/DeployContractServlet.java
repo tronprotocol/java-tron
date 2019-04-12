@@ -53,7 +53,7 @@ public class DeployContractServlet extends HttpServlet {
       abiSB.append(abi);
       abiSB.append("}");
       ABI.Builder abiBuilder = ABI.newBuilder();
-      JsonFormat.merge(abiSB.toString(), abiBuilder);
+      JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
 
       long feeLimit = jsonObject.getLongValue("fee_limit");
 

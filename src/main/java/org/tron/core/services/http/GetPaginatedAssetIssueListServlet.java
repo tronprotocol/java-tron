@@ -33,7 +33,7 @@ public class GetPaginatedAssetIssueListServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));
