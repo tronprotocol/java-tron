@@ -22,6 +22,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
@@ -294,6 +295,12 @@ public class Util {
             ProposalDeleteContract proposalDeleteContract = contractParameter
                 .unpack(ProposalDeleteContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(proposalDeleteContract
+                    , selfType ));
+            break;
+          case SetAccountIdContract:
+            Contract.SetAccountIdContract  setAccountIdContract =
+                    contractParameter.unpack(Contract.SetAccountIdContract.class);
+            contractJson = JSONObject.parseObject(JsonFormat.printToString(setAccountIdContract
                     , selfType ));
             break;
           case ExchangeCreateContract:

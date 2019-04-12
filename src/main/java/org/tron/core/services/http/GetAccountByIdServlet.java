@@ -34,16 +34,15 @@ public class GetAccountByIdServlet extends HttpServlet {
           "asset_issued_ID", ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
       return accountJson.toJSONString();
     }
-
   }
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       boolean visible = getVisible(request);
-      String accountId = request.getParameter("accountId");
+      String accountId = request.getParameter("account_id");
       Account.Builder build = Account.newBuilder();
       JSONObject jsonObject = new JSONObject();
-      jsonObject.put("accountId", accountId);
+      jsonObject.put("account_id", accountId);
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
 
       Account reply = wallet.getAccountById(build.build());
