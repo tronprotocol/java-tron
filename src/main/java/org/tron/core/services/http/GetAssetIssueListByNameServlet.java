@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -54,9 +56,12 @@ public class GetAssetIssueListByNameServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build, visible);
-      AssetIssueList reply = wallet.getAssetIssueListByName(build.getValue());
+      JSONObject jsonObject = JSON.parseObject( input );
+      String value = jsonObject.getString("value");
+      if ( visible ) {
+        value = getHexString( value );
+      }
+      AssetIssueList reply = wallet.getAssetIssueListByName(ByteString.copyFrom(ByteArray.fromHexString(value)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {

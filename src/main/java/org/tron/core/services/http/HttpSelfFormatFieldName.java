@@ -128,6 +128,7 @@ public class HttpSelfFormatFieldName {
         AddressFieldNameMap.put("caller_address", 1);
         AddressFieldNameMap.put("transferTo_address", 1);
         //DelegatedResourceAccountIndex
+        AddressFieldNameMap.put("account", 1);
         AddressFieldNameMap.put("fromAccounts", 1);
         AddressFieldNameMap.put("toAccounts", 1);
 
@@ -186,7 +187,6 @@ public class HttpSelfFormatFieldName {
         NameFieldNameMap.put("ContractName", 1);
         //TransactionInfo
         NameFieldNameMap.put("topics", 1);
-        NameFieldNameMap.put("id", 1);
         NameFieldNameMap.put("resMessage", 1);
     }
 

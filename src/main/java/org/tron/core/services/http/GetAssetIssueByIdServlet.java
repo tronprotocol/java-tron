@@ -26,9 +26,6 @@ public class GetAssetIssueByIdServlet extends HttpServlet {
     try {
       boolean visible = getVisible(request);
       String input = request.getParameter("value");
-      if ( visible ) {
-          input = getHexString( input );
-      }
       AssetIssueContract reply = wallet.getAssetIssueById(input);
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));
@@ -53,9 +50,6 @@ public class GetAssetIssueByIdServlet extends HttpServlet {
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
       String id = jsonObject.getString("value");
-      if ( visible ) {
-          id = getHexString( id );
-      }
       AssetIssueContract reply = wallet.getAssetIssueById(id);
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible ));
