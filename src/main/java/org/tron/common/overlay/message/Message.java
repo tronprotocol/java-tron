@@ -96,7 +96,7 @@ public abstract class Message {
   }
 
   private static boolean isFilter() {
-    return manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum() == 1;
+    return manager.getDynamicPropertiesStore().getAllowProtoFilterNum() == 1;
   }
 
 }

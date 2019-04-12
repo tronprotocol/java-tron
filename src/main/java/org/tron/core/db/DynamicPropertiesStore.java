@@ -174,7 +174,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
 
   //Used only for protobuf data filter , once，value is 0,1
-  private static final byte[] ALLOW_PROTO_FILTER_BLOCK_NUM = "ALLOW_PROTO_FILTER_BLOCK_NUM"
+  private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
@@ -614,9 +614,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowProtoFilterBlockNum();
+      this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterBlockNum(0);
+      this.saveAllowProtoFilterNum(0);
     }
   }
 
@@ -1681,21 +1681,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   /**
-   * get allow protobuf block number.
+   * get allow protobuf number.
    */
-  public long getAllowProtoFilterBlockNum() {
-    return Optional.ofNullable(getUnchecked(ALLOW_PROTO_FILTER_BLOCK_NUM))
+  public long getAllowProtoFilterNum() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PROTO_FILTER_NUM))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElseThrow(() -> new IllegalArgumentException("not found allow protobuf block number"));
+        .orElseThrow(() -> new IllegalArgumentException("not found allow protobuf number"));
   }
 
   /**
-   * save allow protobuf block number.
+   * save allow protobuf  number.
    */
-  public void saveAllowProtoFilterBlockNum(long num) {
-    logger.info("update allow protobuf block number = {}", num);
-    this.put(ALLOW_PROTO_FILTER_BLOCK_NUM, new BytesCapsule(ByteArray.fromLong(num)));
+  public void saveAllowProtoFilterNum(long num) {
+    logger.info("update allow protobuf number = {}", num);
+    this.put(ALLOW_PROTO_FILTER_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
 
   public void saveAllowAccountStateRoot(long allowAccountStateRoot) {
