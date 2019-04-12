@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -57,6 +58,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
@@ -453,6 +455,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    Message.setManager(this);
     fastSyncCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -1260,6 +1263,23 @@ public class Manager {
     return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
   }
 
+  void validateDeferredTransactionType(TransactionCapsule trxCap) throws ContractValidateException{
+    switch (trxCap.getInstance().getRawData().getContractList().get(0).getType()) {
+      case TransferContract:
+      case AccountUpdateContract:
+      case TransferAssetContract:
+      case AccountCreateContract:
+      case UnfreezeAssetContract:
+      case UpdateAssetContract:
+      case SetAccountIdContract:
+      case UpdateSettingContract:
+      case UpdateEnergyLimitContract:
+        break;
+      default:
+        throw new ContractValidateException("Contract type not support deferred transaction");
+    }
+  }
+
   /**
    * Process transaction.
    */
@@ -1267,13 +1287,13 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+    if (trxCap == null) {
+      return false;
+    }
+
     if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
       throw new ContractValidateException("deferred transaction is not allowed, "
           + "need to be opened by the committee");
-    }
-
-    if (trxCap == null) {
-      return false;
     }
 
     validateTapos(trxCap);
@@ -1282,6 +1302,10 @@ public class Manager {
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
+    }
+
+    if (trxCap.getDeferredSeconds() != 0 || trxCap.getDeferredStage() != Constant.NORMALTRANSACTION) {
+      validateDeferredTransactionType(trxCap);
     }
 
     validateDup(trxCap);
@@ -1485,7 +1509,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        fastSyncCallBack.preExeTrans();
         processTransaction(trx, blockCapsule);
+        fastSyncCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1657,7 +1683,9 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        fastSyncCallBack.preExeTrans();
         processTransaction(transactionCapsule, block);
+        fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
     } finally {

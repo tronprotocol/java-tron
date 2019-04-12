@@ -35,6 +35,7 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
       dbManager.cancelDeferredTransaction(cancelDeferredTransactionContract.getTransactionId());
       dbManager.adjustBalance(getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
+      capsule.setStatus(fee, code.SUCESS);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
     } catch (BalanceInsufficientException

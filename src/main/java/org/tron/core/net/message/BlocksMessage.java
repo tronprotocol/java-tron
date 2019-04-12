@@ -10,12 +10,13 @@ public class BlocksMessage extends TronMessage {
   private List<Block> blocks;
 
   public BlocksMessage(byte[] data) throws Exception {
+    super(data);
     this.type = MessageTypes.BLOCKS.asByte();
-    this.data = data;
-    Items items = Items.parseFrom(data);
+    Items items = Items.parseFrom(getCodedInputStream(data));
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }
+    compareBytes(data, items.toByteArray());
   }
 
   public List<Block> getBlocks() {

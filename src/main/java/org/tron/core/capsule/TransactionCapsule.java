@@ -36,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -119,8 +120,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public TransactionCapsule(byte[] data) throws BadItemException {
     try {
-      this.transaction = Transaction.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
+      this.transaction = Transaction.parseFrom(Message.getCodedInputStream(data));
+      Message.compareBytes(data, transaction.toByteArray());
+    } catch (Exception e) {
       throw new BadItemException("Transaction proto data parse exception");
     }
   }
@@ -461,7 +463,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
         case CancelDeferredTransactionContract:
-          owner = contractParameter.unpack(CancelDeferredTransactionContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(CancelDeferredTransactionContract.class)
+              .getOwnerAddress();
           break;
         // todo add other contract
         default:
@@ -780,30 +783,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRet(0).getContractRet();
   }
 
-  public ByteString getSenderAddress(){
+  public ByteString getSenderAddress() {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)){
+    if (Objects.isNull(contract)) {
       return null;
     }
 
     return ByteString.copyFrom(getOwner(contract));
   }
 
-  public long getDeferredSeconds(){
+  public long getDeferredSeconds() {
     return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
   }
 
   public void setDeferredSeconds(long delaySeconds) {
     DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds).setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
+        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
   public void setDeferredStage(int stage) {
     DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
         getDeferredStage().toBuilder().setStage(stage).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
@@ -811,9 +817,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRawData().getDeferredStage().getStage();
   }
 
-  public ByteString getToAddress(){
+  public ByteString getToAddress() {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)){
+    if (Objects.isNull(contract)) {
       return null;
     }
     byte[] address = getToAddress(contract);

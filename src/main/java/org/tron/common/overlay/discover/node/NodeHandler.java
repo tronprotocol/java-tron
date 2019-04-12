@@ -87,7 +87,9 @@ public class NodeHandler {
   private AtomicInteger pingTrials = new AtomicInteger(3);
   private volatile boolean waitForPong = false;
   private volatile boolean waitForNeighbors = false;
-  private long pingSent;
+  private volatile long pingSent;
+  private volatile long pingSequence;
+  private volatile long findnodeSequence;
 
   public NodeHandler(Node node, NodeManager nodeManager) {
     this.node = node;
@@ -187,7 +189,7 @@ public class NodeHandler {
 
   public void handlePing(PingMessage msg) {
     if (!nodeManager.getTable().getNode().equals(node)) {
-      sendPong();
+      sendPong(msg.getTimestamp());
     }
     if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {
       changeState(State.NonActive);
@@ -226,7 +228,7 @@ public class NodeHandler {
 
   public void handleFindNode(FindNodeMessage msg) {
     List<Node> closest = nodeManager.getTable().getClosestNodes(msg.getTargetId());
-    sendNeighbours(closest);
+    sendNeighbours(closest, msg.getTimestamp());
   }
 
   public void handleTimedOut() {
@@ -245,10 +247,11 @@ public class NodeHandler {
   }
 
   public void sendPing() {
-    Message ping = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
+    PingMessage msg = new PingMessage(nodeManager.getPublicHomeNode(), getNode());
+    pingSequence = msg.getTimestamp();
     waitForPong = true;
     pingSent = System.currentTimeMillis();
-    sendMessage(ping);
+    sendMessage(msg);
 
     if (nodeManager.getPongTimer().isShutdown()) {
       return;
@@ -265,20 +268,21 @@ public class NodeHandler {
     }, PingTimeout, TimeUnit.MILLISECONDS);
   }
 
-  public void sendPong() {
-    Message pong = new PongMessage(nodeManager.getPublicHomeNode());
+  public void sendPong(long sequence) {
+    Message pong = new PongMessage(nodeManager.getPublicHomeNode(), sequence);
     sendMessage(pong);
-  }
-
-  public void sendNeighbours(List<Node> neighbours) {
-    Message neighbors = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours);
-    sendMessage(neighbors);
   }
 
   public void sendFindNode(byte[] target) {
     waitForNeighbors = true;
-    Message findNode = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
-    sendMessage(findNode);
+    FindNodeMessage msg = new FindNodeMessage(nodeManager.getPublicHomeNode(), target);
+    findnodeSequence = msg.getTimestamp();
+    sendMessage(msg);
+  }
+
+  public void sendNeighbours(List<Node> neighbours, long sequence) {
+    Message msg = new NeighborsMessage(nodeManager.getPublicHomeNode(), neighbours, sequence);
+    sendMessage(msg);
   }
 
   private void sendMessage(Message msg) {
