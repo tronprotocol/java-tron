@@ -332,7 +332,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
-        if (entry.getValue() != 1 || entry.getValue() != 0) {
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
           throw new ContractValidateException(
               "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1");
         }
@@ -342,7 +342,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
-        if (entry.getValue() != 1 || entry.getValue() != 0) {
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
           throw new ContractValidateException(
               "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1");
         }
