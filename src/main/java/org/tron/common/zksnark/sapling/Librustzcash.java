@@ -2,6 +2,10 @@ package org.tron.common.zksnark.sapling;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
+import java.awt.Point;
+import java.io.File;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
 
@@ -10,10 +14,7 @@ public class Librustzcash {
   private static ILibrustzcash INSTANCE;
 
   static {
-    // System.load("/Users/tron/Documents/codes/java-tron/src/main/resources/librustzcash/librustzcash.dylib");
-    INSTANCE = (ILibrustzcash) Native.loadLibrary(
-        "/Users/renchengchang/workspace/java-tron/src/main/resources/librustzcash/librustzcash.dylib",
-        ILibrustzcash.class);
+    INSTANCE = (ILibrustzcash) Native.loadLibrary(getLibraryByName("librustzcash"), ILibrustzcash.class);
   }
 
   public interface ILibrustzcash extends Library {
@@ -46,6 +47,66 @@ public class Librustzcash {
 //        const unsigned char *r,
 //        unsigned char *result
 //    );
+
+    Pointer librustzcash_sapling_proving_ctx_init();
+    boolean librustzcash_sapling_spend_proof(
+        Pointer ctx,
+        byte[] ak,
+        byte[] nsk,
+        byte[] diversifier,
+        byte[] rcm,
+        byte[] ar,
+        long value,
+        byte[] anchor,
+        byte[] witness,
+        byte[] cv,
+        byte[] rk,
+        byte[] zkproof
+    );
+    boolean librustzcash_sapling_output_proof(
+        Pointer ctx,
+        byte[] esk,
+        byte[] diversifier,
+        byte[] pk_d,
+        byte[] rcm,
+        long value,
+        byte[] cv,
+        byte[] zkproof
+    );
+    boolean librustzcash_sapling_binding_sig(
+        Pointer ctx,
+        long valueBalance,
+        byte[] sighash,
+        byte[] result
+    );
+    void librustzcash_sapling_proving_ctx_free(Pointer ctx);
+
+    Pointer librustzcash_sapling_verification_ctx_init();
+    boolean librustzcash_sapling_check_spend(
+        Pointer ctx,
+        byte[] cv,
+        byte[] anchor,
+        byte[] nullifier,
+        byte[] rk,
+        byte[] zkproof,
+        byte[] spendAuthSig,
+        byte[] sighashValue
+    );
+    boolean librustzcash_sapling_check_output(
+        Pointer ctx,
+        byte[] cv,
+        byte[] cm,
+        byte[] ephemeralKey,
+        byte[] zkproof
+    );
+
+    boolean librustzcash_sapling_final_check(
+        Pointer ctx,
+        long valueBalance,
+        byte[] bindingSig,
+        byte[] sighashValue
+    );
+    void librustzcash_sapling_verification_ctx_free(Pointer ctx);
 
   }
 
@@ -133,9 +194,8 @@ public class Librustzcash {
     return null;
   }
 
-  public static ProvingContext librustzcashSaplingProvingCtxInit() {
-
-    return null;
+  public static Pointer librustzcashSaplingProvingCtxInit() {
+    return INSTANCE.librustzcash_sapling_proving_ctx_init();
   }
 
   public static boolean librustzcashCheckDiversifier(byte[] b) {
@@ -145,7 +205,7 @@ public class Librustzcash {
 
 
   public static boolean librustzcashSaplingSpendProof(
-      ProvingContext ctx,
+      Pointer ctx,
       byte[] ak,
       byte[] nsk,
       byte[] d,
@@ -157,11 +217,11 @@ public class Librustzcash {
       byte[] cv,
       byte[] rk,
       byte[] zkproof) {
-    return false;
+    return INSTANCE.librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv, rk, zkproof);
   }
 
   public static boolean librustzcashSaplingOutputProof(
-      ProvingContext ctx,
+      Pointer ctx,
       byte[] esk,
       byte[] d,
       byte[] pk_d,
@@ -169,7 +229,7 @@ public class Librustzcash {
       long value,
       byte[] cv,
       byte[] zkproof) {
-    return false;
+    return INSTANCE.librustzcash_sapling_output_proof(ctx, esk, d, pk_d, r, value, cv, zkproof);
   }
 
   public static boolean librustzcashSaplingSpendSig(
@@ -181,15 +241,15 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashSaplingBindingSig(
-      ProvingContext ctx, long valueBalance, byte[] sighash, byte[] result) {
-    return false;
+      Pointer ctx, long valueBalance, byte[] sighash, byte[] result) {
+    return INSTANCE.librustzcash_sapling_binding_sig(ctx, valueBalance, sighash, result);
   }
 
   public static void librustzcashToScalar(byte[] value, byte[] data) {
   }
 
-  public static void librustzcashSaplingProvingCtxFree(ProvingContext ctx) {
-    return;
+  public static void librustzcashSaplingProvingCtxFree(Pointer ctx) {
+    INSTANCE.librustzcash_sapling_proving_ctx_free(ctx);
   }
 
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
@@ -197,6 +257,28 @@ public class Librustzcash {
     return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
   }
 
+<<<<<<< HEAD
+=======
+  public static String getLibraryByName(String name) {
+    String platform;
+    String extension;
+    if (Platform.isLinux()) {
+      platform = "linux";
+      extension = ".so";
+    } else if (Platform.isWindows()) {
+      platform = "windows";
+      extension = ".dll";
+    } else if (Platform.isMac()) {
+      platform = "macos";
+      extension = ".dylib";
+    } else {
+      throw new RuntimeException("unsupportedPlatformException");
+    }
+
+    return Librustzcash.class.getClassLoader().getResource(
+        "native-package" + File.separator + platform + File.separator + name +extension).getFile();
+  }
+>>>>>>> d011180c6c2f038e5eb9e11ab4d822f5df8c1164
 
   public static void main(String[] args) throws Exception {
     Librustzcash librustzcash = new Librustzcash();

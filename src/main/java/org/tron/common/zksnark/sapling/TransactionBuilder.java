@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.sapling;
 
+import com.sun.jna.Pointer;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -71,7 +72,7 @@ public class TransactionBuilder {
     // Sapling spends and outputs
     //
 
-    ProvingContext ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
