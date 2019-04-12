@@ -334,7 +334,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         if (entry.getValue() != 1 && entry.getValue() != 0) {
           throw new ContractValidateException(
-              "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1");
+              "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1 or 0");
         }
         break;
       }
@@ -344,7 +344,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         if (entry.getValue() != 1 && entry.getValue() != 0) {
           throw new ContractValidateException(
-              "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1");
+              "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1 or 0");
         }
         break;
       }
