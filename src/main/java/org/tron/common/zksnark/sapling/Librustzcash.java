@@ -183,9 +183,8 @@ public class Librustzcash {
     return null;
   }
 
-  public static ProvingContext librustzcashSaplingProvingCtxInit() {
-
-    return null;
+  public static Pointer librustzcashSaplingProvingCtxInit() {
+    return INSTANCE.librustzcash_sapling_proving_ctx_init();
   }
 
   public static boolean librustzcashCheckDiversifier(byte[] b) {
@@ -195,7 +194,7 @@ public class Librustzcash {
 
 
   public static boolean librustzcashSaplingSpendProof(
-      ProvingContext ctx,
+      Pointer ctx,
       byte[] ak,
       byte[] nsk,
       byte[] d,
@@ -207,11 +206,11 @@ public class Librustzcash {
       byte[] cv,
       byte[] rk,
       byte[] zkproof) {
-    return false;
+    return INSTANCE.librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv, rk, zkproof);
   }
 
   public static boolean librustzcashSaplingOutputProof(
-      ProvingContext ctx,
+      Pointer ctx,
       byte[] esk,
       byte[] d,
       byte[] pk_d,
@@ -219,7 +218,7 @@ public class Librustzcash {
       long value,
       byte[] cv,
       byte[] zkproof) {
-    return false;
+    return INSTANCE.librustzcash_sapling_output_proof(ctx, esk, d, pk_d, r, value, cv, zkproof);
   }
 
   public static boolean librustzcashSaplingSpendSig(
@@ -238,8 +237,8 @@ public class Librustzcash {
   public static void librustzcashToScalar(byte[] value, byte[] data) {
   }
 
-  public static void librustzcashSaplingProvingCtxFree(ProvingContext ctx) {
-    return;
+  public static void librustzcashSaplingProvingCtxFree(Pointer ctx) {
+    INSTANCE.librustzcash_sapling_proving_ctx_free(ctx);
   }
 
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
