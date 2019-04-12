@@ -119,7 +119,7 @@ public class DelayTransaction006 {
   }
 
   @Test(enabled = true, description = "Cancel delay asset setting contract")
-  public void test2CancelDelayUpdateSetting() {
+  public void test2CancelDelayUpdateAsset() {
     //get account
     final Long oldFreeAssetNetLimit = PublicMethed.getAssetIssueById(assetId.toStringUtf8(),
         blockingStubFull).getFreeAssetNetLimit();
@@ -127,11 +127,13 @@ public class DelayTransaction006 {
 
     String newAssetUrl = "new.url";
     String newAssetDescription = "new.description";
+    logger.info("Before delay net usage: " + PublicMethed.queryAccount(assetOwnerKey,blockingStubFull).getNetUsage());
     String txid = PublicMethed.updateAssetDelay(assetOwnerAddress,newAssetDescription.getBytes(),
         newAssetUrl.getBytes(),newFreeAssetNetLimit,23L,delaySecond,assetOwnerKey,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
+    logger.info("In delay net usage: " + PublicMethed.queryAccount(assetOwnerKey,blockingStubFull).getNetUsage());
+    Long beforeNetUsaged = PublicMethed.queryAccount(assetOwnerKey,blockingStubFull).getNetUsage();
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,fromAddress,testKey002,
         blockingStubFull));
     final String cancelTxid = PublicMethed.cancelDeferredTransactionByIdGetTxid(txid,
@@ -140,6 +142,8 @@ public class DelayTransaction006 {
         assetOwnerKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    logger.info("After cancle net usage: " + PublicMethed.queryAccount(assetOwnerKey,blockingStubFull).getNetUsage());
 
     Assert.assertTrue(PublicMethed.getAssetIssueById(assetId.toStringUtf8(),
         blockingStubFull).getFreeAssetNetLimit() == oldFreeAssetNetLimit);
@@ -154,6 +158,12 @@ public class DelayTransaction006 {
         .get().getFee());
 
     Assert.assertTrue(fee - netFee == cancleDelayTransactionFee);
+
+    Long afterNetUsaged = PublicMethed.queryAccount(assetOwnerKey,blockingStubFull).getFreeNetUsage();
+
+    logger.info("beforeNetUsaged: " + beforeNetUsaged);
+    logger.info("afterNetUsaged:  " + afterNetUsaged);
+    Assert.assertTrue(beforeNetUsaged == afterNetUsaged);
 
   }
 

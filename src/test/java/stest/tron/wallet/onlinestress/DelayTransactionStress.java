@@ -91,6 +91,7 @@ public class DelayTransactionStress {
   public void test1DelaySendcoinStress() {
     String txid = "";
     Integer i = 0;
+    String cancelId = "";
     while (i++  <= 10000000) {
       ECKey ecKey2 = new ECKey(Utils.getRandom());
       byte[] delayAccount2Address = ecKey2.getAddress();
@@ -98,9 +99,14 @@ public class DelayTransactionStress {
 
        txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20,fromAddress,
           testKey002, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      if (i % 4 == 0) {
-        PublicMethed.cancelDeferredTransactionById(txid,fromAddress,testKey002,blockingStubFull);
+      //PublicMethed.waitProduceNextBlock(blockingStubFull);
+      if (i % 20 == 0) {
+        cancelId = txid;
+        //PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,blockingStubFull);
+      }
+      if (i % 39 == 0) {
+        PublicMethed.cancelDeferredTransactionById(cancelId,fromAddress,testKey002,blockingStubFull);
+        PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,blockingStubFull);
       }
 
     }

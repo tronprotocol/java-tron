@@ -315,12 +315,63 @@ public class DelayTransaction001 {
 
   }
 
+  @Test(enabled = true, description = "Not enough money to send coin.")
+  public void test4DelaySendCoin() {
+    ecKey4 = new ECKey(Utils.getRandom());
+    delayAccount3Address = ecKey4.getAddress();
+    delayAccount3Key = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+    PublicMethed.printAddress(delayAccount3Key);
+
+    ecKey5 = new ECKey(Utils.getRandom());
+    receiverAccount4Address = ecKey5.getAddress();
+    receiverAccount4Key = ByteArray.toHexString(ecKey5.getPrivKeyBytes());
+    PublicMethed.printAddress(receiverAccount4Key);
+
+    Long sendCoinAmount = 100000000L;
+    //Pre sendcoin to the test account
+    Assert.assertTrue(PublicMethed.sendcoin(delayAccount3Address, sendCoinAmount, fromAddress,
+        testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(receiverAccount4Address, sendCoinAmount, fromAddress,
+        testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Do delay send coin transaction.
+    Long delaySecond = 4L;
+    Long createAccountFee = 100000L;
+
+    logger.info("----------------Send all balance to exist account--------------------");
+    //Test no balance to send coin.
+    //Query balance before send coin.
+    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
+    logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
+    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address, sendCoinAmount, delaySecond,delayAccount3Address,
+        delayAccount3Key, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    //Query balance after delay send coin.
+    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
+    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
+    logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
+
+    Assert.assertTrue(recevierAccountAfterDelayalance == 0);
+    logger.info("deplayAccountBeforeBalance: " + deplayAccountBeforeBalance);
+    logger.info("deplayAccountAfterBalance: " + deplayAccountAfterBalance);
+
+    Assert.assertEquals(deplayAccountBeforeBalance,deplayAccountAfterBalance);
 
 
 
-  /**
-   * constructor.
-   */
+  }
+
+
+
+
+    /**
+     * constructor.
+     */
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
