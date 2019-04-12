@@ -614,9 +614,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowProtoFilterBlockNum();
+      this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterBlockNum(0);
+      this.saveAllowProtoFilterNum(0);
     }
   }
 
@@ -1683,7 +1683,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   /**
    * get allow protobuf number.
    */
-  public long getAllowProtoFilterBlockNum() {
+  public long getAllowProtoFilterNum() {
     return Optional.ofNullable(getUnchecked(ALLOW_PROTO_FILTER_NUM))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
@@ -1693,7 +1693,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   /**
    * save allow protobuf  number.
    */
-  public void saveAllowProtoFilterBlockNum(long num) {
+  public void saveAllowProtoFilterNum(long num) {
     logger.info("update allow protobuf number = {}", num);
     this.put(ALLOW_PROTO_FILTER_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
