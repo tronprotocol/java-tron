@@ -230,8 +230,8 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashSaplingBindingSig(
-      ProvingContext ctx, long valueBalance, byte[] sighash, byte[] result) {
-    return false;
+      Pointer ctx, long valueBalance, byte[] sighash, byte[] result) {
+    return INSTANCE.librustzcash_sapling_binding_sig(ctx, valueBalance, sighash, result);
   }
 
   public static void librustzcashToScalar(byte[] value, byte[] data) {
