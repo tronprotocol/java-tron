@@ -8,18 +8,18 @@ import org.tron.protos.Contract.GrothProof;
 import org.tron.protos.Contract.OutputDescription;
 
 @Slf4j(topic = "capsule")
-public class ReceiverDescriptionCapsule implements ProtoCapsule<OutputDescription> {
+public class ReceiveDescriptionCapsule implements ProtoCapsule<OutputDescription> {
 
   private OutputDescription outputDescription;
 
-  public ReceiverDescriptionCapsule() {
+  public ReceiveDescriptionCapsule() {
   }
 
-  public ReceiverDescriptionCapsule(final OutputDescription outputDescription) {
+  public ReceiveDescriptionCapsule(final OutputDescription outputDescription) {
     this.outputDescription = outputDescription;
   }
 
-  public ReceiverDescriptionCapsule(final byte[] data) {
+  public ReceiveDescriptionCapsule(final byte[] data) {
     try {
       this.outputDescription = OutputDescription.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
@@ -27,7 +27,7 @@ public class ReceiverDescriptionCapsule implements ProtoCapsule<OutputDescriptio
     }
   }
 
-  public ReceiverDescriptionCapsule(
+  public ReceiveDescriptionCapsule(
       ByteString cv,
       ByteString cm,
       ByteString ephemeralKey,

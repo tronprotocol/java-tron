@@ -363,14 +363,14 @@ message SpendStatement {
   bytes path = 6; // path for cm to root in merkle tree
 }
 
-message OutputStatement {
+message ReceiveStatement {
   bytes esk = 1; // for Encryption
   Note note = 2;
 }
 
 
 message GrothProof {
-  bytes values= 1;
+  bytes values = 1;
 }
 
 message SpendDescription {
@@ -382,7 +382,7 @@ message SpendDescription {
   bytes spend_authority_signature = 6;
 }
 
-message OutputDescription {
+message ReceiveDescription {
   bytes value_commitment = 1;
   bytes note_commitment = 2;
   bytes epk = 3; // for Encryption
@@ -395,7 +395,7 @@ message ShieldedTransferContract {
   bytes transparent_from_address = 1; // transparent address
   bytes from_amount = 2;
   repeated SpendDescription spend_description = 3;
-  repeated OutputDescription output_description = 4;
+  repeated ReceiveDescription receive_description = 4;
   bytes binding_signature = 5;
   bytes value_balance = 6;
   bytes transparent_to_address = 7; // transparent address
