@@ -100,6 +100,8 @@ public class Parameter {
     DEFERRED_TRANSACTION_FEE, // 100_000, 25
     CANCEL_DEFERRED_TRANSACTION_FEE, // 50_000, 26
     MAX_DEFERRED_TRANSACTION_PROCESS_TIME, // 100, 27
+    ALLOW_PROTO_FILTER_NUM,//1, 28
+    ALLOW_ACCOUNT_STATE_ROOT,//1, 29
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,
@@ -124,7 +126,7 @@ public class Parameter {
     ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7),
-    VERSION_4_0(8);
+    VERSION_3_6(8);
     @Getter
     private int value;
 
