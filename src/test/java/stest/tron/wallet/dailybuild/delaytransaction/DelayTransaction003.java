@@ -108,7 +108,7 @@ public class DelayTransaction003 {
     Long end = System.currentTimeMillis() + 1000000000;
     Assert.assertTrue(PublicMethed.createAssetIssue(assetOwnerAddress,
         name, totalSupply, 1, 1, start, end, 1, description, url,
-        2000L, 2000L, 1L, 1L,
+        2000L, 2000L, 100000L, 1L,
         assetOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account assetOwnerAccount = PublicMethed.queryAccount(assetOwnerKey, blockingStubFull);
@@ -160,9 +160,9 @@ public class DelayTransaction003 {
     String txid = PublicMethed.transferAssetDelayGetTxid(receiverAssetAddress, assetId.toByteArray(),
         transferAssetAmount, delaySecond,assetOwnerAddress, assetOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAssetAddress,receiverassetKey,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAssetAddress,receiverassetKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -175,6 +175,18 @@ public class DelayTransaction003 {
     Assert.assertEquals(ownerAssetBalanceOfbeforeTransferAsset, ownerAssetBalanceAfterTransferAsset);
     Assert.assertTrue(receiverAssetBalanceAfterTransferAsset == receiverAssetBalanceOfbeforeTransferAsset);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
+
+  }
+
+  @Test(enabled = true, description = "Delay unfreeze asset")
+  public void test3DelayUnfreezeAsset() {
+
+    final Long ownerAssetBalanceOfbeforeTransferAsset = PublicMethed
+        .getAssetBalanceByAssetId(assetId, assetOwnerKey,blockingStubFull);
+
+    String txid = PublicMethed.unfreezeAssetDelayGetTxid(assetOwnerAddress,delaySecond,assetOwnerKey,blockingStubFull);
+
+
 
   }
 

@@ -86,8 +86,8 @@ public class DelayTransaction004 {
 
     Assert.assertTrue(PublicMethed.sendcoin(smartContractOwnerAddress, 2048000000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.freezeBalance(smartContractOwnerAddress,10000000L,3,
-        smartContractOwnerKey,blockingStubFull);
+    //PublicMethed.freezeBalance(smartContractOwnerAddress,10000000L,3,
+    //    smartContractOwnerKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String contractName = "TRONTOKEN";
     String code = Configuration.getByPath("testng.conf")
@@ -106,10 +106,12 @@ public class DelayTransaction004 {
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
 
+    Long beforeFreeNetUsaged = PublicMethed.queryAccount(smartContractOwnerKey,blockingStubFull).getFreeNetUsage();
     Long newContractPercent = 39L;
     final String txid = PublicMethed.updateSettingDelayGetTxid(contractAddress,newContractPercent,
         delaySecond,smartContractOwnerKey,smartContractOwnerAddress,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long inDelayFreeNetUsaged = PublicMethed.queryAccount(smartContractOwnerKey,blockingStubFull).getFreeNetUsage();
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -122,6 +124,12 @@ public class DelayTransaction004 {
         .getNetFee();
     Long fee = PublicMethed.getTransactionInfoById(txid,blockingStubFull).get().getFee();
     Assert.assertTrue(fee - netFee == delayTransactionFee);
+    Long afterFreeNetUsaged = PublicMethed.queryAccount(smartContractOwnerKey,blockingStubFull).getFreeNetUsage();
+    logger.info("beforeFreeNetUsaged: " + beforeFreeNetUsaged);
+    logger.info("inDelayFreeNetUsaged: " + inDelayFreeNetUsaged);
+    logger.info("afterFreeNetUsaged: " + afterFreeNetUsaged);
+    Assert.assertTrue(beforeFreeNetUsaged + 50 < inDelayFreeNetUsaged);
+    Assert.assertTrue(inDelayFreeNetUsaged + 50 < afterFreeNetUsaged);
 
   }
 

@@ -959,7 +959,43 @@ public class PublicMethed {
     return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
   }
 
+  /**
+   * constructor.
+   */
 
+  public static String unfreezeAssetDelayGetTxid(byte[] address,Long delaySeconds, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+        .newBuilder();
+    ByteString byteAddreess = ByteString.copyFrom(address);
+    builder.setOwnerAddress(byteAddreess);
+
+    Contract.UnfreezeAssetContract contract = builder.build();
+    Protocol.Transaction transaction = blockingStubFull.unfreezeAsset(contract);
+    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("Please check!!! transaction == null");
+      return null;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    logger.info("Txid is " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+
+
+
+
+  }
 
 
   /**
