@@ -4,7 +4,6 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
-import java.awt.Point;
 import java.io.File;
 import org.tron.common.zksnark.sapling.zip32.HDSeed;
 import org.tron.common.zksnark.sapling.zip32.HDSeed.RawHDSeed;
@@ -14,7 +13,8 @@ public class Librustzcash {
   private static ILibrustzcash INSTANCE;
 
   static {
-    INSTANCE = (ILibrustzcash) Native.loadLibrary(getLibraryByName("librustzcash"), ILibrustzcash.class);
+    INSTANCE = (ILibrustzcash) Native
+        .loadLibrary(getLibraryByName("librustzcash"), ILibrustzcash.class);
   }
 
   public interface ILibrustzcash extends Library {
@@ -49,6 +49,7 @@ public class Librustzcash {
 //    );
 
     Pointer librustzcash_sapling_proving_ctx_init();
+
     boolean librustzcash_sapling_spend_proof(
         Pointer ctx,
         byte[] ak,
@@ -63,6 +64,7 @@ public class Librustzcash {
         byte[] rk,
         byte[] zkproof
     );
+
     boolean librustzcash_sapling_output_proof(
         Pointer ctx,
         byte[] esk,
@@ -73,15 +75,18 @@ public class Librustzcash {
         byte[] cv,
         byte[] zkproof
     );
+
     boolean librustzcash_sapling_binding_sig(
         Pointer ctx,
         long valueBalance,
         byte[] sighash,
         byte[] result
     );
+
     void librustzcash_sapling_proving_ctx_free(Pointer ctx);
 
     Pointer librustzcash_sapling_verification_ctx_init();
+
     boolean librustzcash_sapling_check_spend(
         Pointer ctx,
         byte[] cv,
@@ -92,6 +97,7 @@ public class Librustzcash {
         byte[] spendAuthSig,
         byte[] sighashValue
     );
+
     boolean librustzcash_sapling_check_output(
         Pointer ctx,
         byte[] cv,
@@ -106,6 +112,7 @@ public class Librustzcash {
         byte[] bindingSig,
         byte[] sighashValue
     );
+
     void librustzcash_sapling_verification_ctx_free(Pointer ctx);
 
   }
@@ -217,7 +224,9 @@ public class Librustzcash {
       byte[] cv,
       byte[] rk,
       byte[] zkproof) {
-    return INSTANCE.librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv, rk, zkproof);
+    return INSTANCE
+        .librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv,
+            rk, zkproof);
   }
 
   public static boolean librustzcashSaplingOutputProof(
@@ -274,7 +283,7 @@ public class Librustzcash {
     }
 
     return Librustzcash.class.getClassLoader().getResource(
-        "native-package" + File.separator + platform + File.separator + name +extension).getFile();
+        "native-package" + File.separator + platform + File.separator + name + extension).getFile();
   }
 
   public static void main(String[] args) throws Exception {

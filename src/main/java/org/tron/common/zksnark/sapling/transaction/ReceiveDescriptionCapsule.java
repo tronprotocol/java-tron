@@ -5,23 +5,23 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.GrothProof;
-import org.tron.protos.Contract.OutputDescription;
+import org.tron.protos.Contract.ReceiveDescription;
 
 @Slf4j(topic = "capsule")
-public class ReceiveDescriptionCapsule implements ProtoCapsule<OutputDescription> {
+public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescription> {
 
-  private OutputDescription outputDescription;
+  private ReceiveDescription receiveDescription;
 
   public ReceiveDescriptionCapsule() {
   }
 
-  public ReceiveDescriptionCapsule(final OutputDescription outputDescription) {
-    this.outputDescription = outputDescription;
+  public ReceiveDescriptionCapsule(final ReceiveDescription outputDescription) {
+    this.receiveDescription = receiveDescription;
   }
 
   public ReceiveDescriptionCapsule(final byte[] data) {
     try {
-      this.outputDescription = OutputDescription.parseFrom(data);
+      this.receiveDescription = ReceiveDescription.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -34,8 +34,8 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<OutputDescription
       ByteString encCiphertext,
       ByteString outCiphertext,
       GrothProof zkproof) {
-    this.outputDescription =
-        OutputDescription.newBuilder()
+    this.receiveDescription =
+        ReceiveDescription.newBuilder()
             .setValueCommitment(cv)
             .setNoteCommitment(cm)
             .setEpk(ephemeralKey)
@@ -47,90 +47,90 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<OutputDescription
   }
 
   public ByteString getValueCommitment() {
-    return this.outputDescription.getValueCommitment();
+    return this.receiveDescription.getValueCommitment();
   }
 
   public void setValueCommitment(byte[] bytes) {
-    this.outputDescription =
-        this.outputDescription.toBuilder().setValueCommitment(ByteString.copyFrom(bytes)).build();
+    this.receiveDescription =
+        this.receiveDescription.toBuilder().setValueCommitment(ByteString.copyFrom(bytes)).build();
   }
 
   public void setValueCommitment(ByteString bytes) {
-    this.outputDescription = this.outputDescription.toBuilder().setValueCommitment(bytes).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setValueCommitment(bytes).build();
   }
 
   public ByteString getEphemeralKey() {
-    return this.outputDescription.getEpk();
+    return this.receiveDescription.getEpk();
   }
 
   public void setEpk(byte[] bytes) {
-    this.outputDescription =
-        this.outputDescription.toBuilder().setEpk(ByteString.copyFrom(bytes)).build();
+    this.receiveDescription =
+        this.receiveDescription.toBuilder().setEpk(ByteString.copyFrom(bytes)).build();
   }
 
   public void setEpk(ByteString bytes) {
-    this.outputDescription = this.outputDescription.toBuilder().setEpk(bytes).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setEpk(bytes).build();
   }
 
   public ByteString getEncCiphertext() {
-    return this.outputDescription.getCEnc();
+    return this.receiveDescription.getCEnc();
   }
 
   public void setCEnc(byte[] bytes) {
-    this.outputDescription =
-        this.outputDescription.toBuilder().setCEnc(ByteString.copyFrom(bytes)).build();
+    this.receiveDescription =
+        this.receiveDescription.toBuilder().setCEnc(ByteString.copyFrom(bytes)).build();
   }
 
   public void setCEnc(ByteString bytes) {
-    this.outputDescription = this.outputDescription.toBuilder().setCEnc(bytes).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setCEnc(bytes).build();
   }
 
   public ByteString getOutCiphertext() {
-    return this.outputDescription.getCOut();
+    return this.receiveDescription.getCOut();
   }
 
   public void setCOut(byte[] bytes) {
-    this.outputDescription =
-        this.outputDescription.toBuilder().setCOut(ByteString.copyFrom(bytes)).build();
+    this.receiveDescription =
+        this.receiveDescription.toBuilder().setCOut(ByteString.copyFrom(bytes)).build();
   }
 
   public void setCOut(ByteString bytes) {
-    this.outputDescription = this.outputDescription.toBuilder().setCOut(bytes).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setCOut(bytes).build();
   }
 
   public ByteString getCm() {
-    return this.outputDescription.getNoteCommitment();
+    return this.receiveDescription.getNoteCommitment();
   }
 
   public void setNoteCommitment(byte[] bytes) {
-    this.outputDescription =
-        this.outputDescription.toBuilder().setNoteCommitment(ByteString.copyFrom(bytes)).build();
+    this.receiveDescription =
+        this.receiveDescription.toBuilder().setNoteCommitment(ByteString.copyFrom(bytes)).build();
   }
 
   public void setNoteCommitment(ByteString bytes) {
-    this.outputDescription = this.outputDescription.toBuilder().setNoteCommitment(bytes).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setNoteCommitment(bytes).build();
   }
 
   public GrothProof getZkproof() {
-    return this.outputDescription.getZkproof();
+    return this.receiveDescription.getZkproof();
   }
 
   public void setZkproof(byte[] proof) {
     GrothProof proof1 = GrothProof.newBuilder().setValues(ByteString.copyFrom(proof)).build();
-    this.outputDescription = this.outputDescription.toBuilder().setZkproof(proof1).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setZkproof(proof1).build();
   }
 
   public void setZkproof(GrothProof proof) {
-    this.outputDescription = this.outputDescription.toBuilder().setZkproof(proof).build();
+    this.receiveDescription = this.receiveDescription.toBuilder().setZkproof(proof).build();
   }
 
   @Override
   public byte[] getData() {
-    return this.outputDescription.toByteArray();
+    return this.receiveDescription.toByteArray();
   }
 
   @Override
-  public OutputDescription getInstance() {
-    return this.outputDescription;
+  public ReceiveDescription getInstance() {
+    return this.receiveDescription;
   }
 }

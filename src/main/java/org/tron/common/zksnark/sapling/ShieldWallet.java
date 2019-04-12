@@ -18,7 +18,7 @@ import org.tron.common.zksnark.sapling.note.NoteEntry;
 import org.tron.common.zksnark.sapling.transaction.BaseOutPoint.OutPoint;
 import org.tron.common.zksnark.sapling.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
-import org.tron.protos.Contract.OutputDescription;
+import org.tron.protos.Contract.ReceiveDescription;
 
 public class ShieldWallet {
 
@@ -88,7 +88,7 @@ public class ShieldWallet {
       NoteData nd = entry.getValue();
 
       //todo: tx.vShieldedOutput[op.n]
-      OutputDescription description = null;
+      ReceiveDescription description = null;
       Optional<NotePlaintext> maybe_pt = NotePlaintext.decrypt(
           description.getCEnc().toByteArray(),
           nd.ivk.value,
