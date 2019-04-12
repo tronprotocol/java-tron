@@ -15,6 +15,7 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.core.config.args.Args;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
 
@@ -42,7 +43,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     String entryName = "";
     JSONObject entryObj = new JSONObject();
 
-    if (entrys != null) {
+    if (entrys != null && Args.getInstance().getStorage().isContractParseSwitch()) {
       String logHash = logInfo.getTopics().get(0).toString();
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
