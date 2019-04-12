@@ -126,7 +126,7 @@ public class Parameter {
     ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7),
-    VERSION_4_0(8);
+    VERSION_3_6(8);
     @Getter
     private int value;
 

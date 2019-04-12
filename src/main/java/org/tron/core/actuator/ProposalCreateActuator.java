@@ -319,7 +319,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (27): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() < 0 || entry.getValue() > 1500) {
@@ -329,7 +329,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (28): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() != 1 || entry.getValue() != 0) {
@@ -339,7 +339,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (29): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() != 1 || entry.getValue() != 0) {
