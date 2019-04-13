@@ -383,8 +383,9 @@ public class Wallet {
       for (Actuator act : actList) {
         if (trx.getDeferredSeconds() > 0) {
           TransactionUtil.validateDeferredTransactionFee(trx, dbManager);
+        } else {
+          act.validate();
         }
-        act.validate();
       }
     }
 
