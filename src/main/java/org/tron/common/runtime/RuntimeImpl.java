@@ -163,11 +163,12 @@ public class RuntimeImpl implements Runtime {
         .createActuator(trxCap, deposit.getDbManager());
 
     for (Actuator act : actuatorList) {
-      act.validate();
       if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
+        trace.validateDeferredFee();
         trace.chargeDeferredFee(trxCap.getDeferredSeconds(), result.getRet());
       }
       else {
+        act.validate();
         act.execute(result.getRet());
       }
     }

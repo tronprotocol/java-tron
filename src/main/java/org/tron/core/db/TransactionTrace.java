@@ -28,8 +28,10 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.*;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -296,6 +298,10 @@ public class TransactionTrace {
 
   public Runtime getRuntime() {
     return runtime;
+  }
+
+  public void validateDeferredFee() throws ContractValidateException {
+    TransactionUtil.validateDeferredTransactionFee(trx, dbManager);
   }
 
   public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule)

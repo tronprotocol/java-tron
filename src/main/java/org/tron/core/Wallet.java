@@ -381,6 +381,9 @@ public class Wallet {
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
+        if (trx.getDeferredSeconds() > 0) {
+          TransactionUtil.validateDeferredTransactionFee(trx, dbManager);
+        }
         act.validate();
       }
     }

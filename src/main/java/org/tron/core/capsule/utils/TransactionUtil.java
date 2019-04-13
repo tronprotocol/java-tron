@@ -16,11 +16,15 @@
 package org.tron.core.capsule.utils;
 
 import com.google.protobuf.ByteString;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
@@ -166,6 +170,31 @@ public class TransactionUtil {
       result = false;
     }
     return result;
+  }
+
+  public static void validateDeferredTransactionFee(TransactionCapsule trx, Manager dbManager) throws ContractValidateException {
+    if (Objects.isNull(trx)
+        ||Objects.isNull(trx.getInstance())
+        || Objects.isNull(trx.getInstance().getRawData())
+        || trx.getInstance().getRawData().getContractList().size() < 1) {
+      throw new ContractValidateException("validate contract failed");
+    }
+    byte[] ownerAddress = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
+    if (!Wallet.addressValid(ownerAddress)){
+      logger.error("empty owner address");
+      throw new ContractValidateException("empty owner address");
+    }
+    AccountCapsule ownerAccount = dbManager.getAccountStore().getUnchecked(ownerAddress);
+    if (ownerAccount == null) {
+      throw new ContractValidateException("validate contract error, no OwnerAccount.");
+    }
+
+    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (trx.getDeferredSeconds() / (24 * 60 * 60) + 1);
+    if (ownerAccount.getBalance() < fee ) {
+      logger.error("no enough money for deferred transaction");
+      throw new ContractValidateException(
+          "create deferred transaction error, insufficient fee.");
+    }
   }
 
   /**
