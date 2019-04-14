@@ -377,12 +377,14 @@ public class Wallet {
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
+
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
-        if (trx.getDeferredSeconds() > 0) {
-          TransactionUtil.validateDeferredTransactionFee(trx, dbManager);
+        long delaySecond = TransactionUtil.getDelaySeconds(trx);
+        if (delaySecond > 0) {
+          TransactionUtil.validateDeferredTransactionFee(trx, delaySecond, dbManager);
         } else {
           act.validate();
         }

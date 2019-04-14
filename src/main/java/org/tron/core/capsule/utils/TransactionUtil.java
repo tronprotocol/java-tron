@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule.utils;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +26,15 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.SetAccountIdContract;
+import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -172,7 +181,58 @@ public class TransactionUtil {
     return result;
   }
 
-  public static void validateDeferredTransactionFee(TransactionCapsule trx, Manager dbManager) throws ContractValidateException {
+
+  public static long getDelaySeconds(TransactionCapsule transactionCapsule) {
+    if (Objects.isNull(transactionCapsule)|| Objects.isNull(transactionCapsule.getInstance())
+        || Objects.isNull(transactionCapsule.getInstance().getRawData())
+        || Objects.isNull(transactionCapsule.getInstance().getRawData().getContractList())
+        || transactionCapsule.getInstance().getRawData().getContractList().size() < 1) {
+      return 0;
+    }
+    Transaction.Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
+    long delaySeconds = 0;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case AccountUpdateContract:
+          delaySeconds = contractParameter.unpack(AccountUpdateContract.class).getDelaySeconds();
+          break;
+        case TransferContract:
+          delaySeconds = contractParameter.unpack(TransferContract.class).getDelaySeconds();
+          break;
+        case TransferAssetContract:
+          delaySeconds = contractParameter.unpack(TransferAssetContract.class).getDelaySeconds();
+          break;
+        case AccountCreateContract:
+          delaySeconds = contractParameter.unpack(AccountCreateContract.class).getDelaySeconds();
+          break;
+        case UnfreezeAssetContract:
+          delaySeconds = contractParameter.unpack(UnfreezeAssetContract.class).getDelaySeconds();
+          break;
+        case UpdateAssetContract:
+          delaySeconds = contractParameter.unpack(UpdateAssetContract.class).getDelaySeconds();
+          break;
+        case SetAccountIdContract:
+          delaySeconds = contractParameter.unpack(SetAccountIdContract.class).getDelaySeconds();
+          break;
+        case UpdateSettingContract:
+          delaySeconds = contractParameter.unpack(UpdateSettingContract.class).getDelaySeconds();
+          break;
+        case UpdateEnergyLimitContract:
+          delaySeconds = contractParameter.unpack(UpdateEnergyLimitContract.class).getDelaySeconds();
+          break;
+        default:
+          return 0;
+      }
+      return delaySeconds;
+    } catch (Exception ex) {
+      logger.info("get deferred transaction delay second failed");
+      return 0;
+    }
+  }
+
+
+  public static void validateDeferredTransactionFee(TransactionCapsule trx, long delaySecond,  Manager dbManager) throws ContractValidateException {
     if (Objects.isNull(trx)
         ||Objects.isNull(trx.getInstance())
         || Objects.isNull(trx.getInstance().getRawData())
@@ -189,7 +249,7 @@ public class TransactionUtil {
       throw new ContractValidateException("validate contract error, no OwnerAccount.");
     }
 
-    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (trx.getDeferredSeconds() / (24 * 60 * 60) + 1);
+    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySecond  / (24 * 60 * 60) + 1);
     if (ownerAccount.getBalance() < fee ) {
       logger.error("no enough money for deferred transaction");
       throw new ContractValidateException(

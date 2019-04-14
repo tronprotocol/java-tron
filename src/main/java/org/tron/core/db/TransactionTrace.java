@@ -301,7 +301,7 @@ public class TransactionTrace {
   }
 
   public void validateDeferredFee() throws ContractValidateException {
-    TransactionUtil.validateDeferredTransactionFee(trx, dbManager);
+    TransactionUtil.validateDeferredTransactionFee(trx, trx.getDeferredSeconds(), dbManager);
   }
 
   public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule)
