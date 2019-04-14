@@ -35,13 +35,19 @@ public class UpdateEnergyLimitServlet extends HttpServlet {
       Util.checkBodySize(contract);
       UpdateEnergyLimitContract.Builder build = UpdateEnergyLimitContract.newBuilder();
       JsonFormat.merge(contract, build);
+      long delaySeconds = 0;
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+        if (delaySeconds > 0) {
+          build.setDelaySeconds(delaySeconds);
+        }
+      }
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.UpdateEnergyLimitContract)
           .getInstance();
 
-      JSONObject jsonObject = JSONObject.parseObject(contract);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+      if (delaySeconds > 0) {
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 

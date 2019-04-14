@@ -35,13 +35,20 @@ public class UpdateAccountServlet extends HttpServlet {
       Util.checkBodySize(contract);
       AccountUpdateContract.Builder build = AccountUpdateContract.newBuilder();
       JsonFormat.merge(contract, build);
+
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      long delaySeconds = 0;
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+        if (delaySeconds > 0) {
+          build.setDelaySeconds(delaySeconds);
+        }
+      }
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.AccountUpdateContract)
           .getInstance();
 
-      JSONObject jsonObject = JSONObject.parseObject(contract);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+      if (delaySeconds > 0) {
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 
