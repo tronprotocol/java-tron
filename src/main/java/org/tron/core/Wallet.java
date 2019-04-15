@@ -925,6 +925,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountStateRoot")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowProtoFilterNum")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
+        .build());
+
     return builder.build();
   }
 
