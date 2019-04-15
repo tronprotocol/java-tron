@@ -92,10 +92,10 @@ public class TransactionBuilder {
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
-      SpendDescriptionCapsule sdesc = generateSpendProof(spend, ctx);
+      SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
       // todo: add sdesc into tx
       //      mtx.vShieldedSpend.push_back(sdesc);
-      mutableTransactionCapsule.getSpends().add(sdesc);
+      mutableTransactionCapsule.getSpends().add(spendDescriptionCapsule);
     }
 
     // Create Sapling OutputDescriptions
@@ -179,13 +179,13 @@ public class TransactionBuilder {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Spend proof failed");
     }
-    SpendDescriptionCapsule sdesc = new SpendDescriptionCapsule();
-    sdesc.setValueCommitment(cv);
-    sdesc.setRk(rk);
-    sdesc.setZkproof(zkproof);
-    sdesc.setAnchor(spend.anchor);
-    sdesc.setNullifier(nf);
-    return sdesc;
+    SpendDescriptionCapsule spendDescriptionCapsule = new SpendDescriptionCapsule();
+    spendDescriptionCapsule.setValueCommitment(cv);
+    spendDescriptionCapsule.setRk(rk);
+    spendDescriptionCapsule.setZkproof(zkproof);
+    spendDescriptionCapsule.setAnchor(spend.anchor);
+    spendDescriptionCapsule.setNullifier(nf);
+    return spendDescriptionCapsule;
   }
 
   public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) {
