@@ -24,6 +24,8 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -482,105 +484,114 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  public static <T extends com.google.protobuf.Message> T parse(Class<T> clazz,
+      CodedInputStream codedInputStream) throws InvalidProtocolBufferException {
+    T defaultInstance = Internal.getDefaultInstance(clazz);
+    return (T) defaultInstance.getParserForType().parseFrom(codedInputStream);
+  }
+
   public static void validContractProto(Transaction.Contract contract)
       throws InvalidProtocolBufferException, P2pException {
-    com.google.protobuf.Message contractMessage = null;
     Any contractParameter = contract.getParameter();
+    Class clazz = null;
     switch (contract.getType()) {
       case AccountCreateContract:
-        contractMessage = contractParameter.unpack(AccountCreateContract.class);
+        clazz = AccountCreateContract.class;
         break;
       case TransferContract:
-        contractMessage = contractParameter.unpack(TransferContract.class);
+        clazz = TransferContract.class;
         break;
       case TransferAssetContract:
-        contractMessage = contractParameter.unpack(TransferAssetContract.class);
+        clazz = TransferAssetContract.class;
         break;
       case VoteAssetContract:
-        contractMessage = contractParameter.unpack(VoteAssetContract.class);
+        clazz = VoteAssetContract.class;
         break;
       case VoteWitnessContract:
-        contractMessage = contractParameter.unpack(VoteWitnessContract.class);
+        clazz = VoteWitnessContract.class;
         break;
       case WitnessCreateContract:
-        contractMessage = contractParameter.unpack(WitnessCreateContract.class);
+        clazz = WitnessCreateContract.class;
         break;
       case AssetIssueContract:
-        contractMessage = contractParameter.unpack(AssetIssueContract.class);
+        clazz = AssetIssueContract.class;
         break;
       case WitnessUpdateContract:
-        contractMessage = contractParameter.unpack(WitnessUpdateContract.class);
+        clazz = WitnessUpdateContract.class;
         break;
       case ParticipateAssetIssueContract:
-        contractMessage = contractParameter.unpack(ParticipateAssetIssueContract.class);
+        clazz = ParticipateAssetIssueContract.class;
         break;
       case AccountUpdateContract:
-        contractMessage = contractParameter.unpack(AccountUpdateContract.class);
+        clazz = AccountUpdateContract.class;
         break;
       case FreezeBalanceContract:
-        contractMessage = contractParameter.unpack(FreezeBalanceContract.class);
+        clazz = FreezeBalanceContract.class;
         break;
       case UnfreezeBalanceContract:
-        contractMessage = contractParameter.unpack(UnfreezeBalanceContract.class);
+        clazz = UnfreezeBalanceContract.class;
         break;
       case UnfreezeAssetContract:
-        contractMessage = contractParameter.unpack(UnfreezeAssetContract.class);
+        clazz = UnfreezeAssetContract.class;
         break;
       case WithdrawBalanceContract:
-        contractMessage = contractParameter.unpack(WithdrawBalanceContract.class);
+        clazz = WithdrawBalanceContract.class;
         break;
       case CreateSmartContract:
-        contractMessage = contractParameter.unpack(Contract.CreateSmartContract.class);
+        clazz = Contract.CreateSmartContract.class;
         break;
       case TriggerSmartContract:
-        contractMessage = contractParameter.unpack(Contract.TriggerSmartContract.class);
+        clazz = Contract.TriggerSmartContract.class;
         break;
       case UpdateAssetContract:
-        contractMessage = contractParameter.unpack(UpdateAssetContract.class);
+        clazz = UpdateAssetContract.class;
         break;
       case ProposalCreateContract:
-        contractMessage = contractParameter.unpack(ProposalCreateContract.class);
+        clazz = ProposalCreateContract.class;
         break;
       case ProposalApproveContract:
-        contractMessage = contractParameter.unpack(ProposalApproveContract.class);
+        clazz = ProposalApproveContract.class;
         break;
       case ProposalDeleteContract:
-        contractMessage = contractParameter.unpack(ProposalDeleteContract.class);
+        clazz = ProposalDeleteContract.class;
         break;
       case SetAccountIdContract:
-        contractMessage = contractParameter.unpack(SetAccountIdContract.class);
+        clazz = SetAccountIdContract.class;
         break;
       case UpdateSettingContract:
-        contractMessage = contractParameter.unpack(UpdateSettingContract.class);
+        clazz = UpdateSettingContract.class;
         break;
       case UpdateEnergyLimitContract:
-        contractMessage = contractParameter.unpack(UpdateEnergyLimitContract.class);
+        clazz = UpdateEnergyLimitContract.class;
         break;
       case ExchangeCreateContract:
-        contractMessage = contractParameter.unpack(ExchangeCreateContract.class);
+        clazz = ExchangeCreateContract.class;
         break;
       case ExchangeInjectContract:
-        contractMessage = contractParameter.unpack(ExchangeInjectContract.class);
+        clazz = ExchangeInjectContract.class;
         break;
       case ExchangeWithdrawContract:
-        contractMessage = contractParameter.unpack(ExchangeWithdrawContract.class);
+        clazz = ExchangeWithdrawContract.class;
         break;
       case ExchangeTransactionContract:
-        contractMessage = contractParameter.unpack(ExchangeTransactionContract.class);
+        clazz = ExchangeTransactionContract.class;
         break;
       case AccountPermissionUpdateContract:
-        contractMessage = contractParameter.unpack(AccountPermissionUpdateContract.class);
+        clazz = AccountPermissionUpdateContract.class;
         break;
       case CancelDeferredTransactionContract:
-        contractMessage = contractParameter.unpack(CancelDeferredTransactionContract.class);
+        clazz = CancelDeferredTransactionContract.class;
         break;
       // todo add other contract
       default:
         break;
     }
-    if (contractMessage == null || contractMessage.getUnknownFields().getSerializedSize() > 0) {
+    if (clazz == null) {
       throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
     }
+    com.google.protobuf.Message contractMessage = parse(clazz,
+        Message.getCodedInputStream(contractParameter.toByteArray()));
+    Message.compareBytes(contractParameter.toByteArray(), contractMessage.toByteArray());
   }
 
   // todo mv this static function to capsule util
