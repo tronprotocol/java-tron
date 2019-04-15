@@ -131,6 +131,15 @@ public class SendCoinShieldTest {
     byte[] voucherPath = voucher.path().encode();
   }
 
+  private IncrementalMerkleVoucherContainer createMerkleVoucherContainer(){
+
+    IncrementalMerkleVoucherCapsule voucherCapsule = new IncrementalMerkleVoucherCapsule();
+    IncrementalMerkleVoucherContainer voucher =
+        new IncrementalMerkleVoucherContainer(voucherCapsule);
+
+    return voucher;
+  }
+
   @Test
   public void testGenerateSpendProof() {
 //    TransactionBuilder builder = new TransactionBuilder();
@@ -144,10 +153,9 @@ public class SendCoinShieldTest {
     long value = 100;
     Note note = new Note(address, value);
 
-    byte[] anchor = new byte[256];
-    IncrementalMerkleVoucherCapsule voucherCapsule = new IncrementalMerkleVoucherCapsule();
-    IncrementalMerkleVoucherContainer voucher =
-        new IncrementalMerkleVoucherContainer(voucherCapsule);
+//    byte[] anchor = new byte[256];
+    IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
+    byte[] anchor = voucher.root().getContent().toByteArray();
 
 //    builder.AddNoteSpend(expsk, note, anchor, voucher);
 //    SpendDescriptionInfo spend = builder.getSpends().get(0);
