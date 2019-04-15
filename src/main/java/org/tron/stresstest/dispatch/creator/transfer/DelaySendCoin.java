@@ -2,9 +2,11 @@ package org.tron.stresstest.dispatch.creator.transfer;
 
 import com.google.protobuf.ByteString;
 import lombok.Setter;
+import org.tron.api.GrpcAPI;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.common.utils.TransactionUtils;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -12,7 +14,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
-import org.tron.protos.Protocol.DeferredStage;
+
 
 @Setter
 public class DelaySendCoin extends AbstractTransferTransactionCreator implements GoodCaseTransactonCreator {
@@ -21,7 +23,7 @@ public class DelaySendCoin extends AbstractTransferTransactionCreator implements
   private String toAddress = commonToAddress;
   private long amount = 1L;
   private String privateKey = commonOwnerPrivateKey;
-  private Long delaySeconds = 20L;
+  private Long delaySeconds = 200L;
   public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
 
   @Override
@@ -35,19 +37,12 @@ public class DelaySendCoin extends AbstractTransferTransactionCreator implements
         .setAmount(amount)
         .build();
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TransferContract);
-    transaction = setDelaySeconds(transaction, delaySeconds);
+    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
   }
 
-  public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds) {
-    DeferredStage deferredStage = transaction.getRawData().toBuilder()
-        .getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
-        .setStage(UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = transaction.toBuilder().getRawData()
-        .toBuilder().setDeferredStage(deferredStage).build();
-    return transaction.toBuilder().setRawData(rawData).build();
-  }
+
 
 
 }

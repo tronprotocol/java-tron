@@ -175,7 +175,7 @@ public class StressPrecondition {
 
 
 
-    if (proposalMap.isEmpty()) {
+    if (!proposalMap.isEmpty()) {
       PublicMethed.createProposal(witness001Address, witnessKey001,
           proposalMap, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
