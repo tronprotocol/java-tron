@@ -3,14 +3,18 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.sun.jna.Pointer;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Contract.SpendDescription;
 
 
 @Slf4j(topic = "actuator")
@@ -47,7 +51,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-
+    List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
+    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract.getReceiveDescriptionList();
+    if (CollectionUtils.isNotEmpty(spendDescriptions) || CollectionUtils.isNotEmpty(receiveDescriptions)) {
+      Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+    }
     return false;
   }
 
