@@ -1,6 +1,7 @@
 package org.tron.core.net.message;
 
 import java.util.List;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 
@@ -20,6 +21,11 @@ public class TransactionsMessage extends TronMessage {
     super(data);
     this.type = MessageTypes.TRXS.asByte();
     this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream(data));
+    if (isFilter()) {
+      for (Protocol.Transaction transaction : transactions.getTransactionsList()) {
+        TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
+      }
+    }
     compareBytes(data, transactions.toByteArray());
   }
 
