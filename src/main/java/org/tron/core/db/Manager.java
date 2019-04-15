@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -31,6 +32,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -55,6 +58,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
@@ -67,6 +71,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -77,6 +82,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.fast.TrieService;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -88,6 +95,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -105,6 +113,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
@@ -120,6 +129,10 @@ public class Manager {
   private TransactionStore transactionStore;
   @Autowired(required = false)
   private TransactionCache transactionCache;
+  @Autowired
+  private DeferredTransactionStore deferredTransactionStore;
+  @Autowired
+  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -207,6 +220,9 @@ public class Manager {
 
   private long latestSolidifiedBlockNumber;
 
+  private static ScheduledExecutorService deferredTransactionTimer = Executors
+      .newSingleThreadScheduledExecutor(r -> new Thread(r, "DeferredTransactionTimer"));
+
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -220,7 +236,15 @@ public class Manager {
   @Getter
   private ForkController forkController = ForkController.instance();
 
+  @Autowired
+  private FastSyncCallBack fastSyncCallBack;
+
+  @Autowired
+  private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
+
+  @Getter
+  private ScheduledFuture<?> deferredTransactionTask;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -315,6 +339,11 @@ public class Manager {
 
   // transactions popped
   private List<TransactionCapsule> popedTransactions =
+      Collections.synchronizedList(Lists.newArrayList());
+
+  private final Object lockObj = new Object();
+
+  private List<DeferredTransactionCapsule> deferredTransactionList =
       Collections.synchronizedList(Lists.newArrayList());
 
   // the capacity is equal to Integer.MAX_VALUE default
@@ -426,6 +455,9 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    Message.setManager(this);
+    fastSyncCallBack.setManager(this);
+    trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
@@ -465,6 +497,14 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread repushThread = new Thread(repushLoop);
     repushThread.start();
+    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1) {
+      deferredTransactionTask = deferredTransactionTimer.scheduleAtFixedRate(() -> {
+        synchronized (lockObj) {
+          deferredTransactionList = getDeferredTransactionStore()
+              .getScheduledTransactions();
+        }
+      }, 1, 1, TimeUnit.SECONDS);
+    }
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
@@ -596,12 +636,14 @@ public class Manager {
             blockCapsule.getTransactions().stream()
                 .map(tc -> tc.getTransactionId().getBytes())
                 .map(bytes -> Maps.immutableEntry(bytes, Longs.toByteArray(blockNum)))
-                .forEach(e -> transactionCache.put(e.getKey(), new BytesCapsule(e.getValue())));
+                .forEach(e -> transactionCache
+                    .put(e.getKey(), new BytesCapsule(e.getValue())));
           } catch (ItemNotFoundException | BadItemException e) {
             logger.info("init txs cache error.");
             throw new IllegalStateException("init txs cache error.");
           }
         })));
+
     ListenableFuture<?> future = Futures.allAsList(futures);
     try {
       future.get();
@@ -611,6 +653,7 @@ public class Manager {
     } catch (ExecutionException e) {
       logger.info(e.getMessage());
     }
+
     logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
         transactionCache.size(),
         blockCount.get(),
@@ -698,6 +741,11 @@ public class Manager {
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
+    if (transactionCapsule.getDeferredSeconds() > 0
+        && transactionCapsule.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      transactionExpiration += transactionCapsule.getDeferredSeconds() * 1000;
+    }
+
     long headBlockTime = getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime ||
         transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
@@ -729,7 +777,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
 
     synchronized (pushTransactionQueue) {
       pushTransactionQueue.add(trx);
@@ -810,7 +858,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, DeferredTransactionException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -825,7 +873,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -842,7 +890,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException {
+      VMIllegalException, DeferredTransactionException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -889,7 +937,8 @@ public class Manager {
             | TooBigTransactionException
             | TooBigTransactionResultException
             | ValidateScheduleException
-            | VMIllegalException e) {
+            | VMIllegalException
+            | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -940,7 +989,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException {
+      ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1069,7 +1118,8 @@ public class Manager {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
             this.witnessStore
-                .getUnchecked(StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
+                .getUnchecked(
+                    StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
         w.setTotalMissed(w.getTotalMissed() + 1);
         this.witnessStore.put(w.createDbKey(), w);
         logger.info(
@@ -1170,15 +1220,80 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
+  // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
+  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap,
+      TransactionTrace transactionTrace) throws ContractValidateException {
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, blockCap, transactionTrace);
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+    postContractTrigger(transactionTrace, false);
+
+    try {
+      pushScheduledTransaction(blockCap, new TransactionCapsule(trxCap.getData()));
+    } catch (BadItemException e) {
+      e.printStackTrace();
+    }
+
+    return true;
+  }
+
+  TransactionCapsule getExecutingDeferredTransaction(TransactionCapsule transactionCapsule,
+      BlockCapsule blockCap)
+      throws DeferredTransactionException {
+    if (Objects.isNull(blockCap)) {
+      throw new DeferredTransactionException("block capsule can't be null");
+    }
+    DeferredTransactionCapsule deferredTransactionCapsule =
+        getDeferredTransactionStore()
+            .getByTransactionId(recoveryTransactionId(transactionCapsule));
+    if (Objects.isNull(deferredTransactionCapsule)) {
+      throw new DeferredTransactionException("unknown deferred transaction");
+    }
+    if (deferredTransactionCapsule.getDelayUntil() > blockCap.getTimeStamp()) {
+      throw new DeferredTransactionException("this transaction isn't ready");
+    }
+    if (Objects.isNull(deferredTransactionCapsule.getInstance())) {
+      throw new DeferredTransactionException("not transaction found");
+    }
+    return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
+  }
+
+  void validateDeferredTransactionType(TransactionCapsule trxCap) throws ContractValidateException{
+    switch (trxCap.getInstance().getRawData().getContractList().get(0).getType()) {
+      case TransferContract:
+      case AccountUpdateContract:
+      case TransferAssetContract:
+      case AccountCreateContract:
+      case UnfreezeAssetContract:
+      case UpdateAssetContract:
+      case SetAccountIdContract:
+      case UpdateSettingContract:
+      case UpdateEnergyLimitContract:
+        break;
+      default:
+        throw new ContractValidateException("Contract type not support deferred transaction");
+    }
+  }
+
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public boolean processTransaction(TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
-      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
+      DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
     if (trxCap == null) {
       return false;
+    }
+
+    if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
+      throw new ContractValidateException("deferred transaction is not allowed, "
+          + "need to be opened by the committee");
     }
 
     validateTapos(trxCap);
@@ -1189,11 +1304,19 @@ public class Manager {
           "act size should be exactly 1, this is extend feature");
     }
 
+    if (trxCap.getDeferredSeconds() != 0 || trxCap.getDeferredStage() != Constant.NORMALTRANSACTION) {
+      validateDeferredTransactionType(trxCap);
+    }
+
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
+    if (trxCap.getDeferredSeconds() > 0
+        && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
+    }else if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
+
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
@@ -1206,7 +1329,18 @@ public class Manager {
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+    trace.setDeferredStage(trxCap.getDeferredStage());
+
+    if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      cancelDeferredTransaction(recoveryTransactionId(trxCap));
+    }
+
     trace.exec();
+    
+    // process deferred transaction for the first time
+    if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      return processDeferTransaction(trxCap, blockCap, trace);
+    }
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
@@ -1231,9 +1365,10 @@ public class Manager {
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
+    TransactionCapsule finalTrxCap = trxCap;
     Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
+        .ifPresent(t -> t.put(finalTrxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
@@ -1242,7 +1377,6 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
-    //
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
@@ -1301,12 +1435,20 @@ public class Manager {
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
+    //
+    fastSyncCallBack.preExecute(blockCapsule);
 
     if (needCheckWitnessPermission && !witnessService.
         validateWitnessPermission(witnessCapsule.getAddress())) {
       logger.warn("Witness permission is wrong");
       return null;
     }
+
+    long deferredTransactionBeginTime = 0;
+    long postponedDeferredTrxCount = 0;
+    long processedDeferredTrxCount = 0;
+    long totalDeferredTransactionProcessTime = 0;
+    addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1327,12 +1469,30 @@ public class Manager {
         logger.warn("Processing transaction time exceeds the 50% producing time。");
         break;
       }
+
       // check the block size
       if ((blockCapsule.getInstance().getSerializedSize() + trx.getSerializedSize() + 3)
           > ChainConstant.BLOCK_SIZE) {
         postponedTrxCount++;
         continue;
       }
+
+      // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+        if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore()
+            .getMaxDeferredTransactionProcessTime()) {
+          logger.info("totalDeferredTransactionProcessTime {}, exceeds {}",
+              totalDeferredTransactionProcessTime,
+              getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
+          postponedTrxCount++;
+          postponedDeferredTrxCount++;
+          continue;
+        } else {
+          deferredTransactionBeginTime = DateTime.now().getMillis();
+          processedDeferredTrxCount++;
+        }
+      }
+
       //
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
@@ -1349,7 +1509,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        fastSyncCallBack.preExeTrans();
         processTransaction(trx, blockCapsule);
+        fastSyncCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1388,11 +1550,19 @@ public class Manager {
         logger.debug(e.getMessage(), e);
       } catch (VMIllegalException e) {
         logger.warn(e.getMessage(), e);
+      } catch (DeferredTransactionException e) {
+        logger.debug(e.getMessage(), e);
       }
-    }
+
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+        long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
+        totalDeferredTransactionProcessTime += processTime;
+      }
+    } // end of while
+
+    fastSyncCallBack.executeGenerateFinish();
 
     session.reset();
-
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
@@ -1400,6 +1570,12 @@ public class Manager {
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
+
+    if (postponedDeferredTrxCount > 0) {
+      logger.info("{} deferred transactions processed, {} deferred transactions postponed",
+          processedDeferredTrxCount, postponedDeferredTrxCount);
+    }
+
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
@@ -1427,6 +1603,8 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    } catch (DeferredTransactionException e) {
+      logger.debug(e.getMessage(), e);
     }
 
     return null;
@@ -1456,9 +1634,16 @@ public class Manager {
     return this.transactionStore;
   }
 
-
   public TransactionHistoryStore getTransactionHistoryStore() {
     return this.transactionHistoryStore;
+  }
+
+  public DeferredTransactionStore getDeferredTransactionStore() {
+    return this.deferredTransactionStore;
+  }
+
+  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
+    return this.deferredTransactionIdIndexStore;
   }
 
   public BlockStore getBlockStore() {
@@ -1473,17 +1658,15 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
-
     //parallel check sign
     if (!block.generatedByMyself) {
       try {
@@ -1493,13 +1676,20 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
-
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      transactionCapsule.setBlockNum(block.getNum());
-      if (block.generatedByMyself) {
-        transactionCapsule.setVerified(true);
+    try {
+      fastSyncCallBack.preExecute(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        transactionCapsule.setBlockNum(block.getNum());
+        if (block.generatedByMyself) {
+          transactionCapsule.setVerified(true);
+        }
+        fastSyncCallBack.preExeTrans();
+        processTransaction(transactionCapsule, block);
+        fastSyncCallBack.exeTransFinish();
       }
-      processTransaction(transactionCapsule, block);
+      fastSyncCallBack.executePushFinish();
+    } finally {
+      fastSyncCallBack.exceptionFinish();
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1515,12 +1705,12 @@ public class Manager {
       energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
-    this.updateDynamicProperties(block);
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
-    this.updateTransHashCache(block);
+    updateSignedWitness(block);
+    updateLatestSolidifiedBlock();
+    updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+    updateDynamicProperties(block);
   }
 
 
@@ -1544,7 +1734,8 @@ public class Manager {
         witnessController
             .getActiveWitnesses()
             .stream()
-            .map(address -> witnessController.getWitnesseByAddress(address).getLatestBlockNum())
+            .map(address -> witnessController.getWitnesseByAddress(address)
+                .getLatestBlockNum())
             .sorted()
             .collect(Collectors.toList());
 
@@ -1616,7 +1807,8 @@ public class Manager {
     // TODO: add verification
     WitnessCapsule witnessCapsule =
         witnessStore.getUnchecked(
-            block.getInstance().getBlockHeader().getRawData().getWitnessAddress().toByteArray());
+            block.getInstance().getBlockHeader().getRawData().getWitnessAddress()
+                .toByteArray());
     witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
     witnessCapsule.setLatestBlockNum(block.getNum());
     witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
@@ -1727,6 +1919,9 @@ public class Manager {
     closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(deferredTransactionStore);
+    closeOneStore(deferredTransactionIdIndexStore);
+
     logger.info("******** end to close db ********");
   }
 
@@ -1769,6 +1964,10 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
+        if (trx.getDeferredSeconds() > 0
+            && trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+          return true;
+        }
         trx.validateSignature(manager);
       } catch (ValidateSignatureException e) {
         throw e;
@@ -1813,7 +2012,8 @@ public class Manager {
 
     try {
       this.pushTransaction(tx);
-    } catch (ValidateSignatureException | ContractValidateException | ContractExeException | AccountResourceInsufficientException | VMIllegalException e) {
+    } catch (ValidateSignatureException | ContractValidateException | ContractExeException
+        | AccountResourceInsufficientException | VMIllegalException | DeferredTransactionException e) {
       logger.debug(e.getMessage(), e);
     } catch (DupTransactionException e) {
       logger.debug("pending manager: dup trans", e);
@@ -1927,5 +2127,86 @@ public class Manager {
         }
       }
     }
+  }
+
+  private void addDeferredTransactionToPending(final BlockCapsule blockCapsule) {
+    if (dynamicPropertiesStore.getAllowDeferredTransaction() == 1) {
+      synchronized (lockObj) {
+        for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
+          if (deferredTransaction.getDelayUntil() <= blockCapsule.getTimeStamp()) {
+            TransactionCapsule trxCapsule = new TransactionCapsule(
+                deferredTransaction.getDeferredTransaction().getTransaction());
+            pendingTransactions.add(0, trxCapsule);
+          }
+        }
+      }
+    }
+  }
+
+  // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
+  public void pushScheduledTransaction(BlockCapsule blockCapsule,
+      TransactionCapsule transactionCapsule) {
+    if (blockCapsule == null) {
+      return;
+    }
+    Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
+    // new trx id to represent the second trx record
+    transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+    logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
+    DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+    // save original transactionId in order to query deferred transaction
+    deferredTransaction.setTransactionId(originalTransactionId.getByteString());
+    deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
+
+    ByteString senderAddress = transactionCapsule.getSenderAddress();
+    ByteString toAddress = transactionCapsule.getToAddress();
+
+    deferredTransaction.setSenderAddress(senderAddress);
+    deferredTransaction.setReceiverAddress(toAddress);
+
+    // publish time
+    long publishTime = 0;
+    if (Objects.nonNull(blockCapsule)) {
+      publishTime = blockCapsule.getTimeStamp();
+    } else {
+      publishTime = System.currentTimeMillis();
+    }
+
+    deferredTransaction.setPublishTime(publishTime);
+
+    // delay until
+    long delayUntil = publishTime + transactionCapsule.getDeferredSeconds() * 1000;
+    deferredTransaction.setDelayUntil(delayUntil);
+    deferredTransaction.setExpiration(delayUntil
+        + Args.getInstance().getTrxExpirationTimeInMilliseconds());
+
+    deferredTransaction.setTransaction(transactionCapsule.getInstance());
+
+    DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
+        deferredTransaction.build());
+
+    getDeferredTransactionStore().put(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
+  }
+
+  public boolean cancelDeferredTransaction(ByteString transactionId) {
+    DeferredTransactionCapsule deferredTransactionCapsule
+        = getDeferredTransactionStore().getByTransactionId(transactionId);
+    if (Objects.isNull(deferredTransactionCapsule)) {
+      logger.info("cancelDeferredTransaction failed, transaction id not exists");
+      return false;
+    }
+
+    getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
+    logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
+
+    return true;
+  }
+
+  private ByteString recoveryTransactionId(TransactionCapsule trxCap) {
+    TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
+    oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
+    return oldTrxCap.getTransactionId().getByteString();
   }
 }

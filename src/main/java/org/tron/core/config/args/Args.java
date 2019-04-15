@@ -5,6 +5,7 @@ import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -22,7 +23,9 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -405,6 +408,10 @@ public class Args {
 
   @Getter
   @Setter
+  private int allowDeferredTransaction;
+
+  @Getter
+  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -446,6 +453,14 @@ public class Args {
 
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   private boolean version;
+
+  @Getter
+  @Setter
+  private long allowProtoFilterNum;
+
+  @Getter
+  @Setter
+  private long allowAccountStateRoot;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -518,7 +533,10 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowMultiSign = 0;
+    INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.allowProtoFilterNum = 0;
+    INSTANCE.allowAccountStateRoot = 0;
   }
 
   /**
@@ -818,6 +836,11 @@ public class Args {
     INSTANCE.allowMultiSign =
         config.hasPath("committee.allowMultiSign") ? config
             .getInt("committee.allowMultiSign") : 0;
+
+    INSTANCE.allowDeferredTransaction =
+        config.hasPath("committee.allowDeferredTransaction") ? config
+            .getInt("committee.allowDeferredTransaction") : 0;
+
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
@@ -897,6 +920,14 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.allowProtoFilterNum =
+        config.hasPath("committee.allowProtoFilterNum") ? config
+            .getInt("committee.allowProtoFilterNum") : 0;
+
+    INSTANCE.allowAccountStateRoot =
+        config.hasPath("committee.allowAccountStateRoot") ? config
+            .getInt("committee.allowAccountStateRoot") : 0;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -993,24 +1024,46 @@ public class Args {
   private static EventPluginConfig getEventPluginConfig(final com.typesafe.config.Config config) {
     EventPluginConfig eventPluginConfig = new EventPluginConfig();
 
-    if (config.hasPath("event.subscribe.path")) {
-      String pluginPath = config.getString("event.subscribe.path");
-      if (StringUtils.isNotEmpty(pluginPath)) {
-        eventPluginConfig.setPluginPath(pluginPath.trim());
+    boolean useNativeQueue = false;
+    int bindPort = 0;
+    int sendQueueLength = 0;
+    if (config.hasPath("event.subscribe.native.useNativeQueue")){
+      useNativeQueue = config.getBoolean("event.subscribe.native.useNativeQueue");
+
+      if(config.hasPath("event.subscribe.native.bindport")){
+        bindPort = config.getInt("event.subscribe.native.bindport");
       }
+
+      if(config.hasPath("event.subscribe.native.sendqueuelength")){
+        sendQueueLength = config.getInt("event.subscribe.native.sendqueuelength");
+      }
+
+      eventPluginConfig.setUseNativeQueue(useNativeQueue);
+      eventPluginConfig.setBindPort(bindPort);
+      eventPluginConfig.setSendQueueLength(sendQueueLength);
     }
 
-    if (config.hasPath("event.subscribe.server")) {
-      String serverAddress = config.getString("event.subscribe.server");
-      if (StringUtils.isNotEmpty(serverAddress)) {
-        eventPluginConfig.setServerAddress(serverAddress.trim());
+    // use event plugin
+    if (!useNativeQueue) {
+      if (config.hasPath("event.subscribe.path")) {
+        String pluginPath = config.getString("event.subscribe.path");
+        if (StringUtils.isNotEmpty(pluginPath)) {
+          eventPluginConfig.setPluginPath(pluginPath.trim());
+        }
       }
-    }
 
-    if (config.hasPath("event.subscribe.dbconfig")) {
-      String dbConfig = config.getString("event.subscribe.dbconfig");
-      if (StringUtils.isNotEmpty(dbConfig)) {
-        eventPluginConfig.setDbConfig(dbConfig.trim());
+      if (config.hasPath("event.subscribe.server")) {
+        String serverAddress = config.getString("event.subscribe.server");
+        if (StringUtils.isNotEmpty(serverAddress)) {
+          eventPluginConfig.setServerAddress(serverAddress.trim());
+        }
+      }
+
+      if (config.hasPath("event.subscribe.dbconfig")) {
+        String dbConfig = config.getString("event.subscribe.dbconfig");
+        if (StringUtils.isNotEmpty(dbConfig)) {
+          eventPluginConfig.setDbConfig(dbConfig.trim());
+        }
       }
     }
 
@@ -1225,7 +1278,6 @@ public class Args {
     INSTANCE.dbBackupConfig = DbBackupConfig.getInstance()
         .initArgs(enable, propPath, bak1path, bak2path, frequency);
   }
-
 
   private static void initBackupProperty(Config config) {
     INSTANCE.backupPriority = config.hasPath("node.backup.priority")

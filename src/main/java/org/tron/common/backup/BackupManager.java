@@ -37,9 +37,9 @@ public class BackupManager implements EventHandler {
 
   private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
-  private volatile MessageHandler messageHandler;
+  private MessageHandler messageHandler;
 
-  private volatile BackupStatusEnum status = MASTER;
+  private BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
 

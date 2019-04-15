@@ -288,6 +288,66 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (24): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id: ALLOW_DEFERRED_TRANSACTION");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_DEFERRED_TRANSACTION] is only allowed to be 1");
+        }
+        break;
+      }
+      case (25): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000L]");
+        }
+        break;
+      }
+      case (26): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_5)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 100_000_000L) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,100_000_000L]");
+        }
+        break;
+      }
+      case (27): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 1500) {
+          throw new ContractValidateException(
+              "Bad chain parameter value,valid range is [0,1500]");
+        }
+        break;
+      }
+      case (28): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case (29): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1 or 0");
+        }
+        break;
+      }
       default:
         break;
     }
