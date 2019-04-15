@@ -287,7 +287,7 @@ public class Wallet {
   }
 
   // for `CREATE2`
-  public static byte[] generateContractAddress2(byte[] address, byte[] code, byte[] salt) {
+  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
     byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
     return Hash.sha3omit12(mergedData);
   }

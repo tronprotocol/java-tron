@@ -1176,7 +1176,7 @@ public class Program {
     byte[] senderAddress = convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] contractAddress = Wallet.generateContractAddress2(senderAddress, programCode, salt.getData());
+    byte[] contractAddress = Wallet.generateContractAddress2(senderAddress, salt.getData(), programCode);
     createContractImpl(value, programCode, contractAddress);
   }
 

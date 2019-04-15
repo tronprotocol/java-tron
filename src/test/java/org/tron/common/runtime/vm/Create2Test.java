@@ -102,7 +102,7 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
 
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     byte[] actualContract = MUtil.convertToTronAddress(Arrays.copyOfRange(returnValue, 12, 32));
-    byte[] expectedContract = Wallet.generateContractAddress2(address, Hex.decode(testCode), new DataWord(salt).getData());
+    byte[] expectedContract = Wallet.generateContractAddress2(address, new DataWord(salt).getData(), Hex.decode(testCode));
     // check deployed contract
     Assert.assertEquals(actualContract, expectedContract);
 
