@@ -115,6 +115,22 @@ public class Librustzcash {
 
     void librustzcash_sapling_verification_ctx_free(Pointer ctx);
 
+    /// Computes a merkle tree hash for a given depth.
+    /// The `depth` parameter should not be larger than
+    /// 62.
+    ///
+    /// `a` and `b` each must be of length 32, and must each
+    /// be scalars of BLS12-381.
+    ///
+    /// The result of the merkle tree hash is placed in
+    /// `result`, which must also be of length 32.
+    void librustzcash_merkle_hash(
+        int depth,
+        byte[] a,
+        byte[] b,
+        byte[] result
+    );
+
   }
 
   // todo jni
@@ -158,7 +174,6 @@ public class Librustzcash {
   // void librustzcash_crh_ivk(const unsigned char *ak, const unsigned char *nk, unsigned char
   // *result);
   public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
-    System.out.println("just a test");
     INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
   }
 
@@ -264,6 +279,10 @@ public class Librustzcash {
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
 
     return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
+  }
+
+  public static void librustzcashMerkleHash(int depth, byte[] a, byte[] b, byte[] result) {
+    INSTANCE.librustzcash_merkle_hash(depth, a, b, result);
   }
 
   public static String getLibraryByName(String name) {

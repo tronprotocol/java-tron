@@ -1,17 +1,17 @@
 package org.tron.common.zksnark.merkle;
 
 import java.util.Deque;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 
 public class PathFiller {
 
-  private Deque<SHA256Compress> queue;
+  private Deque<PedersenHash> queue;
 
-  public PathFiller(Deque<SHA256Compress> queue) {
+  public PathFiller(Deque<PedersenHash> queue) {
     this.queue = queue;
   }
 
-  public SHA256Compress next(int depth) {
+  public PedersenHash next(int depth) {
     if (queue.size() > 0) {
       return queue.poll();
     } else {

@@ -4,7 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import org.tron.common.utils.ByteArray;
 import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
 
@@ -21,9 +21,9 @@ public class IncrementalMerkleVoucherContainer {
     this.voucherCapsule.setTree(tree.getTreeCapsule());
   }
 
-  private Deque<SHA256Compress> partialPath() {
+  private Deque<PedersenHash> partialPath() {
 
-    Deque<SHA256Compress> uncles = new ArrayDeque<>(voucherCapsule.getFilled());
+    Deque<PedersenHash> uncles = new ArrayDeque<>(voucherCapsule.getFilled());
 
     if (cursorExist()) {
       uncles.add(
@@ -33,7 +33,7 @@ public class IncrementalMerkleVoucherContainer {
     return uncles;
   }
 
-  public void append(SHA256Compress obj) {
+  public void append(PedersenHash obj) {
 
     if (cursorExist()) {
       IncrementalMerkleTreeCapsule cursor = voucherCapsule.getCursor();
@@ -78,7 +78,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule.getTree().toMerkleTreeContainer().path(partialPath());
   }
 
-  public SHA256Compress element() {
+  public PedersenHash element() {
     return voucherCapsule.getTree().toMerkleTreeContainer().last();
   }
 
@@ -86,7 +86,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule.getTree().toMerkleTreeContainer().size() - 1;
   }
 
-  public SHA256Compress root() {
+  public PedersenHash root() {
     return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
 
