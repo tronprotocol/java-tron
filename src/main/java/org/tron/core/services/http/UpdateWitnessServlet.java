@@ -14,6 +14,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -29,10 +30,10 @@ public class UpdateWitnessServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost( contract );
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
       JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet

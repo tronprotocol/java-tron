@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.stream.Collectors;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -28,10 +29,10 @@ public class SetAccountIdServlet extends HttpServlet {
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) {
         try {
-            boolean visible = getVisible(request);
             String contract = request.getReader().lines()
                     .collect(Collectors.joining(System.lineSeparator()));
             Util.checkBodySize(contract);
+            boolean visible = getVisiblePost( contract );
             Contract.SetAccountIdContract.Builder build = Contract.SetAccountIdContract.newBuilder();
             JsonFormat.merge(contract, build, visible );
             Protocol.Transaction tx = wallet.createTransactionCapsule(build.build(),

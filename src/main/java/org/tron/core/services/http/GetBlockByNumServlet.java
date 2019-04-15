@@ -13,6 +13,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -43,10 +44,10 @@ public class GetBlockByNumServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       NumberMessage.Builder build = NumberMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       Block reply = wallet.getBlockByNum(build.getNum());

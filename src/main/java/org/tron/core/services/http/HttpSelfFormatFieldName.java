@@ -138,6 +138,10 @@ public class HttpSelfFormatFieldName {
         NameFieldNameMap.put("message", 1);
         //Address
         NameFieldNameMap.put("host", 1);
+        //EasyTransferMessage
+        NameFieldNameMap.put("passPhrase", 1);
+        //EasyTransferAssetMessage
+        NameFieldNameMap.put("passPhrase", 1);
 
         //***** Contract.proto *****
         //AccountUpdateContract

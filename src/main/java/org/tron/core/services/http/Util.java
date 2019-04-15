@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
@@ -621,11 +622,22 @@ public class Util {
 
   public static boolean getVisible(final HttpServletRequest request )
   {
-    boolean visiable = false;
+    boolean visible = false;
     if ( StringUtil.isNotBlank(request.getParameter("visible")) ) {
-      visiable = Boolean.valueOf(request.getParameter("visible"));
+      visible = Boolean.valueOf(request.getParameter("visible"));
     }
-    return visiable;
+    return visible;
+  }
+
+  public static boolean getVisiblePost(final String input )
+  {
+    boolean visible = false;
+    JSONObject jsonObject = JSON.parseObject(input);
+    if ( jsonObject.containsKey("visible") ) {
+      visible = jsonObject.getBoolean("visible");
+    }
+
+    return visible;
   }
 
   public static String getHexAddress(final String address) {

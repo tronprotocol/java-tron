@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -25,10 +26,10 @@ public class GetExchangeByIdServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       JSONObject jsonObject = JSONObject.parseObject(input);
       long id = jsonObject.getLong("id");
       response.getWriter()

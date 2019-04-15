@@ -13,6 +13,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.core.Wallet;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -28,10 +29,10 @@ public class GetPaginatedAssetIssueListServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       PaginatedMessage.Builder build = PaginatedMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       AssetIssueList reply = wallet.getAssetIssueList(build.getOffset(), build.getLimit());

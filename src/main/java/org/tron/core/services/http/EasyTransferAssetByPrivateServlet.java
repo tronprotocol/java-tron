@@ -20,6 +20,7 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -36,10 +37,11 @@ public class EasyTransferAssetByPrivateServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-    boolean visible = getVisible(request);
+    boolean visible = false;
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      visible = getVisiblePost(input);
       EasyTransferAssetByPrivateMessage.Builder build = EasyTransferAssetByPrivateMessage
           .newBuilder();
       JsonFormat.merge(input, build, visible);

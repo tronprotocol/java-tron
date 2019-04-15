@@ -17,6 +17,7 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
 import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -52,9 +53,10 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       if ( visible ) {
         JSONObject jsonObject = JSONObject.parseObject(input);
         String value = jsonObject.getString("value");
@@ -62,7 +64,6 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
         input = jsonObject.toJSONString();
       }
 
-      Util.checkBodySize(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       DelegatedResourceAccountIndex reply =

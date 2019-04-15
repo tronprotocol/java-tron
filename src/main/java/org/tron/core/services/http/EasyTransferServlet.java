@@ -22,6 +22,7 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -38,11 +39,12 @@ public class EasyTransferServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-    boolean visible = getVisible(request);
+    boolean visible = false;
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      visible = getVisiblePost(input);
       EasyTransferMessage.Builder build = EasyTransferMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());

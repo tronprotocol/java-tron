@@ -16,6 +16,7 @@ import org.tron.core.Wallet;
 
 import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -55,10 +56,10 @@ public class GetDelegatedResourceServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input =
           request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       DelegatedResourceMessage.Builder build = DelegatedResourceMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       DelegatedResourceList reply =

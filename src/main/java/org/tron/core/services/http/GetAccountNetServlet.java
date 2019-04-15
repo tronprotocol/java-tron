@@ -16,6 +16,7 @@ import org.tron.protos.Protocol.Account;
 
 import static org.tron.core.services.http.Util.getHexAddress;
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -51,10 +52,10 @@ public class GetAccountNetServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
+      boolean visible = getVisiblePost( account );
       Account.Builder build = Account.newBuilder();
       JsonFormat.merge(account, build, visible);
       AccountNetMessage reply = wallet.getAccountNet(build.getAddress());

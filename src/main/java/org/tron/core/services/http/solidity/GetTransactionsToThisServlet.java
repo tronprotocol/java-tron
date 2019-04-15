@@ -16,6 +16,7 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -27,9 +28,9 @@ public class GetTransactionsToThisServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
     try {
-      boolean visible = getVisible(req);
       String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost(input);
       AccountPaginated.Builder builder = AccountPaginated.newBuilder();
       JsonFormat.merge(input, builder, visible );
       AccountPaginated accountPaginated = builder.build();

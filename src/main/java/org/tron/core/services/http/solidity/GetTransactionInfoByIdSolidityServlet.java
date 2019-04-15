@@ -17,6 +17,7 @@ import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
 
 import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -51,10 +52,10 @@ public class GetTransactionInfoByIdSolidityServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible );
       TransactionInfo transInfo = wallet.getTransactionInfoById(build.build().getValue());
