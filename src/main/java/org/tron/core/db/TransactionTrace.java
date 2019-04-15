@@ -132,6 +132,13 @@ public class TransactionTrace {
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
       ContractCapsule contract = deposit
           .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
+      if (contract == null) {
+        logger.info("contract: {} is not in contract store", Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
+        throw new ContractValidateException("contract: " + Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
+            + " is not in contract store");
+      }
       ABI abi = contract.getInstance().getAbi();
       if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         throw new VMIllegalException("cannot call constant method");
