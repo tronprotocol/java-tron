@@ -11,7 +11,7 @@ import org.tron.common.zksnark.sapling.zip32.HDSeed;
 
 public class KeyStore {
 
-  static HDSeed seed = new HDSeed();
+  public static HDSeed seed = new HDSeed();
 
   private static Map<FullViewingKey, ExtendedSpendingKey> mapSpendingKeys = new HashMap<>();
   private static Map<IncomingViewingKey, FullViewingKey> mapFullViewingKeys = new HashMap<>();

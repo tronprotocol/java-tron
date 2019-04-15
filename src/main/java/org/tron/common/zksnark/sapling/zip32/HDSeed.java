@@ -2,6 +2,7 @@ package org.tron.common.zksnark.sapling.zip32;
 
 import java.security.SecureRandom;
 import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.zksnark.sapling.utils.CryptoGenerichashBlake2BState;
 import org.tron.common.zksnark.sapling.utils.PRF;
 
@@ -13,7 +14,16 @@ public class HDSeed {
   public static class RawHDSeed {
 
     @Getter
+    @Setter
     public byte[] data ;
+  }
+
+  public HDSeed() {
+  }
+
+  public HDSeed(byte[] data) {
+    rawSeed = new RawHDSeed();
+    rawSeed.data = data;
   }
 
 

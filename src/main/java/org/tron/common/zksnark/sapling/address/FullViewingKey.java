@@ -32,7 +32,7 @@ public class FullViewingKey {
     return new IncomingViewingKey(ivk);
   }
 
-  boolean is_valid() {
+  public boolean isValid() {
     byte[] ivk = null;
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
     return ivk != null && ivk.length != 0;
