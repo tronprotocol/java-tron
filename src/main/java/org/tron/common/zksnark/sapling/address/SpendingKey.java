@@ -11,30 +11,30 @@ public class SpendingKey {
   public byte[] value;
   // class SpendingKey : public uint256 {
 
-  static SpendingKey random() {
+  public static SpendingKey random() {
     while (true) {
       SpendingKey sk = new SpendingKey(randomUint256());
-      if (sk.full_viewing_key().is_valid()) {
+      if (sk.fullViewingKey().is_valid()) {
         return sk;
       }
     }
   }
 
-  ExpandedSpendingKey expanded_spending_key() {
+  public ExpandedSpendingKey expandedSpendingKey() {
     return new ExpandedSpendingKey(
         PRF.prfAsk(this.value), PRF.prfNsk(this.value), PRF.prfOvk(this.value));
   }
 
-  FullViewingKey full_viewing_key() {
+  public FullViewingKey fullViewingKey() {
 
-    return expanded_spending_key().fullViewingKey();
+    return expandedSpendingKey().fullViewingKey();
   }
 
   // Can derive  addr from default diversifier
   PaymentAddress default_address() {
     // Iterates within defaultDiversifier to ensure a valid address is returned
     Optional<PaymentAddress> addrOpt =
-        full_viewing_key().inViewingKey().address(defaultDiversifier(this));
+        fullViewingKey().inViewingKey().address(defaultDiversifier(this));
     //    assert (addrOpt != boost::none);
     return addrOpt.get();
   }

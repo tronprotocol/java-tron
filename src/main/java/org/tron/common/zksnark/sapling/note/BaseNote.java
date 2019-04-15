@@ -1,6 +1,5 @@
 package org.tron.common.zksnark.sapling.note;
 
-import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.Librustzcash;
 import org.tron.common.zksnark.sapling.address.DiversifierT;
 import org.tron.common.zksnark.sapling.address.FullViewingKey;
@@ -10,23 +9,22 @@ public class BaseNote {
 
   public long value = 0;
 
-  @AllArgsConstructor
   public static class Note extends BaseNote {
 
     public DiversifierT d;
-    public byte[] pk_d; // 256
+    public byte[] pkD; // 256
     public byte[] r; // 256
 
     public Note(PaymentAddress address, long value) {
       this.value = value;
       this.d = address.getD();
-      this.pk_d = address.getPkD();
+      this.pkD = address.getPkD();
       Librustzcash.librustzcashSaplingGenerateR(r);
     }
 
-    public Note(DiversifierT d, byte[] pk_d, long value, byte[] r) {
+    public Note(DiversifierT d, byte[] pkD, long value, byte[] r) {
       this.d = d;
-      this.pk_d = pk_d;
+      this.pkD = pkD;
       this.value = value;
       this.r = r;
     }
@@ -34,7 +32,7 @@ public class BaseNote {
     // Call librustzcash to compute the commitment
     public byte[] cm() {
       byte[] result = null;
-      if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pk_d, value, r, result)) {
+      if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pkD, value, r, result)) {
         return null;
       }
 
@@ -50,7 +48,7 @@ public class BaseNote {
 
       byte[] result = null; // 256
       if (!Librustzcash.librustzcashSaplingComputeNf(
-          d.getData(), pk_d, value, r, ak, nk, position, result)) {
+          d.getData(), pkD, value, r, ak, nk, position, result)) {
         return null;
       }
 

@@ -1,11 +1,13 @@
 package org.tron.common.zksnark.sapling.note;
 
+import static org.tron.common.zksnark.sapling.ZkChainParams.ZC_JUBJUB_POINT_SIZE;
+import static org.tron.common.zksnark.sapling.ZkChainParams.ZC_JUBJUB_SCALAR_SIZE;
+import static org.tron.common.zksnark.sapling.ZkChainParams.ZC_SAPLING_OUTPLAINTEXT_SIZE;
+
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.sapling.note.NoteEncryption.OutCiphertext;
 import org.tron.common.zksnark.sapling.note.NoteEncryption.OutPlaintext;
-
-import static org.tron.common.zksnark.sapling.ZkChainParams.*;
 
 @AllArgsConstructor
 public class SaplingOutgoingPlaintext {
@@ -72,13 +74,13 @@ public class SaplingOutgoingPlaintext {
     Optional<SaplingOutgoingPlaintext>  ret = decrypt(outCiphertext, ovk, cv, cm, epk);
     SaplingOutgoingPlaintext result = ret.get();
 
-    System.out.println("plain text pk_d size:" +  result.pk_d.length);
+    System.out.println("plain text pkD size:" + result.pk_d.length);
     for(byte b : result.pk_d) {
       System.out.print(b + ",");
     }
     System.out.println();
 
-    System.out.println("plain text pk_d size:" +  result.esk.length);
+    System.out.println("plain text pkD size:" + result.esk.length);
     for(byte b : result.esk) {
       System.out.print(b + ",");
     }

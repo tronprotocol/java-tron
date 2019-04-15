@@ -4,6 +4,8 @@ import com.sun.jna.Pointer;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
@@ -22,9 +24,15 @@ public class TransactionBuilder {
   //  CKeyStore keystore;
   //  CMutableTransaction mtx;
 
-  String from;
-  List<SpendDescriptionInfo> spends;
-  List<OutputDescriptionInfo> outputs;
+  @Setter
+  @Getter
+  private String from;
+  @Setter
+  @Getter
+  private List<SpendDescriptionInfo> spends;
+  @Setter
+  @Getter
+  private List<OutputDescriptionInfo> outputs;
   //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
@@ -33,7 +41,7 @@ public class TransactionBuilder {
 
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
-  void AddNoteSpend(
+  public void AddNoteSpend(
       ExpandedSpendingKey expsk,
       Note note,
       byte[] anchor,
@@ -76,41 +84,7 @@ public class TransactionBuilder {
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
-      byte[] cm = spend.note.cm();
-      byte[] nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.voucher.position());
-
-      if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(nf)) {
-        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-        throw new RuntimeException("Spend is invalid");
-      }
-
-      byte[] voucherPath = spend.voucher.path().encode();
-
-      byte[] cv = new byte[32];
-      byte[] rk = new byte[32];
-      byte[] zkproof = new byte[32];
-      if (!Librustzcash.librustzcashSaplingSpendProof(
-          ctx,
-          spend.expsk.fullViewingKey().getAk(),
-          spend.expsk.getNsk(),
-          spend.note.d.getData(),
-          spend.note.r,
-          spend.alpha,
-          spend.note.value,
-          spend.anchor,
-          voucherPath,
-          cv,
-          rk,
-          zkproof)) {
-        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-        throw new RuntimeException("Spend proof failed");
-      }
-      SpendDescriptionCapsule sdesc = new SpendDescriptionCapsule();
-      sdesc.setValueCommitment(cv);
-      sdesc.setRk(rk);
-      sdesc.setZkproof(zkproof);
-      sdesc.setAnchor(spend.anchor);
-      sdesc.setNullifier(nf);
+      SpendDescriptionCapsule sdesc = generateSpendProof(spend, ctx);
       // todo: add sdesc into tx
       //      mtx.vShieldedSpend.push_back(sdesc);
     }
@@ -125,7 +99,7 @@ public class TransactionBuilder {
 
       NotePlaintext notePlaintext = new NotePlaintext(output.note, output.memo);
 
-      Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext.encrypt(output.note.pk_d);
+      Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext.encrypt(output.note.pkD);
       if (!res.isPresent()) {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         throw new RuntimeException("Failed to encrypt note");
@@ -140,7 +114,7 @@ public class TransactionBuilder {
           ctx,
           encryptor.esk,
           output.note.d.getData(),
-          output.note.pk_d,
+          output.note.pkD,
           output.note.r,
           output.note.value,
           cv,
@@ -157,7 +131,7 @@ public class TransactionBuilder {
       odesc.setZkproof(zkproof);
 
       SaplingOutgoingPlaintext outPlaintext =
-          new SaplingOutgoingPlaintext(output.note.pk_d, encryptor.esk);
+          new SaplingOutgoingPlaintext(output.note.pkD, encryptor.esk);
       odesc.setCOut(outPlaintext
           .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
               odesc.getCm().toByteArray(),
@@ -208,6 +182,46 @@ public class TransactionBuilder {
 //    }
 
     return null;
+  }
+
+  public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, Pointer ctx) {
+
+    byte[] cm = spend.note.cm();
+    byte[] nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.voucher.position());
+
+    if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(nf)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Spend is invalid");
+    }
+
+    byte[] voucherPath = spend.voucher.path().encode();
+
+    byte[] cv = new byte[32];
+    byte[] rk = new byte[32];
+    byte[] zkproof = new byte[32];
+    if (!Librustzcash.librustzcashSaplingSpendProof(
+        ctx,
+        spend.expsk.fullViewingKey().getAk(),
+        spend.expsk.getNsk(),
+        spend.note.d.getData(),
+        spend.note.r,
+        spend.alpha,
+        spend.note.value,
+        spend.anchor,
+        voucherPath,
+        cv,
+        rk,
+        zkproof)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Spend proof failed");
+    }
+    SpendDescriptionCapsule sdesc = new SpendDescriptionCapsule();
+    sdesc.setValueCommitment(cv);
+    sdesc.setRk(rk);
+    sdesc.setZkproof(zkproof);
+    sdesc.setAnchor(spend.anchor);
+    sdesc.setNullifier(nf);
+    return sdesc;
   }
 
   public class SpendDescriptionInfo {

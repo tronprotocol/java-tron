@@ -350,7 +350,7 @@ message AccountPermissionUpdateContract {
 message Note {
   bytes value = 1;
   bytes d = 2;
-  bytes pk_d = 3;
+  bytes pkD = 3;
   bytes rcm = 4;
 }
 

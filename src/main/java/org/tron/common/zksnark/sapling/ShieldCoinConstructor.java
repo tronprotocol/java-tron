@@ -157,16 +157,16 @@ public class ShieldCoinConstructor {
 
       // Fetch ShieldNote anchor and voucher
       byte[] anchor = null;
-      List<Optional<IncrementalMerkleVoucherContainer>> voucher = null;
+      List<Optional<IncrementalMerkleVoucherContainer>> vouchers = null;
 
-      ShieldWallet.getNoteVouchers(ops, voucher, anchor);
+      ShieldWallet.getNoteVouchers(ops, vouchers, anchor);
 
       // Add Sapling spends
       for (int i = 0; i < notes.size(); i++) {
-        if (!voucher.get(i).isPresent()) {
+        if (!vouchers.get(i).isPresent()) {
           throw new RuntimeException("Missing voucher for shield note");
         }
-        builder.AddNoteSpend(expsk, notes.get(i), anchor, voucher.get(i).get());
+        builder.AddNoteSpend(expsk, notes.get(i), anchor, vouchers.get(i).get());
       }
     }
 
