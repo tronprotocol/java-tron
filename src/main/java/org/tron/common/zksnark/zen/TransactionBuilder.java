@@ -219,23 +219,23 @@ public class TransactionBuilder {
         cv,
         zkproof)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Output proof failed");
+      throw new RuntimeException("Ourtput proof failed");
     }
 
-    ReceiveDescriptionCapsule odesc = new ReceiveDescriptionCapsule();
-    odesc.setValueCommitment(cv);
-    odesc.setNoteCommitment(cm);
-    odesc.setEpk(encryptor.epk);
-    odesc.setCEnc(enc.encCiphertext);
-    odesc.setZkproof(zkproof);
+    ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
+    receiveDescriptionCapsule.setValueCommitment(cv);
+    receiveDescriptionCapsule.setNoteCommitment(cm);
+    receiveDescriptionCapsule.setEpk(encryptor.epk);
+    receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
+    receiveDescriptionCapsule.setZkproof(zkproof);
 
     SaplingOutgoingPlaintext outPlaintext =
         new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
-    odesc.setCOut(outPlaintext
-        .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
-            odesc.getCm().toByteArray(),
+    receiveDescriptionCapsule.setCOut(outPlaintext
+        .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
+            receiveDescriptionCapsule.getCm().toByteArray(),
             encryptor).data);
-    return odesc;
+    return receiveDescriptionCapsule;
   }
 
   public static class SpendDescriptionInfo {
