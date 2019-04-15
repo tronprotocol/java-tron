@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
 public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMerkleTree> {
@@ -29,11 +29,11 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     }
   }
 
-  public SHA256Compress getLeft() {
+  public PedersenHash getLeft() {
     return this.merkleTree.getLeft();
   }
 
-  public void setLeft(SHA256Compress left) {
+  public void setLeft(PedersenHash left) {
     this.merkleTree = this.merkleTree.toBuilder().setLeft(left).build();
   }
 
@@ -45,11 +45,11 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     this.merkleTree = this.merkleTree.toBuilder().clearLeft().build();
   }
 
-  public SHA256Compress getRight() {
+  public PedersenHash getRight() {
     return this.merkleTree.getRight();
   }
 
-  public void setRight(SHA256Compress right) {
+  public void setRight(PedersenHash right) {
     this.merkleTree = this.merkleTree.toBuilder().setRight(right).build();
   }
 
@@ -61,7 +61,7 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     this.merkleTree = this.merkleTree.toBuilder().clearRight().build();
   }
 
-  public List<SHA256Compress> getParents() {
+  public List<PedersenHash> getParents() {
     return this.merkleTree.getParentsList();
   }
 
@@ -69,17 +69,17 @@ public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMer
     return this.merkleTree.getParentsList().isEmpty();
   }
 
-  public void setParents(int index, SHA256Compress parents) {
+  public void setParents(int index, PedersenHash parents) {
     this.merkleTree = this.merkleTree.toBuilder().setParents(index, parents).build();
   }
 
-  public void addParents(SHA256Compress parents) {
+  public void addParents(PedersenHash parents) {
     this.merkleTree = this.merkleTree.toBuilder().addParents(parents).build();
   }
 
   public void clearParents(int index) {
     this.merkleTree =
-        this.merkleTree.toBuilder().setParents(index, SHA256Compress.newBuilder().build()).build();
+        this.merkleTree.toBuilder().setParents(index, PedersenHash.newBuilder().build()).build();
   }
 
   public boolean isEmptyTree() {

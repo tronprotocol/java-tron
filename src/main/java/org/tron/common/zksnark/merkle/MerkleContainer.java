@@ -5,10 +5,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.SHA256CompressCapsule;
+import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer.OutputPointUtil;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
 public class MerkleContainer {
@@ -40,9 +40,9 @@ public class MerkleContainer {
 
       // tmp
       String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-      SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
       compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
-      SHA256Compress a = compressCapsule1.getInstance();
+      PedersenHash a = compressCapsule1.getInstance();
 
       container.append(a);
 
@@ -80,7 +80,7 @@ public class MerkleContainer {
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
       IncrementalMerkleTreeContainer tree, byte[] cm) {
 
-    SHA256CompressCapsule sha256CompressCapsule1 = new SHA256CompressCapsule();
+    PedersenHashCapsule sha256CompressCapsule1 = new PedersenHashCapsule();
     sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
     tree.append(sha256CompressCapsule1.getInstance());
 
@@ -119,7 +119,7 @@ public class MerkleContainer {
 
   public IncrementalMerkleVoucherContainer saveCmIntoMerkleVoucher(
       IncrementalMerkleVoucherContainer tree, byte[] cm) {
-    SHA256CompressCapsule sha256CompressCapsule1 = new SHA256CompressCapsule();
+    PedersenHashCapsule sha256CompressCapsule1 = new PedersenHashCapsule();
     sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
     tree.append(sha256CompressCapsule1.getInstance());
 

@@ -92,10 +92,10 @@ public class TransactionBuilder {
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
-      SpendDescriptionCapsule sdesc = generateSpendProof(spend, ctx);
+      SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
       // todo: add sdesc into tx
       //      mtx.vShieldedSpend.push_back(sdesc);
-      mutableTransactionCapsule.getSpends().add(sdesc);
+      mutableTransactionCapsule.getSpends().add(spendDescriptionCapsule);
     }
 
     // Create Sapling OutputDescriptions
@@ -179,13 +179,13 @@ public class TransactionBuilder {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Spend proof failed");
     }
-    SpendDescriptionCapsule sdesc = new SpendDescriptionCapsule();
-    sdesc.setValueCommitment(cv);
-    sdesc.setRk(rk);
-    sdesc.setZkproof(zkproof);
-    sdesc.setAnchor(spend.anchor);
-    sdesc.setNullifier(nf);
-    return sdesc;
+    SpendDescriptionCapsule spendDescriptionCapsule = new SpendDescriptionCapsule();
+    spendDescriptionCapsule.setValueCommitment(cv);
+    spendDescriptionCapsule.setRk(rk);
+    spendDescriptionCapsule.setZkproof(zkproof);
+    spendDescriptionCapsule.setAnchor(spend.anchor);
+    spendDescriptionCapsule.setNullifier(nf);
+    return spendDescriptionCapsule;
   }
 
   public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) {
@@ -219,23 +219,23 @@ public class TransactionBuilder {
         cv,
         zkproof)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Output proof failed");
+      throw new RuntimeException("Ourtput proof failed");
     }
 
-    ReceiveDescriptionCapsule odesc = new ReceiveDescriptionCapsule();
-    odesc.setValueCommitment(cv);
-    odesc.setNoteCommitment(cm);
-    odesc.setEpk(encryptor.epk);
-    odesc.setCEnc(enc.encCiphertext);
-    odesc.setZkproof(zkproof);
+    ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
+    receiveDescriptionCapsule.setValueCommitment(cv);
+    receiveDescriptionCapsule.setNoteCommitment(cm);
+    receiveDescriptionCapsule.setEpk(encryptor.epk);
+    receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
+    receiveDescriptionCapsule.setZkproof(zkproof);
 
     SaplingOutgoingPlaintext outPlaintext =
         new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
-    odesc.setCOut(outPlaintext
-        .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
-            odesc.getCm().toByteArray(),
+    receiveDescriptionCapsule.setCOut(outPlaintext
+        .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
+            receiveDescriptionCapsule.getCm().toByteArray(),
             encryptor).data);
-    return odesc;
+    return receiveDescriptionCapsule;
   }
 
   public static class SpendDescriptionInfo {

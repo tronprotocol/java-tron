@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.IncrementalMerkleVoucher;
 import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
 public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<IncrementalMerkleVoucher> {
@@ -38,11 +38,11 @@ public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<Incremental
     this.voucher = this.voucher.toBuilder().setTree(merkleTreeCapsule.getInstance()).build();
   }
 
-  public List<SHA256Compress> getFilled() {
+  public List<PedersenHash> getFilled() {
     return this.voucher.getFilledList();
   }
 
-  public void addFilled(SHA256Compress value) {
+  public void addFilled(PedersenHash value) {
     this.voucher = this.voucher.toBuilder().addFilled(value).build();
   }
 
