@@ -160,7 +160,8 @@ public class StressPrecondition {
     if (getChainParameters.get().getChainParameter(18).getValue() == 0) {
       proposalMap.put(18L, 1L);
     }*/
-  if (getChainParameters.get().getChainParameter(24).getValue() == 0L) {
+  if (getChainParameters.get().getChainParameter(22).getValue() == 0L) {
+      logger.info("24 value is " + getChainParameters.get().getChainParameter(24).getValue());
       proposalMap.put(24L, 1L);
     }
 /*
@@ -173,9 +174,8 @@ public class StressPrecondition {
 */
 
 
+    if (proposalMap.size() >= 1) {
 
-
-    if (!proposalMap.isEmpty()) {
       PublicMethed.createProposal(witness001Address, witnessKey001,
           proposalMap, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
