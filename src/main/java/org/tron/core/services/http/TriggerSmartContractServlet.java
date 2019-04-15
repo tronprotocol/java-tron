@@ -17,8 +17,10 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -76,6 +78,11 @@ public class TriggerSmartContractServlet extends HttpServlet {
       Transaction trx = wallet
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+        trx = TransactionUtil.setTransactionDelaySeconds(trx, delaySeconds);
+      }
+
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {

@@ -1275,6 +1275,7 @@ public class Manager {
       case UpdateSettingContract:
       case UpdateEnergyLimitContract:
       case TriggerSmartContract:
+      case CreateSmartContract:
         break;
       default:
         throw new ContractValidateException("Contract type not support deferred transaction");
