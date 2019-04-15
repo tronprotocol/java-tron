@@ -33,7 +33,7 @@ public class TransactionBuilder {
   private List<SpendDescriptionInfo> spends;
   @Setter
   @Getter
-  private List<OutputDescriptionInfo> outputs;
+  private List<ReceiveDescriptionInfo> outputs;
 
   private MutableTransactionCapsule mutableTransactionCapsule;
   //  List<TransparentInputInfo> tIns;
@@ -55,7 +55,7 @@ public class TransactionBuilder {
   }
 
   public void addOutputs(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
-    outputs.add(new OutputDescriptionInfo(ovk, new Note(to, value), memo));
+    outputs.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
     mutableTransactionCapsule.getAndAddBalance(-value);
   }
 
@@ -99,7 +99,7 @@ public class TransactionBuilder {
     }
 
     // Create Sapling OutputDescriptions
-    for (OutputDescriptionInfo output : outputs) {
+    for (ReceiveDescriptionInfo output : outputs) {
       ReceiveDescriptionCapsule rdesc = generateOutputProof(output, ctx);
       mutableTransactionCapsule.getReceives().add(rdesc);
     }
@@ -187,7 +187,7 @@ public class TransactionBuilder {
     return sdesc;
   }
 
-  public ReceiveDescriptionCapsule generateOutputProof(OutputDescriptionInfo output, Pointer ctx) {
+  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) {
     byte[] cm = output.getNote().cm();
     if (ByteArray.isEmpty(cm)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -259,7 +259,7 @@ public class TransactionBuilder {
   }
 
   @AllArgsConstructor
-  public class OutputDescriptionInfo {
+  public class ReceiveDescriptionInfo {
 
     @Getter
     private byte[] ovk;
