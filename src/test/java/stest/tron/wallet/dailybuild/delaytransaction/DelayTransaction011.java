@@ -70,7 +70,7 @@ public class DelayTransaction011 {
   }
 
   @Test(enabled = true, description = "When Bandwidth not enough, create delay transaction.")
-  public void test1TestDelayedTransactionFee() {
+  public void test1BandwidthInDelayTransaction() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
     noBandwidthAddress = ecKey.getAddress();
