@@ -92,19 +92,19 @@ message OutputPointInfo {
   int32 block_num = 3;
 }
 
-message SHA256Compress {
+message PedersenHash {
   bytes content = 1;
 }
 
 message IncrementalMerkleTree {
-  SHA256Compress left = 1;
-  SHA256Compress right = 2;
-  repeated SHA256Compress parents = 3;
+  PedersenHash left = 1;
+  PedersenHash right = 2;
+  repeated PedersenHash parents = 3;
 }
 
 message IncrementalMerkleVoucher {
   IncrementalMerkleTree tree = 1;
-  repeated SHA256Compress filled = 2;
+  repeated PedersenHash filled = 2;
   IncrementalMerkleTree cursor = 3;
   int64 cursor_depth = 4;
   bytes rt = 5;

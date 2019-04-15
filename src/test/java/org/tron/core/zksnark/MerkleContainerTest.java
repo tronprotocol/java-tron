@@ -32,7 +32,7 @@ import org.tron.core.db.Manager;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -70,25 +70,25 @@ public class MerkleContainerTest {
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
         new IncrementalMerkleTreeCapsule());
     String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-    SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
-    SHA256Compress a = compressCapsule1.getInstance();
+    PedersenHash a = compressCapsule1.getInstance();
 
 
 
     String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
-    SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
     byte[] bytes2 = ByteArray.fromHexString(s2);
     ZksnarkUtils.sort(bytes2);
     compressCapsule2.setContent(ByteString.copyFrom(bytes2));
-    SHA256Compress b = compressCapsule2.getInstance();
+    PedersenHash b = compressCapsule2.getInstance();
 
     String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
-    SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
+    PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
     byte[] bytes3 = ByteArray.fromHexString(s3);
     ZksnarkUtils.sort(bytes3);
     compressCapsule3.setContent(ByteString.copyFrom(bytes3));
-    SHA256Compress c = compressCapsule3.getInstance();
+    PedersenHash c = compressCapsule3.getInstance();
 
     tree.append(a);
     tree.append(b);
@@ -190,9 +190,9 @@ public class MerkleContainerTest {
       {
         long blockNum = 99;
         String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab01";
-        SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
-        SHA256Compress a = compressCapsule1.getInstance();
+        PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
         dbManager.getMerkleTreeIndexStore()
@@ -224,22 +224,22 @@ public class MerkleContainerTest {
             .put(new TransactionCapsule(transaction).getTransactionId().getBytes(),
                 transactionInfoCapsule1);
 
-        SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
-        SHA256Compress a = compressCapsule1.getInstance();
+        PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
-        SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
         compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm2)));
-        SHA256Compress b = compressCapsule2.getInstance();
+        PedersenHash b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
-        SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
         compressCapsule3.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm3)));
-        SHA256Compress c = compressCapsule3.getInstance();
+        PedersenHash c = compressCapsule3.getInstance();
         tree.toMerkleTreeContainer().append(c);
-        SHA256CompressCapsule compressCapsule4 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule4 = new PedersenHashCapsule();
         compressCapsule4.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm4)));
 
-        SHA256Compress d = compressCapsule4.getInstance();
+        PedersenHash d = compressCapsule4.getInstance();
         tree.toMerkleTreeContainer().append(d);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
       }
@@ -254,13 +254,13 @@ public class MerkleContainerTest {
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
 
-        SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
-        SHA256Compress a = compressCapsule1.getInstance();
+        PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
-        SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
         compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm2)));
-        SHA256Compress b = compressCapsule2.getInstance();
+        PedersenHash b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
 
@@ -293,22 +293,22 @@ public class MerkleContainerTest {
             .put(new TransactionCapsule(transaction2).getTransactionId().getBytes(),
                 transactionInfoCapsule1);
 
-        SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
-        SHA256Compress a = compressCapsule1.getInstance();
+        PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
-        SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
         compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm2)));
-        SHA256Compress b = compressCapsule2.getInstance();
+        PedersenHash b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
-        SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
         compressCapsule3.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm3)));
-        SHA256Compress c = compressCapsule3.getInstance();
+        PedersenHash c = compressCapsule3.getInstance();
         tree.toMerkleTreeContainer().append(c);
-        SHA256CompressCapsule compressCapsule4 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule4 = new PedersenHashCapsule();
         compressCapsule4.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm4)));
-        SHA256Compress d = compressCapsule4.getInstance();
+        PedersenHash d = compressCapsule4.getInstance();
         tree.toMerkleTreeContainer().append(d);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
       }
@@ -323,13 +323,13 @@ public class MerkleContainerTest {
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
 
-        SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
-        SHA256Compress a = compressCapsule1.getInstance();
+        PedersenHash a = compressCapsule1.getInstance();
         tree.toMerkleTreeContainer().append(a);
-        SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+        PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
         compressCapsule2.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm2)));
-        SHA256Compress b = compressCapsule2.getInstance();
+        PedersenHash b = compressCapsule2.getInstance();
         tree.toMerkleTreeContainer().append(b);
         dbManager.getMerkleTreeStore().put(tree.toMerkleTreeContainer().getMerkleTreeKey(), tree);
       }
@@ -396,14 +396,14 @@ public class MerkleContainerTest {
       for (; i <= a; i++) {
         byte[] bytes = new byte[32];
         bytes[0] = (byte) i;
-        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        PedersenHash c = PedersenHash.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         tree.toMerkleTreeContainer().append(c);
       }
       IncrementalMerkleVoucherContainer witnessa = tree.toMerkleTreeContainer().toVoucher();
       for (int j = i; j <= b; j++) {
         byte[] bytes = new byte[32];
         bytes[0] = (byte) j;
-        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        PedersenHash c = PedersenHash.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         witnessa.append(c);
       }
 
@@ -411,7 +411,7 @@ public class MerkleContainerTest {
       for (int j = i; j <= b; j++) {
         byte[] bytes = new byte[32];
         bytes[0] = (byte) j;
-        SHA256Compress c = SHA256Compress.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
+        PedersenHash c = PedersenHash.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         tree.toMerkleTreeContainer().append(c);
       }
       IncrementalMerkleVoucherContainer witnessb = tree.toMerkleTreeContainer().toVoucher();

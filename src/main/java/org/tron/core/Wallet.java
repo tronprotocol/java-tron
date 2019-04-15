@@ -80,7 +80,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
-import org.tron.common.zksnark.SHA256CompressCapsule;
+import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.ShieldAddressGenerator;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
@@ -137,7 +137,7 @@ import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.SHA256Compress;
+import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -1404,13 +1404,13 @@ public class Wallet {
         ZksnarkV0TransferContract zkContract = contract1.getParameter()
             .unpack(ZksnarkV0TransferContract.class);
 
-        SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+        PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
         cmCapsule1.setContent(zkContract.getCm1());
-        SHA256Compress cm1 = cmCapsule1.getInstance();
+        PedersenHash cm1 = cmCapsule1.getInstance();
 
-        SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+        PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
         cmCapsule2.setContent(zkContract.getCm2());
-        SHA256Compress cm2 = cmCapsule2.getInstance();
+        PedersenHash cm2 = cmCapsule2.getInstance();
 
         System.out.println("Update existing witness");
 
@@ -1478,13 +1478,13 @@ public class Wallet {
           ZksnarkV0TransferContract zkContract = contract1.getParameter()
               .unpack(ZksnarkV0TransferContract.class);
 
-          SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+          PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
           cmCapsule1.setContent(zkContract.getCm1());
-          SHA256Compress cm1 = cmCapsule1.getInstance();
+          PedersenHash cm1 = cmCapsule1.getInstance();
 
-          SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+          PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
           cmCapsule2.setContent(zkContract.getCm2());
-          SHA256Compress cm2 = cmCapsule2.getInstance();
+          PedersenHash cm2 = cmCapsule2.getInstance();
 
           witnessList.forEach(wit -> {
             wit.append(cm1);
@@ -1524,13 +1524,13 @@ public class Wallet {
           ZksnarkV0TransferContract zkContract = contract1.getParameter()
               .unpack(ZksnarkV0TransferContract.class);
 
-          SHA256CompressCapsule cmCapsule1 = new SHA256CompressCapsule();
+          PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
           cmCapsule1.setContent(zkContract.getCm1());
-          SHA256Compress cm1 = cmCapsule1.getInstance();
+          PedersenHash cm1 = cmCapsule1.getInstance();
 
-          SHA256CompressCapsule cmCapsule2 = new SHA256CompressCapsule();
+          PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
           cmCapsule2.setContent(zkContract.getCm2());
-          SHA256Compress cm2 = cmCapsule2.getInstance();
+          PedersenHash cm2 = cmCapsule2.getInstance();
 
           witness.append(cm1);
           witness.append(cm2);
