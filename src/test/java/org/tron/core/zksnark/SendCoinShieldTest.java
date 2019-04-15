@@ -147,8 +147,6 @@ public class SendCoinShieldTest {
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
     SHA256Compress a = compressCapsule1.getInstance();
 
-
-
     String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
     SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
     byte[] bytes2 = ByteArray.fromHexString(s2);

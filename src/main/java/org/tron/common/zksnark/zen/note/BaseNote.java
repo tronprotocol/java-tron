@@ -19,6 +19,7 @@ public class BaseNote {
       this.value = value;
       this.d = address.getD();
       this.pkD = address.getPkD();
+      r = new byte[32];
       Librustzcash.librustzcashSaplingGenerateR(r);
     }
 

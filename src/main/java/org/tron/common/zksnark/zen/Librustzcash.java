@@ -29,6 +29,8 @@ public class Librustzcash {
 
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
 
+    void librustzcash_sapling_generate_r(byte[] r);
+
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
 
     boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
@@ -198,7 +200,8 @@ public class Librustzcash {
   }
 
   public static byte[] librustzcashSaplingGenerateR(byte[] r) {
-    return null;
+    INSTANCE.librustzcash_sapling_generate_r(r);
+    return r;
   }
 
   public static Pointer librustzcashSaplingProvingCtxInit() {
