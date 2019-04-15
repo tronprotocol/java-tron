@@ -2,12 +2,17 @@ package org.tron.core.zksnark;
 
 import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
+import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.SHA256CompressCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.zen.HdChain;
@@ -31,6 +36,7 @@ import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.protos.Contract.SHA256Compress;
 
 public class SendCoinShieldTest {
 
@@ -133,10 +139,38 @@ public class SendCoinShieldTest {
 
   private IncrementalMerkleVoucherContainer createMerkleVoucherContainer(){
 
-    IncrementalMerkleVoucherCapsule voucherCapsule = new IncrementalMerkleVoucherCapsule();
-    IncrementalMerkleVoucherContainer voucher =
-        new IncrementalMerkleVoucherContainer(voucherCapsule);
+    //add
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
+    SHA256CompressCapsule compressCapsule1 = new SHA256CompressCapsule();
+    compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
+    SHA256Compress a = compressCapsule1.getInstance();
 
+
+
+    String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
+    SHA256CompressCapsule compressCapsule2 = new SHA256CompressCapsule();
+    byte[] bytes2 = ByteArray.fromHexString(s2);
+    ZksnarkUtils.sort(bytes2);
+    compressCapsule2.setContent(ByteString.copyFrom(bytes2));
+    SHA256Compress b = compressCapsule2.getInstance();
+
+    String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
+    SHA256CompressCapsule compressCapsule3 = new SHA256CompressCapsule();
+    byte[] bytes3 = ByteArray.fromHexString(s3);
+    ZksnarkUtils.sort(bytes3);
+    compressCapsule3.setContent(ByteString.copyFrom(bytes3));
+    SHA256Compress c = compressCapsule3.getInstance();
+
+    tree.append(a);
+    tree.append(b);
+    IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+    voucher.append(c);
+
+    System.out.println(ByteArray.toHexString(voucher.root().getContent().toByteArray()));
+
+    tree.append(c);
     return voucher;
   }
 
