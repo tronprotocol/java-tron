@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen.zip32;
 
 import java.security.SecureRandom;
 import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.zksnark.zen.utils.CryptoGenerichashBlake2BState;
 import org.tron.common.zksnark.zen.utils.PRF;
 

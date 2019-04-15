@@ -1,6 +1,6 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
+import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import com.sun.jna.Pointer;
 import java.util.List;
@@ -10,6 +10,7 @@ import org.testng.collections.Lists;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.common.zksnark.zen.HdChain;
 import org.tron.common.zksnark.zen.KeyStore;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.RpcWallet;
@@ -18,6 +19,7 @@ import org.tron.common.zksnark.zen.ShieldWallet;
 import org.tron.common.zksnark.zen.TransactionBuilder;
 import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
 import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
+import org.tron.common.zksnark.zen.ZkChainParams;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.FullViewingKey;
 import org.tron.common.zksnark.zen.address.IncomingViewingKey;
@@ -26,28 +28,9 @@ import org.tron.common.zksnark.zen.address.SpendingKey;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
 import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
+import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
-import org.tron.common.zksnark.sapling.HdChain;
-import org.tron.common.zksnark.sapling.KeyStore;
-import org.tron.common.zksnark.sapling.Librustzcash;
-import org.tron.common.zksnark.sapling.RpcWallet;
-import org.tron.common.zksnark.sapling.ShieldCoinConstructor;
-import org.tron.common.zksnark.sapling.ShieldWallet;
-import org.tron.common.zksnark.sapling.TransactionBuilder;
-import org.tron.common.zksnark.sapling.TransactionBuilder.SpendDescriptionInfo;
-import org.tron.common.zksnark.sapling.TransactionBuilder.TransactionBuilderResult;
-import org.tron.common.zksnark.sapling.ZkChainParams;
-import org.tron.common.zksnark.sapling.address.ExpandedSpendingKey;
-import org.tron.common.zksnark.sapling.address.FullViewingKey;
-import org.tron.common.zksnark.sapling.address.IncomingViewingKey;
-import org.tron.common.zksnark.sapling.address.PaymentAddress;
-import org.tron.common.zksnark.sapling.address.SpendingKey;
-import org.tron.common.zksnark.sapling.note.BaseNote.Note;
-import org.tron.common.zksnark.sapling.transaction.Recipient;
-import org.tron.common.zksnark.sapling.transaction.SpendDescriptionCapsule;
-import org.tron.common.zksnark.sapling.utils.KeyIo;
-import org.tron.common.zksnark.sapling.zip32.ExtendedSpendingKey;
-import org.tron.common.zksnark.sapling.zip32.HDSeed;
+import org.tron.common.zksnark.zen.zip32.HDSeed;
 
 public class SendCoinShieldTest {
 

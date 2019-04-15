@@ -188,7 +188,6 @@ public class TransactionBuilder {
     return sdesc;
   }
 
-  public static class SpendDescriptionInfo {
   public ReceiveDescriptionCapsule generateOutputProof(OutputDescriptionInfo output, Pointer ctx) {
     byte[] cm = output.getNote().cm();
     if (ByteArray.isEmpty(cm)) {
@@ -239,7 +238,7 @@ public class TransactionBuilder {
     return odesc;
   }
 
-  public class SpendDescriptionInfo {
+  public static class SpendDescriptionInfo {
 
     public ExpandedSpendingKey expsk;
 
