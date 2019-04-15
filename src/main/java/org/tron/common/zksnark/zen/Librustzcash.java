@@ -27,6 +27,15 @@ public class Librustzcash {
 
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
 
+    void librustzcash_sapling_compute_nf(byte[] d,
+        byte[] pk_d,
+        long value_,
+        byte[] r,
+        byte[] ak,
+        byte[] nk,
+        long position,
+        byte[] result);
+
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
 
     void librustzcash_sapling_generate_r(byte[] r);
@@ -182,6 +191,7 @@ public class Librustzcash {
       byte[] nk,
       long position,
       byte[] result) {
+    INSTANCE.librustzcash_sapling_compute_nf(d, pk_d, value_, r, ak, nk, position, result);
     return true;
   }
 

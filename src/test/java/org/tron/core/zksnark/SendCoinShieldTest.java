@@ -129,12 +129,20 @@ public class SendCoinShieldTest {
     }
   }
 
-  @Test
+  //@Test
   public void testVoucher() {
     IncrementalMerkleVoucherCapsule voucherCapsule = new IncrementalMerkleVoucherCapsule();
     IncrementalMerkleVoucherContainer voucher =
         new IncrementalMerkleVoucherContainer(voucherCapsule);
     byte[] voucherPath = voucher.path().encode();
+  }
+
+
+  @Test
+  public void testPath() {
+    IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
+    byte[] encode = voucher.path().encode();
+    System.out.print(ByteArray.toHexString(encode));
   }
 
   private IncrementalMerkleVoucherContainer createMerkleVoucherContainer(){
