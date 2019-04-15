@@ -1,6 +1,7 @@
 package org.tron.common.zksnark.sapling;
 
 import com.sun.jna.Pointer;
+import java.awt.Point;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -15,6 +16,7 @@ import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.sapling.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
 import org.tron.common.zksnark.sapling.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.sapling.note.SaplingOutgoingPlaintext;
+import org.tron.common.zksnark.sapling.transaction.MutableTransactionCapsule;
 import org.tron.common.zksnark.sapling.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.sapling.transaction.SpendDescriptionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
@@ -33,6 +35,8 @@ public class TransactionBuilder {
   @Setter
   @Getter
   private List<OutputDescriptionInfo> outputs;
+
+  private MutableTransactionCapsule mutableTransactionCapsule;
   //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
@@ -48,7 +52,12 @@ public class TransactionBuilder {
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
     //    mtx.valueBalance += note.value;
+    mutableTransactionCapsule.getAndAddBalance(note.value);
+  }
 
+  public void addOutputs(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
+    outputs.add(new OutputDescriptionInfo(ovk, new Note(to, value), memo));
+    mutableTransactionCapsule.getAndAddBalance(-value);
   }
 
   public void AddTransparentInput(String address, long value) {
@@ -87,58 +96,13 @@ public class TransactionBuilder {
       SpendDescriptionCapsule sdesc = generateSpendProof(spend, ctx);
       // todo: add sdesc into tx
       //      mtx.vShieldedSpend.push_back(sdesc);
+      mutableTransactionCapsule.getSpends().add(sdesc);
     }
 
     // Create Sapling OutputDescriptions
     for (OutputDescriptionInfo output : outputs) {
-      byte[] cm = output.note.cm();
-      if (ByteArray.isEmpty(cm)) {
-        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-        throw new RuntimeException("Output is invalid");
-      }
-
-      NotePlaintext notePlaintext = new NotePlaintext(output.note, output.memo);
-
-      Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext.encrypt(output.note.pkD);
-      if (!res.isPresent()) {
-        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-        throw new RuntimeException("Failed to encrypt note");
-      }
-
-      SaplingNotePlaintextEncryptionResult enc = res.get();
-      SaplingNoteEncryption encryptor = enc.noteEncryption;
-
-      byte[] cv = new byte[32];
-      byte[] zkproof = new byte[32];
-      if (!Librustzcash.librustzcashSaplingOutputProof(
-          ctx,
-          encryptor.esk,
-          output.note.d.getData(),
-          output.note.pkD,
-          output.note.r,
-          output.note.value,
-          cv,
-          zkproof)) {
-        Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-        throw new RuntimeException("Output proof failed");
-      }
-
-      ReceiveDescriptionCapsule odesc = new ReceiveDescriptionCapsule();
-      odesc.setValueCommitment(cv);
-      odesc.setNoteCommitment(cm);
-      odesc.setEpk(encryptor.epk);
-      odesc.setCEnc(enc.encCiphertext);
-      odesc.setZkproof(zkproof);
-
-      SaplingOutgoingPlaintext outPlaintext =
-          new SaplingOutgoingPlaintext(output.note.pkD, encryptor.esk);
-      odesc.setCOut(outPlaintext
-          .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
-              odesc.getCm().toByteArray(),
-              encryptor).data);
-      //todo: add odesc into tx
-//      mtx.vShieldedOutput.push_back(odesc);
-
+      ReceiveDescriptionCapsule rdesc = generateOutputProof(output, ctx);
+      mutableTransactionCapsule.getReceives().add(rdesc);
     }
 
     // Empty output script.
@@ -224,6 +188,55 @@ public class TransactionBuilder {
     return sdesc;
   }
 
+  public ReceiveDescriptionCapsule generateOutputProof(OutputDescriptionInfo output, Pointer ctx) {
+    byte[] cm = output.getNote().cm();
+    if (ByteArray.isEmpty(cm)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Output is invalid");
+    }
+
+    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
+
+    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext.encrypt(output.getNote().pkD);
+    if (!res.isPresent()) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Failed to encrypt note");
+    }
+
+    SaplingNotePlaintextEncryptionResult enc = res.get();
+    SaplingNoteEncryption encryptor = enc.noteEncryption;
+
+    byte[] cv = new byte[32];
+    byte[] zkproof = new byte[32];
+    if (!Librustzcash.librustzcashSaplingOutputProof(
+        ctx,
+        encryptor.esk,
+        output.getNote().d.getData(),
+        output.getNote().pkD,
+        output.getNote().r,
+        output.getNote().value,
+        cv,
+        zkproof)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Output proof failed");
+    }
+
+    ReceiveDescriptionCapsule odesc = new ReceiveDescriptionCapsule();
+    odesc.setValueCommitment(cv);
+    odesc.setNoteCommitment(cm);
+    odesc.setEpk(encryptor.epk);
+    odesc.setCEnc(enc.encCiphertext);
+    odesc.setZkproof(zkproof);
+
+    SaplingOutgoingPlaintext outPlaintext =
+        new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
+    odesc.setCOut(outPlaintext
+        .encrypt(output.ovk, odesc.getValueCommitment().toByteArray(),
+            odesc.getCm().toByteArray(),
+            encryptor).data);
+    return odesc;
+  }
+
   public class SpendDescriptionInfo {
 
     public ExpandedSpendingKey expsk;
@@ -247,11 +260,12 @@ public class TransactionBuilder {
 
   @AllArgsConstructor
   public class OutputDescriptionInfo {
-
-    public byte[] ovk;
-
-    public Note note;
-    public byte[] memo; // 256
+    @Getter
+    private byte[] ovk;
+    @Getter
+    private Note note;
+    @Getter
+    private byte[] memo; // 256
   }
 
   public static class TransactionBuilderResult {
