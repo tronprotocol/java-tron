@@ -418,13 +418,13 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
-      return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
-    }
-
-    Message message = new TransactionMessage(signaturedTransaction);
-
     try {
+      trx = new TransactionCapsule(signaturedTransaction.toByteArray());
+      if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
+        return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
+      }
+
+      Message message = new TransactionMessage(signaturedTransaction);
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
