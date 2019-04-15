@@ -21,7 +21,7 @@ public class DelaySendCoin extends AbstractTransferTransactionCreator implements
 
   private String ownerAddress = commonOwnerAddress;
   private String toAddress = commonToAddress;
-  private long amount = 1L;
+  private long amount = 13L;
   private String privateKey = commonOwnerPrivateKey;
   private Long delaySeconds = 200L;
   public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
