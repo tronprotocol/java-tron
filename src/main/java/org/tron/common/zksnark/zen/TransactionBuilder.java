@@ -147,7 +147,8 @@ public class TransactionBuilder {
     return null;
   }
 
-  public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, Pointer ctx) {
+  public static SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+      Pointer ctx) {
 
     byte[] cm = spend.note.cm();
     byte[] nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.voucher.position());
@@ -237,7 +238,7 @@ public class TransactionBuilder {
     return odesc;
   }
 
-  public class SpendDescriptionInfo {
+  public static class SpendDescriptionInfo {
 
     public ExpandedSpendingKey expsk;
 

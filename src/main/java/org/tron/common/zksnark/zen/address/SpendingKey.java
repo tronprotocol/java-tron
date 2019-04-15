@@ -14,7 +14,7 @@ public class SpendingKey {
   public static SpendingKey random() {
     while (true) {
       SpendingKey sk = new SpendingKey(randomUint256());
-      if (sk.fullViewingKey().is_valid()) {
+      if (sk.fullViewingKey().isValid()) {
         return sk;
       }
     }
@@ -26,7 +26,6 @@ public class SpendingKey {
   }
 
   public FullViewingKey fullViewingKey() {
-
     return expandedSpendingKey().fullViewingKey();
   }
 

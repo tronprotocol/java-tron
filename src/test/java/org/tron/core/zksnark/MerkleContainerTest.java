@@ -1,4 +1,4 @@
-package org.tron.common.zksnark;
+package org.tron.core.zksnark;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -13,6 +13,7 @@ import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.SHA256CompressCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
