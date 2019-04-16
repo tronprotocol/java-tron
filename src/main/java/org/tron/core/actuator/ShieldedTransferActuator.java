@@ -52,7 +52,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    byte[] signHash = new byte[256];
+    byte[] signHash = new byte[32];
     // TODO generate signhash
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
