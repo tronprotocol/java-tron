@@ -77,7 +77,7 @@ public class ContractScenario001 {
 
     Assert.assertTrue(PublicMethed.sendcoin(contract001Address, 20000000L, toAddress,
         testKey003, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 10000000L,
+    Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract001Address, 15000000L,
         3, 1, contract001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract001Address,
