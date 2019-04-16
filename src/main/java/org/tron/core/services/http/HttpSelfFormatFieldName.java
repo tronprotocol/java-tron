@@ -36,6 +36,8 @@ public class HttpSelfFormatFieldName {
         //TransferContract
         AddressFieldNameMap.put("protocol.TransferContract.owner_address", 1);
         AddressFieldNameMap.put("protocol.TransferContract.to_address", 1);
+        //CancelDeferredTransactionContract
+        AddressFieldNameMap.put("protocol.CancelDeferredTransactionContract.ownerAddress", 1);
         //TransferAssetContract
         AddressFieldNameMap.put("protocol.TransferAssetContract.owner_address", 1);
         AddressFieldNameMap.put("protocol.TransferAssetContract.to_address", 1);
@@ -51,6 +53,9 @@ public class HttpSelfFormatFieldName {
         //UpdateEnergyLimitContract
         AddressFieldNameMap.put("protocol.UpdateEnergyLimitContract.owner_address", 1);
         AddressFieldNameMap.put("protocol.UpdateEnergyLimitContract.contract_address", 1);
+        //ClearABIContract
+        AddressFieldNameMap.put("protocol.ClearABIContract.owner_address", 1);
+        AddressFieldNameMap.put("protocol.ClearABIContract.contract_address", 1);
         //WitnessCreateContract
         AddressFieldNameMap.put("protocol.WitnessCreateContract.owner_address", 1);
         //WitnessUpdateContract
@@ -124,6 +129,9 @@ public class HttpSelfFormatFieldName {
         //TransactionInfo
         AddressFieldNameMap.put("protocol.TransactionInfo.Log.address", 1);
         AddressFieldNameMap.put("protocol.TransactionInfo.contract_address", 1);
+        //DeferredTransaction
+        AddressFieldNameMap.put("protocol.DeferredTransaction.senderAddress", 1);
+        AddressFieldNameMap.put("protocol.DeferredTransaction.receiverAddress", 1);
         //BlockHeader
         AddressFieldNameMap.put("protocol.BlockHeader.raw.witness_address", 1);
         //SmartContract

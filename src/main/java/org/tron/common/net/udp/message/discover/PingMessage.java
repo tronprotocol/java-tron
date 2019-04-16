@@ -52,6 +52,11 @@ public class PingMessage extends Message {
   }
 
   @Override
+  public long getTimestamp() {
+    return this.pingMessage.getTimestamp();
+  }
+
+  @Override
   public Node getFrom() {
     return Message.getNode(pingMessage.getFrom());
   }

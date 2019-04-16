@@ -129,7 +129,7 @@ public class TronNetService {
         case UNLINK_BLOCK:
           code = ReasonCode.UNLINKABLE;
           break;
-        case DEFAULT:
+        default:
           code = ReasonCode.UNKNOWN;
           break;
       }

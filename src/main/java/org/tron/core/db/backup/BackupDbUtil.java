@@ -20,7 +20,7 @@ import org.tron.core.db2.core.SnapshotRoot;
 public class BackupDbUtil {
 
   @Getter
-  private static String DB_BACKUP_STATE = "DB";
+  private static final String DB_BACKUP_STATE = "DB";
   private static final int DB_BACKUP_INDEX1 = 1;
   private static final int DB_BACKUP_INDEX2 = 2;
 
@@ -29,9 +29,9 @@ public class BackupDbUtil {
 
   public enum State {
     BAKINGONE(1), BAKEDONE(11), BAKINGTWO(2), BAKEDTWO(22);
-    public int status;
+    private int status;
 
-    private State(int status) {
+    State(int status) {
       this.status = status;
     }
 

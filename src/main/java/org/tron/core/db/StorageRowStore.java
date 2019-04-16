@@ -10,8 +10,6 @@ import org.tron.core.capsule.StorageRowCapsule;
 @Component
 public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
 
-  private static StorageRowStore instance;
-
   @Autowired
   private StorageRowStore(@Value("storage-row") String dbName) {
     super(dbName);
@@ -22,9 +20,5 @@ public class StorageRowStore extends TronStoreWithRevoking<StorageRowCapsule> {
     StorageRowCapsule row = getUnchecked(key);
     row.setRowKey(key);
     return row;
-  }
-
-  void destory() {
-    instance = null;
   }
 }
