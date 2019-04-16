@@ -33,7 +33,7 @@ public class TransactionBuilder {
   private List<SpendDescriptionInfo> spends;
   @Setter
   @Getter
-  private List<ReceiveDescriptionInfo> outputs;
+  private List<ReceiveDescriptionInfo> receives;
 
   private MutableTransactionCapsule mutableTransactionCapsule;
   private ShieldedTransferContract tx;
@@ -56,7 +56,7 @@ public class TransactionBuilder {
   }
 
   public void addOutputs(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
-    outputs.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
+    receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
     mutableTransactionCapsule.getAndAddBalance(-value);
   }
 
@@ -100,9 +100,9 @@ public class TransactionBuilder {
     }
 
     // Create Sapling OutputDescriptions
-    for (ReceiveDescriptionInfo output : outputs) {
-      ReceiveDescriptionCapsule rdesc = generateOutputProof(output, ctx);
-      mutableTransactionCapsule.getReceives().add(rdesc);
+    for (ReceiveDescriptionInfo receive : receives) {
+      ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
+      mutableTransactionCapsule.getReceives().add(receiveDescriptionCapsule);
     }
 
     // Empty output script.
@@ -123,7 +123,6 @@ public class TransactionBuilder {
           spends.get(i).expsk.getAsk(),
           spends.get(i).alpha,
           dataToBeSigned,
-//          mtx.vShieldedSpend[i].spendAuthSig.data());
           result);
     }
 
@@ -131,19 +130,12 @@ public class TransactionBuilder {
     byte[] bindingSig = null;
     Librustzcash.librustzcashSaplingBindingSig(
         ctx,
-//        mtx.valueBalance,
         valueBalance,
         dataToBeSigned,
-//        mtx.bindingSig.data()
         bindingSig
     );
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-
-    // Transparent signatures
-//    for (int nIn = 0; nIn < mtx.vin.size(); nIn++) {
-//
-//    }
 
     return null;
   }

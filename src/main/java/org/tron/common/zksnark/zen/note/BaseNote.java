@@ -19,6 +19,7 @@ public class BaseNote {
       this.value = value;
       this.d = address.getD();
       this.pkD = address.getPkD();
+      r = new byte[32];
       Librustzcash.librustzcashSaplingGenerateR(r);
     }
 
@@ -31,7 +32,7 @@ public class BaseNote {
 
     // Call librustzcash to compute the commitment
     public byte[] cm() {
-      byte[] result = null;
+      byte[] result = new byte[256];
       if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pkD, value, r, result)) {
         return null;
       }
@@ -46,7 +47,7 @@ public class BaseNote {
       byte[] ak = vk.getAk();
       byte[] nk = vk.getNk();
 
-      byte[] result = null; // 256
+      byte[] result = new byte[256]; // 256
       if (!Librustzcash.librustzcashSaplingComputeNf(
           d.getData(), pkD, value, r, ak, nk, position, result)) {
         return null;
