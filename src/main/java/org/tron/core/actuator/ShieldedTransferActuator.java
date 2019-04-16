@@ -10,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ReceiveDescription;
@@ -30,29 +31,44 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throws ContractExeException {
 
     long fee = calcFee();
-
+    ShieldedTransferContract strx;
     try {
-      ShieldedTransferContract strx = contract.unpack(ShieldedTransferContract.class);
+      strx = contract.unpack(ShieldedTransferContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
-    return false;
+    executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
+    executeShielded();
+    executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+
+    return true;
   }
 
-  private boolean executeTransparentIn() {
 
-    return false;
+  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee, TransactionResultCapsule ret) throws ContractExeException {
+    try {
+      dbManager.adjustBalance(ownerAddress, -fee);
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      dbManager.adjustBalance(ownerAddress, -amount);
+      ret.setStatus(fee, code.SUCESS);
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
   }
 
-  private boolean executeTransparentOut() {
-    return false;
+  private void executeTransparentIn(byte[] toAddress, long amount) throws ContractExeException {
+    try {
+      dbManager.adjustBalance(toAddress, amount);
+    } catch (BalanceInsufficientException e) {
+      throw new ContractExeException(e.getMessage());
+    }
   }
 
-  private boolean executeShielded() {
-    return false;
+  //record shielded transaction data.
+  private void executeShielded() {
   }
 
   @Override
