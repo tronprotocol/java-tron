@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -16,6 +15,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.Protocol.Transaction.Result.code;
 
 
 @Slf4j(topic = "actuator")
@@ -26,7 +26,32 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule result) throws ContractExeException {
+  public boolean execute(TransactionResultCapsule ret)
+      throws ContractExeException {
+
+    long fee = calcFee();
+
+    try {
+      ShieldedTransferContract strx = contract.unpack(ShieldedTransferContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
+
+    return false;
+  }
+
+  private boolean executeTransparentIn() {
+
+    return false;
+  }
+
+  private boolean executeTransparentOut() {
+    return false;
+  }
+
+  private boolean executeShielded() {
     return false;
   }
 
