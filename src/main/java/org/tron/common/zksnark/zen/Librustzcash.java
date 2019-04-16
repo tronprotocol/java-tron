@@ -89,7 +89,7 @@ public class Librustzcash {
 
     boolean librustzcash_sapling_spend_sig(
         byte[] ask,
-        byte[] alpha,
+        byte[] ar,
         byte[] sighash,
         byte[] result);
 
@@ -277,9 +277,9 @@ public class Librustzcash {
   public static boolean librustzcashSaplingSpendSig(
       byte[] ask,
       byte[] alpha,
-      byte[] sighash,
+      byte[] sigHash,
       byte[] result) {
-    return INSTANCE.librustzcash_sapling_spend_sig(ask, alpha, sighash, result);
+    return INSTANCE.librustzcash_sapling_spend_sig(ask, alpha, sigHash, result);
   }
 
   public static boolean librustzcashSaplingBindingSig(
