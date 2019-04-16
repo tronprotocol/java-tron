@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
@@ -45,7 +46,8 @@ public class ClearABIContractActuatorTest {
   private static final String SMART_CONTRACT_NAME = "smart_contarct";
   private static final String CONTRACT_ADDRESS = "111111";
   private static final String NO_EXIST_CONTRACT_ADDRESS = "2222222";
-  private static final ABI SOURCE_ABI = jsonStr2Abi("[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
+  private static final ABI SOURCE_ABI = jsonStr2Abi(
+      "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}]");
   private static final ABI TARGET_ABI = ABI.getDefaultInstance();
 
   static {
@@ -63,6 +65,7 @@ public class ClearABIContractActuatorTest {
    */
   @BeforeClass
   public static void init() {
+    VMConfig.initAllowTvmConstantinople(1);
     dbManager = context.getBean(Manager.class);
   }
 
