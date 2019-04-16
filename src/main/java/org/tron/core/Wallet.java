@@ -426,13 +426,14 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
-      return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR).build();
-    }
-
-    Message message = new TransactionMessage(signaturedTransaction);
-
     try {
+      trx = new TransactionCapsule(signaturedTransaction.toByteArray());
+      if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
+        return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
+            .build();
+      }
+
+      Message message = new TransactionMessage(signaturedTransaction);
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -932,12 +933,24 @@ public class Wallet {
         .setKey("getUpdateAccountPermissionFee")
         .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
         .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountStateRoot")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowProtoFilterNum")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
+        .build());
+
     // ALLOW_TVM_CONSTANTINOPLE, // 1, 30
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowTvmConstantinople")
             .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
             .build());
+
     return builder.build();
   }
 

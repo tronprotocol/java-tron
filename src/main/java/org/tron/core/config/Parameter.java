@@ -24,7 +24,7 @@ public class Parameter {
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_VOTE_NUMBER = 30;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 7;
+    public static final int BLOCK_VERSION = 8;
   }
 
   public class NodeConstant {
@@ -101,6 +101,8 @@ public class Parameter {
     DEFERRED_TRANSACTION_FEE, // 100_000, 25
     CANCEL_DEFERRED_TRANSACTION_FEE, // 50_000, 26
     MAX_DEFERRED_TRANSACTION_PROCESS_TIME, // 100, 27
+    ALLOW_PROTO_FILTER_NUM,//1, 28
+    ALLOW_ACCOUNT_STATE_ROOT,//1, 29
     ALLOW_TVM_CONSTANTINOPLE, // 1, 30
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
@@ -126,7 +128,7 @@ public class Parameter {
     ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7),
-    VERSION_4_0(8);
+    VERSION_3_6(8);
     @Getter
     private int value;
 

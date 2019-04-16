@@ -221,7 +221,7 @@ public class ProposalController {
           break;
         }
         case (28): {
-          manager.getDynamicPropertiesStore().saveAllowProtoFilterBlockNum(entry.getValue());
+          manager.getDynamicPropertiesStore().saveAllowProtoFilterNum(entry.getValue());
           break;
         }
         case (29): {

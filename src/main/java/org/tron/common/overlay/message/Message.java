@@ -95,8 +95,8 @@ public abstract class Message {
     return codedInputStream;
   }
 
-  private static boolean isFilter() {
-    return manager.getDynamicPropertiesStore().getAllowProtoFilterBlockNum() == 1;
+  public static boolean isFilter() {
+    return manager.getDynamicPropertiesStore().getAllowProtoFilterNum() == 1;
   }
 
 }

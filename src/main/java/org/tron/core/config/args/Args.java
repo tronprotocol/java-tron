@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static java.lang.Math.max;
+import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -454,6 +455,17 @@ public class Args {
   @Getter
   private RocksDbSettings rocksDBCustomSettings;
 
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  private boolean version;
+
+  @Getter
+  @Setter
+  private long allowProtoFilterNum;
+
+  @Getter
+  @Setter
+  private long allowAccountStateRoot;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -528,6 +540,8 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.allowProtoFilterNum = 0;
+    INSTANCE.allowAccountStateRoot = 0;
   }
 
   /**
@@ -535,6 +549,11 @@ public class Args {
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    if (INSTANCE.version) {
+      JCommander.getConsole().println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
@@ -605,11 +624,11 @@ public class Args {
           } catch (IOException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           } catch (CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           }
         }
       }
@@ -910,6 +929,14 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.allowProtoFilterNum =
+        config.hasPath("committee.allowProtoFilterNum") ? config
+            .getInt("committee.allowProtoFilterNum") : 0;
+
+    INSTANCE.allowAccountStateRoot =
+        config.hasPath("committee.allowAccountStateRoot") ? config
+            .getInt("committee.allowAccountStateRoot") : 0;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -1291,6 +1318,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("Version name: {}", Version.versionName);
+    logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("DB engine : {}", args.getStorage().getDbEngine());
