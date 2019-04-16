@@ -93,8 +93,6 @@ public class TransactionBuilder {
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
       SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
-      // todo: add sdesc into tx
-      //      mtx.vShieldedSpend.push_back(sdesc);
       mutableTransactionCapsule.getSpends().add(spendDescriptionCapsule);
     }
 
@@ -108,7 +106,7 @@ public class TransactionBuilder {
     byte[] dataToBeSigned;//256 
     try {
 //      dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0,
-//          consensusBranchId);
+////          consensusBranchId);
       dataToBeSigned = null;
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);

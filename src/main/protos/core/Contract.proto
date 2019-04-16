@@ -368,7 +368,6 @@ message ReceiveStatement {
   Note note = 2;
 }
 
-
 message GrothProof {
   bytes values = 1;
 }
