@@ -110,7 +110,7 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
     this.spendDescription = this.spendDescription.toBuilder().setZkproof(proof).build();
   }
 
-  public ByteString getSpendAuthSig() {
+  public ByteString getSpendAuthoritySignature() {
     return this.spendDescription.getSpendAuthoritySignature();
   }
 

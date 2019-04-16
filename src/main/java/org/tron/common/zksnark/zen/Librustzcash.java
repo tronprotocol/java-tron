@@ -87,6 +87,12 @@ public class Librustzcash {
         byte[] zkproof
     );
 
+    boolean librustzcash_sapling_spend_sig(
+        byte[] ask,
+        byte[] alpha,
+        byte[] sighash,
+        byte[] result);
+
     boolean librustzcash_sapling_binding_sig(
         Pointer ctx,
         long valueBalance,
@@ -141,7 +147,6 @@ public class Librustzcash {
         byte[] b,
         byte[] result
     );
-
   }
 
   // todo jni
@@ -271,10 +276,10 @@ public class Librustzcash {
 
   public static boolean librustzcashSaplingSpendSig(
       byte[] ask,
-      byte[] ar,
+      byte[] alpha,
       byte[] sighash,
       byte[] result) {
-    return false;
+    return INSTANCE.librustzcash_sapling_spend_sig(ask, alpha, sighash, result);
   }
 
   public static boolean librustzcashSaplingBindingSig(
@@ -304,7 +309,9 @@ public class Librustzcash {
       byte[] sighashValue
 
   ) {
-    return INSTANCE.librustzcash_sapling_check_spend(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig, sighashValue);
+    return INSTANCE
+        .librustzcash_sapling_check_spend(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
+            sighashValue);
   }
 
   public boolean librustzcashSaplingCheckOutput(
@@ -332,7 +339,6 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
-
     return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
   }
 
