@@ -15,7 +15,7 @@ contract B{
     constructor() payable public{}
     function() payable public{}
     function getOne(address contractAddres, address toAddress) payable public{
-        contractAddres.call(bytes4(keccak256("suicide(address)")),address(this));
+        contractAddres.call(bytes4(keccak256("suicide1(address)")),address(this));
 
     }
     function callCGetZero(address cAddress,uint256 amount){
@@ -37,7 +37,7 @@ contract C{
 
 contract D{
     constructor () payable public{}
-    function suicide(address toAddress) public payable{
+    function suicide1(address toAddress) public payable{
         selfdestruct(toAddress);
     }
     function () payable public{}

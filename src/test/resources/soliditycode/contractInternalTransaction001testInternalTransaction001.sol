@@ -11,8 +11,8 @@ contract A{
         b2.callCGetZero(cAddr,2);//1.6
     }
     function test2(address payable cAddress,uint256 amount) public payable{
-        cAddress.call.value(amount)(abi.encode(bytes4(keccak256("newBAndTransfer()"))));//2.1
-        cAddress.call.value(amount + 1)(abi.encode(bytes4(keccak256("newBAndTransfer()"))));//2.6
+        cAddress.call.value(amount)(abi.encodeWithSignature("newBAndTransfer()"));//2.1
+        cAddress.call.value(amount + 1)(abi.encodeWithSignature("newBAndTransfer()"));//2.6
     }
 }
 
@@ -23,7 +23,7 @@ contract B{
         return 1;
     }
     function callCGetZero(address payable cAddress,uint256 amount) public{
-        cAddress.call.value(amount)(abi.encode(bytes4(keccak256("getZero()"))));//1.5,1.7
+        cAddress.call.value(amount)(abi.encodeWithSignature("getZero()"));//1.5,1.7
     }
 }
 

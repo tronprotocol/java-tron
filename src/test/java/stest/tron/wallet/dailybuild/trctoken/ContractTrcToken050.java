@@ -111,8 +111,8 @@ public class ContractTrcToken050 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // devAddress transfer token to A
-    PublicMethed.transferAsset(dev001Address, assetAccountId.toByteArray(), 101, user001Address,
-        user001Key, blockingStubFull);
+    PublicMethed.transferAsset(user001Address, assetAccountId.toByteArray(), 101, dev001Address,
+        dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
