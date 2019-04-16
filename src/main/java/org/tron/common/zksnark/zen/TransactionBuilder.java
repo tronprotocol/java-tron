@@ -15,7 +15,6 @@ import org.tron.common.zksnark.zen.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.zen.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
 import org.tron.common.zksnark.zen.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.zen.note.SaplingOutgoingPlaintext;
-import org.tron.common.zksnark.zen.transaction.MutableTransactionCapsule;
 import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
@@ -35,7 +34,6 @@ public class TransactionBuilder {
   @Getter
   private List<ReceiveDescriptionInfo> receives;
 
-  private MutableTransactionCapsule mutableTransactionCapsule;
   private ShieldedTransferContract tx;
   //  List<TransparentInputInfo> tIns;
 
@@ -51,13 +49,12 @@ public class TransactionBuilder {
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
-    //    mtx.valueBalance += note.value;
-    mutableTransactionCapsule.getAndAddBalance(note.value);
+    tx = tx.toBuilder().setValueBalance(tx.getValueBalance() + note.value).build();
   }
 
   public void addOutputs(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
-    mutableTransactionCapsule.getAndAddBalance(-value);
+    tx = tx.toBuilder().setValueBalance(tx.getValueBalance() - value).build();
   }
 
   public void AddTransparentInput(String address, long value) {
@@ -94,13 +91,13 @@ public class TransactionBuilder {
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
       SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
-      mutableTransactionCapsule.getSpends().add(spendDescriptionCapsule);
+      tx = tx.toBuilder().addSpendDescription(spendDescriptionCapsule.getInstance()).build();
     }
 
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : receives) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
-      mutableTransactionCapsule.getReceives().add(receiveDescriptionCapsule);
+      tx = tx.toBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
     }
 
     // Empty output script.

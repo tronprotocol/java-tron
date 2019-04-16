@@ -98,7 +98,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
       if (!Librustzcash.librustzcashSaplingFinalCheck(
           ctx,
-          Longs.fromByteArray(shieldedTransferContract.getValueBalance().toByteArray()),
+          shieldedTransferContract.getValueBalance(),
           shieldedTransferContract.getBindingSignature().toByteArray(),
           signHash
       )) {
