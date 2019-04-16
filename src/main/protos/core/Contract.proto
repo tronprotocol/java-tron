@@ -392,12 +392,12 @@ message ReceiveDescription {
 
 message ShieldedTransferContract {
   bytes transparent_from_address = 1; // transparent address
-  bytes from_amount = 2;
+  int64 from_amount = 2;
   repeated SpendDescription spend_description = 3;
   repeated ReceiveDescription receive_description = 4;
   bytes binding_signature = 5;
   int64 value_balance = 6;
   bytes transparent_to_address = 7; // transparent address
-  bytes to_amount = 8; // the amount to transparent to_address
+  int64 to_amount = 8; // the amount to transparent to_address
 }
 // end shielded transaction

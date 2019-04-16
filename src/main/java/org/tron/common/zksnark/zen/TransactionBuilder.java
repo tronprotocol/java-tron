@@ -79,8 +79,8 @@ public class TransactionBuilder {
   //
   //  void SendChangeTo(CTxDestination&changeAddr);
 
-  public TransactionBuilderResult Build() {
-    ShieldedTransferContract.Builder zkBuilder = ShieldedTransferContract.newBuilder();
+  public ShieldedTransferContract Build() {
+    ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
 
     //
     // Sapling spends and outputs
@@ -91,13 +91,13 @@ public class TransactionBuilder {
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
       SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
-      tx = tx.toBuilder().addSpendDescription(spendDescriptionCapsule.getInstance()).build();
+      contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
     }
 
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : receives) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
-      tx = tx.toBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
+      contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
     }
 
     // Empty output script.
@@ -132,7 +132,7 @@ public class TransactionBuilder {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
-    return null;
+    return contractBuilder.build();
   }
 
   public static SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
