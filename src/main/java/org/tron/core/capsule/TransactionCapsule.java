@@ -589,9 +589,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (clazz == null) {
       throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
     }
+    com.google.protobuf.Message src = contractParameter.unpack(clazz);
     com.google.protobuf.Message contractMessage = parse(clazz,
-        Message.getCodedInputStream(contractParameter.toByteArray()));
-    Message.compareBytes(contractParameter.toByteArray(), contractMessage.toByteArray());
+        Message.getCodedInputStream(src.toByteArray()));
+    Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
 
   // todo mv this static function to capsule util
