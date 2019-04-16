@@ -250,7 +250,7 @@ public class JsonFormat {
 
       case BYTES: {
         generator.print("\"");
-        generator.print(escapeBytes((ByteString) value, field.getName(), selfType ));
+        generator.print(escapeBytes((ByteString) value, field.getFullName(), selfType ));
         generator.print("\"");
         break;
       }
@@ -618,7 +618,7 @@ public class JsonFormat {
         break;
 
       case BYTES:
-        value = tokenizer.consumeByteString(field.getName(), selfType);
+        value = tokenizer.consumeByteString(field.getFullName(), selfType);
         break;
 
       case ENUM: {
