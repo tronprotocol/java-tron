@@ -230,6 +230,11 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("exchange withdraw not support delay transaction");
+  }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {

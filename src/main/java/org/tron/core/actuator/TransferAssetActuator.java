@@ -27,6 +27,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -38,6 +39,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class TransferAssetActuator extends AbstractActuator {
+
+  boolean isDeferredTransaction = false;
 
   TransferAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -181,13 +184,28 @@ public class TransferAssetActuator extends AbstractActuator {
       }
     } else {
       fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
-      if (ownerAccount.getBalance() < fee) {
-        throw new ContractValidateException(
-            "Validate TransferAssetActuator error, insufficient fee.");
+      if (isDeferredTransaction) {
+        isDeferredTransaction = false;
+        if (ownerAccount.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, transferAssetContract.getDelaySeconds())) {
+          throw new ContractValidateException(
+              "Validate TransferAssetActuator error, insufficient fee.");
+        }
+
+      } else {
+        if (ownerAccount.getBalance() < fee) {
+          throw new ContractValidateException(
+              "Validate TransferAssetActuator error, insufficient fee.");
+        }
       }
     }
 
     return true;
+  }
+
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    isDeferredTransaction = true;
+    return validate();
   }
 
   public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,

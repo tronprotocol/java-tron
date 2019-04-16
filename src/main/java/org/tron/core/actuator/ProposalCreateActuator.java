@@ -139,6 +139,11 @@ public class ProposalCreateActuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("proposal create actuator not support delay transaction");
+  }
+
   private void validateValue(Map.Entry<Long, Long> entry) throws ContractValidateException {
 
     switch (entry.getKey().intValue()) {

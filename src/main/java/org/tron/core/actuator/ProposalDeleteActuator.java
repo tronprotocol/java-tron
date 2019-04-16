@@ -130,6 +130,11 @@ public class ProposalDeleteActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("proposal delete actuator not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(ProposalDeleteContract.class).getOwnerAddress();
   }

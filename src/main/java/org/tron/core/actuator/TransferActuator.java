@@ -9,6 +9,7 @@ import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -20,6 +21,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class TransferActuator extends AbstractActuator {
+
+  boolean isDeferredTransaction = false;
 
   TransferActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -120,9 +123,17 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
 
-      if (balance < Math.addExact(amount, fee)) {
-        throw new ContractValidateException(
-            "Validate TransferContract error, balance is not sufficient.");
+      if (isDeferredTransaction) {
+        isDeferredTransaction = false;
+        if ( balance < TransactionUtil.calcDeferredTransactionFee(dbManager, transferContract.getDelaySeconds())) {
+          throw new ContractValidateException(
+              "Validate TransferContract error, balance is not sufficient.");
+        }
+      } else {
+        if (balance < Math.addExact(amount, fee)) {
+          throw new ContractValidateException(
+              "Validate TransferContract error, balance is not sufficient.");
+        }
       }
 
       if (toAccount != null) {
@@ -134,6 +145,12 @@ public class TransferActuator extends AbstractActuator {
     }
 
     return true;
+  }
+
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    isDeferredTransaction = true;
+    return validate();
   }
 
   public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,

@@ -231,6 +231,10 @@ public class TransactionUtil {
     }
   }
 
+  public static long calcDeferredTransactionFee(Manager dbManager, long delaySecond) {
+    return dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySecond  / (24 * 60 * 60) + 1);
+  }
+
 
   public static void validateDeferredTransactionFee(TransactionCapsule trx, long delaySecond,  Manager dbManager) throws ContractValidateException {
     if (Objects.isNull(trx)

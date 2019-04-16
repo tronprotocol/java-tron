@@ -189,6 +189,11 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("exchange transaction not support delay transaction");
+  }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {

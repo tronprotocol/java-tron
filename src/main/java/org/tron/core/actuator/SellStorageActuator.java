@@ -106,6 +106,11 @@ public class SellStorageActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("sell storage actuator not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(SellStorageContract.class).getOwnerAddress();
   }

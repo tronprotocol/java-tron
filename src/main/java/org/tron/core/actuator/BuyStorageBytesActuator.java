@@ -111,6 +111,11 @@ public class BuyStorageBytesActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("buy storage bytes actuator not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(BuyStorageBytesContract.class).getOwnerAddress();
   }

@@ -230,6 +230,11 @@ public class ExchangeInjectActuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("exchange inject actuator not support delay transaction");
+  }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {

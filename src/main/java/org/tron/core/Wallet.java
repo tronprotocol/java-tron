@@ -384,7 +384,7 @@ public class Wallet {
       for (Actuator act : actList) {
         long delaySecond = TransactionUtil.getDelaySeconds(trx);
         if (delaySecond > 0) {
-          TransactionUtil.validateDeferredTransactionFee(trx, delaySecond, dbManager);
+          act.validateDeferredTransaction();
         } else {
           act.validate();
         }

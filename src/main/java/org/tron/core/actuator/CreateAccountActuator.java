@@ -8,6 +8,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -17,6 +18,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class CreateAccountActuator extends AbstractActuator {
+
+  boolean isDeferredTransaction = false;
 
   CreateAccountActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -89,7 +92,12 @@ public class CreateAccountActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] not exists");
     }
 
-    final long fee = calcFee();
+    long fee = calcFee();
+    if (isDeferredTransaction) {
+      fee = TransactionUtil.calcDeferredTransactionFee(dbManager, contract.getDelaySeconds());
+      isDeferredTransaction = false;
+    }
+
     if (accountCapsule.getBalance() < fee) {
       throw new ContractValidateException(
           "Validate CreateAccountActuator error, insufficient fee.");
@@ -109,6 +117,12 @@ public class CreateAccountActuator extends AbstractActuator {
     }
 
     return true;
+  }
+
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException{
+    isDeferredTransaction = true;
+    return validate();
   }
 
   @Override

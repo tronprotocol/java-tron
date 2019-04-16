@@ -190,6 +190,11 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("participate asset issue not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return this.contract.unpack(Contract.ParticipateAssetIssueContract.class).getOwnerAddress();
   }

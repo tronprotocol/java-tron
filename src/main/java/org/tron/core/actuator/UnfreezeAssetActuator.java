@@ -132,6 +132,11 @@ public class UnfreezeAssetActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    return false;
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(UnfreezeAssetContract.class).getOwnerAddress();
   }
