@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -63,7 +62,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
-    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract.getReceiveDescriptionList();
+    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract
+        .getReceiveDescriptionList();
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
