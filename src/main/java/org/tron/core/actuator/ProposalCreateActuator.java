@@ -348,6 +348,18 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (30): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
+        }
+        if (dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_TRANSFER_TRC10] proposal must be approved "
+                  + "before [ALLOW_TVM_CONSTANTINOPLE] can be proposed");
+        }
+        break;
+      }
       default:
         break;
     }

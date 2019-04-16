@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.solidity.GetDeferredTransactionInfoByIdSolidityServlet;
 
 @Component
 @Slf4j(topic = "API")
@@ -119,7 +118,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private TriggerSmartContractServlet triggerSmartContractServlet;
   @Autowired
+  private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
   private GetContractServlet getContractServlet;
+  @Autowired
+  private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
   @Autowired
@@ -244,7 +247,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
+      context.addServlet(new ServletHolder(triggerConstantContractServlet),
+          "/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
+      context.addServlet(new ServletHolder(clearABIServlet), "/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
       context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");

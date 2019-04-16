@@ -39,6 +39,7 @@ public class Parameter {
   }
 
   public class NetConstants {
+
     public static final long GRPC_IDLE_TIME_OUT = 60000L;
     public static final long ADV_TIME_OUT = 20000L;
     public static final long SYNC_TIME_OUT = 5000L;
@@ -102,6 +103,7 @@ public class Parameter {
     MAX_DEFERRED_TRANSACTION_PROCESS_TIME, // 100, 27
     ALLOW_PROTO_FILTER_NUM,//1, 28
     ALLOW_ACCOUNT_STATE_ROOT,//1, 29
+    ALLOW_TVM_CONSTANTINOPLE, // 1, 30
 //    ONE_DAY_NET_LIMIT,
 //    MAX_FROZEN_TIME,
 //    MIN_FROZEN_TIME,

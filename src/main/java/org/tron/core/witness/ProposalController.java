@@ -228,6 +228,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
           break;
         }
+        case (30): {
+          manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
+          break;
+        }
         default:
           break;
       }

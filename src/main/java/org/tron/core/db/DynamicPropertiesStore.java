@@ -172,6 +172,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+  private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
@@ -528,6 +529,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowTvmTransferTrc10(Args.getInstance().getAllowTvmTransferTrc10());
     }
 
+    try {
+      this.getAllowTvmConstantinople();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
+    }
     try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
@@ -1344,6 +1350,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
+  }
+
+  public void saveAllowTvmConstantinople(long value) {
+    this.put(ALLOW_TVM_CONSTANTINOPLE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmConstantinople() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CONSTANTINOPLE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_CONSTANTINOPLE"));
   }
 
   public void saveAvailableContractType(byte[] value) {
