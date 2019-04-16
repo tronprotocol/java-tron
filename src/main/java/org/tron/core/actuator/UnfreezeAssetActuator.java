@@ -11,6 +11,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -20,6 +21,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class UnfreezeAssetActuator extends AbstractActuator {
+
+  boolean isDeferredTransaction = false;
 
   UnfreezeAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -128,12 +131,22 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       throw new ContractValidateException("It's not time to unfreeze asset supply");
     }
 
+    if (isDeferredTransaction) {
+      isDeferredTransaction = false;
+      if (accountCapsule.getBalance() < TransactionUtil
+          .calcDeferredTransactionFee(dbManager, unfreezeAssetContract.getDelaySeconds())) {
+        throw new ContractValidateException(
+            "Validate Actuator error, insufficient fee.");
+      }
+    }
+
     return true;
   }
 
   @Override
   public boolean validateDeferredTransaction() throws ContractValidateException {
-    return false;
+    isDeferredTransaction = true;
+    return validate();
   }
 
   @Override

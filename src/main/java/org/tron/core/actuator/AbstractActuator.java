@@ -1,8 +1,6 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
-import lombok.Getter;
-import lombok.Setter;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -27,6 +25,4 @@ public abstract class AbstractActuator implements Actuator {
     this.contract = contract;
     this.dbManager = dbManager;
   }
-
-
 }

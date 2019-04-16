@@ -190,7 +190,6 @@ public class TransferAssetActuator extends AbstractActuator {
           throw new ContractValidateException(
               "Validate TransferAssetActuator error, insufficient fee.");
         }
-
       } else {
         if (ownerAccount.getBalance() < fee) {
           throw new ContractValidateException(

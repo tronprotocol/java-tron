@@ -149,6 +149,11 @@ public class VoteWitnessActuator extends AbstractActuator {
     return true;
   }
 
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("vote witness actuator not support delay transaction");
+  }
+
   private void countVoteAccount(VoteWitnessContract voteContract, Deposit deposit) {
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 

@@ -10,6 +10,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
@@ -19,6 +20,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class UpdateSettingContractActuator extends AbstractActuator {
+
+  boolean isDeferredTransaction = false;
 
   UpdateSettingContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -104,7 +107,20 @@ public class UpdateSettingContractActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] is not the owner of the contract");
     }
 
+    if (isDeferredTransaction) {
+      isDeferredTransaction = false;
+      if (accountCapsule.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, contract.getDelaySeconds())) {
+        throw new ContractValidateException("Validate UpdateEnergyLimit Contract error, insufficient fee.");
+      }
+    }
+
     return true;
+  }
+
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    isDeferredTransaction = true;
+    return validate();
   }
 
   @Override

@@ -86,6 +86,11 @@ public class WitnessUpdateActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("witness update actuator not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(WitnessUpdateContract.class).getOwnerAddress();
   }

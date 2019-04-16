@@ -19,6 +19,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class UpdateAssetActuator extends AbstractActuator {
+  boolean isDeferredTransaction = false;
 
   UpdateAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -150,7 +151,20 @@ public class UpdateAssetActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid PublicFreeAssetNetLimit");
     }
 
+    if (isDeferredTransaction) {
+      isDeferredTransaction = false;
+      if (account.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, updateAssetContract.getDelaySeconds())) {
+        throw new ContractValidateException("Validate UpdateAssetActuator error, insufficient fee.");
+      }
+    }
+
     return true;
+  }
+
+  @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    isDeferredTransaction = true;
+    return validate();
   }
 
   @Override

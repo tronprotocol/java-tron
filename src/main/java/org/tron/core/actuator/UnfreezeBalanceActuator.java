@@ -328,6 +328,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
   }
 
   @Override
+  public boolean validateDeferredTransaction() throws ContractValidateException {
+    throw new ContractValidateException("unfreeze balance actuator not support delay transaction");
+  }
+
+  @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
     return contract.unpack(UnfreezeBalanceContract.class).getOwnerAddress();
   }
