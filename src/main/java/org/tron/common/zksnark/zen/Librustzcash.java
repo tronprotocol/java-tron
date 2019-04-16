@@ -298,7 +298,7 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_verification_ctx_init();
   }
 
-  public boolean librustzcashSaplingCheckSpend(
+  public static boolean librustzcashSaplingCheckSpend(
       Pointer ctx,
       byte[] cv,
       byte[] anchor,
@@ -314,7 +314,7 @@ public class Librustzcash {
             sighashValue);
   }
 
-  public boolean librustzcashSaplingCheckOutput(
+  public static boolean librustzcashSaplingCheckOutput(
       Pointer ctx,
       byte[] cv,
       byte[] cm,
