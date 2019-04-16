@@ -159,4 +159,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   public long calcFee() {
     return 0;
   }
+
+  public static void main(String[] args) {
+    Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+  }
 }
