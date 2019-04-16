@@ -1,5 +1,6 @@
 package org.tron.core.actuator;
 
+import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -51,12 +52,61 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    byte[] signHash = new byte[256];
+    // TODO generate signhash
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
-    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract.getReceiveDescriptionList();
-    if (CollectionUtils.isNotEmpty(spendDescriptions) || CollectionUtils.isNotEmpty(receiveDescriptions)) {
-      Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+    // check duplicate sapling nullifiers
+    if (CollectionUtils.isNotEmpty(spendDescriptions)) {
+      for (SpendDescription spendDescription : spendDescriptions) {
+        if (dbManager.getNullfierStore().has(spendDescription.getNullifier().toByteArray())) {
+          throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
+        }
+      }
     }
-    return false;
+    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract.getReceiveDescriptionList();
+    if (CollectionUtils.isNotEmpty(spendDescriptions)
+        || CollectionUtils.isNotEmpty(receiveDescriptions)) {
+      Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+      for (SpendDescription spendDescription : spendDescriptions) {
+        if (!Librustzcash.librustzcashSaplingCheckSpend(
+            ctx,
+            spendDescription.getValueCommitment().toByteArray(),
+            spendDescription.getAnchor().toByteArray(),
+            spendDescription.getNullifier().toByteArray(),
+            spendDescription.getRk().toByteArray(),
+            spendDescription.getZkproof().toByteArray(),
+            spendDescription.getSpendAuthoritySignature().toByteArray(),
+            signHash
+        )) {
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          throw new ContractValidateException("librustzcashSaplingCheckSpend error");
+        }
+      }
+
+      for (ReceiveDescription receiveDescription : receiveDescriptions) {
+        if (!Librustzcash.librustzcashSaplingCheckOutput(
+            ctx,
+            receiveDescription.getValueCommitment().toByteArray(),
+            receiveDescription.getNoteCommitment().toByteArray(),
+            receiveDescription.getEpk().toByteArray(),
+            receiveDescription.getZkproof().toByteArray()
+        )) {
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          throw new ContractValidateException("librustzcashSaplingCheckOutput error");
+        }
+      }
+
+      if (!Librustzcash.librustzcashSaplingFinalCheck(
+          ctx,
+          Longs.fromByteArray(shieldedTransferContract.getValueBalance().toByteArray()),
+          shieldedTransferContract.getBindingSignature().toByteArray(),
+          signHash
+      )) {
+        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        throw new ContractValidateException("librustzcashSaplingFinalCheck error");
+      }
+    }
+    return true;
   }
 
   @Override

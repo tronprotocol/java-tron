@@ -36,6 +36,7 @@ public class TransactionBuilder {
   private List<ReceiveDescriptionInfo> outputs;
 
   private MutableTransactionCapsule mutableTransactionCapsule;
+  private ShieldedTransferContract tx;
   //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
