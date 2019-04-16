@@ -18,6 +18,8 @@ public class HttpSelfFormatFieldName {
         AddressFieldNameMap.put("protocol.EasyTransferAssetMessage.toAddress", 1);
         //EasyTransferByPrivateMessage
         AddressFieldNameMap.put("protocol.EasyTransferByPrivateMessage.toAddress", 1);
+        //EasyTransferAssetByPrivateMessage
+        AddressFieldNameMap.put("protocol.EasyTransferAssetByPrivateMessage.toAddress", 1);
         //TransactionSignWeight
         AddressFieldNameMap.put("protocol.TransactionSignWeight.approved_list", 1);
         //TransactionApprovedList
@@ -43,6 +45,9 @@ public class HttpSelfFormatFieldName {
         //VoteWitnessContract
         AddressFieldNameMap.put("protocol.VoteWitnessContract.Vote.vote_address", 1);
         AddressFieldNameMap.put("protocol.VoteWitnessContract.owner_address", 1);
+        //UpdateSettingContract
+        AddressFieldNameMap.put("protocol.UpdateSettingContract.owner_address", 1);
+        AddressFieldNameMap.put("protocol.UpdateSettingContract.contract_address", 1);
         //UpdateEnergyLimitContract
         AddressFieldNameMap.put("protocol.UpdateEnergyLimitContract.owner_address", 1);
         AddressFieldNameMap.put("protocol.UpdateEnergyLimitContract.contract_address", 1);
