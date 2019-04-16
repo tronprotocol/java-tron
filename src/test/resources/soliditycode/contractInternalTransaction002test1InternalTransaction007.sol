@@ -10,7 +10,7 @@ contract A{
         b2.callCGetZero();//1.4
     }
     function test2(address cAddress,uint256 amount) public payable{
-        cAddress.call.value(amount)(abi.encode(bytes4(keccak256("newBAndTransfer()"))));//2.1
+        cAddress.call.value(amount)(abi.encodeWithSignature("newBAndTransfer()"));//2.1
     }
 }
 
