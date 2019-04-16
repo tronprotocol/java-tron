@@ -365,6 +365,12 @@ public class Util {
                 .parseObject(JsonFormat.printToString(cancelDeferredTransactionContract,
                         selfType ));
             break;
+          case ClearABIContract:
+            Contract.ClearABIContract clearABIContract = contractParameter
+                    .unpack(Contract.ClearABIContract.class);
+            contractJson = JSONObject
+                    .parseObject(JsonFormat.printToString(clearABIContract, selfType ));
+            break;
           // todo add other contract
           default:
         }
@@ -607,6 +613,11 @@ public class Util {
             JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
                     CancelDeferredTransactionContractBuilder, selfType );
             any = Any.pack(CancelDeferredTransactionContractBuilder.build());
+            break;
+          case "ClearABIContract":
+            Contract.ClearABIContract.Builder clearABIContract = Contract.ClearABIContract.newBuilder();
+            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), clearABIContract, selfType );
+            any = Any.pack(clearABIContract.build());
             break;
           // todo add other contract
           default:
