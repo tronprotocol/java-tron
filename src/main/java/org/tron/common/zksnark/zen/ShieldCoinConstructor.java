@@ -129,7 +129,7 @@ public class ShieldCoinConstructor {
     if (isFromTAddress) {
       // todo:get from input params
       long value = 0L;
-      builder.AddTransparentInput(fromAddress, value);
+      builder.setTransparentInput(fromAddress, value);
       HDSeed seed = KeyStore.seed;
       ovk = seed.ovkForShieldingFromTaddr();
     } else {
@@ -166,13 +166,13 @@ public class ShieldCoinConstructor {
         if (!vouchers.get(i).isPresent()) {
           throw new RuntimeException("Missing voucher for shield note");
         }
-        builder.AddNoteSpend(expsk, notes.get(i), anchor, vouchers.get(i).get());
+        builder.addSaplingSpend(expsk, notes.get(i), anchor, vouchers.get(i).get());
       }
     }
 
     if (isToTAddress) {
       for (Recipient out : tOutputs) {
-        builder.AddTransparentOutput(out.address, out.value);
+        builder.setTransparentOutput(out.address, out.value);
       }
     } else {
       // Add Sapling outputs
@@ -188,7 +188,7 @@ public class ShieldCoinConstructor {
 
         byte[] memo = ByteArray.fromHexString(hexMemo);
 
-        builder.AddSaplingOutput(ovk, addr, value, memo);
+        builder.addSaplingOutput(ovk, addr, value, memo);
       }
     }
 
