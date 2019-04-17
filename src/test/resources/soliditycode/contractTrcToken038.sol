@@ -8,7 +8,7 @@ contract transferTrc10 {
         require(aamount==msg.tokenvalue);
         rec.transferToken(aamount,msg.tokenid);
         //require(rec.call(abi.encode(bytes4(keccak256("AssertError()")))));
-        (bool suc, bytes memory data) = rec.call(abi.encode(bytes4(keccak256("AssertError()"))));
+        (bool suc, bytes memory data) = rec.call(abi.encodeWithSignature("AssertError()"));
         require(suc);
         require(aamount==address(this).tokenBalance(msg.tokenid));
         require(bamount==rec.tokenBalance(msg.tokenid));
