@@ -678,7 +678,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
     if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
       validatePubSignature(manager);
-    } else {
+    } else {  //TODO: need more check here. must compare with shielded transaction's verification.
       byte[] owner = getOwner(contract);
       if (!ArrayUtils.isEmpty(owner)) {
         validatePubSignature(manager);   //If no pub input , need not signature.

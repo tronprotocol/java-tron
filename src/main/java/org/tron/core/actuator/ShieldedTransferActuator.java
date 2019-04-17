@@ -4,12 +4,16 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
@@ -29,6 +33,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     super(contract, dbManager);
   }
 
+  boolean isTransparentOut = false;
+
+  boolean isTransparentIn = false;
+
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
@@ -43,13 +51,18 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
-    executeShielded(strx);
-    executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+    if (strx.getTransparentFromAddress().toByteArray().length > 0) {
+      executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
+    }
+
+    executeShielded(strx.getSpendDescriptionList(), strx.getReceiveDescriptionList());
+
+    if (strx.getTransparentToAddress().toByteArray().length > 0) {
+      executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+    }
 
     return true;
   }
-
 
   private void executeTransparentOut(byte[] ownerAddress, long amount, long fee, TransactionResultCapsule ret) throws ContractExeException {
     try {
@@ -71,20 +84,22 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   //record shielded transaction data.
-  private void executeShielded(ShieldedTransferContract strx) {
+  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
+    //handle spends
+    for (SpendDescription spend: spends
+    ) {
+      dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
+    }
+
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
     IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
         .getCurrentMerkle();
-
-    for(SpendDescription sd:strx.getSpendDescriptionList()){
-      byte[] nf = sd.getNullifier().toByteArray();
-      dbManager.getNullfierStore().put(nf, new BytesCapsule(nf));
+    //handle receives
+    for (ReceiveDescription receive : receives)  {
+      dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
     }
-    for(ReceiveDescription rd:strx.getReceiveDescriptionList()){
-      merkleContainer.saveCmIntoMerkleTree(currentMerkle, rd.getNoteCommitment().toByteArray());
-    }
-
     merkleContainer.setCurrentMerkle(currentMerkle);
+
   }
 
   @Override
@@ -109,6 +124,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    //transparent verification
+    if (!validateTransparent(shieldedTransferContract)) {
+      return false;
+    }
+
     byte[] signHash = new byte[32];
     // TODO generate signhash
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
@@ -120,6 +140,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
+
     List<ReceiveDescription> receiveDescriptions = shieldedTransferContract
         .getReceiveDescriptionList();
     if (CollectionUtils.isNotEmpty(spendDescriptions)
@@ -163,6 +184,72 @@ public class ShieldedTransferActuator extends AbstractActuator {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException("librustzcashSaplingFinalCheck error");
       }
+    }
+    return true;
+  }
+
+  private boolean validateTransparent(ShieldedTransferContract strx) throws ContractValidateException {
+
+    byte[] toAddress = strx.getTransparentToAddress().toByteArray();
+    byte[] ownerAddress = strx.getTransparentFromAddress().toByteArray();
+
+    isTransparentIn = (toAddress.length > 0);
+    isTransparentOut = (ownerAddress.length > 0);
+
+    long amountOut = strx.getFromAmount();
+    long amountIn = strx.getToAmount();
+
+    if (isTransparentOut && !Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+    if (isTransparentIn && !Wallet.addressValid(toAddress)) {
+      throw new ContractValidateException("Invalid toAddress");
+    }
+
+    if (isTransparentIn && isTransparentOut && Arrays.equals(toAddress, ownerAddress)) {
+      throw new ContractValidateException("Cannot transfer trx to yourself.");
+    }
+
+    if (isTransparentOut) {
+      AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress);
+      if (ownerAccount == null) {
+        throw new ContractValidateException("Validate TransferContract error, no OwnerAccount.");
+      }
+
+      long balance = ownerAccount.getBalance();
+
+      if (amountOut <= 0) {
+        throw new ContractValidateException("Amount must greater than 0.");
+      }
+
+      if (balance < amountOut) {
+          throw new ContractValidateException(
+              "Validate TransferContract error, balance is not sufficient.");
+      }
+
+      //use shield transaction to create transparent address
+//      try {
+//
+//        AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
+//        if (toAccount == null) {
+//          fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
+//        }
+//
+//        if (balance < Math.addExact(amount, fee)) {
+//          throw new ContractValidateException(
+//              "Validate TransferContract error, balance is not sufficient.");
+//        }
+//
+//        if (toAccount != null) {
+//          long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
+//        }
+//
+//      } catch (ArithmeticException e) {
+//        logger.debug(e.getMessage(), e);
+//        throw new ContractValidateException(e.getMessage());
+//      }
+
+      //TODO: We need check the delta amount in the librustzcash. this delta amount include the fee using to create address.
     }
     return true;
   }
