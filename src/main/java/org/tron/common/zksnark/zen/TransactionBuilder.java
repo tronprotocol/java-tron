@@ -124,7 +124,8 @@ public class TransactionBuilder {
     try {
       TransactionCapsule transactionCapsule = wallet.createTransactionCapsule(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray()).getBytes();
+      dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray())
+          .getBytes();
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
