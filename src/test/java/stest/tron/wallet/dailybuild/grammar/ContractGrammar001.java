@@ -48,7 +48,7 @@ public class ContractGrammar001 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String compilerVersion = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.solidityCompileVersion");
+      .getString("defaultParameter.solidityCompilerVersion");
 
 
   byte[] contractAddress = null;

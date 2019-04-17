@@ -293,7 +293,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true, description = "No payable function call value")
+  @Test(enabled = false, description = "No payable function call value")
   public void test4noPayableContract() {
     String filePath = "src/test/resources/soliditycode/requireExceptiontest4noPayableContract.sol";
     String contractName = "noPayableContract";
@@ -357,7 +357,7 @@ public class RequireException {
 
   }
 
-  @Test(enabled = true, description = "No payable Constructor")
+  @Test(enabled = false, description = "No payable Constructor")
   public void test5noPayableConstructor() {
 
     Account info;
