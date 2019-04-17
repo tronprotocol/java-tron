@@ -105,6 +105,10 @@ public class TransactionBuilder {
       throw new RuntimeException("change cannot be negative");
     }
 
+    if (change > 0) {
+      // TODO
+    }
+
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     // Create Sapling SpendDescriptions
@@ -116,7 +120,7 @@ public class TransactionBuilder {
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : receives) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
-      contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
+      contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance());
     }
 
     // Empty output script.
@@ -132,11 +136,11 @@ public class TransactionBuilder {
     }
 
     // Create Sapling spendAuth and binding signatures
-    for (int i = 0; i < spends.size(); i++) {
+    for (SpendDescriptionInfo spend : spends) {
       byte[] result = null;
       Librustzcash.librustzcashSaplingSpendSig(
-          spends.get(i).expsk.getAsk(),
-          spends.get(i).alpha,
+          spend.expsk.getAsk(),
+          spend.alpha,
           dataToBeSigned,
           result);
     }
@@ -152,11 +156,10 @@ public class TransactionBuilder {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
-//    return contractBuilder.build();
-    return null;
+    return new TransactionBuilderResult(contractBuilder.build());
   }
 
-  public static SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+  public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
       Pointer ctx) {
 
     byte[] cm = spend.note.cm();
@@ -171,7 +174,7 @@ public class TransactionBuilder {
 
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
-    byte[] zkproof = new byte[32];
+    byte[] zkproof = new byte[192];
     if (!Librustzcash.librustzcashSaplingSpendProof(
         ctx,
         spend.expsk.fullViewingKey().getAk(),
@@ -279,7 +282,9 @@ public class TransactionBuilder {
     private byte[] memo; // 256
   }
 
+  @AllArgsConstructor
   public static class TransactionBuilderResult {
-
+    @Getter
+    private ShieldedTransferContract shieldedTransferContract;
   }
 }
