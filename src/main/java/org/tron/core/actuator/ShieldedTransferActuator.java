@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -40,13 +41,18 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
-    executeShielded();
-    executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+    if (strx.getTransparentFromAddress().toByteArray().length > 0) {
+      executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
+    }
+
+    executeShielded(strx.getSpendDescriptionList(), strx.getReceiveDescriptionList());
+
+    if (strx.getTransparentToAddress().toByteArray().length > 0) {
+      executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+    }
 
     return true;
   }
-
 
   private void executeTransparentOut(byte[] ownerAddress, long amount, long fee, TransactionResultCapsule ret) throws ContractExeException {
     try {
@@ -68,7 +74,17 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   //record shielded transaction data.
-  private void executeShielded() {
+  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
+    //handle spends
+    for (SpendDescription spend: spends
+    ) {
+      dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
+    }
+
+    //handle receives
+    for (ReceiveDescription receive : receives)  {
+      dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
+    }
   }
 
   @Override
