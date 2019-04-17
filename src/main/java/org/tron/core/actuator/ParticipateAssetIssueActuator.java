@@ -190,7 +190,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
     throw new ContractValidateException("participate asset issue not support delay transaction");
   }
 

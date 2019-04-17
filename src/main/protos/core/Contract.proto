@@ -15,6 +15,8 @@
 
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 package protocol;
 
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
@@ -27,28 +29,24 @@ message AccountCreateContract {
   bytes owner_address = 1;
   bytes account_address = 2;
   AccountType type = 3;
-  int64 delaySeconds = 4;
 }
 
 // Update account name. Account name is not unique now.
 message AccountUpdateContract {
   bytes account_name = 1;
   bytes owner_address = 2;
-  int64 delaySeconds = 3;
 }
 
 // Set account id if the account has no id. Account id is unique and case insensitive.
 message SetAccountIdContract {
   bytes account_id = 1;
   bytes owner_address = 2;
-  int64 delaySeconds = 3;
 }
 
 message TransferContract {
   bytes owner_address = 1;
   bytes to_address = 2;
   int64 amount = 3;
-  int64 delaySeconds = 4;
 }
 
 message CancelDeferredTransactionContract {
@@ -61,7 +59,6 @@ message TransferAssetContract {
   bytes owner_address = 2;
   bytes to_address = 3;
   int64 amount = 4;
-  int64 delaySeconds = 5;
 }
 
 
@@ -86,14 +83,18 @@ message UpdateSettingContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
   int64 consume_user_resource_percent = 3;
-  int64 delaySeconds = 4;
 }
 
 message UpdateEnergyLimitContract {
   bytes owner_address = 1;
   bytes contract_address = 2;
   int64 origin_energy_limit = 3;
-  int64 delaySeconds = 4;
+}
+
+message DeferredTransactionContract {
+  int64 delaySecond = 1;
+  google.protobuf.Any parameter = 2;
+  int32 type = 3;
 }
 
 message WitnessCreateContract {
@@ -164,7 +165,6 @@ message UnfreezeBalanceContract {
 
 message UnfreezeAssetContract {
   bytes owner_address = 1;
-  int64 delaySeconds = 2;
 }
 
 message WithdrawBalanceContract {
@@ -177,7 +177,6 @@ message UpdateAssetContract {
   bytes url = 3;
   int64 new_limit = 4;
   int64 new_public_limit = 5;
-  int64 delaySeconds = 6;
 }
 
 message ProposalCreateContract {

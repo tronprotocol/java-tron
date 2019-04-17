@@ -111,8 +111,8 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
-    return false;
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
+    throw new ContractValidateException("cancel deferred transaction actuator not support delay transaction");
   }
 
   @Override

@@ -297,7 +297,7 @@ public class AssetIssueActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
     throw new ContractValidateException("asset issue actuator not support delay transaction");
   }
 

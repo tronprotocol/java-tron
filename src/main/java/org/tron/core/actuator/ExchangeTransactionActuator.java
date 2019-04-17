@@ -190,7 +190,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
     throw new ContractValidateException("exchange transaction not support delay transaction");
   }
 

@@ -22,7 +22,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class TransferActuator extends AbstractActuator {
 
-  boolean isDeferredTransaction = false;
+  int delaySecond = 0;
 
   TransferActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);

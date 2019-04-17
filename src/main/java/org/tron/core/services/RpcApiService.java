@@ -81,6 +81,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.DeferredTransactionContract;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
@@ -655,6 +656,12 @@ public class RpcApiService implements Service {
         logger.debug("ContractValidateException: {}", e.getMessage());
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createDeferredTransaction2(DeferredTransactionContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.DeferredTransactionContract, responseObserver);
     }
 
     @Override

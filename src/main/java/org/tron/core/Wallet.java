@@ -27,6 +27,7 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -121,6 +122,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.DeferredTransactionContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
@@ -376,15 +378,21 @@ public class Wallet {
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    long delaySecond = 0;
+    if (contractType == ContractType.DeferredTransactionContract) {
+      DeferredTransactionContract deferredTransactionContract = (DeferredTransactionContract) message;
+      message = deferredTransactionContract.getParameter();
+      contractType = ContractType.forNumber(deferredTransactionContract.getType());
+      delaySecond = deferredTransactionContract.getDelaySecond();
+    }
 
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
       for (Actuator act : actList) {
-        long delaySecond = TransactionUtil.getDelaySeconds(trx);
         if (delaySecond > 0) {
-          act.validateDeferredTransaction();
+          act.validateDeferredTransaction(delaySecond);
         } else {
           act.validate();
         }

@@ -12,7 +12,7 @@ public interface Actuator {
 
   boolean validate() throws ContractValidateException;
 
-  boolean validateDeferredTransaction() throws ContractValidateException;
+  boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException;
 
   ByteString getOwnerAddress() throws InvalidProtocolBufferException;
 

@@ -42,6 +42,10 @@ service Wallet {
       }
     };
   };
+
+  rpc CreateDeferredTransaction2(DeferredTransactionContract) returns (TransactionExtention) {
+  }
+
   //Use this function instead of CreateTransaction.
   rpc CreateTransaction2 (TransferContract) returns (TransactionExtention) {
   };

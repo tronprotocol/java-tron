@@ -109,7 +109,7 @@ public class BuyStorageActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
     throw new ContractValidateException("buy storage actuator not support delay transaction");
   }
 
