@@ -116,6 +116,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    //transparent verification
     if (!validateTransparent(shieldedTransferContract)) {
       return false;
     }
@@ -217,7 +218,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException(
               "Validate TransferContract error, balance is not sufficient.");
       }
-      
+
       //use shield transaction to create transparent address
 //      try {
 //
@@ -242,7 +243,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
       //TODO: We need check the delta amount in the librustzcash. this delta amount include the fee using to create address.
     }
-
+    return true;
   }
 
   @Override
