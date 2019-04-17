@@ -2,14 +2,13 @@ package org.tron.common.zksnark.zen;
 
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
@@ -20,8 +19,10 @@ import org.tron.common.zksnark.zen.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.zen.note.SaplingOutgoingPlaintext;
 import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
-import org.tron.core.exception.ContractValidateException;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class TransactionBuilder {
 
@@ -37,6 +38,8 @@ public class TransactionBuilder {
   @Setter
   @Getter
   private List<ReceiveDescriptionInfo> receives;
+
+  private Wallet wallet;
 
   private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
 
@@ -66,6 +69,7 @@ public class TransactionBuilder {
   public void setTransparentInput(String address, long value) {
     setTransparentInput(address.getBytes(), value);
   }
+
   public void setTransparentInput(byte[] address, long value) {
     contractBuilder.setTransparentFromAddress(ByteString.copyFrom(address))
         .setFromAmount(value);
@@ -122,9 +126,10 @@ public class TransactionBuilder {
     // Empty output script.
     byte[] dataToBeSigned;//256 
     try {
-//      dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0,
-////          consensusBranchId);
-      dataToBeSigned = null;
+      TransactionCapsule transactionCapsule = wallet.createTransactionCapsule(
+          contractBuilder.build(), ContractType.ShieldedTransferContract);
+      dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray())
+          .getBytes();
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());

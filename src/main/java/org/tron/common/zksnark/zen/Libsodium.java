@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.Structure;
 
 public class Libsodium {
 
@@ -18,14 +19,51 @@ public class Libsodium {
 
   public interface ILibsodium extends Library {
 
-    //        int crypto_generichash_blake2b_salt_personal(unsigned char *out, size_t outlen,
+    class crypto_generichash_blake2b_state extends Structure {
+
+      public static class ByReference extends crypto_generichash_blake2b_state implements
+          Structure.ByReference {
+
+      }
+
+      public static class ByValue extends crypto_generichash_blake2b_state implements
+          Structure.ByValue {
+
+      }
+
+      public long h[];
+      public long t[];
+      public long f[];
+      public int buf[];
+      public int buflen;
+      public int last_node;
+    }
+
+    int crypto_generichash_blake2b_init(crypto_generichash_blake2b_state.ByReference state,
+        byte[] key, int kenlen, int outlen);
+
+    int crypto_generichash_blake2b_init_salt_personal(
+        crypto_generichash_blake2b_state.ByReference state,
+        byte[] key,
+        int keylen,
+        int outlen,
+        byte[] salt,
+        byte[] personal);
+
+    int crypto_generichash_blake2b_update(crypto_generichash_blake2b_state.ByReference state,
+        byte[] in, long inlen);
+
+    int crypto_generichash_blake2b_final(crypto_generichash_blake2b_state.ByReference state,
+        byte[] out, int outlen);
+
+//            int crypto_generichash_blake2b_salt_personal(unsigned char *out, size_t outlen,
 //                                             const unsigned char *in,
 //                                                     unsigned long long inlen,
 //                                             const unsigned char *key,
 //                                                     size_t keylen,
 //                                             const unsigned char *salt,
 //                                             const unsigned char *personal);
-//
+
     int crypto_generichash_blake2b_salt_personal(byte[] out, int outlen, byte[] in, long inlen,
         byte[] key, int keylen, byte[] salt, byte[] personal);
 
@@ -48,22 +86,36 @@ public class Libsodium {
         long adlen,
         byte[] npub,
         byte[] k);
-
-
   }
 
+  public static int cryptoGenerichashBlake2bInitSaltPersonal(
+      ILibsodium.crypto_generichash_blake2b_state.ByReference state,
+      byte[] key, int keylen, int outlen, byte[] salt, byte[] personal) {
+    return INSTANCE
+        .crypto_generichash_blake2b_init_salt_personal(state, key, keylen, outlen, salt, personal);
+  }
+
+  public static int cryptoGenerichashBlake2bUpdate(
+      ILibsodium.crypto_generichash_blake2b_state.ByReference state,
+      byte[] in, long inlen) {
+    return INSTANCE.crypto_generichash_blake2b_update(state, in, inlen);
+  }
+
+  public static int cryptoGenerichashBlake2bFinal(
+      ILibsodium.crypto_generichash_blake2b_state.ByReference state,
+      byte[] out, int outlen) {
+    return INSTANCE.crypto_generichash_blake2b_final(state, out, outlen);
+  }
 
   public static int cryptoGenerichashBlack2bSaltPersonal(byte[] out, int outlen, byte[] in,
-      long inlen,
-      byte[] key, int keylen, byte[] salt, byte[] personal) {
+      long inlen, byte[] key, int keylen, byte[] salt, byte[] personal) {
     return INSTANCE
         .crypto_generichash_blake2b_salt_personal(out, outlen, in, inlen, key, keylen, salt,
             personal);
   }
 
   public static int cryptoAeadChacha20poly1305IetfDecrypt(byte[] m, long[] mlen_p, byte[] nsec,
-      byte[] c, long clen, byte[] ad,
-      long adlen, byte[] npub, byte[] k) {
+      byte[] c, long clen, byte[] ad, long adlen, byte[] npub, byte[] k) {
     return INSTANCE
         .crypto_aead_chacha20poly1305_ietf_decrypt(m, mlen_p, nsec, c, clen, ad, adlen, npub, k);
   }

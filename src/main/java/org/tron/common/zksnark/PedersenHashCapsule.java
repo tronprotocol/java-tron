@@ -62,11 +62,13 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
   }
 
   public static PedersenHashCapsule uncommitted() {
+    byte[] res = new byte[32];
+
+    Librustzcash.librustzcash_tree_uncommitted(res);
+
     PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
-    compressCapsule.setContent(
-        ByteString.copyFrom(
-            ByteArray.fromHexString(
-                "0000000000000000000000000000000000000000000000000000000000000000")));
+    compressCapsule.setContent(ByteString.copyFrom(res));
+
     return compressCapsule;
   }
 
@@ -76,13 +78,13 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
 
   public static void main(String[] args) {
     byte[] a =
-        ByteArray.fromHexString("87a086ae7d2252d58729b30263fb7b66308bf94ef59a76c9c86e7ea016536505");
+        ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
     byte[] b =
-        ByteArray.fromHexString("a75b84a125b2353da7e8d96ee2a15efe4de23df9601b9d9564ba59de57130406");
+        ByteArray.fromHexString("0000000000000000000000000000000000000000000000000000000000000000");
 
     PedersenHash sa = PedersenHash.newBuilder().setContent(ByteString.copyFrom(a)).build();
     PedersenHash sb = PedersenHash.newBuilder().setContent(ByteString.copyFrom(b)).build();
-    PedersenHash result = combine(sa, sb, 25).getInstance();
+    PedersenHash result = combine(sa, sb, 0).getInstance();
     // 5bf43b5736c19b714d1f462c9d22ba3492c36e3d9bbd7ca24d94b440550aa561
     System.out.println(ByteArray.toHexString(result.getContent().toByteArray()));
   }

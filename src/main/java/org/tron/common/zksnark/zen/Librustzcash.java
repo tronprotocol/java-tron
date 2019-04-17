@@ -147,6 +147,13 @@ public class Librustzcash {
         byte[] b,
         byte[] result
     );
+
+    /// Writes the "uncommitted" note value for empty leaves
+    /// of the merkle tree. `result` must be a valid pointer
+    /// to 32 bytes which will be written.
+    void librustzcash_tree_uncommitted(
+        byte[] result
+    );
   }
 
   // todo jni
@@ -344,6 +351,10 @@ public class Librustzcash {
 
   public static void librustzcashMerkleHash(int depth, byte[] a, byte[] b, byte[] result) {
     INSTANCE.librustzcash_merkle_hash(depth, a, b, result);
+  }
+
+  public static void librustzcash_tree_uncommitted(byte[] result) {
+    INSTANCE.librustzcash_tree_uncommitted(result);
   }
 
   public static String getLibraryByName(String name) {
