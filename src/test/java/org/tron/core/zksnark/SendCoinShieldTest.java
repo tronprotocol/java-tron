@@ -197,7 +197,7 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-//    builder.AddNoteSpend(expsk, note, anchor, voucher);
+//    builder.addSaplingSpend(expsk, note, anchor, voucher);
 //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
