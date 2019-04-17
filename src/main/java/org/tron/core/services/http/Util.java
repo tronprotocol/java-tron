@@ -606,7 +606,6 @@ public class Util {
                     UpdateEnergyLimitContractBuilder, selfType);
             any = Any.pack(UpdateEnergyLimitContractBuilder.build());
             break;
-
           case "CancelDeferredTransactionContract":
             CancelDeferredTransactionContract.Builder CancelDeferredTransactionContractBuilder =
                 CancelDeferredTransactionContract.newBuilder();

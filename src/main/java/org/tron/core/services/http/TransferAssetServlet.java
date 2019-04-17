@@ -47,7 +47,6 @@ public class TransferAssetServlet extends HttpServlet {
         long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
-
       response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

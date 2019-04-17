@@ -26,7 +26,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisiblePost;
 
-
 @Component
 @Slf4j(topic = "API")
 public class TriggerConstantContractServlet extends HttpServlet {
