@@ -7,7 +7,10 @@ import com.sun.jna.Pointer;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -41,7 +44,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
-    executeShielded();
+    executeShielded(strx);
     executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
 
     return true;
@@ -68,7 +71,20 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   //record shielded transaction data.
-  private void executeShielded() {
+  private void executeShielded(ShieldedTransferContract strx) {
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
+        .getCurrentMerkle();
+
+    for(SpendDescription sd:strx.getSpendDescriptionList()){
+      byte[] nf = sd.getNullifier().toByteArray();
+      dbManager.getNullfierStore().put(nf, new BytesCapsule(nf));
+    }
+    for(ReceiveDescription rd:strx.getReceiveDescriptionList()){
+      merkleContainer.saveCmIntoMerkleTree(currentMerkle, rd.getNoteCommitment().toByteArray());
+    }
+
+    merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
   @Override

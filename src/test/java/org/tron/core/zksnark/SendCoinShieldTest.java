@@ -191,7 +191,7 @@ public class SendCoinShieldTest {
 
   @Test
   public void testGenerateSpendProof() {
-//    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
 //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
@@ -210,6 +210,6 @@ public class SendCoinShieldTest {
 //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    SpendDescriptionCapsule sdesc = TransactionBuilder.generateSpendProof(spend, ctx);
+    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
   }
 }
