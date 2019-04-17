@@ -35,13 +35,14 @@ public class CreateAccountServlet extends HttpServlet {
 
       JSONObject jsonObject = JSONObject.parseObject(contract);
       long delaySeconds = 0;
+      Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         if (delaySeconds > 0) {
-          build.setDelaySeconds(delaySeconds);
+          tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.AccountCreateContract).getInstance();
         }
       }
-      Transaction tx = wallet
+      tx = wallet
           .createTransactionCapsule(build.build(), ContractType.AccountCreateContract)
           .getInstance();
 

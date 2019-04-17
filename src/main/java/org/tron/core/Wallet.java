@@ -49,6 +49,7 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.Address;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.DeferredTransactionMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.Node;
@@ -375,12 +376,20 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
+  public TransactionCapsule createDeferredTransactionCapsule(com.google.protobuf.Message message, long delaySecond,
+      ContractType contractType) throws ContractValidateException {
+    DeferredTransactionMessage.Builder builder = DeferredTransactionMessage.newBuilder();
+    builder.setDelaySecond(delaySecond);
+    builder.setParameter(Any.pack(message));
+    builder.setType(contractType.getNumber());
+    return createTransactionCapsule(builder.build(), ContractType.DeferredTransactionContract);
+  }
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     long delaySecond = 0;
     if (contractType == ContractType.DeferredTransactionContract) {
-      DeferredTransactionContract deferredTransactionContract = (DeferredTransactionContract) message;
+      DeferredTransactionMessage deferredTransactionContract = (DeferredTransactionMessage) message;
       message = deferredTransactionContract.getParameter();
       contractType = ContractType.forNumber(deferredTransactionContract.getType());
       delaySecond = deferredTransactionContract.getDelaySecond();

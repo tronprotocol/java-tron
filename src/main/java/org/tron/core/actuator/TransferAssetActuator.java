@@ -40,7 +40,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class TransferAssetActuator extends AbstractActuator {
 
-  boolean isDeferredTransaction = false;
+  long delaySecond = 0;
 
   TransferAssetActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -184,9 +184,9 @@ public class TransferAssetActuator extends AbstractActuator {
       }
     } else {
       fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
-      if (isDeferredTransaction) {
-        isDeferredTransaction = false;
-        if (ownerAccount.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, transferAssetContract.getDelaySeconds())) {
+      if (delaySecond > 0) {
+        delaySecond = 0;
+        if (ownerAccount.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
           throw new ContractValidateException(
               "Validate TransferAssetActuator error, insufficient fee.");
         }
@@ -202,8 +202,8 @@ public class TransferAssetActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
-    isDeferredTransaction = true;
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
+    this.delaySecond = delaySecond;
     return validate();
   }
 

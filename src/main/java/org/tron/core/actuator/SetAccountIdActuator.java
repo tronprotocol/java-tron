@@ -19,7 +19,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class SetAccountIdActuator extends AbstractActuator {
 
-  boolean isDeferredTransaction = false;
+  long delaySecond = 0;
   SetAccountIdActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
   }
@@ -89,9 +89,9 @@ public class SetAccountIdActuator extends AbstractActuator {
       throw new ContractValidateException("This id has existed");
     }
 
-    if (isDeferredTransaction) {
-      isDeferredTransaction = false;
-      if (account.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, setAccountIdContract.getDelaySeconds())) {
+    if (delaySecond > 0) {
+      delaySecond = 0;
+      if (account.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
         throw new ContractValidateException("Validate SetAccountIdActuator error, insufficient fee.");
       }
     }
@@ -100,8 +100,8 @@ public class SetAccountIdActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
-    isDeferredTransaction = true;
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
+    this.delaySecond = delaySecond;
     return validate();
   }
 

@@ -22,7 +22,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class TransferActuator extends AbstractActuator {
 
-  int delaySecond = 0;
+  long delaySecond = 0;
 
   TransferActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -123,9 +123,9 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
 
-      if (isDeferredTransaction) {
-        isDeferredTransaction = false;
-        if ( balance < TransactionUtil.calcDeferredTransactionFee(dbManager, transferContract.getDelaySeconds())) {
+      if (delaySecond > 0) {
+        delaySecond = 0;
+        if ( balance < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
           throw new ContractValidateException(
               "Validate TransferContract error, balance is not sufficient.");
         }
@@ -148,8 +148,8 @@ public class TransferActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
-    isDeferredTransaction = true;
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
+    this.delaySecond = delaySecond;
     return validate();
   }
 

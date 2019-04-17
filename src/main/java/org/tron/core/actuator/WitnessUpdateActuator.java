@@ -86,7 +86,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
     throw new ContractValidateException("witness update actuator not support delay transaction");
   }
 

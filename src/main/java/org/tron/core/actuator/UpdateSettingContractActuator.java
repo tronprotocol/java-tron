@@ -21,7 +21,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class UpdateSettingContractActuator extends AbstractActuator {
 
-  boolean isDeferredTransaction = false;
+  long delaySecond = 0;
 
   UpdateSettingContractActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
@@ -107,9 +107,9 @@ public class UpdateSettingContractActuator extends AbstractActuator {
           "Account[" + readableOwnerAddress + "] is not the owner of the contract");
     }
 
-    if (isDeferredTransaction) {
-      isDeferredTransaction = false;
-      if (accountCapsule.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, contract.getDelaySeconds())) {
+    if (delaySecond > 0) {
+      delaySecond = 0;
+      if (accountCapsule.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
         throw new ContractValidateException("Validate UpdateEnergyLimit Contract error, insufficient fee.");
       }
     }
@@ -118,8 +118,8 @@ public class UpdateSettingContractActuator extends AbstractActuator {
   }
 
   @Override
-  public boolean validateDeferredTransaction() throws ContractValidateException {
-    isDeferredTransaction = true;
+  public boolean validateDeferredTransaction(long delaySecond) throws ContractValidateException {
+    this.delaySecond = delaySecond;
     return validate();
   }
 

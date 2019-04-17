@@ -659,8 +659,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createDeferredTransaction2(DeferredTransactionContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
+    public void createDeferredTransaction2(org.tron.api.GrpcAPI.DeferredTransactionMessage request,
+        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.DeferredTransactionContract, responseObserver);
     }
 
