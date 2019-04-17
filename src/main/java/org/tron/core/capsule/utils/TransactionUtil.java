@@ -181,56 +181,7 @@ public class TransactionUtil {
     return result;
   }
 
-
-  public static long getDelaySeconds(TransactionCapsule transactionCapsule) {
-    if (Objects.isNull(transactionCapsule)|| Objects.isNull(transactionCapsule.getInstance())
-        || Objects.isNull(transactionCapsule.getInstance().getRawData())
-        || Objects.isNull(transactionCapsule.getInstance().getRawData().getContractList())
-        || transactionCapsule.getInstance().getRawData().getContractList().size() < 1) {
-      return 0;
-    }
-    Transaction.Contract contract = transactionCapsule.getInstance().getRawData().getContract(0);
-    long delaySeconds = 0;
-    try {
-      Any contractParameter = contract.getParameter();
-      switch (contract.getType()) {
-        case AccountUpdateContract:
-          delaySeconds = contractParameter.unpack(AccountUpdateContract.class).getDelaySeconds();
-          break;
-        case TransferContract:
-          delaySeconds = contractParameter.unpack(TransferContract.class).getDelaySeconds();
-          break;
-        case TransferAssetContract:
-          delaySeconds = contractParameter.unpack(TransferAssetContract.class).getDelaySeconds();
-          break;
-        case AccountCreateContract:
-          delaySeconds = contractParameter.unpack(AccountCreateContract.class).getDelaySeconds();
-          break;
-        case UnfreezeAssetContract:
-          delaySeconds = contractParameter.unpack(UnfreezeAssetContract.class).getDelaySeconds();
-          break;
-        case UpdateAssetContract:
-          delaySeconds = contractParameter.unpack(UpdateAssetContract.class).getDelaySeconds();
-          break;
-        case SetAccountIdContract:
-          delaySeconds = contractParameter.unpack(SetAccountIdContract.class).getDelaySeconds();
-          break;
-        case UpdateSettingContract:
-          delaySeconds = contractParameter.unpack(UpdateSettingContract.class).getDelaySeconds();
-          break;
-        case UpdateEnergyLimitContract:
-          delaySeconds = contractParameter.unpack(UpdateEnergyLimitContract.class).getDelaySeconds();
-          break;
-        default:
-          return 0;
-      }
-      return delaySeconds;
-    } catch (Exception ex) {
-      logger.info("get deferred transaction delay second failed");
-      return 0;
-    }
-  }
-
+  
   public static long calcDeferredTransactionFee(Manager dbManager, long delaySecond) {
     return dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySecond  / (24 * 60 * 60) + 1);
   }
