@@ -117,6 +117,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
     }
 
+    event.setRawData(logInfo);
+    event.setAbiString(contractTrigger.getAbiString());
+
     event.setUniqueId(contractTrigger.getUniqueId());
     event.setTransactionId(contractTrigger.getTransactionId());
     event.setContractAddress(contractTrigger.getContractAddress());
