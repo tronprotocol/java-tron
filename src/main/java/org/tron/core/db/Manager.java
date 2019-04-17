@@ -1900,8 +1900,8 @@ public class Manager {
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     if (eventPluginLoaded &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable()
-            && trace.getRuntimeResult().getTriggerList().size() > 0)) {
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+        && trace.getRuntimeResult().getTriggerList().size() > 0) {
       boolean result = false;
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {

@@ -109,7 +109,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserJson.parseEventData(data, topicList, entryObj));
     } else {
-      if (EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
+      if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
         return;
       }
       event = new ContractLogTrigger();
