@@ -171,7 +171,7 @@ public class TransactionBuilder {
 
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
-    byte[] zkproof = new byte[32];
+    byte[] zkproof = new byte[192];
     if (!Librustzcash.librustzcashSaplingSpendProof(
         ctx,
         spend.expsk.fullViewingKey().getAk(),

@@ -13,13 +13,13 @@ import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.merkle.MerklePath;
-import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -73,8 +73,6 @@ public class MerkleContainerTest {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
     PedersenHash a = compressCapsule1.getInstance();
-
-
 
     String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
     PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
