@@ -35,6 +35,8 @@ public class ContractScenario009 {
       .getStringList("fullnode.ip.list").get(0);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+  private String compilerVersion = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.solidityCompilerVersion");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract009Address = ecKey1.getAddress();
@@ -97,7 +99,7 @@ public class ContractScenario009 {
 
     byte[] contractAddress = PublicMethed
         .deployContractForLibrary(contractName, abi, code, "", maxFeeLimit, 0L, 100, libraryAddress,
-            contract009Key, contract009Address, "v5", blockingStubFull);
+            contract009Key, contract009Address, compilerVersion, blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());

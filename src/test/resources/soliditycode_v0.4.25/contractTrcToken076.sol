@@ -10,4 +10,10 @@ contract Test {
         result1 = msg.sender == tx.origin; // true
         result2 = origin == sender; // true
     }
+function getResult1() public returns(bool){
+    return result1;
+}
+function getResult2() public returns(bool){
+    return result2;
+}
 }

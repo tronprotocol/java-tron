@@ -24,3 +24,11 @@ contract transferTokenContract {
         return toAddress.tokenBalance(tokenId);
     }
 }
+
+contract Result {
+   event log(uint256,uint256,uint256);
+   constructor() payable public{}
+    function() payable external{
+         emit log(msg.tokenid,msg.tokenvalue,msg.value);
+    }
+}

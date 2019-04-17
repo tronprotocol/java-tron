@@ -27,7 +27,7 @@ contract transferTokenContract {
 
 
 contract Result {
-   Event log(uint256,uint256,uint256);
+   event log(uint256,uint256,uint256);
    constructor() payable public{}
     function() payable public{
          emit log(msg.tokenid,msg.tokenvalue,msg.value);

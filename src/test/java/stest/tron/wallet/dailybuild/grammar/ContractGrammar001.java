@@ -47,6 +47,8 @@ public class ContractGrammar001 {
       .getStringList("fullnode.ip.list").get(1);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String compilerVersion = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.solidityCompileVersion");
 
 
   byte[] contractAddress = null;
@@ -151,7 +153,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, "v5", blockingStubFull);
+            grammarAddress, compilerVersion, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -189,7 +191,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, "v5", blockingStubFull);
+            grammarAddress, compilerVersion, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -236,7 +238,7 @@ public class ContractGrammar001 {
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
-            grammarAddress, "v5", blockingStubFull);
+            grammarAddress, compilerVersion, blockingStubFull);
     String txid = "";
     String num = "1";
     PublicMethed.waitProduceNextBlock(blockingStubFull);

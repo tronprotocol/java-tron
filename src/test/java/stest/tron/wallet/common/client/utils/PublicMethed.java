@@ -3557,7 +3557,8 @@ public class PublicMethed {
     final String compile = Configuration.getByPath("testng.conf")
         .getString("defaultParameter.solidityCompile");
 
-    String outputPath = "src/test/resources/soliditycode/output";
+    String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
+    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
 
     File binFile = new File(outputPath + "/" + contractName + ".bin");
     File abiFile = new File(outputPath + "/" + contractName + ".abi");
@@ -3636,7 +3637,8 @@ public class PublicMethed {
   public static HashMap<String, String> getBycodeAbiForLibrary(String solFile,
       String contractName) {
     HashMap retMap = null;
-    String outputPath = "src/test/resources/soliditycode/output";
+    String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
+    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
     try {
       retMap = PublicMethed.getBycodeAbi(solFile, contractName);
       String library = fileRead(outputPath + "/" + contractName + ".bin", true);

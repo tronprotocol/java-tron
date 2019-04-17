@@ -32,8 +32,8 @@ contract transferTokenContract {
     function transferTokenTestValueMaxLong(address toAddress) payable public  {
         toAddress.transferToken(9223372036854775807, 1000001);
     }
-    function transferTokenTestSmallerThanZero(address toAddress) payable public  {
-    toAddress.transferToken(-9223372036854775809, 1);
+    function transferTokenTestValue0IdBigInteger(address toAddress) payable public  {
+            toAddress.transferToken(0, 9223372036854775809);
     }
 }
 
@@ -41,7 +41,7 @@ contract transferTokenContract {
 
 
 contract Result {
-   Event log(uint256,uint256,uint256);
+   event log(uint256,uint256,uint256);
    constructor() payable public{}
     function() payable public{
          emit log(msg.tokenid,msg.tokenvalue,msg.value);

@@ -7,6 +7,9 @@ contract token{
         B b= new B();
         a= b.tokenBalance(id);
     }
+    function getA() public returns(uint256){
+        return a;
+    }
 }
 
 
