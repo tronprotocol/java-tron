@@ -120,7 +120,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
-    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract.getReceiveDescriptionList();
+    List<ReceiveDescription> receiveDescriptions = shieldedTransferContract
+        .getReceiveDescriptionList();
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
