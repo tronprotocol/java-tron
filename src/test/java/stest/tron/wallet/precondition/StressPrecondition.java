@@ -195,11 +195,7 @@ public class StressPrecondition {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
           true, blockingStubFull);
-      try {
-        Thread.sleep(700000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+      waitProposalApprove(31,blockingStubFull);
     }
   }
 
@@ -492,6 +488,23 @@ public class StressPrecondition {
       e.printStackTrace();
     }
     return "";
+  }
+
+  public static void waitProposalApprove(Integer proposalIndex,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Long currentTime = System.currentTimeMillis();
+    while (System.currentTimeMillis() <= currentTime + 610000) {
+      ChainParameters chainParameters = blockingStubFull
+          .getChainParameters(EmptyMessage.newBuilder().build());
+      Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
+      if (getChainParameters.get().getChainParameter(proposalIndex).getValue() == 1L) {
+        logger.info("Proposal has been approval");
+        return;
+      }
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
+
+
+
   }
 
 
