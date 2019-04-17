@@ -4,6 +4,7 @@ import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDEN
 
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,8 +14,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.common.zksnark.merkle.MerklePath;
 import org.tron.common.zksnark.zen.HdChain;
 import org.tron.common.zksnark.zen.KeyStore;
 import org.tron.common.zksnark.zen.Librustzcash;
@@ -129,19 +130,27 @@ public class SendCoinShieldTest {
     }
   }
 
-  //@Test
-  public void testVoucher() {
-    IncrementalMerkleVoucherCapsule voucherCapsule = new IncrementalMerkleVoucherCapsule();
-    IncrementalMerkleVoucherContainer voucher =
-        new IncrementalMerkleVoucherContainer(voucherCapsule);
-    byte[] voucherPath = voucher.path().encode();
-  }
-
-
   @Test
   public void testPath() {
     IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
     byte[] encode = voucher.path().encode();
+    System.out.print(ByteArray.toHexString(encode));
+  }
+
+  @Test
+  public void testPathMock() {
+    List<List<Boolean>> authenticationPath = Lists.newArrayList();
+    Boolean[] authenticationArray = {true, false, true, false, true, false};
+    for (int i = 0; i < 6; i++) {
+      authenticationPath.add(Lists.newArrayList(authenticationArray));
+    }
+
+    Boolean[] indexArray = {true, false, true, false, true, false};
+    List<Boolean> index = Lists.newArrayList(Arrays.asList(indexArray));
+
+    MerklePath path = new MerklePath(authenticationPath, index);
+
+    byte[] encode = path.encode();
     System.out.print(ByteArray.toHexString(encode));
   }
 
