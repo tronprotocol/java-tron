@@ -9,9 +9,8 @@ public class DiversifierT {
 
   @Setter
   @Getter
-  byte[] data; // ZC_DIVERSIFIER_SIZE
+  byte[] data;
 
-  // typedef array<char, ZC_DIVERSIFIER_SIZE> DiversifierT;
   public DiversifierT() {
     data = new byte[ZC_DIVERSIFIER_SIZE];
   }
