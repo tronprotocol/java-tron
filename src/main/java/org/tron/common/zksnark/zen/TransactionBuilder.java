@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.zen;
 
+import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
 import java.util.List;
 import java.util.Optional;
@@ -7,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
@@ -17,7 +19,10 @@ import org.tron.common.zksnark.zen.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.zen.note.SaplingOutgoingPlaintext;
 import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class TransactionBuilder {
 
@@ -34,7 +39,10 @@ public class TransactionBuilder {
   @Getter
   private List<ReceiveDescriptionInfo> receives;
 
-  private ShieldedTransferContract tx;
+  private Wallet wallet;
+
+  private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
+
   //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
@@ -43,69 +51,80 @@ public class TransactionBuilder {
 
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
-  public void AddNoteSpend(
+  public void addSaplingSpend(
       ExpandedSpendingKey expsk,
       Note note,
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
-    tx = tx.toBuilder().setValueBalance(tx.getValueBalance() + note.value).build();
+    contractBuilder.setValueBalance(contractBuilder.getValueBalance() + note.value);
   }
 
-  public void addOutputs(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
+  public void addSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
-    tx = tx.toBuilder().setValueBalance(tx.getValueBalance() - value).build();
+    contractBuilder.setValueBalance(contractBuilder.getValueBalance() - value);
   }
 
-  public void AddTransparentInput(String address, long value) {
+  // TODO
+  public void setTransparentInput(String address, long value) {
+    setTransparentInput(address.getBytes(), value);
   }
 
-  public void AddTransparentOutput(String address, long value) {
+  public void setTransparentInput(byte[] address, long value) {
+    contractBuilder.setTransparentFromAddress(ByteString.copyFrom(address))
+        .setFromAmount(value);
   }
 
-  public void AddSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
-    //    {
-    //      Note note = new Note(to, value);
-    //      outputs.add(new OutputDescriptionInfo(ovk, note, memo));
-    //      mtx.valueBalance -= value;
+  // TODO
+  public void setTransparentOutput(String address, long value) {
+    setTransparentOutput(address.getBytes(), value);
   }
 
-  // Assumes that the value correctly corresponds to the provided UTXO.
-  //  void AddTransparentInput(COutPoint utxo, CScript scriptPubKey, CAmount value);
-  //
-  //  void AddTransparentOutput(CTxDestination&to, CAmount value);
+  public void setTransparentOutput(byte[] address, long value) {
+    contractBuilder.setTransparentToAddress(ByteString.copyFrom(address))
+        .setToAmount(value);
+  }
+
   //
   //  void SendChangeTo(PaymentAddress changeAddr, byte[] ovk);
   //
   //  void SendChangeTo(CTxDestination&changeAddr);
 
   public TransactionBuilderResult Build() {
-    ShieldedTransferContract.Builder zkBuilder = ShieldedTransferContract.newBuilder();
 
     //
     // Sapling spends and outputs
     //
+
+    long change = contractBuilder.getValueBalance();
+    change += contractBuilder.getFromAmount();
+    change -= contractBuilder.getToAmount();
+
+    if (change < 0) {
+      // TODO
+      throw new RuntimeException("change cannot be negative");
+    }
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
       SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
-      tx = tx.toBuilder().addSpendDescription(spendDescriptionCapsule.getInstance()).build();
+      contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
     }
 
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : receives) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
-      tx = tx.toBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
+      contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance()).build();
     }
 
     // Empty output script.
     byte[] dataToBeSigned;//256 
     try {
-//      dataToBeSigned = SignatureHash(scriptCode, mtx, NOT_AN_INPUT, SIGHASH_ALL, 0,
-////          consensusBranchId);
-      dataToBeSigned = null;
+      TransactionCapsule transactionCapsule = wallet.createTransactionCapsule(
+          contractBuilder.build(), ContractType.ShieldedTransferContract);
+      dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray()).getBytes();
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -132,6 +151,7 @@ public class TransactionBuilder {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
+//    return contractBuilder.build();
     return null;
   }
 
