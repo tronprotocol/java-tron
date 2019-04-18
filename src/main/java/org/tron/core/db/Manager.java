@@ -2100,17 +2100,13 @@ public class Manager {
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     if (eventPluginLoaded &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable())
-        && trace.getRuntimeResult().getTriggerList().size() > 0) {
-      boolean result = false;
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
         contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-        result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
-
-        if (!result) {
+        if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }
