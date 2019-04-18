@@ -136,7 +136,7 @@ public class ContractEventParser {
     return inputSize == topicList.size();
   }
 
-  private static String parseDataBytes(byte[] data, String typeStr, int index) {
+  protected static String parseDataBytes(byte[] data, String typeStr, int index) {
 
     try {
       byte[] startBytes = subBytes(data, index * DATAWORD_UNIT_SIZE, DATAWORD_UNIT_SIZE);
@@ -166,7 +166,7 @@ public class ContractEventParser {
   }
 
   // don't support these type yet : bytes32[10][10]  OR  bytes32[][10]
-  private static Type basicType(String type) {
+  protected static Type basicType(String type) {
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)) {
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
       if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
@@ -186,11 +186,11 @@ public class ContractEventParser {
     return Type.UNKNOWN;
   }
 
-  private static Integer intValueExact(byte[] data) {
+  protected static Integer intValueExact(byte[] data) {
     return new BigInteger(data).intValueExact();
   }
 
-  private static byte[] subBytes(byte[] src, int start, int length) {
+  protected static byte[] subBytes(byte[] src, int start, int length) {
     if (ArrayUtils.isEmpty(src) || start >= src.length || length < 0) {
       throw new OutputLengthException("data start:" + start + ", length:" + length);
     }
@@ -208,7 +208,7 @@ public class ContractEventParser {
    * This is only for decode Topic. Since Topic and Data use different encode methods when deal
    * dynamic length types, such as bytes and string.
    */
-  private static String parseTopic(byte[] bytes, String typeStr) {
+  protected static String parseTopic(byte[] bytes, String typeStr) {
     if (ArrayUtils.isEmpty(bytes) || StringUtils.isNullOrEmpty(typeStr)) {
       return "";
     }
