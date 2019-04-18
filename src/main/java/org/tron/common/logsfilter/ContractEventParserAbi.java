@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,15 +7,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.protos.Protocol.SmartContract.ABI;
 
 @Slf4j(topic = "Parser")
-public class ContractEventParserJson extends ContractEventParser {
+public class ContractEventParserAbi extends ContractEventParser {
 
   /**
    * parse Event Topic into map NOTICE: In solidity, Indexed Dynamic types's topic is just
    * EVENT_INDEXED_ARGS
    */
-  public static Map<String, String> parseTopics(List<byte[]> topicList, JSONObject entry) {
+  public static Map<String, String> parseTopics(List<byte[]> topicList, ABI.Entry entry) {
     Map<String, String> map = new HashMap<>();
     if (topicList == null || topicList.isEmpty()) {
       return map;
@@ -25,24 +24,22 @@ public class ContractEventParserJson extends ContractEventParser {
 
     // the first is the signature.
     int index = 1;
-    JSONArray inputs = entry.getJSONArray("inputs");
+    List<ABI.Entry.Param> list = entry.getInputsList();
 
     // in case indexed topics doesn't match
     if (topicsMatched(topicList, entry)) {
-      for (int i = 0; i < inputs.size(); ++i) {
-        JSONObject param = inputs.getJSONObject(i);
-        Boolean indexed = param.getBoolean("indexed");
-        if (indexed == null || !indexed) {
-          continue;
+      for (int i = 0; i < list.size(); ++i) {
+        ABI.Entry.Param param = list.get(i);
+        if (param.getIndexed()) {
+          if (index >= topicList.size()) {
+            break;
+          }
+          String str = parseTopic(topicList.get(index++), param.getType());
+          if (StringUtils.isNotNullOrEmpty(param.getName())) {
+            map.put(param.getName(), str);
+          }
+          map.put("" + i, str);
         }
-        if (index >= topicList.size()) {
-          break;
-        }
-        String str = parseTopic(topicList.get(index++), param.getString("type"));
-        if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
-          map.put(param.getString("name"), str);
-        }
-        map.put("" + i, str);
       }
     } else {
       for (int i = 1; i < topicList.size(); ++i) {
@@ -58,7 +55,7 @@ public class ContractEventParserJson extends ContractEventParser {
    * Array are not support yet (then return {"0": Hex.toHexString(data)}).
    */
   public static Map<String, String> parseEventData(byte[] data,
-      List<byte[]> topicList, JSONObject entry) {
+      List<byte[]> topicList, ABI.Entry entry) {
     Map<String, String> map = new HashMap<>();
     if (ArrayUtils.isEmpty(data)) {
       return map;
@@ -70,32 +67,28 @@ public class ContractEventParserJson extends ContractEventParser {
     }
 
     // the first is the signature.
-    JSONArray inputs = entry.getJSONArray("inputs");
+    List<ABI.Entry.Param> list = entry.getInputsList();
     Integer startIndex = 0;
-
     try {
       // this one starts from the first position.
       int index = 0;
-      if (inputs != null) {
-        for (Integer i = 0; i < inputs.size(); ++i) {
-          JSONObject param = inputs.getJSONObject(i);
-          Boolean indexed = param.getBoolean("indexed");
-          if (indexed != null && indexed) {
-            continue;
-          }
-
-          if (startIndex == 0) {
-            startIndex = i;
-          }
-
-          String str = parseDataBytes(data, param.getString("type"), index++);
-          if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
-            map.put(param.getString("name"), str);
-          }
-          map.put("" + i, str);
-
+      for (Integer i = 0; i < list.size(); ++i) {
+        ABI.Entry.Param param = list.get(i);
+        if (param.getIndexed()) {
+          continue;
         }
-      } else {
+        if (startIndex == 0) {
+          startIndex = i;
+        }
+
+        String str = parseDataBytes(data, param.getType(), index++);
+        if (StringUtils.isNotNullOrEmpty(param.getName())) {
+          map.put(param.getName(), str);
+        }
+        map.put("" + i, str);
+
+      }
+      if (list.size() == 0) {
         map.put("0", Hex.toHexString(data));
       }
     } catch (UnsupportedOperationException e) {
@@ -106,20 +99,16 @@ public class ContractEventParserJson extends ContractEventParser {
     return map;
   }
 
-  private static boolean topicsMatched(List<byte[]> topicList, JSONObject entry) {
+  private static boolean topicsMatched(List<byte[]> topicList, ABI.Entry entry) {
     if (topicList == null || topicList.isEmpty()) {
       return true;
     }
     int inputSize = 1;
-    JSONArray inputs = entry.getJSONArray("inputs");
-    for (int i = 0; i < inputs.size(); i++) {
-      JSONObject param = inputs.getJSONObject(i);
-      Boolean indexed = param.getBoolean("indexed");
-      if (indexed != null && indexed) {
+    for (ABI.Entry.Param param : entry.getInputsList()) {
+      if (param.getIndexed()) {
         inputSize++;
       }
     }
     return inputSize == topicList.size();
   }
-
 }

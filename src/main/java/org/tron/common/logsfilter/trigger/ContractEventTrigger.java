@@ -23,7 +23,7 @@ public class ContractEventTrigger extends ContractTrigger {
 
   /**
    * decode from topicList with the ABI of this contract. this item is null if not called
-   * ContractEventParser::parseTopics(ContractEventTrigger trigger)
+   * ContractEventParserAbi::parseTopics(ContractEventTrigger trigger)
    */
   @Getter
   @Setter
@@ -31,7 +31,7 @@ public class ContractEventTrigger extends ContractTrigger {
 
   /**
    * multi data items will be concat into a single string. this item is null if not called
-   * ContractEventParser::parseData(ContractEventTrigger trigger)
+   * ContractEventParserAbi::parseData(ContractEventTrigger trigger)
    */
   @Getter
   @Setter
