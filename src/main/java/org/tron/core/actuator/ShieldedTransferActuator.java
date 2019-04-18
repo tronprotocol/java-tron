@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -88,10 +90,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
+        .getCurrentMerkle();
     //handle receives
     for (ReceiveDescription receive : receives)  {
       dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
     }
+    merkleContainer.setCurrentMerkle(currentMerkle);
+
   }
 
   @Override
@@ -127,6 +134,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {
       for (SpendDescription spendDescription : spendDescriptions) {
+        if (!dbManager.getMerkleContainer()
+            .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
+          throw new ContractValidateException("Rt is invalid.");
+        }
         if (dbManager.getNullfierStore().has(spendDescription.getNullifier().toByteArray())) {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }

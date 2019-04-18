@@ -106,7 +106,7 @@ public class MerkleContainerTest {
     merkleContainer.putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
 
     //get
-    Assert.assertEquals(true, merkleContainer.merkleRootIsExist(tree.getMerkleTreeKey()));
+    Assert.assertEquals(true, merkleContainer.merkleRootExist(tree.getMerkleTreeKey()));
 
     tree = merkleContainer.getMerkleTree(tree.getMerkleTreeKey()).toMerkleTreeContainer();
     Assert.assertEquals(3, tree.size());
