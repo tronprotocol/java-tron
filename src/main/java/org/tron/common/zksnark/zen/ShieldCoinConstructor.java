@@ -4,6 +4,7 @@ import static org.tron.core.Wallet.tryDecodeFromBase58Check;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -157,7 +158,7 @@ public class ShieldCoinConstructor {
 
       // Fetch ShieldNote anchor and voucher
       byte[] anchor = null;
-      List<Optional<IncrementalMerkleVoucherContainer>> vouchers = null;
+      List<Optional<IncrementalMerkleVoucherContainer>> vouchers = new ArrayList<>();
 
       ShieldWallet.getNoteVouchers(ops, vouchers, anchor);
 
