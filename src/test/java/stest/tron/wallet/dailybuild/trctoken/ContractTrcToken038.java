@@ -110,6 +110,7 @@ public class ContractTrcToken038 {
         10000L, 1L, 1L, dev001Key, blockingStubFull));
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertFalse(assetAccountId.toStringUtf8().equals(""));
 
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
