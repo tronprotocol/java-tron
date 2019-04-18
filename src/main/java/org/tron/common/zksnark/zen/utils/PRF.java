@@ -1,11 +1,13 @@
 package org.tron.common.zksnark.zen.utils;
 
 import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.common.zksnark.zen.Libsodium;
+import org.tron.common.zksnark.zen.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
 
 public class PRF {
 
   public static byte[] prfAsk(byte[] sk) {
-    byte[] ask = null;
+    byte[] ask = new byte[32];
     byte t = 0x00;
     byte[] tmp = prfExpand(sk, t);
     Librustzcash.librustzcashToScalar(tmp, ask);
@@ -34,14 +36,9 @@ public class PRF {
 
     System.arraycopy(sk, 0, blob, 0, 32);
     blob[32] = t;
-
-    // todo:
-    //    crypto_generichash_blake2b_state state;
-    //    crypto_generichash_blake2b_init_salt_personal(
-    //        state, nullptr, 0, 64, nullptr, ZCASH_EXPANDSEED_PERSONALIZATION);
-    //    cryptoGenerichashBlake2BUpdate(state, blob, 33);
-    //    cryptoGenerichashBlake2BFinal(state, res, 64);
-
+    crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
+    Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
+    Libsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
     return res;
   }
 }
