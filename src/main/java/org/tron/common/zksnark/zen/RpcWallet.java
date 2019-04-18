@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen;
 
 import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
@@ -99,7 +100,7 @@ public class RpcWallet {
   public void sendCoinShield(String[] params) {
 
     String fromAddr = params[0];
-    List<Recipient> outputs = null;
+    List<Recipient> outputs = new ArrayList<>();
 
     ShieldCoinConstructor constructor =
         new ShieldCoinConstructor(fromAddr, outputs);
@@ -112,7 +113,7 @@ public class RpcWallet {
     long balance = 0;
     List<NoteEntry> saplingEntries;
 
-    PaymentAddress filterAddresses = null;
+    PaymentAddress filterAddresses = null;// TODO can be null
     if (address.length() > 0) {
       filterAddresses = KeyIo.decodePaymentAddress(address);
     }

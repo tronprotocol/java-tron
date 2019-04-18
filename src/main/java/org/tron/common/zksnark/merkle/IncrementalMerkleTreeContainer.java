@@ -12,7 +12,7 @@ import org.tron.protos.Contract.PedersenHash;
 @Slf4j
 public class IncrementalMerkleTreeContainer {
 
-  public static Integer DEPTH = 29;
+  public static Integer DEPTH = 32;
 
   private IncrementalMerkleTreeCapsule treeCapsule;
 

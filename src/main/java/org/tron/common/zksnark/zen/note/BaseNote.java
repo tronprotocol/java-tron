@@ -32,7 +32,7 @@ public class BaseNote {
 
     // Call librustzcash to compute the commitment
     public byte[] cm() {
-      byte[] result = new byte[256];
+      byte[] result = new byte[32];
       if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pkD, value, r, result)) {
         return null;
       }
