@@ -37,8 +37,6 @@ public class HDSeed {
   }
 
   public byte[] ovkForShieldingFromTaddr() {
-
-    // I = BLAKE2b-512("ZcTaddrToSapling", seed)
     CryptoGenerichashBlake2BState state = null;
     CryptoGenerichashBlake2BState
         .cryptoGenerichashBlake2BUpdate(state, rawSeed.data, rawSeed.data.length);

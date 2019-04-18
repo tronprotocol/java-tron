@@ -154,6 +154,8 @@ public class Librustzcash {
     void librustzcash_tree_uncommitted(
         byte[] result
     );
+
+    void librustzcash_to_scalar(byte[] input, byte[] result);
   }
 
   // todo jni
@@ -295,6 +297,7 @@ public class Librustzcash {
   }
 
   public static void librustzcashToScalar(byte[] value, byte[] data) {
+    INSTANCE.librustzcash_to_scalar(value, data);
   }
 
   public static void librustzcashSaplingProvingCtxFree(Pointer ctx) {
