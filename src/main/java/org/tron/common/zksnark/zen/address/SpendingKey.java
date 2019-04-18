@@ -51,7 +51,7 @@ public class SpendingKey {
     blob[32] = 3;
     blob[33] = 0;
     while (true) {
-      crypto_generichash_blake2b_state.ByReference state = null;
+      crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
       Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(state, null, 0, 64, null,
           ZCASH_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
