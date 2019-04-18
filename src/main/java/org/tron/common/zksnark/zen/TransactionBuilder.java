@@ -268,6 +268,8 @@ public class TransactionBuilder {
       this.note = note;
       this.anchor = anchor;
       this.voucher = voucher;
+      alpha = new byte[32];
+      Librustzcash.librustzcashSaplingGenerateR(alpha);
     }
   }
 
