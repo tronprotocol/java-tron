@@ -86,12 +86,14 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.NodeInfo;
@@ -468,6 +470,34 @@ public class RpcApiService implements Service {
       ByteString id = request.getValue();
       if (null != id) {
         TransactionInfo reply = wallet.getTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDeferredTransactionInfoById(BytesMessage request,
+        StreamObserver<TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDeferredTransactionById(BytesMessage request,
+        StreamObserver<DeferredTransaction> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        DeferredTransaction reply = wallet.getDeferredTransactionById(id);
 
         responseObserver.onNext(reply);
       } else {
@@ -944,6 +974,13 @@ public class RpcApiService implements Service {
     public void updateEnergyLimit(UpdateEnergyLimitContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UpdateEnergyLimitContract,
+          responseObserver);
+    }
+
+    @Override
+    public void clearContractABI(ClearABIContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.ClearABIContract,
           responseObserver);
     }
 
@@ -1515,12 +1552,30 @@ public class RpcApiService implements Service {
     @Override
     public void triggerContract(Contract.TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
+
+      callContract(request, responseObserver, false);
+    }
+
+    @Override
+    public void triggerConstantContract(Contract.TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver) {
+
+      callContract(request, responseObserver, true);
+    }
+
+    private void callContract(Contract.TriggerSmartContract request,
+        StreamObserver<TransactionExtention> responseObserver, boolean isConstant) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
         TransactionCapsule trxCap = createTransactionCapsule(request,
             ContractType.TriggerSmartContract);
-        Transaction trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+        Transaction trx;
+        if (isConstant) {
+          trx = wallet.triggerConstantContract(request, trxCap, trxExtBuilder, retBuilder);
+        } else {
+          trx = wallet.triggerContract(request, trxCap, trxExtBuilder, retBuilder);
+        }
         trxExtBuilder.setTransaction(trx);
         trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
@@ -1637,11 +1692,38 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDeferredTransactionInfoById(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.TransactionInfo> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
         TransactionInfo reply = wallet.getTransactionInfoById(id);
+
+        responseObserver.onNext(reply);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDeferredTransactionById(BytesMessage request, StreamObserver<DeferredTransaction> responseObserver) {
+      ByteString id = request.getValue();
+      if (null != id) {
+        DeferredTransaction reply = wallet.getDeferredTransactionById(id);
 
         responseObserver.onNext(reply);
       } else {
@@ -1665,6 +1747,11 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
           responseObserver);
+    }
+
+    @Override
+    public void createCancelDeferredTransactionContract(Contract.CancelDeferredTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelDeferredTransactionContract, responseObserver);
     }
 
   }

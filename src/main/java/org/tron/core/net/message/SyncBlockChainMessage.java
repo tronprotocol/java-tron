@@ -1,7 +1,6 @@
 package org.tron.core.net.message;
 
 import java.util.List;
-import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol.BlockInventory.Type;
 

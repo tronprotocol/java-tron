@@ -53,18 +53,18 @@ public class SyncService {
   private ScheduledExecutorService blockHandleExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private boolean syncHandleFlag = false;
+  private volatile boolean handleFlag = false;
 
   @Setter
-  private boolean fetchFlag = false;
+  private volatile boolean fetchFlag = false;
 
   public void init() {
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
         if (fetchFlag) {
+          fetchFlag = false;
           startFetchSyncBlock();
         }
-        fetchFlag = false;
       } catch (Throwable t) {
         logger.error("Fetch sync block error.", t);
       }
@@ -72,8 +72,8 @@ public class SyncService {
 
     blockHandleExecutor.scheduleWithFixedDelay(() -> {
       try {
-        if (syncHandleFlag) {
-          syncHandleFlag = false;
+        if (handleFlag) {
+          handleFlag = false;
           handleSyncBlock();
         }
       } catch (Throwable t) {
@@ -115,7 +115,7 @@ public class SyncService {
     synchronized (blockJustReceived) {
       blockJustReceived.put(blockMessage, peer);
     }
-    syncHandleFlag = true;
+    handleFlag = true;
     if (peer.isIdle()) {
       if (peer.getRemainNum() > 0
           && peer.getSyncBlockToFetch().size() <= NodeConstant.SYNC_FETCH_BATCH_NUM) {

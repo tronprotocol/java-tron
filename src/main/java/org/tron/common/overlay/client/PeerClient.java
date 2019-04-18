@@ -31,7 +31,7 @@ public class PeerClient {
 
   public PeerClient() {
     workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
-      AtomicInteger cnt = new AtomicInteger(0);
+      private AtomicInteger cnt = new AtomicInteger(0);
 
       @Override
       public Thread newThread(Runnable r) {

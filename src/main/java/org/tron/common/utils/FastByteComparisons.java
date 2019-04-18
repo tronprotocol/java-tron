@@ -35,9 +35,8 @@ package org.tron.common.utils;
 import com.google.common.primitives.UnsignedBytes;
 
 /**
- * Utility code to do optimized byte-array comparison.
- * This is borrowed and slightly modified from Guava's {@link UnsignedBytes}
- * class to be able to compare arrays that start at non-zero offsets.
+ * Utility code to do optimized byte-array comparison. This is borrowed and slightly modified from
+ * Guava's {@link UnsignedBytes} class to be able to compare arrays that start at non-zero offsets.
  */
 @SuppressWarnings("restriction")
 public abstract class FastByteComparisons {
@@ -75,20 +74,20 @@ public abstract class FastByteComparisons {
   }
 
   /**
-   * <p>Uses reflection to gracefully fall back to the Java implementation if
-   * {@code Unsafe} isn't available.
+   * <p>Uses reflection to gracefully fall back to the Java implementation if {@code Unsafe} isn't
+   * available.
    */
   private static class LexicographicalComparerHolder {
 
-    static final String UNSAFE_COMPARER_NAME =
+    private static final String UNSAFE_COMPARER_NAME =
         LexicographicalComparerHolder.class.getName() +
             "$UnsafeComparer";
 
-    static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
+    private static final Comparer<byte[]> BEST_COMPARER = getBestComparer();
 
     /**
-     * Returns the Unsafe-using Comparer, or falls back to the pure-Java
-     * implementation if unable to do so.
+     * Returns the Unsafe-using Comparer, or falls back to the pure-Java implementation if unable to
+     * do so.
      */
     static Comparer<byte[]> getBestComparer() {
       try {
