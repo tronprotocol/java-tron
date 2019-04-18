@@ -69,7 +69,7 @@ public class MerkleContainer {
     manager.getMerkleTreeStore().put(currentTreeKey, treeContainer.getTreeCapsule());
   }
 
-  public boolean merkleRootIsExist(byte[] rt) {
+  public boolean merkleRootExist(byte[] rt) {
     return this.manager.getMerkleTreeStore().contain(rt);
   }
 

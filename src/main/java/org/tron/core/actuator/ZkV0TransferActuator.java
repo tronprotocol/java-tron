@@ -182,7 +182,7 @@ public class ZkV0TransferActuator extends AbstractActuator {
       throw new ContractValidateException("Merkel root is invalid.");
     }
 
-    if (!dbManager.getMerkleContainer().merkleRootIsExist(rt.toByteArray())) {
+    if (!dbManager.getMerkleContainer().merkleRootExist(rt.toByteArray())) {
       throw new ContractValidateException("Rt is invalid.");
     }
 

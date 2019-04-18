@@ -1316,7 +1316,7 @@ public class Wallet {
       return null;
     }
 
-    if (!dbManager.getMerkleContainer().merkleRootIsExist(rt.toByteArray())) {
+    if (!dbManager.getMerkleContainer().merkleRootExist(rt.toByteArray())) {
       return null;
     }
 

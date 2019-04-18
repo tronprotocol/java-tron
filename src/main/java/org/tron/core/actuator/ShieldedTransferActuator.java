@@ -11,7 +11,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.MerkleContainer;
 import org.tron.common.zksnark.zen.Librustzcash;
-import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -135,6 +134,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {
       for (SpendDescription spendDescription : spendDescriptions) {
+        if (!dbManager.getMerkleContainer()
+            .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
+          throw new ContractValidateException("Rt is invalid.");
+        }
         if (dbManager.getNullfierStore().has(spendDescription.getNullifier().toByteArray())) {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
