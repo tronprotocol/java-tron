@@ -14,6 +14,9 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -31,16 +34,18 @@ public class TransactionSignServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost( contract );
       JSONObject input = JSONObject.parseObject(contract);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
-      Transaction transaction = Util.packTransaction(strTransaction);
-      JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction));
+      Transaction transaction = Util.packTransaction(strTransaction, visible );
+      JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction,
+              visible));
       input.put("transaction", jsonTransaction);
       TransactionSign.Builder build = TransactionSign.newBuilder();
-      JsonFormat.merge(input.toJSONString(), build);
+      JsonFormat.merge(input.toJSONString(), build, visible );
       TransactionCapsule reply = wallet.getTransactionSign(build.build());
       if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply.getInstance()));
+        response.getWriter().println(Util.printTransaction(reply.getInstance(), visible));
       } else {
         response.getWriter().println("{}");
       }

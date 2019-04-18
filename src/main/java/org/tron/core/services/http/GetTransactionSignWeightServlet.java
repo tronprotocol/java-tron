@@ -12,6 +12,9 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -29,10 +32,11 @@ public class GetTransactionSignWeightServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      Transaction transaction = Util.packTransaction(input);
+      boolean visible = getVisiblePost( input );
+      Transaction transaction = Util.packTransaction(input, visible );
       TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
       if (reply != null) {
-        response.getWriter().println(Util.printTransactionSignWeight(reply));
+        response.getWriter().println(Util.printTransactionSignWeight(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

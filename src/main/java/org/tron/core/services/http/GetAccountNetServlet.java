@@ -14,6 +14,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
+import static org.tron.core.services.http.Util.getHexAddress;
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -24,11 +28,15 @@ public class GetAccountNetServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String address = request.getParameter("address");
+      if ( visible ) {
+        address = getHexAddress( address );
+      }
       AccountNetMessage reply = wallet
           .getAccountNet(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -47,11 +55,12 @@ public class GetAccountNetServlet extends HttpServlet {
       String account = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(account);
+      boolean visible = getVisiblePost( account );
       Account.Builder build = Account.newBuilder();
-      JsonFormat.merge(account, build);
+      JsonFormat.merge(account, build, visible);
       AccountNetMessage reply = wallet.getAccountNet(build.getAddress());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

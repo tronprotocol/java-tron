@@ -15,6 +15,9 @@ import org.tron.core.WalletSolidity;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 @Component
 @Slf4j(topic = "API")
 public class GetTransactionsToThisServlet extends HttpServlet {
@@ -27,15 +30,16 @@ public class GetTransactionsToThisServlet extends HttpServlet {
     try {
       String input = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost(input);
       AccountPaginated.Builder builder = AccountPaginated.newBuilder();
-      JsonFormat.merge(input, builder);
+      JsonFormat.merge(input, builder, visible );
       AccountPaginated accountPaginated = builder.build();
       ByteString toAddress = accountPaginated.getAccount().getAddress();
       long offset = accountPaginated.getOffset();
       long limit = accountPaginated.getLimit();
       if (toAddress != null && offset >= 0 && limit >= 0) {
         TransactionList list = walletSolidity.getTransactionsToThis(toAddress, offset, limit);
-        resp.getWriter().println(Util.printTransactionList(list));
+        resp.getWriter().println(Util.printTransactionList(list, visible ));
       } else {
         resp.getWriter().print("{}");
       }

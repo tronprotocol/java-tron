@@ -24,6 +24,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -51,12 +52,13 @@ public class TriggerConstantContractServlet extends HttpServlet {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
     TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
     Return.Builder retBuilder = Return.newBuilder();
-
+    boolean visible = false;
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
-      JsonFormat.merge(contract, build);
+      visible = getVisiblePost( contract );
+      JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
       String parameter = jsonObject.getString("parameter");
@@ -87,6 +89,6 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build()));
+    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible ));
   }
 }

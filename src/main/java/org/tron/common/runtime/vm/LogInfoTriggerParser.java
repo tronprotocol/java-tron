@@ -64,7 +64,7 @@ public class LogInfoTriggerParser {
       signMap.put(strContractAddr, creatorAddr); // mark as found.
 
       if (abi != null && abi.getEntrysCount() > 0) {
-        abiMap.put(strContractAddr, JsonFormat.printToString(abi));
+        abiMap.put(strContractAddr, JsonFormat.printToString(abi, false));
       } else {
         abiMap.put(strContractAddr, "");
       }
