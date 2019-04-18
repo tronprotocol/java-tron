@@ -295,7 +295,7 @@ public class RequireException {
 
   @Test(enabled = false, description = "No payable function call value")
   public void test4noPayableContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest4noPayableContract.sol";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest4noPayableContract_1.sol";
     String contractName = "noPayableContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -373,7 +373,7 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest5noPayableConstructor.sol";
+    String filePath = "src/test/resources/soliditycode/requireExceptiontest5noPayableConstructor_1.sol";
     String contractName = "MyContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
