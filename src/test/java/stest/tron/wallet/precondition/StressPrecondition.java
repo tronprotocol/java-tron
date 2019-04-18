@@ -140,7 +140,7 @@ public class StressPrecondition {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test1CreateProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
