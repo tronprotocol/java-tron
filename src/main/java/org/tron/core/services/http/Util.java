@@ -545,11 +545,6 @@ public class Util {
                     setAccountid, selfType);
             any = Any.pack(setAccountid.build());
             break;
-          case "SmartContract":
-            SmartContract.Builder smartContractBuilder = SmartContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), smartContractBuilder, selfType);
-            any = Any.pack(smartContractBuilder.build());
-            break;
           case "CreateSmartContract":
             CreateSmartContract.Builder createSmartContractBuilder = CreateSmartContract
                     .newBuilder();
