@@ -31,10 +31,10 @@ public class Libsodium {
 
       }
 
-      public long h[];
-      public long t[];
-      public long f[];
-      public int buf[];
+      public long h[] = new long[8];
+      public long t[] = new long[2];
+      public long f[] = new long[2];
+      public byte buf[] = new byte[2 * 128];
       public int buflen;
       public int last_node;
     }

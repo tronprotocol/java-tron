@@ -15,7 +15,7 @@ public class PRF {
   }
 
   public static byte[] prfNsk(byte[] sk) {
-    byte[] nsk = null;
+    byte[] nsk = new byte[32];
     byte t = 0x01;
     byte[] tmp = prfExpand(sk, t);
     Librustzcash.librustzcashToScalar(tmp, nsk);

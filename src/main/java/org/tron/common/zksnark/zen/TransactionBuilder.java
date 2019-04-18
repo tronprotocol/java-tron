@@ -136,23 +136,24 @@ public class TransactionBuilder {
     }
 
     // Create Sapling spendAuth and binding signatures
-    for (SpendDescriptionInfo spend : spends) {
-      byte[] result = null;
+    for (int i=0; i < spends.size(); i++) {
+      byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          spend.expsk.getAsk(),
-          spend.alpha,
+          spends.get(i).expsk.getAsk(),
+          spends.get(i).alpha,
           dataToBeSigned,
           result);
+      contractBuilder.getSpendDescriptionBuilder(i).setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
 
-    long valueBalance = 0;
-    byte[] bindingSig = null;
+    byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
         ctx,
-        valueBalance,
+        contractBuilder.getValueBalance(),
         dataToBeSigned,
         bindingSig
     );
+    contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 

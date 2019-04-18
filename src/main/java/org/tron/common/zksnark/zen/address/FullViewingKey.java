@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.zen.address;
 
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,9 +34,9 @@ public class FullViewingKey {
   }
 
   public boolean isValid() {
-    byte[] ivk = null;
+    byte[] ivk = new byte[32];
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
-    return ivk != null && ivk.length != 0;
+    return !Arrays.equals(ivk, new byte[32]);
   }
 
   public static class CBLAKE2bWriter {
