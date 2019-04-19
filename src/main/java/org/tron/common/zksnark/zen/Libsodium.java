@@ -44,12 +44,8 @@ public class Libsodium {
         byte[] key, int kenlen, int outlen);
 
     int crypto_generichash_blake2b_init_salt_personal(
-        crypto_generichash_blake2b_state.ByReference state,
-        byte[] key,
-        int keylen,
-        int outlen,
-        byte[] salt,
-        byte[] personal);
+        crypto_generichash_blake2b_state.ByReference state, byte[] key, int keylen, int outlen,
+        byte[] salt, byte[] personal);
 
     int crypto_generichash_blake2b_update(crypto_generichash_blake2b_state.ByReference state,
         byte[] in, long inlen);
@@ -57,36 +53,11 @@ public class Libsodium {
     int crypto_generichash_blake2b_final(crypto_generichash_blake2b_state.ByReference state,
         byte[] out, int outlen);
 
-//            int crypto_generichash_blake2b_salt_personal(unsigned char *out, size_t outlen,
-//                                             const unsigned char *in,
-//                                                     unsigned long long inlen,
-//                                             const unsigned char *key,
-//                                                     size_t keylen,
-//                                             const unsigned char *salt,
-//                                             const unsigned char *personal);
-
     int crypto_generichash_blake2b_salt_personal(byte[] out, int outlen, byte[] in, long inlen,
         byte[] key, int keylen, byte[] salt, byte[] personal);
 
-//        int crypto_aead_chacha20poly1305_ietf_decrypt(unsigned char *m,
-//                                                      unsigned long long *mlen_p,
-//                                                      unsigned char *nsec,
-//                                              const unsigned char *c,
-//                                                      unsigned long long clen,
-//                                              const unsigned char *ad,
-//                                                      unsigned long long adlen,
-//                                              const unsigned char *npub,
-//                                              const unsigned char *k)
-
-    int crypto_aead_chacha20poly1305_ietf_decrypt(byte[] m,
-        long[] mlen_p,
-        byte[] nsec,
-        byte[] c,
-        long clen,
-        byte[] ad,
-        long adlen,
-        byte[] npub,
-        byte[] k);
+    int crypto_aead_chacha20poly1305_ietf_decrypt(byte[] m, long[] mlen_p, byte[] nsec, byte[] c,
+        long clen, byte[] ad, long adlen, byte[] npub, byte[] k);
   }
 
   public static int cryptoGenerichashBlake2bInitSaltPersonal(
@@ -120,7 +91,6 @@ public class Libsodium {
     return INSTANCE
         .crypto_aead_chacha20poly1305_ietf_decrypt(m, mlen_p, nsec, c, clen, ad, adlen, npub, k);
   }
-
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
     byte[] block = new byte[128];
@@ -174,7 +144,5 @@ public class Libsodium {
     byte[] epk = new byte[32];
 
     test(K, ovk, cv, cm, epk);
-
   }
-
 }

@@ -3,17 +3,22 @@ package org.tron.common.zksnark.zen.address;
 import java.util.Optional;
 import java.util.Random;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.zen.Constants;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.Libsodium;
 import org.tron.common.zksnark.zen.Libsodium.ILibsodium;
+import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.utils.PRF;
 
 @AllArgsConstructor
 public class SpendingKey {
 
+  @Setter
+  @Getter
   public byte[] value;
 
   public static SpendingKey random() {
@@ -27,6 +32,11 @@ public class SpendingKey {
 
   public String encode() {
     return ByteArray.toHexString(value);
+  }
+
+  public static SpendingKey decode(String hex) {
+    SpendingKey sk = new SpendingKey(ByteArray.fromHexString(hex));
+    return sk;
   }
 
   public ExpandedSpendingKey expandedSpendingKey() {
@@ -56,7 +66,6 @@ public class SpendingKey {
           state, null, 0, 64, null, Constants.ZCASH_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
-
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
@@ -85,8 +94,10 @@ public class SpendingKey {
     return result;
   }
 
+
   public static void main(String[] args) throws Exception {
-    SpendingKey sk = SpendingKey.random();
+    SpendingKey sk = SpendingKey
+        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
     System.out.println(sk.encode());
     System.out.println(
         "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
@@ -99,6 +110,8 @@ public class SpendingKey {
 
     System.out.println(
         "sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
-  }
 
+    System.out.println(
+        "sk.defaultAddress:" + KeyIo.EncodePaymentAddress(sk.defaultAddress()));
+  }
 }
