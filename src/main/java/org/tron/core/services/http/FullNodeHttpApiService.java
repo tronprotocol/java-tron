@@ -167,6 +167,11 @@ public class FullNodeHttpApiService implements Service {
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private SetAccountIdServlet setAccountServlet;
+  @Autowired
+  private GetAccountByIdServlet getAccountByIdServlet;
+
 
   @Override
   public void init() {
@@ -276,6 +281,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
+      context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
 
       server.start();
     } catch (Exception e) {
