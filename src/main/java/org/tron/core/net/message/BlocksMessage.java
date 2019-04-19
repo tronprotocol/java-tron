@@ -18,7 +18,7 @@ public class BlocksMessage extends TronMessage {
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }
-    if (isFilter()) {
+    if (isFilter() && CollectionUtils.isNotEmpty(blocks)) {
       for (Block block : blocks) {
         for (Protocol.Transaction transaction : block.getTransactionsList()) {
           TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
