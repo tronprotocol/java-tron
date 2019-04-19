@@ -74,7 +74,7 @@ public class ContractScenario004 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
 
-    String filePath = "./src/test/resources/soliditycode/ContractScenario004.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario004.sol";
     String contractName = "TronToken";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

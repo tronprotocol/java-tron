@@ -77,7 +77,7 @@ public class ContractScenario010 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before Net usage is " + Long.toString(netUsage));
-    String filePath = "./src/test/resources/soliditycode/ContractScenario010.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario010.sol";
     String contractName = "TRON_ERC721";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

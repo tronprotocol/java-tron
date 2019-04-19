@@ -78,7 +78,7 @@ public class ContractScenario008 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     Long shortFeeLimit = 900L;
 
-    String filePath = "./src/test/resources/soliditycode/ContractScenario008.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario008.sol";
     String contractName = "KittyCore";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

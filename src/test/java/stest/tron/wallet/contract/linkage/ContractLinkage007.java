@@ -81,7 +81,7 @@ public class ContractLinkage007 {
     Assert.assertTrue(PublicMethed.sendcoin(linkage007Address, 2000000000L, fromAddress,
         testKey002, blockingStubFull));
 
-    String filePath = "./src/test/resources/soliditycode/ContractLinkage002.sol";
+    String filePath = "./src/test/resources/soliditycode/contractLinkage002.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

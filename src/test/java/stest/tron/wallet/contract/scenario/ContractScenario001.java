@@ -90,7 +90,7 @@ public class ContractScenario001 {
     logger.info("before energy usage is " + Long.toString(energyUsage));
     logger.info("before balance is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/ContractScenario001.sol";
+    String filePath = "./src/test/resources/soliditycode/contractScenario001.sol";
     String contractName = "divideIHaveArgsReturnStorage";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
