@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
+import static org.tron.core.services.http.Util.getVisible;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -20,9 +22,10 @@ public class GetNowBlockServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       Block reply = wallet.getNowBlock();
       if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply));
+        response.getWriter().println(Util.printBlock(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

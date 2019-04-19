@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -14,6 +15,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
+import static org.tron.core.services.http.Util.getHexAddress;
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 @Component
 @Slf4j(topic = "API")
 public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
@@ -23,12 +28,16 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String address = request.getParameter("value");
+      if ( visible ) {
+        address = getHexAddress( address );
+      }
       DelegatedResourceAccountIndex reply =
           wallet.getDelegatedResourceAccountIndex(
               ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -47,12 +56,20 @@ public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
+      if ( visible ) {
+        JSONObject jsonObject = JSONObject.parseObject(input);
+        String value = jsonObject.getString("value");
+        jsonObject.put("value", getHexAddress( value ));
+        input = jsonObject.toJSONString();
+      }
+
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       DelegatedResourceAccountIndex reply =
           wallet.getDelegatedResourceAccountIndex(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

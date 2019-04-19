@@ -17,13 +17,10 @@
  */
 package org.tron.common.runtime.config;
 
-import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 
 /**
  * For developer only
@@ -47,6 +44,9 @@ public class VMConfig {
 
   @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
+
+  @Setter
+  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
@@ -84,12 +84,20 @@ public class VMConfig {
     ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
   }
 
+  public static void initAllowTvmConstantinople(long allow) {
+    ALLOW_TVM_CONSTANTINOPLE = allow == 1;
+  }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
 
   public static boolean allowTvmTransferTrc10() {
     return ALLOW_TVM_TRANSFER_TRC10;
+  }
+
+  public static boolean allowTvmConstantinople() {
+    return ALLOW_TVM_CONSTANTINOPLE;
   }
 
   public static boolean allowMultiSign() {

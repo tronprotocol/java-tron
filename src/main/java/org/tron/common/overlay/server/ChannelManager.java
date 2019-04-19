@@ -36,6 +36,9 @@ public class ChannelManager {
   @Autowired
   private SyncPool syncPool;
 
+  @Autowired
+  private FastForward fastForward;
+
   private Args args = Args.getInstance();
 
   private final Map<ByteArrayWrapper, Channel> activePeers = new ConcurrentHashMap<>();
@@ -47,7 +50,13 @@ public class ChannelManager {
       .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   @Getter
-  private Map<InetAddress, Node> trustPeers = new ConcurrentHashMap();
+  private Map<InetAddress, Node> trustNodes = new ConcurrentHashMap();
+
+  @Getter
+  private Map<InetAddress, Node> activeNodes = new ConcurrentHashMap();
+
+  @Getter
+  private Map<InetAddress, Node> fastForwardNodes = new ConcurrentHashMap();
 
   private int maxActivePeers = args.getNodeMaxActiveNodes();
 
@@ -59,12 +68,29 @@ public class ChannelManager {
           "PeerServerThread").start();
     }
 
+    InetAddress address;
     for (Node node : args.getPassiveNodes()) {
-      trustPeers.put(new InetSocketAddress(node.getHost(), node.getPort()).getAddress(), node);
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
     }
-    logger.info("Trust peer size {}", trustPeers.size());
+
+    for (Node node : args.getActiveNodes()) {
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
+      activeNodes.put(address, node);
+    }
+
+    for (Node node : args.getFastForwardNodes()) {
+      address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
+      trustNodes.put(address, node);
+      fastForwardNodes.put(address, node);
+    }
+
+    logger.info("Node config, trust {}, active {}, forward {}.",
+        trustNodes.size(), activeNodes.size(), fastForwardNodes.size());
 
     syncPool.init();
+    fastForward.init();
   }
 
   public void processDisconnect(Channel channel, ReasonCode reason) {
@@ -100,7 +126,7 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (!trustPeers.containsKey(peer.getInetAddress())) {
+    if (!trustNodes.containsKey(peer.getInetAddress())) {
       if (recentlyDisconnected.getIfPresent(peer) != null) {
         logger.info("Peer {} recently disconnected.", peer.getInetAddress());
         return false;

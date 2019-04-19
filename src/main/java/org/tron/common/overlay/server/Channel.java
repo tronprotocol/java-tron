@@ -96,6 +96,8 @@ public class Channel {
 
   private boolean isTrustPeer;
 
+  private boolean isFastForwardPeer;
+
   public void init(ChannelPipeline pipeline, String remoteId, boolean discoveryMode,
       ChannelManager channelManager) {
 
@@ -127,7 +129,8 @@ public class Channel {
   }
 
   public void publicHandshakeFinished(ChannelHandlerContext ctx, HelloMessage msg) {
-    isTrustPeer = channelManager.getTrustPeers().containsKey(getInetAddress());
+    isTrustPeer = channelManager.getTrustNodes().containsKey(getInetAddress());
+    isFastForwardPeer = channelManager.getFastForwardNodes().containsKey(getInetAddress());
     ctx.pipeline().remove(handshakeHandler);
     msgQueue.activate(ctx);
     ctx.pipeline().addLast("messageCodec", messageCodec);
@@ -251,6 +254,11 @@ public class Channel {
   public boolean isTrustPeer() {
     return isTrustPeer;
   }
+
+  public boolean isFastForwardPeer() {
+    return isFastForwardPeer;
+  }
+
 
   @Override
   public boolean equals(Object o) {

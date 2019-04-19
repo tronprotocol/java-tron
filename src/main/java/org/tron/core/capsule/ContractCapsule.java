@@ -23,6 +23,7 @@ import org.tron.core.Constant;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 
 import static java.lang.Math.max;
@@ -108,5 +109,9 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
       originEnergyLimit = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
     }
     return originEnergyLimit;
+  }
+
+  public void clearABI() {
+    this.smartContract = this.smartContract.toBuilder().setAbi(ABI.getDefaultInstance()).build();
   }
 }

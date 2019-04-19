@@ -41,11 +41,11 @@ public class KhaosDatabase extends TronDatabase {
     }
 
     @Getter
-    BlockCapsule blk;
-    Reference<KhaosBlock> parent = new WeakReference<>(null);
-    BlockId id;
-    Boolean invalid;
-    long num;
+    private BlockCapsule blk;
+    private Reference<KhaosBlock> parent = new WeakReference<>(null);
+    private BlockId id;
+    private Boolean invalid;
+    private long num;
 
     public KhaosBlock getParent() {
       return parent == null ? null : parent.get();
