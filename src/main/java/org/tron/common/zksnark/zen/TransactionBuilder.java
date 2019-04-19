@@ -232,7 +232,7 @@ public class TransactionBuilder {
         cv,
         zkproof)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Ourtput proof failed");
+      throw new RuntimeException("Output proof failed");
     }
 
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
