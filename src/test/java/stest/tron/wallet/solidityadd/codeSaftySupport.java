@@ -212,7 +212,7 @@ public class codeSaftySupport {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String filePath = "./src/test/resources/soliditycode/ContractTrcToken011.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken011.sol";
     String contractName = "Result";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

@@ -117,7 +117,7 @@ public class ContractTrcToken050 {
 
     // deploy transferTokenContract
 
-    String filePath = "./src/test/resources/soliditycode/ContractTrcToken050.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken050.sol";
     String contractName = "tokenTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

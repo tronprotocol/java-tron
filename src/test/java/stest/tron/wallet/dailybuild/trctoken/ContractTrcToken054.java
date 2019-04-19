@@ -124,7 +124,7 @@ public class ContractTrcToken054 {
 
     //String contractName = "transferTokenContract";
 
-    String filePath = "./src/test/resources/soliditycode/ContractTrcToken054.sol";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken054.sol";
     String contractName = "tokenTest";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
