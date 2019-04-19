@@ -14,6 +14,10 @@ import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getHexAddress;
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -24,11 +28,15 @@ public class GetAccountResourceServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String address = request.getParameter("address");
+      if ( visible ) {
+          address = getHexAddress( address );
+      }
       AccountResourceMessage reply = wallet
           .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -47,12 +55,16 @@ public class GetAccountResourceServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       JSONObject jsonObject = JSONObject.parseObject(input);
       String address = jsonObject.getString("address");
+      if ( visible ) {
+          address = getHexAddress( address );
+      }
       AccountResourceMessage reply = wallet
           .getAccountResource(ByteString.copyFrom(ByteArray.fromHexString(address)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

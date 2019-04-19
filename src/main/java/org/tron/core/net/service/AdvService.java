@@ -83,7 +83,7 @@ public class AdvService {
       } catch (Throwable t) {
         logger.error("Fetch thread error.", t);
       }
-    }, 100, 30, TimeUnit.MILLISECONDS);
+    }, 100, 10, TimeUnit.MILLISECONDS);
   }
 
   public void close() {

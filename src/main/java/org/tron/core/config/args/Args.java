@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static java.lang.Math.max;
+import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -133,6 +134,10 @@ public class Args {
   @Parameter(names = {
       "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
+
+  @Parameter(names = {
+      "--contract-parse-enable"}, description = "enable contract parses in java-tron or not.(true or flase)")
+  private String contractParseEnable = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
@@ -350,6 +355,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowTvmConstantinople; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -450,6 +459,17 @@ public class Args {
   @Getter
   private RocksDbSettings rocksDBCustomSettings;
 
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  private boolean version;
+
+  @Getter
+  @Setter
+  private long allowProtoFilterNum;
+
+  @Getter
+  @Setter
+  private long allowAccountStateRoot;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -501,6 +521,7 @@ public class Args {
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
     INSTANCE.allowTvmTransferTrc10 = 0;
+    INSTANCE.allowTvmConstantinople = 0;
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
@@ -523,6 +544,8 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.allowProtoFilterNum = 0;
+    INSTANCE.allowAccountStateRoot = 0;
   }
 
   /**
@@ -530,6 +553,11 @@ public class Args {
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    if (INSTANCE.version) {
+      JCommander.getConsole().println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
@@ -600,11 +628,11 @@ public class Args {
           } catch (IOException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           } catch (CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           }
         }
       }
@@ -651,6 +679,11 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .map(Boolean::valueOf)
         .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
+    INSTANCE.storage.setContractParseSwitch(Optional.ofNullable(INSTANCE.contractParseEnable)
+        .filter(StringUtils::isNotEmpty)
+        .map(Boolean::valueOf)
+        .orElse(Storage.getContractParseSwitchFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
@@ -838,6 +871,10 @@ public class Args {
         config.hasPath("committee.allowTvmTransferTrc10") ? config
             .getInt("committee.allowTvmTransferTrc10") : 0;
 
+    INSTANCE.allowTvmConstantinople =
+        config.hasPath("committee.allowTvmConstantinople") ? config
+            .getInt("committee.allowTvmConstantinople") : 0;
+
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
 
@@ -901,6 +938,14 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.allowProtoFilterNum =
+        config.hasPath("committee.allowProtoFilterNum") ? config
+            .getInt("committee.allowProtoFilterNum") : 0;
+
+    INSTANCE.allowAccountStateRoot =
+        config.hasPath("committee.allowAccountStateRoot") ? config
+            .getInt("committee.allowAccountStateRoot") : 0;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -1282,6 +1327,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("Version name: {}", Version.versionName);
+    logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("DB engine : {}", args.getStorage().getDbEngine());

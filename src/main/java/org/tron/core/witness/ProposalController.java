@@ -220,8 +220,16 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
           break;
         }
+        case (28): {
+          manager.getDynamicPropertiesStore().saveAllowProtoFilterNum(entry.getValue());
+          break;
+        }
         case (29): {
           manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
+          break;
+        }
+        case (30): {
+          manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
           break;
         }
         default:

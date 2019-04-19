@@ -17,7 +17,6 @@ package org.tron.core.capsule;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -172,9 +172,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockCapsule(byte[] data) throws BadItemException {
     try {
-      this.block = Block.parseFrom(data);
+      this.block = Block.parseFrom(Message.getCodedInputStream(data));
+      Message.compareBytes(data, block.toByteArray());
       initTxs();
-    } catch (InvalidProtocolBufferException e) {
+    } catch (Exception e) {
+      logger.error("constructor block error : {}", e.getMessage());
       throw new BadItemException("Block proto data parse exception");
     }
   }

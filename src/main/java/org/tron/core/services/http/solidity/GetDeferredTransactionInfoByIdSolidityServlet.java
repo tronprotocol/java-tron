@@ -16,6 +16,10 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.TransactionInfo;
 
+
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 @Component
 @Slf4j(topic = "API")
 public class GetDeferredTransactionInfoByIdSolidityServlet extends HttpServlet {
@@ -26,13 +30,14 @@ public class GetDeferredTransactionInfoByIdSolidityServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
       TransactionInfo transInfo = wallet.getDeferredTransactionInfoById(ByteString.copyFrom(
           ByteArray.fromHexString(input)));
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible ));
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -50,13 +55,14 @@ public class GetDeferredTransactionInfoByIdSolidityServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       TransactionInfo transInfo = wallet.getDeferredTransactionInfoById(build.build().getValue());
       if (transInfo == null) {
         response.getWriter().println("{}");
       } else {
-        response.getWriter().println(JsonFormat.printToString(transInfo));
+        response.getWriter().println(JsonFormat.printToString(transInfo, visible ));
       }
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

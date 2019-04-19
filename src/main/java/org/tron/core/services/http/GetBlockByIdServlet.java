@@ -14,6 +14,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 @Component
 @Slf4j(topic = "API")
 public class GetBlockByIdServlet extends HttpServlet {
@@ -23,10 +26,11 @@ public class GetBlockByIdServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       String input = request.getParameter("value");
       Block reply = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply));
+        response.getWriter().println(Util.printBlock(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }
@@ -45,11 +49,12 @@ public class GetBlockByIdServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       Block reply = wallet.getBlockById(build.getValue());
       if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply));
+        response.getWriter().println(Util.printBlock(reply, visible ));
       } else {
         response.getWriter().println("{}");
       }

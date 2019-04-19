@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -50,15 +51,13 @@ import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
-import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
-import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.LogEventWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
@@ -453,6 +452,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    Message.setManager(this);
     fastSyncCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -1260,6 +1260,23 @@ public class Manager {
     return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
   }
 
+  void validateDeferredTransactionType(TransactionCapsule trxCap) throws ContractValidateException{
+    switch (trxCap.getInstance().getRawData().getContractList().get(0).getType()) {
+      case TransferContract:
+      case AccountUpdateContract:
+      case TransferAssetContract:
+      case AccountCreateContract:
+      case UnfreezeAssetContract:
+      case UpdateAssetContract:
+      case SetAccountIdContract:
+      case UpdateSettingContract:
+      case UpdateEnergyLimitContract:
+        break;
+      default:
+        throw new ContractValidateException("Contract type not support deferred transaction");
+    }
+  }
+
   /**
    * Process transaction.
    */
@@ -1267,13 +1284,13 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+    if (trxCap == null) {
+      return false;
+    }
+
     if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
       throw new ContractValidateException("deferred transaction is not allowed, "
           + "need to be opened by the committee");
-    }
-
-    if (trxCap == null) {
-      return false;
     }
 
     validateTapos(trxCap);
@@ -1282,6 +1299,10 @@ public class Manager {
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
+    }
+
+    if (trxCap.getDeferredSeconds() != 0 || trxCap.getDeferredStage() != Constant.NORMALTRANSACTION) {
+      validateDeferredTransactionType(trxCap);
     }
 
     validateDup(trxCap);
@@ -1303,6 +1324,7 @@ public class Manager {
     VMConfig.initVmHardFork();
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
+    VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.setDeferredStage(trxCap.getDeferredStage());
@@ -2078,27 +2100,13 @@ public class Manager {
   private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     if (eventPluginLoaded &&
         (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-            || EventPluginLoader.getInstance().isContractLogTriggerEnable()
-            && trace.getRuntimeResult().getTriggerList().size() > 0)) {
-      boolean result = false;
+            || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
       // be careful, trace.getRuntimeResult().getTriggerList() should never return null
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
-        if (trigger instanceof LogEventWrapper && EventPluginLoader.getInstance()
-            .isContractEventTriggerEnable()) {
-          ContractEventTriggerCapsule contractEventTriggerCapsule = new ContractEventTriggerCapsule(
-              (LogEventWrapper) trigger);
-          contractEventTriggerCapsule.getContractEventTrigger().setRemoved(remove);
-          contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-          result = triggerCapsuleQueue.offer(contractEventTriggerCapsule);
-        } else if (trigger instanceof ContractLogTrigger && EventPluginLoader.getInstance()
-            .isContractLogTriggerEnable()) {
-          ContractLogTriggerCapsule contractLogTriggerCapsule = new ContractLogTriggerCapsule(
-              (ContractLogTrigger) trigger);
-          contractLogTriggerCapsule.getContractLogTrigger().setRemoved(remove);
-          contractLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
-          result = triggerCapsuleQueue.offer(contractLogTriggerCapsule);
-        }
-        if (!result) {
+        ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
+        contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
+        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+        if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }

@@ -202,10 +202,10 @@ public class TronNetDelegate {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
-        | ValidateSignatureException
         | VMIllegalException e) {
       throw new P2pException(TypeEnum.BAD_TRX, e);
     } catch (ContractValidateException
+        | ValidateSignatureException
         | ContractExeException
         | DupTransactionException
         | DeferredTransactionException

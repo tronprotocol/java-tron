@@ -15,6 +15,7 @@
 
 package org.tron.core.capsule;
 
+import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 import static org.tron.protos.Contract.AssetIssueContract;
 import static org.tron.protos.Contract.VoteAssetContract;
 import static org.tron.protos.Contract.VoteWitnessContract;
@@ -23,6 +24,8 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -36,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -54,6 +58,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.P2pException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -81,6 +86,7 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
@@ -119,8 +125,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    */
   public TransactionCapsule(byte[] data) throws BadItemException {
     try {
-      this.transaction = Transaction.parseFrom(data);
-    } catch (InvalidProtocolBufferException e) {
+      this.transaction = Transaction.parseFrom(Message.getCodedInputStream(data));
+      Message.compareBytes(data, transaction.toByteArray());
+      if (Message.isFilter()) {
+        validContractProto(transaction.getRawData().getContract(0));
+      }
+    } catch (Exception e) {
       throw new BadItemException("Transaction proto data parse exception");
     }
   }
@@ -445,6 +455,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(UpdateEnergyLimitContract.class)
               .getOwnerAddress();
           break;
+        case ClearABIContract:
+          owner = contractParameter.unpack(ClearABIContract.class)
+              .getOwnerAddress();
+          break;
         case ExchangeCreateContract:
           owner = contractParameter.unpack(ExchangeCreateContract.class).getOwnerAddress();
           break;
@@ -461,7 +475,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
         case CancelDeferredTransactionContract:
-          owner = contractParameter.unpack(CancelDeferredTransactionContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(CancelDeferredTransactionContract.class)
+              .getOwnerAddress();
           break;
         // todo add other contract
         default:
@@ -472,6 +487,117 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       logger.error(ex.getMessage());
       return null;
     }
+  }
+
+  public static <T extends com.google.protobuf.Message> T parse(Class<T> clazz,
+      CodedInputStream codedInputStream) throws InvalidProtocolBufferException {
+    T defaultInstance = Internal.getDefaultInstance(clazz);
+    return (T) defaultInstance.getParserForType().parseFrom(codedInputStream);
+  }
+
+  public static void validContractProto(Transaction.Contract contract)
+      throws InvalidProtocolBufferException, P2pException {
+    Any contractParameter = contract.getParameter();
+    Class clazz = null;
+    switch (contract.getType()) {
+      case AccountCreateContract:
+        clazz = AccountCreateContract.class;
+        break;
+      case TransferContract:
+        clazz = TransferContract.class;
+        break;
+      case TransferAssetContract:
+        clazz = TransferAssetContract.class;
+        break;
+      case VoteAssetContract:
+        clazz = VoteAssetContract.class;
+        break;
+      case VoteWitnessContract:
+        clazz = VoteWitnessContract.class;
+        break;
+      case WitnessCreateContract:
+        clazz = WitnessCreateContract.class;
+        break;
+      case AssetIssueContract:
+        clazz = AssetIssueContract.class;
+        break;
+      case WitnessUpdateContract:
+        clazz = WitnessUpdateContract.class;
+        break;
+      case ParticipateAssetIssueContract:
+        clazz = ParticipateAssetIssueContract.class;
+        break;
+      case AccountUpdateContract:
+        clazz = AccountUpdateContract.class;
+        break;
+      case FreezeBalanceContract:
+        clazz = FreezeBalanceContract.class;
+        break;
+      case UnfreezeBalanceContract:
+        clazz = UnfreezeBalanceContract.class;
+        break;
+      case UnfreezeAssetContract:
+        clazz = UnfreezeAssetContract.class;
+        break;
+      case WithdrawBalanceContract:
+        clazz = WithdrawBalanceContract.class;
+        break;
+      case CreateSmartContract:
+        clazz = Contract.CreateSmartContract.class;
+        break;
+      case TriggerSmartContract:
+        clazz = Contract.TriggerSmartContract.class;
+        break;
+      case UpdateAssetContract:
+        clazz = UpdateAssetContract.class;
+        break;
+      case ProposalCreateContract:
+        clazz = ProposalCreateContract.class;
+        break;
+      case ProposalApproveContract:
+        clazz = ProposalApproveContract.class;
+        break;
+      case ProposalDeleteContract:
+        clazz = ProposalDeleteContract.class;
+        break;
+      case SetAccountIdContract:
+        clazz = SetAccountIdContract.class;
+        break;
+      case UpdateSettingContract:
+        clazz = UpdateSettingContract.class;
+        break;
+      case UpdateEnergyLimitContract:
+        clazz = UpdateEnergyLimitContract.class;
+        break;
+      case ExchangeCreateContract:
+        clazz = ExchangeCreateContract.class;
+        break;
+      case ExchangeInjectContract:
+        clazz = ExchangeInjectContract.class;
+        break;
+      case ExchangeWithdrawContract:
+        clazz = ExchangeWithdrawContract.class;
+        break;
+      case ExchangeTransactionContract:
+        clazz = ExchangeTransactionContract.class;
+        break;
+      case AccountPermissionUpdateContract:
+        clazz = AccountPermissionUpdateContract.class;
+        break;
+      case CancelDeferredTransactionContract:
+        clazz = CancelDeferredTransactionContract.class;
+        break;
+      // todo add other contract
+      default:
+        break;
+    }
+    if (clazz == null) {
+      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    }
+    com.google.protobuf.Message src = contractParameter.unpack(clazz);
+    com.google.protobuf.Message contractMessage = parse(clazz,
+        Message.getCodedInputStream(src.toByteArray()));
+    Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
 
   // todo mv this static function to capsule util
@@ -780,30 +906,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRet(0).getContractRet();
   }
 
-  public ByteString getSenderAddress(){
+  public ByteString getSenderAddress() {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)){
+    if (Objects.isNull(contract)) {
       return null;
     }
 
     return ByteString.copyFrom(getOwner(contract));
   }
 
-  public long getDeferredSeconds(){
+  public long getDeferredSeconds() {
     return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
   }
 
   public void setDeferredSeconds(long delaySeconds) {
     DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds).setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
+        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
   public void setDeferredStage(int stage) {
     DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
         getDeferredStage().toBuilder().setStage(stage).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder().setDeferredStage(deferredStage).build();
+    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
@@ -811,9 +940,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRawData().getDeferredStage().getStage();
   }
 
-  public ByteString getToAddress(){
+  public ByteString getToAddress() {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)){
+    if (Objects.isNull(contract)) {
       return null;
     }
     byte[] address = getToAddress(contract);

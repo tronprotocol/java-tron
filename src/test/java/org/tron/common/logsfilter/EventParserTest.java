@@ -1,25 +1,17 @@
 package org.tron.common.logsfilter;
 
-import org.apache.commons.lang3.ArrayUtils;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import org.junit.Test;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TVMTestUtils;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.services.http.JsonFormat;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
-import org.tron.protos.Protocol.SmartContract.ABI.Builder;
-
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 public class EventParserTest {
 
@@ -54,8 +46,8 @@ public class EventParserTest {
     Assert.assertEquals(Hash.sha3(LogInfoTriggerParser.getEntrySignature(entry).getBytes()),
         topicList.get(0));
     Assert.assertNotNull(entry);
-    Map<String, String> dataMap = ContractEventParser.parseEventData(data, topicList, entry);
-    Map<String, String> topicMap = ContractEventParser.parseTopics(topicList, entry);
+    Map<String, String> dataMap = ContractEventParserAbi.parseEventData(data, topicList, entry);
+    Map<String, String> topicMap = ContractEventParserAbi.parseTopics(topicList, entry);
 
     Assert.assertEquals(dataMap.get("0"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");
     Assert.assertEquals(dataMap.get("addr"), "TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt");

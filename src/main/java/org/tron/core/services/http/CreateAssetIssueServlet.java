@@ -13,6 +13,9 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -30,11 +33,12 @@ public class CreateAssetIssueServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost(contract);
       AssetIssueContract.Builder build = AssetIssueContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.AssetIssueContract).getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

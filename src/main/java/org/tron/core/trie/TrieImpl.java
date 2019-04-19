@@ -142,6 +142,9 @@ public class TrieImpl implements Trie<byte[]> {
             for (int i = 0; i < 16; i++) {
               if (encoded[i] == null) {
                 final Node child = branchNodeGetChild(i);
+                if (child == null) {
+                  continue;
+                }
                 if (encodeCnt >= MIN_BRANCHES_CONCURRENTLY) {
                   encoded[i] = getExecutor().submit(() -> child.encode(depth + 1, false));
                 } else {
@@ -211,7 +214,7 @@ public class TrieImpl implements Trie<byte[]> {
 
       RLP.LList list = parsedRlp == null ? RLP.decodeLazyList(rlp) : parsedRlp;
 
-      if (list.size() == 2) {
+      if (list != null && list.size() == 2) {
         children = new Object[2];
         TrieKey key = TrieKey.fromPacked(list.getBytes(0));
         children[0] = key;
@@ -487,7 +490,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   public void setRoot(byte[] root) {
-    if (root != null && !FastByteComparisons.equal(root, EMPTY_TRIE_HASH)) {
+    if (root != null && !FastByteComparisons.equalByte(root, EMPTY_TRIE_HASH)) {
       this.root = new Node(root);
     } else {
       this.root = null;
@@ -725,8 +728,13 @@ public class TrieImpl implements Trie<byte[]> {
 
     TrieImpl trieImpl1 = (TrieImpl) o;
 
-    return FastByteComparisons.equal(getRootHash(), trieImpl1.getRootHash());
+    return FastByteComparisons.equalByte(getRootHash(), trieImpl1.getRootHash());
 
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
   }
 
   public String dumpStructure() {
@@ -891,7 +899,7 @@ public class TrieImpl implements Trie<byte[]> {
     }
     int i = 0;
     TrieKey trieKey = TrieKey.fromNormal(key);
-    byte[] beforeNode = null;
+    byte[] beforeNode = new byte[0];
     for (Entry<byte[], Node> entry : nodeMap.entrySet()) {
       if (i > 0) {
         byte[] hash = (beforeNode.length < 32) ? entry.getKey() : encodeElement(entry.getKey());

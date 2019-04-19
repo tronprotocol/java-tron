@@ -172,6 +172,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+  private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
+
+  //Used only for protobuf data filter , once，value is 0,1
+  private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
+      .getBytes();
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
@@ -525,6 +530,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowTvmConstantinople();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
+    }
+    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -606,7 +616,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAccountStateRoot();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAccountStateRoot(0);
+      this.saveAllowAccountStateRoot(Args.getInstance().getAllowAccountStateRoot());
+    }
+
+    try {
+      this.getAllowProtoFilterNum();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowProtoFilterNum(Args.getInstance().getAllowProtoFilterNum());
     }
   }
 
@@ -1336,6 +1352,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
   }
 
+  public void saveAllowTvmConstantinople(long value) {
+    this.put(ALLOW_TVM_CONSTANTINOPLE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmConstantinople() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CONSTANTINOPLE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_CONSTANTINOPLE"));
+  }
+
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1668,6 +1697,24 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean getForked() {
     byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
     return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
+  }
+
+  /**
+   * get allow protobuf number.
+   */
+  public long getAllowProtoFilterNum() {
+    return Optional.ofNullable(getUnchecked(ALLOW_PROTO_FILTER_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found allow protobuf number"));
+  }
+
+  /**
+   * save allow protobuf  number.
+   */
+  public void saveAllowProtoFilterNum(long num) {
+    logger.info("update allow protobuf number = {}", num);
+    this.put(ALLOW_PROTO_FILTER_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
 
   public void saveAllowAccountStateRoot(long allowAccountStateRoot) {
