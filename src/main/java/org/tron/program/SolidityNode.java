@@ -3,8 +3,13 @@ package org.tron.program;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import ch.qos.logback.classic.Level;
+
+import java.io.File;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
+
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.slf4j.Logger;
@@ -62,6 +67,22 @@ public class SolidityNode {
       logger
           .error("Failed to start solid node, address: {}.", Args.getInstance().getTrustNodeAddr());
       System.exit(0);
+    }
+  }
+
+  public static void load(String path) {
+    try {
+      File file = new File(path);
+      if (!file.exists() || !file.isFile() || !file.canRead()) {
+        return;
+      }
+      LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+      JoranConfigurator configurator = new JoranConfigurator();
+      configurator.setContext(lc);
+      lc.reset();
+      configurator.doConfigure(file);
+    } catch (Exception e) {
+      logger.error(e.getMessage());
     }
   }
 
@@ -176,6 +197,7 @@ public class SolidityNode {
     logger.info("Solidity node running.");
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
+    load(cfgArgs.getLogbackPath());
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils.toBoolean(cfgArgs.getStorage().getIndexSwitch())));
