@@ -17,6 +17,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -113,6 +114,8 @@ public class ContractScenario012 {
 
   @Test(enabled = true)
   public void test2TriggerTransactionCoin() {
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(fromAddress)
         + "\"";
     //When the contract has no money,transaction coin failed.
@@ -140,7 +143,8 @@ public class ContractScenario012 {
     //Send some trx to the contract account.
     Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
         testKey003, blockingStubFull));
-
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
     //In smart contract, you can't create account
@@ -165,6 +169,8 @@ public class ContractScenario012 {
   public void test4TriggerTransactionCoin() {
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     //This time, trigger the methed sendToAddress2 is OK.
     Assert.assertTrue(PublicMethed.sendcoin(receiverAddress, 10000000L, toAddress,
         testKey003, blockingStubFull));
