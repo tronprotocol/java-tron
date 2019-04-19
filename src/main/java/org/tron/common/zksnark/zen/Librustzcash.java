@@ -248,7 +248,6 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashCheckDiversifier(byte[] b) {
-    // TODO
     return INSTANCE.librustzcash_check_diversifier(b);
   }
 

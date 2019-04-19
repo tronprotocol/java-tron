@@ -161,31 +161,41 @@ public class SendCoinShieldTest {
         new IncrementalMerkleTreeCapsule());
     String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+    byte[] bytes1 = ByteArray.fromHexString(s1);
+    // ZksnarkUtils.sort(bytes1);
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
     PedersenHash a = compressCapsule1.getInstance();
 
     String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
     PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
     byte[] bytes2 = ByteArray.fromHexString(s2);
-    ZksnarkUtils.sort(bytes2);
+    // ZksnarkUtils.sort(bytes2);
     compressCapsule2.setContent(ByteString.copyFrom(bytes2));
     PedersenHash b = compressCapsule2.getInstance();
 
     String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
     PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
     byte[] bytes3 = ByteArray.fromHexString(s3);
-    ZksnarkUtils.sort(bytes3);
+    // ZksnarkUtils.sort(bytes3);
     compressCapsule3.setContent(ByteString.copyFrom(bytes3));
     PedersenHash c = compressCapsule3.getInstance();
 
     tree.append(a);
+    PedersenHash hash = tree.root();
+
     tree.append(b);
+    hash = tree.root();
+
+
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
+    // ee4a5074c806272ca59393bee7d23ffe92a514af1265fa15b667fa4d95fa6b4a
+    hash = voucher.root();
 
     System.out.println(ByteArray.toHexString(voucher.root().getContent().toByteArray()));
 
     tree.append(c);
+
     return voucher;
   }
 

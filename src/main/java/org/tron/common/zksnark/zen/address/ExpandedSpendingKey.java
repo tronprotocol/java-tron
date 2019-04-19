@@ -20,14 +20,10 @@ public class ExpandedSpendingKey {
   @Getter
   byte[] ovk; // the outgoing viewing key,256
 
-  // A note is spent by proving knowledge of (p, ak, nsk) in zero knowledge while
-  // publically disclosing its nf, allowing nf to be used to prevent double-spending.
-
   public ExpandedSpendingKey() {
   }
 
   public FullViewingKey fullViewingKey() {
-
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
@@ -47,9 +43,7 @@ public class ExpandedSpendingKey {
   }
 
   public byte[] encode() {
-
     byte[] m_bytes = new byte[96];
-
     System.arraycopy(ask, 0, m_bytes, 0, 32);
     System.arraycopy(nsk, 0, m_bytes, 32, 32);
     System.arraycopy(ovk, 0, m_bytes, 64, 32);
