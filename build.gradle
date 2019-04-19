@@ -183,7 +183,6 @@ dependencies {
 
     // for jna, zksark
     compile group: 'com.sun.jna', name: 'jna', version: '3.0.9'
-    compile 'com.github.joshjdevl.libsodiumjni:libsodium-jni:2.0.1'
 }
 
 check.dependsOn 'lint'

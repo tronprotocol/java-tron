@@ -17,6 +17,7 @@ public class Libsodium {
         .loadLibrary(Librustzcash.getLibraryByName("libsodium"), ILibsodium.class);
   }
 
+
   public interface ILibsodium extends Library {
 
     class crypto_generichash_blake2b_state extends Structure {

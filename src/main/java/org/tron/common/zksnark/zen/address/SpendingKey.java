@@ -3,17 +3,18 @@ package org.tron.common.zksnark.zen.address;
 import java.util.Optional;
 import java.util.Random;
 import lombok.AllArgsConstructor;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.zksnark.zen.Constants;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.Libsodium;
-import org.tron.common.zksnark.zen.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
+import org.tron.common.zksnark.zen.Libsodium.ILibsodium;
 import org.tron.common.zksnark.zen.utils.PRF;
 
 @AllArgsConstructor
 public class SpendingKey {
 
-
   public byte[] value;
-  // class SpendingKey : public uint256 {
 
   public static SpendingKey random() {
     while (true) {
@@ -22,6 +23,10 @@ public class SpendingKey {
         return sk;
       }
     }
+  }
+
+  public String encode() {
+    return ByteArray.toHexString(value);
   }
 
   public ExpandedSpendingKey expandedSpendingKey() {
@@ -33,29 +38,25 @@ public class SpendingKey {
     return expandedSpendingKey().fullViewingKey();
   }
 
-  PaymentAddress default_address() throws Exception {
+  public PaymentAddress defaultAddress() throws Exception {
     Optional<PaymentAddress> addrOpt =
-        fullViewingKey().inViewingKey().address(defaultDiversifier(this));
-    //    assert (addrOpt != boost::none);
+        fullViewingKey().inViewingKey().address(defaultDiversifier());
     return addrOpt.get();
   }
 
-
-  public DiversifierT defaultDiversifier(SpendingKey spendingKey) throws Exception {
-    byte[] ZCASH_EXPANDSEED_PERSONALIZATION = {'Z', 'c', 'a', 's', 'h', '_', 'E', 'x', 'p', 'a',
-        'n',
-        'd', 'S', 'e', 'e', 'd' };
+  public DiversifierT defaultDiversifier() throws Exception {
     byte[] res = new byte[DiversifierT.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
-    System.arraycopy(spendingKey.value, 0, blob, 0, 32);
+    System.arraycopy(this.value, 0, blob, 0, 32);
     blob[32] = 3;
     blob[33] = 0;
     while (true) {
-      crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
-      Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(state, null, 0, 64, null,
-          ZCASH_EXPANDSEED_PERSONALIZATION);
+      ILibsodium.crypto_generichash_blake2b_state.ByReference state = new ILibsodium.crypto_generichash_blake2b_state.ByReference();
+      Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
+          state, null, 0, 64, null, Constants.ZCASH_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
+
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
@@ -84,9 +85,20 @@ public class SpendingKey {
     return result;
   }
 
+  public static void main(String[] args) throws Exception {
+    SpendingKey sk = SpendingKey.random();
+    System.out.println(sk.encode());
+    System.out.println(
+        "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
+    System.out.println(
+        "sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
+    System.out.println(
+        "sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
+    System.out.println(
+        "sk.defaultDiversifier:" + ByteUtil.toHexString(sk.defaultDiversifier().getData()));
 
-  public static void main(String[] args) {
-    SpendingKey.random();
+    System.out.println(
+        "sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
   }
 
 }
