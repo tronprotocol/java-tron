@@ -101,6 +101,7 @@ public class ContractScenario012 {
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
             null, contract012Key, contract012Address, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
@@ -121,6 +122,7 @@ public class ContractScenario012 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
@@ -148,6 +150,7 @@ public class ContractScenario012 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 1);
@@ -171,6 +174,7 @@ public class ContractScenario012 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 0);
