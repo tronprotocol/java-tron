@@ -47,7 +47,7 @@ public class TransactionBuilder {
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
 
-  //  Optional<CTxDestination> tChangeAddr;
+  //  Optional<CTxDstination> tChangeAddr;
 
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
