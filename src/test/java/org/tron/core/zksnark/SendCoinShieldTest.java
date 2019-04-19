@@ -161,6 +161,8 @@ public class SendCoinShieldTest {
         new IncrementalMerkleTreeCapsule());
     String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+    byte[] bytes1 = ByteArray.fromHexString(s1);
+    ZksnarkUtils.sort(bytes1);
     compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(s1)));
     PedersenHash a = compressCapsule1.getInstance();
 
