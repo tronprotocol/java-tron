@@ -182,14 +182,20 @@ public class SendCoinShieldTest {
 
     tree.append(a);
     PedersenHash hash = tree.root();
+    System.out.println(ByteArray.toHexString(hash.getContent().toByteArray()));
 
     tree.append(b);
     hash = tree.root();
+    System.out.println(ByteArray.toHexString(hash.getContent().toByteArray()));
 
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
     // ee4a5074c806272ca59393bee7d23ffe92a514af1265fa15b667fa4d95fa6b4a
     hash = voucher.root();
+
+    // check path
+    byte[] encode = voucher.path().encode();
+
 
     Assert.assertEquals(
         ByteArray.toHexString(voucher.root().getContent().toByteArray()),
