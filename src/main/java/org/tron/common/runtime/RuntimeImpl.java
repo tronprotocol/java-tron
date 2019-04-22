@@ -43,7 +43,10 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
@@ -166,10 +169,9 @@ public class RuntimeImpl implements Runtime {
 
     for (Actuator act : actuatorList) {
       act.validate();
-      if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
+      if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
         trace.chargeDeferredFee(trxCap.getDeferredSeconds(), result.getRet());
-      }
-      else {
+      } else {
         act.execute(result.getRet());
       }
     }
@@ -621,6 +623,9 @@ public class RuntimeImpl implements Runtime {
           if (callValue > 0 || callTokenValue > 0) {
             runtimeError = "constant cannot set call value or call token value.";
             result.rejectInternalTransactions();
+          }
+          if (result.isRevert()) {
+            runtimeError = "REVERT opcode executed";
           }
           return;
         }
