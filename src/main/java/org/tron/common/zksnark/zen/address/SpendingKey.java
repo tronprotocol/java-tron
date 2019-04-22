@@ -96,8 +96,9 @@ public class SpendingKey {
 
 
   public static void main(String[] args) throws Exception {
-    SpendingKey sk = SpendingKey
-        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
+//    SpendingKey sk = SpendingKey
+//        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
+    SpendingKey sk = SpendingKey.random();
     System.out.println(sk.encode());
     System.out.println(
         "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
