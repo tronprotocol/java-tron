@@ -226,7 +226,7 @@ public class TransactionBuilder {
     if (!Librustzcash.librustzcashSaplingOutputProof(
         ctx,
         encryptor.esk,
-        output.getNote().d.getData(),
+        output.getNote().d.data,
         output.getNote().pkD,
         output.getNote().r,
         output.getNote().value,

@@ -64,6 +64,9 @@ public class Libsodium {
 
     int crypto_aead_chacha20poly1305_ietf_decrypt(byte[] m, long[] mlen_p, byte[] nsec, byte[] c,
         long clen, byte[] ad, long adlen, byte[] npub, byte[] k);
+
+    int crypto_aead_chacha20poly1305_ietf_encrypt(byte[] c, long[] clen_p, byte[] m,
+        long mlen, byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k);
   }
 
   public static int cryptoGenerichashBlake2bInitSaltPersonal(
@@ -96,6 +99,11 @@ public class Libsodium {
       byte[] c, long clen, byte[] ad, long adlen, byte[] npub, byte[] k) {
     return INSTANCE
         .crypto_aead_chacha20poly1305_ietf_decrypt(m, mlen_p, nsec, c, clen, ad, adlen, npub, k);
+  }
+
+  public static int cryptoAeadChacha20Poly1305IetfEncrypt(byte[] c, long[] clen_p, byte[] m,
+      long mlen, byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k) {
+    return INSTANCE.crypto_aead_chacha20poly1305_ietf_encrypt(c, clen_p, m, mlen, ad, adlen, nsec, npub, k);
   }
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
