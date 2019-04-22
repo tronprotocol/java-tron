@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.zen;
 
+import com.sun.jna.IntegerType;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Structure;
@@ -32,12 +33,17 @@ public class Libsodium {
 
       }
 
+      public static class sizeT extends IntegerType {
+        public sizeT() { this(0); }
+        public sizeT(long value) { super(Native.POINTER_SIZE, value); }
+      }
+
       public long h[] = new long[8];
       public long t[] = new long[2];
       public long f[] = new long[2];
       public byte buf[] = new byte[2 * 128];
-      public int buflen;
-      public int last_node;
+      public sizeT buflen = new sizeT();
+      public byte last_node;
     }
 
     int crypto_generichash_blake2b_init(crypto_generichash_blake2b_state.ByReference state,
