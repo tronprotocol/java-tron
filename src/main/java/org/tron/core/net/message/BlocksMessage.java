@@ -20,9 +20,7 @@ public class BlocksMessage extends TronMessage {
     }
     if (isFilter() && CollectionUtils.isNotEmpty(blocks)) {
       for (Block block : blocks) {
-        for (Protocol.Transaction transaction : block.getTransactionsList()) {
-          TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
-        }
+        TransactionCapsule.validContractProto(block.getTransactionsList());
       }
     }
     compareBytes(data, items.toByteArray());

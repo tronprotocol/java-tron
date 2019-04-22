@@ -36,7 +36,6 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
@@ -176,9 +175,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       this.block = Block.parseFrom(Message.getCodedInputStream(data));
       Message.compareBytes(data, block.toByteArray());
       if (Message.isFilter()) {
-        for (Protocol.Transaction transaction : block.getTransactionsList()) {
-          TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
-        }
+        TransactionCapsule.validContractProto(block.getTransactionsList());
       }
       initTxs();
     } catch (Exception e) {

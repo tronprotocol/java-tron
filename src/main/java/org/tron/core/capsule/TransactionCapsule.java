@@ -32,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
@@ -67,6 +70,7 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.CancelDeferredTransactionContract;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -86,7 +90,6 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
@@ -112,6 +115,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Getter
   @Setter
   private TransactionTrace trxTrace;
+
+  private final static ExecutorService executorService = Executors
+      .newFixedThreadPool(16);
 
   /**
    * constructor TransactionCapsule.
@@ -493,6 +499,33 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       CodedInputStream codedInputStream) throws InvalidProtocolBufferException {
     T defaultInstance = Internal.getDefaultInstance(clazz);
     return (T) defaultInstance.getParserForType().parseFrom(codedInputStream);
+  }
+
+  public static void validContractProto(List<Transaction> transactionList) throws P2pException {
+    long startTime = System.currentTimeMillis();
+    List<Future<Boolean>> futureList = new ArrayList<>();
+    transactionList.forEach(transaction -> {
+      Future<Boolean> future = executorService.submit(() -> {
+        try {
+          validContractProto(transaction.getRawData().getContract(0));
+          return true;
+        } catch (Exception e) {
+        }
+        return false;
+      });
+      futureList.add(future);
+    });
+    for (Future<Boolean> future : futureList) {
+      try {
+        if (!future.get()) {
+          throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+        }
+      } catch (Exception e) {
+        throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+      }
+    }
+    logger.info("validContractProtos spend time:{},trans:{}",
+        (System.currentTimeMillis() - startTime), transactionList.size());
   }
 
   public static void validContractProto(Transaction.Contract contract)
