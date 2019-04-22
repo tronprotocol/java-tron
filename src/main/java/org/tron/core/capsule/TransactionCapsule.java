@@ -503,27 +503,36 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public static void validContractProto(List<Transaction> transactionList) throws P2pException {
     long startTime = System.currentTimeMillis();
-    List<Future<Boolean>> futureList = new ArrayList<>();
-    transactionList.forEach(transaction -> {
-      Future<Boolean> future = executorService.submit(() -> {
-        try {
-          validContractProto(transaction.getRawData().getContract(0));
-          return true;
-        } catch (Exception e) {
-        }
-        return false;
-      });
-      futureList.add(future);
-    });
-    for (Future<Boolean> future : futureList) {
+//    List<Future<Boolean>> futureList = new ArrayList<>();
+//    transactionList.forEach(transaction -> {
+//      Future<Boolean> future = executorService.submit(() -> {
+//        try {
+//          validContractProto(transaction.getRawData().getContract(0));
+//          return true;
+//        } catch (Exception e) {
+//        }
+//        return false;
+//      });
+//      futureList.add(future);
+//    });
+//    for (Future<Boolean> future : futureList) {
+//      try {
+//        if (!future.get()) {
+//          throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+//        }
+//      } catch (Exception e) {
+//        throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+//      }
+//    }
+
+    for (Transaction transaction : transactionList) {
       try {
-        if (!future.get()) {
-          throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-        }
-      } catch (Exception e) {
+        validContractProto(transaction.getRawData().getContract(0));
+      } catch (InvalidProtocolBufferException e) {
         throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
       }
     }
+
     logger.info("validContractProtos spend time:{},trans:{}",
         (System.currentTimeMillis() - startTime), transactionList.size());
   }
@@ -630,7 +639,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     com.google.protobuf.Message src = contractParameter.unpack(clazz);
     com.google.protobuf.Message contractMessage = parse(clazz,
         Message.getCodedInputStream(src.toByteArray()));
-    Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
+
+    if (!src.equals(contractMessage)) {
+      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    }
+
+//    Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
 
   // todo mv this static function to capsule util
