@@ -137,14 +137,15 @@ public class TransactionBuilder {
     }
 
     // Create Sapling spendAuth and binding signatures
-    for (int i=0; i < spends.size(); i++) {
+    for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
           spends.get(i).expsk.getAsk(),
           spends.get(i).alpha,
           dataToBeSigned,
           result);
-      contractBuilder.getSpendDescriptionBuilder(i).setSpendAuthoritySignature(ByteString.copyFrom(result));
+      contractBuilder.getSpendDescriptionBuilder(i)
+          .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
 
     byte[] bindingSig = new byte[64];
@@ -222,7 +223,7 @@ public class TransactionBuilder {
     SaplingNoteEncryption encryptor = enc.noteEncryption;
 
     byte[] cv = new byte[32];
-    byte[] zkproof = new byte[32];
+    byte[] zkProof = new byte[32];
     if (!Librustzcash.librustzcashSaplingOutputProof(
         ctx,
         encryptor.esk,
@@ -231,7 +232,7 @@ public class TransactionBuilder {
         output.getNote().r,
         output.getNote().value,
         cv,
-        zkproof)) {
+        zkProof)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Output proof failed");
     }
@@ -241,7 +242,7 @@ public class TransactionBuilder {
     receiveDescriptionCapsule.setNoteCommitment(cm);
     receiveDescriptionCapsule.setEpk(encryptor.epk);
     receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
-    receiveDescriptionCapsule.setZkproof(zkproof);
+    receiveDescriptionCapsule.setZkproof(zkProof);
 
     SaplingOutgoingPlaintext outPlaintext =
         new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
@@ -288,6 +289,7 @@ public class TransactionBuilder {
 
   @AllArgsConstructor
   public static class TransactionBuilderResult {
+
     @Getter
     private ShieldedTransferContract shieldedTransferContract;
   }
