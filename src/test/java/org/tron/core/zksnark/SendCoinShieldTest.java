@@ -196,7 +196,7 @@ public class SendCoinShieldTest {
 //    System.out.println(ByteArray.toHexString(hash.getContent().toByteArray()));
 
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
-    voucher.append(b);
+//    voucher.append(b);
     voucher.append(c);
     // ee4a5074c806272ca59393bee7d23ffe92a514af1265fa15b667fa4d95fa6b4a
     hash = voucher.root();
