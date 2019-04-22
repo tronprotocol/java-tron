@@ -238,6 +238,7 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
 
+    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
 
   }
 
