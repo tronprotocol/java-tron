@@ -67,6 +67,7 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.CancelDeferredTransactionContract;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -86,7 +87,6 @@ import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
@@ -568,6 +568,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         break;
       case UpdateEnergyLimitContract:
         clazz = UpdateEnergyLimitContract.class;
+        break;
+      case ClearABIContract:
+        clazz = ClearABIContract.class;
         break;
       case ExchangeCreateContract:
         clazz = ExchangeCreateContract.class;
