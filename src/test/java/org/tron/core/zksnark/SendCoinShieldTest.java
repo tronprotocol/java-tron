@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.testng.collections.Lists;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.merkle.EmptyMerkleRoots;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
@@ -44,7 +45,6 @@ import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
 import org.tron.protos.Contract.PedersenHash;
-import org.tron.common.utils.Sha256Hash;
 
 public class SendCoinShieldTest {
 
