@@ -73,6 +73,33 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse setAccountId(String httpNode, byte[] setAccountIdAddress,
+      String accountId, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/setaccountid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("account_id", accountId);
+      userBaseObj2.addProperty("owner_address", Base58.encode58Check(PublicMethed.getFinalAddress(fromKey)));
+      userBaseObj2.addProperty("visible",true);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+      logger.info(transactionString);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode, transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse updateWitness(String httpNode, byte[] witnessAddress, String updateUrl,
       String fromKey) {
     try {
