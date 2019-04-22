@@ -313,13 +313,6 @@ task dailyBuild(type: Test) {
     }
 }
 
-task solidityFile(type: Test){
-    useTestNG{
-        suites(file('src/test/resources/solidityFile.xml'))
-        parallel 'tests'
-        threadCount 4
-    }
-}
 
 jacocoTestReport {
     reports {
