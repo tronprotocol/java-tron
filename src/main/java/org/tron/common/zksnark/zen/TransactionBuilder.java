@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen;
 
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -34,10 +35,10 @@ public class TransactionBuilder {
   private String from;
   @Setter
   @Getter
-  private List<SpendDescriptionInfo> spends;
+  private List<SpendDescriptionInfo> spends = new ArrayList<>();
   @Setter
   @Getter
-  private List<ReceiveDescriptionInfo> receives;
+  private List<ReceiveDescriptionInfo> receives = new ArrayList<>();
 
   private Wallet wallet;
 
