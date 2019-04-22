@@ -2,8 +2,12 @@ package org.tron.core.zksnark;
 
 import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
+import com.alibaba.fastjson.JSONArray;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
@@ -12,8 +16,10 @@ import org.testng.collections.Lists;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.PedersenHashCapsule;
+import org.tron.common.zksnark.merkle.EmptyMerkleRoots;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.merkle.MerklePath;
 import org.tron.common.zksnark.zen.HdChain;
@@ -231,4 +237,157 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
   }
+
+  @Test
+  public void testEmptyRoot() {
+    byte[] bytes = IncrementalMerkleTreeContainer.emptyRoot().getContent().toByteArray();
+    ZksnarkUtils.sort(bytes);
+    Assert.assertEquals("3e49b5f954aa9d3545bc6c37744661eea48d7c34e3000d82b7f0010c30f4c2fb",
+        ByteArray.toHexString(bytes));
+  }
+
+  @Test
+  public void testEmptyRoots() throws Exception {
+    JSONArray array = readFile("merkle_roots_empty_sapling.json");
+
+    for (int i = 0; i < 32; i++) {
+      String string = array.getString(i);
+
+      EmptyMerkleRoots emptyMerkleRootsInstance = EmptyMerkleRoots.emptyMerkleRootsInstance;
+
+      byte[] bytes = emptyMerkleRootsInstance.emptyRoot(i).getContent().toByteArray();
+
+      Assert.assertEquals(string, ByteArray.toHexString(bytes));
+    }
+
+  }
+
+  private JSONArray readFile(String fileName) throws Exception {
+    String file1 = SendCoinShieldTest.class.getClassLoader()
+        .getResource("json" + File.separator + fileName).getFile();
+    List<String> readLines = Files.readLines(new File(file1),
+        Charsets.UTF_8);
+
+    JSONArray array = JSONArray
+        .parseArray(readLines.stream().reduce((s, s2) -> s + s2).get());
+
+    return array;
+  }
+
+
+  private String PedersenHash2String(PedersenHash hash) {
+    return ByteArray.toHexString(hash.getContent().toByteArray());
+  }
+
+  @Test
+  public void testVectors() throws Exception {
+    JSONArray root_tests = readFile("merkle_roots_sapling.json");
+    JSONArray path_tests = readFile("merkle_path_sapling.json");
+    JSONArray commitment_tests = readFile("merkle_commitments_sapling.json");
+
+    int path_i = 0;
+
+//    MerkleContainer merkleContainer = new MerkleContainer();
+//    merkleContainer.getCurrentMerkle();
+
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
+        .toMerkleTreeContainer();
+
+    // The root of the tree at this point is expected to be the root of the
+    // empty tree.
+    Assert.assertEquals(PedersenHash2String(tree.root()),
+        PedersenHash2String(IncrementalMerkleTreeContainer.emptyRoot()));
+
+    try {
+      tree.last();
+      Assert.fail("The tree doesn't have a 'last' element added since it's blank.");
+    } catch (Exception ex) {
+
+    }
+    // The tree is empty.
+    Assert.assertEquals(0, tree.size());
+
+    // We need to witness at every single point in the tree, so
+    // that the consistency of the tree and the merkle paths can
+    // be checked.
+    List<IncrementalMerkleVoucherCapsule> witnesses = Lists.newArrayList();
+
+    for (int i = 0; i < 16; i++) {
+      // Witness here
+      witnesses.add(tree.toVoucher().getVoucherCapsule());
+
+      PedersenHashCapsule test_commitment = new PedersenHashCapsule();
+      byte[] bytes = ByteArray.fromHexString(commitment_tests.getString(i));
+      ZksnarkUtils.sort(bytes);
+      test_commitment.setContent(ByteString.copyFrom(bytes));
+      // Now append a commitment to the tree
+      tree.append(test_commitment.getInstance());
+
+      // Size incremented by one.
+      Assert.assertEquals(i + 1, tree.size());
+
+      // Last element added to the tree was `test_commitment`
+      Assert.assertEquals(PedersenHash2String(test_commitment.getInstance()),
+          PedersenHash2String(tree.last()));
+
+      //todo:
+      // Check tree root consistency
+      Assert.assertEquals(root_tests.getString(i),
+          PedersenHash2String(tree.root()));
+
+      // Check serialization of tree
+//      expect_ser_test_vector(ser_tests[i], tree, tree);
+
+      boolean first = true; // The first witness can never form a path
+      for (IncrementalMerkleVoucherCapsule wit : witnesses) {
+        // Append the same commitment to all the witnesses
+        wit.toMerkleVoucherContainer().append(test_commitment.getInstance());
+
+        if (first) {
+          try {
+            wit.toMerkleVoucherContainer().path();
+            Assert.fail("The first witness can never form a path");
+          } catch (Exception ex) {
+
+          }
+
+          try {
+            wit.toMerkleVoucherContainer().element();
+            Assert.fail("The first witness can never form a path");
+          } catch (Exception ex) {
+
+          }
+        } else {
+          MerklePath path = wit.toMerkleVoucherContainer().path();
+          Assert.assertEquals(path_tests.getString(path_i++), ByteArray.toHexString(path.encode()));
+        }
+
+        Assert.assertEquals(
+            PedersenHash2String(wit.toMerkleVoucherContainer().root()),
+            PedersenHash2String(tree.root()));
+
+        first = false;
+      }
+    }
+
+    {
+      try {
+        tree.append(new PedersenHashCapsule().getInstance());
+        Assert.fail("Tree should be full now");
+      } catch (Exception ex) {
+
+      }
+
+      for (IncrementalMerkleVoucherCapsule wit : witnesses) {
+        try {
+          wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
+          Assert.fail("Tree should be full now");
+        } catch (Exception ex) {
+
+        }
+      }
+    }
+
+  }
+
 }
