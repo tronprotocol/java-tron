@@ -1,5 +1,6 @@
 package org.tron.common.zksnark.zen;
 
+import com.sun.jna.IntegerType;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Structure;
@@ -32,12 +33,17 @@ public class Libsodium {
 
       }
 
+      public static class sizeT extends IntegerType {
+        public sizeT() { this(0); }
+        public sizeT(long value) { super(Native.POINTER_SIZE, value); }
+      }
+
       public long h[] = new long[8];
       public long t[] = new long[2];
       public long f[] = new long[2];
       public byte buf[] = new byte[2 * 128];
-      public int buflen;
-      public int last_node;
+      public sizeT buflen = new sizeT();
+      public byte last_node;
     }
 
     int crypto_generichash_blake2b_init(crypto_generichash_blake2b_state.ByReference state,
@@ -58,6 +64,9 @@ public class Libsodium {
 
     int crypto_aead_chacha20poly1305_ietf_decrypt(byte[] m, long[] mlen_p, byte[] nsec, byte[] c,
         long clen, byte[] ad, long adlen, byte[] npub, byte[] k);
+
+    int crypto_aead_chacha20poly1305_ietf_encrypt(byte[] c, long[] clen_p, byte[] m,
+        long mlen, byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k);
   }
 
   public static int cryptoGenerichashBlake2bInitSaltPersonal(
@@ -90,6 +99,11 @@ public class Libsodium {
       byte[] c, long clen, byte[] ad, long adlen, byte[] npub, byte[] k) {
     return INSTANCE
         .crypto_aead_chacha20poly1305_ietf_decrypt(m, mlen_p, nsec, c, clen, ad, adlen, npub, k);
+  }
+
+  public static int cryptoAeadChacha20Poly1305IetfEncrypt(byte[] c, long[] clen_p, byte[] m,
+      long mlen, byte[] ad, long adlen, byte[] nsec, byte[] npub, byte[] k) {
+    return INSTANCE.crypto_aead_chacha20poly1305_ietf_encrypt(c, clen_p, m, mlen, ad, adlen, nsec, npub, k);
   }
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {

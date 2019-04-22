@@ -50,6 +50,8 @@ public class Librustzcash {
 
     void librustzcash_sapling_generate_r(byte[] r);
 
+    boolean librustzcash_sapling_ka_derivepublic(byte[] diversifier, byte[] esk, byte[] result);
+
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
 
     boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
@@ -268,6 +270,10 @@ public class Librustzcash {
   public static byte[] librustzcashSaplingGenerateR(byte[] r) {
     INSTANCE.librustzcash_sapling_generate_r(r);
     return r;
+  }
+
+  public static boolean librustzcashSaplingKaDerivepublic(byte[] diversifier, byte[] esk, byte[] result) {
+    return INSTANCE.librustzcash_sapling_ka_derivepublic(diversifier, esk, result);
   }
 
   public static Pointer librustzcashSaplingProvingCtxInit() {

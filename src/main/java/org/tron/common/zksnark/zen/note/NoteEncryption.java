@@ -11,27 +11,21 @@ import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.Libsodium;
 
 public class NoteEncryption {
-
   public static final int NOTEENCRYPTION_CIPHER_KEYSIZE = 32;
-
   public static class EncCiphertext {
-
-    public byte[] data; // ZC_SAPLING_ENCCIPHERTEXT_SIZE
+    public byte[] data = new byte[ZC_SAPLING_ENCCIPHERTEXT_SIZE]; // ZC_SAPLING_ENCCIPHERTEXT_SIZE
   }
 
   public static class EncPlaintext {
-
-    public byte[] data; // ZC_SAPLING_ENCPLAINTEXT_SIZE
+    public byte[] data = new byte[ZC_SAPLING_ENCPLAINTEXT_SIZE]; // ZC_SAPLING_ENCPLAINTEXT_SIZE
   }
 
   public static class OutCiphertext {
-
-    public byte[] data; // ZC_SAPLING_OUTCIPHERTEXT_SIZE
+    public byte[] data = new byte[ZC_SAPLING_OUTCIPHERTEXT_SIZE]; // ZC_SAPLING_OUTCIPHERTEXT_SIZE
   }
 
   public static class OutPlaintext {
-
-    public byte[] data; // ZC_SAPLING_OUTPLAINTEXT_SIZE
+    public byte[] data = new byte[ZC_SAPLING_OUTPLAINTEXT_SIZE]; // ZC_SAPLING_OUTPLAINTEXT_SIZE
   }
 
   public static void PRFOck(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
