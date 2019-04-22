@@ -55,7 +55,7 @@ public class SpendingKey {
   }
 
   public DiversifierT defaultDiversifier() throws Exception {
-    byte[] res = new byte[DiversifierT.ZC_DIVERSIFIER_SIZE];
+    byte[] res = new byte[Constants.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
     System.arraycopy(this.value, 0, blob, 0, 32);
     blob[32] = 3;
@@ -96,8 +96,9 @@ public class SpendingKey {
 
 
   public static void main(String[] args) throws Exception {
-    SpendingKey sk = SpendingKey
-        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
+//    SpendingKey sk = SpendingKey
+//        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
+    SpendingKey sk = SpendingKey.random();
     System.out.println(sk.encode());
     System.out.println(
         "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
@@ -113,5 +114,14 @@ public class SpendingKey {
 
     System.out.println(
         "sk.defaultAddress:" + KeyIo.EncodePaymentAddress(sk.defaultAddress()));
+
+    DiversifierT diversifierT = new DiversifierT();
+    byte[] d = {'1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '0' };
+    diversifierT.setData(d);
+    Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
+    if (op.isPresent()) {
+      System.out.println(
+          "sk.Address:" + KeyIo.EncodePaymentAddress(op.get()));
+    }
   }
 }

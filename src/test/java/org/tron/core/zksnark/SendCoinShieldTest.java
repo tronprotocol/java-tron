@@ -108,7 +108,7 @@ public class SendCoinShieldTest {
     System.out.println(paymentAddress);
   }
 
-  //@Test
+  // @Test
   public void testShieldWallet() {
     PaymentAddress address = PaymentAddress.decode(new byte[43]);
     ExtendedSpendingKey sk = ExtendedSpendingKey.decode(new byte[169]);
@@ -160,11 +160,11 @@ public class SendCoinShieldTest {
     System.out.print(ByteArray.toHexString(encode));
   }
 
-  private IncrementalMerkleVoucherContainer createMerkleVoucherContainer(){
+  private IncrementalMerkleVoucherContainer createMerkleVoucherContainer() {
 
-    //add
-    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
-        new IncrementalMerkleTreeCapsule());
+    // add
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(s1);
@@ -192,11 +192,14 @@ public class SendCoinShieldTest {
     tree.append(b);
     hash = tree.root();
 
-
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
     // ee4a5074c806272ca59393bee7d23ffe92a514af1265fa15b667fa4d95fa6b4a
     hash = voucher.root();
+
+    Assert.assertEquals(
+        ByteArray.toHexString(voucher.root().getContent().toByteArray()),
+        "ee4a5074c806272ca59393bee7d23ffe92a514af1265fa15b667fa4d95fa6b4a");
 
     System.out.println(ByteArray.toHexString(voucher.root().getContent().toByteArray()));
 
@@ -210,20 +213,20 @@ public class SendCoinShieldTest {
     TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
-//    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
+    //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
-//    PaymentAddress address = PaymentAddress.decode(new byte[43]);
+    //    PaymentAddress address = PaymentAddress.decode(new byte[43]);
     PaymentAddress address = xsk.DefaultAddress();
     long value = 100;
     Note note = new Note(address, value);
 
-//    byte[] anchor = new byte[256];
+    //    byte[] anchor = new byte[256];
     IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-//    builder.addSaplingSpend(expsk, note, anchor, voucher);
-//    SpendDescriptionInfo spend = builder.getSpends().get(0);
+    //    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
