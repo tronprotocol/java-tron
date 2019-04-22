@@ -19,6 +19,16 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
 
+    void librustzcash_init_zksnark_params(byte[] spend_path,
+        int spend_path_len,
+        byte[] spend_hash,
+        byte[] output_path,
+        int output_path_len,
+        byte[] output_hash,
+        byte[] sprout_path,
+        int sprout_path_len,
+        byte[] sprout_hash);
+
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
 
     void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
@@ -169,6 +179,23 @@ public class Librustzcash {
   * */
   public static void librustzcashZip32XskMaster(byte[] data, int size, byte[] m_bytes) {
     INSTANCE.librustzcash_zip32_xsk_master(data, size, m_bytes);
+  }
+
+  public static void librustzcashInitZksnarkParams(
+      byte[] spend_path,
+      int spend_path_len,
+      byte[] spend_hash,
+      byte[] output_path,
+      int output_path_len,
+      byte[] output_hash,
+      byte[] sprout_path,
+      int sprout_path_len,
+      byte[] sprout_hash
+  ) {
+
+    INSTANCE.librustzcash_init_zksnark_params(spend_path, spend_path_len, spend_hash,
+        output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
+        sprout_hash);
   }
 
   /*
@@ -369,7 +396,7 @@ public class Librustzcash {
       platform = "windows";
       extension = ".dll";
     } else if (Platform.isMac()) {
-      platform = "macos";
+      platform = "tmp";
       extension = ".dylib";
     } else {
       throw new RuntimeException("unsupportedPlatformException");

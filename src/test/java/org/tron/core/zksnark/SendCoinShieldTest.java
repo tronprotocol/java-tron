@@ -215,8 +215,39 @@ public class SendCoinShieldTest {
     return voucher;
   }
 
+  private void librustzcashInitZksnarkParams() {
+
+    String file1 = SendCoinShieldTest.class.getClassLoader()
+        .getResource("params" + File.separator + "sapling-spend.params").getFile();
+
+    byte[] spend_path = file1.getBytes();
+    int spend_path_len = spend_path.length;
+    byte[] spend_hash = ByteArray.fromHexString(
+        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c");
+
+    String file2 = SendCoinShieldTest.class.getClassLoader()
+        .getResource("params" + File.separator + "sapling-output.params").getFile();
+    byte[] output_path = file2.getBytes();
+    int output_path_len = output_path.length;
+    byte[] output_hash = ByteArray.fromHexString(
+        "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028");
+
+    String file3 = SendCoinShieldTest.class.getClassLoader()
+        .getResource("params" + File.separator + "sprout-groth16.params").getFile();
+    byte[] sprout_path = file3.getBytes();
+    int sprout_path_len = sprout_path.length;
+    byte[] sprout_hash = ByteArray.fromHexString(
+        "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a");
+
+    Librustzcash.librustzcashInitZksnarkParams(spend_path, spend_path_len, spend_hash,
+        output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
+        sprout_hash);
+  }
+
   @Test
   public void testGenerateSpendProof() {
+    librustzcashInitZksnarkParams();
+
     TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
@@ -238,7 +269,9 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
 
+    System.out.println("0000000");
     System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
+    System.out.println("0000000");
 
   }
 
