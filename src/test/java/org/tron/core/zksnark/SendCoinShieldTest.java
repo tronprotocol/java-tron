@@ -44,6 +44,7 @@ import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
 import org.tron.protos.Contract.PedersenHash;
+import org.tron.common.utils.Sha256Hash;
 
 public class SendCoinShieldTest {
 
@@ -236,7 +237,60 @@ public class SendCoinShieldTest {
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+
+
   }
+
+
+  public byte[] getHash() {
+    return Sha256Hash.of("this is a test".getBytes()).getBytes();
+  }
+
+
+  @Test
+  public void testVerifySpendProof() {
+    TransactionBuilder builder = new TransactionBuilder();
+
+    ExtendedSpendingKey xsk = createXsk();
+    //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    //    PaymentAddress address = PaymentAddress.decode(new byte[43]);
+    PaymentAddress address = xsk.DefaultAddress();
+    long value = 100;
+    Note note = new Note(address, value);
+
+    //    byte[] anchor = new byte[256];
+    IncrementalMerkleVoucherContainer voucher = createMerkleVoucherContainer();
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    //    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    //    SpendDescriptionInfo spend = builder.getSpends().get(0);
+    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+
+    byte[] result = new byte[64];
+    Librustzcash.librustzcashSaplingSpendSig(
+        expsk.getAsk(),
+        spend.alpha,
+        getHash(),
+        result);
+
+    boolean ok = Librustzcash.librustzcashSaplingCheckSpend(
+        ctx,
+        spendDescriptionCapsule.getValueCommitment().toByteArray(),
+        spendDescriptionCapsule.getAnchor().toByteArray(),
+        spendDescriptionCapsule.getNullifier().toByteArray(),
+        spendDescriptionCapsule.getRk().toByteArray(),
+        spendDescriptionCapsule.getZkproof().toByteArray(),
+        result,
+        getHash()
+    );
+    Assert.assertEquals(ok, true);
+
+  }
+
 
   @Test
   public void testEmptyRoot() {
