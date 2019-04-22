@@ -58,6 +58,10 @@ public class WalletTestWitness003 {
   byte[] updateUrl = updateWitnessUrl.getBytes();
   byte[] wrongUrl = nullUrl.getBytes();
   byte[] updateSpaceUrl = spaceUrl.getBytes();
+  private static final String tooLongUrl = "qagwqaswqaswqaswqaswqaswqaswqaswqaswqaswqaswqas"
+      + "wqaswqasw1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazx"
+      + "swedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedc"
+      + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcv";
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -92,7 +96,7 @@ public class WalletTestWitness003 {
 
   @Test(enabled = true, description = "Invaild account to apply create witness")
   public void testInvaildToApplyBecomeWitness() {
-    Assert.assertFalse(createWitness(INVAILD_ADDRESS, createUrl, testKey002));
+    Assert.assertFalse(createWitnessNotBroadcast(INVAILD_ADDRESS, createUrl, testKey002));
   }
 
   @Test(enabled = true, description = "Create witness")
@@ -102,7 +106,7 @@ public class WalletTestWitness003 {
     //Assert.assertFalse(createWitness(fromAddress, createUrl, testKey002));
 
     //No balance,try to create witness.
-    Assert.assertFalse(createWitness(lowBalAddress, createUrl, lowBalTest));
+    Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     //Send enough coin to the apply account to make that account
     // has ability to apply become witness.
@@ -114,6 +118,10 @@ public class WalletTestWitness003 {
       Assert.assertTrue(PublicMethed
           .sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002,
               blockingStubFull));
+      //null url, update failed
+      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, wrongUrl, testUpdateWitnessKey));
+      //too long url, update failed
+      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, tooLongUrl.getBytes(), testUpdateWitnessKey));
       Assert.assertTrue(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     }
@@ -128,6 +136,8 @@ public class WalletTestWitness003 {
     if (result.get().getWitnessesCount() < 6) {
       //null url, update failed
       Assert.assertFalse(updateWitness(updateAddress, wrongUrl, testUpdateWitnessKey));
+      //too long url, update failed
+      Assert.assertFalse(updateWitness(updateAddress, tooLongUrl.getBytes(), testUpdateWitnessKey));
       //Content space and special char, update success
       Assert.assertTrue(updateWitness(updateAddress, updateSpaceUrl, testUpdateWitnessKey));
       //update success
@@ -148,34 +158,6 @@ public class WalletTestWitness003 {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-  }
-
-  /**
-   * constructor.
-   */
-
-  public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(owner));
-    builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
-    Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      return false;
-    }
-    transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
-
   }
 
   /**
