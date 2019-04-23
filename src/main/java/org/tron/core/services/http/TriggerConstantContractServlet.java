@@ -25,6 +25,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 @Component
 @Slf4j(topic = "API")
@@ -79,6 +80,7 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .triggerConstantContract(build.build(), new TransactionCapsule(txBuilder.build()),
               trxExtBuilder,
               retBuilder);
+      trx = setTransactionPermissionId(jsonObject, trx);
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {

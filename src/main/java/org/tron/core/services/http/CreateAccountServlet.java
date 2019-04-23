@@ -19,6 +19,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
 import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 
 @Component
@@ -45,8 +46,8 @@ public class CreateAccountServlet extends HttpServlet {
         long delaySeconds = input.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
-
-      response.getWriter().println(Util.printTransaction(tx, visible));
+      tx = setTransactionPermissionId(input, tx);
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
