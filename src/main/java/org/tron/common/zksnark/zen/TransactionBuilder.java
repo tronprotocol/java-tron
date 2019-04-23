@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen;
 
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -34,10 +35,10 @@ public class TransactionBuilder {
   private String from;
   @Setter
   @Getter
-  private List<SpendDescriptionInfo> spends;
+  private List<SpendDescriptionInfo> spends = new ArrayList<>();
   @Setter
   @Getter
-  private List<ReceiveDescriptionInfo> receives;
+  private List<ReceiveDescriptionInfo> receives = new ArrayList<>();
 
   private Wallet wallet;
 
@@ -47,7 +48,7 @@ public class TransactionBuilder {
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
 
-  //  Optional<CTxDestination> tChangeAddr;
+  //  Optional<CTxDstination> tChangeAddr;
 
   // Throws if the anchor does not match the anchor used by
   // previously-added Sapling spends.
@@ -136,14 +137,15 @@ public class TransactionBuilder {
     }
 
     // Create Sapling spendAuth and binding signatures
-    for (int i=0; i < spends.size(); i++) {
+    for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
           spends.get(i).expsk.getAsk(),
           spends.get(i).alpha,
           dataToBeSigned,
           result);
-      contractBuilder.getSpendDescriptionBuilder(i).setSpendAuthoritySignature(ByteString.copyFrom(result));
+      contractBuilder.getSpendDescriptionBuilder(i)
+          .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
 
     byte[] bindingSig = new byte[64];
@@ -221,18 +223,18 @@ public class TransactionBuilder {
     SaplingNoteEncryption encryptor = enc.noteEncryption;
 
     byte[] cv = new byte[32];
-    byte[] zkproof = new byte[32];
+    byte[] zkProof = new byte[32];
     if (!Librustzcash.librustzcashSaplingOutputProof(
         ctx,
         encryptor.esk,
-        output.getNote().d.getData(),
+        output.getNote().d.data,
         output.getNote().pkD,
         output.getNote().r,
         output.getNote().value,
         cv,
-        zkproof)) {
+        zkProof)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Ourtput proof failed");
+      throw new RuntimeException("Output proof failed");
     }
 
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
@@ -240,7 +242,7 @@ public class TransactionBuilder {
     receiveDescriptionCapsule.setNoteCommitment(cm);
     receiveDescriptionCapsule.setEpk(encryptor.epk);
     receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
-    receiveDescriptionCapsule.setZkproof(zkproof);
+    receiveDescriptionCapsule.setZkproof(zkProof);
 
     SaplingOutgoingPlaintext outPlaintext =
         new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
@@ -287,6 +289,7 @@ public class TransactionBuilder {
 
   @AllArgsConstructor
   public static class TransactionBuilderResult {
+
     @Getter
     private ShieldedTransferContract shieldedTransferContract;
   }

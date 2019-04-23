@@ -116,7 +116,7 @@ public class BaseNotePlaintext {
     public Optional<SaplingNotePlaintextEncryptionResult> encrypt(byte[] pk_d) {
 
       // Get the encryptor
-      Optional<SaplingNoteEncryption> sne = SaplingNoteEncryption.FromDiversifier(d);
+      Optional<SaplingNoteEncryption> sne = SaplingNoteEncryption.fromDiversifier(d);
       if (!sne.isPresent()) {
         return Optional.empty();
       }
@@ -155,7 +155,7 @@ public class BaseNotePlaintext {
       }
 
       data[0] = 0x01;
-      System.arraycopy(d, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
+      System.arraycopy(d.data, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
       System.arraycopy(valueLong, 0, data,
           ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, ZC_V_SIZE);
       System.arraycopy(rcm, 0, data,

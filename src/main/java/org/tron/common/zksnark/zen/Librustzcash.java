@@ -19,6 +19,9 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
 
+    void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, byte[] spend_hash,
+        byte[] output_path, int output_path_len, byte[] output_hash);
+
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
 
     void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
@@ -27,18 +30,14 @@ public class Librustzcash {
 
     void librustzcash_ask_to_ak(byte[] ask, byte[] result);
 
-    void librustzcash_sapling_compute_nf(byte[] d,
-        byte[] pk_d,
-        long value_,
-        byte[] r,
-        byte[] ak,
-        byte[] nk,
-        long position,
-        byte[] result);
+    void librustzcash_sapling_compute_nf(byte[] d, byte[] pk_d, long value_, byte[] r, byte[] ak,
+        byte[] nk, long position, byte[] result);
 
     void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
 
     void librustzcash_sapling_generate_r(byte[] r);
+
+    boolean librustzcash_sapling_ka_derivepublic(byte[] diversifier, byte[] esk, byte[] result);
 
     void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
 
@@ -61,74 +60,30 @@ public class Librustzcash {
 
     Pointer librustzcash_sapling_proving_ctx_init();
 
-    boolean librustzcash_sapling_spend_proof(
-        Pointer ctx,
-        byte[] ak,
-        byte[] nsk,
-        byte[] diversifier,
-        byte[] rcm,
-        byte[] ar,
-        long value,
-        byte[] anchor,
-        byte[] witness,
-        byte[] cv,
-        byte[] rk,
-        byte[] zkproof
-    );
+    boolean librustzcash_sapling_spend_proof(Pointer ctx, byte[] ak, byte[] nsk, byte[] diversifier,
+        byte[] rcm, byte[] ar, long value, byte[] anchor, byte[] witness, byte[] cv, byte[] rk,
+        byte[] zkproof);
 
-    boolean librustzcash_sapling_output_proof(
-        Pointer ctx,
-        byte[] esk,
-        byte[] diversifier,
-        byte[] pk_d,
-        byte[] rcm,
-        long value,
-        byte[] cv,
-        byte[] zkproof
-    );
+    boolean librustzcash_sapling_output_proof(Pointer ctx, byte[] esk, byte[] diversifier,
+        byte[] pk_d, byte[] rcm, long value, byte[] cv, byte[] zkproof);
 
-    boolean librustzcash_sapling_spend_sig(
-        byte[] ask,
-        byte[] ar,
-        byte[] sighash,
+    boolean librustzcash_sapling_spend_sig(byte[] ask, byte[] ar, byte[] sighash, byte[] result);
+
+    boolean librustzcash_sapling_binding_sig(Pointer ctx, long valueBalance, byte[] sighash,
         byte[] result);
-
-    boolean librustzcash_sapling_binding_sig(
-        Pointer ctx,
-        long valueBalance,
-        byte[] sighash,
-        byte[] result
-    );
 
     void librustzcash_sapling_proving_ctx_free(Pointer ctx);
 
     Pointer librustzcash_sapling_verification_ctx_init();
 
-    boolean librustzcash_sapling_check_spend(
-        Pointer ctx,
-        byte[] cv,
-        byte[] anchor,
-        byte[] nullifier,
-        byte[] rk,
-        byte[] zkproof,
-        byte[] spendAuthSig,
-        byte[] sighashValue
-    );
+    boolean librustzcash_sapling_check_spend(Pointer ctx, byte[] cv, byte[] anchor,
+        byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue);
 
-    boolean librustzcash_sapling_check_output(
-        Pointer ctx,
-        byte[] cv,
-        byte[] cm,
-        byte[] ephemeralKey,
-        byte[] zkproof
-    );
+    boolean librustzcash_sapling_check_output(Pointer ctx, byte[] cv, byte[] cm,
+        byte[] ephemeralKey, byte[] zkproof);
 
-    boolean librustzcash_sapling_final_check(
-        Pointer ctx,
-        long valueBalance,
-        byte[] bindingSig,
-        byte[] sighashValue
-    );
+    boolean librustzcash_sapling_final_check(Pointer ctx, long valueBalance, byte[] bindingSig,
+        byte[] sighashValue);
 
     void librustzcash_sapling_verification_ctx_free(Pointer ctx);
 
@@ -141,63 +96,36 @@ public class Librustzcash {
     ///
     /// The result of the merkle tree hash is placed in
     /// `result`, which must also be of length 32.
-    void librustzcash_merkle_hash(
-        int depth,
-        byte[] a,
-        byte[] b,
-        byte[] result
+    void librustzcash_merkle_hash(int depth, byte[] a, byte[] b, byte[] result
     );
 
     /// Writes the "uncommitted" note value for empty leaves
     /// of the merkle tree. `result` must be a valid pointer
     /// to 32 bytes which will be written.
-    void librustzcash_tree_uncommitted(
-        byte[] result
-    );
+    void librustzcash_tree_uncommitted(byte[] result);
 
     void librustzcash_to_scalar(byte[] input, byte[] result);
   }
 
-  // todo jni
-  /*
-  /// Derive the master ExtendedSpendingKey from a seed.
-    void librustzcash_zip32_xsk_master(
-        const unsigned char *seed,
-        size_t seedlen,
-        unsigned char *xsk_master
-    );
-  * */
   public static void librustzcashZip32XskMaster(byte[] data, int size, byte[] m_bytes) {
     INSTANCE.librustzcash_zip32_xsk_master(data, size, m_bytes);
   }
 
-  /*
-  /// Derive a child ExtendedSpendingKey from a parent.
-    void librustzcash_zip32_xsk_derive(
-        const unsigned char *xsk_parent,
-        uint32_t i,
-        unsigned char *xsk_i
-    );
-  * */
+  public static void librustzcashInitZksnarkParams(byte[] spend_path, int spend_path_len,
+      byte[] spend_hash, byte[] output_path, int output_path_len, byte[] output_hash) {
+    INSTANCE.librustzcash_init_zksnark_params(spend_path, spend_path_len, spend_hash,
+        output_path, output_path_len, output_hash);
+  }
+
   public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
     INSTANCE.librustzcash_zip32_xsk_derive(p_bytes, i, m_bytes);
   }
 
-  // /// Derive a PaymentAddress from an ExtendedFullViewingKey.
-  //     bool librustzcash_zip32_xfvk_address(
-  //         const unsigned char *xfvk,
-  //         const unsigned char *j,
-  //         unsigned char *j_ret,
-  //         unsigned char *addr_ret
-  //     );
   public static boolean librustzcashZip32XfvkAddress(byte[] xfvk, byte[] j, byte[] j_ret,
       byte[] addr_ret) {
     return INSTANCE.librustzcash_zip32_xfvk_address(xfvk, j, j_ret, addr_ret);
   }
 
-
-  // void librustzcash_crh_ivk(const unsigned char *ak, const unsigned char *nk, unsigned char
-  // *result);
   public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
     INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
   }
@@ -206,20 +134,13 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_ka_agree(p, sk, result);
   }
 
-  public static boolean librustzcashSaplingComputeCm(
-      byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm) {
+  public static boolean librustzcashSaplingComputeCm(byte[] d, byte[] pk_d, long value, byte[] r,
+      byte[] cm) {
     return INSTANCE.librustzcash_sapling_compute_cm(d, pk_d, value, r, cm);
   }
 
-  public static boolean librustzcashSaplingComputeNf(
-      byte[] d,
-      byte[] pk_d,
-      long value_,
-      byte[] r,
-      byte[] ak,
-      byte[] nk,
-      long position,
-      byte[] result) {
+  public static boolean librustzcashSaplingComputeNf(byte[] d, byte[] pk_d, long value_, byte[] r,
+      byte[] ak, byte[] nk, long position, byte[] result) {
     INSTANCE.librustzcash_sapling_compute_nf(d, pk_d, value_, r, ak, nk, position, result);
     return true;
   }
@@ -243,50 +164,33 @@ public class Librustzcash {
     return r;
   }
 
+  public static boolean librustzcashSaplingKaDerivepublic(byte[] diversifier, byte[] esk,
+      byte[] result) {
+    return INSTANCE.librustzcash_sapling_ka_derivepublic(diversifier, esk, result);
+  }
+
   public static Pointer librustzcashSaplingProvingCtxInit() {
     return INSTANCE.librustzcash_sapling_proving_ctx_init();
   }
 
   public static boolean librustzcashCheckDiversifier(byte[] b) {
-    // TODO
     return INSTANCE.librustzcash_check_diversifier(b);
   }
 
-
-  public static boolean librustzcashSaplingSpendProof(
-      Pointer ctx,
-      byte[] ak,
-      byte[] nsk,
-      byte[] d,
-      byte[] r,
-      byte[] alpha,
-      long value,
-      byte[] anchor,
-      byte[] voucherPath,
-      byte[] cv,
-      byte[] rk,
+  public static boolean librustzcashSaplingSpendProof(Pointer ctx, byte[] ak, byte[] nsk, byte[] d,
+      byte[] r, byte[] alpha, long value, byte[] anchor, byte[] voucherPath, byte[] cv, byte[] rk,
       byte[] zkproof) {
     return INSTANCE
         .librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv,
             rk, zkproof);
   }
 
-  public static boolean librustzcashSaplingOutputProof(
-      Pointer ctx,
-      byte[] esk,
-      byte[] d,
-      byte[] pk_d,
-      byte[] r,
-      long value,
-      byte[] cv,
-      byte[] zkproof) {
+  public static boolean librustzcashSaplingOutputProof(Pointer ctx, byte[] esk, byte[] d,
+      byte[] pk_d, byte[] r, long value, byte[] cv, byte[] zkproof) {
     return INSTANCE.librustzcash_sapling_output_proof(ctx, esk, d, pk_d, r, value, cv, zkproof);
   }
 
-  public static boolean librustzcashSaplingSpendSig(
-      byte[] ask,
-      byte[] alpha,
-      byte[] sigHash,
+  public static boolean librustzcashSaplingSpendSig(byte[] ask, byte[] alpha, byte[] sigHash,
       byte[] result) {
     return INSTANCE.librustzcash_sapling_spend_sig(ask, alpha, sigHash, result);
   }
@@ -308,39 +212,20 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_verification_ctx_init();
   }
 
-  public static boolean librustzcashSaplingCheckSpend(
-      Pointer ctx,
-      byte[] cv,
-      byte[] anchor,
-      byte[] nullifier,
-      byte[] rk,
-      byte[] zkproof,
-      byte[] spendAuthSig,
-      byte[] sighashValue
-
-  ) {
+  public static boolean librustzcashSaplingCheckSpend(Pointer ctx, byte[] cv, byte[] anchor,
+      byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
     return INSTANCE
         .librustzcash_sapling_check_spend(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
             sighashValue);
   }
 
-  public static boolean librustzcashSaplingCheckOutput(
-      Pointer ctx,
-      byte[] cv,
-      byte[] cm,
-      byte[] ephemeralKey,
-      byte[] zkproof
-
-  ) {
+  public static boolean librustzcashSaplingCheckOutput(Pointer ctx, byte[] cv, byte[] cm,
+      byte[] ephemeralKey, byte[] zkproof) {
     return INSTANCE.librustzcash_sapling_check_output(ctx, cv, cm, ephemeralKey, zkproof);
   }
 
-  public static boolean librustzcashSaplingFinalCheck(
-      Pointer ctx,
-      long valueBalance,
-      byte[] bindingSig,
-      byte[] sighashValue
-  ) {
+  public static boolean librustzcashSaplingFinalCheck(Pointer ctx, long valueBalance,
+      byte[] bindingSig, byte[] sighashValue) {
     return INSTANCE.librustzcash_sapling_final_check(ctx, valueBalance, bindingSig, sighashValue);
   }
 
@@ -394,7 +279,6 @@ public class Librustzcash {
     int ZIP32_XSK_SIZE = 169; // byte
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
     librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().length, m_bytes);
-
   }
 
 }

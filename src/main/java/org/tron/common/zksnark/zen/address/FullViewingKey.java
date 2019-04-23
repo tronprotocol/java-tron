@@ -21,13 +21,7 @@ public class FullViewingKey {
   @Setter
   private byte[] ovk; // 256,the outgoing viewing key
 
-  // ! Get the fingerprint of this full viewing key (as defined in ZIP 32).
-  byte[] GetFingerprint() {
-    return CBLAKE2bWriter.GetHash(this);
-  }
-
   public IncomingViewingKey inViewingKey() {
-
     byte[] ivk = new byte[32]; // the incoming viewing key
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
     return new IncomingViewingKey(ivk);
@@ -39,17 +33,8 @@ public class FullViewingKey {
     return !Arrays.equals(ivk, new byte[32]);
   }
 
-  public static class CBLAKE2bWriter {
-
-    public static byte[] GetHash(FullViewingKey keys) {
-      return null;
-    }
-  }
-
   public byte[] encode() {
-
     byte[] m_bytes = new byte[96];
-
     System.arraycopy(ak, 0, m_bytes, 0, 32);
     System.arraycopy(nk, 0, m_bytes, 32, 32);
     System.arraycopy(ovk, 0, m_bytes, 64, 32);
@@ -58,7 +43,6 @@ public class FullViewingKey {
   }
 
   public static FullViewingKey decode(byte[] data) {
-
     byte[] ak = new byte[32];
     byte[] nk = new byte[32];
     byte[] ovk = new byte[32];
