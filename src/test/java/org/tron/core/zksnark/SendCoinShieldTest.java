@@ -40,7 +40,6 @@ import org.tron.common.zksnark.zen.address.FullViewingKey;
 import org.tron.common.zksnark.zen.address.IncomingViewingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.address.SpendingKey;
-import org.tron.common.zksnark.zen.note.BaseNote;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
 import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.Recipient;
@@ -48,7 +47,6 @@ import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
-import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 
@@ -294,7 +292,8 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
-    ReceiveDescriptionCapsule capsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    ReceiveDescriptionCapsule capsule = builder
+        .generateOutputProof(builder.getReceives().get(0), ctx);
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     ReceiveDescription receiveDescription = capsule.getInstance();
     ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
@@ -319,6 +318,8 @@ public class SendCoinShieldTest {
 
   @Test
   public void testVerifySpendProof() {
+    librustzcashInitZksnarkParams();
+
     TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
@@ -339,6 +340,9 @@ public class SendCoinShieldTest {
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+
+    System.out.println(
+        "---------:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
 
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
