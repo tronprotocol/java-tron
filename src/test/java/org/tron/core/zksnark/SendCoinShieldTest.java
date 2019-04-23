@@ -215,33 +215,40 @@ public class SendCoinShieldTest {
     return voucher;
   }
 
-  private String getParamsFile(String fileName){
+  private String getParamsFile(String fileName) {
     return SendCoinShieldTest.class.getClassLoader()
         .getResource("params" + File.separator + fileName).getFile();
   }
-  private void librustzcashInitZksnarkParams() {
+
+  @Test
+  public void librustzcashInitZksnarkParams() {
 
     String file1 = getParamsFile("sapling-spend.params");
 
     byte[] spend_path = file1.getBytes();
     int spend_path_len = spend_path.length;
-    byte[] spend_hash = ByteArray.fromHexString(
-        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c");
+    byte[] spend_hash =
+        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c"
+            .getBytes();
+    // ZksnarkUtils.sort(spend_hash);
 
     String file2 = getParamsFile("sapling-output.params");
     byte[] output_path = file2.getBytes();
     int output_path_len = output_path.length;
-    byte[] output_hash = ByteArray.fromHexString(
-        "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028");
+    byte[] output_hash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028"
+        .getBytes();
+    // ZksnarkUtils.sort(output_hash);
 
     String file3 = getParamsFile("sprout-groth16.params");
     byte[] sprout_path = file3.getBytes();
     int sprout_path_len = sprout_path.length;
-    byte[] sprout_hash = ByteArray.fromHexString(
-        "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a");
+    byte[] sprout_hash =
+        "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a"
+            .getBytes();
+    // ZksnarkUtils.sort(sprout_hash);
 
     Librustzcash.librustzcashInitZksnarkParams(spend_path, spend_path_len, spend_hash,
-        output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
+        output_path, output_path_len, output_hash, null, 0,
         sprout_hash);
   }
 
