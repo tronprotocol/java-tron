@@ -289,7 +289,8 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
-    ReceiveDescriptionCapsule capsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    ReceiveDescriptionCapsule capsule = builder
+        .generateOutputProof(builder.getReceives().get(0), ctx);
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     ReceiveDescription receiveDescription = capsule.getInstance();
     ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
@@ -314,6 +315,8 @@ public class SendCoinShieldTest {
 
   @Test
   public void testVerifySpendProof() {
+    librustzcashInitZksnarkParams();
+
     TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
@@ -334,6 +337,9 @@ public class SendCoinShieldTest {
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+
+    System.out.println(
+        "---------:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
 
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
