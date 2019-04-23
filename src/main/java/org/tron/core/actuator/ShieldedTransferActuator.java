@@ -156,7 +156,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             spendDescription.getAnchor().toByteArray(),
             spendDescription.getNullifier().toByteArray(),
             spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().toByteArray(),
+            spendDescription.getZkproof().getValues().toByteArray(),
             spendDescription.getSpendAuthoritySignature().toByteArray(),
             signHash
         )) {
@@ -171,7 +171,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().toByteArray()
+            receiveDescription.getZkproof().getValues().toByteArray()
         )) {
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("librustzcashSaplingCheckOutput error");

@@ -42,12 +42,15 @@ import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.address.SpendingKey;
 import org.tron.common.zksnark.zen.note.BaseNote;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
+import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.Contract.ReceiveDescription;
 
 public class SendCoinShieldTest {
 
@@ -296,9 +299,41 @@ public class SendCoinShieldTest {
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-
   }
 
+  @Test
+  public void verifyOutputProof() {
+    librustzcashInitZksnarkParams();
+    TransactionBuilder builder = new TransactionBuilder();
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    BaseNote.Note note = new Note(paymentAddress, 5000);
+    IncrementalMerkleVoucherContainer voucher = new IncrementalMerkleVoucherContainer(
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule())
+    );
+    voucher.append(PedersenHash.newBuilder().setContent(ByteString.copyFrom(note.cm())).build());
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    ReceiveDescriptionCapsule capsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    ReceiveDescription receiveDescription = capsule.getInstance();
+    ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+    if (!Librustzcash.librustzcashSaplingCheckOutput(
+        ctx,
+        receiveDescription.getValueCommitment().toByteArray(),
+        receiveDescription.getNoteCommitment().toByteArray(),
+        receiveDescription.getEpk().toByteArray(),
+        receiveDescription.getZkproof().getValues().toByteArray()
+    )) {
+      Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      throw new RuntimeException("librustzcashSaplingCheckOutput error");
+    }
+
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
 
   public byte[] getHash() {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
