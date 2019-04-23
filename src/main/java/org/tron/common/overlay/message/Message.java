@@ -83,13 +83,15 @@ public abstract class Message {
       throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
     }
   }
+  private static final Field field = ReflectionUtils
+      .findField(CodedInputStream.class, "explicitDiscardUnknownFields");
+  static {
+    ReflectionUtils.makeAccessible(field);
 
+  }
   public static CodedInputStream getCodedInputStream(byte[] data) {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
     if (isFilter()) {
-      Field field = ReflectionUtils
-          .findField(codedInputStream.getClass(), "explicitDiscardUnknownFields");
-      ReflectionUtils.makeAccessible(field);
       ReflectionUtils.setField(field, codedInputStream, true);
     }
     return codedInputStream;
@@ -98,5 +100,14 @@ public abstract class Message {
   public static boolean isFilter() {
     return manager.getDynamicPropertiesStore().getAllowProtoFilterNum() == 1;
   }
+
+//  public static void main(String[] args) {
+//    long startTime = System.currentTimeMillis();
+//    for (int i=0;i<1000000;i++){
+//      getCodedInputStream(new byte[0]);
+//    }
+//    long endTime = System.currentTimeMillis();
+//    System.out.println("spend time : "+(endTime-startTime));
+//  }
 
 }
