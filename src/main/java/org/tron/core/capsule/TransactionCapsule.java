@@ -525,14 +525,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 //      }
 //    }
 
-    for (Transaction transaction : transactionList) {
-      try {
-        validContractProto(transaction.getRawData().getContract(0));
-      } catch (InvalidProtocolBufferException e) {
-        throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-      }
-    }
-
     logger.info("validContractProtos spend time:{},trans:{}",
         (System.currentTimeMillis() - startTime), transactionList.size());
   }
