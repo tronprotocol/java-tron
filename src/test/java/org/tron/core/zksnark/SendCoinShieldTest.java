@@ -34,18 +34,23 @@ import org.tron.common.zksnark.zen.TransactionBuilder;
 import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
 import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.zen.ZkChainParams;
+import org.tron.common.zksnark.zen.address.DiversifierT;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.FullViewingKey;
 import org.tron.common.zksnark.zen.address.IncomingViewingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.address.SpendingKey;
+import org.tron.common.zksnark.zen.note.BaseNote;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
+import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.Contract.ReceiveDescription;
 
 public class SendCoinShieldTest {
 
@@ -222,24 +227,16 @@ public class SendCoinShieldTest {
 
   }
 
-  private void librustzcashInitZksnarkParams() throws Exception {
+  private void librustzcashInitZksnarkParams() {
 
-    String file1 = getParamsFile("sapling-spend.params");
+    String spendPath = getParamsFile("sapling-spend.params");
+    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
 
-    byte[] spend_path = stringToAscii(file1);
-    int spend_path_len = spend_path.length;
-    byte[] spend_hash = stringToAscii(
-        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c\0");
+    String outputPath = getParamsFile("sapling-output.params");
+    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
-    String file2 = getParamsFile("sapling-output.params");
-    byte[] output_path = stringToAscii(file2);
-    int output_path_len = output_path.length;
-    byte[] output_hash =
-        stringToAscii(
-            "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028\0");
-
-    Librustzcash.librustzcashInitZksnarkParams(spend_path, spend_path_len, spend_hash,
-        output_path, output_path_len, output_hash);
+    Librustzcash.librustzcashInitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
+        outputPath.getBytes(), outputPath.length(), outputHash);
   }
 
   @Test
@@ -271,6 +268,49 @@ public class SendCoinShieldTest {
 
   }
 
+  @Test
+  public void generateOutputProof() {
+    librustzcashInitZksnarkParams();
+    TransactionBuilder builder = new TransactionBuilder();
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+  }
+
+  @Test
+  public void verifyOutputProof() {
+    librustzcashInitZksnarkParams();
+    TransactionBuilder builder = new TransactionBuilder();
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    ReceiveDescriptionCapsule capsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    ReceiveDescription receiveDescription = capsule.getInstance();
+    ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+    if (!Librustzcash.librustzcashSaplingCheckOutput(
+        ctx,
+        receiveDescription.getValueCommitment().toByteArray(),
+        receiveDescription.getNoteCommitment().toByteArray(),
+        receiveDescription.getEpk().toByteArray(),
+        receiveDescription.getZkproof().getValues().toByteArray()
+    )) {
+      Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      throw new RuntimeException("librustzcashSaplingCheckOutput error");
+    }
+
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
 
   public byte[] getHash() {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
