@@ -5,6 +5,7 @@ import static org.tron.common.zksnark.zen.note.NoteEncryption.NOTEENCRYPTION_CIP
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.tron.common.zksnark.Prf;
 import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.Libsodium;
 import org.tron.common.zksnark.zen.ZkChainParams;
@@ -14,6 +15,7 @@ import org.tron.common.zksnark.zen.note.NoteEncryption.EncPlaintext;
 import org.tron.common.zksnark.zen.note.NoteEncryption.OutCiphertext;
 import org.tron.common.zksnark.zen.note.NoteEncryption.OutPlaintext;
 import org.tron.common.zksnark.zen.transaction.Ciphertext;
+import org.tron.common.zksnark.zen.utils.PRF;
 
 @AllArgsConstructor
 public class SaplingNoteEncryption {
@@ -67,6 +69,17 @@ public class SaplingNoteEncryption {
 
   OutCiphertext encrypt_to_ourselves(
       byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) {
-    return null;
+    if (already_encrypted_out) {
+      throw new RuntimeException("already encrypted to the recipient using this key");
+    }
+
+    byte[] k = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
+    NoteEncryption.PRFOck(k, ovk, cv, cm, message.data);
+    byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+    OutCiphertext ciphertext = new OutCiphertext();
+    Libsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
+        ZkChainParams.ZC_SAPLING_OUTPLAINTEXT_SIZE, null, 0, null, cipherNonce, k);
+    already_encrypted_out = true;
+    return ciphertext;
   }
 }

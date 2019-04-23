@@ -223,7 +223,7 @@ public class TransactionBuilder {
     SaplingNoteEncryption encryptor = enc.noteEncryption;
 
     byte[] cv = new byte[32];
-    byte[] zkProof = new byte[32];
+    byte[] zkProof = new byte[192];
     if (!Librustzcash.librustzcashSaplingOutputProof(
         ctx,
         encryptor.esk,

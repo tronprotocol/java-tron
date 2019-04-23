@@ -13,6 +13,7 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescriptio
   private ReceiveDescription receiveDescription;
 
   public ReceiveDescriptionCapsule() {
+    receiveDescription = ReceiveDescription.newBuilder().build();
   }
 
   public ReceiveDescriptionCapsule(final ReceiveDescription outputDescription) {

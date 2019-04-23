@@ -34,11 +34,13 @@ import org.tron.common.zksnark.zen.TransactionBuilder;
 import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
 import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.zen.ZkChainParams;
+import org.tron.common.zksnark.zen.address.DiversifierT;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.FullViewingKey;
 import org.tron.common.zksnark.zen.address.IncomingViewingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.address.SpendingKey;
+import org.tron.common.zksnark.zen.note.BaseNote;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
 import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
@@ -233,7 +235,7 @@ public class SendCoinShieldTest {
 
   }
 
-  private void librustzcashInitZksnarkParams() throws Exception {
+  private void librustzcashInitZksnarkParams() {
 
     String spendPath = getParamsFile("sapling-spend.params");
     String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
@@ -273,6 +275,27 @@ public class SendCoinShieldTest {
     System.out.println("0000000");
     System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
     System.out.println("0000000");
+
+  }
+
+  @Test
+  public void generateOutputProof() {
+    librustzcashInitZksnarkParams();
+    TransactionBuilder builder = new TransactionBuilder();
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    BaseNote.Note note = new Note(paymentAddress, 5000);
+    IncrementalMerkleVoucherContainer voucher = new IncrementalMerkleVoucherContainer(
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule())
+    );
+    voucher.append(PedersenHash.newBuilder().setContent(ByteString.copyFrom(note.cm())).build());
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
   }
 
