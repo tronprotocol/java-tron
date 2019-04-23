@@ -10,6 +10,7 @@ import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
@@ -215,30 +216,45 @@ public class SendCoinShieldTest {
     return voucher;
   }
 
-  private String getParamsFile(String fileName){
+  private String getParamsFile(String fileName) {
     return SendCoinShieldTest.class.getClassLoader()
         .getResource("params" + File.separator + fileName).getFile();
   }
-  private void librustzcashInitZksnarkParams() {
+
+  public static byte[] stringToAscii(String value) {
+    List<Byte> sbu = Lists.newArrayList();
+    char[] chars = value.toCharArray();
+    for (int i = 0; i < chars.length; i++) {
+      sbu.add((byte) chars[i]);
+    }
+
+    Byte[] bytes = sbu.toArray(new Byte[sbu.size()]);
+    return ArrayUtils.toPrimitive(bytes);
+
+  }
+
+  private void librustzcashInitZksnarkParams() throws Exception {
 
     String file1 = getParamsFile("sapling-spend.params");
 
     byte[] spend_path = file1.getBytes();
     int spend_path_len = spend_path.length;
-    byte[] spend_hash = ByteArray.fromHexString(
-        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c");
+    byte[] spend_hash = stringToAscii(
+        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c\0");
 
     String file2 = getParamsFile("sapling-output.params");
     byte[] output_path = file2.getBytes();
     int output_path_len = output_path.length;
-    byte[] output_hash = ByteArray.fromHexString(
-        "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028");
+    byte[] output_hash =
+        stringToAscii(
+            "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028\0");
 
     String file3 = getParamsFile("sprout-groth16.params");
     byte[] sprout_path = file3.getBytes();
     int sprout_path_len = sprout_path.length;
-    byte[] sprout_hash = ByteArray.fromHexString(
-        "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a");
+    byte[] sprout_hash =
+        stringToAscii(
+            "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a\0");
 
     Librustzcash.librustzcashInitZksnarkParams(spend_path, spend_path_len, spend_hash,
         output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
@@ -246,7 +262,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void testGenerateSpendProof() {
+  public void testGenerateSpendProof() throws Exception {
     librustzcashInitZksnarkParams();
 
     TransactionBuilder builder = new TransactionBuilder();

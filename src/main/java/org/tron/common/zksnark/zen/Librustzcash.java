@@ -402,7 +402,7 @@ public class Librustzcash {
       platform = "windows";
       extension = ".dll";
     } else if (Platform.isMac()) {
-      platform = "macos";
+      platform = "tmp";
       extension = ".dylib";
     } else {
       throw new RuntimeException("unsupportedPlatformException");
