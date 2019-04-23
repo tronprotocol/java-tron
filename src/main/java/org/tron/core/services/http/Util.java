@@ -64,6 +64,8 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j(topic = "API")
 public class Util {
 
+  public static final String PERMISSION_ID = "Permission_id";
+
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("Error", e.getClass() + " : " + e.getMessage());
@@ -128,12 +130,21 @@ public class Util {
     return printTransactionToJSON(transaction, selfType).toJSONString();
   }
 
-  public static String printTransactionExtention(TransactionExtention transactionExtention, boolean selfType ) {
+  public static String printCreateTransaction(Transaction transaction, boolean selfType ) {
+    JSONObject jsonObject = printTransactionToJSON(transaction, selfType);
+    jsonObject.put("visible", selfType);
+    return jsonObject.toJSONString();
+  }
+
+  public static String printTransactionExtention(TransactionExtention transactionExtention,
+                                                  boolean selfType ) {
     String string = JsonFormat.printToString(transactionExtention, selfType );
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
-      jsonObject.put("transaction", printTransactionToJSON(transactionExtention.getTransaction(),
-       selfType       ));
+      JSONObject transactionOjbect = printTransactionToJSON(
+              transactionExtention.getTransaction(), selfType );
+      transactionOjbect.put("visible", selfType);
+      jsonObject.put("transaction", transactionOjbect);
     }
     return jsonObject.toJSONString();
   }
@@ -380,6 +391,9 @@ public class Util {
         JSONObject jsonContract = new JSONObject();
         jsonContract.put("parameter", parameter);
         jsonContract.put("type", contract.getType());
+        if (contract.getPermissionId() > 0 ) {
+          jsonContract.put("Permission_id", contract.getPermissionId());
+        }
         contracts.add(jsonContract);
       } catch (InvalidProtocolBufferException e) {
         logger.debug("InvalidProtocolBufferException: {}", e.getMessage());
@@ -399,7 +413,6 @@ public class Util {
       jsonTransaction.put("delaySeconds", transaction.getRawData().getDeferredStage().getDelaySeconds());
       jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
     }
-
     return jsonTransaction;
   }
 
@@ -684,4 +697,21 @@ public class Util {
   public static String getHexString(final String string) {
     return ByteArray.toHexString(ByteString.copyFromUtf8( string ).toByteArray());
   }
+
+  public static Transaction setTransactionPermissionId(JSONObject jsonObject, Transaction transaction)
+  {
+    if (jsonObject.containsKey(PERMISSION_ID) ) {
+      int permissionId = jsonObject.getInteger(PERMISSION_ID);
+      if (permissionId > 0 ) {
+        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+        Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+                .setPermissionId(permissionId);
+        raw.clearContract();
+        raw.addContract(contract);
+        return transaction.toBuilder().setRawData(raw).build();
+      }
+    }
+    return transaction;
+  }
+
 }

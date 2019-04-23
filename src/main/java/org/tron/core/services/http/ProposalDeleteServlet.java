@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,6 +17,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
 import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 
 @Component
@@ -39,7 +42,9 @@ public class ProposalDeleteServlet extends HttpServlet {
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.ProposalDeleteContract)
           .getInstance();
-      response.getWriter().println(Util.printTransaction(tx, visible));
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      tx = setTransactionPermissionId(jsonObject, tx);
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

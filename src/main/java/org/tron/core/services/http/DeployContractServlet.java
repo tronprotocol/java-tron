@@ -20,9 +20,7 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-import static org.tron.core.services.http.Util.getHexAddress;
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.*;
 
 
 @Component
@@ -93,7 +91,8 @@ public class DeployContractServlet extends HttpServlet {
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
-      response.getWriter().println(Util.printTransaction(txBuilder.build(), visible));
+      tx = setTransactionPermissionId(jsonObject, txBuilder.build());
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
