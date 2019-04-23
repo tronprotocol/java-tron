@@ -237,20 +237,20 @@ public class SendCoinShieldTest {
 
     String file1 = getParamsFile("sapling-spend.params");
 
-    byte[] spend_path = stringToAscii(file1 + "\0");
+    byte[] spend_path = stringToAscii(file1);
     int spend_path_len = spend_path.length;
     byte[] spend_hash = stringToAscii(
         "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c\0");
 
     String file2 = getParamsFile("sapling-output.params");
-    byte[] output_path = stringToAscii(file2 + "\0");
+    byte[] output_path = stringToAscii(file2);
     int output_path_len = output_path.length;
     byte[] output_hash =
         stringToAscii(
             "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028\0");
 
     String file3 = getParamsFile("sprout-groth16.params");
-    byte[] sprout_path = stringToAscii(file3 + "\0");
+    byte[] sprout_path = stringToAscii(file3);
     int sprout_path_len = sprout_path.length;
     byte[] sprout_hash =
         stringToAscii(
