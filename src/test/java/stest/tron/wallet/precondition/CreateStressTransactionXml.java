@@ -41,7 +41,8 @@ public class CreateStressTransactionXml {
       "proposalCreate",
       "updateEnergyLimit",
       "triggerTimeoutContractCreatorMulti",
-      "SendCoin(Delay)"
+      "SendCoin(Delay)",
+      "transferTRC20"
 
   };
 

@@ -58,6 +58,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonContractAddress2");
   protected String commonContractAddress3 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress3");
+  protected String commonContractAddress4 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress4");
   protected String commontokenid= Configuration.getByPath("stress.conf")
       .getString("param.commontokenid");
   protected long commonexchangeid= Configuration.getByPath("stress.conf")
