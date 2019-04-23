@@ -177,7 +177,7 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeNetUsed + netUsed) >= afterNetUsed);
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
     PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
-        linkage006Address, blockingStubFull);
+        null, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Boundary value for contract stack(63 is the largest level)")
@@ -214,6 +214,7 @@ public class ContractLinkage006 {
     txid = PublicMethed.triggerContract(contractAddress,
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById1 = PublicMethed
