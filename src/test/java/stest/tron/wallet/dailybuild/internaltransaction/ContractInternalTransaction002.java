@@ -94,7 +94,6 @@ public class ContractInternalTransaction002 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test1InternalTransaction007.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -103,15 +102,8 @@ public class ContractInternalTransaction002 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         1000000L, 100, null, testKeyForinternalTxsAddress,
         internalTxsAddress, blockingStubFull);
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById1 = null;
-    infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
-    contractAddress = infoById1.get().getContractAddress().toByteArray();
-    Assert.assertNotNull(infoById1);
-    Assert.assertTrue(infoById1.get().getResultValue() == 0);
-
 
     String contractName1 = "C";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
@@ -119,16 +111,10 @@ public class ContractInternalTransaction002 {
     String abi1 = retMap1.get("abI").toString();
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> infoById2 = null;
-    infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
-    byte[] contractAddress1 = infoById2.get().getContractAddress().toByteArray();
-    Assert.assertNotNull(infoById2);
-    Assert.assertTrue(infoById2.get().getResultValue() == 0);
 
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\"";
 
@@ -171,12 +157,12 @@ public class ContractInternalTransaction002 {
     Assert.assertTrue(5 == vaule3);
     Assert.assertTrue(0 == vaule4);
     String initParmes1 = "\"" + Base58.encode58Check(contractAddress1) + "\",\"1\"";
-    txid1 = PublicMethed.triggerContract(contractAddress,
+    String txid1 = PublicMethed.triggerContract(contractAddress,
         "test2(address,uint256)", initParmes1, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    infoById1 = null;
+    Optional<TransactionInfo> infoById1 = null;
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertTrue(infoById1.get().getResultValue() == 0);
     int transactionsCount1 = infoById1.get().getInternalTransactionsCount();
@@ -206,33 +192,19 @@ public class ContractInternalTransaction002 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    String deployTxid = PublicMethed
-        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
-            1000000L, 100, null, testKeyForinternalTxsAddress,
-            internalTxsAddress, blockingStubFull);
-    Optional<TransactionInfo> infobyId = null;
-    infobyId = PublicMethed.getTransactionInfoById(deployTxid, blockingStubFull);
-    contractAddress = infobyId.get().getContractAddress().toByteArray();
-    Assert.assertNotNull(infobyId);
-    Assert.assertTrue(infobyId.get().getResultValue() == 0);
-
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        1000000L, 100, null, testKeyForinternalTxsAddress,
+        internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     String contractName1 = "B";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infobyId = PublicMethed.getTransactionInfoById(deployTxid2, blockingStubFull);
-    byte[] contractAddress1 = infobyId.get().getContractAddress().toByteArray();
-    Assert.assertNotNull(infobyId);
-    Assert.assertTrue(infobyId.get().getResultValue() == 0);
-
     String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\",\"1\"";
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -264,16 +236,11 @@ public class ContractInternalTransaction002 {
     String code2 = retMap2.get("byteCode").toString();
     String abi2 = retMap2.get("abI").toString();
 
-    String deployTxid3 = PublicMethed
-        .deployContractAndGetTransactionInfoById(contractName2, abi2, code2, "", maxFeeLimit,
+    byte[] contractAddress2 = PublicMethed
+        .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infobyId = PublicMethed.getTransactionInfoById(deployTxid3, blockingStubFull);
-    byte[] contractAddress2 = infobyId.get().getContractAddress().toByteArray();
-    Assert.assertNotNull(infobyId);
-    Assert.assertTrue(infobyId.get().getResultValue() == 0);
 
     String initParmes1 = "\"" + Base58.encode58Check(contractAddress2) + "\",\"1\"";
     String txid1 = PublicMethed.triggerContract(contractAddress,
