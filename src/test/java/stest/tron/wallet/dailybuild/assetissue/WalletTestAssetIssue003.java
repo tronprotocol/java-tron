@@ -45,6 +45,8 @@ public class WalletTestAssetIssue003 {
   private static final String shortname = "a";
   private static final String tooLongName = "qazxswedcvfrtgbnhyujmkiolpoiuytre";
   private static final String chineseAssetIssuename = "中文都名字";
+  private static final String tooLongAbbreviation = "wazxswedcvfrtgbnhyujmkiolpoiuytre";
+  private static final String chineseAbbreviation = "中文的简称";
   private static final String tooLongDescription =
       "1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqa"
           + "zxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvq"
@@ -163,14 +165,30 @@ public class WalletTestAssetIssue003 {
     Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, chineseAssetIssuename,
         totalSupply, 1, 10, start, end, 2, description, url, 10000L,
         10000L, 1L, 3652L, asset003Key, blockingStubFull));
+    //The abbreviation is null.
+    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, "", totalSupply,
+        1, 10, start, end, 2, description, url, 10000L, 10000L,
+        1L, 3652L, asset003Key, blockingStubFull));
+    //The abbreviation is large than 33 char.
+    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, tooLongAbbreviation,
+        totalSupply, 1, 10, start, end, 2, description, url, 10000L,
+        10000L, 1L, 3652L, asset003Key, blockingStubFull));
+    //The abbreviation is chinese name.
+    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, chineseAbbreviation,
+        totalSupply, 1, 10, start, end, 2, description, url, 10000L,
+        10000L, 1L, 3652L, asset003Key, blockingStubFull));
     //The URL is null.
     Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
         start, end, 2, description, "", 10000L, 10000L,
         1L, 3652L, asset003Key, blockingStubFull));
     //The URL is too long.
-    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
-        start, end, 2, description, tooLongUrl, 10000L, 10000L,
-        1L, 3652L, asset003Key, blockingStubFull));
+    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply,
+        1, 10, start, end, 2, description, tooLongUrl, 10000L,
+        10000L, 1L, 3652L, asset003Key, blockingStubFull));
+    //The description is null.
+    Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply,
+        1, 10, start, end, 2, "", url, 10000L,
+        10000L, 1L, 3652L, asset003Key, blockingStubFull));
     //The description is too long, create failed.
     Assert.assertFalse(PublicMethed.createAssetIssue(fromAddress, name, totalSupply, 1, 10,
         start, end, 2, tooLongDescription, url, 10000L,
@@ -214,65 +232,6 @@ public class WalletTestAssetIssue003 {
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-  }
-
-  /**
-   * constructor.
-   */
-
-  public Boolean createAssetIssue(byte[] address, String name, Long totalSupply, Integer trxNum,
-      Integer icoNum, Long startTime, Long endTime,
-      Integer voteScore, String description, String url, Long fronzenAmount, Long frozenDay,
-      String priKey) {
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    ECKey ecKey = temKey;
-    Account search = queryAccount(ecKey, blockingStubFull);
-
-    try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
-      builder.setOwnerAddress(ByteString.copyFrom(address));
-      builder.setName(ByteString.copyFrom(name.getBytes()));
-      builder.setTotalSupply(totalSupply);
-      builder.setTrxNum(trxNum);
-      builder.setNum(icoNum);
-      builder.setStartTime(startTime);
-      builder.setEndTime(endTime);
-      builder.setVoteScore(voteScore);
-      builder.setDescription(ByteString.copyFrom(description.getBytes()));
-      builder.setFreeAssetNetLimit(10000);
-      builder.setPublicFreeAssetNetLimit(10000);
-      builder.setUrl(ByteString.copyFrom(url.getBytes()));
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply
-              .newBuilder();
-      frozenBuilder.setFrozenAmount(fronzenAmount);
-      frozenBuilder.setFrozenDays(frozenDay);
-      builder.addFrozenSupply(0, frozenBuilder);
-
-      Transaction transaction = blockingStubFull.createAssetIssue(builder.build());
-      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-        logger.info("transaction == null");
-        return false;
-      }
-      transaction = signTransaction(ecKey, transaction);
-      Return response = blockingStubFull.broadcastTransaction(transaction);
-      if (response.getResult() == false) {
-        logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-        return false;
-      } else {
-        logger.info(name);
-        return true;
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      return false;
     }
   }
 

@@ -130,6 +130,7 @@ public class MultiSign30 {
     Transaction transaction = PublicMethedForMutiSign
         .sendcoinWithPermissionIdNotSign(fromAddress, 1L, test001Address, 2, dev001Key,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Transaction transaction1 = PublicMethed
         .addTransactionSign(transaction, sendAccountKey4, blockingStubFull);

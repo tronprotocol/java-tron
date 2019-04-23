@@ -113,6 +113,7 @@ public class ContractTrcToken038 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertFalse(assetAccountId.toStringUtf8().equals(""));
 
+
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
 
