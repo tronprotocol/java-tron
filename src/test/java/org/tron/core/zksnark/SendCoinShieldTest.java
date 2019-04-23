@@ -158,38 +158,41 @@ public class SendCoinShieldTest {
     System.out.print(ByteArray.toHexString(encode));
   }
 
-  private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
+  private PedersenHash String2PedersenHash(String str){
+    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+    byte[] bytes1 = ByteArray.fromHexString(str);
+    ZksnarkUtils.sort(bytes1);
+    compressCapsule1.setContent(ByteString.copyFrom(bytes1));
+    return compressCapsule1.getInstance();
+  }
+
+  private PedersenHash ByteArray2PedersenHash(byte[] bytes){
+    PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
+    compressCapsule_in.setContent(ByteString.copyFrom(bytes));
+    return compressCapsule_in.getInstance();
+  }
+
+    private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
 
-    String s1 = "2ec45f5ae2d1bc7a80df02abfb2814a1239f956c6fb3ac0e112c008ba2c1ab91";
-    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
-    byte[] bytes1 = ByteArray.fromHexString(s1);
-    compressCapsule1.setContent(ByteString.copyFrom(bytes1));
-    PedersenHash a = compressCapsule1.getInstance();
+    String s1 = "556f3af94225d46b1ef652abc9005dee873b2e245eef07fd5be587e0f21023b0";
+    PedersenHash a = String2PedersenHash(s1);
 
-    String s2 = "3daa00c9a1966a37531c829b9b1cd928f8172d35174e1aecd31ba0ed36863017";
-    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
-    byte[] bytes2 = ByteArray.fromHexString(s2);
-    compressCapsule2.setContent(ByteString.copyFrom(bytes2));
-    PedersenHash b = compressCapsule2.getInstance();
+    String s2 = "5814b127a6c6b8f07ed03f0f6e2843ff04c9851ff824a4e5b4dad5b5f3475722";
+    PedersenHash b = String2PedersenHash(s2);
 
-    String s3 = "c013c63be33194974dc555d445bac616fca794a0369f9d84fbb5a8556699bf62";
-    PedersenHashCapsule compressCapsule3 = new PedersenHashCapsule();
-    byte[] bytes3 = ByteArray.fromHexString(s3);
-    compressCapsule3.setContent(ByteString.copyFrom(bytes3));
-    PedersenHash c = compressCapsule3.getInstance();
+    String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
+    PedersenHash c = String2PedersenHash(s3);
 
-    PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
-    compressCapsule_in.setContent(ByteString.copyFrom(cm));
-    PedersenHash p_in = compressCapsule_in.getInstance();
+    PedersenHash p_in =ByteArray2PedersenHash(cm);
 
-    tree.append(a);
-    tree.append(b);
+//    tree.append(a);
+//    tree.append(b);
     tree.append(p_in);
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
-    voucher.append(c);
+//    voucher.append(c);
 
     return voucher;
   }
@@ -244,20 +247,14 @@ public class SendCoinShieldTest {
     TransactionBuilder builder = new TransactionBuilder();
 
     ExtendedSpendingKey xsk = createXsk();
-    //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
-    //    PaymentAddress address = PaymentAddress.decode(new byte[43]);
     PaymentAddress address = xsk.DefaultAddress();
-    long value = 100;
-    Note note = new Note(address, value);
+    Note note = new Note(address, 100);
 
-    //    byte[] anchor = new byte[256];
-    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-    //    builder.addSaplingSpend(expsk, note, anchor, voucher);
-    //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
