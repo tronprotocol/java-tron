@@ -290,11 +290,6 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
 
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    BaseNote.Note note = new Note(paymentAddress, 5000);
-    IncrementalMerkleVoucherContainer voucher = new IncrementalMerkleVoucherContainer(
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule())
-    );
-    voucher.append(PedersenHash.newBuilder().setContent(ByteString.copyFrom(note.cm())).build());
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
@@ -310,11 +305,6 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
 
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    BaseNote.Note note = new Note(paymentAddress, 5000);
-    IncrementalMerkleVoucherContainer voucher = new IncrementalMerkleVoucherContainer(
-        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule())
-    );
-    voucher.append(PedersenHash.newBuilder().setContent(ByteString.copyFrom(note.cm())).build());
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
     ReceiveDescriptionCapsule capsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
