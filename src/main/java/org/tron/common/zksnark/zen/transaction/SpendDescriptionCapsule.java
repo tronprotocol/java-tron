@@ -13,6 +13,7 @@ public class SpendDescriptionCapsule implements ProtoCapsule<SpendDescription> {
   private SpendDescription spendDescription;
 
   public SpendDescriptionCapsule() {
+    spendDescription = SpendDescription.newBuilder().build();
   }
 
   public SpendDescriptionCapsule(final SpendDescription spendDescription) {
