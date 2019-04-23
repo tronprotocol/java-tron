@@ -92,12 +92,6 @@ public class ContractLinkage006 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address, 1000000L,
         0, 1, linkage006Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "./src/test/resources/soliditycode/contractLinkage006.sol";
-    String contractName = "AA";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage006Address,
         blockingStubFull);
     Account info;
@@ -116,6 +110,14 @@ public class ContractLinkage006 {
     logger.info("beforeNetLimit:" + beforeNetLimit);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage006.sol";
+    String contractName = "AA";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     //success ,balnace change.use EnergyUsed and NetUsed
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 1000L, 100, null, linkage006Key,

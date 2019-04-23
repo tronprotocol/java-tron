@@ -80,7 +80,8 @@ public class ContractScenario009 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] libraryContractAddress = PublicMethed
+    byte[] libraryContractAddress;
+    libraryContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, contract009Key, contract009Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -93,8 +94,8 @@ public class ContractScenario009 {
 
     //String libraryAddress =
     //    "browser/TvmTest_p1_Grammar_002.sol:Set:" + Base58.encode58Check(libraryContractAddress);
-    String libraryAddress = library
-        //    "/Users/tron/git/java-tron/./src/test/resources/soliditycode/contractScenario009.sol:Set:"
+    String libraryAddress;
+    libraryAddress = library
         + Base58.encode58Check(libraryContractAddress);
 
     byte[] contractAddress = PublicMethed

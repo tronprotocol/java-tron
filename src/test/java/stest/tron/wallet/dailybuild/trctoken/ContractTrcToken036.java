@@ -115,28 +115,28 @@ public class ContractTrcToken036 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // deploy transferTokenContract
-//    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
-//    String contractName = "IllegalDecorate";
-//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-//    String code = retMap.get("byteCode").toString();
-//    String abi = retMap.get("abI").toString();
-//    transferTokenContractAddress = PublicMethed
-//        .deployContract(contractName, abi, code, "", maxFeeLimit,
-//            0L, 0, originEnergyLimit, "0",
-//            0, null, dev001Key, dev001Address,
-//            blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//
-//    // devAddress transfer token to userAddress
-//    PublicMethed
-//        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
-//            dev001Address,
-//            dev001Key,
-//            blockingStubFull);
-//    Assert
-//        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 100, fromAddress,
-//            testKey002, blockingStubFull));
+    //    String filePath = "src/test/resources/soliditycode/contractTrcToken036.sol";
+    //    String contractName = "IllegalDecorate";
+    //    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    //    String code = retMap.get("byteCode").toString();
+    //    String abi = retMap.get("abI").toString();
+    //    transferTokenContractAddress = PublicMethed
+    //        .deployContract(contractName, abi, code, "", maxFeeLimit,
+    //            0L, 0, originEnergyLimit, "0",
+    //            0, null, dev001Key, dev001Address,
+    //            blockingStubFull);
+    //    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //
+    //    // devAddress transfer token to userAddress
+    //    PublicMethed
+    //        .transferAsset(transferTokenContractAddress, assetAccountId.toByteArray(), 100,
+    //            dev001Address,
+    //            dev001Key,
+    //            blockingStubFull);
+    //    Assert
+    //        .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 100, fromAddress,
+    //            testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 

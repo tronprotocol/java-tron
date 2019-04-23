@@ -96,8 +96,6 @@ public class ContractScenario012 {
 
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-//    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-//        0L, 100, null, contract012Key, contract012Address, blockingStubFull);
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
             null, contract012Key, contract012Address, blockingStubFull);

@@ -1,1 +1,0 @@
-get bytecode and abi

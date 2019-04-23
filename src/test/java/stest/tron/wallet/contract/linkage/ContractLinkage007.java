@@ -81,13 +81,6 @@ public class ContractLinkage007 {
     Assert.assertTrue(PublicMethed.sendcoin(linkage007Address, 2000000000L, fromAddress,
         testKey002, blockingStubFull));
 
-    String filePath = "./src/test/resources/soliditycode/contractLinkage002.sol";
-    String contractName = "divideIHaveArgsReturnStorage";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage007Address,
         blockingStubFull);
     Account info;
@@ -107,6 +100,14 @@ public class ContractLinkage007 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     //When the feelimit is large, the deploy will be failed,No used everything.
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage002.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String txid;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit + 1, 0L, 100, null, linkage007Key,
@@ -262,7 +263,7 @@ public class ContractLinkage007 {
     logger.info("beforeNetLimit3:" + beforeNetLimit3);
     logger.info("beforeNetUsed3:" + beforeNetUsed3);
     logger.info("beforeFreeNetUsed3:" + beforeFreeNetUsed3);
-//    String initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"63\"";
+    //String initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"63\"";
     String num = "4" + "," + "2";
     txid = PublicMethed.triggerContract(contractAddress,
         "divideIHaveArgsReturn(int256,int256)", num, false,

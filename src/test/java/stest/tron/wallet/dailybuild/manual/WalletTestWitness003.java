@@ -121,7 +121,8 @@ public class WalletTestWitness003 {
       //null url, update failed
       Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, wrongUrl, testUpdateWitnessKey));
       //too long url, update failed
-      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, tooLongUrl.getBytes(), testUpdateWitnessKey));
+      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress,
+          tooLongUrl.getBytes(), testUpdateWitnessKey));
       Assert.assertTrue(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     }

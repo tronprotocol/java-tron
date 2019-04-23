@@ -168,9 +168,6 @@ public class ContractScenario011 {
         .deployContractWithConstantParame(contractName, abi, code, "constructor(address,uint256)",
             data, "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey, deployAddress,
             blockingStubFull);
-    //String deplTxid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
-    //    "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
-    //    deployAddress, blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(deplTxid, blockingStubFull);
     Assert.assertTrue(info.get().getResultValue() == 0);
@@ -189,12 +186,12 @@ public class ContractScenario011 {
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
 
-    String TriggerTxid = PublicMethed
+    String triggerTxid = PublicMethed
         .triggerContract(saleClockAuctionContractAddress, "isSaleClockAuction()", "#", false, 0,
             maxFeeLimit, deployAddress, deployKey, blockingStubFull);
     Optional<TransactionInfo> inFoByid = PublicMethed
-        .getTransactionInfoById(TriggerTxid, blockingStubFull);
-    logger.info("Ttttt " + TriggerTxid);
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Ttttt " + triggerTxid);
     Assert.assertTrue(inFoByid.get().getResultValue() == 0);
   }
 

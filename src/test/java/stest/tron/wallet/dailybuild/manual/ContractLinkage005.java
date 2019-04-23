@@ -97,13 +97,6 @@ public class ContractLinkage005 {
         0, 1, linkage005Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "./src/test/resources/soliditycode/contractLinkage005.sol";
-    String contractName = "timeoutTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage005Address,
         blockingStubFull);
     Account info;
@@ -122,6 +115,14 @@ public class ContractLinkage005 {
     logger.info("beforeNetLimit:" + beforeNetLimit);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage005.sol";
+    String contractName = "timeoutTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 100, null, linkage005Key,
         linkage005Address, blockingStubFull);

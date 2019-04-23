@@ -158,7 +158,8 @@ public class AssertException {
 
   @Test(enabled = true, description = "Trigger contract index out of bounds")
   public void test2FindArgsContractMinTest() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest2FindArgsContractMinTest.sol";
+    String filePath =
+        "src/test/resources/soliditycode/assertExceptiontest2FindArgsContractMinTest.sol";
     String contractName = "findArgsIContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
@@ -413,7 +414,8 @@ public class AssertException {
   @Test(enabled = true, description = "Trigger contract Call an uninitialized "
       + "internal function type variable")
   public void test6UninitializedContract() {
-    String filePath = "src/test/resources/soliditycode/assertExceptiontest6UninitializedContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/assertExceptiontest6UninitializedContract.sol";
     String contractName = "uni";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

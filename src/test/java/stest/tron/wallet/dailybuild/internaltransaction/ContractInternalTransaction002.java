@@ -94,7 +94,8 @@ public class ContractInternalTransaction002 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test1InternalTransaction007.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction002test1InternalTransaction007.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -186,7 +187,8 @@ public class ContractInternalTransaction002 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test2InternalTransaction008.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction002test2InternalTransaction008.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -325,7 +327,8 @@ public class ContractInternalTransaction002 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test3InternalTransaction009.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction002test3InternalTransaction009.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -418,7 +421,8 @@ public class ContractInternalTransaction002 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test4InternalTransaction010.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction002test4InternalTransaction010.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -481,7 +485,8 @@ public class ContractInternalTransaction002 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction002test5InternalTransaction012.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction002test5InternalTransaction012.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

@@ -47,6 +47,7 @@ public class ContractScenario014 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract014Address = ecKey1.getAddress();
   String contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  String priKey014 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] receiverAddress = ecKey2.getAddress();
@@ -72,10 +73,6 @@ public class ContractScenario014 {
 
   @Test(enabled = true, description = "Triple trigger in smart contract")
   public void testTripleTrigger() {
-    ecKey1 = new ECKey(Utils.getRandom());
-    contract014Address = ecKey1.getAddress();
-    contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-    String priKey014 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     ecKey2 = new ECKey(Utils.getRandom());
     receiverAddress = ecKey2.getAddress();

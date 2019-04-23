@@ -144,7 +144,6 @@ public class WalletTestAccount012 {
           0, maxFeeLimit, asset011Address, testKeyForAssetIssue011, blockingStubFull);*/
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull1);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
       txid = PublicMethed.triggerContract(contractAddress,
           "add2(uint256)", initParmes, false,
           0, maxFeeLimit, asset011Address, testKeyForAssetIssue011, blockingStubFull);

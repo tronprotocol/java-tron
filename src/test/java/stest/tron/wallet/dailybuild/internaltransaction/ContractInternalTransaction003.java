@@ -94,7 +94,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction013.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction013.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -161,7 +162,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction014.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction014.sol";
     String contractName = "callerContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -291,7 +293,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction015.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction015.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -346,7 +349,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction016.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction016.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -411,7 +415,8 @@ public class ContractInternalTransaction003 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction017.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction017.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -458,7 +463,8 @@ public class ContractInternalTransaction003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String filePath = "src/test/resources/soliditycode/contractInternalTransaction003testInternalTransaction018.sol";
+    String filePath = "src/test/resources/soliditycode/"
+        + "contractInternalTransaction003testInternalTransaction018.sol";
     String contractName = "A";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 

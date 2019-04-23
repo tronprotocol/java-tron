@@ -100,7 +100,8 @@ public class RequireException {
         .sendcoin(asset016Address, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
 
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest1TestRequireContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -165,7 +166,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "Throw Exception")
   public void test2TestThrowsContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest2TestThrowsContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest2TestThrowsContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -230,7 +232,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "Call Revert ")
   public void test3TestRevertContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest3TestRevertContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest3TestRevertContract.sol";
     String contractName = "TestThrowsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -295,7 +298,8 @@ public class RequireException {
 
   @Test(enabled = false, description = "No payable function call value")
   public void test4noPayableContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest4noPayableContract_1.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest4noPayableContract_1.sol";
     String contractName = "noPayableContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -373,7 +377,8 @@ public class RequireException {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest5noPayableConstructor_1.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest5noPayableConstructor_1.sol";
     String contractName = "MyContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -419,7 +424,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "Transfer failed")
   public void test6transferTestContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest6transferTestContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest6transferTestContract.sol";
     String contractName = "transferTestContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -487,7 +493,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "No payable fallback call value")
   public void test7payableFallbakContract() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest7payableFallbakContract.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest7payableFallbakContract.sol";
     String contractName = "Caller";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -565,7 +572,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "New contract gas not enough")
   public void test8newContractGasNoenough() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest8newContractGasNoenough.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest8newContractGasNoenough.sol";
     String contractName = "Account";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -641,7 +649,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "Message used error")
   public void test9MessageUsedErrorFeed() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontest9MessageUsedErrorFeed.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontest9MessageUsedErrorFeed.sol";
     String contractName = "MathedFeed";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -717,7 +726,8 @@ public class RequireException {
 
   @Test(enabled = true, description = "Function used error")
   public void testFunctionUsedErrorFeed() {
-    String filePath = "src/test/resources/soliditycode/requireExceptiontestFunctionUsedErrorFeed.sol";
+    String filePath =
+        "src/test/resources/soliditycode/requireExceptiontestFunctionUsedErrorFeed.sol";
     String contractName = "MessageFeed";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
