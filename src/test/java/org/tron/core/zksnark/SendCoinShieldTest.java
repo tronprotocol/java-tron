@@ -249,16 +249,8 @@ public class SendCoinShieldTest {
         stringToAscii(
             "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028\0");
 
-    String file3 = getParamsFile("sprout-groth16.params");
-    byte[] sprout_path = stringToAscii(file3);
-    int sprout_path_len = sprout_path.length;
-    byte[] sprout_hash =
-        stringToAscii(
-            "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a\0");
-
     Librustzcash.librustzcashInitZksnarkParams(spend_path, spend_path_len, spend_hash,
-        output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
-        sprout_hash);
+        output_path, output_path_len, output_hash );
   }
 
   @Test

@@ -20,8 +20,7 @@ public class Librustzcash {
   public interface ILibrustzcash extends Library {
 
     void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, byte[] spend_hash,
-        byte[] output_path, int output_path_len, byte[] output_hash, byte[] sprout_path,
-        int sprout_path_len, byte[] sprout_hash);
+        byte[] output_path, int output_path_len, byte[] output_hash);
 
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
 
@@ -113,11 +112,9 @@ public class Librustzcash {
   }
 
   public static void librustzcashInitZksnarkParams(byte[] spend_path, int spend_path_len,
-      byte[] spend_hash, byte[] output_path, int output_path_len, byte[] output_hash,
-      byte[] sprout_path, int sprout_path_len, byte[] sprout_hash) {
+      byte[] spend_hash, byte[] output_path, int output_path_len, byte[] output_hash) {
     INSTANCE.librustzcash_init_zksnark_params(spend_path, spend_path_len, spend_hash,
-        output_path, output_path_len, output_hash, sprout_path, sprout_path_len,
-        sprout_hash);
+        output_path, output_path_len, output_hash);
   }
 
   public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
