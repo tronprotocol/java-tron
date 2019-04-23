@@ -315,6 +315,10 @@ public class SendCoinShieldTest {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
   }
 
+  public byte[] getHash1() {
+    return Sha256Hash.of("this is a test11".getBytes()).getBytes();
+  }
+
 
   @Test
   public void testVerifySpendProof() {
