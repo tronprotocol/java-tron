@@ -96,7 +96,7 @@ public class WalletTestTransfer007 {
     Assert.assertTrue(timestamptis >= timestamptispBlockOne);
   }
 
-  @Test
+  @Test(enabled = false)
   public void testSendCoin2() {
     String transactionId = PublicMethed.sendcoinGetTransactionId(sendAccountAddress, 90000000000L,
         fromAddress, testKey002, blockingStubFull);
