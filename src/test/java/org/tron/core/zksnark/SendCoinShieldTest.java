@@ -382,7 +382,7 @@ public class SendCoinShieldTest {
     PaymentAddress address = xsk.DefaultAddress();
     Note note = new Note(address, 10000);
 
-    IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
     builder.addSaplingSpend(expsk, note, anchor, voucher);
@@ -420,7 +420,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
     PaymentAddress address = xsk.DefaultAddress();
     Note note = new Note(address, 10000);
-    IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSaplingSpend(expsk, note, anchor, voucher);
     SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(builder.getSpends().get(0), ctx);
