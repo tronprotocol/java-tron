@@ -44,7 +44,7 @@ public class AddTransactionSignServlet extends HttpServlet {
       JsonFormat.merge(input.toJSONString(), build, visible);
       TransactionCapsule reply = wallet.addSign(build.build());
       if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply.getInstance(), visible));
+        response.getWriter().println(Util.printCreateTransaction(reply.getInstance(), visible));
       } else {
         response.getWriter().println("{}");
       }
