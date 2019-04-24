@@ -93,12 +93,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
     IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
         .getCurrentMerkle();
+
+
     //handle receives
     for (ReceiveDescription receive : receives)  {
       dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
+      //add merkle root
+      //currentMerkle.append();
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
-
   }
 
   @Override
@@ -253,6 +256,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 //      }
 
       //TODO: We need check the delta amount in the librustzcash. this delta amount include the fee using to create address.
+      //TODO: This delta balance value can be calculated automatically.
     }
     return true;
   }

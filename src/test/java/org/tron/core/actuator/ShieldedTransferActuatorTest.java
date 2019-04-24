@@ -1,8 +1,11 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.Any.Builder;
 import com.google.protobuf.ByteString;
+import com.sun.jna.Pointer;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -10,8 +13,25 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.zksnark.PedersenHashCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.common.zksnark.zen.HdChain;
+import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.common.zksnark.zen.TransactionBuilder;
+import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
+import org.tron.common.zksnark.zen.ZkChainParams;
+import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
+import org.tron.common.zksnark.zen.address.PaymentAddress;
+import org.tron.common.zksnark.zen.note.BaseNote.Note;
+import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
+import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
+import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
+import org.tron.common.zksnark.zen.zip32.HDSeed;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -19,6 +39,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -129,6 +150,96 @@ public class ShieldedTransferActuatorTest {
 //            .setSpe
 //    )
 //
+    return null;
+  }
+
+  private String getParamsFile(String fileName) {
+    return ShieldedTransferActuatorTest.class.getClassLoader()
+        .getResource("zcash-params" + File.separator + fileName).getFile();
+  }
+
+  private void librustzcashInitZksnarkParams() {
+
+    String spendPath = getParamsFile("sapling-spend.params");
+    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
+
+    String outputPath = getParamsFile("sapling-output.params");
+    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
+
+    Librustzcash.librustzcashInitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
+        outputPath.getBytes(), outputPath.length(), outputHash);
+  }
+
+  private PedersenHash String2PedersenHash(String str) {
+    PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+    byte[] bytes1 = ByteArray.fromHexString(str);
+    ZksnarkUtils.sort(bytes1);
+    compressCapsule1.setContent(ByteString.copyFrom(bytes1));
+    return compressCapsule1.getInstance();
+  }
+
+  private PedersenHash ByteArray2PedersenHash(byte[] bytes) {
+    PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
+    compressCapsule_in.setContent(ByteString.copyFrom(bytes));
+    return compressCapsule_in.getInstance();
+  }
+
+
+  private SpendDescriptionCapsule generateSpendDescription() {
+    librustzcashInitZksnarkParams();
+
+    TransactionBuilder builder = new TransactionBuilder();
+    
+    //generate extended spending key
+    String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
+    HDSeed seed = new HDSeed(ByteArray.fromHexString(seedString));
+    ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
+    int bip44CoinType = ZkChainParams.BIP44CoinType;
+    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
+    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+
+    ExtendedSpendingKey xsk =
+        master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    PaymentAddress address = xsk.DefaultAddress();
+
+
+    //generate note cm to merkle root
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+
+    String s1 = "556f3af94225d46b1ef652abc9005dee873b2e245eef07fd5be587e0f21023b0";
+    PedersenHash a = String2PedersenHash(s1);
+
+    String s2 = "5814b127a6c6b8f07ed03f0f6e2843ff04c9851ff824a4e5b4dad5b5f3475722";
+    PedersenHash b = String2PedersenHash(s2);
+
+    String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
+    PedersenHash c = String2PedersenHash(s3);
+
+    Note note = new Note(address, 100);
+    PedersenHash p_in = ByteArray2PedersenHash(note.cm());
+
+//    tree.append(a);
+//    tree.append(b);
+    tree.append(p_in);
+    IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+//    voucher.append(c);
+
+
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+    return sdesc;
+  }
+
+
+
+  private ReceiveDescriptionCapsule generateReceiveDescription() {
     return null;
   }
 

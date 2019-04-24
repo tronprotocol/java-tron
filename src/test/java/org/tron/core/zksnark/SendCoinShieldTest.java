@@ -228,7 +228,7 @@ public class SendCoinShieldTest {
 
   }
 
-  private void librustzcashInitZksnarkParams() {
+  public void librustzcashInitZksnarkParams() {
 
     String spendPath = getParamsFile("sapling-spend.params");
     String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
