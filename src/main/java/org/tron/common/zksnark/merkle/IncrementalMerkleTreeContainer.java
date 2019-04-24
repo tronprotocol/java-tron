@@ -278,8 +278,8 @@ public class IncrementalMerkleTreeContainer {
     for (PedersenHash b : path) {
       merklePath.add(MerkleUtils.convertBytesVectorToVector(b.getContent().toByteArray()));
     }
-    Lists.reverse(merklePath);
-    Lists.reverse(index);
+    merklePath = Lists.reverse(merklePath);
+    index = Lists.reverse(index);
 
     return new MerklePath(merklePath, index);
   }
