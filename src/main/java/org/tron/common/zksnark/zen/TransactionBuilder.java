@@ -1,6 +1,7 @@
 package org.tron.common.zksnark.zen;
 
 import com.google.protobuf.ByteString;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class TransactionBuilder {
 
   private Wallet wallet;
 
+  @Getter
   private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
 
   //  List<TransparentInputInfo> tIns;
