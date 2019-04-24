@@ -1,8 +1,10 @@
 package org.tron.core.net.message;
 
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 
 public class BlockMessage extends TronMessage {
 
@@ -11,7 +13,11 @@ public class BlockMessage extends TronMessage {
   public BlockMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.BLOCK.asByte();
-    this.block = new BlockCapsule(data);
+    this.block = new BlockCapsule(getCodedInputStream(data));
+    if (Message.isFilter()) {
+      Message.compareBytes(data, block.getInstance().toByteArray());
+      TransactionCapsule.validContractProto(block.getInstance().getTransactionsList());
+    }
   }
 
   public BlockMessage(BlockCapsule block) {

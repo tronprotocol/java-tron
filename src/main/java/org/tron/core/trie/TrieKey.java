@@ -104,10 +104,8 @@ public final class TrieKey {
 
     if ((off & 1) == (k.off & 1)) {
       // optimization to compare whole keys bytes
-      if ((off & 1) == 1) {
-        if (getHex(0) != k.getHex(0)) {
-          return null;
-        }
+      if ((off & 1) == 1 && getHex(0) != k.getHex(0)) {
+        return null;
       }
       int idx1 = (off + 1) >> 1;
       int idx2 = (k.off + 1) >> 1;
@@ -167,6 +165,12 @@ public final class TrieKey {
 
   @Override
   public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (this.getClass() != obj.getClass()) {
+      return false;
+    }
     TrieKey k = (TrieKey) obj;
     int len = getLength();
 
@@ -180,6 +184,11 @@ public final class TrieKey {
       }
     }
     return isTerminal() == k.isTerminal();
+  }
+
+  @Override
+  public int hashCode() {
+    return super.hashCode();
   }
 
   @Override
