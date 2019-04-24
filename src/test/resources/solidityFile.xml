@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Solidity File">
+  <listeners>
+    <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"></listener>
+  </listeners>
+  <test name="solidity part 1">
+    <packages>
+      <package name="stest.tron.wallet.dailybuild.grammar.*"></package>
+      <package name="stest.tron.wallet.dailybuild.internaltransaction.*"></package>
+    </packages>
+    <classes>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken077"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken078"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken079"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken080"></class>
+    </classes>
+  </test>
+  <test name="solidity part 2">
+    <classes>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken001"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken002"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken003"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken005"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken011"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken012"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken014"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken018"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken023"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken026"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken027"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken028"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken029"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken030"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken031"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken034"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken035"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken036"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken037"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken038"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken039"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken041"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken043"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken048"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken049"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken050"></class>
+    </classes>
+  </test>
+  <test name="solidity part 3">
+    <packages>
+      <package name="stest.tron.wallet.solidityadd.*"></package>
+    </packages>
+  </test>
+  <test name="solidity part 4">
+    <packages>
+      <package name="stest.tron.wallet.contract.*"></package>
+    </packages>
+    <classes>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractLinkage001"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractLinkage005"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractLinkage006"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractScenario002"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractScenario011"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractScenario014"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.ContractUnknownException"></class>
+      <class name="stest.tron.wallet.dailybuild.manual.RequireException"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken051"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken052"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken054"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken055"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken060"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken061"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken064"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken066"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken067"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken073"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken075"></class>
+      <class name="stest.tron.wallet.dailybuild.trctoken.ContractTrcToken076"></class>
+    </classes>
+  </test>
+</suite>

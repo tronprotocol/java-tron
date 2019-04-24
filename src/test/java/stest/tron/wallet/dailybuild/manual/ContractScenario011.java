@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -113,10 +114,11 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "KittyCore";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario011_deployErc721KittyCore");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario011_deployErc721KittyCore");
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     logger.info("Kitty Core");
     kittyCoreContractAddress = PublicMethed.deployContract(contractName, abi, code, "",
         maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
@@ -154,15 +156,23 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SaleClockAuction";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario011_deploySaleClockAuction")
-        + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario011_deploySaleClockAuction");
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     logger.info("Sale Clock Auction");
-    saleClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
-        "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
-        deployAddress, blockingStubFull);
+    //saleClockAuctionContractAddress;
+    String data = "\"" + Base58.encode58Check(kittyCoreContractAddress) + "\"," + 100;
+    String deplTxid = PublicMethed
+        .deployContractWithConstantParame(contractName, abi, code, "constructor(address,uint256)",
+            data, "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey, deployAddress,
+            blockingStubFull);
+    Optional<TransactionInfo> info = PublicMethed
+        .getTransactionInfoById(deplTxid, blockingStubFull);
+    Assert.assertTrue(info.get().getResultValue() == 0);
+
+    saleClockAuctionContractAddress = info.get().getContractAddress().toByteArray();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(saleClockAuctionContractAddress,
         blockingStubFull);
@@ -175,6 +185,14 @@ public class ContractScenario011 {
     logger.info("after balance is " + Long.toString(account.getBalance()));
     logger.info("after cpu limit is " + Long.toString(cpuLimit));
     logger.info("after cpu usage is " + Long.toString(cpuUsage));
+
+    String triggerTxid = PublicMethed
+        .triggerContract(saleClockAuctionContractAddress, "isSaleClockAuction()", "#", false, 0,
+            maxFeeLimit, deployAddress, deployKey, blockingStubFull);
+    Optional<TransactionInfo> inFoByid = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Ttttt " + triggerTxid);
+    Assert.assertTrue(inFoByid.get().getResultValue() == 0);
   }
 
   @Test(enabled = true, description = "Deploy Erc721 contract \"Siring Clock Auction\"")
@@ -188,16 +206,22 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "SiringClockAuction";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario011_deploySiringClockAuction")
-        + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario011_deploySiringClockAuction");
-    logger.info("Siring Clock Auction");
-    siringClockAuctionContractAddress = PublicMethed.deployContract(contractName, abi, code,
-        "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
-        deployAddress, blockingStubFull);
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    String data = "\"" + Base58.encode58Check(kittyCoreContractAddress) + "\"," + 100;
+    String siringClockAuctionContractAddressTxid = PublicMethed
+        .deployContractWithConstantParame(contractName, abi, code, "constructor(address,uint256)",
+            data,
+            "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey,
+            deployAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info2 = PublicMethed
+        .getTransactionInfoById(siringClockAuctionContractAddressTxid, blockingStubFull);
+    siringClockAuctionContractAddress = info2.get().getContractAddress().toByteArray();
+    Assert.assertTrue(info2.get().getResultValue() == 0);
     SmartContract smartContract = PublicMethed.getContract(siringClockAuctionContractAddress,
         blockingStubFull);
     Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));
@@ -222,16 +246,21 @@ public class ContractScenario011 {
     logger.info("before cpu limit is " + Long.toString(cpuLimit));
     logger.info("before cpu usage is " + Long.toString(cpuUsage));
     String contractName = "GeneScienceInterface";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario011_deployGeneScienceInterface")
-        + kittyCoreAddressAndCut;
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario011_deployGeneScienceInterface");
-    logger.info("gene Science Interface");
-    geneScienceInterfaceContractAddress = PublicMethed.deployContract(contractName, abi, code,
+    String filePath = "./src/test/resources/soliditycode/contractScenario011.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit,
         0L, consumeUserResourcePercent, null, deployKey, deployAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info2 = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    geneScienceInterfaceContractAddress = info2.get().getContractAddress().toByteArray();
+    Assert.assertTrue(info2.get().getResultValue() == 0);
+
     SmartContract smartContract = PublicMethed.getContract(geneScienceInterfaceContractAddress,
         blockingStubFull);
     Assert.assertFalse(StringUtils.isEmpty(smartContract.getBytecode()));

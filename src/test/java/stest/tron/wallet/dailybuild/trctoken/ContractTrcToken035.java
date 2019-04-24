@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -114,11 +115,11 @@ public class ContractTrcToken035 {
 
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
-    String contractName = "tokenTest";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken035_tokenTest");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken035_tokenTest");
+    String filePath = "src/test/resources/soliditycode/contractTrcToken035.sol";
+    String contractName = "token";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     transferTokenContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",

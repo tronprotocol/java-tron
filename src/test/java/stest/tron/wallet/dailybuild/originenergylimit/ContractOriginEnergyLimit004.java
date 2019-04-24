@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.originenergylimit;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -186,12 +187,11 @@ public class ContractOriginEnergyLimit004 {
     logger.info("before deploy, dev energy usage is " + Long.toString(devEnergyUsageBefore));
     logger.info("before deploy, dev balance is " + Long.toString(devBalanceBefore));
 
-    String contractName = "findArgsByIndex";
-
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_OriginEnergyLimit004");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_OriginEnergyLimit004");
+    String filePath = "src/test/resources/soliditycode/contractOriginEnergyLimit004.sol";
+    String contractName = "findArgsContractTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
     final String deployTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
