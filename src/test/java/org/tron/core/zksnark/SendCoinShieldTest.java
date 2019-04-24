@@ -202,7 +202,7 @@ public class SendCoinShieldTest {
     String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
     PedersenHash c = String2PedersenHash(s3);
 
-    PedersenHash p_in =ByteArray2PedersenHash(cm);
+    PedersenHash p_in = ByteArray2PedersenHash(cm);
 
     System.out.println("root_empty------" + ByteArray.toHexString(tree.getRootArray()));
 
@@ -349,8 +349,10 @@ public class SendCoinShieldTest {
     //    builder.addSaplingSpend(expsk, note, anchor, voucher);
     //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+    Pointer proofContext = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule spendDescriptionCapsule = builder
+        .generateSpendProof(spend, proofContext);
+    Librustzcash.librustzcashSaplingProvingCtxFree(proofContext);
 
     System.out.println(
         "---------:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
@@ -362,8 +364,9 @@ public class SendCoinShieldTest {
         getHash(),
         result);
 
+    Pointer verifyContext = Librustzcash.librustzcashSaplingVerificationCtxInit();
     boolean ok = Librustzcash.librustzcashSaplingCheckSpend(
-        ctx,
+        verifyContext,
         spendDescriptionCapsule.getValueCommitment().toByteArray(),
         spendDescriptionCapsule.getAnchor().toByteArray(),
         spendDescriptionCapsule.getNullifier().toByteArray(),
@@ -372,6 +375,7 @@ public class SendCoinShieldTest {
         result,
         getHash()
     );
+    Librustzcash.librustzcashSaplingVerificationCtxFree(verifyContext);
     Assert.assertEquals(ok, true);
 
   }
