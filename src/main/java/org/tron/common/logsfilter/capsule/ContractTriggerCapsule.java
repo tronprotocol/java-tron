@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -17,6 +18,7 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 
+@Slf4j(topic = "event")
 public class ContractTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -36,8 +38,16 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     ContractTrigger event;
     boolean isEvent = false;
     LogInfo logInfo = contractTrigger.getRawData();
-    JSONObject abi = JSONObject.parseObject(contractTrigger.getAbiString());
-    JSONArray entrys = abi.getJSONArray("entrys");
+    JSONObject abi = null;
+    JSONArray entrys = null;
+    try {
+      abi = JSONObject.parseObject(contractTrigger.getAbiString());
+      if (abi != null) {
+        entrys = abi.getJSONArray("entrys");
+      }
+    } catch (Exception e) {
+      logger.error("ABIString2Json error: ", e);
+    }
     String eventSignature = "";
     String eventSignatureFull = "fallback()";
     String entryName = "";
