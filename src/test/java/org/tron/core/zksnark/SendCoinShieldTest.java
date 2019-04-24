@@ -174,7 +174,7 @@ public class SendCoinShieldTest {
     System.out.print(ByteArray.toHexString(encode));
   }
 
-  private PedersenHash String2PedersenHash(String str){
+  private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
     ZksnarkUtils.sort(bytes1);
@@ -182,7 +182,7 @@ public class SendCoinShieldTest {
     return compressCapsule1.getInstance();
   }
 
-  private PedersenHash ByteArray2PedersenHash(byte[] bytes){
+  private PedersenHash ByteArray2PedersenHash(byte[] bytes) {
     PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
     compressCapsule_in.setContent(ByteString.copyFrom(bytes));
     return compressCapsule_in.getInstance();
@@ -322,6 +322,10 @@ public class SendCoinShieldTest {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
   }
 
+  public byte[] getHash1() {
+    return Sha256Hash.of("this is a test11".getBytes()).getBytes();
+  }
+
 
   @Test
   public void testVerifySpendProof() {
@@ -364,7 +368,7 @@ public class SendCoinShieldTest {
         spendDescriptionCapsule.getAnchor().toByteArray(),
         spendDescriptionCapsule.getNullifier().toByteArray(),
         spendDescriptionCapsule.getRk().toByteArray(),
-        spendDescriptionCapsule.getZkproof().toByteArray(),
+        spendDescriptionCapsule.getZkproof().getValues().toByteArray(),
         result,
         getHash()
     );
@@ -478,12 +482,7 @@ public class SendCoinShieldTest {
       boolean first = true; // The first witness can never form a path
       for (IncrementalMerkleVoucherCapsule wit : witnesses) {
         // Append the same commitment to all the witnesses
-
-        if (i == 2 && path_i == 2) {
-          wit.toMerkleVoucherContainer().append(test_commitment.getInstance());
-        } else {
-          wit.toMerkleVoucherContainer().append(test_commitment.getInstance());
-        }
+        wit.toMerkleVoucherContainer().append(test_commitment.getInstance());
 
         if (first) {
           try {
@@ -501,12 +500,7 @@ public class SendCoinShieldTest {
           }
         } else {
           MerklePath path = wit.toMerkleVoucherContainer().path();
-          if (!path_tests.getString(path_i++).equals(ByteArray.toHexString(path.encode()))) {
-            System.out.print("---testComplexTreePath---" + i + "---" + path_i);
-            MerklePath path2 = wit.toMerkleVoucherContainer().path();
-            return;
-          }
-//          Assert.assertEquals(path_tests.getString(path_i++), ByteArray.toHexString(path.encode()));
+          Assert.assertEquals(path_tests.getString(path_i++), ByteArray.toHexString(path.encode()));
         }
 
         Assert.assertEquals(
