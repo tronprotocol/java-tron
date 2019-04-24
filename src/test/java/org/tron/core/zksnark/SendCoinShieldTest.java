@@ -11,7 +11,6 @@ import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.testng.collections.Lists;
@@ -54,10 +53,10 @@ import org.tron.protos.Contract.SpendDescription;
 
 public class SendCoinShieldTest {
 
-  static RpcWallet wallet = new RpcWallet();
-
   // @Test
   public void testShieldCoinConstructor() {
+    RpcWallet wallet = new RpcWallet();
+
     String fromAddr = wallet.getNewAddress();
 
     List<Recipient> outputs = Lists.newArrayList();
@@ -84,10 +83,27 @@ public class SendCoinShieldTest {
     Assert.assertNotNull(expsk.getNsk());
   }
 
-  private ExtendedSpendingKey createXsk() {
-    String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
+  private ExtendedSpendingKey createXskDefault() {
+    byte[] seedBytes =
+        ByteArray.fromHexString(
+            "000000000000000000f48df508754177dc0b6991da20751d53cd7eb849770e09da70bc2bb236bd7b1f6325da173f65a4e1d1dfebfda009bd220e731506bb46ea42d26720305f98200a9a020fed5b4ee4c3705ab0ebdcc803539453a64ded42b2b2dbb013ac28057702fe154604b8d8ee261ee00f29a0e0a3e37db577df4537eef90e388674da4e690bfb7932d3271548d6479e15a753481b2d9ee11a349b8acf6369b6e19de10dabb8"
+        );
+
+    ExtendedSpendingKey master = ExtendedSpendingKey.decode(seedBytes);
+
+    int bip44CoinType = ZkChainParams.BIP44CoinType;
+    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
+    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+
+    ExtendedSpendingKey xsk =
+        master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+    return xsk;
+  }
+
+  private ExtendedSpendingKey createXsk(String seedString) {
     HDSeed seed = new HDSeed(ByteArray.fromHexString(seedString));
     ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
+
     int bip44CoinType = ZkChainParams.BIP44CoinType;
     ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
     ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
@@ -100,7 +116,7 @@ public class SendCoinShieldTest {
   @Test
   public void testExpandedSpendingKey() {
 
-    ExtendedSpendingKey xsk = createXsk();
+    ExtendedSpendingKey xsk = createXskDefault();
 
     ExpandedSpendingKey expsk = xsk.getExpsk();
     Assert.assertNotNull(expsk);
@@ -160,7 +176,7 @@ public class SendCoinShieldTest {
     System.out.print(ByteArray.toHexString(encode));
   }
 
-  private PedersenHash String2PedersenHash(String str){
+  private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
     ZksnarkUtils.sort(bytes1);
@@ -168,13 +184,13 @@ public class SendCoinShieldTest {
     return compressCapsule1.getInstance();
   }
 
-  private PedersenHash ByteArray2PedersenHash(byte[] bytes){
+  private PedersenHash ByteArray2PedersenHash(byte[] bytes) {
     PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
     compressCapsule_in.setContent(ByteString.copyFrom(bytes));
     return compressCapsule_in.getInstance();
   }
 
-    private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -190,11 +206,18 @@ public class SendCoinShieldTest {
 
     PedersenHash p_in =ByteArray2PedersenHash(cm);
 
-//    tree.append(a);
-//    tree.append(b);
+    System.out.println("root_empty------" + ByteArray.toHexString(tree.getRootArray()));
+
+    tree.append(a);
+    System.out.println("root_a------" + ByteArray.toHexString(tree.getRootArray()));
+
     tree.append(p_in);
+    System.out.println("cm------" + ByteArray.toHexString(p_in.getContent().toByteArray()));
+    System.out.println("root_cm------" + ByteArray.toHexString(tree.getRootArray()));
+
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
-//    voucher.append(c);
+    voucher.append(c);
+    System.out.println("root_c------" + ByteArray.toHexString(voucher.getRootArray()));
 
     return voucher;
   }
@@ -218,18 +241,6 @@ public class SendCoinShieldTest {
         .getResource("zcash-params" + File.separator + fileName).getFile();
   }
 
-  public static byte[] stringToAscii(String value) {
-    List<Byte> sbu = Lists.newArrayList();
-    char[] chars = value.toCharArray();
-    for (int i = 0; i < chars.length; i++) {
-      sbu.add((byte) chars[i]);
-    }
-
-    Byte[] bytes = sbu.toArray(new Byte[sbu.size()]);
-    return ArrayUtils.toPrimitive(bytes);
-
-  }
-
   private void librustzcashInitZksnarkParams() {
 
     String spendPath = getParamsFile("sapling-spend.params");
@@ -248,20 +259,19 @@ public class SendCoinShieldTest {
 
     TransactionBuilder builder = new TransactionBuilder();
 
-    ExtendedSpendingKey xsk = createXsk();
+    ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
-
     PaymentAddress address = xsk.DefaultAddress();
     Note note = new Note(address, 100);
 
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
-
-    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
+//    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+//    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+//    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+//
+//    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
 
   }
 
@@ -310,7 +320,7 @@ public class SendCoinShieldTest {
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  public byte[] getHash() {
+  private byte[] getHash() {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
   }
 
@@ -325,7 +335,7 @@ public class SendCoinShieldTest {
 
     TransactionBuilder builder = new TransactionBuilder();
 
-    ExtendedSpendingKey xsk = createXsk();
+    ExtendedSpendingKey xsk = createXskDefault();
     //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
@@ -360,7 +370,7 @@ public class SendCoinShieldTest {
         spendDescriptionCapsule.getAnchor().toByteArray(),
         spendDescriptionCapsule.getNullifier().toByteArray(),
         spendDescriptionCapsule.getRk().toByteArray(),
-        spendDescriptionCapsule.getZkproof().toByteArray(),
+        spendDescriptionCapsule.getZkproof().getValues().toByteArray(),
         result,
         getHash()
     );
@@ -532,7 +542,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void testVectors() throws Exception {
+  public void testComplexTreePath() throws Exception {
     IncrementalMerkleTreeContainer.DEPTH = 4;
 
     JSONArray root_tests = readFile("merkle_roots_sapling.json");
