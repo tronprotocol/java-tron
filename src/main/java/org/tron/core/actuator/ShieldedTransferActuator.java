@@ -93,12 +93,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
     IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
         .getCurrentMerkle();
+
+
     //handle receives
     for (ReceiveDescription receive : receives)  {
       dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
+      //add merkle root
+      //currentMerkle.append();
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
-
   }
 
   @Override
@@ -156,7 +159,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             spendDescription.getAnchor().toByteArray(),
             spendDescription.getNullifier().toByteArray(),
             spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().toByteArray(),
+            spendDescription.getZkproof().getValues().toByteArray(),
             spendDescription.getSpendAuthoritySignature().toByteArray(),
             signHash
         )) {
@@ -171,7 +174,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().toByteArray()
+            receiveDescription.getZkproof().getValues().toByteArray()
         )) {
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("librustzcashSaplingCheckOutput error");
@@ -253,6 +256,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 //      }
 
       //TODO: We need check the delta amount in the librustzcash. this delta amount include the fee using to create address.
+      //TODO: This delta balance value can be calculated automatically.
     }
     return true;
   }

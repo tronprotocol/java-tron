@@ -31,8 +31,8 @@ public class MerklePath {
     long indexLong; // 64
     for (int i = 0; i < authenticationPath.size(); i++) {
       pathByteList.add(Lists.newArrayList());
-      for (int p = 0; p < authenticationPath.get(authenticationPath.size() - 1 - i).size(); p++) {
-        byte bByte = (byte) (authenticationPath.get(authenticationPath.size() - 1 - i).get(p) ? 1
+      for (int p = 0; p < authenticationPath.get(i).size(); p++) {
+        byte bByte = (byte) (authenticationPath.get(i).get(p) ? 1
             : 0);
         int i1;
         if (pathByteList.get(i).size() > (p / 8)) {

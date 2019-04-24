@@ -2,6 +2,7 @@ package org.tron.common.zksnark.zen;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import java.io.File;
@@ -19,8 +20,8 @@ public class Librustzcash {
 
   public interface ILibrustzcash extends Library {
 
-    void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, byte[] spend_hash,
-        byte[] output_path, int output_path_len, byte[] output_hash);
+    void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, String spend_hash,
+        byte[] output_path, int output_path_len, String output_hash);
 
     void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
 
@@ -112,7 +113,7 @@ public class Librustzcash {
   }
 
   public static void librustzcashInitZksnarkParams(byte[] spend_path, int spend_path_len,
-      byte[] spend_hash, byte[] output_path, int output_path_len, byte[] output_hash) {
+      String spend_hash, byte[] output_path, int output_path_len, String output_hash) {
     INSTANCE.librustzcash_init_zksnark_params(spend_path, spend_path_len, spend_hash,
         output_path, output_path_len, output_hash);
   }
