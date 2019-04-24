@@ -19,11 +19,11 @@ public class BlocksMessage extends TronMessage {
       blocks = items.getBlocksList();
     }
     if (isFilter() && CollectionUtils.isNotEmpty(blocks)) {
+      compareBytes(data, items.toByteArray());
       for (Block block : blocks) {
         TransactionCapsule.validContractProto(block.getTransactionsList());
       }
     }
-    compareBytes(data, items.toByteArray());
   }
 
   public List<Block> getBlocks() {

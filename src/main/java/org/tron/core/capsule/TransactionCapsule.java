@@ -27,6 +27,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -132,11 +133,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public TransactionCapsule(byte[] data) throws BadItemException {
     try {
       this.transaction = Transaction.parseFrom(Message.getCodedInputStream(data));
-      Message.compareBytes(data, transaction.toByteArray());
-      if (Message.isFilter()) {
-        validContractProto(transaction.getRawData().getContract(0));
-      }
     } catch (Exception e) {
+      throw new BadItemException("Transaction proto data parse exception");
+    }
+  }
+
+  public TransactionCapsule(CodedInputStream codedInputStream) throws BadItemException {
+    try {
+      this.transaction = Transaction.parseFrom(codedInputStream);
+    } catch (IOException e) {
       throw new BadItemException("Transaction proto data parse exception");
     }
   }
