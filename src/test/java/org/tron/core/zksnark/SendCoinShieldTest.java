@@ -158,7 +158,7 @@ public class SendCoinShieldTest {
     System.out.print(ByteArray.toHexString(encode));
   }
 
-  private PedersenHash String2PedersenHash(String str){
+  private PedersenHash String2PedersenHash(String str) {
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
     byte[] bytes1 = ByteArray.fromHexString(str);
     ZksnarkUtils.sort(bytes1);
@@ -166,13 +166,13 @@ public class SendCoinShieldTest {
     return compressCapsule1.getInstance();
   }
 
-  private PedersenHash ByteArray2PedersenHash(byte[] bytes){
+  private PedersenHash ByteArray2PedersenHash(byte[] bytes) {
     PedersenHashCapsule compressCapsule_in = new PedersenHashCapsule();
     compressCapsule_in.setContent(ByteString.copyFrom(bytes));
     return compressCapsule_in.getInstance();
   }
 
-    private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -186,7 +186,7 @@ public class SendCoinShieldTest {
     String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
     PedersenHash c = String2PedersenHash(s3);
 
-    PedersenHash p_in =ByteArray2PedersenHash(cm);
+    PedersenHash p_in = ByteArray2PedersenHash(cm);
 
 //    tree.append(a);
 //    tree.append(b);
@@ -358,7 +358,7 @@ public class SendCoinShieldTest {
         spendDescriptionCapsule.getAnchor().toByteArray(),
         spendDescriptionCapsule.getNullifier().toByteArray(),
         spendDescriptionCapsule.getRk().toByteArray(),
-        spendDescriptionCapsule.getZkproof().toByteArray(),
+        spendDescriptionCapsule.getZkproof().getValues().toByteArray(),
         result,
         getHash()
     );
