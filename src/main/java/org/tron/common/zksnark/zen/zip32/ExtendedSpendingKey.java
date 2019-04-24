@@ -42,20 +42,12 @@ public class ExtendedSpendingKey {
 
     byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
     Librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().length, m_bytes);
-
     ExtendedSpendingKey xsk_m = decode(m_bytes);
     return xsk_m;
   }
 
   // u_int32
   public ExtendedSpendingKey Derive(int i) {
-    /*
-    CDataStream ss_p(SER_NETWORK, PROTOCOL_VERSION);
-    ss_p << *this;
-    CSerializeData p_bytes(ss_p.begin(), ss_p.end());
-
-    CSerializeData i_bytes(ZIP32_XSK_SIZE);
-    * */
     byte[] p_bytes = encode();
 
     byte[] i_bytes = new byte[ZIP32_XSK_SIZE];
