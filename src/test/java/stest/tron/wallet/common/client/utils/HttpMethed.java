@@ -74,13 +74,14 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse setAccountId(String httpNode, byte[] setAccountIdAddress,
-      String accountId, String fromKey) {
+      String accountId, Boolean visable, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/setaccountid";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("account_id", accountId);
-      userBaseObj2.addProperty("owner_address", Base58.encode58Check(PublicMethed.getFinalAddress(fromKey)));
-      userBaseObj2.addProperty("visible",true);
+      userBaseObj2.addProperty("owner_address",
+          Base58.encode58Check(PublicMethed.getFinalAddress(fromKey)));
+      userBaseObj2.addProperty("visible",visable);
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);

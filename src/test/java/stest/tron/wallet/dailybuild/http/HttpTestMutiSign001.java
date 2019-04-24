@@ -127,8 +127,15 @@ public class HttpTestMutiSign001 {
     response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, 0,permissionKeyString);
     Assert.assertTrue(HttpMethed.verificationResult(response));
 
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, 2,permissionKeyString);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
+
+    logger.info("start permission id 2");
     response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 12L, 2,permissionKeyActive);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 12L, 0,permissionKeyActive);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
 
     response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 11L, 1,permissionKeyActive);
     Assert.assertFalse(HttpMethed.verificationResult(response));
