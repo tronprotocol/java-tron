@@ -376,7 +376,7 @@ public class SendCoinShieldTest {
 
     TransactionBuilder builder = new TransactionBuilder();
 
-    ExtendedSpendingKey xsk = createXsk();
+    ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
@@ -416,7 +416,7 @@ public class SendCoinShieldTest {
     librustzcashInitZksnarkParams();
     TransactionBuilder builder = new TransactionBuilder();
     // generate spend proof
-    ExtendedSpendingKey xsk = createXsk();
+    ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
     PaymentAddress address = xsk.DefaultAddress();
     Note note = new Note(address, 10000);
