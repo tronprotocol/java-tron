@@ -13,11 +13,13 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
 import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 
 @Component
@@ -46,7 +48,8 @@ public class TransferServlet extends HttpServlet {
         long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
-      response.getWriter().println(Util.printTransaction(tx, visible));
+      tx = setTransactionPermissionId(jsonObject, tx);
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

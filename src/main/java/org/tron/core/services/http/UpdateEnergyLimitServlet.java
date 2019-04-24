@@ -18,6 +18,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 import static org.tron.core.services.http.Util.getVisible;
 import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 
 @Component
@@ -47,8 +48,9 @@ public class UpdateEnergyLimitServlet extends HttpServlet {
         long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
+      tx = setTransactionPermissionId(jsonObject, tx);
 
-      response.getWriter().println(Util.printTransaction(tx, visible));
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
