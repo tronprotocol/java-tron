@@ -1,11 +1,11 @@
 package org.tron.common.logsfilter.capsule;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -20,7 +20,6 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 
-@Slf4j(topic = "event")
 public class ContractTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -42,14 +41,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     LogInfo logInfo = contractTrigger.getRawData();
     JSONObject abi = null;
     JSONArray entrys = null;
-    try {
-      abi = JSONObject.parseObject(contractTrigger.getAbiString());
-      if (abi != null) {
-        entrys = abi.getJSONArray("entrys");
-      }
-    } catch (Exception e) {
-      logger.error("ABIString2Json error: ", e);
+    String abiString = contractTrigger.getAbiString();
+
+    Object abiObj = JSON.parse(abiString);
+    if (abiObj instanceof JSONObject) {
+      abi = (JSONObject) abiObj;
+      entrys = abi.getJSONArray("entrys");
     }
+
     List<DataWord> topics = logInfo.getTopics();
 
     String eventSignature = "";
@@ -64,14 +63,14 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
 
-        if (!entry.getString("type").equalsIgnoreCase("event")) {
+        String funcType = entry.getString("type");
+        Boolean anonymous = entry.getBoolean("anonymous");
+        if (funcType == null || !funcType.equalsIgnoreCase("event")) {
           continue;
         }
 
-        if (entry.getBoolean("anonymous") != null) {
-          if (entry.getBoolean("anonymous")) {
-            continue;
-          }
+        if (anonymous != null && anonymous) {
+          continue;
         }
 
         String signature = entry.getString("name") + "(";
