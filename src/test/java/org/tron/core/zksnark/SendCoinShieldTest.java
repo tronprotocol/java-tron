@@ -192,6 +192,7 @@ public class SendCoinShieldTest {
     String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
     PedersenHash c = String2PedersenHash(s3);
 
+<<<<<<< HEAD
     PedersenHash p_in = ByteArray2PedersenHash(cm);
 
     System.out.println("root_empty------" + ByteArray.toHexString(tree.getRootArray()));
@@ -199,13 +200,14 @@ public class SendCoinShieldTest {
     tree.append(a);
     System.out.println("root_a------" + ByteArray.toHexString(tree.getRootArray()));
 
+=======
+    PedersenHash p_in =ByteArray2PedersenHash(cm);
+    tree.append(a); 
+>>>>>>> ae025ff9156a5d70c5ab8eb3c67c7b383f0ba27f
     tree.append(p_in);
-    System.out.println("cm------" + ByteArray.toHexString(p_in.getContent().toByteArray()));
-    System.out.println("root_cm------" + ByteArray.toHexString(tree.getRootArray()));
 
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
-    System.out.println("root_c------" + ByteArray.toHexString(voucher.getRootArray()));
 
     return voucher;
   }
@@ -254,14 +256,14 @@ public class SendCoinShieldTest {
     Note note = new Note(address, 100);
     note.r = ByteArray
         .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
-    IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-//    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-//    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-//    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
-//
-//    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
+    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+
+    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
 
   }
 
