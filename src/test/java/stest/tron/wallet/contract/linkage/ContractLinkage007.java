@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.linkage;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -80,31 +80,7 @@ public class ContractLinkage007 {
     //Now the feelimit range is 0-1000000000,including 0 and 1000000000
     Assert.assertTrue(PublicMethed.sendcoin(linkage007Address, 2000000000L, fromAddress,
         testKey002, blockingStubFull));
-    contractName = "testRangeOfFeeLimit";
-    code = "60806040526000805561026c806100176000396000f3006080604052600436106100565763ffffffff7c01"
-        + "0000000000000000000000000000000000000000000000000000000060003504166306661abd811461005b5"
-        + "780631548567714610082578063399ae724146100a8575b600080fd5b34801561006757600080fd5b506100"
-        + "706100cc565b60408051918252519081900360200190f35b6100a673fffffffffffffffffffffffffffffff"
-        + "fffffffff600435166024356100d2565b005b6100a673ffffffffffffffffffffffffffffffffffffffff60"
-        + "0435166024356101af565b60005481565b80600054101561017257600080546001018155604080517f15485"
-        + "67700000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffff"
-        + "ffffffffffffffffff851660048201526024810184905290513092631548567792604480820193918290030"
-        + "1818387803b15801561015557600080fd5b505af1158015610169573d6000803e3d6000fd5b505050506100"
-        + "d2565b8060005414156101ab5760405173ffffffffffffffffffffffffffffffffffffffff8316906000906"
-        + "0149082818181858883f150505050505b5050565b6000808055604080517f15485677000000000000000000"
-        + "00000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff851"
-        + "6600482015260248101849052905130926315485677926044808201939182900301818387803b1580156102"
-        + "2457600080fd5b505af1158015610238573d6000803e3d6000fd5b5050505050505600a165627a7a7230582"
-        + "0ecdc49ccf0dea5969829debf8845e77be6334f348e9dcaeabf7e98f2d6c7f5270029";
-    abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"count\",\"outputs\":[{\"name\":\"\",\"type"
-        + "\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},"
-        + "{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"},{\"name\":\""
-        + "max\",\"type\":\"uint256\"}],\"name\":\"hack\",\"outputs\":[],\"payable\":true,\""
-        + "stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{"
-        + "\"name\":\"addr\",\"type\":\"address\"},{\"name\":\"max\",\"type\":\"uint256\"}],\""
-        + "name\":\"init\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type"
-        + "\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type"
-        + "\":\"constructor\"}]";
+
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage007Address,
         blockingStubFull);
     Account info;
@@ -124,6 +100,14 @@ public class ContractLinkage007 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     //When the feelimit is large, the deploy will be failed,No used everything.
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage002.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String txid;
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit + 1, 0L, 100, null, linkage007Key,
@@ -279,9 +263,10 @@ public class ContractLinkage007 {
     logger.info("beforeNetLimit3:" + beforeNetLimit3);
     logger.info("beforeNetUsed3:" + beforeNetUsed3);
     logger.info("beforeFreeNetUsed3:" + beforeFreeNetUsed3);
-    String initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"63\"";
+    //String initParmes = "\"" + Base58.encode58Check(fromAddress) + "\",\"63\"";
+    String num = "4" + "," + "2";
     txid = PublicMethed.triggerContract(contractAddress,
-        "init(address,uint256)", initParmes, false,
+        "divideIHaveArgsReturn(int256,int256)", num, false,
         1000, maxFeeLimit + 1, linkage007Address, linkage007Key, blockingStubFull);
     Account infoafter3 = PublicMethed.queryAccount(linkage007Address, blockingStubFull1);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -325,10 +310,9 @@ public class ContractLinkage007 {
     logger.info("beforeNetLimit4:" + beforeNetLimit4);
     logger.info("beforeNetUsed4:" + beforeNetUsed4);
     logger.info("beforeFreeNetUsed4:" + beforeFreeNetUsed4);
-    PublicMethed.triggerContract(contractAddress,
-        "init(address,uint256)", initParmes, false,
-        1000, 0, linkage007Address, linkage007Key, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    txid = PublicMethed.triggerContract(contractAddress,
+        "divideIHaveArgsReturn(int256,int256)", num, false,
+        1000, maxFeeLimit + 1, linkage007Address, linkage007Key, blockingStubFull);
     Account infoafter4 = PublicMethed.queryAccount(linkage007Address, blockingStubFull1);
     AccountResourceMessage resourceInfoafter4 = PublicMethed.getAccountResource(linkage007Address,
         blockingStubFull1);

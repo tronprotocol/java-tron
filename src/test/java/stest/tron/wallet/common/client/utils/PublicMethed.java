@@ -6,6 +6,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,6 +67,7 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
+import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 
@@ -2128,20 +2137,6 @@ public class PublicMethed {
   /**
    * constructor.
    */
-
-  public static byte[] deployContract(String contractName, String abiString, String code,
-      String data, Long feeLimit, long value,
-      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
-      WalletGrpc.WalletBlockingStub blockingStubFull) {
-    return deployContract(contractName, abiString, code, data, feeLimit, value,
-        consumeUserResourcePercent, 1000L, "0", 0L, libraryAddress,
-        priKey, ownerAddress, blockingStubFull);
-  }
-
-  /**
-   * constructor.
-   */
-
   public static byte[] deployContract(String contractName, String abiString, String code,
       String data, Long feeLimit, long value,
       long consumeUserResourcePercent, long originEnergyLimit, String tokenId, long tokenValue,
@@ -2253,6 +2248,142 @@ public class PublicMethed {
       //logger.info("brodacast succesfully");
       return contractAddress;
     }
+  }
+
+  /**
+   * constructor.
+   */
+  public static byte[] deployContract(String contractName, String abiString, String code,
+      String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    return deployContract(contractName, abiString, code, data, feeLimit, value,
+        consumeUserResourcePercent, 1000L, "0", 0L, libraryAddress,
+        priKey, ownerAddress, blockingStubFull);
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static byte[] deployContractForLibrary(String contractName, String abiString, String code,
+      String data, Long feeLimit, long value,
+      long consumeUserResourcePercent, String libraryAddress, String priKey, byte[] ownerAddress,
+      String compilerVersion,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    SmartContract.ABI abi = jsonStr2Abi(abiString);
+    if (abi == null) {
+      logger.error("abi is null");
+      return null;
+    }
+    //byte[] codeBytes = Hex.decode(code);
+    SmartContract.Builder builder = SmartContract.newBuilder();
+    builder.setName(contractName);
+    builder.setOriginAddress(ByteString.copyFrom(owner));
+    builder.setAbi(abi);
+    builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
+    builder.setOriginEnergyLimit(1000L);
+
+    if (value != 0) {
+
+      builder.setCallValue(value);
+    }
+
+    byte[] byteCode;
+    if (null != libraryAddress) {
+      if (compilerVersion.equals("v5") || compilerVersion.equals("V5")) {
+        byteCode = replaceLibraryAddresscompilerVersion(code, libraryAddress, "v5");
+      } else {
+        //old version
+        byteCode = replaceLibraryAddresscompilerVersion(code, libraryAddress, null);
+      }
+
+    } else {
+      byteCode = Hex.decode(code);
+    }
+    builder.setBytecode(ByteString.copyFrom(byteCode));
+
+    Builder contractBuilder = CreateSmartContract.newBuilder();
+    contractBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+    contractBuilder.setCallTokenValue(0);
+    contractBuilder.setTokenId(Long.parseLong("0"));
+    CreateSmartContract contractDeployContract = contractBuilder
+        .setNewContract(builder.build()).build();
+
+    TransactionExtention transactionExtention = blockingStubFull
+        .deployContract(contractDeployContract);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create trx failed!");
+      if (transactionExtention != null) {
+        System.out.println("Code = " + transactionExtention.getResult().getCode());
+        System.out
+            .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      }
+      return null;
+    }
+
+    final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+    Transaction.Builder transBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
+        .toBuilder();
+    rawBuilder.setFeeLimit(feeLimit);
+    transBuilder.setRawData(rawBuilder);
+    for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
+      ByteString s = transactionExtention.getTransaction().getSignature(i);
+      transBuilder.setSignature(i, s);
+    }
+    for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
+      Result r = transactionExtention.getTransaction().getRet(i);
+      transBuilder.setRet(i, r);
+    }
+    texBuilder.setTransaction(transBuilder);
+    texBuilder.setResult(transactionExtention.getResult());
+    texBuilder.setTxid(transactionExtention.getTxid());
+    transactionExtention = texBuilder.build();
+
+    byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
+    System.out.println(
+        "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return null;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    System.out.println(
+        "txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+    contractAddress = generateContractAddress(transaction, owner);
+    System.out.println(
+        "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
+
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    if (response.getResult() == false) {
+      return null;
+    } else {
+      //logger.info("brodacast succesfully");
+      return contractAddress;
+    }
+
   }
 
   /**
@@ -2599,6 +2730,49 @@ public class PublicMethed {
 
     Matcher m = Pattern.compile("__.*__").matcher(code);
     code = m.replaceAll(libraryAddressHex);
+    return Hex.decode(code);
+  }
+
+  private static byte[] replaceLibraryAddresscompilerVersion(String code, String libraryAddressPair,
+      String compilerVersion) {
+
+    String[] libraryAddressList = libraryAddressPair.split("[,]");
+
+    for (int i = 0; i < libraryAddressList.length; i++) {
+      String cur = libraryAddressList[i];
+
+      int lastPosition = cur.lastIndexOf(":");
+      if (-1 == lastPosition) {
+        throw new RuntimeException("libraryAddress delimit by ':'");
+      }
+      String libraryName = cur.substring(0, lastPosition);
+      String addr = cur.substring(lastPosition + 1);
+      String libraryAddressHex;
+      try {
+        libraryAddressHex = (new String(Hex.encode(Wallet.decodeFromBase58Check(addr)),
+            "US-ASCII")).substring(2);
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException(e);  // now ignore
+      }
+
+      String beReplaced;
+      if (compilerVersion == null) {
+        //old version
+        String repeated = new String(new char[40 - libraryName.length() - 2]).replace("\0", "_");
+        beReplaced = "__" + libraryName + repeated;
+      } else if (compilerVersion.equalsIgnoreCase("v5")) {
+        //0.5.4 version
+        String libraryNameKeccak256 = ByteArray
+            .toHexString(Hash.sha3(ByteArray.fromString(libraryName))).substring(0, 34);
+        beReplaced = "__\\$" + libraryNameKeccak256 + "\\$__";
+      } else {
+        throw new RuntimeException("unknown compiler version.");
+      }
+
+      Matcher m = Pattern.compile(beReplaced).matcher(code);
+      code = m.replaceAll(libraryAddressHex);
+    }
+
     return Hex.decode(code);
   }
 
@@ -4055,6 +4229,134 @@ public class PublicMethed {
       logger.info("Message = " + response.getMessage().toStringUtf8());
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String exec(String command) throws InterruptedException {
+    String returnString = "";
+    Process pro = null;
+    Runtime runTime = Runtime.getRuntime();
+    if (runTime == null) {
+      logger.error("Create runtime false!");
+    }
+    try {
+      pro = runTime.exec(command);
+      BufferedReader input = new BufferedReader(new InputStreamReader(pro.getInputStream()));
+      PrintWriter output = new PrintWriter(new OutputStreamWriter(pro.getOutputStream()));
+      String line;
+      while ((line = input.readLine()) != null) {
+        returnString = returnString + line + "\n";
+      }
+      input.close();
+      output.close();
+      pro.destroy();
+    } catch (IOException ex) {
+      logger.error(null, ex);
+    }
+    return returnString;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HashMap<String, String> getBycodeAbi(String solFile, String contractName) {
+    final String compile = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.solidityCompile");
+
+    String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
+    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
+
+    File binFile = new File(outputPath + "/" + contractName + ".bin");
+    File abiFile = new File(outputPath + "/" + contractName + ".abi");
+    if (binFile.exists()) {
+      binFile.delete();
+    }
+    if (abiFile.exists()) {
+      abiFile.delete();
+    }
+
+    HashMap<String, String> retMap = new HashMap<>();
+    String absolutePath = System.getProperty("user.dir");
+    logger.debug("absolutePath: " + absolutePath);
+    logger.debug("solFile: " + solFile);
+    logger.debug("outputPath: " + outputPath);
+    String cmd =
+        compile + " --optimize --bin --abi --overwrite " + solFile + " -o "
+            + absolutePath + "/" + outputPath;
+    logger.debug("cmd: " + cmd);
+
+    String byteCode = null;
+    String abI = null;
+
+    // compile solidity file
+    try {
+      exec(cmd);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    // get byteCode and ABI
+    try {
+      byteCode = fileRead(outputPath + "/" + contractName + ".bin", false);
+      retMap.put("byteCode", byteCode);
+      logger.debug("byteCode: " + byteCode);
+      abI = fileRead(outputPath + "/" + contractName + ".abi", false);
+      retMap.put("abI", abI);
+      logger.debug("abI: " + abI);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return retMap;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String fileRead(String filePath, boolean isLibrary) throws Exception {
+    File file = new File(filePath);
+    FileReader reader = new FileReader(file);
+    BufferedReader breader = new BufferedReader(reader);
+    StringBuilder sb = new StringBuilder();
+    String s = "";
+    if (!isLibrary) {
+      if ((s = breader.readLine()) != null) {
+        sb.append(s);
+      }
+      breader.close();
+    } else {
+      String fistLine = breader.readLine();
+      breader.readLine();
+      if ((s = breader.readLine()) != null && !s.equals("")) {
+        s = s.substring(s.indexOf("-> ") + 3);
+        sb.append(s + ":");
+      } else {
+        s = fistLine.substring(fistLine.indexOf("__") + 2, fistLine.lastIndexOf("__"));
+        sb.append(s + ":");
+      }
+      breader.close();
+    }
+    return sb.toString();
+  }
+
+  /**
+   * constructor.
+   */
+  public static HashMap<String, String> getBycodeAbiForLibrary(String solFile,
+      String contractName) {
+    HashMap retMap = null;
+    String dirPath = solFile.substring(solFile.lastIndexOf("/"), solFile.lastIndexOf("."));
+    String outputPath = "src/test/resources/soliditycode/output" + dirPath;
+    try {
+      retMap = PublicMethed.getBycodeAbi(solFile, contractName);
+      String library = fileRead(outputPath + "/" + contractName + ".bin", true);
+      retMap.put("library", library);
+      logger.debug("library: " + library);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return retMap;
   }
 
 }

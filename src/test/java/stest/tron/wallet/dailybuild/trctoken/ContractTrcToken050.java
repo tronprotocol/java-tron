@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -110,22 +111,30 @@ public class ContractTrcToken050 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
 
     // devAddress transfer token to A
-    PublicMethed.transferAsset(dev001Address, assetAccountId.toByteArray(), 101, user001Address,
-        user001Key, blockingStubFull);
+    PublicMethed.transferAsset(user001Address, assetAccountId.toByteArray(), 101, dev001Address,
+        dev001Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken050_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken050_transferTokenContract");
-    byte[] transferTokenContractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
+
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken050.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    byte[] transferTokenContractAddress;
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, 10000, assetAccountId.toStringUtf8(),
             0, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    transferTokenContractAddress = infoById.get().getContractAddress().toByteArray();
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     // devAddress transfer token to userAddress
     PublicMethed
@@ -200,8 +209,9 @@ public class ContractTrcToken050 {
     logger.info("afterAssetIssueContractAddress:" + afterAssetIssueContractAddress);
     logger.info("afterAssetIssueDev:" + afterAssetIssueDev);
 
-    Optional<TransactionInfo> infoById = PublicMethed
-        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertEquals(beforeAssetIssueCount, afterAssetIssueCount);
     Assert.assertTrue(beforeAssetIssueContractAddress == afterAssetIssueContractAddress);

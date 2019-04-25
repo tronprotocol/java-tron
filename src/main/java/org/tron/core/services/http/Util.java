@@ -714,4 +714,14 @@ public class Util {
     return transaction;
   }
 
+  public static  boolean getVisibleOnlyForSign(JSONObject jsonObject) {
+    boolean visible = false;
+    if ( jsonObject.containsKey("visible") ) {
+      visible = jsonObject.getBoolean("visible");
+    } else if ( jsonObject.getJSONObject("transaction").containsKey("visible")) {
+      visible = jsonObject.getJSONObject("transaction").getBoolean("visible");
+    }
+    return visible;
+  }
+
 }

@@ -17,6 +17,8 @@ package org.tron.core.capsule;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -36,7 +37,6 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.Transaction;
@@ -173,13 +173,16 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockCapsule(byte[] data) throws BadItemException {
     try {
-      this.block = Block.parseFrom(Message.getCodedInputStream(data));
-      Message.compareBytes(data, block.toByteArray());
-      if (Message.isFilter()) {
-        for (Protocol.Transaction transaction : block.getTransactionsList()) {
-          TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
-        }
-      }
+      this.block = Block.parseFrom(data);
+      initTxs();
+    } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException("Block proto data parse exception");
+    }
+  }
+
+  public BlockCapsule(CodedInputStream codedInputStream) throws BadItemException {
+    try {
+      this.block = Block.parseFrom(codedInputStream);
       initTxs();
     } catch (Exception e) {
       logger.error("constructor block error : {}", e.getMessage());

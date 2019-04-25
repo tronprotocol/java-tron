@@ -19,13 +19,11 @@ public class BlocksMessage extends TronMessage {
       blocks = items.getBlocksList();
     }
     if (isFilter() && CollectionUtils.isNotEmpty(blocks)) {
+      compareBytes(data, items.toByteArray());
       for (Block block : blocks) {
-        for (Protocol.Transaction transaction : block.getTransactionsList()) {
-          TransactionCapsule.validContractProto(transaction.getRawData().getContract(0));
-        }
+        TransactionCapsule.validContractProto(block.getTransactionsList());
       }
     }
-    compareBytes(data, items.toByteArray());
   }
 
   public List<Block> getBlocks() {
