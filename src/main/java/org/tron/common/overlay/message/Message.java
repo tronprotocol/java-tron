@@ -94,7 +94,7 @@ public abstract class Message {
   public static CodedInputStream getCodedInputStream(byte[] data) {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
     if (isFilter()) {
-      ReflectionUtils.setField(field, codedInputStream, true);
+//      ReflectionUtils.setField(field, codedInputStream, true);
     }
     return codedInputStream;
   }
