@@ -417,6 +417,26 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType) throws ContractValidateException {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    try {
+      BlockId blockId = dbManager.getHeadBlockId();
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")) {
+        blockId = dbManager.getSolidBlockId();
+      }
+      trx.setReference(blockId.getNum(), blockId.getBytes());
+      long expiration =
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
+      trx.setExpiration(expiration);
+      trx.setTimestamp();
+    } catch (Exception e) {
+      logger.error("Create transaction capsule failed.", e);
+    }
+    return trx;
+  }
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
@@ -1548,7 +1568,6 @@ public class Wallet {
 
     IncrementalMerkleVoucherContainer witness1 = null;
     IncrementalMerkleVoucherContainer witness2 = null;
-
 
     int synBlockNum = request.getBlockNum();
 

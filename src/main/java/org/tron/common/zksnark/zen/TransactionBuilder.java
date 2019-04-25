@@ -136,8 +136,9 @@ public class TransactionBuilder {
     byte[] dataToBeSigned;//256
     TransactionCapsule transactionCapsule;
     try {
-      transactionCapsule = wallet.createTransactionCapsule(
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
+
       dataToBeSigned = HashShieldedTransaction.hash(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
