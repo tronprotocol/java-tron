@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -15,6 +16,7 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 
@@ -48,13 +50,17 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     } catch (Exception e) {
       logger.error("ABIString2Json error: ", e);
     }
+    List<DataWord> topics = logInfo.getTopics();
+
     String eventSignature = "";
     String eventSignatureFull = "fallback()";
     String entryName = "";
     JSONObject entryObj = new JSONObject();
 
-    if (entrys != null && Args.getInstance().getStorage().isContractParseSwitch()) {
-      String logHash = logInfo.getTopics().get(0).toString();
+    if (entrys != null && topics != null && !topics.isEmpty() && !ArrayUtils
+        .isEmpty(topics.get(0).getData()) && Args.getInstance().getStorage()
+        .isContractParseSwitch()) {
+      String logHash = topics.get(0).toString();
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
 
