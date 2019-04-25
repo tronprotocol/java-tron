@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
@@ -20,8 +22,10 @@ import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 
+@Component
 public class ShieldCoinConstructor {
 
   private static long fee = 10_000_000L;
@@ -39,6 +43,9 @@ public class ShieldCoinConstructor {
   private boolean isToTAddress = false;
 
   private long targetAmount = 10_000_000L;
+
+  @Autowired
+  private Wallet wallet;
 
   public ShieldCoinConstructor() {
   }
@@ -124,7 +131,7 @@ public class ShieldCoinConstructor {
 
     // todo：check value
 
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
 
     byte[] ovk = null;
     if (isFromTAddress) {

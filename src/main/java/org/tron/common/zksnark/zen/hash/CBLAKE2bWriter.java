@@ -1,4 +1,4 @@
-package org.tron.common.zksnark.zen.sighash;
+package org.tron.common.zksnark.zen.hash;
 
 import org.tron.common.zksnark.zen.Libsodium;
 import org.tron.common.zksnark.zen.Libsodium.ILibsodium.crypto_generichash_blake2b_state;

@@ -10,11 +10,16 @@ import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.PedersenHashCapsule;
 import org.tron.common.zksnark.merkle.EmptyMerkleRoots;
@@ -45,7 +50,10 @@ import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -63,6 +71,50 @@ import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
 
 public class SendCoinShieldTest {
+
+  public static final long totalBalance = 1000_0000_000_000L;
+  private static String dbPath = "output_ShieldedTransaction_test";
+  private static String dbDirectory = "db_ShieldedTransaction_test";
+  private static String indexDirectory = "index_ShieldedTransaction_test";
+  private static AnnotationConfigApplicationContext context;
+  private static Manager dbManager;
+  private static Wallet wallet;
+
+
+  static {
+    Args.setParam(
+        new String[]{
+            "--output-directory", dbPath,
+            "--storage-db-directory", dbDirectory,
+            "--storage-index-directory", indexDirectory,
+            "-w",
+            "--debug"
+        },
+        "config-test-mainnet.conf"
+    );
+    context = new TronApplicationContext(DefaultConfig.class);
+  }
+
+  /**
+   * Init data.
+   */
+  @BeforeClass
+  public static void init() {
+    dbManager = context.getBean(Manager.class);
+    wallet = context.getBean(Wallet.class);
+    //init energy
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
+  }
+
+  @AfterClass
+  public static void removeDb() {
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
 
   // @Test
   public void testShieldCoinConstructor() {
@@ -249,7 +301,7 @@ public class SendCoinShieldTest {
   public void testGenerateSpendProof() throws Exception {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
@@ -272,7 +324,7 @@ public class SendCoinShieldTest {
   @Test
   public void generateOutputProof() {
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
@@ -287,7 +339,7 @@ public class SendCoinShieldTest {
   @Test
   public void verifyOutputProof() {
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
@@ -327,7 +379,7 @@ public class SendCoinShieldTest {
   public void testVerifySpendProof() {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
@@ -378,7 +430,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
@@ -415,12 +467,15 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransaction()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, ContractExeException, AccountResourceInsufficientException {
+      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+      TaposException, TransactionExpirationException, ReceiptCheckErrException,
+      DupTransactionException, VMIllegalException, ValidateSignatureException,
+      ContractExeException, AccountResourceInsufficientException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
@@ -430,6 +485,9 @@ public class SendCoinShieldTest {
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
+
+    dbManager.getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     builder.addSaplingSpend(expsk, note, anchor, voucher);
 
@@ -442,8 +500,7 @@ public class SendCoinShieldTest {
 
     TransactionCapsule transactionCap = builder.build();
 
-    Manager manager = new Manager();
-    boolean ok = manager.pushTransaction(transactionCap);
+    boolean ok = dbManager.pushTransaction(transactionCap);
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ok);
@@ -453,7 +510,7 @@ public class SendCoinShieldTest {
   public void finalCheck() {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    TransactionBuilder builder = new TransactionBuilder(wallet);
     // generate spend proof
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
