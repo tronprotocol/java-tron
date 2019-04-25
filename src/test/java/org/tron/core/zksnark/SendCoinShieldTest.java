@@ -6,7 +6,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.Arrays;
@@ -192,18 +191,9 @@ public class SendCoinShieldTest {
     String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
     PedersenHash c = String2PedersenHash(s3);
 
-<<<<<<< HEAD
     PedersenHash p_in = ByteArray2PedersenHash(cm);
-
-    System.out.println("root_empty------" + ByteArray.toHexString(tree.getRootArray()));
-
     tree.append(a);
-    System.out.println("root_a------" + ByteArray.toHexString(tree.getRootArray()));
 
-=======
-    PedersenHash p_in =ByteArray2PedersenHash(cm);
-    tree.append(a); 
->>>>>>> ae025ff9156a5d70c5ab8eb3c67c7b383f0ba27f
     tree.append(p_in);
 
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
@@ -429,7 +419,8 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSaplingSpend(expsk, note, anchor, voucher);
-    SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(builder.getSpends().get(0), ctx);
+    SpendDescriptionCapsule spendDescriptionCapsule = builder
+        .generateSpendProof(builder.getSpends().get(0), ctx);
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -437,7 +428,8 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
-    ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
+        .generateOutputProof(builder.getReceives().get(0), ctx);
 
     //create binding sig
     byte[] bindingSig = new byte[64];
