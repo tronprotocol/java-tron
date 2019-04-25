@@ -427,7 +427,7 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      trx = new TransactionMessage(signaturedTransaction.toByteArray()).getTransactionCapsule();
+//      trx = new TransactionMessage(signaturedTransaction.toByteArray()).getTransactionCapsule();
       if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
         return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
             .build();
