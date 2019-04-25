@@ -15,8 +15,8 @@ public class BlockMessage extends TronMessage {
     this.type = MessageTypes.BLOCK.asByte();
     this.block = new BlockCapsule(getCodedInputStream(data));
     if (Message.isFilter()) {
-      Message.compareBytes(data, block.getInstance().toByteArray());
-      TransactionCapsule.validContractProto(block.getInstance().getTransactionsList());
+//      Message.compareBytes(data, block.getInstance().toByteArray());
+//      TransactionCapsule.validContractProto(block.getInstance().getTransactionsList());
     }
   }
 
