@@ -901,6 +901,43 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getAccountById(String httpNode, String accountId, Boolean visable) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getaccountbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("account_id", accountId);
+      userBaseObj2.addProperty("visible",visable);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getAccountByIdFromSolidity(String httpSolidityNode, String accountId, Boolean visable) {
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getaccountbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("account_id", accountId);
+      userBaseObj2.addProperty("visible",visable);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getAccount(String httpNode, byte[] queryAddress) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getaccount";
