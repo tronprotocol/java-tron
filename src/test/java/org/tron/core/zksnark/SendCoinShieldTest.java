@@ -204,11 +204,18 @@ public class SendCoinShieldTest {
     PedersenHash c = String2PedersenHash(s3);
 
     PedersenHash p_in = ByteArray2PedersenHash(cm);
+
+    //root_empty------fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e
+
+    //root_a------ee880ed73e96ba0739578c87ba8e6a4bc33b5e63bb98875e6e2f04b214e9fb59
     tree.append(a);
 
+    //cm------7a3c8007280da7db97a5645625f8a2ce9ffcfb072273d96e53a3c48607617970
+    //root_cm------c7941215c2c6054012ca9267ec1f47fdedbb1a7330d29a36405b1a7b5372d81c
     tree.append(p_in);
 
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+    //root_c------114c9fce928d0dae76051a26935fd523eac34a64fa12e635a0062d1f26de304f
     voucher.append(c);
 
     return voucher;
@@ -245,27 +252,38 @@ public class SendCoinShieldTest {
         outputPath.getBytes(), outputPath.length(), outputHash);
   }
 
+
+  @Test
+  public void testStringRevert() throws Exception {
+    byte[] bytes = ByteArray
+        .fromHexString("6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c");
+
+    ZksnarkUtils.sort(bytes);
+    System.out.println("testStringRevert------" + ByteArray.toHexString(bytes));
+  }
+
   @Test
   public void testGenerateSpendProof() throws Exception {
     librustzcashInitZksnarkParams();
 
     TransactionBuilder builder = new TransactionBuilder();
 
-    ExtendedSpendingKey xsk = createXskDefault();
+    ExtendedSpendingKey xsk = createXsk(
+        "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = xsk.getExpsk();
     PaymentAddress address = xsk.DefaultAddress();
 
     Note note = new Note(address, 100);
     note.r = ByteArray
         .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
-    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
-
-    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
+//    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+//    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+//    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+//
+//    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
 
   }
 
