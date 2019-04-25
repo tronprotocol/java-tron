@@ -1,9 +1,9 @@
 package org.tron.common.logsfilter.trigger;
 
-import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.runtime.vm.RawData;
 
 public class ContractTrigger extends Trigger {
 
@@ -69,7 +69,11 @@ public class ContractTrigger extends Trigger {
 
   @Getter
   @Setter
-  private LogInfo rawData;
+  private LogInfo logInfo;
+
+  @Getter
+  @Setter
+  private RawData rawData;
 
   @Getter
   @Setter

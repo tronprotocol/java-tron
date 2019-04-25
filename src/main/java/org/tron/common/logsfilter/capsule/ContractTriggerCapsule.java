@@ -18,6 +18,7 @@ import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.runtime.vm.RawData;
 import org.tron.core.config.args.Args;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
@@ -38,7 +39,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   public void processTrigger() {
     ContractTrigger event;
     boolean isEvent = false;
-    LogInfo logInfo = contractTrigger.getRawData();
+    LogInfo logInfo = contractTrigger.getLogInfo();
     JSONObject abi = null;
     JSONArray entrys = null;
     String abiString = contractTrigger.getAbiString();
@@ -132,7 +133,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
     }
 
-    event.setRawData(logInfo);
+    RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());
+
+    event.setRawData(rawData);
     event.setAbiString(contractTrigger.getAbiString());
 
     event.setUniqueId(contractTrigger.getUniqueId());
