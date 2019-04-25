@@ -5,7 +5,6 @@ import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDEN
 import java.util.ArrayList;
 import java.util.List;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.zen.address.IncomingViewingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.note.NoteEntry;
@@ -15,6 +14,7 @@ import org.tron.common.zksnark.zen.walletdb.CKeyMetadata;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 
 public class RpcWallet {
 
@@ -104,7 +104,7 @@ public class RpcWallet {
 
     ShieldCoinConstructor constructor =
         new ShieldCoinConstructor(fromAddr, outputs);
-    TransactionBuilderResult result = constructor.build();
+    TransactionCapsule result = constructor.build();
 //    broadcastTX();
   }
 

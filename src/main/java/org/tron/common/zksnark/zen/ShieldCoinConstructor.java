@@ -11,7 +11,6 @@ import java.util.Set;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
@@ -21,6 +20,7 @@ import org.tron.common.zksnark.zen.transaction.Recipient;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.capsule.TransactionCapsule;
 
 public class ShieldCoinConstructor {
 
@@ -120,7 +120,7 @@ public class ShieldCoinConstructor {
   }
 
 
-  public TransactionBuilderResult build() {
+  public TransactionCapsule build() {
 
     // todo：check value
 
@@ -193,7 +193,7 @@ public class ShieldCoinConstructor {
       }
     }
 
-    return builder.Build();
+    return builder.build();
   }
 
   private boolean findUnspentNotes() {

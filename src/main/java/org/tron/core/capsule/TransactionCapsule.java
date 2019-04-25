@@ -76,6 +76,7 @@ import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.SetAccountIdContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -466,6 +467,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
+        case ShieldedTransferContract:
+          ShieldedTransferContract shieldedTransferContract = contractParameter
+              .unpack(ShieldedTransferContract.class);
+          if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()) {
+            owner = shieldedTransferContract.getTransparentFromAddress();
+          } else {
+            owner = null;
+          }
+          break;
         // todo add other contract
         default:
           return null;
@@ -676,14 +686,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     //Do not support multi contracts in one transaction
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
-    if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
+    if (contract.getType() != ContractType.ShieldedTransferContract) {
       validatePubSignature(manager);
     } else {  //TODO: need more check here. must compare with shielded transaction's verification.
       byte[] owner = getOwner(contract);
       if (!ArrayUtils.isEmpty(owner)) {
         validatePubSignature(manager);   //If no pub input , need not signature.
       }
-      validateZkSignature();
     }
 
     isVerified = true;

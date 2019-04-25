@@ -1,7 +1,7 @@
 package org.tron.common.zksnark.zen;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,7 @@ import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public class TransactionBuilder {
@@ -93,7 +94,7 @@ public class TransactionBuilder {
   //
   //  void SendChangeTo(CTxDestination&changeAddr);
 
-  public TransactionBuilderResult Build() {
+  public TransactionCapsule build() {
 
     //
     // Sapling spends and outputs
@@ -127,9 +128,10 @@ public class TransactionBuilder {
     }
 
     // Empty output script.
-    byte[] dataToBeSigned;//256 
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
     try {
-      TransactionCapsule transactionCapsule = wallet.createTransactionCapsule(
+      transactionCapsule = wallet.createTransactionCapsule(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
       dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray())
           .getBytes();
@@ -161,7 +163,17 @@ public class TransactionBuilder {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
-    return new TransactionBuilderResult(contractBuilder.build());
+    Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
+        .getRawDataBuilder()
+        .clearContract()
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
+                .setParameter(
+                    Any.pack(contractBuilder.build())).build());
+
+    Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
+        .setRawData(rawBuilder).build();
+    return new TransactionCapsule(transaction);
   }
 
   public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
@@ -289,10 +301,5 @@ public class TransactionBuilder {
     private byte[] memo; // 256
   }
 
-  @AllArgsConstructor
-  public static class TransactionBuilderResult {
 
-    @Getter
-    private ShieldedTransferContract shieldedTransferContract;
-  }
 }

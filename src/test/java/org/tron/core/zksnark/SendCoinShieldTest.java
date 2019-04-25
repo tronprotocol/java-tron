@@ -31,7 +31,6 @@ import org.tron.common.zksnark.zen.ShieldCoinConstructor;
 import org.tron.common.zksnark.zen.ShieldWallet;
 import org.tron.common.zksnark.zen.TransactionBuilder;
 import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
-import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
 import org.tron.common.zksnark.zen.ZkChainParams;
 import org.tron.common.zksnark.zen.address.DiversifierT;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
@@ -46,6 +45,19 @@ import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.utils.KeyIo;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
@@ -68,7 +80,7 @@ public class SendCoinShieldTest {
     ShieldCoinConstructor constructor = new ShieldCoinConstructor();
     constructor.setFromAddress(fromAddr);
     constructor.setZOutputs(outputs);
-    TransactionBuilderResult result = constructor.build();
+    TransactionCapsule result = constructor.build();
   }
 
   //  @Test
@@ -399,6 +411,42 @@ public class SendCoinShieldTest {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
+  }
+
+  @Test
+  public void pushShieldedTransaction()
+      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException, TaposException, TransactionExpirationException, ReceiptCheckErrException, DupTransactionException, VMIllegalException, ValidateSignatureException, ContractExeException, AccountResourceInsufficientException {
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    // generate spend proof
+    librustzcashInitZksnarkParams();
+
+    TransactionBuilder builder = new TransactionBuilder();
+
+    ExtendedSpendingKey xsk = createXskDefault();
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    PaymentAddress address = xsk.DefaultAddress();
+    Note note = new Note(address, 10000);
+
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    builder.addSaplingSpend(expsk, note, anchor, voucher);
+
+    // generate output proof
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+
+    TransactionCapsule transactionCap = builder.build();
+
+    Manager manager = new Manager();
+    boolean ok = manager.pushTransaction(transactionCap);
+
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
   }
 
   @Test

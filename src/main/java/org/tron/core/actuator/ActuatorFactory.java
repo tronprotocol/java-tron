@@ -101,6 +101,8 @@ public class ActuatorFactory {
         return new ExchangeTransactionActuator(contract.getParameter(), manager);
       case AccountPermissionUpdateContract:
         return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
+      case ShieldedTransferContract:
+        return new ShieldedTransferActuator(contract.getParameter(), manager);
       default:
         break;
 

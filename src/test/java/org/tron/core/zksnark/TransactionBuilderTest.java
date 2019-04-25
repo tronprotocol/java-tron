@@ -1,14 +1,11 @@
 package org.tron.core.zksnark;
 
 import com.google.protobuf.ByteString;
-import com.sun.jna.Pointer;
-import java.io.File;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.common.zksnark.zen.Librustzcash;
 import org.tron.common.zksnark.zen.TransactionBuilder;
 import org.tron.common.zksnark.zen.address.DiversifierT;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
@@ -19,7 +16,6 @@ import org.tron.common.zksnark.zen.address.SpendingKey;
 import org.tron.common.zksnark.zen.note.BaseNote;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
 import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ShieldedTransferContract;
 
 public class TransactionBuilderTest {
 
@@ -49,7 +45,6 @@ public class TransactionBuilderTest {
 
     builder.addSaplingSpend(expandedSpendingKey, note, anchor, voucher);
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
-    ShieldedTransferContract shieldedTransferContract = builder.Build().getShieldedTransferContract();
   }
 
   // Create a Transparent-only transaction
