@@ -35,11 +35,13 @@ public class ActuatorFactory {
     Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     rawData.getContractList()
-        .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
+        .forEach(contract -> actuatorList
+            .add(getActuatorByContract(contract, manager, transactionCapsule)));
     return actuatorList;
   }
 
-  private static Actuator getActuatorByContract(Contract contract, Manager manager) {
+  private static Actuator getActuatorByContract(Contract contract, Manager manager,
+      TransactionCapsule tx) {
     switch (contract.getType()) {
       case AccountUpdateContract:
         return new UpdateAccountActuator(contract.getParameter(), manager);
@@ -102,7 +104,7 @@ public class ActuatorFactory {
       case AccountPermissionUpdateContract:
         return new AccountPermissionUpdateActuator(contract.getParameter(), manager);
       case ShieldedTransferContract:
-        return new ShieldedTransferActuator(contract.getParameter(), manager);
+        return new ShieldedTransferActuator(contract.getParameter(), manager, tx);
       default:
         break;
 

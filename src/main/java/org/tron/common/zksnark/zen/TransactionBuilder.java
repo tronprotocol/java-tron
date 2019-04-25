@@ -10,10 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
+import org.tron.common.zksnark.zen.hash.HashShieldedTransaction;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
 import org.tron.common.zksnark.zen.note.BaseNotePlaintext.NotePlaintext;
 import org.tron.common.zksnark.zen.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
@@ -26,6 +26,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
 
 public class TransactionBuilder {
 
@@ -46,6 +47,10 @@ public class TransactionBuilder {
 
   @Getter
   private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
+
+  public TransactionBuilder(Wallet wallet) {
+    this.wallet = wallet;
+  }
 
   //  List<TransparentInputInfo> tIns;
 
@@ -131,10 +136,10 @@ public class TransactionBuilder {
     byte[] dataToBeSigned;//256
     TransactionCapsule transactionCapsule;
     try {
-      transactionCapsule = wallet.createTransactionCapsule(
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = Sha256Hash.of(transactionCapsule.getInstance().getRawData().toByteArray())
-          .getBytes();
+
+      dataToBeSigned = HashShieldedTransaction.hash(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());

@@ -188,8 +188,8 @@ public class ShieldedTransferActuatorTest {
   private SpendDescriptionCapsule generateSpendDescription() {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
-    
+    TransactionBuilder builder = null; //= new TransactionBuilder();
+
     //generate extended spending key
     String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
     HDSeed seed = new HDSeed(ByteArray.fromHexString(seedString));
@@ -204,7 +204,6 @@ public class ShieldedTransferActuatorTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-
 
     //generate note cm to merkle root
     IncrementalMerkleTreeContainer tree =
@@ -228,7 +227,6 @@ public class ShieldedTransferActuatorTest {
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
 //    voucher.append(c);
 
-
     byte[] anchor = voucher.root().getContent().toByteArray();
 
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
@@ -236,7 +234,6 @@ public class ShieldedTransferActuatorTest {
     SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
     return sdesc;
   }
-
 
 
   private ReceiveDescriptionCapsule generateReceiveDescription() {
