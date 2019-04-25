@@ -338,9 +338,6 @@ public class SendCoinShieldTest {
         .generateSpendProof(spend, proofContext);
     Librustzcash.librustzcashSaplingProvingCtxFree(proofContext);
 
-    System.out.println(
-        "---------:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
-
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
         expsk.getAsk(),
@@ -361,7 +358,6 @@ public class SendCoinShieldTest {
     );
     Librustzcash.librustzcashSaplingVerificationCtxFree(verifyContext);
     Assert.assertEquals(ok, true);
-
   }
 
   @Test
@@ -403,7 +399,6 @@ public class SendCoinShieldTest {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
-
   }
 
   @Test
@@ -502,14 +497,10 @@ public class SendCoinShieldTest {
 
     for (int i = 0; i < 32; i++) {
       String string = array.getString(i);
-
       EmptyMerkleRoots emptyMerkleRootsInstance = EmptyMerkleRoots.emptyMerkleRootsInstance;
-
       byte[] bytes = emptyMerkleRootsInstance.emptyRoot(i).getContent().toByteArray();
-
       Assert.assertEquals(string, ByteArray.toHexString(bytes));
     }
-
   }
 
   private JSONArray readFile(String fileName) throws Exception {
@@ -621,25 +612,21 @@ public class SendCoinShieldTest {
         first = false;
       }
     }
+    try {
+      tree.append(new PedersenHashCapsule().getInstance());
+      Assert.fail("Tree should be full now");
+    } catch (Exception ex) {
 
-    {
+    }
+
+    for (IncrementalMerkleVoucherCapsule wit : witnesses) {
       try {
-        tree.append(new PedersenHashCapsule().getInstance());
+        wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
         Assert.fail("Tree should be full now");
       } catch (Exception ex) {
 
       }
-
-      for (IncrementalMerkleVoucherCapsule wit : witnesses) {
-        try {
-          wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
-          Assert.fail("Tree should be full now");
-        } catch (Exception ex) {
-
-        }
-      }
     }
-
   }
 
 }
