@@ -79,6 +79,7 @@ public class HttpTestAccount004 {
    */
   @Test(enabled = true, description = "Get account by id via http")
   public void test3getAccountIdFromSolidity() {
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode,httpSoliditynode);
     response = HttpMethed.getAccountByIdFromSolidity(httpSoliditynode,accountId,true);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
