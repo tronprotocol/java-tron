@@ -1,75 +1,137 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
+import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.zksnark.PedersenHashCapsule;
-import org.tron.common.zksnark.merkle.EmptyMerkleRoots;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.common.zksnark.merkle.MerklePath;
-import org.tron.common.zksnark.zen.HdChain;
-import org.tron.common.zksnark.zen.KeyStore;
-import org.tron.common.zksnark.zen.Librustzcash;
-import org.tron.common.zksnark.zen.RpcWallet;
-import org.tron.common.zksnark.zen.ShieldCoinConstructor;
-import org.tron.common.zksnark.zen.ShieldWallet;
-import org.tron.common.zksnark.zen.TransactionBuilder;
-import org.tron.common.zksnark.zen.TransactionBuilder.SpendDescriptionInfo;
-import org.tron.common.zksnark.zen.TransactionBuilder.TransactionBuilderResult;
-import org.tron.common.zksnark.zen.ZkChainParams;
-import org.tron.common.zksnark.zen.address.DiversifierT;
-import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
-import org.tron.common.zksnark.zen.address.FullViewingKey;
-import org.tron.common.zksnark.zen.address.IncomingViewingKey;
-import org.tron.common.zksnark.zen.address.PaymentAddress;
-import org.tron.common.zksnark.zen.address.SpendingKey;
-import org.tron.common.zksnark.zen.note.BaseNote.Note;
-import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
-import org.tron.common.zksnark.zen.transaction.Recipient;
-import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
-import org.tron.common.zksnark.zen.utils.KeyIo;
-import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
-import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.common.zksnark.Librustzcash;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.zen.KeyStore;
+import org.tron.core.zen.ZenTransactionBuilder;
+import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZenTransactionBuilderFactory;
+import org.tron.core.zen.ZenWallet;
+import org.tron.core.zen.ZkChainParams;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.merkle.EmptyMerkleRoots;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.MerklePath;
+import org.tron.core.zen.merkle.PedersenHashCapsule;
+import org.tron.core.zen.note.BaseNote.Note;
+import org.tron.core.zen.transaction.ReceiveDescriptionCapsule;
+import org.tron.core.zen.transaction.Recipient;
+import org.tron.core.zen.transaction.SpendDescriptionCapsule;
+import org.tron.core.zen.utils.KeyIo;
+import org.tron.core.zen.zip32.ExtendedSpendingKey;
+import org.tron.core.zen.zip32.HDSeed;
+import org.tron.core.zen.zip32.HdChain;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
 
 public class SendCoinShieldTest {
 
+  public static final long totalBalance = 1000_0000_000_000L;
+  private static String dbPath = "output_ShieldedTransaction_test";
+  private static String dbDirectory = "db_ShieldedTransaction_test";
+  private static String indexDirectory = "index_ShieldedTransaction_test";
+  private static AnnotationConfigApplicationContext context;
+  private static Manager dbManager;
+  private static Wallet wallet;
+
+
+  static {
+    Args.setParam(
+        new String[]{
+            "--output-directory", dbPath,
+            "--storage-db-directory", dbDirectory,
+            "--storage-index-directory", indexDirectory,
+            "-w",
+            "--debug"
+        },
+        "config-test-mainnet.conf"
+    );
+    context = new TronApplicationContext(DefaultConfig.class);
+  }
+
+  /**
+   * Init data.
+   */
+  @BeforeClass
+  public static void init() {
+    dbManager = context.getBean(Manager.class);
+    wallet = context.getBean(Wallet.class);
+    //init energy
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
+
+    dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
+  }
+
+  @AfterClass
+  public static void removeDb() {
+    Args.clearParam();
+    context.destroy();
+    FileUtil.deleteDir(new File(dbPath));
+  }
+
   // @Test
   public void testShieldCoinConstructor() {
-    RpcWallet wallet = new RpcWallet();
+    Wallet wallet = new Wallet();
 
-    String fromAddr = wallet.getNewAddress();
+    String fromAddr = wallet.getNewZenAddress();
 
     List<Recipient> outputs = Lists.newArrayList();
     Recipient recipient = new Recipient();
-    recipient.address = wallet.getNewAddress();
+    recipient.address = wallet.getNewZenAddress();
     recipient.value = 1000_000L;
     recipient.memo = "demo";
     outputs.add(recipient);
 
-    ShieldCoinConstructor constructor = new ShieldCoinConstructor();
+    ZenTransactionBuilderFactory constructor = new ZenTransactionBuilderFactory();
     constructor.setFromAddress(fromAddr);
     constructor.setZOutputs(outputs);
-    TransactionBuilderResult result = constructor.build();
+    TransactionCapsule result = constructor.build();
   }
 
   //  @Test
@@ -130,7 +192,7 @@ public class SendCoinShieldTest {
     KeyStore.addFullViewingKey(ivk, fvk);
     KeyStore.addIncomingViewingKey(address, ivk);
 
-    System.out.print(ShieldWallet.getSpendingKeyForPaymentAddress(address).isPresent());
+    System.out.print(ZenWallet.getSpendingKeyForPaymentAddress(address).isPresent());
   }
 
   @Test
@@ -192,21 +254,12 @@ public class SendCoinShieldTest {
     String s3 = "6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c";
     PedersenHash c = String2PedersenHash(s3);
 
-    PedersenHash p_in =ByteArray2PedersenHash(cm);
-
-    System.out.println("root_empty------" + ByteArray.toHexString(tree.getRootArray()));
+    PedersenHash cmHash = ByteArray2PedersenHash(cm);
 
     tree.append(a);
-    System.out.println("root_a------" + ByteArray.toHexString(tree.getRootArray()));
-
-    tree.append(p_in);
-    System.out.println("cm------" + ByteArray.toHexString(p_in.getContent().toByteArray()));
-    System.out.println("root_cm------" + ByteArray.toHexString(tree.getRootArray()));
-
+    tree.append(cmHash);
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
-    System.out.println("root_c------" + ByteArray.toHexString(voucher.getRootArray()));
-
     return voucher;
   }
 
@@ -241,15 +294,26 @@ public class SendCoinShieldTest {
         outputPath.getBytes(), outputPath.length(), outputHash);
   }
 
+
+  @Test
+  public void testStringRevert() throws Exception {
+    byte[] bytes = ByteArray
+        .fromHexString("6c030e6d7460f91668cc842ceb78cdb54470469e78cd59cf903d3a6e1aa03e7c");
+
+    ZksnarkUtils.sort(bytes);
+    System.out.println("testStringRevert------" + ByteArray.toHexString(bytes));
+  }
+
   @Test
   public void testGenerateSpendProof() throws Exception {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
-    ExtendedSpendingKey xsk = createXskDefault();
-    ExpandedSpendingKey expsk = xsk.getExpsk();
-    PaymentAddress address = xsk.DefaultAddress();
+    SpendingKey sk = SpendingKey
+        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
 
     Note note = new Note(address, 100);
     note.r = ByteArray
@@ -257,18 +321,18 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-//    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-//    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-//    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
-//
-//    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
+    SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule sdesc = builder.generateSpendProof(spend, ctx);
+
+    System.out.println(ByteArray.toHexString(sdesc.getRk().toByteArray()));
 
   }
 
   @Test
   public void generateOutputProof() {
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
@@ -283,7 +347,7 @@ public class SendCoinShieldTest {
   @Test
   public void verifyOutputProof() {
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
@@ -323,7 +387,7 @@ public class SendCoinShieldTest {
   public void testVerifySpendProof() {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     //    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
@@ -341,11 +405,10 @@ public class SendCoinShieldTest {
     //    builder.addSaplingSpend(expsk, note, anchor, voucher);
     //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
-
-    System.out.println(
-        "---------:" + ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
+    Pointer proofContext = Librustzcash.librustzcashSaplingProvingCtxInit();
+    SpendDescriptionCapsule spendDescriptionCapsule = builder
+        .generateSpendProof(spend, proofContext);
+    Librustzcash.librustzcashSaplingProvingCtxFree(proofContext);
 
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
@@ -354,8 +417,9 @@ public class SendCoinShieldTest {
         getHash(),
         result);
 
+    Pointer verifyContext = Librustzcash.librustzcashSaplingVerificationCtxInit();
     boolean ok = Librustzcash.librustzcashSaplingCheckSpend(
-        ctx,
+        verifyContext,
         spendDescriptionCapsule.getValueCommitment().toByteArray(),
         spendDescriptionCapsule.getAnchor().toByteArray(),
         spendDescriptionCapsule.getNullifier().toByteArray(),
@@ -364,8 +428,8 @@ public class SendCoinShieldTest {
         result,
         getHash()
     );
+    Librustzcash.librustzcashSaplingVerificationCtxFree(verifyContext);
     Assert.assertEquals(ok, true);
-
   }
 
   @Test
@@ -374,7 +438,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
@@ -407,14 +471,54 @@ public class SendCoinShieldTest {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
+  }
 
+  @Test
+  public void pushShieldedTransaction()
+      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+      TaposException, TransactionExpirationException, ReceiptCheckErrException,
+      DupTransactionException, VMIllegalException, ValidateSignatureException,
+      ContractExeException, AccountResourceInsufficientException {
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    // generate spend proof
+    librustzcashInitZksnarkParams();
+
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+    ExtendedSpendingKey xsk = createXskDefault();
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    PaymentAddress address = xsk.DefaultAddress();
+    Note note = new Note(address, 10000);
+
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    dbManager.getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+
+    builder.addSaplingSpend(expsk, note, anchor, voucher);
+
+    // generate output proof
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+
+    TransactionCapsule transactionCap = builder.build();
+
+    boolean ok = dbManager.pushTransaction(transactionCap);
+
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
   }
 
   @Test
   public void finalCheck() {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     librustzcashInitZksnarkParams();
-    TransactionBuilder builder = new TransactionBuilder();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     // generate spend proof
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
@@ -423,7 +527,8 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSaplingSpend(expsk, note, anchor, voucher);
-    SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(builder.getSpends().get(0), ctx);
+    SpendDescriptionCapsule spendDescriptionCapsule = builder
+        .generateSpendProof(builder.getSpends().get(0), ctx);
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -431,7 +536,8 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
-    ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(builder.getReceives().get(0), ctx);
+    ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
+        .generateOutputProof(builder.getReceives().get(0), ctx);
 
     //create binding sig
     byte[] bindingSig = new byte[64];
@@ -504,14 +610,10 @@ public class SendCoinShieldTest {
 
     for (int i = 0; i < 32; i++) {
       String string = array.getString(i);
-
       EmptyMerkleRoots emptyMerkleRootsInstance = EmptyMerkleRoots.emptyMerkleRootsInstance;
-
       byte[] bytes = emptyMerkleRootsInstance.emptyRoot(i).getContent().toByteArray();
-
       Assert.assertEquals(string, ByteArray.toHexString(bytes));
     }
-
   }
 
   private JSONArray readFile(String fileName) throws Exception {
@@ -623,25 +725,21 @@ public class SendCoinShieldTest {
         first = false;
       }
     }
+    try {
+      tree.append(new PedersenHashCapsule().getInstance());
+      Assert.fail("Tree should be full now");
+    } catch (Exception ex) {
 
-    {
+    }
+
+    for (IncrementalMerkleVoucherCapsule wit : witnesses) {
       try {
-        tree.append(new PedersenHashCapsule().getInstance());
+        wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
         Assert.fail("Tree should be full now");
       } catch (Exception ex) {
 
       }
-
-      for (IncrementalMerkleVoucherCapsule wit : witnesses) {
-        try {
-          wit.toMerkleVoucherContainer().append(new PedersenHashCapsule().getInstance());
-          Assert.fail("Tree should be full now");
-        } catch (Exception ex) {
-
-        }
-      }
     }
-
   }
 
 }

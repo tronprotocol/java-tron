@@ -8,17 +8,18 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.MerkleContainer;
-import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
@@ -28,8 +29,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  ShieldedTransferActuator(Any contract, Manager dbManager) {
+  private TransactionCapsule tx;
+
+  ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
+    this.tx = tx;
   }
 
   boolean isTransparentOut = false;
@@ -41,29 +45,33 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throws ContractExeException {
 
     long fee = calcFee();
-    ShieldedTransferContract strx;
+    ShieldedTransferContract shieldedTransferContract;
     try {
-      strx = contract.unpack(ShieldedTransferContract.class);
+      shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
-    if (strx.getTransparentFromAddress().toByteArray().length > 0) {
-      executeTransparentOut(strx.getTransparentFromAddress().toByteArray(), strx.getFromAmount(), fee, ret);
+    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
+      executeTransparentOut(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
+          shieldedTransferContract.getFromAmount(), fee, ret);
     }
 
-    executeShielded(strx.getSpendDescriptionList(), strx.getReceiveDescriptionList());
+    executeShielded(shieldedTransferContract.getSpendDescriptionList(),
+        shieldedTransferContract.getReceiveDescriptionList());
 
-    if (strx.getTransparentToAddress().toByteArray().length > 0) {
-      executeTransparentIn(strx.getTransparentToAddress().toByteArray(), strx.getToAmount());
+    if (shieldedTransferContract.getTransparentToAddress().toByteArray().length > 0) {
+      executeTransparentIn(shieldedTransferContract.getTransparentToAddress().toByteArray(),
+          shieldedTransferContract.getToAmount());
     }
 
     return true;
   }
 
-  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee, TransactionResultCapsule ret) throws ContractExeException {
+  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee,
+      TransactionResultCapsule ret) throws ContractExeException {
     try {
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
@@ -85,8 +93,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   //record shielded transaction data.
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
     //handle spends
-    for (SpendDescription spend: spends
-    ) {
+    for (SpendDescription spend : spends
+        ) {
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
@@ -94,9 +102,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
         .getCurrentMerkle();
 
-
     //handle receives
-    for (ReceiveDescription receive : receives)  {
+    for (ReceiveDescription receive : receives) {
       dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
       //add merkle root
       //currentMerkle.append();
@@ -106,6 +113,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    System.out.println("000000009999999");
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -119,8 +127,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     ShieldedTransferContract shieldedTransferContract;
+    byte[] signHash;
     try {
       shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
+      signHash = TransactionCapsule.hash(tx);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -131,8 +141,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       return false;
     }
 
-    byte[] signHash = new byte[32];
-    // TODO generate signhash
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {
@@ -194,7 +202,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     return true;
   }
 
-  private boolean validateTransparent(ShieldedTransferContract strx) throws ContractValidateException {
+  private boolean validateTransparent(ShieldedTransferContract strx)
+      throws ContractValidateException {
 
     byte[] toAddress = strx.getTransparentToAddress().toByteArray();
     byte[] ownerAddress = strx.getTransparentFromAddress().toByteArray();
@@ -229,8 +238,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
 
       if (balance < amountOut) {
-          throw new ContractValidateException(
-              "Validate TransferContract error, balance is not sufficient.");
+        throw new ContractValidateException(
+            "Validate TransferContract error, balance is not sufficient.");
       }
 
       //use shield transaction to create transparent address

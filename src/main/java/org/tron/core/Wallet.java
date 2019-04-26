@@ -20,6 +20,7 @@ package org.tron.core;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
@@ -77,14 +78,8 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
-import org.tron.common.zksnark.PedersenHashCapsule;
-import org.tron.common.zksnark.ShieldAddressGenerator;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -128,6 +123,23 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
+import org.tron.core.zen.KeyStore;
+import org.tron.core.zen.ZenTransactionBuilderFactory;
+import org.tron.core.zen.ZenWallet;
+import org.tron.core.zen.ZkChainParams;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.PedersenHashCapsule;
+import org.tron.core.zen.note.NoteEntry;
+import org.tron.core.zen.transaction.Recipient;
+import org.tron.core.zen.utils.KeyIo;
+import org.tron.core.zen.walletdb.CKeyMetadata;
+import org.tron.core.zen.zip32.ExtendedSpendingKey;
+import org.tron.core.zen.zip32.HDSeed;
+import org.tron.core.zen.zip32.HdChain;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
@@ -138,7 +150,6 @@ import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Contract.ZksnarkV0TransferContract;
@@ -338,23 +349,23 @@ public class Wallet {
     return address;
   }
 
-  public ShieldAddress generateShieldAddress() {
-    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
-    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
-
-    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
-    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
-
-    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
-    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
-
-    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
-    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
-
-    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
-    builder.setPublicAddress(ByteString.copyFrom(addPublic));
-    return builder.build();
-  }
+//  public ShieldAddress generateShieldAddress() {
+//    ShieldAddress.Builder builder = ShieldAddress.newBuilder();
+//    ShieldAddressGenerator shieldAddressGenerator = new ShieldAddressGenerator();
+//
+//    byte[] privateKey = shieldAddressGenerator.generatePrivateKey();
+//    byte[] publicKey = shieldAddressGenerator.generatePublicKey(privateKey);
+//
+//    byte[] privateKeyEnc = shieldAddressGenerator.generatePrivateKeyEnc(privateKey);
+//    byte[] publicKeyEnc = shieldAddressGenerator.generatePublicKeyEnc(privateKeyEnc);
+//
+//    byte[] addPrivate = ByteUtil.merge(privateKey, privateKeyEnc);
+//    byte[] addPublic = ByteUtil.merge(publicKey, publicKeyEnc);
+//
+//    builder.setPrivateAddress(ByteString.copyFrom(addPrivate));
+//    builder.setPublicAddress(ByteString.copyFrom(addPublic));
+//    return builder.build();
+//  }
 
   public Account getAccount(Account account) {
     AccountStore accountStore = dbManager.getAccountStore();
@@ -417,6 +428,26 @@ public class Wallet {
     return new TransactionCapsule(contract, accountStore).getInstance();
   }
 
+  public TransactionCapsule createTransactionCapsuleWithoutValidate(
+      com.google.protobuf.Message message,
+      ContractType contractType) throws ContractValidateException {
+    TransactionCapsule trx = new TransactionCapsule(message, contractType);
+    try {
+      BlockId blockId = dbManager.getHeadBlockId();
+      if (Args.getInstance().getTrxReferenceBlock().equals("solid")) {
+        blockId = dbManager.getSolidBlockId();
+      }
+      trx.setReference(blockId.getNum(), blockId.getBytes());
+      long expiration =
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
+      trx.setExpiration(expiration);
+      trx.setTimestamp();
+    } catch (Exception e) {
+      logger.error("Create transaction capsule failed.", e);
+    }
+    return trx;
+  }
 
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
@@ -1320,7 +1351,7 @@ public class Wallet {
       return null;
     }
 
-    org.tron.common.zksnark.merkle.MerklePath merklePath = null;
+    org.tron.core.zen.merkle.MerklePath merklePath = null;
     try {
       merklePath = dbManager.getMerkleContainer().merklePath(rt.toByteArray());
     } catch (Exception ex) {
@@ -1548,7 +1579,6 @@ public class Wallet {
 
     IncrementalMerkleVoucherContainer witness1 = null;
     IncrementalMerkleVoucherContainer witness2 = null;
-
 
     int synBlockNum = request.getBlockNum();
 
@@ -1857,4 +1887,95 @@ public class Wallet {
     return builder.build();
 
   }
+
+  //for shield transactions
+
+  public String getNewZenAddress() {
+    //seed
+    //AccountCounter
+
+    // Create new metadata
+    long nCreationTime = System.currentTimeMillis();
+    CKeyMetadata metadata = new CKeyMetadata(nCreationTime);
+
+    // Try to get the seed
+    HDSeed seed = KeyStore.seed;
+    // init data for test
+    seed.random(32);
+
+    if (seed == null) {
+      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
+    }
+
+    ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
+    int bip44CoinType = ZkChainParams.BIP44CoinType;
+
+    // We use a fixed keypath scheme of m/32'/coin_type'/account'
+    // Derive m/32'
+    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
+    // Derive m/32'/coin_type'
+    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
+
+    System.out.println("depth=" + ByteArray.toInt(master32hCth.getDepth()));
+    System.out.println("depth=" + ByteArray.toStr(master32hCth.getParentFVKTag()));
+    System.out.println("depth=" + ByteArray.toInt(master32hCth.getChildIndex()));
+
+    // Derive account key at next index, skip keys already known to the wallet
+    ExtendedSpendingKey xsk = null;
+
+    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
+      //
+      xsk = master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
+      metadata.hdKeyPath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
+      metadata.seedFp = HdChain.seedFp;
+      // Increment childkey index
+      HdChain.saplingAccountCounter++;
+    }
+
+    // Update the chain model in the database
+//    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
+//      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
+
+    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().inViewingKey();
+    ZenWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
+
+    PaymentAddress addr = xsk.DefaultAddress();
+    if (!ZenWallet.AddSaplingZKey(xsk, addr)) {
+      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
+    }
+
+    // return default sapling payment address.
+    String paymentAddress = KeyIo.EncodePaymentAddress(addr);
+    System.out.println("paymentAddress = " + paymentAddress);
+    return paymentAddress;
+  }
+
+  public void sendZenCoinShield(String[] params) {
+    String fromAddr = params[0];
+    List<Recipient> outputs = new ArrayList<>();
+
+    ZenTransactionBuilderFactory constructor =
+        new ZenTransactionBuilderFactory(fromAddr, outputs);
+    TransactionCapsule result = constructor.build();
+//    broadcastTX();
+  }
+
+
+  public long getBalanceZenAddress(String address, int minDepth, boolean requireSpendingKey) {
+    long balance = 0;
+    List<NoteEntry> saplingEntries;
+
+    PaymentAddress filterAddresses = null;// TODO can be null
+    if (address.length() > 0) {
+      filterAddresses = KeyIo.decodePaymentAddress(address);
+    }
+
+    saplingEntries = ZenWallet.GetFilteredNotes(filterAddresses, true, requireSpendingKey);
+    for (NoteEntry entry : saplingEntries) {
+      balance += entry.note.value;
+    }
+
+    return balance;
+  }
+
 }
