@@ -5,6 +5,7 @@ import static org.tron.core.zen.note.NoteEncryption.NOTEENCRYPTION_CIPHER_KEYSIZ
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.core.zen.ZkChainParams;
@@ -71,7 +72,8 @@ public class SaplingNoteEncryption {
     }
 
     byte[] k = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
-    NoteEncryption.PRFOck(k, ovk, cv, cm, message.data);
+    NoteEncryption.PRFOck(k, ovk, cv, cm, epk);
+
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     OutCiphertext ciphertext = new OutCiphertext();
     Libsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
