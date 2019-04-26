@@ -39,7 +39,6 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.zen.KeyStore;
-import org.tron.core.zen.RpcWallet;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilderFactory;
@@ -118,13 +117,13 @@ public class SendCoinShieldTest {
 
   // @Test
   public void testShieldCoinConstructor() {
-    RpcWallet wallet = new RpcWallet();
+    Wallet wallet = new Wallet();
 
-    String fromAddr = wallet.getNewAddress();
+    String fromAddr = wallet.getNewZenAddress();
 
     List<Recipient> outputs = Lists.newArrayList();
     Recipient recipient = new Recipient();
-    recipient.address = wallet.getNewAddress();
+    recipient.address = wallet.getNewZenAddress();
     recipient.value = 1000_000L;
     recipient.memo = "demo";
     outputs.add(recipient);
