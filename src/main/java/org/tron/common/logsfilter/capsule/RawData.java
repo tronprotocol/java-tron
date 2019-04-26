@@ -15,18 +15,21 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.runtime.vm;
+package org.tron.common.logsfilter.capsule;
 
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.runtime.vm.DataWord;
 
+@Data
 public class RawData {
 
   // for mongodb
-  public String address = "";
-  public List<DataWord> topics = new ArrayList<>();
-  public String data = "";
+  private String address;
+  private List<DataWord> topics;
+  private String data;
 
   public RawData(byte[] address, List<DataWord> topics, byte[] data) {
     this.address = (address != null) ? Hex.toHexString(address) : "";

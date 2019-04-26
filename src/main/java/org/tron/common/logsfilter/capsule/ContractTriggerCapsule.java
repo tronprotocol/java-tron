@@ -18,7 +18,6 @@ import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.runtime.vm.RawData;
 import org.tron.core.config.args.Args;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
