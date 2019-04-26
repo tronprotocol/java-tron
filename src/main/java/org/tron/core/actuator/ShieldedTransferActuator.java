@@ -36,6 +36,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   boolean isTransparentIn = false;
 
+
+
+
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
@@ -106,6 +109,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
+
+
 
   @Override
   public boolean validate() throws ContractValidateException {

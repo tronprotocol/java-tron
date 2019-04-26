@@ -7,6 +7,7 @@ import com.google.protobuf.Any.Builder;
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
 import java.io.File;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import org.tron.common.zksnark.zen.ZkChainParams;
 import org.tron.common.zksnark.zen.address.ExpandedSpendingKey;
 import org.tron.common.zksnark.zen.address.PaymentAddress;
 import org.tron.common.zksnark.zen.note.BaseNote.Note;
+import org.tron.common.zksnark.zen.note.SaplingNoteEncryption;
 import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
@@ -123,6 +125,7 @@ public class ShieldedTransferActuatorTest {
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setFromAmount(outAmount)
+            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
@@ -131,6 +134,7 @@ public class ShieldedTransferActuatorTest {
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setToAmount(inAmount)
+            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
@@ -141,6 +145,7 @@ public class ShieldedTransferActuatorTest {
             .setFromAmount(outAmount)
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setToAmount(inAmount)
+            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
@@ -189,7 +194,7 @@ public class ShieldedTransferActuatorTest {
     librustzcashInitZksnarkParams();
 
     TransactionBuilder builder = new TransactionBuilder();
-    
+
     //generate extended spending key
     String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
     HDSeed seed = new HDSeed(ByteArray.fromHexString(seedString));
@@ -237,9 +242,43 @@ public class ShieldedTransferActuatorTest {
     return sdesc;
   }
 
-
-
   private ReceiveDescriptionCapsule generateReceiveDescription() {
+    byte[] cm = output.getNote().cm();
+    if (ByteArray.isEmpty(cm)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Output is invalid");
+    }
+
+    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
+
+    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext
+        .encrypt(output.getNote().pkD);
+    if (!res.isPresent()) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Failed to encrypt note");
+    }
+
+    SaplingNotePlaintextEncryptionResult enc = res.get();
+    SaplingNoteEncryption encryptor = enc.noteEncryption;
+
+    byte[] cv = new byte[32];
+    byte[] zkProof = new byte[192];
+    if (!Librustzcash.librustzcashSaplingOutputProof(
+        ctx,
+        encryptor.esk,
+        output.getNote().d.data,
+        output.getNote().pkD,
+        output.getNote().r,
+        output.getNote().value,
+        cv,
+        zkProof)) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Output proof failed");
+
+
+
+
+
     return null;
   }
 
