@@ -239,13 +239,13 @@ public class ProposalController {
         32, 33, 41, 42, 43, 44, 45, 46, 48}
            */
           byte[] bytes = ByteArray.fromHexString("7fff1fc0037e0100000000000000000000000000000000000000000000000000");
-          manager.getDynamicPropertiesStore().saveAvailableContractType(bytes);
+          manager.getDynamicPropertiesStore().saveActiveDefaultOperations(bytes);
            /*
           {0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 31,
         32, 33, 41, 42, 43, 44, 45, 48}
            */
           bytes = ByteArray.fromHexString("7fff1fc0033e0100000000000000000000000000000000000000000000000000");
-          manager.getDynamicPropertiesStore().saveActiveDefaultOperations(bytes);
+          manager.getDynamicPropertiesStore().saveAvailableContractType(bytes);
           break;
         }
         default:
