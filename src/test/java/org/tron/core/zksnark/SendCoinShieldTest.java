@@ -257,6 +257,7 @@ public class SendCoinShieldTest {
     PedersenHash cmHash = ByteArray2PedersenHash(cm);
 
     tree.append(a);
+    tree.append(b);
     tree.append(cmHash);
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
     voucher.append(c);
