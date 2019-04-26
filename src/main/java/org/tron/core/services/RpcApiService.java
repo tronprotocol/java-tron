@@ -89,7 +89,6 @@ import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.ShieldAddress;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.UnfreezeAssetContract;
@@ -1785,22 +1784,22 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    @Override
-    public void generateShieldAddress(EmptyMessage request,
-        StreamObserver<ShieldAddress> responseObserver) {
-      responseObserver.onNext(wallet.generateShieldAddress());
-      responseObserver.onCompleted();
-    }
+//    @Override
+//    public void generateShieldAddress(EmptyMessage request,
+//        StreamObserver<ShieldAddress> responseObserver) {
+//      responseObserver.onNext(wallet.generateShieldAddress());
+//      responseObserver.onCompleted();
+//    }
 
     @Override
     public void getZKBlockByLimitNext(BlockLimit request,
-      StreamObserver<BlockListExtention> responseObserver) {
+        StreamObserver<BlockListExtention> responseObserver) {
       long startNum = request.getStartNum();
       long endNum = request.getEndNum();
 
       if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
         responseObserver.onNext(blocklist2Extention(
-                wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
+            wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
       } else {
         responseObserver.onNext(null);
       }
@@ -1812,19 +1811,19 @@ public class RpcApiService implements Service {
         StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
       long blockNumber = request.getNum();
       if (blockNumber >= 0) {
-          BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
-          builder.setNumber(blockNumber);
-          IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock( blockNumber );
-          if (tree != null ) {
-              builder.setMerkleTree( tree );
-              responseObserver.onNext( builder.build() );
-          } else {
-              responseObserver.onNext(null);
-          }
-      } else {
+        BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
+        builder.setNumber(blockNumber);
+        IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock(blockNumber);
+        if (tree != null) {
+          builder.setMerkleTree(tree);
+          responseObserver.onNext(builder.build());
+        } else {
           responseObserver.onNext(null);
+        }
+      } else {
+        responseObserver.onNext(null);
       }
-        responseObserver.onCompleted();
+      responseObserver.onCompleted();
     }
 
   }

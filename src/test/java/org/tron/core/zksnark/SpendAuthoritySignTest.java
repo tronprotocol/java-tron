@@ -4,8 +4,8 @@ import com.sun.jna.Pointer;
 import org.junit.Test;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.zksnark.zen.Librustzcash;
-import org.tron.common.zksnark.zen.address.SpendingKey;
+import org.tron.common.zksnark.Librustzcash;
+import org.tron.core.zen.address.SpendingKey;
 
 public class SpendAuthoritySignTest {
 

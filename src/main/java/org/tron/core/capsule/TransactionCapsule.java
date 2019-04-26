@@ -77,6 +77,7 @@ import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -361,6 +362,37 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     ECDSASignature signature = ecKey.sign(getRawHash().getBytes());
     ByteString sig = ByteString.copyFrom(signature.toByteArray());
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
+  }
+
+  public static byte[] hash(TransactionCapsule tx) throws InvalidProtocolBufferException {
+    Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
+    ShieldedTransferContract shieldedTransferContract = contractParameter
+        .unpack(ShieldedTransferContract.class);
+    ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
+    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+    newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+    newContract.setToAmount(shieldedTransferContract.getToAmount());
+    newContract.setValueBalance(shieldedTransferContract.getValueBalance());
+    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+      newContract
+          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+    }
+
+    Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
+        .getRawDataBuilder()
+        .clearContract()
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
+                .setParameter(
+                    Any.pack(newContract.build())).build());
+
+    Transaction transaction = tx.getInstance().toBuilder().clearRawData()
+        .setRawData(rawBuilder).build();
+
+    return Sha256Hash.of(transaction.getRawData().toByteArray())
+        .getBytes();
   }
 
   // todo mv this static function to capsule util

@@ -8,10 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.MerkleContainer;
-import org.tron.common.zksnark.zen.Librustzcash;
-import org.tron.common.zksnark.zen.hash.HashShieldedTransaction;
+import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -21,6 +18,8 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
@@ -131,7 +130,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     byte[] signHash;
     try {
       shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
-      signHash = HashShieldedTransaction.hash(tx);
+      signHash = TransactionCapsule.hash(tx);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());

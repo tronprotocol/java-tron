@@ -13,13 +13,13 @@ import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.zksnark.PedersenHashCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherCapsule;
-import org.tron.common.zksnark.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.common.zksnark.merkle.MerkleContainer;
-import org.tron.common.zksnark.merkle.MerklePath;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
+import org.tron.core.zen.merkle.MerklePath;
+import org.tron.core.zen.merkle.PedersenHashCapsule;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -389,7 +389,7 @@ public class MerkleContainerTest {
     IncrementalMerkleTreeCapsule tree = new IncrementalMerkleTreeCapsule();
     int b = 255;
 
-    for ( int a = 1; a < b; a++){
+    for (int a = 1; a < b; a++) {
       int i = 1;
       for (; i <= a; i++) {
         byte[] bytes = new byte[32];
@@ -404,7 +404,6 @@ public class MerkleContainerTest {
         PedersenHash c = PedersenHash.newBuilder().setContent(ByteString.copyFrom(bytes)).build();
         witnessa.append(c);
       }
-
 
       for (int j = i; j <= b; j++) {
         byte[] bytes = new byte[32];
