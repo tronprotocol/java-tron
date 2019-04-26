@@ -1389,6 +1389,20 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
+  public void updateDynamicStoreByConfig(){
+    if(Args.getInstance().getAllowDeferredTransaction() != 0){
+      saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
+      addSystemContractAndSetPermission(47);
+    }
+
+    if(Args.getInstance().getAllowTvmConstantinople() != 0){
+      saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
+      addSystemContractAndSetPermission(48);
+    }
+  }
+
+
+
   public void saveActiveDefaultOperations(byte[] value) {
     this.put(ACTIVE_DEFAULT_OPERATIONS,
         new BytesCapsule(value));
