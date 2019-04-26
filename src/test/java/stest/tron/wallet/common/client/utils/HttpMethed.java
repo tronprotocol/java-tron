@@ -1667,6 +1667,27 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getBlockByLimitNextFromSolidity(String httpNode, Integer startNum,
+      Integer endNum) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/getblockbylimitnext";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("startNum", startNum);
+      userBaseObj2.addProperty("endNum", endNum);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getBlockByLastNum(String httpNode, Integer num) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getblockbylatestnum";
@@ -1684,6 +1705,25 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse getBlockByLastNumFromSolidity(String httpNode, Integer num) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/getblockbylatestnum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", num);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getBlockById(String httpNode, String blockId) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getblockbyid";
@@ -1697,6 +1737,25 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBlockByIdFromSolidity(String httpNode, String blockId) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/getblockbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", blockId);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
 
   /**
    * constructor.
