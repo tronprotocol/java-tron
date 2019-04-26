@@ -1,11 +1,14 @@
 package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
@@ -230,6 +233,19 @@ public class ProposalController {
         }
         case (30): {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
+
+          /*
+          {0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 31,
+        32, 33, 41, 42, 43, 44, 45, 46, 48}
+           */
+          byte[] bytes = ByteArray.fromHexString("7fff1fc0037e0100000000000000000000000000000000000000000000000000");
+          manager.getDynamicPropertiesStore().saveAvailableContractType(bytes);
+           /*
+          {0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 31,
+        32, 33, 41, 42, 43, 44, 45, 48}
+           */
+          bytes = ByteArray.fromHexString("7fff1fc0033e0100000000000000000000000000000000000000000000000000");
+          manager.getDynamicPropertiesStore().saveActiveDefaultOperations(bytes);
           break;
         }
         default:
