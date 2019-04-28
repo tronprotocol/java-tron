@@ -348,7 +348,7 @@ message AccountPermissionUpdateContract {
 
 // for shielded transaction
 message Note {
-  bytes value = 1;
+  int64 value = 1;
   bytes d = 2;
   bytes pkD = 3;
   bytes rcm = 4;
@@ -401,3 +401,4 @@ message ShieldedTransferContract {
   int64 to_amount = 8; // the amount to transparent to_address
 }
 // end shielded transaction
+

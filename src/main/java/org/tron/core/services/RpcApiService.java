@@ -1826,6 +1826,22 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getCommitmentsByBlockRange(org.tron.protos.Contract.BlockIvkDecrypt request,
+                                           io.grpc.stub.StreamObserver<org.tron.protos.Contract.IvkDecryptResult> responseObserver) {
+
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
+        responseObserver.onNext(null);
+      }else {
+        responseObserver.onNext(wallet.getCommitmentsByBlockRange(startNum, endNum, request.getIvk().toByteArray()));
+      }
+      responseObserver.onCompleted();
+
+    }
+
   }
 
   @Override

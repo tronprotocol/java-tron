@@ -46,7 +46,7 @@ public class IncrementalMerkleTreeContainer {
 
     if ((!leftIsPresent()) && treeCapsule.getParents().size() > 0) {
       throw new RuntimeException(
-          "tree has non-canonical representation; parents should not be unempty");
+          "tree has non-canonical representation; parents should be empty");
     }
   }
 

@@ -52,7 +52,11 @@ public class ZenTransactionBuilder {
     this.wallet = wallet;
   }
 
-  //  List<TransparentInputInfo> tIns;
+    public ZenTransactionBuilder() {
+
+    }
+
+    //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
 

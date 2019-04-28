@@ -3,6 +3,7 @@ package org.tron.core.zen.merkle;
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.Getter;
+import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 
 public class MerklePath {
@@ -47,11 +48,14 @@ public class MerklePath {
       }
     }
     indexLong = convertVectorToLong(index);
+    byte[] indexBytes = ByteArray.fromLong(indexLong);
+    ZksnarkUtils.sort(indexBytes);
+
     byte[] pathByteArray = ListList2Bytes(pathByteList);
 
     byte[] result = new byte[pathByteArray.length + 8];
     System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);
-    System.arraycopy(ByteArray.fromLong(indexLong), 0, result,
+    System.arraycopy(indexBytes, 0, result,
         pathByteArray.length, 8);
     return result;
   }
