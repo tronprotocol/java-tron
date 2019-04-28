@@ -76,6 +76,8 @@ import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Contract.SetAccountIdContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -362,6 +364,37 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
+  public static byte[] hash(TransactionCapsule tx) throws InvalidProtocolBufferException {
+    Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
+    ShieldedTransferContract shieldedTransferContract = contractParameter
+        .unpack(ShieldedTransferContract.class);
+    ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
+    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+    newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+    newContract.setToAmount(shieldedTransferContract.getToAmount());
+    newContract.setValueBalance(shieldedTransferContract.getValueBalance());
+    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+      newContract
+          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+    }
+
+    Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
+        .getRawDataBuilder()
+        .clearContract()
+        .addContract(
+            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
+                .setParameter(
+                    Any.pack(newContract.build())).build());
+
+    Transaction transaction = tx.getInstance().toBuilder().clearRawData()
+        .setRawData(rawBuilder).build();
+
+    return Sha256Hash.of(transaction.getRawData().toByteArray())
+        .getBytes();
+  }
+
   // todo mv this static function to capsule util
   public static byte[] getOwner(Transaction.Contract contract) {
     ByteString owner;
@@ -465,6 +498,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           break;
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
+          break;
+        case ShieldedTransferContract:
+          ShieldedTransferContract shieldedTransferContract = contractParameter
+              .unpack(ShieldedTransferContract.class);
+          if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()) {
+            owner = shieldedTransferContract.getTransparentFromAddress();
+          } else {
+            owner = null;
+          }
           break;
         // todo add other contract
         default:
@@ -676,14 +718,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     //Do not support multi contracts in one transaction
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
-    if (contract.getType() != ContractType.ZksnarkV0TransferContract) {
+    if (contract.getType() != ContractType.ShieldedTransferContract) {
       validatePubSignature(manager);
     } else {  //TODO: need more check here. must compare with shielded transaction's verification.
       byte[] owner = getOwner(contract);
       if (!ArrayUtils.isEmpty(owner)) {
         validatePubSignature(manager);   //If no pub input , need not signature.
       }
-      validateZkSignature();
     }
 
     isVerified = true;

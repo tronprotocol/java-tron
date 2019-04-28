@@ -8,17 +8,18 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.tron.common.zksnark.merkle.IncrementalMerkleTreeContainer;
-import org.tron.common.zksnark.merkle.MerkleContainer;
-import org.tron.common.zksnark.zen.Librustzcash;
+import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
@@ -28,8 +29,11 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  ShieldedTransferActuator(Any contract, Manager dbManager) {
+  private TransactionCapsule tx;
+
+  ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
+    this.tx = tx;
   }
 
   boolean isTransparentOut = false;
@@ -114,6 +118,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    System.out.println("000000009999999");
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -127,8 +132,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     ShieldedTransferContract shieldedTransferContract;
+    byte[] signHash;
     try {
       shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
+      signHash = TransactionCapsule.hash(tx);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
@@ -139,8 +146,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       return false;
     }
 
-    byte[] signHash = new byte[32];
-    // TODO generate signhash
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {

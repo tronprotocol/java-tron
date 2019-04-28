@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
-
+import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 import com.google.protobuf.Any;
 import com.google.protobuf.Any.Builder;
 import com.google.protobuf.ByteString;
@@ -34,12 +33,28 @@ import org.tron.common.zksnark.zen.transaction.ReceiveDescriptionCapsule;
 import org.tron.common.zksnark.zen.transaction.SpendDescriptionCapsule;
 import org.tron.common.zksnark.zen.zip32.ExtendedSpendingKey;
 import org.tron.common.zksnark.zen.zip32.HDSeed;
+import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.zen.ZenTransactionBuilder;
+import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
+import org.tron.core.zen.ZkChainParams;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.PedersenHashCapsule;
+import org.tron.core.zen.note.BaseNote.Note;
+import org.tron.core.zen.transaction.ReceiveDescriptionCapsule;
+import org.tron.core.zen.transaction.SpendDescriptionCapsule;
+import org.tron.core.zen.zip32.ExtendedSpendingKey;
+import org.tron.core.zen.zip32.HDSeed;
+import org.tron.core.zen.zip32.HdChain;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Protocol.AccountType;
@@ -193,7 +208,8 @@ public class ShieldedTransferActuatorTest {
   private SpendDescriptionCapsule generateSpendDescription() {
     librustzcashInitZksnarkParams();
 
-    TransactionBuilder builder = new TransactionBuilder();
+
+    ZenTransactionBuilder builder = null; //= new ZenTransactionBuilder();
 
     //generate extended spending key
     String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
@@ -209,7 +225,6 @@ public class ShieldedTransferActuatorTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-
 
     //generate note cm to merkle root
     IncrementalMerkleTreeContainer tree =
@@ -233,7 +248,6 @@ public class ShieldedTransferActuatorTest {
     IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
 //    voucher.append(c);
 
-
     byte[] anchor = voucher.root().getContent().toByteArray();
 
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
@@ -242,43 +256,41 @@ public class ShieldedTransferActuatorTest {
     return sdesc;
   }
 
+//  private ReceiveDescriptionCapsule generateReceiveDescription() {
+//    byte[] cm = output.getNote().cm();
+//    if (ByteArray.isEmpty(cm)) {
+//      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+//      throw new RuntimeException("Output is invalid");
+//    }
+//
+//    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
+//
+//    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext
+//        .encrypt(output.getNote().pkD);
+//    if (!res.isPresent()) {
+//      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+//      throw new RuntimeException("Failed to encrypt note");
+//    }
+//
+//    SaplingNotePlaintextEncryptionResult enc = res.get();
+//    SaplingNoteEncryption encryptor = enc.noteEncryption;
+//
+//    byte[] cv = new byte[32];
+//    byte[] zkProof = new byte[192];
+//    if (!Librustzcash.librustzcashSaplingOutputProof(
+//        ctx,
+//        encryptor.esk,
+//        output.getNote().d.data,
+//        output.getNote().pkD,
+//        output.getNote().r,
+//        output.getNote().value,
+//        cv,
+//        zkProof)) {
+//      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+//      throw new RuntimeException("Output proof failed");
+//
+
   private ReceiveDescriptionCapsule generateReceiveDescription() {
-    byte[] cm = output.getNote().cm();
-    if (ByteArray.isEmpty(cm)) {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Output is invalid");
-    }
-
-    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
-
-    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext
-        .encrypt(output.getNote().pkD);
-    if (!res.isPresent()) {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Failed to encrypt note");
-    }
-
-    SaplingNotePlaintextEncryptionResult enc = res.get();
-    SaplingNoteEncryption encryptor = enc.noteEncryption;
-
-    byte[] cv = new byte[32];
-    byte[] zkProof = new byte[192];
-    if (!Librustzcash.librustzcashSaplingOutputProof(
-        ctx,
-        encryptor.esk,
-        output.getNote().d.data,
-        output.getNote().pkD,
-        output.getNote().r,
-        output.getNote().value,
-        cv,
-        zkProof)) {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Output proof failed");
-
-
-
-
-
     return null;
   }
 

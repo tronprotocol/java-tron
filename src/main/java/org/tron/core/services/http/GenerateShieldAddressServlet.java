@@ -14,11 +14,12 @@ import org.tron.protos.Contract.ShieldAddress;
 @Slf4j
 public class GenerateShieldAddressServlet extends HttpServlet {
 
-  @Autowired private Wallet wallet;
+  @Autowired
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      ShieldAddress reply = wallet.generateShieldAddress();
+      ShieldAddress reply = null;//wallet.generateShieldAddress();
 
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
