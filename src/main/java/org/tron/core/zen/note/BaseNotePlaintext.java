@@ -21,7 +21,7 @@ import org.tron.core.zen.note.NoteEncryption.EncPlaintext;
 
 public class BaseNotePlaintext {
 
-  public long value = 0L; // 64
+  public long value = 0L;
   public byte[] memo = new byte[ZC_MEMO_SIZE];
 
   @AllArgsConstructor
@@ -29,7 +29,6 @@ public class BaseNotePlaintext {
 
     public byte[] encCiphertext;
     public SaplingNoteEncryption noteEncryption;
-    // pair<EncCiphertext, SaplingNoteEncryption> SaplingNotePlaintextEncryptionResult;
   }
 
   public static class NotePlaintext extends BaseNotePlaintext {
@@ -107,9 +106,6 @@ public class BaseNotePlaintext {
         return Optional.empty();
       }
 
-      //TODO
-      //assert(ss.size() == 0);
-
       return Optional.of(ret);
     }
 
@@ -143,11 +139,9 @@ public class BaseNotePlaintext {
       ret.data = new byte[ZC_SAPLING_ENCPLAINTEXT_SIZE];
       data = ret.data;
 
-      //将long转换为byte[]
       buffer.putLong(0, value);
       valueLong = buffer.array();
 
-      // TODO zcash c++代码是按照大字节序保存的
       for (int i = 0; i < valueLong.length / 2; i++) {
         byte temp = valueLong[i];
         valueLong[i] = valueLong[valueLong.length - 1 - i];
@@ -176,7 +170,6 @@ public class BaseNotePlaintext {
       }
 
       NotePlaintext ret = new NotePlaintext();
-      //(ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE + ZC_MEMO_SIZE);
       System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING,
           ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);
 
@@ -187,18 +180,15 @@ public class BaseNotePlaintext {
       System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
           ret.memo, 0, ZC_MEMO_SIZE);
 
-      // TODO zcash c++是按照大字节序保存的
       for (int i = 0; i < valueLong.length / 2; i++) {
         byte temp = valueLong[i];
         valueLong[i] = valueLong[valueLong.length - 1 - i];
         valueLong[valueLong.length - 1 - i] = temp;
       }
 
-      //将byte[]转换成long
       buffer.put(valueLong, 0, valueLong.length);
       buffer.flip();
       ret.value = buffer.getLong();
-      //ret.value = Long.reverse(ret.value);
 
       return ret;
     }

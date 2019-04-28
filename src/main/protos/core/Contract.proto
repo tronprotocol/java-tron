@@ -402,12 +402,3 @@ message ShieldedTransferContract {
 }
 // end shielded transaction
 
-message BlockIvkDecrypt{
-  int64 start_block_index = 1;
-  int64 end_block_index = 2;
-  bytes ivk = 3;
-}
-
-message IvkDecryptResult{
-  repeated Note notes = 1;
-}
