@@ -31,12 +31,8 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -80,6 +76,7 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -133,6 +130,7 @@ import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.PedersenHashCapsule;
+import org.tron.core.zen.note.BaseNotePlaintext;
 import org.tron.core.zen.note.NoteEntry;
 import org.tron.core.zen.transaction.Recipient;
 import org.tron.core.zen.utils.KeyIo;
@@ -1977,5 +1975,70 @@ public class Wallet {
 
     return balance;
   }
+
+  public org.tron.protos.Contract.IvkDecryptResult getCommitmentsByBlockRange(long startNum, long endNum, byte[] ivk) {
+
+    org.tron.protos.Contract.IvkDecryptResult.Builder builder = org.tron.protos.Contract.IvkDecryptResult.newBuilder();
+
+    if (!(endNum > 0 && endNum > startNum)) {
+      return builder.build();
+    }
+
+    BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+
+    blockList.getBlockList().forEach(block -> {
+
+      for (Transaction t : block.getTransactionsList()) {
+
+        for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+
+          System.out.println(c.getType());
+
+          if (c.getType() != ContractType.forNumber(ContractType.ShieldedTransferContract_VALUE))
+            continue;
+
+          if (!c.getParameter().is(org.tron.protos.Contract.ReceiveDescription.class))
+            continue;
+
+          try {
+            org.tron.protos.Contract.ReceiveDescription r = c.getParameter().unpack(org.tron.protos.Contract.ReceiveDescription.class);
+            Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext.decrypt(
+                    r.getCEnc().toByteArray(),//ciphertext
+                    ivk,
+                    r.getEpk().toByteArray(),//epk
+                    r.getNoteCommitment().toByteArray() //cmu
+            );
+
+            if(notePlaintext.isPresent()) {
+              BaseNotePlaintext.NotePlaintext noteText = notePlaintext.get();
+
+              byte[] pk_d = new byte[32];
+              if (!Librustzcash.librustzcashIvkToPkd(ivk, noteText.d.getData(), pk_d)) {
+                continue;
+              }
+
+              org.tron.protos.Contract.Note note = org.tron.protos.Contract.Note.newBuilder()
+                      .setD(ByteString.copyFrom(noteText.d.getData()))
+                      .setValue(noteText.value)
+                      .setRcm(ByteString.copyFrom(noteText.rcm))
+                      .setPkD(ByteString.copyFrom(pk_d))
+                      .build();
+
+              builder.addNotes(note);
+            }
+
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException("unpack ReceiveDescription failed.");
+          }
+
+        } // end of contract
+
+      } // end of transaction
+
+    }); //end of blocklist
+
+    return builder.build();
+  }
+
 
 }
