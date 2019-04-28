@@ -8,6 +8,7 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
@@ -252,6 +253,13 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public void updateContract(byte[] address, ContractCapsule contractCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(contractCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    contractCache.put(key, value);
+  }
+
+  @Override
   public synchronized ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
     if (contractCache.containsKey(key)) {
@@ -272,27 +280,32 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized void saveCode(byte[] codeHash, byte[] code) {
-    Key key = Key.create(codeHash);
+  public synchronized void saveCode(byte[] address, byte[] code) {
+    Key key = Key.create(address);
     Value value = Value.create(code, Type.VALUE_TYPE_CREATE);
     codeCache.put(key, value);
+
+    ContractCapsule contract = getContract(address);
+    byte[] codeHash = Hash.sha3(code);
+    contract.setCodeHash(codeHash);
+    updateContract(address, contract);
   }
 
   @Override
-  public synchronized byte[] getCode(byte[] addr) {
-    Key key = Key.create(addr);
+  public synchronized byte[] getCode(byte[] address) {
+    Key key = Key.create(address);
     if (codeCache.containsKey(key)) {
       return codeCache.get(key).getCode().getData();
     }
 
     byte[] code;
     if (parent != null) {
-      code = parent.getCode(addr);
+      code = parent.getCode(address);
     } else {
-      if (null == getCodeStore().get(addr)) {
+      if (null == getCodeStore().get(address)) {
         code = null;
       } else {
-        code = getCodeStore().get(addr).getData();
+        code = getCodeStore().get(address).getData();
       }
     }
     if (code != null) {
