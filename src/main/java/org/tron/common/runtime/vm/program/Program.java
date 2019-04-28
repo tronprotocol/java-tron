@@ -398,6 +398,9 @@ public class Program {
           balance);
     }
 
+    if (VMConfig.allowTvmConstantinople() && getContractState().getAccount(obtainer) == null) {
+      return;
+    }
     increaseNonce();
 
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
@@ -662,7 +665,14 @@ public class Program {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          if (VMConfig.allowTvmConstantinople()) {
+            stackPushZero();
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            return;
+          }
+          else {
+            throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          }
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -671,7 +681,14 @@ public class Program {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          if (VMConfig.allowTvmConstantinople()) {
+            stackPushZero();
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            return;
+          }
+          else {
+            throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          }
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1364,14 +1381,28 @@ public class Program {
           transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException("transfer failure");
+          if (VMConfig.allowTvmConstantinople()) {
+            stackPushZero();
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            return;
+          }
+          else {
+            throw new BytecodeExecutionException("transfer failure");
+          }
         }
       } else {
         try {
           TransferAssetActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          if (VMConfig.allowTvmConstantinople()) {
+            stackPushZero();
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            return;
+          }
+          else {
+            throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          }
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
