@@ -670,6 +670,11 @@ service Wallet {
   rpc CreateShieldedTransaction (ShieldedTransferContract) returns (TransactionExtention) {
   };
   // end for shiededTransaction
+
+  //protocol p47
+  rpc GetCommitmentsByBlockRange(BlockIvkDecrypt) returns(IvkDecryptResult){
+  };
+
 };
 
 
