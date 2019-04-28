@@ -1,6 +1,5 @@
 package org.tron.core.db.fast;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
@@ -17,8 +16,7 @@ public class AccountStateEntity {
     Account.Builder builder = Account.newBuilder();
     builder.setAddress(account.getAddress());
     builder.setBalance(account.getBalance());
-    builder.putAllAsset(account.getAssetMap());
-    builder.putAllAssetV2(account.getAssetV2Map());
+//    builder.putAllAssetV2(account.getAssetV2Map());
     builder.setAllowance(account.getAllowance());
     this.account = builder.build();
   }
@@ -39,7 +37,7 @@ public class AccountStateEntity {
   public static AccountStateEntity parse(byte[] data) {
     try {
       return new AccountStateEntity().setAccount(Account.parseFrom(data));
-    } catch (InvalidProtocolBufferException e) {
+    } catch (Exception e) {
       logger.error("parse to AccountStateEntity error! reason: {}", e.getMessage());
     }
     return null;

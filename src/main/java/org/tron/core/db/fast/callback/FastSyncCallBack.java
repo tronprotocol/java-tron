@@ -86,12 +86,10 @@ public class FastSyncCallBack {
   }
 
   public void exeTransFinish() {
-    long startTime = System.nanoTime();
     for (TrieEntry trieEntry : trieEntryList) {
       trie.put(RLP.encodeElement(trieEntry.getKey()), trieEntry.getData());
     }
     trieEntryList.clear();
-    logger.info("add trie spend time : {}", System.nanoTime() - startTime);
   }
 
   public void deleteAccount(byte[] key) {
@@ -102,7 +100,6 @@ public class FastSyncCallBack {
   }
 
   public void preExecute(BlockCapsule blockCapsule) {
-    long startTime = System.nanoTime();
     this.blockCapsule = blockCapsule;
     this.execute = true;
     this.allowGenerateRoot = manager.getDynamicPropertiesStore().allowAccountStateRoot();
@@ -121,7 +118,6 @@ public class FastSyncCallBack {
       rootHash = Hash.EMPTY_TRIE_HASH;
     }
     trie = new TrieImpl(db, rootHash);
-    logger.info("preExecute spend time : {}", System.nanoTime() - startTime);
   }
 
   public void executePushFinish() throws BadBlockException {
