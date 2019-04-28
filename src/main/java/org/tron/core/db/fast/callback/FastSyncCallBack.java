@@ -70,7 +70,6 @@ public class FastSyncCallBack {
   }
 
   public void accountCallBack(byte[] key, AccountCapsule item) {
-    long startTime = System.nanoTime();
     if (!exe()) {
       return;
     }
@@ -78,7 +77,6 @@ public class FastSyncCallBack {
       return;
     }
     trieEntryList.add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
-    logger.info("add account spend time : {}", System.nanoTime() - startTime);
   }
 
   public void preExeTrans() {
