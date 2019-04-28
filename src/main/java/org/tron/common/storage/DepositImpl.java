@@ -285,7 +285,7 @@ public class DepositImpl implements Deposit {
     Value value = Value.create(code, Type.VALUE_TYPE_CREATE);
     codeCache.put(key, value);
 
-    if (VMConfig.allowTvmConstantinople()) {
+    if (VMConfig.allowTvmConstantinople() ) {
       ContractCapsule contract = getContract(address);
       byte[] codeHash = Hash.sha3(code);
       contract.setCodeHash(codeHash);
