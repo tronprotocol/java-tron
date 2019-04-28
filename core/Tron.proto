@@ -559,7 +559,7 @@ message SmartContract {
   int64 consume_user_resource_percent = 6;
   string name = 7;
   int64 origin_energy_limit = 8;
-
+  bytes code_hash = 9;
 }
 
 message InternalTransaction {
