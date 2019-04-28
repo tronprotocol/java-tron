@@ -141,7 +141,7 @@ public class StressPrecondition {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test1CreateProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -168,9 +168,9 @@ public class StressPrecondition {
     if (getChainParameters.get().getChainParameter(32).getValue() == 0L) {
       proposalMap.put(28L, 1L);
     }
-    /*if (getChainParameters.get().getChainParameter(31).getValue() == 0L) {
+    if (getChainParameters.get().getChainParameter(31).getValue() == 0L) {
       proposalMap.put(29L, 1L);
-    }*/
+    }
 
     if (proposalMap.size() >= 1) {
 
