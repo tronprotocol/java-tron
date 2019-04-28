@@ -1827,8 +1827,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getCommitmentsByBlockRange(org.tron.protos.Contract.BlockIvkDecrypt request,
-                                           io.grpc.stub.StreamObserver<org.tron.protos.Contract.IvkDecryptResult> responseObserver) {
+    public void scanNoteByBlockRangeAndIvk(GrpcAPI.IvkDecryptParameters request,
+                                           io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
@@ -1836,7 +1836,23 @@ public class RpcApiService implements Service {
       if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
         responseObserver.onNext(null);
       }else {
-        responseObserver.onNext(wallet.getCommitmentsByBlockRange(startNum, endNum, request.getIvk().toByteArray()));
+        responseObserver.onNext(wallet.scanNoteByBlockRangeAndIvk(startNum, endNum, request.getIvk().toByteArray()));
+      }
+      responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void scanNoteByBlockRangeAndOvk(GrpcAPI.OvkDecryptParameters request,
+                                           io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
+        responseObserver.onNext(null);
+      }else {
+        responseObserver.onNext(wallet.scanNoteByBlockRangeAndOvk(startNum, endNum, request.getOvk().toByteArray()));
       }
       responseObserver.onCompleted();
 

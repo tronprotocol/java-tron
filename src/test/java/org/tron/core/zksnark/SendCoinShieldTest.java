@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -76,6 +77,7 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.Protocol;
 
 public class SendCoinShieldTest {
 
@@ -476,47 +478,43 @@ public class SendCoinShieldTest {
 
   @Test
   public void verifyOvkDecryptReceive() throws Exception {
-    //decode c_out with ovk
+    //decode c_out with ovk.
     librustzcashInitZksnarkParams();
-    ZenTransactionBuilder builder2 = new ZenTransactionBuilder();
 
+    // construct payment address
     SpendingKey spendingKey2 = SpendingKey.decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
-
     PaymentAddress paymentAddress2 = spendingKey2.defaultAddress();
     FullViewingKey fullViewingKey = spendingKey2.fullViewingKey();
 
+    // generate output proof
+    ZenTransactionBuilder builder2 = new ZenTransactionBuilder();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-
-    long value = 1000;
-    byte[] memo = new byte[512];
-
-    builder2.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress2, value, memo);
-
+    builder2.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress2, 10000, new byte[512]);
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder2.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder2.generateOutputProof(output, ctx);
     Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
-    Note note = new Note(paymentAddress2, value);//construct function：this.pkD = address.getPkD();
-    Assert.assertEquals(note.pkD,pkd);
+    Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
 
     byte[] cmu_opt = note.cm();
     Assert.assertNotNull(cmu_opt);
 
-    BaseNotePlaintext.NotePlaintext pt = new BaseNotePlaintext.NotePlaintext(note,memo);
-
+    BaseNotePlaintext.NotePlaintext pt = new BaseNotePlaintext.NotePlaintext(note,new byte[512]);
     BaseNotePlaintext.SaplingNotePlaintextEncryptionResult enc = pt.encrypt(pkd).get();
 
     SaplingNoteEncryption encryptor = enc.noteEncryption;
 
     SaplingOutgoingPlaintext out_pt = new SaplingOutgoingPlaintext(note.pkD, encryptor.esk);
 
+    // encrypt with ovk
     NoteEncryption.OutCiphertext outCiphertext = out_pt.encrypt(
             fullViewingKey.getOvk(),
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             encryptor);
 
+    // get pk_d, esk from decryption of c_out with ovk
     Optional<SaplingOutgoingPlaintext> ret2 = SaplingOutgoingPlaintext.decrypt(outCiphertext,
             fullViewingKey.getOvk(),
             receiveDescription.getValueCommitment().toByteArray(),
@@ -533,7 +531,7 @@ public class SendCoinShieldTest {
 
       System.out.println("decrypt c_out with ovk success");
 
-      //decode c_enc with pkd、esk
+      //decrypt c_enc with pkd、esk
       NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
       ciphertext.data = enc.encCiphertext;
 
@@ -547,9 +545,9 @@ public class SendCoinShieldTest {
       if(foo.isPresent()) {
 
         BaseNotePlaintext.NotePlaintext bar = foo.get();
-
-        Assert.assertEquals(bar.value, value);
-        Assert.assertArrayEquals(bar.memo, memo);
+        //verify result
+        Assert.assertEquals(bar.value, 4000);
+        Assert.assertArrayEquals(bar.memo, new byte[512]);
 
         System.out.println("decrypt c_out with pkd,esk success");
 
@@ -565,6 +563,175 @@ public class SendCoinShieldTest {
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
+
+  @Test
+  public void pushShieldedTransactionAndDecryptWithIvk()
+          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+          TaposException, TransactionExpirationException, ReceiptCheckErrException,
+          DupTransactionException, VMIllegalException, ValidateSignatureException,
+          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    // generate spend proof
+    librustzcashInitZksnarkParams();
+
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+    ExtendedSpendingKey xsk = createXskDefault();
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    PaymentAddress address = xsk.DefaultAddress();
+    Note note = new Note(address, 10000);
+
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    dbManager.getMerkleContainer()
+            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+
+    builder.addSaplingSpend(expsk, note, anchor, voucher);
+
+    // generate output proof
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 3000, new byte[512]);
+
+    TransactionCapsule transactionCap = builder.build();
+
+    boolean ok = dbManager.pushTransaction(transactionCap);
+
+    // add here
+    byte[] ivk = fullViewingKey.inViewingKey().getValue();
+    Protocol.Transaction t = transactionCap.getInstance();
+    for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+
+      if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
+        continue;
+      }
+
+      Contract.ShieldedTransferContract stContract = c.getParameter().unpack(Contract.ShieldedTransferContract.class);
+      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+
+      Optional<BaseNotePlaintext.NotePlaintext> ret1 = BaseNotePlaintext.NotePlaintext.decrypt(
+              receiveDescription.getCEnc().toByteArray(),//ciphertext
+              ivk,
+              receiveDescription.getEpk().toByteArray(),//epk
+              receiveDescription.getNoteCommitment().toByteArray() //cm
+      );
+
+      if (ret1.isPresent()) {
+        BaseNotePlaintext.NotePlaintext noteText = ret1.get();
+
+        byte[] pk_d = new byte[32];
+        if (!Librustzcash.librustzcashIvkToPkd(incomingViewingKey.getValue(), noteText.d.getData(), pk_d)) {
+          Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+          return;
+        }
+
+        Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
+        Assert.assertEquals(noteText.value, 3000);
+        Assert.assertArrayEquals(noteText.memo, new byte[512]);
+
+        System.out.println("verify ok.");
+      }
+    }
+    // end here
+
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
+  }
+
+  @Test
+  public void pushShieldedTransactionAndDecryptWithOvk()
+          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+          TaposException, TransactionExpirationException, ReceiptCheckErrException,
+          DupTransactionException, VMIllegalException, ValidateSignatureException,
+          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    // generate spend proof
+    librustzcashInitZksnarkParams();
+
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+    ExtendedSpendingKey xsk = createXskDefault();
+    ExpandedSpendingKey expsk = xsk.getExpsk();
+
+    PaymentAddress address = xsk.DefaultAddress();
+    Note note = new Note(address, 10000);
+
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+
+    dbManager.getMerkleContainer()
+            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+
+    builder.addSaplingSpend(expsk, note, anchor, voucher);
+
+    // generate output proof
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 3000, new byte[512]);
+
+    TransactionCapsule transactionCap = builder.build();
+
+    boolean ok = dbManager.pushTransaction(transactionCap);
+
+    // add here
+    byte[] ivk = fullViewingKey.inViewingKey().getValue();
+    Protocol.Transaction t = transactionCap.getInstance();
+    for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+
+      if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
+        continue;
+      }
+
+      Contract.ShieldedTransferContract stContract = c.getParameter().unpack(Contract.ShieldedTransferContract.class);
+      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+
+      NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
+      c_out.data = receiveDescription.getCOut().toByteArray();
+
+      Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(
+              c_out,//ciphertext
+              fullViewingKey.getOvk(),
+              receiveDescription.getValueCommitment().toByteArray(), //cv
+              receiveDescription.getNoteCommitment().toByteArray(), //cmu
+              receiveDescription.getEpk().toByteArray() //epk
+      );
+
+      if(notePlaintext.isPresent()) {
+        SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
+
+        //decode c_enc with pkd、esk
+        NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
+        ciphertext.data = receiveDescription.getCEnc().toByteArray();
+
+        Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
+                .decrypt(ciphertext,
+                        receiveDescription.getEpk().toByteArray(),
+                        decrypted_out_ct_unwrapped.esk,
+                        decrypted_out_ct_unwrapped.pk_d,
+                        receiveDescription.getNoteCommitment().toByteArray());
+
+        if(foo.isPresent()) {
+          BaseNotePlaintext.NotePlaintext bar = foo.get();
+          //verify result
+          Assert.assertEquals(bar.value, 3000);
+          Assert.assertArrayEquals(bar.memo, new byte[512]);
+          System.out.println("decrypt c_out with ovk success");
+        }
+
+      }
+    }
+    // end here
+
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
+  }
+
 
   @Test
   public void testEncrypt(){

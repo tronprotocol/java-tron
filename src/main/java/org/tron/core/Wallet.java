@@ -37,6 +37,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -131,7 +132,9 @@ import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.PedersenHashCapsule;
 import org.tron.core.zen.note.BaseNotePlaintext;
+import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEntry;
+import org.tron.core.zen.note.SaplingOutgoingPlaintext;
 import org.tron.core.zen.transaction.Recipient;
 import org.tron.core.zen.utils.KeyIo;
 import org.tron.core.zen.walletdb.CKeyMetadata;
@@ -1976,9 +1979,12 @@ public class Wallet {
     return balance;
   }
 
-  public org.tron.protos.Contract.IvkDecryptResult getCommitmentsByBlockRange(long startNum, long endNum, byte[] ivk) {
+  /*
+   * try to get cm belongs to ivk
+   */
+  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndIvk(long startNum, long endNum, byte[] ivk) {
 
-    org.tron.protos.Contract.IvkDecryptResult.Builder builder = org.tron.protos.Contract.IvkDecryptResult.newBuilder();
+    GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
 
     if (!(endNum > 0 && endNum > startNum)) {
       return builder.build();
@@ -1992,16 +1998,18 @@ public class Wallet {
 
         for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
 
-          System.out.println(c.getType());
-
-          if (c.getType() != ContractType.forNumber(ContractType.ShieldedTransferContract_VALUE))
+          if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract)
             continue;
 
-          if (!c.getParameter().is(org.tron.protos.Contract.ReceiveDescription.class))
-            continue;
-
+          org.tron.protos.Contract.ShieldedTransferContract stContract = null;
           try {
-            org.tron.protos.Contract.ReceiveDescription r = c.getParameter().unpack(org.tron.protos.Contract.ReceiveDescription.class);
+            stContract = c.getParameter().unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException("unpack ShieldedTransferContract failed.");
+          }
+
+          for(org.tron.protos.Contract.ReceiveDescription r : stContract.getReceiveDescriptionList()) {
+
             Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext.decrypt(
                     r.getCEnc().toByteArray(),//ciphertext
                     ivk,
@@ -2009,7 +2017,7 @@ public class Wallet {
                     r.getNoteCommitment().toByteArray() //cmu
             );
 
-            if(notePlaintext.isPresent()) {
+            if (notePlaintext.isPresent()) {
               BaseNotePlaintext.NotePlaintext noteText = notePlaintext.get();
 
               byte[] pk_d = new byte[32];
@@ -2026,10 +2034,7 @@ public class Wallet {
 
               builder.addNotes(note);
             }
-
-          } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException("unpack ReceiveDescription failed.");
-          }
+          } // end of ReceiveDescriptionList
 
         } // end of contract
 
@@ -2040,5 +2045,85 @@ public class Wallet {
     return builder.build();
   }
 
+  /*
+   * try to get cm belongs to ovk
+   */
+  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndOvk(long startNum, long endNum, byte[] ovk) {
 
+    GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
+
+    if (!(endNum > 0 && endNum > startNum)) {
+      return builder.build();
+    }
+
+    BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+
+    blockList.getBlockList().forEach(block -> {
+
+      for (Transaction t : block.getTransactionsList()) {
+
+        for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+
+          if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract)
+            continue;
+
+          org.tron.protos.Contract.ShieldedTransferContract stContract = null;
+          try {
+            stContract = c.getParameter().unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
+          } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException("unpack ShieldedTransferContract failed.");
+          }
+
+          for(org.tron.protos.Contract.ReceiveDescription r : stContract.getReceiveDescriptionList()) {
+
+            NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
+            c_out.data = r.getCOut().toByteArray();
+
+            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(
+                    c_out,//ciphertext
+                    ovk,
+                    r.getValueCommitment().toByteArray(), //cv
+                    r.getNoteCommitment().toByteArray(), //cmu
+                    r.getEpk().toByteArray() //epk
+            );
+
+            if(notePlaintext.isPresent()) {
+              SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
+
+              //decode c_enc with pkd、esk
+              NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
+              ciphertext.data = r.getCEnc().toByteArray();
+
+              Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
+                      .decrypt(ciphertext,
+                              r.getEpk().toByteArray(),
+                              decrypted_out_ct_unwrapped.esk,
+                              decrypted_out_ct_unwrapped.pk_d,
+                              r.getNoteCommitment().toByteArray());
+
+              if(foo.isPresent()) {
+
+                BaseNotePlaintext.NotePlaintext bar = foo.get();
+
+                org.tron.protos.Contract.Note note = org.tron.protos.Contract.Note.newBuilder()
+                        .setD(ByteString.copyFrom(bar.d.getData()))
+                        .setValue(bar.value)
+                        .setRcm(ByteString.copyFrom(bar.rcm))
+                        .setPkD(ByteString.copyFrom(decrypted_out_ct_unwrapped.pk_d))
+                        .build();
+
+                builder.addNotes(note);
+              }
+            }
+
+          } // end of ReceiveDescriptionList
+
+        } // end of contract
+
+      } // end of transaction
+
+    }); //end of blocklist
+
+    return builder.build();
+  }
 }

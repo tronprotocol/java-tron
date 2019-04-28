@@ -672,7 +672,10 @@ service Wallet {
   // end for shiededTransaction
 
   //protocol p47
-  rpc GetCommitmentsByBlockRange (BlockIvkDecrypt) returns (IvkDecryptResult) {
+  rpc ScanNoteByBlockRangeAndIvk (IvkDecryptParameters) returns (DecryptNotes) {
+  };
+
+  rpc ScanNoteByBlockRangeAndOvk (OvkDecryptParameters) returns (DecryptNotes) {
   };
 
 };
@@ -1093,12 +1096,18 @@ message TransactionApprovedList {
   TransactionExtention transaction = 5;
 }
 
-message BlockIvkDecrypt {
+message IvkDecryptParameters {
   int64 start_block_index = 1;
   int64 end_block_index = 2;
   bytes ivk = 3;
 }
 
-message IvkDecryptResult {
+message OvkDecryptParameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ovk = 3;
+}
+
+message DecryptNotes {
   repeated Note notes = 1;
 }
