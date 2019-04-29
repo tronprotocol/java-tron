@@ -507,7 +507,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static void validContractProto(List<Transaction> transactionList) throws P2pException {
-    long startTime = System.currentTimeMillis();
     List<Future<Boolean>> futureList = new ArrayList<>();
     transactionList.forEach(transaction -> {
       Future<Boolean> future = executorService.submit(() -> {
@@ -529,9 +528,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
       }
     }
-
-    logger.info("validContractProtos spend time:{},trans:{}",
-        (System.currentTimeMillis() - startTime), transactionList.size());
   }
 
   public static void validContractProto(Transaction.Contract contract)

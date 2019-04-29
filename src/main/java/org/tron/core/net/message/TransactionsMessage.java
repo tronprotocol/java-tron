@@ -22,8 +22,8 @@ public class TransactionsMessage extends TronMessage {
     this.type = MessageTypes.TRXS.asByte();
     this.transactions = Protocol.Transactions.parseFrom(getCodedInputStream(data));
     if (isFilter()) {
-//      compareBytes(data, transactions.toByteArray());
-//      TransactionCapsule.validContractProto(transactions.getTransactionsList());
+      compareBytes(data, transactions.toByteArray());
+      TransactionCapsule.validContractProto(transactions.getTransactionsList());
     }
   }
 
