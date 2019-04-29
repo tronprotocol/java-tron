@@ -664,6 +664,7 @@ public class Program {
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            throw new TransferException("transfer trc10 failed:", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
@@ -676,6 +677,7 @@ public class Program {
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            throw new TransferException("transfer trx failed:", e.getMessage());
           }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
@@ -1477,6 +1479,12 @@ public class Program {
 
     public BytecodeExecutionException(String message) {
       super(message);
+    }
+  }
+
+  public static class TransferException extends BytecodeExecutionException {
+    public TransferException(String message, Object... args) {
+      super(format(message, args));
     }
   }
 
