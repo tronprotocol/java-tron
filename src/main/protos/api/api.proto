@@ -661,13 +661,7 @@ service Wallet {
   };
 
   // for shiededTransaction
-  rpc CreateSpendProof (SpendStatement) returns (SpendDescription) {
-  };
-
-  rpc CreateReceiveProof (ReceiveStatement) returns (ReceiveDescription) {
-  };
-
-  rpc CreateShieldedTransaction (ShieldedTransferContract) returns (TransactionExtention) {
+  rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
   // end for shiededTransaction
 
@@ -1110,4 +1104,34 @@ message OvkDecryptParameters {
 
 message DecryptNotes {
   repeated Note notes = 1;
+}
+
+message Note {
+  int64 value = 1;
+  bytes d = 2;
+  bytes pkD = 3;
+  bytes rcm = 4;
+}
+
+message SpendNote {
+  Note note = 3;
+  bytes alpha = 4; // random number for spend authority signature
+  bytes anchor = 5; // merkle root
+  bytes path = 6; // path for cm from leaf to root in merkle tree
+}
+
+message ReceiveNote {
+  bytes esk = 1; // for Encryption
+  Note note = 2;
+}
+
+message PrivateParameters {
+  bytes from_address = 1;
+  bytes ak = 2;
+  bytes nsk = 3;
+  int64 from_amount = 4;
+  repeated SpendNote shieldedSpends = 5;
+  repeated ReceiveNote shieldedReceives = 6;
+  bytes transparent_to_address = 7;
+  bytes to_amount = 8;
 }

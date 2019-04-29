@@ -347,27 +347,6 @@ message AccountPermissionUpdateContract {
 }
 
 // for shielded transaction
-message Note {
-  int64 value = 1;
-  bytes d = 2;
-  bytes pkD = 3;
-  bytes rcm = 4;
-}
-
-message SpendStatement {
-  bytes ak = 1;
-  bytes nsk = 2;
-  Note note = 3;
-  bytes alpha = 4; // random number for spend authority signature
-  bytes anchor = 5; // merkle root
-  bytes path = 6; // path for cm from leaf to root in merkle tree
-}
-
-message ReceiveStatement {
-  bytes esk = 1; // for Encryption
-  Note note = 2;
-}
-
 message GrothProof {
   bytes values = 1;
 }
@@ -399,6 +378,7 @@ message ShieldedTransferContract {
   int64 value_balance = 6;
   bytes transparent_to_address = 7; // transparent address
   int64 to_amount = 8; // the amount to transparent to_address
+  int64 fee = 9;
 }
 // end shielded transaction
 
