@@ -662,6 +662,7 @@ public class Program {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addBalance(senderAddress, -endowment);
@@ -671,6 +672,7 @@ public class Program {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
