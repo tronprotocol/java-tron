@@ -39,17 +39,6 @@ public class TriggerSmartContractServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
   }
 
-  public static String parseMethod(String methodSign, String params) {
-    byte[] selector = new byte[4];
-    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
-    System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (StringUtils.isEmpty(params)) {
-      return Hex.toHexString(selector);
-    }
-    String result = Hex.toHexString(selector) + params;
-    return result;
-  }
-
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
@@ -66,7 +55,12 @@ public class TriggerSmartContractServlet extends HttpServlet {
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
       String parameter = jsonObject.getString("parameter");
-      String data = parseMethod(selector, parameter);
+      boolean bHex = true;
+      if (jsonObject.containsKey("parameter_string")) {
+        parameter = jsonObject.getString("parameter_string");
+        bHex = false;
+      }
+      String data = AbiUtil.parseMethod(selector, parameter, bHex);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
 
       long feeLimit = jsonObject.getLongValue("fee_limit");

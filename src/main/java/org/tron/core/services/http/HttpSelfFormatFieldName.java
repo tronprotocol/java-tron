@@ -203,7 +203,6 @@ public class HttpSelfFormatFieldName {
         //Transaction
         NameFieldNameMap.put("protocol.Transaction.Contract.ContractName", 1);
         //TransactionInfo
-        NameFieldNameMap.put("protocol.TransactionInfo.Log.topics", 1);
         NameFieldNameMap.put("protocol.TransactionInfo.resMessage", 1);
     }
 
