@@ -418,6 +418,9 @@ public class Program {
           transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          throw new TransferException("transfer all token or transfer all trx failed in suicide");
+        }
         throw new BytecodeExecutionException("transfer failure");
       }
     }

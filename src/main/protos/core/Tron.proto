@@ -307,6 +307,7 @@ message Transaction {
       OUT_OF_TIME = 11;
       JVM_STACK_OVER_FLOW = 12;
       UNKNOWN = 13;
+      TRANSFER_FAILED = 14;
     }
     int64 fee = 1;
     code ret = 2;
