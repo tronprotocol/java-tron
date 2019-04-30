@@ -5,6 +5,7 @@ import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.StorageRowCapsule;
@@ -80,5 +81,10 @@ public class Storage {
         }
       }
     });
+  }
+
+  public static void main(String[] args) {
+    String s = "test(address)";
+    System.out.println(Hex.toHexString(Hash.sha3(s.getBytes())));
   }
 }
