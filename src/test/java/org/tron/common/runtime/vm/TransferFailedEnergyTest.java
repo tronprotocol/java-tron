@@ -253,6 +253,7 @@ contract Caller {
   public void testTransferFailedBeforeAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
+    VMConfig.initAllowTvmConstantinople(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);
