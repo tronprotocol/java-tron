@@ -689,7 +689,9 @@ public class RuntimeImpl implements Runtime {
       runtimeError = result.getException().getMessage();
       logger.info("timeout: {}", result.getException().getMessage());
     } catch (Throwable e) {
-      program.spendAllEnergy();
+      if (! (e instanceof TransferException)) {
+        program.spendAllEnergy();
+      }
       result = program.getResult();
       result.rejectInternalTransactions();
       if (Objects.isNull(result.getException())) {
