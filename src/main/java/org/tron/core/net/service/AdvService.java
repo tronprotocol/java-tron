@@ -236,7 +236,7 @@ public class AdvService {
 
     InvSender invSender = new InvSender();
 
-    peers.forEach(peer -> invToSpread.forEach((item, time) -> {
+    invToSpread.forEach((item, time) -> peers.forEach(peer -> {
       if (peer.getAdvInvReceive().getIfPresent(item) == null &&
           peer.getAdvInvSpread().getIfPresent(item) == null) {
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
