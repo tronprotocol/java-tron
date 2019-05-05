@@ -54,9 +54,6 @@ public class TriggerConstantContractServlet extends HttpServlet {
       String parameter = jsonObject.getString("parameter");
       String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-      build.setCallTokenValue(jsonObject.getLongValue("call_token_value"));
-      build.setTokenId(jsonObject.getLongValue("token_id"));
-      build.setCallValue(jsonObject.getLongValue("call_value"));
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
       TransactionCapsule trxCap = wallet
