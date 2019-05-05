@@ -55,9 +55,17 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
-      executeTransparentOut(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
-          shieldedTransferContract.getFromAmount(), fee, ret);
+    try {
+      if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
+        executeTransparentOut(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
+            shieldedTransferContract.getFromAmount(), fee);
+      } else {
+        dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      }
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
 
     executeShielded(shieldedTransferContract.getSpendDescriptionList(),
@@ -67,17 +75,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
       executeTransparentIn(shieldedTransferContract.getTransparentToAddress().toByteArray(),
           shieldedTransferContract.getToAmount());
     }
-
+    ret.setStatus(fee, code.SUCESS);
     return true;
   }
 
-  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee,
-      TransactionResultCapsule ret) throws ContractExeException {
+  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee) throws ContractExeException {
     try {
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
       dbManager.adjustBalance(ownerAddress, -amount);
-      ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
       throw new ContractExeException(e.getMessage());
     }
@@ -94,8 +100,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   //record shielded transaction data.
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
     //handle spends
-    for (SpendDescription spend : spends
-    ) {
+    for (SpendDescription spend : spends) {
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
