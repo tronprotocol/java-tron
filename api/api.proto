@@ -672,6 +672,11 @@ service Wallet {
   rpc ScanNoteByBlockRangeAndOvk (OvkDecryptParameters) returns (DecryptNotes) {
   };
 
+  rpc GetExpandedSpendingKey (BytesMessage) returns (ExpandedSpendingKeyMessage) {
+  }
+
+  rpc GetProofAuthorizingKey (ExpandedSpendingKeyMessage) returns (ProofAuthorizingKeyMessage) {
+  }
 };
 
 
@@ -1134,4 +1139,43 @@ message PrivateParameters {
   repeated ReceiveNote shieldedReceives = 6;
   bytes transparent_to_address = 7;
   bytes to_amount = 8;
+}
+
+message ExpandedSpendingKeyMessage {
+  bytes ask = 1;
+  bytes nsk = 2;
+  bytes ovk = 3;
+}
+
+message ProofAuthorizingKeyMessage {
+  bytes ak = 1;
+  bytes nsk = 2;
+}
+
+message FullViewingKeyMessage {
+  bytes ak = 1;
+  bytes nk = 2;
+  bytes ovk = 3;
+}
+
+message IncomingViewingKeyMessage {
+  bytes ivk = 1;
+}
+
+message DiversifierMessage {
+  bytes d = 1;
+}
+
+message TransmissionKeyMessage {
+  bytes pkD = 1;
+}
+
+message IncomingViewingKeyDiversifierMessage {
+  IncomingViewingKeyMessage ivk =1;
+  DiversifierMessage d = 2;
+}
+
+message SaplingPaymentAddressMessage {
+  DiversifierMessage d = 1;
+  bytes pkD =2;
 }
