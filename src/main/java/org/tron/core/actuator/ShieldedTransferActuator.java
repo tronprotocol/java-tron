@@ -41,8 +41,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
   boolean isTransparentIn = false;
 
 
-
-
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
@@ -97,7 +95,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
     //handle spends
     for (SpendDescription spend : spends
-        ) {
+    ) {
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
@@ -115,10 +113,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
 
-
   @Override
   public boolean validate() throws ContractValidateException {
-    System.out.println("000000009999999");
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
@@ -194,9 +190,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
 
+      long valueBalance = shieldedTransferContract.getToAmount() -
+          shieldedTransferContract.getFromAmount() + calcFee();
       if (!Librustzcash.librustzcashSaplingFinalCheck(
           ctx,
-          shieldedTransferContract.getValueBalance(),
+          valueBalance,
           shieldedTransferContract.getBindingSignature().toByteArray(),
           signHash
       )) {
@@ -282,7 +280,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    return 0;
+    return 10 * 1000000;
   }
 
   public static void main(String[] args) {
