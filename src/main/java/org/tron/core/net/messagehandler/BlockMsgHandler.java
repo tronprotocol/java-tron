@@ -54,7 +54,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
-      logger.info("Receive block {} from {}, cost {}ms", blockId.getByteString(),
+      logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
           System.currentTimeMillis() - peer.getAdvInvRequest().get(item));
       peer.getAdvInvRequest().remove(item);
       processBlock(peer, blockMessage.getBlockCapsule());
