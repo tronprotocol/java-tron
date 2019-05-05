@@ -65,15 +65,17 @@ public class AdvService {
   private boolean fastForward = Args.getInstance().isFastForward();
 
   public void init() {
-    if (!fastForward) {
-      spreadExecutor.scheduleWithFixedDelay(() -> {
-        try {
-          consumerInvToSpread();
-        } catch (Throwable t) {
-          logger.error("Spread thread error.", t);
-        }
-      }, 100, 10, TimeUnit.MILLISECONDS);
+    if (fastForward) {
+      return;
     }
+
+    spreadExecutor.scheduleWithFixedDelay(() -> {
+      try {
+        consumerInvToSpread();
+      } catch (Throwable t) {
+        logger.error("Spread thread error.", t);
+      }
+    }, 100, 30, TimeUnit.MILLISECONDS);
 
     fetchExecutor.scheduleWithFixedDelay(() -> {
       try {
@@ -81,7 +83,7 @@ public class AdvService {
       } catch (Throwable t) {
         logger.error("Fetch thread error.", t);
       }
-    }, 100, 10, TimeUnit.MILLISECONDS);
+    }, 100, 30, TimeUnit.MILLISECONDS);
   }
 
   public void close() {
@@ -90,6 +92,11 @@ public class AdvService {
   }
 
   synchronized public boolean addInv(Item item) {
+
+    if (fastForward && !InventoryType.BLOCK.equals(item.getType())) {
+      return false;
+    }
+
     if (invToFetchCache.getIfPresent(item) != null) {
       return false;
     }
@@ -106,6 +113,11 @@ public class AdvService {
 
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.put(item, System.currentTimeMillis());
+
+    if (InventoryType.BLOCK.equals(item.getType())){
+      consumerInvToFetch();
+    }
+
     return true;
   }
 
@@ -118,6 +130,10 @@ public class AdvService {
   }
 
   public void broadcast(Message msg) {
+    if (fastForward && !(msg instanceof BlockMessage)) {
+      return;
+    }
+
     Item item;
     if (msg instanceof BlockMessage) {
       BlockMessage blockMsg = (BlockMessage) msg;
@@ -140,11 +156,12 @@ public class AdvService {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
     }
+
     synchronized (invToSpread) {
       invToSpread.put(item, System.currentTimeMillis());
     }
 
-    if (fastForward) {
+    if (InventoryType.BLOCK.equals(item.getType())) {
       consumerInvToSpread();
     }
   }
@@ -159,6 +176,10 @@ public class AdvService {
           invToFetchCache.invalidate(item);
         }
       });
+    }
+
+    if (invToFetch.size() > 0) {
+      consumerInvToFetch();
     }
   }
 
