@@ -82,9 +82,4 @@ public class Storage {
       }
     });
   }
-
-  public static void main(String[] args) {
-    String s = "test(address)";
-    System.out.println(Hex.toHexString(Hash.sha3(s.getBytes())));
-  }
 }
