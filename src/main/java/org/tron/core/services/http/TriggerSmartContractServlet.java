@@ -52,14 +52,11 @@ public class TriggerSmartContractServlet extends HttpServlet {
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
       String parameter = jsonObject.getString("parameter");
-      boolean hexPara = true;
-      if (jsonObject.containsKey("parameter_string")) {
-        parameter = jsonObject.getString("parameter_string");
-        hexPara = false;
-      }
-      String data = AbiUtil.parseMethod(selector, parameter, hexPara);
+      String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-
+      build.setCallTokenValue(jsonObject.getLongValue("call_token_value"));
+      build.setTokenId(jsonObject.getLongValue("token_id"));
+      build.setCallValue(jsonObject.getLongValue("call_value"));
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
       TransactionCapsule trxCap = wallet

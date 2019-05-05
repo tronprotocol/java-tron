@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
@@ -50,16 +51,12 @@ public class TriggerConstantContractServlet extends HttpServlet {
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
-
       String parameter = jsonObject.getString("parameter");
-      boolean hexPara = true;
-      if (jsonObject.containsKey("parameter_string")) {
-        parameter = jsonObject.getString("parameter_string");
-        hexPara = false;
-      }
-      String data = AbiUtil.parseMethod(selector, parameter, hexPara);
+      String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-
+      build.setCallTokenValue(jsonObject.getLongValue("call_token_value"));
+      build.setTokenId(jsonObject.getLongValue("token_id"));
+      build.setCallValue(jsonObject.getLongValue("call_value"));
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
       TransactionCapsule trxCap = wallet
