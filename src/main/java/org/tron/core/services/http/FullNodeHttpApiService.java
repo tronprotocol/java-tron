@@ -159,6 +159,8 @@ public class FullNodeHttpApiService implements Service {
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private GetExpandedSpendingKeyServlet getExpandedSpendingKeyServlet;
 
   @Override
   public void init() {
