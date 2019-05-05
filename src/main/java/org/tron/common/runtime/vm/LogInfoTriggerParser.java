@@ -87,7 +87,7 @@ public class LogInfoTriggerParser {
       event.setCreatorAddress(StringUtils.isEmpty(creatorAddr) ? "" : creatorAddr);
       event.setBlockNumber(blockNum);
       event.setTimeStamp(blockTimestamp);
-      event.setRawData(logInfo);
+      event.setLogInfo(logInfo);
       event.setAbiString(abiString);
 
       list.add(event);

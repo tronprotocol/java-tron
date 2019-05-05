@@ -2,11 +2,13 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
@@ -24,8 +25,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-import static org.tron.core.services.http.Util.getVisiblePost;
-import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 @Component
 @Slf4j(topic = "API")
@@ -35,17 +34,6 @@ public class TriggerConstantContractServlet extends HttpServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-  }
-
-  public static String parseMethod(String methodSign, String params) {
-    byte[] selector = new byte[4];
-    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
-    System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (StringUtils.isEmpty(params)) {
-      return Hex.toHexString(selector);
-    }
-    String result = Hex.toHexString(selector) + params;
-    return result;
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -58,12 +46,18 @@ public class TriggerConstantContractServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
-      visible = getVisiblePost( contract );
+      visible = Util.getVisiblePost(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
+
       String parameter = jsonObject.getString("parameter");
-      String data = parseMethod(selector, parameter);
+      boolean hexPara = true;
+      if (jsonObject.containsKey("parameter_string")) {
+        parameter = jsonObject.getString("parameter_string");
+        hexPara = false;
+      }
+      String data = AbiUtil.parseMethod(selector, parameter, hexPara);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
 
       long feeLimit = jsonObject.getLongValue("fee_limit");
@@ -80,7 +74,7 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .triggerConstantContract(build.build(), new TransactionCapsule(txBuilder.build()),
               trxExtBuilder,
               retBuilder);
-      trx = setTransactionPermissionId(jsonObject, trx);
+      trx = Util.setTransactionPermissionId(jsonObject, trx);
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
@@ -91,6 +85,6 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible ));
+    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
   }
 }

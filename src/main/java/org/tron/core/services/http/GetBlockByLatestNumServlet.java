@@ -57,7 +57,7 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlockByLatestNum(getNum);
         if (reply != null) {
-          response.getWriter().println(JsonFormat.printToString(reply, visible ));
+          response.getWriter().println(Util.printBlockList(reply, visible ));
           return;
         }
       }
