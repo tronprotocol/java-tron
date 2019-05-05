@@ -46,17 +46,20 @@ public class ZenTransactionBuilder {
   private Wallet wallet;
 
   @Getter
+  private long valueBalance = 0;
+
+  @Getter
   private ShieldedTransferContract.Builder contractBuilder = ShieldedTransferContract.newBuilder();
 
   public ZenTransactionBuilder(Wallet wallet) {
     this.wallet = wallet;
   }
 
-    public ZenTransactionBuilder() {
+  public ZenTransactionBuilder() {
 
-    }
+  }
 
-    //  List<TransparentInputInfo> tIns;
+  //  List<TransparentInputInfo> tIns;
 
   //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
 
@@ -70,12 +73,12 @@ public class ZenTransactionBuilder {
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
-    contractBuilder.setValueBalance(contractBuilder.getValueBalance() + note.value);
+    valueBalance += note.value;
   }
 
   public void addSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
-    contractBuilder.setValueBalance(contractBuilder.getValueBalance() - value);
+    valueBalance -= value;
   }
 
   // TODO
@@ -109,18 +112,18 @@ public class ZenTransactionBuilder {
     // Sapling spends and outputs
     //
 
-    long change = contractBuilder.getValueBalance();
-    change += contractBuilder.getFromAmount();
-    change -= contractBuilder.getToAmount();
-
-    if (change < 0) {
-      // TODO
-      throw new RuntimeException("change cannot be negative");
-    }
-
-    if (change > 0) {
-      // TODO
-    }
+//   // long change = contractBuilder.getValueBalance();
+//    change += contractBuilder.getFromAmount();
+//    change -= contractBuilder.getToAmount();
+//
+//    if (change < 0) {
+//      // TODO
+//      throw new RuntimeException("change cannot be negative");
+//    }
+//
+//    if (change > 0) {
+//      // TODO
+//    }
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -164,7 +167,7 @@ public class ZenTransactionBuilder {
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
         ctx,
-        contractBuilder.getValueBalance(),
+        valueBalance,
         dataToBeSigned,
         bindingSig
     );

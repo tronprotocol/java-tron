@@ -8,18 +8,18 @@ import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
-import java.util.Optional;
-import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.StringUtil;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
+import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
@@ -392,20 +392,18 @@ public class SendCoinShieldTest {
 
   public static byte[] hexString2Bytes(String hex) {
 
-    if ((hex == null) || (hex.equals(""))){
+    if ((hex == null) || (hex.equals(""))) {
       return null;
-    }
-    else if (hex.length()%2 != 0){
+    } else if (hex.length() % 2 != 0) {
       return null;
-    }
-    else{
+    } else {
       hex = hex.toUpperCase();
-      int len = hex.length()/2;
+      int len = hex.length() / 2;
       byte[] b = new byte[len];
       char[] hc = hex.toCharArray();
-      for (int i=0; i<len; i++){
-        int p=2*i;
-        b[i] = (byte) (charToByte(hc[p]) << 4 | charToByte(hc[p+1]));
+      for (int i = 0; i < len; i++) {
+        int p = 2 * i;
+        b[i] = (byte) (charToByte(hc[p]) << 4 | charToByte(hc[p + 1]));
       }
       return b;
     }
@@ -415,13 +413,13 @@ public class SendCoinShieldTest {
   /*
    * convert byte array to string
    */
-  public String byteArrayFormat(byte[]  bytes) {
+  public String byteArrayFormat(byte[] bytes) {
 
     StringBuilder sb = new StringBuilder();
-    for(byte b : bytes){
-      sb.append(String.format("%d,",b));
+    for (byte b : bytes) {
+      sb.append(String.format("%d,", b));
     }
-    return StringUtils.strip(sb.toString(),",");
+    return StringUtils.strip(sb.toString(), ",");
   }
 
   @Test
@@ -444,17 +442,18 @@ public class SendCoinShieldTest {
     Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     Optional<BaseNotePlaintext.NotePlaintext> ret1 = BaseNotePlaintext.NotePlaintext.decrypt(
-            receiveDescription.getCEnc().toByteArray(),//ciphertext
-            fullViewingKey.inViewingKey().getValue(),
-            receiveDescription.getEpk().toByteArray(),//epk
-            receiveDescription.getNoteCommitment().toByteArray() //cm
+        receiveDescription.getCEnc().toByteArray(),//ciphertext
+        fullViewingKey.inViewingKey().getValue(),
+        receiveDescription.getEpk().toByteArray(),//epk
+        receiveDescription.getNoteCommitment().toByteArray() //cm
     );
 
     if (ret1.isPresent()) {
       BaseNotePlaintext.NotePlaintext noteText = ret1.get();
 
       byte[] pk_d = new byte[32];
-      if (!Librustzcash.librustzcashIvkToPkd(incomingViewingKey.getValue(), noteText.d.getData(), pk_d)) {
+      if (!Librustzcash
+          .librustzcashIvkToPkd(incomingViewingKey.getValue(), noteText.d.getData(), pk_d)) {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         return;
       }
@@ -463,12 +462,12 @@ public class SendCoinShieldTest {
       Assert.assertEquals(noteText.value, 4000);
       Assert.assertArrayEquals(noteText.memo, new byte[512]);
 
-      org.tron.protos.Contract.Note decrypt_note = org.tron.protos.Contract.Note.newBuilder()
-              .setD(ByteString.copyFrom(noteText.d.getData()))
-              .setValue(noteText.value)
-              .setRcm(ByteString.copyFrom(noteText.rcm))
-              .setPkD(ByteString.copyFrom(pk_d))
-              .build();
+      GrpcAPI.Note decrypt_note = GrpcAPI.Note.newBuilder()
+          .setD(ByteString.copyFrom(noteText.d.getData()))
+          .setValue(noteText.value)
+          .setRcm(ByteString.copyFrom(noteText.rcm))
+          .setPkD(ByteString.copyFrom(pk_d))
+          .build();
 
       System.out.println("decrypt c_enc note completely.");
     }
@@ -482,7 +481,8 @@ public class SendCoinShieldTest {
     librustzcashInitZksnarkParams();
 
     // construct payment address
-    SpendingKey spendingKey2 = SpendingKey.decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    SpendingKey spendingKey2 = SpendingKey
+        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     PaymentAddress paymentAddress2 = spendingKey2.defaultAddress();
     FullViewingKey fullViewingKey = spendingKey2.fullViewingKey();
 
@@ -500,7 +500,7 @@ public class SendCoinShieldTest {
     byte[] cmu_opt = note.cm();
     Assert.assertNotNull(cmu_opt);
 
-    BaseNotePlaintext.NotePlaintext pt = new BaseNotePlaintext.NotePlaintext(note,new byte[512]);
+    BaseNotePlaintext.NotePlaintext pt = new BaseNotePlaintext.NotePlaintext(note, new byte[512]);
     BaseNotePlaintext.SaplingNotePlaintextEncryptionResult enc = pt.encrypt(pkd).get();
 
     SaplingNoteEncryption encryptor = enc.noteEncryption;
@@ -509,20 +509,20 @@ public class SendCoinShieldTest {
 
     // encrypt with ovk
     NoteEncryption.OutCiphertext outCiphertext = out_pt.encrypt(
-            fullViewingKey.getOvk(),
-            receiveDescription.getValueCommitment().toByteArray(),
-            receiveDescription.getNoteCommitment().toByteArray(),
-            encryptor);
+        fullViewingKey.getOvk(),
+        receiveDescription.getValueCommitment().toByteArray(),
+        receiveDescription.getNoteCommitment().toByteArray(),
+        encryptor);
 
     // get pk_d, esk from decryption of c_out with ovk
     Optional<SaplingOutgoingPlaintext> ret2 = SaplingOutgoingPlaintext.decrypt(outCiphertext,
-            fullViewingKey.getOvk(),
-            receiveDescription.getValueCommitment().toByteArray(),
-            receiveDescription.getNoteCommitment().toByteArray(),
-            encryptor.epk
-            );
+        fullViewingKey.getOvk(),
+        receiveDescription.getValueCommitment().toByteArray(),
+        receiveDescription.getNoteCommitment().toByteArray(),
+        encryptor.epk
+    );
 
-    if(ret2.isPresent()) {
+    if (ret2.isPresent()) {
 
       SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = ret2.get();
 
@@ -536,13 +536,13 @@ public class SendCoinShieldTest {
       ciphertext.data = enc.encCiphertext;
 
       Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
-              .decrypt(ciphertext,
-                      encryptor.epk,
-                      decrypted_out_ct_unwrapped.esk,
-                      decrypted_out_ct_unwrapped.pk_d,
-                      cmu_opt);
+          .decrypt(ciphertext,
+              encryptor.epk,
+              decrypted_out_ct_unwrapped.esk,
+              decrypted_out_ct_unwrapped.pk_d,
+              cmu_opt);
 
-      if(foo.isPresent()) {
+      if (foo.isPresent()) {
 
         BaseNotePlaintext.NotePlaintext bar = foo.get();
         //verify result
@@ -551,12 +551,12 @@ public class SendCoinShieldTest {
 
         System.out.println("decrypt c_out with pkd,esk success");
 
-      }else{
+      } else {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         throw new RuntimeException("decrypt c_out with pkd,esk failed");
       }
 
-    }else{
+    } else {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("decrypt c_out with failed");
     }
@@ -566,10 +566,10 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithIvk()
-          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-          TaposException, TransactionExpirationException, ReceiptCheckErrException,
-          DupTransactionException, VMIllegalException, ValidateSignatureException,
-          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+      TaposException, TransactionExpirationException, ReceiptCheckErrException,
+      DupTransactionException, VMIllegalException, ValidateSignatureException,
+      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -586,7 +586,7 @@ public class SendCoinShieldTest {
     byte[] anchor = voucher.root().getContent().toByteArray();
 
     dbManager.getMerkleContainer()
-            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     builder.addSaplingSpend(expsk, note, anchor, voucher);
 
@@ -610,21 +610,24 @@ public class SendCoinShieldTest {
         continue;
       }
 
-      Contract.ShieldedTransferContract stContract = c.getParameter().unpack(Contract.ShieldedTransferContract.class);
-      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+      Contract.ShieldedTransferContract stContract = c.getParameter()
+          .unpack(Contract.ShieldedTransferContract.class);
+      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract
+          .getReceiveDescription(0);
 
       Optional<BaseNotePlaintext.NotePlaintext> ret1 = BaseNotePlaintext.NotePlaintext.decrypt(
-              receiveDescription.getCEnc().toByteArray(),//ciphertext
-              ivk,
-              receiveDescription.getEpk().toByteArray(),//epk
-              receiveDescription.getNoteCommitment().toByteArray() //cm
+          receiveDescription.getCEnc().toByteArray(),//ciphertext
+          ivk,
+          receiveDescription.getEpk().toByteArray(),//epk
+          receiveDescription.getNoteCommitment().toByteArray() //cm
       );
 
       if (ret1.isPresent()) {
         BaseNotePlaintext.NotePlaintext noteText = ret1.get();
 
         byte[] pk_d = new byte[32];
-        if (!Librustzcash.librustzcashIvkToPkd(incomingViewingKey.getValue(), noteText.d.getData(), pk_d)) {
+        if (!Librustzcash
+            .librustzcashIvkToPkd(incomingViewingKey.getValue(), noteText.d.getData(), pk_d)) {
           Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
@@ -644,10 +647,10 @@ public class SendCoinShieldTest {
 
   @Test
   public void pushShieldedTransactionAndDecryptWithOvk()
-          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-          TaposException, TransactionExpirationException, ReceiptCheckErrException,
-          DupTransactionException, VMIllegalException, ValidateSignatureException,
-          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+      TaposException, TransactionExpirationException, ReceiptCheckErrException,
+      DupTransactionException, VMIllegalException, ValidateSignatureException,
+      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -664,7 +667,7 @@ public class SendCoinShieldTest {
     byte[] anchor = voucher.root().getContent().toByteArray();
 
     dbManager.getMerkleContainer()
-            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     builder.addSaplingSpend(expsk, note, anchor, voucher);
 
@@ -688,21 +691,23 @@ public class SendCoinShieldTest {
         continue;
       }
 
-      Contract.ShieldedTransferContract stContract = c.getParameter().unpack(Contract.ShieldedTransferContract.class);
-      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+      Contract.ShieldedTransferContract stContract = c.getParameter()
+          .unpack(Contract.ShieldedTransferContract.class);
+      org.tron.protos.Contract.ReceiveDescription receiveDescription = stContract
+          .getReceiveDescription(0);
 
       NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
       c_out.data = receiveDescription.getCOut().toByteArray();
 
       Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(
-              c_out,//ciphertext
-              fullViewingKey.getOvk(),
-              receiveDescription.getValueCommitment().toByteArray(), //cv
-              receiveDescription.getNoteCommitment().toByteArray(), //cmu
-              receiveDescription.getEpk().toByteArray() //epk
+          c_out,//ciphertext
+          fullViewingKey.getOvk(),
+          receiveDescription.getValueCommitment().toByteArray(), //cv
+          receiveDescription.getNoteCommitment().toByteArray(), //cmu
+          receiveDescription.getEpk().toByteArray() //epk
       );
 
-      if(notePlaintext.isPresent()) {
+      if (notePlaintext.isPresent()) {
         SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
 
         //decode c_enc with pkd、esk
@@ -710,13 +715,13 @@ public class SendCoinShieldTest {
         ciphertext.data = receiveDescription.getCEnc().toByteArray();
 
         Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
-                .decrypt(ciphertext,
-                        receiveDescription.getEpk().toByteArray(),
-                        decrypted_out_ct_unwrapped.esk,
-                        decrypted_out_ct_unwrapped.pk_d,
-                        receiveDescription.getNoteCommitment().toByteArray());
+            .decrypt(ciphertext,
+                receiveDescription.getEpk().toByteArray(),
+                decrypted_out_ct_unwrapped.esk,
+                decrypted_out_ct_unwrapped.pk_d,
+                receiveDescription.getNoteCommitment().toByteArray());
 
-        if(foo.isPresent()) {
+        if (foo.isPresent()) {
           BaseNotePlaintext.NotePlaintext bar = foo.get();
           //verify result
           Assert.assertEquals(bar.value, 3000);
@@ -734,7 +739,7 @@ public class SendCoinShieldTest {
 
 
   @Test
-  public void testEncrypt(){
+  public void testEncrypt() {
 
   }
 
@@ -828,7 +833,7 @@ public class SendCoinShieldTest {
     byte[] bindingSig = new byte[64];
     boolean ret = Librustzcash.librustzcashSaplingBindingSig(
         ctx,
-        builder.getContractBuilder().getValueBalance(),
+        builder.getValueBalance(),
         getHash(),
         bindingSig
     );
@@ -907,7 +912,7 @@ public class SendCoinShieldTest {
     byte[] bindingSig = new byte[64];
     boolean ret = Librustzcash.librustzcashSaplingBindingSig(
         ctx,
-        builder.getContractBuilder().getValueBalance(),
+        builder.getValueBalance(),
         getHash(),
         bindingSig
     );
@@ -952,7 +957,7 @@ public class SendCoinShieldTest {
     // final check
     ok = Librustzcash.librustzcashSaplingFinalCheck(
         ctx,
-        builder.getContractBuilder().getValueBalance(),
+        builder.getValueBalance(),
         bindingSig,
         getHash()
     );
