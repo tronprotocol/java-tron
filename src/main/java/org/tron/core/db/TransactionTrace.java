@@ -25,6 +25,7 @@ import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime.vm.program.Program.TransferException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
@@ -310,6 +311,12 @@ public class TransactionTrace {
       receipt.setResult(contractResult.JVM_STACK_OVER_FLOW);
       return;
     }
+    if (exception instanceof TransferException) {
+      receipt.setResult(contractResult.TRANSFER_FAILED);
+      return;
+    }
+
+    logger.error("uncaught exception", exception);
     receipt.setResult(contractResult.UNKNOWN);
   }
 

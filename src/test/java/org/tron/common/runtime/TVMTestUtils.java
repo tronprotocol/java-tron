@@ -267,6 +267,7 @@ public class TVMTestUtils {
 
     trace.finalization();
 
+    trace.setResult();
     return new TVMTestResult(trace.getRuntime(), trace.getReceipt(), null);
   }
 
