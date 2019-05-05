@@ -19,7 +19,7 @@ public class TronMessageFactory extends MessageFactory {
       throw e;
     } catch (final Exception e) {
       throw new P2pException(P2pException.TypeEnum.PARSE_MESSAGE_FAILED,
-          "type=" + data[0] + ", len=" + data.length);
+          "type=" + data[0] + ", len=" + data.length + ", error msg: " + e.getMessage());
     }
   }
 

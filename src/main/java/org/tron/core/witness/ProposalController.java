@@ -1,11 +1,14 @@
 package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
@@ -205,6 +208,7 @@ public class ProposalController {
         case (24): {
           if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(47);
           }
           break;
         }
@@ -230,6 +234,7 @@ public class ProposalController {
         }
         case (30): {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
+          manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
           break;
         }
         default:
@@ -237,6 +242,5 @@ public class ProposalController {
       }
     }
   }
-
 
 }

@@ -20,8 +20,7 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.*;
 
 
 @Component
@@ -42,7 +41,11 @@ public class DeployContractServlet extends HttpServlet {
       boolean visible = getVisiblePost(contract);
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      byte[] ownerAddress = ByteArray.fromHexString(jsonObject.getString("owner_address"));
+      String owner_address = jsonObject.getString("owner_address");
+      if ( visible ) {
+        owner_address = getHexAddress(owner_address);
+      }
+      byte[] ownerAddress = ByteArray.fromHexString(owner_address);
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build
           .setCallTokenValue(jsonObject.getLongValue("call_token_value"))
@@ -88,7 +91,8 @@ public class DeployContractServlet extends HttpServlet {
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
-      response.getWriter().println(Util.printTransaction(txBuilder.build(), visible));
+      tx = setTransactionPermissionId(jsonObject, txBuilder.build());
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

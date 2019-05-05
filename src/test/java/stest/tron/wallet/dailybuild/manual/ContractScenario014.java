@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class ContractScenario014 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contract014Address = ecKey1.getAddress();
   String contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  String priKey014 = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] receiverAddress = ecKey2.getAddress();
@@ -71,9 +73,6 @@ public class ContractScenario014 {
 
   @Test(enabled = true, description = "Triple trigger in smart contract")
   public void testTripleTrigger() {
-    ecKey1 = new ECKey(Utils.getRandom());
-    contract014Address = ecKey1.getAddress();
-    contract014Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     ecKey2 = new ECKey(Utils.getRandom());
     receiverAddress = ecKey2.getAddress();
@@ -81,14 +80,20 @@ public class ContractScenario014 {
     PublicMethed.printAddress(contract014Key);
     PublicMethed.printAddress(receiverKey);
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 5000000000L, fromAddress,
+    Assert.assertTrue(PublicMethed.sendcoin(contract014Address, 5000000000000L, fromAddress,
         testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceGetEnergy(contract014Address, 1000000000000L, 0, 1, priKey014,
+            blockingStubFull));
+
+    logger.info("contract014Address : == " + contract014Key);
     //Deploy contract1, contract1 has a function to transaction 5 sun to target account
     String contractName = "Contract1";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario014_testTripleTrigger");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario014_testTripleTrigger");
+    String filePath = "./src/test/resources/soliditycode/contractScenario014.sol";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract014Key, contract014Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -99,12 +104,13 @@ public class ContractScenario014 {
 
     //Deploy contract2, contract2 has a function to call contract1 transaction sun function.
     // and has a revert function.
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code1_ContractScenario014_testTripleTrigger");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi1_ContractScenario014_testTripleTrigger");
+    contractName = "contract2";
+    String filePath1 = "./src/test/resources/soliditycode/contractScenario014.sol";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName);
+
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
     String parame = "\"" + Base58.encode58Check(contractAddress1) + "\"";
-    contractName = "Contract2";
 
     txid = PublicMethed.deployContractWithConstantParame(contractName, abi1, code1,
         "constructor(address)", parame, "", maxFeeLimit, 0L, 100, null,
@@ -114,12 +120,13 @@ public class ContractScenario014 {
     contractAddress2 = infoById.get().getContractAddress().toByteArray();
 
     //Deploy contract3, trigger contrct2 function.
-    String code2 = Configuration.getByPath("testng.conf")
-        .getString("code.code2_ContractScenario014_testTripleTrigger");
-    String abi2 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi2_ContractScenario014_testTripleTrigger");
+    contractName = "contract3";
+    String filePath2 = "./src/test/resources/soliditycode/contractScenario014.sol";
+    HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName);
+
+    String code2 = retMap2.get("byteCode").toString();
+    String abi2 = retMap2.get("abI").toString();
     parame = "\"" + Base58.encode58Check(contractAddress2) + "\"";
-    contractName = "Contract3";
 
     txid = PublicMethed.deployContractWithConstantParame(contractName, abi2, code2,
         "constructor(address)", parame, "", maxFeeLimit, 0L, 100, null,
@@ -150,12 +157,13 @@ public class ContractScenario014 {
     String receiveAddress = "\"" + Base58.encode58Check(receiverAddress) + "\"";
     txid = PublicMethed.triggerContract(contractAddress2,
         "triggerContract1(address)", receiveAddress, false,
-        0, 10000000L, contract014Address, contract014Key, blockingStubFull);
+        0, maxFeeLimit, contract014Address, contract014Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contract2AccountInfo = PublicMethed.queryAccount(contractAddress2, blockingStubFull);
     final Long contract2AfterBalance = contract2AccountInfo.getBalance();
+    //contract2AccountInfo.getAccountResource().getFrozenBalanceForEnergy();
     receiverAccountInfo = PublicMethed.queryAccount(receiverAddress, blockingStubFull);
     Long receiverAfterBalance = receiverAccountInfo.getBalance();
     contract1AccountInfo = PublicMethed.queryAccount(contractAddress1, blockingStubFull);

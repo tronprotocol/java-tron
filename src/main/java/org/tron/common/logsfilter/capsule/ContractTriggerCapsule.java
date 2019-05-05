@@ -1,10 +1,12 @@
 package org.tron.common.logsfilter.capsule;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
@@ -14,6 +16,7 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 
@@ -35,27 +38,39 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   public void processTrigger() {
     ContractTrigger event;
     boolean isEvent = false;
-    LogInfo logInfo = contractTrigger.getRawData();
-    JSONObject abi = JSONObject.parseObject(contractTrigger.getAbiString());
-    JSONArray entrys = abi.getJSONArray("entrys");
+    LogInfo logInfo = contractTrigger.getLogInfo();
+    JSONObject abi = null;
+    JSONArray entrys = null;
+    String abiString = contractTrigger.getAbiString();
+
+    Object abiObj = JSON.parse(abiString);
+    if (abiObj instanceof JSONObject) {
+      abi = (JSONObject) abiObj;
+      entrys = abi.getJSONArray("entrys");
+    }
+
+    List<DataWord> topics = logInfo.getTopics();
+
     String eventSignature = "";
     String eventSignatureFull = "fallback()";
     String entryName = "";
     JSONObject entryObj = new JSONObject();
 
-    if (entrys != null && Args.getInstance().getStorage().isContractParseSwitch()) {
-      String logHash = logInfo.getTopics().get(0).toString();
+    if (entrys != null && topics != null && !topics.isEmpty() && !ArrayUtils
+        .isEmpty(topics.get(0).getData()) && Args.getInstance().getStorage()
+        .isContractParseSwitch()) {
+      String logHash = topics.get(0).toString();
       for (int i = 0; i < entrys.size(); i++) {
         JSONObject entry = entrys.getJSONObject(i);
 
-        if (!entry.getString("type").equalsIgnoreCase("event")) {
+        String funcType = entry.getString("type");
+        Boolean anonymous = entry.getBoolean("anonymous");
+        if (funcType == null || !funcType.equalsIgnoreCase("event")) {
           continue;
         }
 
-        if (entry.getBoolean("anonymous") != null) {
-          if (entry.getBoolean("anonymous")) {
-            continue;
-          }
+        if (anonymous != null && anonymous) {
+          continue;
         }
 
         String signature = entry.getString("name") + "(";
@@ -117,7 +132,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
     }
 
-    event.setRawData(logInfo);
+    RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());
+
+    event.setRawData(rawData);
     event.setAbiString(contractTrigger.getAbiString());
 
     event.setUniqueId(contractTrigger.getUniqueId());

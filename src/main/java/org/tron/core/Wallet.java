@@ -427,7 +427,7 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      trx = new TransactionCapsule(signaturedTransaction.toByteArray());
+      trx = new TransactionMessage(signaturedTransaction.toByteArray()).getTransactionCapsule();
       if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
         return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
             .build();
@@ -1483,6 +1483,10 @@ public class Wallet {
     if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
+    }
+    if (runtime.getResult().isRevert()) {
+      ret.setStatus(0, code.FAILED);
+      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed")).build();
     }
     trxCap.setResult(ret);
     return trxCap.getInstance();

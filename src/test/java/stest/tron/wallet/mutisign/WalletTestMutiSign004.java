@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -151,11 +152,13 @@ public class WalletTestMutiSign004 {
     randNum = rand.nextInt(4000);
 
     Long maxFeeLimit = 1000000000L;
-    String contractName = "StorageAndCpu" + Integer.toString(randNum);
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_TestStorageAndCpu_storageAndCpu");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_TestStorageAndCpu_storageAndCpu");
+    //String contractName = "StorageAndCpu" + Integer.toString(randNum);
+    String filePath = "./src/test/resources/soliditycode/walletTestMutiSign004.sol";
+    String contractName = "timeoutTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     byte[] contractAddress = PublicMethedForMutiSign.deployContract(contractName, abi, code,
         "", maxFeeLimit,
         0L, 100, null, ownerKey, ownerAddress, blockingStubFull, ownerKeyString);
@@ -169,8 +172,10 @@ public class WalletTestMutiSign004 {
         "testUseCpu(uint256)", initParmes, false,
         0, maxFeeLimit, ownerAddress, ownerKey, blockingStubFull, ownerKeyString);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.getTransactionById(txid, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Txid is " + txid);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getBlockNumber() > 0);
     PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, ownerKey,
         ownerAddress, 0, blockingStubFull, ownerKeyString);

@@ -5,6 +5,7 @@ import static org.tron.api.GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -140,18 +141,12 @@ public class ContractTrcToken003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName = "transferTokenContract";
-    String code = "608060405260e2806100126000396000f300608060405260043610603e5763ffffffff7c01000000"
-        + "000000000000000000000000000000000000000000000000006000350416633be9ece781146043575b600080"
-        + "fd5b606873ffffffffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b604051"
-        + "73ffffffffffffffffffffffffffffffffffffffff84169082156108fc029083908590600081818185878a8a"
-        + "d094505050505015801560b0573d6000803e3d6000fd5b505050505600a165627a7a723058200ba246bdb58b"
-        + "e0f221ad07e1b19de843ab541150b329ddd01558c2f1cefe1e270029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},"
-        + "{\"name\":\"id\",\"type\":\"trcToken\"},{\"name\":\"amount\",\"type\":\"uint256\"}],"
-        + "\"name\":\"TransferTokenTo\",\"outputs\":[],\"payable\":true,\"stateMutability\":"
-        + "\"payable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":"
-        + "\"payable\",\"type\":\"constructor\"}]";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken003.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
     // the tokenId is not exist
     String fakeTokenId = Long.toString(Long.valueOf(assetAccountDev.toStringUtf8()) + 100);

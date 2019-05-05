@@ -156,7 +156,7 @@ public class TronNetDelegate {
         case TRX:
           TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {
-            return new TransactionMessage(tx.getData());
+            return new TransactionMessage(tx.getInstance());
           }
           throw new StoreException();
         default:
