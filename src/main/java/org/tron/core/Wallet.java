@@ -75,6 +75,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
@@ -125,8 +126,10 @@ import org.tron.core.zen.KeyStore;
 import org.tron.core.zen.ZenTransactionBuilderFactory;
 import org.tron.core.zen.ZenWallet;
 import org.tron.core.zen.ZkChainParams;
+import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
@@ -1665,6 +1668,22 @@ public class Wallet {
       return null;
     }
     return null;
+  }
+
+  public ExpandedSpendingKey getExpandedSpendingKey(ByteString spendingKey) {
+    if (Objects.isNull(spendingKey)) {
+      return null;
+    }
+
+    ExpandedSpendingKey expandedSpendingKey = null;
+    try {
+      SpendingKey sk = new SpendingKey(spendingKey.toByteArray());
+      expandedSpendingKey = sk.expandedSpendingKey();
+
+    } catch (Exception e) {
+    }
+
+    return expandedSpendingKey;
   }
 
   public NodeList listNodes() {

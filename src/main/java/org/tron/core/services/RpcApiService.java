@@ -42,6 +42,7 @@ import org.tron.api.GrpcAPI.EasyTransferMessage;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
@@ -78,6 +79,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -1827,16 +1829,36 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getExpandedSpendingKey(BytesMessage request,
+        StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
+      ByteString spendingKey = request.getValue();
+      if (null != spendingKey) {
+        ExpandedSpendingKey expandedSpendingKey = wallet.getExpandedSpendingKey(spendingKey);
+
+        ExpandedSpendingKeyMessage.Builder responseBuild = ExpandedSpendingKeyMessage.newBuilder();
+        responseBuild.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()))
+            .setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()))
+            .setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+
+        responseObserver.onNext(responseBuild.build());
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void scanNoteByBlockRangeAndIvk(GrpcAPI.IvkDecryptParameters request,
-                                           io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+        io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
       if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
         responseObserver.onNext(null);
-      }else {
-        responseObserver.onNext(wallet.scanNoteByBlockRangeAndIvk(startNum, endNum, request.getIvk().toByteArray()));
+      } else {
+        responseObserver.onNext(
+            wallet.scanNoteByBlockRangeAndIvk(startNum, endNum, request.getIvk().toByteArray()));
       }
       responseObserver.onCompleted();
 
@@ -1844,15 +1866,16 @@ public class RpcApiService implements Service {
 
     @Override
     public void scanNoteByBlockRangeAndOvk(GrpcAPI.OvkDecryptParameters request,
-                                           io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+        io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
       if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
         responseObserver.onNext(null);
-      }else {
-        responseObserver.onNext(wallet.scanNoteByBlockRangeAndOvk(startNum, endNum, request.getOvk().toByteArray()));
+      } else {
+        responseObserver.onNext(
+            wallet.scanNoteByBlockRangeAndOvk(startNum, endNum, request.getOvk().toByteArray()));
       }
       responseObserver.onCompleted();
 

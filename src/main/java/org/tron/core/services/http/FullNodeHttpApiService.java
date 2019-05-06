@@ -264,6 +264,8 @@ public class FullNodeHttpApiService implements Service {
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
 
+      context.addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
+
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

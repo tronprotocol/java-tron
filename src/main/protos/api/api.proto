@@ -677,8 +677,19 @@ service Wallet {
 
   rpc GetProofAuthorizingKey (ExpandedSpendingKeyMessage) returns (ProofAuthorizingKeyMessage) {
   }
-};
 
+  rpc GetFullViewingKey (ProofAuthorizingKeyMessage) returns (FullViewingKeyMessage) {
+  }
+
+  rpc GetIncomingViewingKey (FullViewingKeyMessage) returns (IncomingViewingKeyMessage) {
+  }
+
+  rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
+  }
+
+  rpc GetSaplingPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
+  }
+};
 
 service WalletSolidity {
 
@@ -1164,10 +1175,6 @@ message IncomingViewingKeyMessage {
 
 message DiversifierMessage {
   bytes d = 1;
-}
-
-message TransmissionKeyMessage {
-  bytes pkD = 1;
 }
 
 message IncomingViewingKeyDiversifierMessage {

@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.zen.address.ExpandedSpendingKey;
 
 @Component
 @Slf4j(topic = "API")
@@ -21,8 +23,45 @@ public class GetExpandedSpendingKeyServlet extends HttpServlet {
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      String input = request.getParameter("value");
+      ExpandedSpendingKey reply = wallet
+          .getExpandedSpendingKey(ByteString.copyFrom(ByteArray.fromHexString(input)));
+      if (reply != null) {
+        response.getWriter().println(JSON.toJSONString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      BytesMessage.Builder build = BytesMessage.newBuilder();
+      JsonFormat.merge(input, build);
+      ExpandedSpendingKey reply = wallet.getExpandedSpendingKey(build.getValue());
+      if (reply != null) {
+        response.getWriter().println(JSON.toJSONString(reply));
+      } else {
+        response.getWriter().println("{}");
+      }
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
   }
 }
