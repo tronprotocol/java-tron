@@ -45,6 +45,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
@@ -929,6 +930,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     if (exception instanceof JVMStackOverFlowException) {
       this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    if (exception instanceof Program.TransferException) {
+      this.setResultCode(contractResult.TRANSFER_FAILED);
       return;
     }
     this.setResultCode(contractResult.UNKNOWN);
