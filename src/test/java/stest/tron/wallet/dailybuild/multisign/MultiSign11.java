@@ -894,6 +894,7 @@ public class MultiSign11 {
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey02) + "\",\"weight\":2},"
             + "{\"address\":\"" + PublicMethed.getAddressString(tmpKey01) + "\",\"weight\":3}"
             + "]}]}";
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
         ownerAddress, ownerKey, blockingStubFull,
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
