@@ -312,6 +312,4 @@ public class ZenTransactionBuilder {
     @Getter
     private byte[] memo; // 256
   }
-
-
 }
