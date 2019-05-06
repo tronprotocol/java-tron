@@ -2,6 +2,7 @@ package stest.tron.wallet.common.client.utils;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.primitives.Longs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -46,6 +47,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.keystore.WalletFile;
 import org.tron.protos.Contract;
@@ -3989,6 +3991,35 @@ public class PublicMethed {
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     return transactionExtention;
 
+  }
+
+  public static String create2(String[] parameters) {
+    if (parameters == null || parameters.length != 3) {
+      logger.error("create2 needs 3 parameter:\ncreate2 address code salt");
+      return null;
+    }
+
+    byte[] address = WalletClient.decodeFromBase58Check(parameters[0]);
+    if (!WalletClient.addressValid(address)) {
+      logger.error("length of address must be 21 bytes.");
+      return null;
+    }
+
+    byte[] code = Hex.decode(parameters[1]);
+    byte[] temp = Longs.toByteArray(Long.parseLong(parameters[2]));
+    if (temp.length != 8) {
+      logger.error("Invalid salt!");
+      return null;
+    }
+    byte[] salt = new byte[32];
+    System.arraycopy(temp, 0, salt, 24, 8);
+
+    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
+    String create2Address = Base58.encode58Check(Hash.sha3omit12(mergedData));
+
+    logger.info("create2 Address: " + create2Address);
+
+    return create2Address;
   }
 
 }
