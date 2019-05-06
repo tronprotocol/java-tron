@@ -50,7 +50,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
-        executeTransparentOut(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
+        executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount());
       }
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
@@ -64,14 +64,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
         shieldedTransferContract.getReceiveDescriptionList());
 
     if (shieldedTransferContract.getTransparentToAddress().toByteArray().length > 0) {
-      executeTransparentIn(shieldedTransferContract.getTransparentToAddress().toByteArray(),
+      executeTransparentTo(shieldedTransferContract.getTransparentToAddress().toByteArray(),
           shieldedTransferContract.getToAmount());
     }
     ret.setStatus(fee, code.SUCESS);
     return true;
   }
 
-  private void executeTransparentOut(byte[] ownerAddress, long amount)
+  private void executeTransparentFrom(byte[] ownerAddress, long amount)
       throws ContractExeException {
     try {
       dbManager.adjustBalance(ownerAddress, -amount);
@@ -80,7 +80,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void executeTransparentIn(byte[] toAddress, long amount) throws ContractExeException {
+  private void executeTransparentTo(byte[] toAddress, long amount) throws ContractExeException {
     try {
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
