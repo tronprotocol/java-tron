@@ -372,7 +372,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     newContract.setFromAmount(shieldedTransferContract.getFromAmount());
     newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
     newContract.setToAmount(shieldedTransferContract.getToAmount());
-    newContract.setValueBalance(shieldedTransferContract.getValueBalance());
     newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
     newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
     for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
