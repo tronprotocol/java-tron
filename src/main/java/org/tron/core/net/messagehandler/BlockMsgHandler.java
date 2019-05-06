@@ -21,7 +21,7 @@ import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class BlockMsgHandler implements TronMsgHandler {
 
@@ -54,6 +54,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
+      logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
+          System.currentTimeMillis() - peer.getAdvInvRequest().get(item));
       peer.getAdvInvRequest().remove(item);
       processBlock(peer, blockMessage.getBlockCapsule());
     }

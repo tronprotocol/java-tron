@@ -20,7 +20,7 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.SyncService;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class ChainInventoryMsgHandler implements TronMsgHandler {
 
@@ -64,6 +64,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
           .containBlock(peer.getSyncBlockToFetch().peek())) {
         BlockId blockId = peer.getSyncBlockToFetch().pop();
+        peer.setBlockBothHave(blockId);
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
       }
     }

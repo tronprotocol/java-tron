@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -35,7 +36,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class AdvService {
 
@@ -62,9 +63,12 @@ public class AdvService {
   @Getter
   private MessageCount trxCount = new MessageCount();
 
+  private int maxSpreadSize = 1_000;
+
   private boolean fastForward = Args.getInstance().isFastForward();
 
   public void init() {
+
     if (fastForward) {
       return;
     }
@@ -130,7 +134,13 @@ public class AdvService {
   }
 
   public void broadcast(Message msg) {
+
     if (fastForward && !(msg instanceof BlockMessage)) {
+      return;
+    }
+
+    if (invToSpread.size() > maxSpreadSize) {
+      logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
       return;
     }
 
@@ -157,9 +167,7 @@ public class AdvService {
       return;
     }
 
-    synchronized (invToSpread) {
-      invToSpread.put(item, System.currentTimeMillis());
-    }
+    invToSpread.put(item, System.currentTimeMillis());
 
     if (InventoryType.BLOCK.equals(item.getType())) {
       consumerInvToSpread();
@@ -217,26 +225,25 @@ public class AdvService {
   }
 
   private void consumerInvToSpread() {
-    if (invToSpread.isEmpty()) {
+
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .collect(Collectors.toList());
+
+    if (invToSpread.isEmpty() || peers.isEmpty()) {
       return;
     }
 
     InvSender invSender = new InvSender();
-    HashMap<Item, Long> spread = new HashMap<>();
-    synchronized (invToSpread) {
-      spread.putAll(invToSpread);
-      invToSpread.clear();
-    }
 
-    tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .forEach(peer -> spread.entrySet().stream()
-            .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null
-                && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)
-            .forEach(entry -> {
-              peer.getAdvInvSpread().put(entry.getKey(), Time.getCurrentMillis());
-              invSender.add(entry.getKey(), peer);
-            }));
+    invToSpread.forEach((item, time) -> peers.forEach(peer -> {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null &&
+          peer.getAdvInvSpread().getIfPresent(item) == null) {
+        peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
+        invSender.add(item, peer);
+      }
+      invToSpread.remove(item);
+    }));
 
     invSender.sendInv();
   }
