@@ -54,6 +54,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.Note;
@@ -1675,7 +1676,17 @@ public class Wallet {
     return null;
   }
 
-  public ExpandedSpendingKey getExpandedSpendingKey(ByteString spendingKey) {
+  public BytesMessage getSpendingKey() {
+    byte [] sk;
+    try {
+      sk = SpendingKey.random().getValue();
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(sk)).build();
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey) {
     if (Objects.isNull(spendingKey)) {
       return null;
     }
@@ -1685,10 +1696,48 @@ public class Wallet {
       SpendingKey sk = new SpendingKey(spendingKey.toByteArray());
       expandedSpendingKey = sk.expandedSpendingKey();
 
+      ExpandedSpendingKeyMessage.Builder responseBuild = ExpandedSpendingKeyMessage.newBuilder();
+      responseBuild.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()))
+          .setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()))
+          .setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+
+      System.out.println(
+          "sk.expandedSpendingKey() is: " + ByteUtil.toHexString(expandedSpendingKey.encode()));
+      System.out.println("ask hexstring is: " + ByteUtil.toHexString(expandedSpendingKey.getAsk()));
+      System.out.println("nsk hexstring is: " + ByteUtil.toHexString(expandedSpendingKey.getNsk()));
+
+      return responseBuild.build();
     } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public BytesMessage getAkFromAsk(ByteString ask) {
+    if (Objects.isNull(ask)) {
+      return null;
     }
 
-    return expandedSpendingKey;
+    byte [] ak;
+    try {
+      ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(ak)).build();
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  public BytesMessage getNkFromNsk(ByteString nsk) {
+    if (Objects.isNull(nsk)) {
+      return null;
+    }
+
+    byte [] nk;
+    try {
+      nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nk)).build();
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public NodeList listNodes() {

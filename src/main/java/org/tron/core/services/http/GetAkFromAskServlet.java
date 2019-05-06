@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -11,14 +10,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.zen.address.ExpandedSpendingKey;
 
 @Component
 @Slf4j(topic = "API")
-public class GetExpandedSpendingKeyServlet extends HttpServlet {
+public class GetAkFromAskServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
@@ -26,8 +23,13 @@ public class GetExpandedSpendingKeyServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getParameter("value");
-      ExpandedSpendingKeyMessage reply = wallet
-          .getExpandedSpendingKey(ByteString.copyFrom(ByteArray.fromHexString(input)));
+      BytesMessage reply = wallet
+          .getAkFromAsk(ByteString.copyFrom(ByteArray.fromHexString(input)));
+
+      String base58check = Wallet.encode58Check(reply.toByteArray());
+      String hexString = ByteArray.toHexString(reply.toByteArray());
+      System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
+
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
@@ -51,7 +53,7 @@ public class GetExpandedSpendingKeyServlet extends HttpServlet {
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
 
-      ExpandedSpendingKeyMessage reply = wallet.getExpandedSpendingKey(build.getValue());
+      BytesMessage reply = wallet.getAkFromAsk(build.getValue());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
