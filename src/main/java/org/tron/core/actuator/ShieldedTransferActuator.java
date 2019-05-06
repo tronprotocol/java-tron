@@ -51,10 +51,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
     try {
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
         executeTransparentOut(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
-            shieldedTransferContract.getFromAmount(), fee);
-      } else {
-        dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+            shieldedTransferContract.getFromAmount());
       }
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -72,11 +71,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
     return true;
   }
 
-  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee)
+  private void executeTransparentOut(byte[] ownerAddress, long amount)
       throws ContractExeException {
     try {
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
       dbManager.adjustBalance(ownerAddress, -amount);
     } catch (BalanceInsufficientException e) {
       throw new ContractExeException(e.getMessage());
@@ -142,8 +139,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    if (shieldedTransferContract.getFee() != calcFee()) {
-      throw new ContractValidateException("ShieldedTransferContract fee must equal " + calcFee());
+    long fee = calcFee();
+    if (shieldedTransferContract.getFee() != fee) {
+      throw new ContractValidateException("ShieldedTransferContract fee must equal " + fee);
     }
 
     //transparent verification
@@ -206,7 +204,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
 
       long valueBalance = shieldedTransferContract.getToAmount() -
-          shieldedTransferContract.getFromAmount() + calcFee();
+          shieldedTransferContract.getFromAmount() + fee;
       if (!Librustzcash.librustzcashSaplingFinalCheck(
           ctx,
           valueBalance,
