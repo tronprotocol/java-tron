@@ -595,7 +595,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    builder
+        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -676,7 +677,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    builder
+        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -826,7 +828,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    builder
+        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
 
     // test create binding sig
@@ -905,7 +908,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    builder
+        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
 
