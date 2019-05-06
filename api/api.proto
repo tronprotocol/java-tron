@@ -675,13 +675,13 @@ service Wallet {
   rpc GetExpandedSpendingKey (BytesMessage) returns (ExpandedSpendingKeyMessage) {
   }
 
-  rpc GetProofAuthorizingKey (ExpandedSpendingKeyMessage) returns (ProofAuthorizingKeyMessage) {
+  rpc GetAkFromAsk (BytesMessage) returns (BytesMessage) {
   }
 
-  rpc GetFullViewingKey (ProofAuthorizingKeyMessage) returns (FullViewingKeyMessage) {
+  rpc GetNkFromNsk (BytesMessage) returns (BytesMessage) {
   }
 
-  rpc GetIncomingViewingKey (FullViewingKeyMessage) returns (IncomingViewingKeyMessage) {
+  rpc GetIncomingViewingKey (ViewingKeyMessage) returns (IncomingViewingKeyMessage) {
   }
 
   rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
@@ -1163,10 +1163,9 @@ message ProofAuthorizingKeyMessage {
   bytes nsk = 2;
 }
 
-message FullViewingKeyMessage {
+message ViewingKeyMessage {
   bytes ak = 1;
   bytes nk = 2;
-  bytes ovk = 3;
 }
 
 message IncomingViewingKeyMessage {
