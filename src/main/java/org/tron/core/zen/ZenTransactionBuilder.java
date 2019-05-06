@@ -126,6 +126,7 @@ public class ZenTransactionBuilder {
 //    }
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    contractBuilder.setFee(10 * 1000000);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
@@ -172,7 +173,6 @@ public class ZenTransactionBuilder {
         bindingSig
     );
     contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
-
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
