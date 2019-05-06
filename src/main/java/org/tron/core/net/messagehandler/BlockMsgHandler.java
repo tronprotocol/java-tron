@@ -21,7 +21,7 @@ import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class BlockMsgHandler implements TronMsgHandler {
 

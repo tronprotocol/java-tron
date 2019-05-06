@@ -12,7 +12,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class InventoryMsgHandler implements TronMsgHandler {
 

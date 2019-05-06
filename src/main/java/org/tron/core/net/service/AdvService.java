@@ -36,7 +36,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class AdvService {
 
