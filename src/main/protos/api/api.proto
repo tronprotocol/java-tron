@@ -672,6 +672,9 @@ service Wallet {
   rpc ScanNoteByBlockRangeAndOvk (OvkDecryptParameters) returns (DecryptNotes) {
   };
 
+  rpc GetSpendingKey (EmptyMessage) returns (BytesMessage) {
+  }
+
   rpc GetExpandedSpendingKey (BytesMessage) returns (ExpandedSpendingKeyMessage) {
   }
 
@@ -1156,11 +1159,6 @@ message ExpandedSpendingKeyMessage {
   bytes ask = 1;
   bytes nsk = 2;
   bytes ovk = 3;
-}
-
-message ProofAuthorizingKeyMessage {
-  bytes ak = 1;
-  bytes nsk = 2;
 }
 
 message ViewingKeyMessage {

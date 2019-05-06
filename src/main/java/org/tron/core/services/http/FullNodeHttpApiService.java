@@ -161,6 +161,12 @@ public class FullNodeHttpApiService implements Service {
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
   private GetExpandedSpendingKeyServlet getExpandedSpendingKeyServlet;
+  @Autowired
+  private GetAkFromAskServlet getAkFromAskServlet;
+  @Autowired
+  private GetNkFromNskServlet getNkFromNskServlet;
+  @Autowired
+  private GetSpendingKeyServlet getSpendingKeyServlet;
 
   @Override
   public void init() {
@@ -265,6 +271,9 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
 
       context.addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
+      context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
+      context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
+      context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
 
       server.start();
     } catch (Exception e) {

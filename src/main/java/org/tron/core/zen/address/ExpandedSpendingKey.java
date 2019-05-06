@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
 
 @AllArgsConstructor
@@ -23,10 +24,21 @@ public class ExpandedSpendingKey {
   public ExpandedSpendingKey() {
   }
 
+
+  public static byte [] getAkFromAsk(byte[] ask) {
+    return Librustzcash.librustzcashAskToAk(ask); // 256
+  }
+
+  public static byte [] getNkFromNsk(byte[] nsk) {
+    return Librustzcash.librustzcashNskToNk(nsk); // 256
+  }
+
   public FullViewingKey fullViewingKey() {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
+    // System.out.println("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
+    // System.out.println("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
     return new FullViewingKey(ak, nk, ovk);
   }
 

@@ -1829,21 +1829,53 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getSpendingKey(EmptyMessage request, StreamObserver<BytesMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getSpendingKey());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getExpandedSpendingKey(BytesMessage request,
         StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
       ByteString spendingKey = request.getValue();
+
       if (null != spendingKey) {
-        ExpandedSpendingKey expandedSpendingKey = wallet.getExpandedSpendingKey(spendingKey);
+        ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
 
-        ExpandedSpendingKeyMessage.Builder responseBuild = ExpandedSpendingKeyMessage.newBuilder();
-        responseBuild.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()))
-            .setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()))
-            .setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
-
-        responseObserver.onNext(responseBuild.build());
+        responseObserver.onNext(response);
       } else {
         responseObserver.onNext(null);
       }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAkFromAsk(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
+      ByteString ak = request.getValue();
+
+      if (null != ak) {
+        responseObserver.onNext(wallet.getAkFromAsk(ak));
+      } else {
+        responseObserver.onNext(null);
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getNkFromNsk(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
+      ByteString nk = request.getValue();
+
+      if (null != nk) {
+        responseObserver.onNext(wallet.getNkFromNsk(nk));
+      } else {
+        responseObserver.onNext(null);
+      }
+
       responseObserver.onCompleted();
     }
 
