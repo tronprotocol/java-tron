@@ -580,7 +580,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-    Note note = new Note(address, 10000);
+    Note note = new Note(address, 4010 * 1000000);
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -595,7 +595,7 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 3000, new byte[512]);
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -633,7 +633,7 @@ public class SendCoinShieldTest {
         }
 
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(noteText.value, 3000);
+        Assert.assertEquals(noteText.value, 4000 * 1000000);
         Assert.assertArrayEquals(noteText.memo, new byte[512]);
 
         System.out.println("verify ok.");
@@ -661,7 +661,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-    Note note = new Note(address, 10000);
+    Note note = new Note(address, 4010 * 1000000);
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -676,7 +676,7 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 3000, new byte[512]);
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -724,7 +724,7 @@ public class SendCoinShieldTest {
         if (foo.isPresent()) {
           BaseNotePlaintext.NotePlaintext bar = foo.get();
           //verify result
-          Assert.assertEquals(bar.value, 3000);
+          Assert.assertEquals(bar.value, 4000 * 1000000);
           Assert.assertArrayEquals(bar.memo, new byte[512]);
           System.out.println("decrypt c_out with ovk success");
         }
@@ -813,7 +813,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-    Note note = new Note(address, 10000);
+    Note note = new Note(address, 4010 * 1000000);
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -826,7 +826,7 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
 
     // test create binding sig
@@ -858,7 +858,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = xsk.getExpsk();
 
     PaymentAddress address = xsk.DefaultAddress();
-    Note note = new Note(address, 10000);
+    Note note = new Note(address, 4010 * 1000000);
 
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -873,7 +873,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder
+        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -892,7 +893,7 @@ public class SendCoinShieldTest {
     ExtendedSpendingKey xsk = createXskDefault();
     ExpandedSpendingKey expsk = xsk.getExpsk();
     PaymentAddress address = xsk.DefaultAddress();
-    Note note = new Note(address, 10000);
+    Note note = new Note(address, 4010 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSaplingSpend(expsk, note, anchor, voucher);
@@ -904,7 +905,7 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
 

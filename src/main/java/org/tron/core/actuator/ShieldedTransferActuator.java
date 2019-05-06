@@ -79,7 +79,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     return true;
   }
 
-  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee) throws ContractExeException {
+  private void executeTransparentOut(byte[] ownerAddress, long amount, long fee)
+      throws ContractExeException {
     try {
       dbManager.adjustBalance(ownerAddress, -fee);
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
@@ -140,6 +141,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+
+    if (shieldedTransferContract.getFee() != calcFee()) {
+      throw new ContractValidateException("ShieldedTransferContract fee must equal " + calcFee());
     }
 
     //transparent verification
