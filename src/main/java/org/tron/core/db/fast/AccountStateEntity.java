@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 
-@Slf4j
+@Slf4j(topic = "AccountState")
 public class AccountStateEntity {
 
   private Account account;

@@ -953,7 +953,7 @@ public class Args {
     INSTANCE.validContractProtoThreadNum =
         config.hasPath("node.validContractProto.threads") ? config
             .getInt("node.validContractProto.threads")
-            : Runtime.getRuntime().availableProcessors() * 2;
+            : Runtime.getRuntime().availableProcessors();
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

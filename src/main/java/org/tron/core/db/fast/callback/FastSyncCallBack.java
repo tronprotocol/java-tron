@@ -23,7 +23,7 @@ import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 import org.tron.core.trie.TrieImpl.ScanAction;
 
-@Slf4j
+@Slf4j(topic = "AccountState")
 @Component
 public class FastSyncCallBack {
 
@@ -76,7 +76,8 @@ public class FastSyncCallBack {
     if (item == null) {
       return;
     }
-    trieEntryList.add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
+    trieEntryList
+        .add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
   }
 
   public void preExeTrans() {
