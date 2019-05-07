@@ -1153,6 +1153,7 @@ message PrivateParameters {
   repeated ReceiveNote shieldedReceives = 6;
   bytes transparent_to_address = 7;
   bytes to_amount = 8;
+  int64 fee = 9;
 }
 
 message ExpandedSpendingKeyMessage {
@@ -1175,11 +1176,11 @@ message DiversifierMessage {
 }
 
 message IncomingViewingKeyDiversifierMessage {
-  IncomingViewingKeyMessage ivk =1;
+  IncomingViewingKeyMessage ivk = 1;
   DiversifierMessage d = 2;
 }
 
 message SaplingPaymentAddressMessage {
   DiversifierMessage d = 1;
-  bytes pkD =2;
+  bytes pkD = 2;
 }
