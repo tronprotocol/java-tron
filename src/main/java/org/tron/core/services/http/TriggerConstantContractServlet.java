@@ -2,11 +2,13 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -24,8 +26,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-import static org.tron.core.services.http.Util.getVisiblePost;
-import static org.tron.core.services.http.Util.setTransactionPermissionId;
 
 @Component
 @Slf4j(topic = "API")
@@ -47,20 +47,13 @@ public class TriggerConstantContractServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
-      visible = getVisiblePost( contract );
+      visible = Util.getVisiblePost(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
-
       String parameter = jsonObject.getString("parameter");
-      boolean bHex = true;
-      if (jsonObject.containsKey("parameter_string")) {
-        parameter = jsonObject.getString("parameter_string");
-        bHex = false;
-      }
-      String data = AbiUtil.parseMethod(selector, parameter, bHex);
+      String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
       TransactionCapsule trxCap = wallet
@@ -75,7 +68,7 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .triggerConstantContract(build.build(), new TransactionCapsule(txBuilder.build()),
               trxExtBuilder,
               retBuilder);
-      trx = setTransactionPermissionId(jsonObject, trx);
+      trx = Util.setTransactionPermissionId(jsonObject, trx);
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {
@@ -86,6 +79,6 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
     }
     trxExtBuilder.setResult(retBuilder);
-    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible ));
+    response.getWriter().println(Util.printTransactionExtention(trxExtBuilder.build(), visible));
   }
 }

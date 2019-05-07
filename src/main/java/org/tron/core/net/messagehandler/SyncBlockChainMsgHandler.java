@@ -16,7 +16,7 @@ import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class SyncBlockChainMsgHandler implements TronMsgHandler {
 

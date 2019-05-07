@@ -1,6 +1,7 @@
 package org.tron.core.net.services;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -9,6 +10,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.service.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
+@Ignore
 public class AdvServiceTest {
 
   AdvService service = new AdvService();

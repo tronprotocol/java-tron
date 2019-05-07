@@ -18,6 +18,7 @@
 
 package org.tron.common.overlay.discover;
 
+import com.sun.org.apache.xpath.internal.Arg;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -58,7 +59,7 @@ public class DiscoverServer {
   @Autowired
   public DiscoverServer(final NodeManager nodeManager) {
     this.nodeManager = nodeManager;
-    if (args.isNodeDiscoveryEnable()) {
+    if (args.isNodeDiscoveryEnable() && !args.isFastForward()) {
       if (port == 0) {
         logger.error("Discovery can't be started while listen port == 0");
       } else {
@@ -66,8 +67,7 @@ public class DiscoverServer {
           try {
             start();
           } catch (Exception e) {
-            logger.debug(e.getMessage(), e);
-            throw new RuntimeException(e);
+            logger.error("Discovery server start failed.", e);
           }
         }, "DiscoverServer").start();
       }
