@@ -1,9 +1,6 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +12,10 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
+
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Slf4j(topic = "DB")
 @Component
@@ -106,6 +107,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MULTI_SIGN_FEE = "MULTI_SIGN_FEE"
       .getBytes();
 
+  private static final byte[]  SHIELD_TRANSACTION_FEE = "SHIELD_TRANSACTION_FEE".getBytes();
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
@@ -383,6 +385,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getCreateAccountFee();
     } catch (IllegalArgumentException e) {
       this.saveCreateAccountFee(100_000L); // 0.1TRX
+    }
+
+    try {
+      this.getShieldTransactionFee();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldTransactionFee(10_000_000L); // 10TRX
     }
 
     try {
@@ -1010,14 +1018,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
-  public long getCreateAccountFee() {
-    return Optional.ofNullable(getUnchecked(CREATE_ACCOUNT_FEE))
+  public long getShieldTransactionFee() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TRANSACTION_FEE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
+            () -> new IllegalArgumentException("not found SHIELD_TRANSACTION_FEE"));
   }
 
+  public void saveShieldTransactionFee(long fee) {
+    this.put(SHIELD_TRANSACTION_FEE,
+            new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getCreateAccountFee() {
+    return Optional.ofNullable(getUnchecked(CREATE_ACCOUNT_FEE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found CREATE_ACCOUNT_FEE"));
+  }
 
   public void saveCreateNewAccountFeeInSystemContract(long fee) {
     this.put(CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT,

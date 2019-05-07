@@ -4,8 +4,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
-import java.util.Arrays;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.Librustzcash;
@@ -25,6 +23,9 @@ import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 @Slf4j(topic = "actuator")
@@ -293,7 +294,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
       }
     }
-    fee += 10 * 1000000;
+    fee += dbManager.getDynamicPropertiesStore().getShieldTransactionFee();
     return fee;
   }
 }
