@@ -86,7 +86,6 @@ public class ClearAbi004 {
 
   @Test(enabled = true, description = "Clear a account address")
   public void testClearAbi() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

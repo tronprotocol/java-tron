@@ -92,7 +92,6 @@ public class TriggerConstant025 {
   @Test(enabled = true, description = "TriggerContract a view method with ABI ,method has "
       + "revert()")
   public void testTriggerContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

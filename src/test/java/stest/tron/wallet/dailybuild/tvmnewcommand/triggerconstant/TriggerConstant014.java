@@ -90,7 +90,6 @@ public class TriggerConstant014 {
 
   @Test(enabled = true, description = "TriggerContract a non-constant function created by create2")
   public void testTriggerContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

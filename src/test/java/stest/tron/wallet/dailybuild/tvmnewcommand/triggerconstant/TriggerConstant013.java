@@ -89,7 +89,6 @@ public class TriggerConstant013 {
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
   public void testTriggerContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

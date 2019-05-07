@@ -91,7 +91,6 @@ public class TriggerConstant022 {
   @Test(enabled = true, description = "TriggerContract a non-payable function "
       + "with ABI(constant ABI)")
   public void testTriggerContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

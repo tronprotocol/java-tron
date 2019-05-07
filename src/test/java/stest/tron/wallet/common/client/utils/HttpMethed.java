@@ -8,7 +8,6 @@ import com.google.gson.JsonParser;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -2116,4 +2115,56 @@ public class HttpMethed {
     }
     return sb.toString().trim();
   }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
+      String contractAddress, String functionSelector, String parameter) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      response = createConnect(requestUrl, userBaseObj2);
+      return response;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse clearABiGetTxid(String httpNode, byte[] ownerAddress,
+      String contractAddress, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/clearabi";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      response = createConnect(requestUrl, userBaseObj2);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode, transactionSignString);
+
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 }

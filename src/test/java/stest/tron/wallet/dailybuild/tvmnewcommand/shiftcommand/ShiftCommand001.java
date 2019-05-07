@@ -89,7 +89,6 @@ public class ShiftCommand001 {
 
   @Test(enabled = true, description = "Trigger old ShiftLeft ShiftRight")
   public void test1OldInstruction() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

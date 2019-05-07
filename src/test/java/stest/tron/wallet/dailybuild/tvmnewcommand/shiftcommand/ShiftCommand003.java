@@ -90,7 +90,6 @@ public class ShiftCommand003 {
 
   @Test(enabled = true, description = "Trigger new ShiftLeft with displacement number too short ")
   public void test1ShiftLeft() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -179,11 +178,9 @@ public class ShiftCommand003 {
 
   @Test(enabled = true, description = "Trigger new ShiftRight with displacement number too short ")
   public void test2ShiftRight() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -257,11 +254,9 @@ public class ShiftCommand003 {
 
   @Test(enabled = true, description = "Trigger new ShiftRightSigned with displacement number too short ")
   public void test3ShiftRightSigned() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);

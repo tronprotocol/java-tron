@@ -90,7 +90,6 @@ public class ClearAbi008 {
   @Test(enabled = true, description = "Clear a contract with ABI created by itself，"
       + "clear a contract by itself again")
   public void testClearAbi() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

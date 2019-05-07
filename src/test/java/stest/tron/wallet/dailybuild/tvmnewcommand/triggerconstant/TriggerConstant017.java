@@ -93,7 +93,6 @@ public class TriggerConstant017 {
   @Test(enabled = true, description = "TriggerConstantContract a constant function which is "
       + "deployed with ABI, but cleared ABI later")
   public void testTriggerConstantContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

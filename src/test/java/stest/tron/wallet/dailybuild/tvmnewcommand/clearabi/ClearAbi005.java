@@ -93,7 +93,6 @@ public class ClearAbi005 {
 
   @Test(enabled = true, description = "clear a contract created by create2 (without ABI)")
   public void testClearAbi() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

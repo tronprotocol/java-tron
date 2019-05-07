@@ -89,7 +89,6 @@ public class TriggerConstant011 {
 
   @Test(enabled = true, description = "TriggerContract a view function without ABI")
   public void testTriggerContract() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

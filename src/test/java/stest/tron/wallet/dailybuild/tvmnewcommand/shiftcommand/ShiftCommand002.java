@@ -89,7 +89,6 @@ public class ShiftCommand002 {
 
   @Test(enabled = true, description = "OLd compiler compile shift instruction")
   public void test1Oldcompile() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -186,7 +185,6 @@ public class ShiftCommand002 {
 
   @Test(enabled = true, description = "New compiler compile shift instruction")
   public void test2Newcompile() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
