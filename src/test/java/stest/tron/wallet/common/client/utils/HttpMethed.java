@@ -651,11 +651,10 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static String deployContractGetTxidWithTooBigLong(String httpNode, String name, String abi,
-      String bytecode,
-      Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
-      Long originEnergyLimit,
-      Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress, String fromKey) {
+  public static HttpResponse deployContractGetTxidWithTooBigLong(String httpNode, String name,
+      String abi, String bytecode, Long bandwidthLimit, Long feeLimit,
+      Integer consumeUserResourcePercent, Long originEnergyLimit, Long callValue, Integer tokenId,
+      Long tokenValue, byte[] ownerAddress, String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
 
@@ -675,18 +674,17 @@ public class HttpMethed {
 
       logger.info(jsonObject.toString());
       response = createConnect1(requestUrl,jsonObject);
-      transactionString = EntityUtils.toString(response.getEntity());
+      /*      transactionString = EntityUtils.toString(response.getEntity());
       logger.info(transactionString);
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
       logger.info(transactionSignString);
-      response = broadcastTransaction(httpNode, transactionSignString);
+      response = broadcastTransaction(httpNode, transactionSignString);*/
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();
       return null;
     }
-    responseContent = HttpMethed.parseStringContent(transactionString);
-    return responseContent.getString("txID");
+    return response;
   }
 
 

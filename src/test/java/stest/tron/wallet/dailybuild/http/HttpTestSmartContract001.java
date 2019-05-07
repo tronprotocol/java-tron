@@ -86,10 +86,13 @@ public class HttpTestSmartContract001 {
     long callValue = 5000;
 
     //This deploy is test too large call_token_value will made the witness node cpu 100%
-    /*    String txid_wrong = HttpMethed.deployContractGetTxidWithTooBigLong(httpnode,
+    /*response = HttpMethed.deployContractGetTxidWithTooBigLong(httpnode,
     contractName, abi, code, 1000000L,1000000000L, 100, 11111111111111L,
         callValue, Integer.parseInt(assetIssueId), tokenValue, assetOwnerAddress, assetOwnerKey);
-    logger.info("Too long time deploy txid is: " + txid_wrong);*/
+    responseContent = HttpMethed.parseResponseContent(response);
+    Assert.assertTrue(responseContent.getString("Error").contains("Overflow"));*/
+
+
 
 
     String txid = HttpMethed.deployContractGetTxid(httpnode, contractName, abi, code, 1000000L,
