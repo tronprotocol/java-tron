@@ -11,7 +11,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
 
-@Slf4j
+@Slf4j(topic = "AccountState")
 @Component
 public class TrieService {
 

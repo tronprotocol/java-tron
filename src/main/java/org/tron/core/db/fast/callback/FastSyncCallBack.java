@@ -11,7 +11,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -24,7 +23,7 @@ import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 import org.tron.core.trie.TrieImpl.ScanAction;
 
-@Slf4j
+@Slf4j(topic = "AccountState")
 @Component
 public class FastSyncCallBack {
 
@@ -74,10 +73,11 @@ public class FastSyncCallBack {
     if (!exe()) {
       return;
     }
-    if (item == null || ArrayUtils.isEmpty(item.getData())) {
+    if (item == null) {
       return;
     }
-    trieEntryList.add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
+    trieEntryList
+        .add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
   }
 
   public void preExeTrans() {
