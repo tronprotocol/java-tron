@@ -18,10 +18,6 @@
 
 package org.tron.core;
 
-import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
-import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
-
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -30,14 +26,6 @@ import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.security.SignatureException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -46,28 +34,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountNetMessage;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.Address;
-import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.DelegatedResourceList;
-import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
-import org.tron.api.GrpcAPI.Node;
-import org.tron.api.GrpcAPI.NodeList;
-import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.ProposalList;
-import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.*;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.TransactionApprovedList;
-import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
-import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
-import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -79,52 +49,16 @@ import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.Base58;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.Utils;
+import org.tron.common.utils.*;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
-import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
-import org.tron.core.capsule.DelegatedResourceCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
-import org.tron.core.capsule.ProposalCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountIdIndexStore;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.BandwidthProcessor;
-import org.tron.core.db.ContractStore;
-import org.tron.core.db.EnergyProcessor;
-import org.tron.core.db.Manager;
-import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.HeaderNotFound;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.NonUniqueObjectException;
-import org.tron.core.exception.PermissionException;
-import org.tron.core.exception.SignatureFormatException;
-import org.tron.core.exception.StoreException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.TooBigTransactionException;
-import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.VMIllegalException;
-import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.db.*;
+import org.tron.core.exception.*;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
@@ -132,10 +66,7 @@ import org.tron.core.zen.KeyStore;
 import org.tron.core.zen.ZenTransactionBuilderFactory;
 import org.tron.core.zen.ZenWallet;
 import org.tron.core.zen.ZkChainParams;
-import org.tron.core.zen.address.ExpandedSpendingKey;
-import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.address.*;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
@@ -150,36 +81,22 @@ import org.tron.core.zen.walletdb.CKeyMetadata;
 import org.tron.core.zen.zip32.ExtendedSpendingKey;
 import org.tron.core.zen.zip32.HDSeed;
 import org.tron.core.zen.zip32.HdChain;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.AuthenticationPath;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleVoucher;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.MerklePath;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Contract.*;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
-import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.*;
 import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Proposal;
-import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionSign;
+
+import java.security.SignatureException;
+import java.util.*;
+
+import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 @Slf4j
 @Component
@@ -1738,6 +1655,57 @@ public class Wallet {
     } catch (Exception e) {
       return null;
     }
+  }
+
+  public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk){
+
+    if(ak.length != 32 || nk.length != 32){
+      return null;
+    }
+
+    byte[] ivk = new byte[32]; // the incoming viewing key
+    Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
+    return IncomingViewingKeyMessage.newBuilder()
+            .setIvk(ByteString.copyFrom(ivk))
+            .build();
+  }
+
+  public DiversifierMessage getDiversifier(){
+    byte[] d;
+    while (true) {
+      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+        break;
+      }
+    }
+    DiversifierMessage diversifierMessage = DiversifierMessage.newBuilder()
+            .setD(ByteString.copyFrom(d))
+            .build();
+
+    return diversifierMessage;
+  }
+
+  public SaplingPaymentAddressMessage getSaplingPaymentAddress(IncomingViewingKey ivk, DiversifierT d){
+    //get pk_d from paymentAddress
+    SaplingPaymentAddressMessage spa = null;
+
+    if (!Librustzcash.librustzcashCheckDiversifier(d.getData())) {
+      return null;
+    }
+
+    Optional<PaymentAddress> op = ivk.address(d);
+    if(op.isPresent()){
+      DiversifierMessage ds = DiversifierMessage.newBuilder()
+              .setD(ByteString.copyFrom(d.getData()))
+              .build();
+
+      spa = SaplingPaymentAddressMessage.newBuilder()
+              .setD(ds)
+              .setPkD(ByteString.copyFrom(op.get().getPkD()))
+              .build();
+
+    }
+    return spa;
   }
 
   public NodeList listNodes() {

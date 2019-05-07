@@ -6,13 +6,6 @@ import com.google.protobuf.Message;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -20,42 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AccountNetMessage;
-import org.tron.api.GrpcAPI.AccountPaginated;
-import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.Address;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
-import org.tron.api.GrpcAPI.AssetIssueList;
-import org.tron.api.GrpcAPI.BlockExtention;
-import org.tron.api.GrpcAPI.BlockIncrementalMerkleTree;
-import org.tron.api.GrpcAPI.BlockLimit;
-import org.tron.api.GrpcAPI.BlockList;
-import org.tron.api.GrpcAPI.BlockListExtention;
-import org.tron.api.GrpcAPI.BlockReference;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.DelegatedResourceList;
-import org.tron.api.GrpcAPI.DelegatedResourceMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
-import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferMessage;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
-import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.GrpcAPI.ExchangeList;
-import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
-import org.tron.api.GrpcAPI.Node;
-import org.tron.api.GrpcAPI.NodeList;
-import org.tron.api.GrpcAPI.NumberMessage;
-import org.tron.api.GrpcAPI.PaginatedMessage;
-import org.tron.api.GrpcAPI.ProposalList;
-import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.*;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.TransactionApprovedList;
-import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.GrpcAPI.TransactionList;
-import org.tron.api.GrpcAPI.TransactionListExtention;
-import org.tron.api.GrpcAPI.TransactionSignWeight;
-import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -79,37 +38,21 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleVoucher;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.MerklePath;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.UnfreezeAssetContract;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Contract.ZksnarkV0TransferContract;
+import org.tron.protos.Contract.*;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DynamicProperties;
-import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.NodeInfo;
-import org.tron.protos.Protocol.Proposal;
-import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.*;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionSign;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j(topic = "API")
@@ -1877,6 +1820,51 @@ public class RpcApiService implements Service {
       }
 
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getIncomingViewingKey(ViewingKeyMessage request,
+                                      StreamObserver<IncomingViewingKeyMessage> responseObserver){
+      ByteString ak = request.getAk();
+      ByteString nk = request.getNk();
+      if (null != ak && null != nk) {
+        IncomingViewingKeyMessage incomingViewingKeyMessage = wallet.getIncomingViewingKey(ak.toByteArray(),nk.toByteArray());
+
+        responseObserver.onNext(incomingViewingKeyMessage);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDiversifier(EmptyMessage request,
+                               StreamObserver<DiversifierMessage> responseObserver){
+      DiversifierMessage d = wallet.getDiversifier();
+      if (null != d) {
+        responseObserver.onNext(d);
+      } else {
+        responseObserver.onNext(null);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getSaplingPaymentAddress(IncomingViewingKeyDiversifierMessage request,
+                                         StreamObserver<SaplingPaymentAddressMessage> responseObserver){
+      IncomingViewingKeyMessage ivk = request.getIvk();
+      DiversifierMessage d = request.getD();
+
+      if(null != ivk && null != d) {
+        SaplingPaymentAddressMessage saplingPaymentAddressMessage = wallet.getSaplingPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+                new DiversifierT(d.getD().toByteArray()));
+        responseObserver.onNext(saplingPaymentAddressMessage);
+      } else {
+        responseObserver.onNext(null);
+      }
+
+      responseObserver.onCompleted();
+
     }
 
     @Override

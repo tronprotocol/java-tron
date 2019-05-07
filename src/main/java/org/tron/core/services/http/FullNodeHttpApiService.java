@@ -167,6 +167,12 @@ public class FullNodeHttpApiService implements Service {
   private GetNkFromNskServlet getNkFromNskServlet;
   @Autowired
   private GetSpendingKeyServlet getSpendingKeyServlet;
+  @Autowired
+  private GetDiversifierServlet getDiversifierServlet;
+  @Autowired
+  private GetIncomingViewingKeyServlet getIncomingViewingKeyServlet;
+  @Autowired
+  private GetSaplingPaymentAddressServlet getSaplingPaymentAddressServlet;
 
   @Override
   public void init() {
@@ -274,6 +280,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
       context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
       context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
+      context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
+      context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
+      context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
 
       server.start();
     } catch (Exception e) {
