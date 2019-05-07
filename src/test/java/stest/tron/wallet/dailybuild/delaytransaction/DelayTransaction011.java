@@ -61,7 +61,7 @@ public class DelayTransaction011 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -69,7 +69,7 @@ public class DelayTransaction011 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "When Bandwidth not enough, create delay transaction.")
+  @Test(enabled = false, description = "When Bandwidth not enough, create delay transaction.")
   public void test1BandwidthInDelayTransaction() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -113,7 +113,7 @@ public class DelayTransaction011 {
      * constructor.
    * */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

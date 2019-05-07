@@ -81,7 +81,7 @@ public class DelayTransaction002 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -89,7 +89,7 @@ public class DelayTransaction002 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Cancel deferred transaction")
+  @Test(enabled = false, description = "Cancel deferred transaction")
   public void test1CancleDeferredTransaction() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -155,7 +155,7 @@ public class DelayTransaction002 {
 
   }
 
-  @Test(enabled = true, description = "Cancel deferred transaction")
+  @Test(enabled = false, description = "Cancel deferred transaction")
   public void test2CancleDeferredTransactionQuickly() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -208,7 +208,7 @@ public class DelayTransaction002 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

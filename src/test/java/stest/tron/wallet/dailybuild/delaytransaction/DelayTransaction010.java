@@ -64,7 +64,7 @@ public class DelayTransaction010 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -72,7 +72,7 @@ public class DelayTransaction010 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delayed transaction cost 0.1TRX every day.")
+  @Test(enabled = false, description = "Delayed transaction cost 0.1TRX every day.")
   public void test1TestDelayedTransactionFee() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -131,7 +131,7 @@ public class DelayTransaction010 {
   /**
    * constructor.
    * */
-  @Test(enabled = true, description = "Delayed transaction finally fialed.")
+  @Test(enabled = false, description = "Delayed transaction finally fialed.")
   public void test2DelaydTransactionFinallyFailed() {
     Long sendAmount = 12345L;
     Long beforeBalance = PublicMethed.queryAccount(delayFeeAccountAddress,blockingStubFull).getBalance();
@@ -162,7 +162,7 @@ public class DelayTransaction010 {
   /**
    * constructor.
    * */
-  @Test(enabled = true, description = "Delayed transaction finally successfully even during delaying time the account has no money has no money.")
+  @Test(enabled = false, description = "Delayed transaction finally successfully even during delaying time the account has no money has no money.")
   public void test3DelaydTransactionFinallySuccessfully() {
     Assert.assertTrue(PublicMethed.sendcoin(delayFeeAccountAddress,10000000L,fromAddress,testKey002,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -204,7 +204,7 @@ public class DelayTransaction010 {
      * constructor.
    * */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -801,8 +801,6 @@ public class PublicMethed {
       return false;
     }
     Transaction transaction = transactionExtention.getTransaction();
-    //transaction = TransactionUtils.setDelaySeconds(transaction, 0);
-    //transaction = TransactionUtils.setDelaySeconds(transaction, 200000);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       System.out.println("Transaction is empty");
       return false;
@@ -849,8 +847,6 @@ public class PublicMethed {
       return null;
     }
     Transaction transaction = transactionExtention.getTransaction();
-    //transaction = TransactionUtils.setDelaySeconds(transaction, 0);
-    //transaction = TransactionUtils.setDelaySeconds(transaction, 200000);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       System.out.println("Transaction is empty");
       return null;

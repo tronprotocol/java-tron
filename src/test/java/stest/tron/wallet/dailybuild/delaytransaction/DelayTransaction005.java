@@ -63,7 +63,7 @@ public class DelayTransaction005 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -71,7 +71,7 @@ public class DelayTransaction005 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delay update energy limit contract")
+  @Test(enabled = false, description = "Delay update energy limit contract")
   public void test1DelayUpdateSetting() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -122,7 +122,7 @@ public class DelayTransaction005 {
 
   }
 
-  @Test(enabled = true, description = "Cancel delay energy limit contract")
+  @Test(enabled = false, description = "Cancel delay energy limit contract")
   public void test2CancelDelayUpdateSetting() {
     //get account
     final Long oldOriginEnergyLimit = smartContract.getOriginEnergyLimit();
@@ -170,7 +170,7 @@ public class DelayTransaction005 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

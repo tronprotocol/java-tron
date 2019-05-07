@@ -68,7 +68,7 @@ public class DelayTransaction007 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -76,7 +76,7 @@ public class DelayTransaction007 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delay account create contract")
+  @Test(enabled = false, description = "Delay account create contract")
   public void test1DelayAccountCreate() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -120,7 +120,7 @@ public class DelayTransaction007 {
 
   }
 
-  @Test(enabled = true, description = "Cancel delay account create contract")
+  @Test(enabled = false, description = "Cancel delay account create contract")
   public void test2CancelDelayUpdateSetting() {
     ecKey1 = new ECKey(Utils.getRandom());
     newAccountAddress = ecKey1.getAddress();
@@ -164,7 +164,7 @@ public class DelayTransaction007 {
    * constructor.
    */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

@@ -91,7 +91,7 @@ public class DelayTransaction001 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -99,7 +99,7 @@ public class DelayTransaction001 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true, description = "Delayed send coin to test delayed second")
+  @Test(enabled = false, description = "Delayed send coin to test delayed second")
   public void test1DelayedSecond() {
     //get account
     ecKey = new ECKey(Utils.getRandom());
@@ -121,7 +121,7 @@ public class DelayTransaction001 {
         delayAccount1Key, blockingStubFull));
   }
 
-  @Test(enabled = true, description = "Get deferred transaction by id")
+  @Test(enabled = false, description = "Get deferred transaction by id")
   public void test2getDeferredTransactionByid() {
     //get account
     ECKey ecKey2 = new ECKey(Utils.getRandom());
@@ -223,7 +223,7 @@ public class DelayTransaction001 {
 
   }
 
-  @Test(enabled = true, description = "Delay send coin")
+  @Test(enabled = false, description = "Delay send coin")
   public void test3DelaySendCoin() {
     ecKey4 = new ECKey(Utils.getRandom());
     delayAccount3Address = ecKey4.getAddress();
@@ -315,7 +315,7 @@ public class DelayTransaction001 {
 
   }
 
-  @Test(enabled = true, description = "Not enough money to send coin.")
+  @Test(enabled = false, description = "Not enough money to send coin.")
   public void test4DelaySendCoin() {
     ecKey4 = new ECKey(Utils.getRandom());
     delayAccount3Address = ecKey4.getAddress();
@@ -373,7 +373,7 @@ public class DelayTransaction001 {
      * constructor.
      */
 
-  @AfterClass(enabled = true)
+  @AfterClass(enabled = false)
   public void shutdown() throws InterruptedException {
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
