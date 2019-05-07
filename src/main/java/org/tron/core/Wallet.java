@@ -85,7 +85,6 @@ import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
@@ -881,12 +880,6 @@ public class Wallet {
             .setKey("getAllowAdaptiveEnergy")
             .setValue(dbManager.getDynamicPropertiesStore().getAllowAdaptiveEnergy())
             .build());
-    //    ALLOW_DEFERRED_TRANSACTION, // 1, 24
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowDeferredTransaction")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowDeferredTransaction())
-            .build());
     //other chainParameters
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getTotalEnergyTargetLimit")
@@ -906,21 +899,6 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getMultiSignFee")
         .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("maxDeferredTransactionProcessTime")
-        .setValue(dbManager.getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getDeferredTransactionFee")
-        .setValue(dbManager.getDynamicPropertiesStore().getDeferredTransactionFee())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getCancelDeferredTransactionFee")
-        .setValue(dbManager.getDynamicPropertiesStore().getCancelDeferredTransactionFee())
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

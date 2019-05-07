@@ -486,10 +486,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
-        case CancelDeferredTransactionContract:
-          owner = contractParameter.unpack(CancelDeferredTransactionContract.class)
-              .getOwnerAddress();
-          break;
         // todo add other contract
         default:
           return null;
@@ -622,9 +618,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         break;
       case AccountPermissionUpdateContract:
         clazz = AccountPermissionUpdateContract.class;
-        break;
-      case CancelDeferredTransactionContract:
-        clazz = CancelDeferredTransactionContract.class;
         break;
       // todo add other contract
       default:
@@ -952,27 +945,5 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
-  }
-
-  public ByteString getSenderAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-
-    return ByteString.copyFrom(getOwner(contract));
-  }
-
-  public ByteString getToAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-    byte[] address = getToAddress(contract);
-    if (address == null) {
-      return ByteString.copyFrom("".getBytes());
-    }
-
-    return ByteString.copyFrom(address);
   }
 }

@@ -206,10 +206,7 @@ public class ProposalController {
           break;
         }
         case (24): {
-          if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
-            manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
-            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(47);
-          }
+          // TODO add allow deferred transaction
           break;
         }
         case (25): {

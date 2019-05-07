@@ -75,9 +75,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     for (Contract contract : contracts) {
-      if (contract.getType() == CancelDeferredTransactionContract) {
-        continue;
-      }
       if (dbManager.getDynamicPropertiesStore().supportVM()) {
         bytesSize += Constant.MAX_RESULT_SIZE_IN_TX;
       }

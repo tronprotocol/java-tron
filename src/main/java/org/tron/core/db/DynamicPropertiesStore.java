@@ -200,12 +200,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowDeferredTransaction();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
-    }
-
-    try {
       this.getLatestBlockHeaderTimestamp();
     } catch (IllegalArgumentException e) {
       this.saveLatestBlockHeaderTimestamp(0);
@@ -269,12 +263,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getMaxFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveMaxFrozenTime(3);
-    }
-
-    try {
-      this.getMaxDeferredTransactionProcessTime();
-    } catch (IllegalArgumentException e) {
-      this.saveMaxDeferredTransactionProcessTime(100);
     }
 
     try {
@@ -389,18 +377,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
-    }
-
-    try {
-      this.getDeferredTransactionFee();
-    } catch (IllegalArgumentException e) {
-      this.saveDeferredTransactionFee(100_000L); // 0.1TRX
-    }
-
-    try {
-      this.getCancelDeferredTransactionFee();
-    } catch (IllegalArgumentException e) {
-      this.saveCancelDeferredTransactionFee(50_000L); // 0.05TRX
     }
 
     try {
@@ -718,15 +694,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(maxDeferredTransactionProcessTime)));
   }
 
-  public long getMaxDeferredTransactionProcessTime() {
-    return Optional.ofNullable(getUnchecked(MAX_DEFERRED_TRANSACTION_PROCESS_TIME))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "not found MAX_DEFERRED_TRANSACTION_PROCESS_TIME"));
-  }
-
   public void saveMaxFrozenSupplyNumber(int maxFrozenSupplyNumber) {
     logger.debug("MAX_FROZEN_SUPPLY_NUMBER:" + maxFrozenSupplyNumber);
     this.put(MAX_FROZEN_SUPPLY_NUMBER,
@@ -956,26 +923,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
-  public long getDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(DEFERRED_TRANSACTION_FEE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found DEFERRED_TRANSACTION_FEE"));
-  }
-
   public void saveCancelDeferredTransactionFee(long fee) {
     this.put(CANCEL_DEFERRED_TRANSACTION_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
-  }
-
-  public long getCancelDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(CANCEL_DEFERRED_TRANSACTION_FEE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "not found CANCEL_DEFERRED_TRANSACTION_FEE"));
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
@@ -1479,14 +1429,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveAllowDeferredTransaction(long allowDeferredTransaction) {
     this.put(ALLOW_DEFERRED_TRANSACTION,
         new BytesCapsule(ByteArray.fromLong(allowDeferredTransaction)));
-  }
-
-  public long getAllowDeferredTransaction() {
-    return Optional.ofNullable(getUnchecked(ALLOW_DEFERRED_TRANSACTION))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_DEFERRED_TRANSACTION"));
   }
 
   public long getAllowCreationOfContracts() {

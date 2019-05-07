@@ -44,7 +44,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -161,15 +160,6 @@ public class WalletTest {
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     manager.getTransactionStore()
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
-  }
-
-  private static void addDeferredTransactionToStore(DeferredTransaction deferredTransaction) {
-    DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
-        deferredTransaction);
-    manager.getDeferredTransactionIdIndexStore()
-        .put(deferredTransactionCapsule);
-    manager.getDeferredTransactionStore()
-        .put(deferredTransactionCapsule);
   }
 
   private static Transaction getBuildTransaction(

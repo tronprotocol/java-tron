@@ -67,7 +67,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -91,7 +90,6 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -124,10 +122,6 @@ public class Manager {
   private TransactionStore transactionStore;
   @Autowired(required = false)
   private TransactionCache transactionCache;
-  @Autowired
-  private DeferredTransactionStore deferredTransactionStore;
-  @Autowired
-  private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
   @Autowired
   private BlockStore blockStore;
   @Autowired
@@ -235,9 +229,6 @@ public class Manager {
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
 
-  @Getter
-  private ScheduledFuture<?> deferredTransactionTask;
-
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
   }
@@ -331,11 +322,6 @@ public class Manager {
 
   // transactions popped
   private List<TransactionCapsule> popedTransactions =
-      Collections.synchronizedList(Lists.newArrayList());
-
-  private final Object lockObj = new Object();
-
-  private List<DeferredTransactionCapsule> deferredTransactionList =
       Collections.synchronizedList(Lists.newArrayList());
 
   // the capacity is equal to Integer.MAX_VALUE default
@@ -759,7 +745,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, DupTransactionException, TaposException,
       TooBigTransactionException, TransactionExpirationException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     synchronized (pushTransactionQueue) {
       pushTransactionQueue.add(trx);
@@ -840,7 +826,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException, DeferredTransactionException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -855,7 +841,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
+      VMIllegalException, TooBigTransactionResultException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -872,7 +858,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, DeferredTransactionException, BadBlockException {
+      VMIllegalException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -971,7 +957,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
+      ReceiptCheckErrException, VMIllegalException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1205,7 +1191,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(TransactionCapsule trxCap, BlockCapsule blockCap)
+  public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
@@ -1264,10 +1250,9 @@ public class Manager {
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
-    TransactionCapsule finalTrxCap = trxCap;
     Optional.ofNullable(transactionCache)
-        .ifPresent(t -> t.put(finalTrxCap.getTransactionId().getBytes(),
-            new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
+        .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
@@ -1342,9 +1327,6 @@ public class Manager {
       logger.warn("Witness permission is wrong");
       return null;
     }
-
-    long postponedDeferredTrxCount = 0;
-    long processedDeferredTrxCount = 0;
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1444,11 +1426,6 @@ public class Manager {
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
 
-    if (postponedDeferredTrxCount > 0) {
-      logger.info("{} deferred transactions processed, {} deferred transactions postponed",
-          processedDeferredTrxCount, postponedDeferredTrxCount);
-    }
-
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
@@ -1476,8 +1453,6 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
-    } catch (DeferredTransactionException e) {
-      logger.debug(e.getMessage(), e);
     }
 
     return null;
@@ -1511,14 +1486,6 @@ public class Manager {
     return this.transactionHistoryStore;
   }
 
-  public DeferredTransactionStore getDeferredTransactionStore() {
-    return this.deferredTransactionStore;
-  }
-
-  public DeferredTransactionIdIndexStore getDeferredTransactionIdIndexStore() {
-    return this.deferredTransactionIdIndexStore;
-  }
-
   public BlockStore getBlockStore() {
     return this.blockStore;
   }
@@ -1531,7 +1498,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1792,9 +1759,6 @@ public class Manager {
     closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
-    closeOneStore(deferredTransactionStore);
-    closeOneStore(deferredTransactionIdIndexStore);
-
     logger.info("******** end to close db ********");
   }
 
@@ -1882,7 +1846,7 @@ public class Manager {
     try {
       this.pushTransaction(tx);
     } catch (ValidateSignatureException | ContractValidateException | ContractExeException
-        | AccountResourceInsufficientException | VMIllegalException | DeferredTransactionException e) {
+        | AccountResourceInsufficientException | VMIllegalException e) {
       logger.debug(e.getMessage(), e);
     } catch (DupTransactionException e) {
       logger.debug("pending manager: dup trans", e);
