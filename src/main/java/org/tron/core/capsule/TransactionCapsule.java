@@ -58,6 +58,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
@@ -118,7 +119,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private TransactionTrace trxTrace;
 
   private final static ExecutorService executorService = Executors
-      .newFixedThreadPool(32);
+      .newFixedThreadPool(Args.getInstance().getValidContractProtoThreadNum());
 
   /**
    * constructor TransactionCapsule.

@@ -5,7 +5,6 @@ import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -23,9 +22,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -470,6 +467,10 @@ public class Args {
   @Setter
   private long allowAccountStateRoot;
 
+  @Getter
+  @Setter
+  private int validContractProtoThreadNum;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -546,6 +547,7 @@ public class Args {
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
+    INSTANCE.validContractProtoThreadNum = 1;
   }
 
   /**
@@ -554,7 +556,8 @@ public class Args {
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
     if (INSTANCE.version) {
-      JCommander.getConsole().println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      JCommander.getConsole()
+          .println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
       exit(0);
     }
 
@@ -947,6 +950,11 @@ public class Args {
         config.hasPath("committee.allowAccountStateRoot") ? config
             .getInt("committee.allowAccountStateRoot") : 0;
 
+    INSTANCE.validContractProtoThreadNum =
+        config.hasPath("node.validContractProto.threads") ? config
+            .getInt("node.validContractProto.threads")
+            : Runtime.getRuntime().availableProcessors() * 2;
+
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
@@ -1045,14 +1053,14 @@ public class Args {
     boolean useNativeQueue = false;
     int bindPort = 0;
     int sendQueueLength = 0;
-    if (config.hasPath("event.subscribe.native.useNativeQueue")){
+    if (config.hasPath("event.subscribe.native.useNativeQueue")) {
       useNativeQueue = config.getBoolean("event.subscribe.native.useNativeQueue");
 
-      if(config.hasPath("event.subscribe.native.bindport")){
+      if (config.hasPath("event.subscribe.native.bindport")) {
         bindPort = config.getInt("event.subscribe.native.bindport");
       }
 
-      if(config.hasPath("event.subscribe.native.sendqueuelength")){
+      if (config.hasPath("event.subscribe.native.sendqueuelength")) {
         sendQueueLength = config.getInt("event.subscribe.native.sendqueuelength");
       }
 
