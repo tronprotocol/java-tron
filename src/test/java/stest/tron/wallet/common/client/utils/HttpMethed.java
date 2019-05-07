@@ -630,6 +630,8 @@ public class HttpMethed {
       userBaseObj2.addProperty("token_id", tokenId);
       userBaseObj2.addProperty("call_token_value", tokenValue);
       userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+
+
       logger.info(userBaseObj2.toString());
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
@@ -645,6 +647,48 @@ public class HttpMethed {
     responseContent = HttpMethed.parseStringContent(transactionString);
     return responseContent.getString("txID");
   }
+
+  /**
+   * constructor.
+   */
+  public static String deployContractGetTxidWithTooBigLong(String httpNode, String name, String abi,
+      String bytecode,
+      Long bandwidthLimit, Long feeLimit, Integer consumeUserResourcePercent,
+      Long originEnergyLimit,
+      Long callValue, Integer tokenId, Long tokenValue, byte[] ownerAddress, String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/deploycontract";
+
+      String text = "{\"call_token_value\": 10000000e100000000}";
+      JSONObject jsonObject = JSONObject.parseObject(text);
+      logger.info("jsonObject: " + jsonObject.toString());
+      jsonObject.put("name", name);
+      jsonObject.put("abi", abi);
+      jsonObject.put("bytecode", bytecode);
+      jsonObject.put("bandwidth_limit", bandwidthLimit);
+      jsonObject.put("fee_limit", feeLimit);
+      jsonObject.put("consume_user_resource_percent", consumeUserResourcePercent);
+      jsonObject.put("origin_energy_limit", originEnergyLimit);
+      jsonObject.put("call_value", callValue);
+      jsonObject.put("token_id", tokenId);
+      jsonObject.put("owner_address", ByteArray.toHexString(ownerAddress));
+
+      logger.info(jsonObject.toString());
+      response = createConnect1(requestUrl,jsonObject);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
+      logger.info(transactionSignString);
+      response = broadcastTransaction(httpNode, transactionSignString);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    responseContent = HttpMethed.parseStringContent(transactionString);
+    return responseContent.getString("txID");
+  }
+
 
 
   /**
@@ -919,7 +963,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getAccountByIdFromSolidity(String httpSolidityNode, String accountId, Boolean visable) {
+  public static HttpResponse getAccountByIdFromSolidity(String httpSolidityNode, String accountId,
+      Boolean visable) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getaccountbyid";
       JsonObject userBaseObj2 = new JsonObject();
@@ -1864,6 +1909,36 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse createConnect1(String url, JSONObject requestBody) {
+    try {
+      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+          connectionTimeout);
+      httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+      httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+          connectionTimeout * 10000);
+      httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout * 10000);
+      httppost = new HttpPost(url);
+      httppost.setHeader("Content-type", "application/json; charset=utf-8");
+      httppost.setHeader("Connection", "Close");
+      if (requestBody != null) {
+        StringEntity entity = new StringEntity(requestBody.toString(), Charset.forName("UTF-8"));
+        entity.setContentEncoding("UTF-8");
+        entity.setContentType("application/json");
+        httppost.setEntity(entity);
+      }
+      response = httpClient.execute(httppost);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
 
   /**

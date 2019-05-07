@@ -81,8 +81,16 @@ public class HttpTestSmartContract001 {
     String abi = Configuration.getByPath("testng.conf")
         .getString("abi.abi_ContractTrcToken001_transferTokenContract");
 
+
     long tokenValue = 100000;
     long callValue = 5000;
+
+    //This deploy is test too large call_token_value will made the witness node cpu 100%
+    /*    String txid_wrong = HttpMethed.deployContractGetTxidWithTooBigLong(httpnode,
+    contractName, abi, code, 1000000L,1000000000L, 100, 11111111111111L,
+        callValue, Integer.parseInt(assetIssueId), tokenValue, assetOwnerAddress, assetOwnerKey);
+    logger.info("Too long time deploy txid is: " + txid_wrong);*/
+
 
     String txid = HttpMethed.deployContractGetTxid(httpnode, contractName, abi, code, 1000000L,
         1000000000L, 100, 11111111111111L,
