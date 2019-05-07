@@ -45,6 +45,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
@@ -58,6 +59,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
@@ -118,7 +120,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private TransactionTrace trxTrace;
 
   private final static ExecutorService executorService = Executors
-      .newFixedThreadPool(32);
+      .newFixedThreadPool(Args.getInstance().getValidContractProtoThreadNum());
 
   /**
    * constructor TransactionCapsule.
@@ -507,7 +509,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static void validContractProto(List<Transaction> transactionList) throws P2pException {
-    long startTime = System.currentTimeMillis();
     List<Future<Boolean>> futureList = new ArrayList<>();
     transactionList.forEach(transaction -> {
       Future<Boolean> future = executorService.submit(() -> {
@@ -529,9 +530,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
       }
     }
-
-    logger.info("validContractProtos spend time:{},trans:{}",
-        (System.currentTimeMillis() - startTime), transactionList.size());
   }
 
   public static void validContractProto(Transaction.Contract contract)
@@ -929,6 +927,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     if (exception instanceof JVMStackOverFlowException) {
       this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    if (exception instanceof Program.TransferException) {
+      this.setResultCode(contractResult.TRANSFER_FAILED);
       return;
     }
     this.setResultCode(contractResult.UNKNOWN);
