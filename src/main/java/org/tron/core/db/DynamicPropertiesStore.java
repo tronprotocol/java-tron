@@ -107,7 +107,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MULTI_SIGN_FEE = "MULTI_SIGN_FEE"
       .getBytes();
 
-  private static final byte[]  SHIELD_TRANSACTION_FEE = "SHIELD_TRANSACTION_FEE".getBytes();
+  private static final byte[]  SHIELDED_TRANSACTION_FEE = "SHIELDED_TRANSACTION_FEE".getBytes();
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
@@ -388,9 +388,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getShieldTransactionFee();
+      this.getShieldedTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveShieldTransactionFee(10_000_000L); // 10TRX
+      this.saveShieldedTransactionFee(10_000_000L); // 10TRX
     }
 
     try {
@@ -1018,16 +1018,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
-  public long getShieldTransactionFee() {
-    return Optional.ofNullable(getUnchecked(SHIELD_TRANSACTION_FEE))
+  public long getShieldedTransactionFee() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRANSACTION_FEE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found SHIELD_TRANSACTION_FEE"));
   }
 
-  public void saveShieldTransactionFee(long fee) {
-    this.put(SHIELD_TRANSACTION_FEE,
+  public void saveShieldedTransactionFee(long fee) {
+    this.put(SHIELDED_TRANSACTION_FEE,
             new BytesCapsule(ByteArray.fromLong(fee)));
   }
 

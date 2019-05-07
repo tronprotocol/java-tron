@@ -294,7 +294,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
       }
     }
-    fee += dbManager.getDynamicPropertiesStore().getShieldTransactionFee();
+    fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }
 }

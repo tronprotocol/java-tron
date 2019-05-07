@@ -214,7 +214,7 @@ public class ProposalController {
           break;
         }
         case (30): {
-          manager.getDynamicPropertiesStore().saveShieldTransactionFee(entry.getValue());
+          manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
           break;
         }
         default:
