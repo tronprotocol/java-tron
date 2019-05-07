@@ -17,6 +17,7 @@
  */
 package org.tron.common.runtime.vm.program.invoke;
 
+import com.google.protobuf.ByteString;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -26,8 +27,10 @@ import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.SmartContract;
 
 
 /**
@@ -57,6 +60,8 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
     this.deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
+    this.deposit.createContract(contractAddress, new ContractCapsule(SmartContract.newBuilder().setContractAddress(
+        ByteString.copyFrom(contractAddress)).build()));
     this.deposit.saveCode(contractAddress,
         Hex.decode("385E60076000396000605f556014600054601e60"
             + "205463abcddcba6040545b51602001600a525451"
