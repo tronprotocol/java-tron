@@ -94,7 +94,6 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -962,31 +961,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
 
     return ByteString.copyFrom(getOwner(contract));
-  }
-
-  public long getDeferredSeconds() {
-    return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
-  }
-
-  public void setDeferredSeconds(long delaySeconds) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
-        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public void setDeferredStage(int stage) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setStage(stage).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public int getDeferredStage() {
-    return this.transaction.getRawData().getDeferredStage().getStage();
   }
 
   public ByteString getToAddress() {

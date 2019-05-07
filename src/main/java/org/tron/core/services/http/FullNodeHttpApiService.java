@@ -76,11 +76,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdServlet getTransactionByIdServlet;
   @Autowired
-  private GetDeferredTransactionByIdServlet getDeferredTransactionByIdServlet;
-  @Autowired
   private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
-  @Autowired
-  private GetDeferredTransactionInfoByIdServlet getDeferredTransactionInfoByIdServlet;
   @Autowired
   private CancelDeferredTransactionByIdServlet cancelDeferredTransactionByIdServlet;
   @Autowired
@@ -221,13 +217,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
-      context.addServlet(new ServletHolder(getDeferredTransactionByIdServlet),"/getdeferredtransactionbyid");
       context.addServlet(new ServletHolder(cancelDeferredTransactionByIdServlet),"/canceldeferredtransactionbyid");
 
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
-      context.addServlet(
-          new ServletHolder(getDeferredTransactionInfoByIdServlet), "/getdeferredtransactioninfobyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
           "/gettransactioncountbyblocknum");

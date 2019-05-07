@@ -59,7 +59,6 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
-import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
@@ -156,8 +155,6 @@ public class WalletTest {
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_SIX),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
     addTransactionToStore(transaction5);
-    deferredTransaction = getBuildDeferredTransaction(transaction6);
-    addDeferredTransactionToStore(deferredTransaction);
   }
 
   private static void addTransactionToStore(Transaction transaction) {
@@ -173,27 +170,6 @@ public class WalletTest {
         .put(deferredTransactionCapsule);
     manager.getDeferredTransactionStore()
         .put(deferredTransactionCapsule);
-  }
-
-  private static DeferredTransaction getBuildDeferredTransaction(Transaction transaction) {
-    DeferredStage deferredStage = transaction.getRawData().toBuilder().getDeferredStage()
-        .toBuilder()
-        .setDelaySeconds(86400).build();
-    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    transaction = transaction.toBuilder().setRawData(rawData).build();
-    DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
-    deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
-    deferredTransaction.setDelayUntil(System.currentTimeMillis() + 100);
-    ByteString senderAddress = transactionCapsule.getSenderAddress();
-    ByteString toAddress = transactionCapsule.getToAddress();
-
-    deferredTransaction.setSenderAddress(senderAddress);
-    deferredTransaction.setReceiverAddress(toAddress);
-    deferredTransaction.setTransaction(transactionCapsule.getInstance());
-    return deferredTransaction.build();
   }
 
   private static Transaction getBuildTransaction(
@@ -393,37 +369,6 @@ public class WalletTest {
         ByteString
             .copyFrom(new TransactionCapsule(transaction5).getTransactionId().getBytes()));
     Assert.assertEquals("getTransactionById5", transaction5, transactionById);
-  }
-
-  @Ignore
-  @Test
-  public void getDeferredTransactionById() {
-    deferredTransaction = getBuildDeferredTransaction(transaction6);
-    addDeferredTransactionToStore(deferredTransaction);
-    DeferredTransaction getDeferredTransactionById = wallet.getDeferredTransactionById(
-        ByteString.copyFrom(
-            new DeferredTransactionCapsule(deferredTransaction).getTransactionId()
-                .toByteArray()));
-    Assert.assertEquals("getDeferredTransactionById", deferredTransaction,
-        getDeferredTransactionById);
-  }
-
-  @Ignore
-  @Test
-  public void cancelDeferredTransaction() {
-    deferredTransaction = getBuildDeferredTransaction(transaction6);
-    addDeferredTransactionToStore(deferredTransaction);
-    DeferredTransaction getdeferredTransactionById = wallet.getDeferredTransactionById(
-        ByteString.copyFrom(
-            new DeferredTransactionCapsule(deferredTransaction).getTransactionId()
-                .toByteArray()));
-    Assert.assertNotNull("cancelDeferredTransaction", getdeferredTransactionById);
-    wallet.cancelDeferredTransaction(deferredTransaction.getTransactionId());
-    getdeferredTransactionById = wallet.getDeferredTransactionById(
-        ByteString.copyFrom(
-            new DeferredTransactionCapsule(deferredTransaction).getTransactionId()
-                .toByteArray()));
-    Assert.assertNull("cancelDeferredTransaction", getdeferredTransactionById);
   }
 
   @Test

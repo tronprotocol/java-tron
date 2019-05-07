@@ -66,7 +66,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       throw new TooBigTransactionResultException();
     }
 
-    long bytesSize = 0;
+    long bytesSize;
 
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
@@ -74,17 +74,6 @@ public class BandwidthProcessor extends ResourceProcessor {
       bytesSize = trx.getSerializedSize();
     }
 
-    if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
-      // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
-      bytesSize += trx.getTransactionId().getBytes().length;
-    } else if (trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-      // don't charge bandwidth twice when executing deferred tranaction
-      bytesSize = 0;
-    }
-
-    // charged is true indicates that the deferred transaction is executed for the first time, false indicates that it is executed for the second time
-    boolean charged = trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION;
     for (Contract contract : contracts) {
       if (contract.getType() == CancelDeferredTransactionContract) {
         continue;
@@ -102,12 +91,12 @@ public class BandwidthProcessor extends ResourceProcessor {
       }
       long now = dbManager.getWitnessController().getHeadSlot();
 
-      if (!charged && contractCreateNewAccount(contract)) {
+      if (contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);
         continue;
       }
 
-      if (!charged && contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
+      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
           accountCapsule, now, bytesSize)) {
         continue;
       }

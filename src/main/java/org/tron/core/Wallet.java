@@ -427,11 +427,6 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
-        return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
-            .build();
-      }
-
       Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
@@ -1252,37 +1247,6 @@ public class Wallet {
     return null;
   }
 
-  public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
-    if (Objects.isNull(transactionId)) {
-      return null;
-    }
-
-    DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore()
-        .getByTransactionId(transactionId);
-    if (deferredTransactionCapsule != null) {
-      return deferredTransactionCapsule.getDeferredTransaction();
-    }
-
-    TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
-        .getUnchecked(transactionId.toByteArray());
-
-    if (Objects.nonNull(transactionCapsule)) {
-      transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
-      TransactionCapsule generateTransaction = dbManager.getTransactionStore()
-          .getUnchecked(transactionCapsule.getTransactionId().getBytes());
-      if (Objects.nonNull(generateTransaction)) {
-        DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
-        deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
-        deferredTransaction.setSenderAddress(transactionCapsule.getSenderAddress());
-        deferredTransaction.setReceiverAddress(transactionCapsule.getToAddress());
-        deferredTransaction.setTransaction(transactionCapsule.getInstance());
-        return deferredTransaction.build();
-      }
-    }
-    return null;
-  }
-
-
   public TransactionInfo getTransactionInfoById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1297,45 +1261,6 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     return null;
-  }
-
-  public TransactionInfo getDeferredTransactionInfoById(ByteString transactionId) {
-    if (Objects.isNull(transactionId)) {
-      return null;
-    }
-    try {
-      TransactionCapsule transactionCapsule = dbManager.getTransactionStore()
-          .getUnchecked(transactionId.toByteArray());
-      if (Objects.nonNull(transactionCapsule)) {
-        transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
-        if (Objects.isNull(transactionCapsule.getTransactionId())) {
-          return null;
-        }
-        TransactionInfoCapsule transactionInfo = dbManager.getTransactionHistoryStore()
-            .get(transactionCapsule.getTransactionId().getBytes());
-        if (Objects.nonNull(transactionInfo)) {
-          return transactionInfo.getInstance();
-        }
-      }
-
-    } catch (StoreException e) {
-    }
-
-    return null;
-  }
-
-  public Return cancelDeferredTransaction(ByteString transactionId) {
-    GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
-
-    if (Objects.isNull(transactionId)) {
-      return builder.setResult(false).build();
-    }
-
-    if (dbManager.cancelDeferredTransaction(transactionId)) {
-      return builder.setResult(true).build();
-    } else {
-      return builder.setResult(false).build();
-    }
   }
 
   public Proposal getProposalById(ByteString proposalId) {

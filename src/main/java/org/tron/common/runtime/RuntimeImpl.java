@@ -170,11 +170,7 @@ public class RuntimeImpl implements Runtime {
 
     for (Actuator act : actuatorList) {
       act.validate();
-      if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-        trace.chargeDeferredFee(trxCap.getDeferredSeconds(), result.getRet());
-      } else {
-        act.execute(result.getRet());
-      }
+      act.execute(result.getRet());
     }
   }
 

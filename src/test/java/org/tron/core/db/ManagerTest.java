@@ -566,36 +566,4 @@ public class ManagerTest {
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
   }
-
-  @Test
-  public void testPushScheduledTransaction() throws BadItemException {
-    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
-        BlockHeader.newBuilder().setRawData(
-            raw.newBuilder().setTimestamp(System.currentTimeMillis())
-                .setParentHash(ByteString.copyFrom(
-                    ByteArray
-                        .fromHexString(
-                            "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
-        )).build());
-
-    TransferContract tc =
-        TransferContract.newBuilder()
-            .setAmount(10)
-            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
-            .setToAddress(ByteString.copyFromUtf8("bbb"))
-            .build();
-    blockCapsule.getTimeStamp();
-
-    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-    trx.setDeferredSeconds(100);
-    trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    dbManager.pushScheduledTransaction(blockCapsule, new TransactionCapsule(trx.getData()));
-    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore()
-        .getByTransactionId(trx.getTransactionId().getByteString());
-    Assert.assertNotNull(capsule);
-    dbManager.cancelDeferredTransaction(trx.getTransactionId().getByteString());
-    capsule = dbManager.getDeferredTransactionStore()
-        .getByTransactionId(trx.getTransactionId().getByteString());
-    Assert.assertNull(capsule);
-  }
 }

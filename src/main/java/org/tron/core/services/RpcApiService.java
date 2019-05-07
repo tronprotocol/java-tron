@@ -479,34 +479,6 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getDeferredTransactionInfoById(BytesMessage request,
-        StreamObserver<TransactionInfo> responseObserver) {
-      ByteString id = request.getValue();
-      if (null != id) {
-        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
-
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getDeferredTransactionById(BytesMessage request,
-        StreamObserver<DeferredTransaction> responseObserver) {
-      ByteString id = request.getValue();
-      if (null != id) {
-        DeferredTransaction reply = wallet.getDeferredTransactionById(id);
-
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
       ECKey ecKey = new ECKey(Utils.getRandom());
@@ -1692,38 +1664,11 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getDeferredTransactionInfoById(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.TransactionInfo> responseObserver) {
-      ByteString id = request.getValue();
-      if (null != id) {
-        TransactionInfo reply = wallet.getDeferredTransactionInfoById(id);
-
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
     public void getTransactionInfoById(BytesMessage request,
         StreamObserver<TransactionInfo> responseObserver) {
       ByteString id = request.getValue();
       if (null != id) {
         TransactionInfo reply = wallet.getTransactionInfoById(id);
-
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getDeferredTransactionById(BytesMessage request, StreamObserver<DeferredTransaction> responseObserver) {
-      ByteString id = request.getValue();
-      if (null != id) {
-        DeferredTransaction reply = wallet.getDeferredTransactionById(id);
 
         responseObserver.onNext(reply);
       } else {
@@ -1747,11 +1692,6 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountPermissionUpdateContract,
           responseObserver);
-    }
-
-    @Override
-    public void createCancelDeferredTransactionContract(Contract.CancelDeferredTransactionContract request, StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.CancelDeferredTransactionContract, responseObserver);
     }
 
   }

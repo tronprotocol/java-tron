@@ -415,13 +415,6 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
-
-    if (Objects.nonNull(transaction.getRawData().getDeferredStage())
-        && transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
-      jsonTransaction.put("delaySeconds",
-          transaction.getRawData().getDeferredStage().getDelaySeconds());
-      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
-    }
     return jsonTransaction;
   }
 
