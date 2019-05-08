@@ -126,7 +126,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;

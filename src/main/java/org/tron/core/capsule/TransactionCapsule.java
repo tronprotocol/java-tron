@@ -72,7 +72,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
