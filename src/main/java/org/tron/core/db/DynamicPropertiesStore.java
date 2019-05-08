@@ -1318,7 +1318,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void updateDynamicStoreByConfig(){
     if(Args.getInstance().getAllowDeferredTransaction() != 0){
-        saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
+      saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
       addSystemContractAndSetPermission(47);
     }
 
