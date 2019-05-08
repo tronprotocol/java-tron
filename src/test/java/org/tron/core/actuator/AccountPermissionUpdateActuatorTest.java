@@ -1112,7 +1112,8 @@ public class AccountPermissionUpdateActuatorTest {
     for (ContractType contractType : ContractType.values()) {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.ClearABIContract
-          || contractType == ContractType.CancelDeferredTransactionContract) {
+          //|| contractType == ContractType.CancelDeferredTransactionContract
+      ) {
         continue;
       }
       int id = contractType.getNumber();
@@ -1138,7 +1139,8 @@ public class AccountPermissionUpdateActuatorTest {
       if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
           || contractType == ContractType.AccountPermissionUpdateContract
           || contractType == ContractType.ClearABIContract
-          || contractType == ContractType.CancelDeferredTransactionContract) {
+          //|| contractType == ContractType.CancelDeferredTransactionContract
+      ) {
         continue;
       }
       int id = contractType.getNumber();
@@ -1155,7 +1157,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc003fe0100000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037e0100000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1175,7 +1177,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc003be0100000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033e0100000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {

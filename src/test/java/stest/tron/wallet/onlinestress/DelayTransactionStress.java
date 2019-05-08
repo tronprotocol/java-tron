@@ -15,7 +15,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.DeferredTransaction;
+//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -45,7 +45,7 @@ public class DelayTransactionStress {
 
   public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 3_600L; //45 days
   Optional<TransactionInfo> infoById = null;
-  Optional<DeferredTransaction> deferredTransactionById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
   Optional<Transaction> getTransactionById = null;
 
 

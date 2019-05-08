@@ -58,7 +58,7 @@ import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DeferredTransaction;
+//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
@@ -784,14 +784,14 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.CancelDeferredTransactionContract.Builder builder = Contract.CancelDeferredTransactionContract.newBuilder();
+    /*Contract.CancelDeferredTransactionContract.Builder builder = Contract.CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
     Contract.CancelDeferredTransactionContract contract = builder.build();
-    //TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
+    TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
 
-    /*    if (transactionExtention == null) {
+        if (transactionExtention == null) {
       return false;
     }
     Return ret = transactionExtention.getResult();
@@ -831,12 +831,12 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.CancelDeferredTransactionContract.Builder builder = Contract.CancelDeferredTransactionContract.newBuilder();
+    /* Contract.CancelDeferredTransactionContract.Builder builder = Contract.CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
     Contract.CancelDeferredTransactionContract contract = builder.build();
-/*    TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
+   TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
 
     if (transactionExtention == null) {
       return null;
