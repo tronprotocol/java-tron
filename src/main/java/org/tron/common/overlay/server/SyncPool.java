@@ -161,7 +161,7 @@ public class SyncPool {
     }
   }
 
-  public synchronized List<PeerConnection> getActivePeers() {
+  public List<PeerConnection> getActivePeers() {
     List<PeerConnection> peers = Lists.newArrayList();
     activePeers.forEach(peer -> {
       if (!peer.isDisconnect()) {
