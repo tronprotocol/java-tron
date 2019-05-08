@@ -33,6 +33,7 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -320,6 +321,11 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
             break;
+          case ShieldedTransferContract:
+            ShieldedTransferContract shieldedTransferContract = contractParameter.unpack(ShieldedTransferContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(shieldedTransferContract));
+            break;
           // todo add other contract
           default:
         }
@@ -561,6 +567,14 @@ public class Util {
                 .merge(parameter.getJSONObject("value").toJSONString(),
                     UpdateEnergyLimitContractBuilder);
             any = Any.pack(UpdateEnergyLimitContractBuilder.build());
+            break;
+          case "ShieldedTransferContract" :
+            ShieldedTransferContract.Builder shieldedTransferContractBuilder = ShieldedTransferContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    shieldedTransferContractBuilder);
+            any = Any.pack(shieldedTransferContractBuilder.build());
             break;
           // todo add other contract
           default:
