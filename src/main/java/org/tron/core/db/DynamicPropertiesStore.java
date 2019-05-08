@@ -87,9 +87,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
-  private static final byte[] MAX_DEFERRED_TRANSACTION_PROCESS_TIME = "MAX_DEFERRED_TRANSACTION_PROCESS_TIME"
-      .getBytes();
-
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
@@ -100,11 +97,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
-
-  private static final byte[] DEFERRED_TRANSACTION_FEE = "DEFERRED_TRANSACTION_FEE".getBytes();
-
-  private static final byte[] CANCEL_DEFERRED_TRANSACTION_FEE = "CANCEL_DEFERRED_TRANSACTION_FEE"
-      .getBytes();
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
 
@@ -689,11 +681,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
   }
 
-  public void saveMaxDeferredTransactionProcessTime(long maxDeferredTransactionProcessTime) {
-    this.put(MAX_DEFERRED_TRANSACTION_PROCESS_TIME,
-        new BytesCapsule(ByteArray.fromLong(maxDeferredTransactionProcessTime)));
-  }
-
   public void saveMaxFrozenSupplyNumber(int maxFrozenSupplyNumber) {
     logger.debug("MAX_FROZEN_SUPPLY_NUMBER:" + maxFrozenSupplyNumber);
     this.put(MAX_FROZEN_SUPPLY_NUMBER,
@@ -916,16 +903,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
     saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
-  }
-
-  public void saveDeferredTransactionFee(long fee) {
-    this.put(DEFERRED_TRANSACTION_FEE,
-        new BytesCapsule(ByteArray.fromLong(fee)));
-  }
-
-  public void saveCancelDeferredTransactionFee(long fee) {
-    this.put(CANCEL_DEFERRED_TRANSACTION_FEE,
-        new BytesCapsule(ByteArray.fromLong(fee)));
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
@@ -1341,7 +1318,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void updateDynamicStoreByConfig(){
     if(Args.getInstance().getAllowDeferredTransaction() != 0){
-      saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
+        saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
       addSystemContractAndSetPermission(47);
     }
 
