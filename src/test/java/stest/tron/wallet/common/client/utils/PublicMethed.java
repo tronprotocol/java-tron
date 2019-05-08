@@ -789,9 +789,9 @@ public class PublicMethed {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
     Contract.CancelDeferredTransactionContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
+    //TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
 
-    if (transactionExtention == null) {
+    /*    if (transactionExtention == null) {
       return false;
     }
     Return ret = transactionExtention.getResult();
@@ -812,7 +812,8 @@ public class PublicMethed {
     System.out.println(
         "Cancel transaction txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    return response.getResult();*/
+    return null;
   }
 
   /**
@@ -835,7 +836,7 @@ public class PublicMethed {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
     Contract.CancelDeferredTransactionContract contract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
+/*    TransactionExtention transactionExtention = blockingStubFull.createCancelDeferredTransactionContract(contract);
 
     if (transactionExtention == null) {
       return null;
@@ -859,7 +860,8 @@ public class PublicMethed {
         "Cancel transaction txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
 
-    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));*/
+    return null;
   }
 
 
@@ -892,7 +894,7 @@ public class PublicMethed {
       Contract.TransferContract contract = builder.build();
       Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
 
-      transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+      //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
         logger.info("transaction ==null");
@@ -931,7 +933,7 @@ public class PublicMethed {
 
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       if (transaction == null) {
@@ -969,7 +971,7 @@ public class PublicMethed {
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
     Contract.AccountCreateContract contract = builder.build();
     Transaction transaction = blockingStubFull.createAccount(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
     }
@@ -1005,7 +1007,7 @@ public class PublicMethed {
 
     Contract.AccountUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAccount(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("Please check!!! transaction == null");
       return null;
@@ -1039,7 +1041,7 @@ public class PublicMethed {
 
     Contract.UnfreezeAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.unfreezeAsset(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("Please check!!! transaction == null");
       return null;
@@ -1082,7 +1084,7 @@ public class PublicMethed {
 
     Contract.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       if (transaction == null) {
@@ -1126,7 +1128,7 @@ public class PublicMethed {
     Contract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
 
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -1162,7 +1164,7 @@ public class PublicMethed {
     builder.setOwnerAddress(bsAddress);
     Contract.SetAccountIdContract contract = builder.build();
     Transaction transaction = blockingStubFull.setAccountId(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -1202,7 +1204,7 @@ public class PublicMethed {
     Contract.UpdateAssetContract contract
         = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAsset(contract);
-    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
+    //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return null;
     }
@@ -1364,6 +1366,7 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  /*
   public static Optional<DeferredTransaction> getDeferredTransactionById(String txId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txId));
@@ -1374,6 +1377,7 @@ public class PublicMethed {
     }
     return Optional.ofNullable(transaction);
   }
+  */
 
 
 
@@ -2863,7 +2867,7 @@ public class PublicMethed {
       }
       return false;
     }
-    transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
+    /*    transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
     if (transactionExtention == null) {
       return false;
     }
@@ -2882,7 +2886,8 @@ public class PublicMethed {
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    return response.getResult();
+    return response.getResult();*/
+    return false;
   }
 
   /**
@@ -2920,7 +2925,7 @@ public class PublicMethed {
       }
       return null;
     }
-    transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
+    /*    transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
     if (transactionExtention == null) {
       return null;
     }
@@ -2940,7 +2945,8 @@ public class PublicMethed {
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
 
-    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));*/
+    return null;
   }
 
   /**
@@ -2978,7 +2984,7 @@ public class PublicMethed {
       }
       return null;
     }
-    transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
+    //transactionExtention = TransactionUtils.setDelaySecondsToExtension(transactionExtention, delaySeconds);
     if (transactionExtention == null) {
       return null;
     }

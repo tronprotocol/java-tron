@@ -121,6 +121,7 @@ public class DelayTransaction001 {
         delayAccount1Key, blockingStubFull));
   }
 
+  /*
   @Test(enabled = false, description = "Get deferred transaction by id")
   public void test2getDeferredTransactionByid() {
     //get account
@@ -221,7 +222,8 @@ public class DelayTransaction001 {
     Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
 
 
-  }
+
+  }*/
 
   @Test(enabled = false, description = "Delay send coin")
   public void test3DelaySendCoin() {

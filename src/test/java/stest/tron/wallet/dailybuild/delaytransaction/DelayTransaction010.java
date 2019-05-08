@@ -143,7 +143,7 @@ public class DelayTransaction010 {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    deferredTransactionById = PublicMethed.getDeferredTransactionById(preTxid,blockingStubFull);
+    //deferredTransactionById = PublicMethed.getDeferredTransactionById(preTxid,blockingStubFull);
     DeferredTransaction transaction = deferredTransactionById.get();
     String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
 
@@ -177,7 +177,7 @@ public class DelayTransaction010 {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    deferredTransactionById = PublicMethed.getDeferredTransactionById(preTxid,blockingStubFull);
+    //deferredTransactionById = PublicMethed.getDeferredTransactionById(preTxid,blockingStubFull);
     DeferredTransaction transaction = deferredTransactionById.get();
     String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
     Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(delayFeeAccountAddress,blockingStubFull).getBalance(),delayFeeAccountAddress,delayFeeAccountKey,blockingStubFull));

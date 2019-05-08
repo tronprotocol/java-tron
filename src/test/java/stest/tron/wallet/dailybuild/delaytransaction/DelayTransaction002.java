@@ -119,7 +119,7 @@ public class DelayTransaction002 {
     String txid = PublicMethed.sendcoinDelayedGetTxid(receiverAccountAddress, sendCoinAmount, delaySecond,delayAccount1Address,
         delayAccount1Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
+    //deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
     DeferredTransaction transaction = deferredTransactionById.get();
     String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
 

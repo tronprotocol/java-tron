@@ -114,7 +114,7 @@ public class DelayTransactionStress {
 
   }
 
-  @Test(enabled = true, description = "Get deferred transaction by id")
+  /*  @Test(enabled = true, description = "Get deferred transaction by id")
   public void test2getDeferredTransactionByid() {
     //get account
     ECKey ecKey2 = new ECKey(Utils.getRandom());
@@ -213,7 +213,7 @@ public class DelayTransactionStress {
     Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == sendCoinAmout + 100000L);
     Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
 
-  }
+  }*/
 
   @Test(enabled = true, description = "Delay send coin")
   public void test3DelaySendCoin() {
