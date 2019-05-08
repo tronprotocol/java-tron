@@ -115,10 +115,25 @@ public class SpendingKey {
     System.out.println(
         "sk.defaultAddress:" + KeyIo.EncodePaymentAddress(sk.defaultAddress()));
 
+    // new sk
+    System.out.println("---- random ----");
+
+    sk = SpendingKey.random();
+
     DiversifierT diversifierT = new DiversifierT();
-    byte[] d = {'1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '0'};
+    // byte[] d = {'1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '0'};
+    byte[] d;
+    while (true) {
+      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+        break;
+      }
+    }
+
     diversifierT.setData(d);
     Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
+    byte[] rcm = org.tron.keystore.Wallet.generateRandomBytes(32);
+    System.out.println("rcm is " + ByteUtil.toHexString(rcm));
     if (op.isPresent()) {
       System.out.println(
           "sk.Address:" + KeyIo.EncodePaymentAddress(op.get()));

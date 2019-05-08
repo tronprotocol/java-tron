@@ -37,8 +37,12 @@ public class ExpandedSpendingKey {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
-    // System.out.println("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
-    // System.out.println("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
+    System.out.println("espsk.ask is : " + ByteUtil.toHexString(ask));
+    System.out.println("espsk.nsk is : " + ByteUtil.toHexString(nsk));
+    System.out.println("espsk.ovk is : " + ByteUtil.toHexString(ovk));
+
+    System.out.println("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
+    System.out.println("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
     return new FullViewingKey(ak, nk, ovk);
   }
 

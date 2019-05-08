@@ -4,6 +4,7 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
 
 // ivk
@@ -18,6 +19,9 @@ public class IncomingViewingKey {
     byte[] pkD = new byte[32]; // 32
     if (Librustzcash.librustzcashCheckDiversifier(d.data)) {
       Librustzcash.librustzcashIvkToPkd(value, d.data, pkD);
+      System.out.println("address.ivk is: " + ByteUtil.toHexString(value));
+      System.out.println("address.d is: " + ByteUtil.toHexString(d.data));
+      System.out.println("address.pkd is: " + ByteUtil.toHexString(pkD));
       return Optional.of(new PaymentAddress(d, pkD));
     } else {
       return Optional.empty();

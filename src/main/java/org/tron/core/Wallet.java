@@ -63,14 +63,17 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.zen.KeyStore;
+import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilderFactory;
 import org.tron.core.zen.ZenWallet;
 import org.tron.core.zen.ZkChainParams;
 import org.tron.core.zen.address.*;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.PedersenHashCapsule;
+import org.tron.core.zen.note.BaseNote;
 import org.tron.core.zen.note.BaseNotePlaintext;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEntry;
@@ -1591,6 +1594,78 @@ public class Wallet {
       return null;
     }
     return null;
+  }
+
+  public TransactionCapsule createShieldedTransaction(PrivateParameters request) throws ContractValidateException, RuntimeException{
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
+
+    byte[] fromAddress = request.getFromAddress().toByteArray();
+    byte[] ask = request.getAsk().toByteArray();
+    byte[] nsk = request.getNsk().toByteArray();
+    byte[] ovk = request.getOvk().toByteArray();
+
+    if (ArrayUtils.isEmpty(fromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+      throw new ContractValidateException("No input address");
+    }
+
+    long fromAmount = request.getFromAmount();
+    if (!ArrayUtils.isEmpty(fromAddress) && fromAmount <= 0) {
+      throw new ContractValidateException("Input amount must > 0");
+    }
+
+    List<SpendNote> shieldedSpends = request.getShieldedSpendsList();
+    if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk)) && shieldedSpends.isEmpty()) {
+      throw new ContractValidateException("No input note");
+    }
+
+    List<ReceiveNote> shieldedReceives = request.getShieldedReceivesList();
+    byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
+    if (shieldedReceives.isEmpty() && ArrayUtils.isEmpty(transparentToAddress)) {
+      throw new ContractValidateException("No output address");
+    }
+
+    long toAmount = request.getToAmount();
+    if (!ArrayUtils.isEmpty(transparentToAddress) && toAmount <= 0) {
+      throw new ContractValidateException("Output amount must > 0");
+    }
+
+    // add
+    if (!ArrayUtils.isEmpty(fromAddress)) {
+      builder.setTransparentInput(fromAddress, fromAmount);
+    }
+
+    if (!ArrayUtils.isEmpty(transparentToAddress)) {
+      builder.setTransparentOutput(transparentToAddress, toAmount);
+    }
+
+    // sapling input
+    if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+      ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
+      for (SpendNote spendNote : shieldedSpends) {
+        IncrementalMerkleTreeCapsule merkleTreeCapsule = new IncrementalMerkleTreeCapsule(
+            spendNote.getPath().toByteArray());
+
+        GrpcAPI.Note note = spendNote.getNote();
+        BaseNote.Note baseNote = new BaseNote.Note(new DiversifierT(note.getD().toByteArray()),
+            note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
+
+        builder.addSaplingSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
+            spendNote.getAnchor().toByteArray(),
+            merkleTreeCapsule.toMerkleTreeContainer().toVoucher());
+      }
+    }
+
+    // sapling output
+    for (ReceiveNote receiveNote : shieldedReceives) {
+
+      DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
+      builder.addSaplingOutput(ovk,
+          new PaymentAddress(diversifierT, receiveNote.getNote().getPkD().toByteArray()),
+          receiveNote.getNote().getValue(), new byte[512]);
+    }
+
+    return builder.build();
+
   }
 
   public BytesMessage getSpendingKey() {

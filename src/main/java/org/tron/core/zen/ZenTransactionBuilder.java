@@ -76,6 +76,16 @@ public class ZenTransactionBuilder {
     valueBalance += note.value;
   }
 
+  public void addSaplingSpend(
+      ExpandedSpendingKey expsk,
+      Note note,
+      byte[] alpha,
+      byte[] anchor,
+      IncrementalMerkleVoucherContainer voucher) {
+    spends.add(new SpendDescriptionInfo(expsk, note, alpha, anchor, voucher));
+    valueBalance += note.value;
+  }
+
   public void addSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
     valueBalance -= value;
@@ -299,6 +309,19 @@ public class ZenTransactionBuilder {
       this.voucher = voucher;
       alpha = new byte[32];
       Librustzcash.librustzcashSaplingGenerateR(alpha);
+    }
+
+    public SpendDescriptionInfo(
+        ExpandedSpendingKey expsk,
+        Note note,
+        byte[] alpha,
+        byte[] anchor,
+        IncrementalMerkleVoucherContainer voucher) {
+      this.expsk = expsk;
+      this.note = note;
+      this.anchor = anchor;
+      this.voucher = voucher;
+      this.alpha = alpha;
     }
   }
 

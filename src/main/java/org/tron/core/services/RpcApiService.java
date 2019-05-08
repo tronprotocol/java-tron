@@ -1772,6 +1772,33 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void createShieldedTransaction(PrivateParameters request, StreamObserver<TransactionExtention> responseObserver) {
+
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+
+      try {
+        TransactionCapsule trx = wallet.createShieldedTransaction(request);
+        trxExtBuilder.setTransaction(trx.getInstance());
+        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
+        retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      } catch (ContractValidateException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.info("exception caught" + e.getMessage());
+      }
+
+      trxExtBuilder.setResult(retBuilder);
+      responseObserver.onNext(trxExtBuilder.build());
+      responseObserver.onCompleted();
+
+    }
+
+    @Override
     public void getSpendingKey(EmptyMessage request, StreamObserver<BytesMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getSpendingKey());
