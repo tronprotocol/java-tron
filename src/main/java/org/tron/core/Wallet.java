@@ -1657,14 +1657,19 @@ public class Wallet {
 
     // sapling output
     for (ReceiveNote receiveNote : shieldedReceives) {
-
       DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
       builder.addSaplingOutput(ovk,
           new PaymentAddress(diversifierT, receiveNote.getNote().getPkD().toByteArray()),
           receiveNote.getNote().getValue(), new byte[512]);
     }
 
-    return builder.build();
+    TransactionCapsule transactionCapsule = null;
+    try {
+      transactionCapsule = builder.build();
+    } catch (RuntimeException e) {
+      logger.error("createShieldedTransaction except, error is " + e.toString());
+    }
+    return transactionCapsule;
 
   }
 

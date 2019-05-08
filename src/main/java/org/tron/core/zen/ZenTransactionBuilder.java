@@ -116,7 +116,7 @@ public class ZenTransactionBuilder {
   //
   //  void SendChangeTo(CTxDestination&changeAddr);
 
-  public TransactionCapsule build() {
+  public TransactionCapsule build() throws RuntimeException {
 
     //
     // Sapling spends and outputs
@@ -239,7 +239,7 @@ public class ZenTransactionBuilder {
     return spendDescriptionCapsule;
   }
 
-  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) {
+  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) throws RuntimeException {
     byte[] cm = output.getNote().cm();
     if (ByteArray.isEmpty(cm)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);

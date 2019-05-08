@@ -875,7 +875,7 @@ public class SendCoinShieldTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
     builder
         .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
