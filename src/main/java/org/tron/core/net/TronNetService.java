@@ -20,7 +20,7 @@ import org.tron.core.net.service.AdvService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class TronNetService {
 
@@ -129,16 +129,16 @@ public class TronNetService {
         case UNLINK_BLOCK:
           code = ReasonCode.UNLINKABLE;
           break;
-        case DEFAULT:
+        default:
           code = ReasonCode.UNKNOWN;
           break;
       }
-      logger.error("Message {} /n process failed from peer {}, type: {}, detail: {}.",
-          msg, peer.getInetAddress(), type, ex.getMessage());
+      logger.error("Message from {} process failed, {} \n type: {}, detail: {}.",
+          peer.getInetAddress(), msg, type, ex.getMessage());
     } else {
       code = ReasonCode.UNKNOWN;
-      logger.error("Message {} /n process failed from peer {}.",
-          msg, peer.getInetAddress(), ex);
+      logger.error("Message from {} process failed, {}",
+          peer.getInetAddress(), msg, ex);
     }
 
     peer.disconnect(code);

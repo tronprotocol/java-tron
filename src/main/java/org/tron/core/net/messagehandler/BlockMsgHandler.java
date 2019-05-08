@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
@@ -20,7 +21,7 @@ import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class BlockMsgHandler implements TronMsgHandler {
 
@@ -38,6 +39,8 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
 
+  private boolean fastForward = Args.getInstance().isFastForward();
+
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
@@ -51,6 +54,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
+      logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
+          System.currentTimeMillis() - peer.getAdvInvRequest().get(item));
       peer.getAdvInvRequest().remove(item);
       processBlock(peer, blockMessage.getBlockCapsule());
     }
@@ -81,6 +86,11 @@ public class BlockMsgHandler implements TronMsgHandler {
       syncService.startSync(peer);
       return;
     }
+
+    if (fastForward && tronNetDelegate.validBlock(block)) {
+      advService.broadcast(new BlockMessage(block));
+    }
+
     tronNetDelegate.processBlock(block);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
     tronNetDelegate.getActivePeer().forEach(p -> {
@@ -88,7 +98,10 @@ public class BlockMsgHandler implements TronMsgHandler {
         p.setBlockBothHave(blockId);
       }
     });
-    advService.broadcast(new BlockMessage(block));
+
+    if (!fastForward) {
+      advService.broadcast(new BlockMessage(block));
+    }
   }
 
 }

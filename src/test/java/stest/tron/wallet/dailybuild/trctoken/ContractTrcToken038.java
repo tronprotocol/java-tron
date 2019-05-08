@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -111,14 +112,16 @@ public class ContractTrcToken038 {
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertFalse(assetAccountId.toStringUtf8().equals(""));
+
+
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
 
-    String contractName2 = "tokenTest";
-    String code2 = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken038_tokenTest");
-    String abi2 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken038_tokenTest");
+    String filePath = "src/test/resources/soliditycode/contractTrcToken038.sol";
+    String contractName2 = "transferTrc10";
+    HashMap retMap2 = PublicMethed.getBycodeAbi(filePath, contractName2);
+    String code2 = retMap2.get("byteCode").toString();
+    String abi2 = retMap2.get("abI").toString();
     final byte[] transferTokenContractAddress = PublicMethed
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",
@@ -127,11 +130,10 @@ public class ContractTrcToken038 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName = "BTest";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken038_BTest");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken038_BTest");
+    String contractName = "receiveTrc10";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     byte[] btestAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",
@@ -244,9 +246,9 @@ public class ContractTrcToken038 {
     Assert.assertTrue(afterAssetIssueContractAddress == beforeAssetIssueContractAddress);
     Assert.assertTrue(afterAssetIssueBAddress == beforeAssetIssueBAddress);
     PublicMethed.unFreezeBalance(dev001Address, dev001Key, 1,
-        dev001Address, blockingStubFull);
+        null, blockingStubFull);
     PublicMethed.unFreezeBalance(user001Address, user001Key, 1,
-        user001Address, blockingStubFull);
+        null, blockingStubFull);
   }
 
   /**

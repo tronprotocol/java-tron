@@ -85,10 +85,6 @@ public class SyncPool {
 
     peerClient = ctx.getBean(PeerClient.class);
 
-    for (Node node : args.getActiveNodes()) {
-      nodeManager.getNodeHandler(node).getNodeStatistics().setPredefined(true);
-    }
-
     poolLoopExecutor.scheduleWithFixedDelay(() -> {
       try {
         fillUp();
@@ -106,18 +102,31 @@ public class SyncPool {
   }
 
   private void fillUp() {
-    int lackSize = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
+    List<NodeHandler> connectNodes = new ArrayList<>();
+    Set<InetAddress> addressInUse = new HashSet<>();
+    Set<String> nodesInUse = new HashSet<>();
+    channelManager.getActivePeers().forEach(channel -> {
+      nodesInUse.add(channel.getPeerId());
+      addressInUse.add(channel.getInetAddress());
+    });
+
+    channelManager.getActiveNodes().forEach((address, node) -> {
+      nodesInUse.add(node.getHexId());
+      if (!addressInUse.contains(address)) {
+        connectNodes.add(nodeManager.getNodeHandler(node));
+      }
+    });
+
+    int size = Math.max((int) (maxActiveNodes * factor) - activePeers.size(),
         (int) (maxActiveNodes * activeFactor - activePeersCount.get()));
-    if (lackSize <= 0) {
-      return;
+    int lackSize = size - connectNodes.size();
+    if (lackSize > 0) {
+      nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
+      List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
+      connectNodes.addAll(newNodes);
     }
 
-    final Set<String> nodesInUse = new HashSet<>();
-    channelManager.getActivePeers().forEach(channel -> nodesInUse.add(channel.getPeerId()));
-    nodesInUse.add(nodeManager.getPublicHomeNode().getHexId());
-
-    List<NodeHandler> newNodes = nodeManager.getNodes(new NodeSelector(nodesInUse), lackSize);
-    newNodes.forEach(n -> {
+    connectNodes.forEach(n -> {
       peerClient.connectAsync(n, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
@@ -190,10 +199,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
-      return false;
-    }
-    return true;
+    return passivePeersCount.get() < maxActiveNodes * (1 - activeFactor);
   }
 
   public void close() {
@@ -215,7 +221,7 @@ public class SyncPool {
 
   class NodeSelector implements Predicate<NodeHandler> {
 
-    Set<String> nodesInUse;
+    private Set<String> nodesInUse;
 
     public NodeSelector(Set<String> nodesInUse) {
       this.nodesInUse = nodesInUse;

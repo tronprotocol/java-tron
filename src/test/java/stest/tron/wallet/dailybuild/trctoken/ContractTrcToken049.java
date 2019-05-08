@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -146,18 +147,24 @@ public class ContractTrcToken049 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken049_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken049_transferTokenContract");
-    byte[] transferTokenContractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken049.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, 10000, tokenId.toStringUtf8(),
             0, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    byte[] transferTokenContractAddress = infoById.get().getContractAddress().toByteArray();
 
     // devAddress transfer token to userAddress
     PublicMethed
@@ -222,8 +229,10 @@ public class ContractTrcToken049 {
     logger.info("afterAssetIssueCount:" + afterAssetIssueCount);
     logger.info("afterAssetIssueContractAddress:" + afterAssetIssueContractAddress);
 
-    Optional<TransactionInfo> infoById = PublicMethed
+    infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(beforeBalance, afterBalance);
     Assert.assertEquals(beforeAssetIssueCount, afterAssetIssueCount);

@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.grammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,8 @@ public class ContractGrammar001 {
       .getStringList("fullnode.ip.list").get(1);
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
+  private String compilerVersion = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.solidityCompilerVersion");
 
 
   byte[] contractAddress = null;
@@ -88,11 +91,12 @@ public class ContractGrammar001 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test1Grammar001.sol";
     String contractName = "FunctionSelector";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar001_testGrammar001");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar001_testGrammar001");
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
@@ -124,11 +128,12 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Ordinary library contract")
   public void test2Grammar002() {
-    String contractName = "SetContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar001_testGrammar002");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar001_testGrammar002");
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
+    String contractName = "Set";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
@@ -136,16 +141,19 @@ public class ContractGrammar001 {
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
-    String contractName1 = "CContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code1_ContractGrammar001_testGrammar002");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi1_ContractGrammar001_testGrammar002");
-    String libraryAddress =
-        "browser/TvmTest_p1_Grammar_002.sol:S:" + Base58.encode58Check(contractAddress);
-    contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-        0L, 100, libraryAddress, testKeyForGrammarAddress,
-        grammarAddress, blockingStubFull);
+    String filePath1 = "src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol";
+    String contractName1 = "C";
+    HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath1, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
+    String library = retMap1.get("library").toString();
+    String libraryAddress = library + Base58.encode58Check(contractAddress);
+    //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol:Set:"
+    //        + Base58.encode58Check(contractAddress);
+    contractAddress1 = PublicMethed
+        .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
+            0L, 100, libraryAddress, testKeyForGrammarAddress,
+            grammarAddress, compilerVersion, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -160,11 +168,11 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Library contract")
   public void test3Grammar003() {
-    String contractName = "SetContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar001_testGrammar003");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar001_testGrammar003");
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol";
+    String contractName = "Set";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
@@ -172,16 +180,18 @@ public class ContractGrammar001 {
     String txid = "";
     String num = "1";
     byte[] contractAddress1 = null;
-    String contractName1 = "CContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code1_ContractGrammar001_testGrammar003");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi1_ContractGrammar001_testGrammar003");
-    String libraryAddress =
-        "browser/TvmTest_p1_Grammar_003.sol:S:" + Base58.encode58Check(contractAddress);
-    contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-        0L, 100, libraryAddress, testKeyForGrammarAddress,
-        grammarAddress, blockingStubFull);
+    String contractName1 = "C";
+    HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
+    String library = retMap1.get("library").toString();
+    String libraryAddress = library
+        //"/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol:Set:"
+        + Base58.encode58Check(contractAddress);
+    contractAddress1 = PublicMethed
+        .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
+            0L, 100, libraryAddress, testKeyForGrammarAddress,
+            grammarAddress, compilerVersion, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     txid = PublicMethed.triggerContract(contractAddress1,
         "register(uint256)", num, false,
@@ -197,27 +207,38 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Extended type")
   public void test4Grammar004() {
-    String contractName = "searchContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar001_testGrammar004");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar001_testGrammar004");
+    ecKey1 = new ECKey(Utils.getRandom());
+    grammarAddress = ecKey1.getAddress();
+    testKeyForGrammarAddress = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol";
+    String contractName = "Search";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     byte[] contractAddress1 = null;
-    String contractName1 = "cContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code1_ContractGrammar001_testGrammar004");
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi1_ContractGrammar001_testGrammar004");
+    String contractName1 = "C";
+    HashMap retMap1 = PublicMethed.getBycodeAbiForLibrary(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
+    String library = retMap1.get("library").toString();
     String libraryAddress = null;
-    libraryAddress =
-        "browser/TvmTest_p1_Grammar_004.sol:S:" + Base58.encode58Check(contractAddress);
-    contractAddress1 = PublicMethed.deployContract(contractName1, abi1, code1, "", maxFeeLimit,
-        0L, 100, libraryAddress, testKeyForGrammarAddress,
-        grammarAddress, blockingStubFull);
+    libraryAddress = library
+        //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol:Search:"
+        + Base58.encode58Check(contractAddress);
+    contractAddress1 = PublicMethed
+        .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
+            0L, 100, libraryAddress, testKeyForGrammarAddress,
+            grammarAddress, compilerVersion, blockingStubFull);
     String txid = "";
     String num = "1";
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -260,11 +281,13 @@ public class ContractGrammar001 {
 
   @Test(enabled = true, description = "Solidity assembly")
   public void test5Grammar006() {
-    String contractName = "infofeedContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar001_testGrammar006");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar001_testGrammar006");
+    String filePath = "src/test/resources/soliditycode/contractGrammar001test5Grammar006.sol";
+    String contractName = "InfoFeed";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress,
         grammarAddress, blockingStubFull);

@@ -40,6 +40,8 @@ public abstract class Message {
 
   public abstract Node getFrom();
 
+  public abstract long getTimestamp();
+
   @Override
   public String toString() {
     return "[Message Type: " + getType() + ", len: " + (data == null ? 0 : data.length) + "]";

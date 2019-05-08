@@ -11,12 +11,12 @@ import org.pf4j.DefaultPluginManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
 import org.springframework.util.StringUtils;
+import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
-import org.tron.common.utils.StringUtil;
 
 @Slf4j
 public class EventPluginLoader {
@@ -45,6 +45,8 @@ public class EventPluginLoader {
 
   private FilterQuery filterQuery;
 
+  private boolean useNativeQueue = false;
+
   public static EventPluginLoader getInstance() {
     if (Objects.isNull(instance)) {
       synchronized (EventPluginLoader.class) {
@@ -56,17 +58,29 @@ public class EventPluginLoader {
     return instance;
   }
 
-  public boolean start(EventPluginConfig config) {
-    boolean success = false;
+  private boolean launchNativeQueue(EventPluginConfig config){
 
-    if (Objects.isNull(config)) {
-      return success;
+    if (!NativeMessageQueue.getInstance().start(config.getBindPort(), config.getSendQueueLength())){
+      return false;
     }
 
+    if (Objects.isNull(triggerConfigList)){
+      logger.error("trigger config is null");
+      return false;
+    }
+
+    triggerConfigList.forEach(triggerConfig -> {
+      setSingleTriggerConfig(triggerConfig);
+    });
+
+    return true;
+  }
+
+  private boolean launchEventPlugin(EventPluginConfig config){
+    boolean success = false;
     // parsing subscribe config from config.conf
     String pluginPath = config.getPluginPath();
     this.serverAddress = config.getServerAddress();
-    this.triggerConfigList = config.getTriggerConfigList();
     this.dbConfig = config.getDbConfig();
 
     if (!startPlugin(pluginPath)) {
@@ -83,6 +97,24 @@ public class EventPluginLoader {
     return true;
   }
 
+  public boolean start(EventPluginConfig config) {
+    boolean success = false;
+
+    if (Objects.isNull(config)) {
+      return success;
+    }
+
+    this.triggerConfigList = config.getTriggerConfigList();
+
+    useNativeQueue = config.isUseNativeQueue();
+
+    if (config.isUseNativeQueue()){
+      return launchNativeQueue(config);
+    }
+
+    return launchEventPlugin(config);
+  }
+
   private void setPluginConfig() {
 
     if (Objects.isNull(eventListeners)) {
@@ -96,39 +128,58 @@ public class EventPluginLoader {
     eventListeners.forEach(listener -> listener.setDBConfig(this.dbConfig));
 
     triggerConfigList.forEach(triggerConfig -> {
-      if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          blockLogTriggerEnable = true;
-        } else {
-          blockLogTriggerEnable = false;
-        }
+      setSingleTriggerConfig(triggerConfig);
+    });
+  }
+
+  private void setSingleTriggerConfig(TriggerConfig triggerConfig){
+    if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        blockLogTriggerEnable = true;
+      } else {
+        blockLogTriggerEnable = false;
+      }
+
+      if (!useNativeQueue){
         setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          transactionLogTriggerEnable = true;
-        } else {
-          transactionLogTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.TRANSACTION_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        transactionLogTriggerEnable = true;
+      } else {
+        transactionLogTriggerEnable = false;
+      }
+
+      if (!useNativeQueue){
         setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          contractEventTriggerEnable = true;
-        } else {
-          contractEventTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.CONTRACTEVENT_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        contractEventTriggerEnable = true;
+      } else {
+        contractEventTriggerEnable = false;
+      }
+
+      if (!useNativeQueue){
         setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
-      } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
-          .equalsIgnoreCase(triggerConfig.getTriggerName())) {
-        if (triggerConfig.isEnabled()) {
-          contractLogTriggerEnable = true;
-        } else {
-          contractLogTriggerEnable = false;
-        }
+      }
+
+    } else if (EventPluginConfig.CONTRACTLOG_TRIGGER_NAME
+            .equalsIgnoreCase(triggerConfig.getTriggerName())) {
+      if (triggerConfig.isEnabled()) {
+        contractLogTriggerEnable = true;
+      } else {
+        contractLogTriggerEnable = false;
+      }
+
+      if (!useNativeQueue){
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
-    });
+    }
   }
 
   public synchronized boolean isBlockLogTriggerEnable() {
@@ -195,32 +246,52 @@ public class EventPluginLoader {
   }
 
   public void stopPlugin() {
-    if (Objects.isNull(pluginManager)) {
-      logger.info("pluginManager is null");
-      return;
+    if (Objects.nonNull(pluginManager)){
+      pluginManager.stopPlugins();
     }
 
-    pluginManager.stopPlugins();
+    NativeMessageQueue.getInstance().stop();
+
     logger.info("eventPlugin stopped");
   }
 
   public void postBlockTrigger(BlockLogTrigger trigger) {
-    eventListeners.forEach(listener ->
-        listener.handleBlockEvent(toJsonString(trigger)));
+    if (useNativeQueue){
+      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    }
+    else {
+      eventListeners.forEach(listener ->
+              listener.handleBlockEvent(toJsonString(trigger)));
+    }
   }
 
   public void postTransactionTrigger(TransactionLogTrigger trigger) {
-    eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
+    if (useNativeQueue){
+      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    }
+    else {
+      eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
+    }
   }
 
   public void postContractLogTrigger(ContractLogTrigger trigger) {
-    eventListeners.forEach(listener ->
-        listener.handleContractLogTrigger(toJsonString(trigger)));
+    if (useNativeQueue){
+      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    }
+    else {
+      eventListeners.forEach(listener ->
+              listener.handleContractLogTrigger(toJsonString(trigger)));
+    }
   }
 
   public void postContractEventTrigger(ContractEventTrigger trigger) {
-    eventListeners.forEach(listener ->
-        listener.handleContractEventTrigger(toJsonString(trigger)));
+    if (useNativeQueue){
+      NativeMessageQueue.getInstance().publishTrigger(toJsonString(trigger), trigger.getTriggerName());
+    }
+    else {
+      eventListeners.forEach(listener ->
+              listener.handleContractEventTrigger(toJsonString(trigger)));
+    }
   }
 
   private String toJsonString(Object data) {
@@ -242,6 +313,4 @@ public class EventPluginLoader {
   public synchronized FilterQuery getFilterQuery() {
     return filterQuery;
   }
-
-
 }

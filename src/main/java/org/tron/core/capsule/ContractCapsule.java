@@ -16,13 +16,14 @@
 package org.tron.core.capsule;
 
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 
 import static java.lang.Math.max;
@@ -68,14 +69,12 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
     }
   }
 
-  public Sha256Hash getHash() {
-    byte[] transBytes = this.smartContract.toByteArray();
-    return Sha256Hash.of(transBytes);
+  public byte[] getCodeHash() {
+    return this.smartContract.getCodeHash().toByteArray();
   }
 
-  public Sha256Hash getCodeHash() {
-    byte[] bytecode = smartContract.getBytecode().toByteArray();
-    return Sha256Hash.of(bytecode);
+  public void setCodeHash(byte[] codeHash) {
+    this.smartContract = this.smartContract.toBuilder().setCodeHash(ByteString.copyFrom(codeHash)).build();
   }
 
   @Override
@@ -108,5 +107,9 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
       originEnergyLimit = Constant.CREATOR_DEFAULT_ENERGY_LIMIT;
     }
     return originEnergyLimit;
+  }
+
+  public void clearABI() {
+    this.smartContract = this.smartContract.toBuilder().setAbi(ABI.getDefaultInstance()).build();
   }
 }

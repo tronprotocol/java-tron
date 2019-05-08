@@ -18,9 +18,11 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
@@ -43,22 +45,12 @@ public class TransactionUtil {
         Contract.ContractType.TransferContract).getInstance();
   }
 
-  /**
-   * checkBalance.
-   */
-  private static boolean checkBalance(long totalBalance, long totalSpent) {
-    return totalBalance == totalSpent;
-  }
-
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
       return true;   //accountname can empty
     }
-    if (accountName.length > 200) {
-      return false;
-    }
-    // other rules.
-    return true;
+
+    return accountName.length <= 200;
   }
 
   public static boolean validAccountId(byte[] accountId) {
@@ -128,22 +120,15 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(description)) {
       return true;   //description can empty
     }
-    if (description.length > 200) {
-      return false;
-    }
-    // other rules.
-    return true;
+
+    return description.length <= 200;
   }
 
   public static boolean validUrl(byte[] url) {
     if (ArrayUtils.isEmpty(url)) {
       return false;
     }
-    if (url.length > 256) {
-      return false;
-    }
-    // other rules.
-    return true;
+    return url.length <= 256;
   }
 
   public static boolean isNumber(byte[] id) {
@@ -155,12 +140,34 @@ public class TransactionUtil {
         return false;
       }
     }
-    if (id.length > 1 && id[0] == '0') {
+
+    return !(id.length > 1 && id[0] == '0');
+  }
+
+  public static Transaction setTransactionDelaySeconds(Transaction transaction, long delaySeconds) {
+    if (delaySeconds <= 0) return transaction;
+    DeferredStage deferredStage = transaction.getRawData().toBuilder().
+        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
+        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData().toBuilder()
+        .setDeferredStage(deferredStage).build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public static boolean validateDeferredTransaction(TransactionCapsule transactionCapsule) {
+    if (transactionCapsule.getDeferredSeconds() > Constant.MAX_DEFERRED_TRANSACTION_DELAY_SECONDS
+        || transactionCapsule.getDeferredSeconds() < 0) {
+      logger.warn("deferred transaction delay seconds is illegal");
       return false;
     }
-
-    return true;
+    boolean result = true;
+    if (transactionCapsule.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION
+        && transactionCapsule.getDeferredStage() != Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      result = false;
+    }
+    return result;
   }
+
   /**
    * Get sender.
    */

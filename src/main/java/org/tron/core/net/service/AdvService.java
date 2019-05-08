@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -25,6 +26,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.FetchInvDataMessage;
@@ -34,7 +36,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class AdvService {
 
@@ -61,7 +63,16 @@ public class AdvService {
   @Getter
   private MessageCount trxCount = new MessageCount();
 
+  private int maxSpreadSize = 1_000;
+
+  private boolean fastForward = Args.getInstance().isFastForward();
+
   public void init() {
+
+    if (fastForward) {
+      return;
+    }
+
     spreadExecutor.scheduleWithFixedDelay(() -> {
       try {
         consumerInvToSpread();
@@ -85,6 +96,11 @@ public class AdvService {
   }
 
   synchronized public boolean addInv(Item item) {
+
+    if (fastForward && !InventoryType.BLOCK.equals(item.getType())) {
+      return false;
+    }
+
     if (invToFetchCache.getIfPresent(item) != null) {
       return false;
     }
@@ -101,6 +117,11 @@ public class AdvService {
 
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.put(item, System.currentTimeMillis());
+
+    if (InventoryType.BLOCK.equals(item.getType())){
+      consumerInvToFetch();
+    }
+
     return true;
   }
 
@@ -113,6 +134,16 @@ public class AdvService {
   }
 
   public void broadcast(Message msg) {
+
+    if (fastForward && !(msg instanceof BlockMessage)) {
+      return;
+    }
+
+    if (invToSpread.size() > maxSpreadSize) {
+      logger.warn("Drop message, type: {}, ID: {}.", msg.getType(), msg.getMessageId());
+      return;
+    }
+
     Item item;
     if (msg instanceof BlockMessage) {
       BlockMessage blockMsg = (BlockMessage) msg;
@@ -135,8 +166,11 @@ public class AdvService {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
     }
-    synchronized (invToSpread) {
-      invToSpread.put(item, System.currentTimeMillis());
+
+    invToSpread.put(item, System.currentTimeMillis());
+
+    if (InventoryType.BLOCK.equals(item.getType())) {
+      consumerInvToSpread();
     }
   }
 
@@ -151,9 +185,13 @@ public class AdvService {
         }
       });
     }
+
+    if (invToFetch.size() > 0) {
+      consumerInvToFetch();
+    }
   }
 
-  private void consumerInvToFetch() {
+  synchronized private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
@@ -186,27 +224,26 @@ public class AdvService {
     invSender.sendFetch();
   }
 
-  private void consumerInvToSpread() {
-    if (invToSpread.isEmpty()) {
+  synchronized private void consumerInvToSpread() {
+
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .collect(Collectors.toList());
+
+    if (invToSpread.isEmpty() || peers.isEmpty()) {
       return;
     }
 
     InvSender invSender = new InvSender();
-    HashMap<Item, Long> spread = new HashMap<>();
-    synchronized (invToSpread) {
-      spread.putAll(invToSpread);
-      invToSpread.clear();
-    }
 
-    tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .forEach(peer -> spread.entrySet().stream()
-            .filter(entry -> peer.getAdvInvReceive().getIfPresent(entry.getKey()) == null
-                && peer.getAdvInvSpread().getIfPresent(entry.getKey()) == null)
-            .forEach(entry -> {
-              peer.getAdvInvSpread().put(entry.getKey(), Time.getCurrentMillis());
-              invSender.add(entry.getKey(), peer);
-            }));
+    invToSpread.forEach((item, time) -> peers.forEach(peer -> {
+      if (peer.getAdvInvReceive().getIfPresent(item) == null &&
+          peer.getAdvInvSpread().getIfPresent(item) == null) {
+        peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
+        invSender.add(item, peer);
+      }
+      invToSpread.remove(item);
+    }));
 
     invSender.sendInv();
   }
@@ -248,6 +285,9 @@ public class AdvService {
 
     public void sendInv() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
+        if (key.equals(InventoryType.TRX) && peer.isFastForwardPeer()) {
+          return;
+        }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
         }

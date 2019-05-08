@@ -45,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
@@ -94,7 +95,6 @@ public class Program {
 
   private long nonce;
   private byte[] rootTransactionId;
-  private Boolean isRootCallConstant;
 
   private InternalTransaction internalTransaction;
 
@@ -162,14 +162,6 @@ public class Program {
 
   public void setNonce(long nonceValue) {
     nonce = nonceValue;
-  }
-
-  public Boolean getRootCallConstant() {
-    return isRootCallConstant;
-  }
-
-  public void setRootCallConstant(Boolean rootCallConstant) {
-    isRootCallConstant = rootCallConstant;
   }
 
   public ProgramPrecompile getProgramPrecompile() {
@@ -426,6 +418,9 @@ public class Program {
           transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          throw new TransferException("transfer all token or transfer all trx failed in suicide: %s", e.getMessage());
+        }
         throw new BytecodeExecutionException("transfer failure");
       }
     }
@@ -444,25 +439,28 @@ public class Program {
       stackPushZero();
       return;
     }
-
-    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
-
-    long endowment = value.value().longValueExact();
-    if (getContractState().getBalance(senderAddress) < endowment) {
-      stackPushZero();
-      return;
-    }
-
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
+
+    byte[] newAddress = Wallet
+        .generateContractAddress(rootTransactionId, nonce);
+
+    createContractImpl(value, programCode, newAddress);
+  }
+
+  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress) {
+    byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
       logger.debug("creating a new contract inside contract run: [{}]",
           Hex.toHexString(senderAddress));
     }
 
-    byte[] newAddress = Wallet
-        .generateContractAddress(rootTransactionId, nonce);
+    long endowment = value.value().longValueExact();
+    if (getContractState().getBalance(senderAddress) < endowment) {
+      stackPushZero();
+      return;
+    }
 
     AccountCapsule existingAddr = getContractState().getAccount(newAddress);
     boolean contractAlreadyExists = existingAddr != null;
@@ -486,6 +484,7 @@ public class Program {
       try {
         TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
+        // TODO: unreachable exception
         throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
       }
       deposit.addBalance(senderAddress, -endowment);
@@ -517,7 +516,6 @@ public class Program {
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
-      program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
@@ -536,7 +534,7 @@ public class Program {
     if (!createResult.isRevert()) {
       if (afterSpend < 0) {
         createResult.setException(
-            Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
+            Exception.notEnoughSpendEnergy("No energy to save just created contract code",
                 saveCodeEnergy, programInvoke.getEnergyLimit() - createResult.getEnergyUsed()));
       } else {
         createResult.spendEnergy(saveCodeEnergy);
@@ -668,6 +666,10 @@ public class Program {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
+          if (VMConfig.allowTvmConstantinople()) {
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            throw new TransferException("transfer trx failed: %s", e.getMessage());
+          }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addBalance(senderAddress, -endowment);
@@ -677,6 +679,10 @@ public class Program {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
+          if (VMConfig.allowTvmConstantinople()) {
+            refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+            throw new TransferException("transfer trc10 failed: %s", e.getMessage());
+          }
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
@@ -709,7 +715,6 @@ public class Program {
       Program program = new Program(programCode, programInvoke, internalTx, config,
           this.blockCap);
       program.setRootTransactionId(this.rootTransactionId);
-      program.setRootCallConstant(this.isRootCallConstant);
       vm.play(program);
       callResult = program.getResult();
 
@@ -843,6 +848,29 @@ public class Program {
   public byte[] getCodeAt(DataWord address) {
     byte[] code = invoke.getDeposit().getCode(convertToTronAddress(address.getLast20Bytes()));
     return nullToEmpty(code);
+  }
+
+  public byte[] getCodeHashAt(DataWord address) {
+    byte[] tronAddr = convertToTronAddress(address.getLast20Bytes());
+    AccountCapsule account = getContractState().getAccount(tronAddr);
+    if (account != null) {
+      ContractCapsule contract = getContractState().getContract(tronAddr);
+      byte[] codeHash;
+      if (contract != null) {
+        codeHash = contract.getCodeHash();
+        if (ByteUtil.isNullOrZeroArray(codeHash)) {
+          byte[] code = getCodeAt(address);
+          codeHash = Hash.sha3(code);
+          contract.setCodeHash(codeHash);
+          getContractState().updateContract(tronAddr, contract);
+        }
+      } else {
+        codeHash = Hash.sha3(new byte[0]);
+      }
+      return codeHash;
+    } else {
+      return EMPTY_BYTE_ARRAY;
+    }
   }
 
   public DataWord getContractAddress() {
@@ -1169,6 +1197,14 @@ public class Program {
     return sb.toString();
   }
 
+  public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
+    byte[] senderAddress = convertToTronAddress(this.getCallerAddress().getLast20Bytes());
+    byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
+
+    byte[] contractAddress = Wallet.generateContractAddress2(senderAddress, salt.getData(), programCode);
+    createContractImpl(value, programCode, contractAddress);
+  }
+
   static class ByteCodeIterator {
 
     private byte[] code;
@@ -1367,7 +1403,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setRootCallConstant(getRootCallConstant().booleanValue());
+      contract.setStaticCall(isStaticCall());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
@@ -1406,8 +1442,8 @@ public class Program {
    * ---------------------------------------------------------------------------------------------
    * [Long.Min, 0)        Not possible                               error
    * --------------------------------------------------------------------------------------------- 0
-   *                   allowed and only allowed                    error (guaranteed in CALLTOKEN)
-   * transfertoken id=0 should not transfer trx） ---------------------------------------------------------------------------------------------
+   * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
+   * should not transfer trx） ---------------------------------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed
@@ -1460,6 +1496,12 @@ public class Program {
 
     public BytecodeExecutionException(String message) {
       super(message);
+    }
+  }
+
+  public static class TransferException extends BytecodeExecutionException {
+    public TransferException(String message, Object... args) {
+      super(format(message, args));
     }
   }
 

@@ -20,6 +20,8 @@ import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.*;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -36,9 +38,14 @@ public class DeployContractServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost(contract);
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      byte[] ownerAddress = ByteArray.fromHexString(jsonObject.getString("owner_address"));
+      String owner_address = jsonObject.getString("owner_address");
+      if ( visible ) {
+        owner_address = getHexAddress(owner_address);
+      }
+      byte[] ownerAddress = ByteArray.fromHexString(owner_address);
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build
           .setCallTokenValue(jsonObject.getLongValue("call_token_value"))
@@ -50,7 +57,7 @@ public class DeployContractServlet extends HttpServlet {
       abiSB.append(abi);
       abiSB.append("}");
       ABI.Builder abiBuilder = ABI.newBuilder();
-      JsonFormat.merge(abiSB.toString(), abiBuilder);
+      JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
 
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
@@ -84,7 +91,8 @@ public class DeployContractServlet extends HttpServlet {
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
-      response.getWriter().println(Util.printTransaction(txBuilder.build()));
+      tx = setTransactionPermissionId(jsonObject, txBuilder.build());
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

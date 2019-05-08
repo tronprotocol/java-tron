@@ -12,6 +12,9 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 @Component
 @Slf4j(topic = "API")
 public class GetBlockByLatestNumServlet extends HttpServlet {
@@ -22,11 +25,12 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = getVisible(request);
       long getNum = Long.parseLong(request.getParameter("num"));
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlockByLatestNum(getNum);
         if (reply != null) {
-          response.getWriter().println(Util.printBlockList(reply));
+          response.getWriter().println(Util.printBlockList(reply, visible ));
           return;
         }
       }
@@ -46,13 +50,14 @@ public class GetBlockByLatestNumServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = getVisiblePost( input );
       NumberMessage.Builder build = NumberMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible );
       long getNum = build.getNum();
       if (getNum > 0 && getNum < BLOCK_LIMIT_NUM) {
         BlockList reply = wallet.getBlockByLatestNum(getNum);
         if (reply != null) {
-          response.getWriter().println(JsonFormat.printToString(reply));
+          response.getWriter().println(Util.printBlockList(reply, visible ));
           return;
         }
       }
