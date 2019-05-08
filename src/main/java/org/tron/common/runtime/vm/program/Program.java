@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.TreeSet;
+import javax.xml.bind.ValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -619,7 +620,16 @@ public class Program {
     Deposit deposit = getContractState().newDepositChild();
 
     // 2.1 PERFORM THE VALUE (endowment) PART
-    long endowment = msg.getEndowment().value().longValueExact();
+    long endowment;
+    try {
+       endowment = msg.getEndowment().value().longValueExact();
+    } catch (ArithmeticException e) {
+      if (VMConfig.allowTvmConstantinople()) {
+        throw new TransferException("endowment out of long range");
+      } else {
+        throw e;
+      }
+    }
     // transfer trx validation
     byte[] tokenId = null;
 
