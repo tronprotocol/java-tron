@@ -7,12 +7,10 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.util.Objects;
 import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 
@@ -77,29 +75,22 @@ public class PropUtil {
       logger.warn("{}", e);
       return false;
     } finally {
-      //fis
+      //close
       try {
         if (fis != null) {
           fis.close();
+        }
+        if (out != null) {
+          out.close();
+        }
+
+        if (bufferedReader != null) {
+          bufferedReader.close();
         }
         if (bw != null) {
           bw.close();
         }
       } catch (Exception e) {
-        logger.warn("{}", e);
-      }
-      //out
-      try {
-
-        if (Objects.nonNull(out)) {
-          out.close();
-        }
-
-        if (Objects.nonNull(bufferedReader)) {
-          bufferedReader.close();
-        }
-
-      } catch (IOException e) {
         logger.warn("{}", e);
       }
     }
