@@ -322,7 +322,8 @@ public class Util {
                 .parseObject(JsonFormat.printToString(updateEnergyLimitContract));
             break;
           case ShieldedTransferContract:
-            ShieldedTransferContract shieldedTransferContract = contractParameter.unpack(ShieldedTransferContract.class);
+            ShieldedTransferContract shieldedTransferContract = contractParameter
+                .unpack(ShieldedTransferContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(shieldedTransferContract));
             break;
@@ -568,7 +569,7 @@ public class Util {
                     UpdateEnergyLimitContractBuilder);
             any = Any.pack(UpdateEnergyLimitContractBuilder.build());
             break;
-          case "ShieldedTransferContract" :
+          case "ShieldedTransferContract":
             ShieldedTransferContract.Builder shieldedTransferContractBuilder = ShieldedTransferContract
                 .newBuilder();
             JsonFormat
