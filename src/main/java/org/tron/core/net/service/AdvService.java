@@ -191,7 +191,7 @@ public class AdvService {
     }
   }
 
-  private void consumerInvToFetch() {
+  synchronized private void consumerInvToFetch() {
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> peer.isIdle())
         .collect(Collectors.toList());
@@ -224,7 +224,7 @@ public class AdvService {
     invSender.sendFetch();
   }
 
-  private void consumerInvToSpread() {
+  synchronized private void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
