@@ -25,7 +25,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.protos.Protocol.DeferredStage;
+//import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 
@@ -194,18 +194,18 @@ public class TransactionUtils {
   /**
    * constructor.
    */
-  public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds) {
+  /*  public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds) {
     DeferredStage deferredStage = transaction.getRawData().toBuilder()
         .getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
         .setStage(UNEXECUTEDDEFERREDTRANSACTION).build();
     Transaction.raw rawData = transaction.toBuilder().getRawData()
         .toBuilder().setDeferredStage(deferredStage).build();
     return transaction.toBuilder().setRawData(rawData).build();
-  }
+  }*/
 
-  /**
+  /*  *//**
    * constructor.
-   */
+   *//*
   public static GrpcAPI.TransactionExtention setDelaySecondsToExtension(GrpcAPI
       .TransactionExtention transactionExtention, long delaySeconds) {
     if (delaySeconds == 0) {
@@ -217,5 +217,5 @@ public class TransactionUtils {
     builder.setTransaction(transaction);
 
     return builder.build();
-  }
+  }*/
 }
