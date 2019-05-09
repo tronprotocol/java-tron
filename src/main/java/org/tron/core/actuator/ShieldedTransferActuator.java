@@ -104,14 +104,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
-    IncrementalMerkleTreeContainer currentMerkle = dbManager.getMerkleContainer()
-        .getCurrentMerkle();
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
 
     //handle receives
     for (ReceiveDescription receive : receives) {
-      dbManager.processNoteCommitment(receive.getNoteCommitment().toByteArray());
-      //add merkle root
-      //currentMerkle.append();
+      merkleContainer.saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
   }

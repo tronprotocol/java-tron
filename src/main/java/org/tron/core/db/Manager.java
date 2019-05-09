@@ -1281,11 +1281,6 @@ public class Manager {
     return true;
   }
 
-  public boolean processNoteCommitment(final byte[] note) {
-    return true;
-  }
-
-
   /**
    * Get the block id from the number.
    */
