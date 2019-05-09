@@ -139,6 +139,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    if (!checkSender(shieldedTransferContract)) {
+      return false;
+    }
+    if (!checkReceiver(shieldedTransferContract)) {
+      return false;
+    }
+
     long fee = calcFee();
     if (shieldedTransferContract.getFee() != fee) {
       throw new ContractValidateException("ShieldedTransferContract fee must equal " + fee);
@@ -214,6 +221,36 @@ public class ShieldedTransferActuator extends AbstractActuator {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException("librustzcashSaplingFinalCheck error");
       }
+    }
+    return true;
+  }
+
+  private boolean checkSender(ShieldedTransferContract shieldedTransferContract)
+      throws ContractValidateException {
+    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0
+        && shieldedTransferContract.getSpendDescriptionCount() > 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, more than 1 senders");
+    }
+    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length == 0
+        && shieldedTransferContract.getSpendDescriptionCount() == 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, no sender");
+    }
+    if (shieldedTransferContract.getSpendDescriptionCount() > 10) {
+      throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
+          + " should not be more than 10");
+    }
+      return true;
+  }
+
+  private boolean checkReceiver(ShieldedTransferContract shieldedTransferContract)
+      throws ContractValidateException {
+    if (shieldedTransferContract.getTransparentToAddress().toByteArray().length == 0
+        && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, no receiver");
+    }
+    if (shieldedTransferContract.getReceiveDescriptionCount() > 10) {
+      throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
+          + " should not be more than 10");
     }
     return true;
   }
