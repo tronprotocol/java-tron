@@ -20,6 +20,7 @@ package org.tron.common.logsfilter.capsule;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
+import lombok.Getter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 
@@ -27,8 +28,11 @@ import org.tron.common.runtime.vm.DataWord;
 public class RawData {
 
   // for mongodb
+  @Getter
   private String address;
+  @Getter
   private List<DataWord> topics;
+  @Getter
   private String data;
 
   public RawData(byte[] address, List<DataWord> topics, byte[] data) {
