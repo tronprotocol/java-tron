@@ -299,17 +299,6 @@ public class ProposalCreateActuator extends AbstractActuator {
           throw new ContractValidateException(
                   "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
         }
-        if (entry.getValue() < 0 || entry.getValue() > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-                  "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
-        }
-        break;
-      }
-      case (30): {
-        if ( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
-          throw new ContractValidateException(
-                  "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
-        }
         if (entry.getValue() < 0 || entry.getValue() > 10_000_000_000L) {
           throw new ContractValidateException(
                   "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");

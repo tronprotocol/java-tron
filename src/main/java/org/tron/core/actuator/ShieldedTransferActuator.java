@@ -131,6 +131,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
+      throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+          " the committee");
+    }
+
     byte[] signHash;
     try {
       signHash = TransactionCapsule.hash(tx);
