@@ -1539,8 +1539,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveLatestBlockHeaderHash(ByteString h) {
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
-//    if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
-//    }
   }
 
   public void saveStateFlag(int n) {
