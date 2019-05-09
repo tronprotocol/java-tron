@@ -1591,11 +1591,13 @@ public class Wallet {
     if (witness1 != null) {
       witness1.getVoucherCapsule().resetRt();
       result.setVoucher1(witness1.getVoucherCapsule().getInstance());
+      result.setPath1(ByteString.copyFrom(witness1.path().encode()));
     }
 
     if (witness2 != null) {
       witness2.getVoucherCapsule().resetRt();
       result.setVoucher2(witness2.getVoucherCapsule().getInstance());
+      result.setPath2(ByteString.copyFrom(witness2.path().encode()));
     }
 
     return result.build();
