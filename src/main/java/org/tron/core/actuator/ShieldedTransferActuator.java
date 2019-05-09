@@ -239,7 +239,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
           + " should not be more than 10");
     }
-      return true;
+    return true;
   }
 
   private boolean checkReceiver(ShieldedTransferContract shieldedTransferContract)
