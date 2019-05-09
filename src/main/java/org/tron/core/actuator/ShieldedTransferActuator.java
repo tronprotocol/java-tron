@@ -287,13 +287,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     long fee = 0;
-    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
-    if (Wallet.addressValid(toAddress)) {
-      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
-      if (transparentToAccount == null) {
-        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-      }
-    }
+//    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
+//    if (Wallet.addressValid(toAddress)) {
+//      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
+//      if (transparentToAccount == null) {
+//        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+//      }
+//    }
     fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }
