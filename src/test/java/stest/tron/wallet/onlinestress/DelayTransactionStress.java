@@ -49,7 +49,7 @@ public class DelayTransactionStress {
   Optional<Transaction> getTransactionById = null;
 
 
-      ECKey ecKey = new ECKey(Utils.getRandom());
+  ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] delayAccount1Address = ecKey.getAddress();
   String delayAccount1Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
@@ -97,7 +97,7 @@ public class DelayTransactionStress {
       byte[] delayAccount2Address = ecKey2.getAddress();
       String delayAccount2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
-       txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20,fromAddress,
+      txid = PublicMethed.sendcoinDelayedGetTxid(delayAccount2Address, 1L, 20,fromAddress,
           testKey002, blockingStubFull);
       //PublicMethed.waitProduceNextBlock(blockingStubFull);
       if (i % 20 == 0) {
@@ -105,8 +105,10 @@ public class DelayTransactionStress {
         //PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,blockingStubFull);
       }
       if (i % 39 == 0) {
-        PublicMethed.cancelDeferredTransactionById(cancelId,fromAddress,testKey002,blockingStubFull);
-        PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,blockingStubFull);
+        PublicMethed.cancelDeferredTransactionById(cancelId,fromAddress,testKey002,
+            blockingStubFull);
+        PublicMethed.sendcoin(delayAccount2Address,1L,fromAddress,testKey002,
+            blockingStubFull);
       }
 
     }
@@ -139,18 +141,23 @@ public class DelayTransactionStress {
     Long sendCoinAmout = 100L;
 
     //Query balance before send coin.
-    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount2Address, blockingStubFull).getBalance();
-    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccountAddress, blockingStubFull).getBalance();
+    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount2Address,
+       blockingStubFull).getBalance();
+    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccountAddress,
+       blockingStubFull).getBalance();
     logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
-    String txid = PublicMethed.sendcoinDelayedGetTxid(receiverAccountAddress, sendCoinAmout, delaySecond,delayAccount2Address,
+    String txid = PublicMethed.sendcoinDelayedGetTxid(receiverAccountAddress, sendCoinAmout,
+       delaySecond,delayAccount2Address,
         delayAccount2Key, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance when pre-sendcoin stage.
-    Long deplayAccountInDelayBalance = PublicMethed.queryAccount(delayAccount2Address, blockingStubFull).getBalance();
-    Long recevierAccountInDelayalance = PublicMethed.queryAccount(receiverAccountAddress, blockingStubFull).getBalance();
+    Long deplayAccountInDelayBalance = PublicMethed.queryAccount(delayAccount2Address,
+       blockingStubFull).getBalance();
+    Long recevierAccountInDelayalance = PublicMethed.queryAccount(receiverAccountAddress,
+       blockingStubFull).getBalance();
     logger.info("deplayAccountInDelayBalance " + deplayAccountInDelayBalance);
     logger.info("recevierAccountInDelayalance " + recevierAccountInDelayalance);
     Assert.assertTrue(recevierAccountBeforeBalance == recevierAccountInDelayalance);
@@ -159,13 +166,18 @@ public class DelayTransactionStress {
 
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
     DeferredTransaction transaction = deferredTransactionById.get();
-    String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
+    String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
+      .getRawData().toByteArray()));
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     logger.info(finalTxid);
-    //logger.info("receiver address is " + Base58.encode58Check(transaction.getReceiverAddress().toByteArray()));
-    Assert.assertTrue(Base58.encode58Check(transaction.getReceiverAddress().toByteArray()).equalsIgnoreCase(PublicMethed.getAddressString(receiverAccountKey)));
-    //logger.info("sender address is " + Base58.encode58Check(transaction.getSenderAddress().toByteArray()));
-    Assert.assertTrue(Base58.encode58Check(transaction.getSenderAddress().toByteArray()).equalsIgnoreCase(PublicMethed.getAddressString(delayAccount2Key)));
+    //logger.info("receiver address is " + Base58.encode58Check(transaction
+      .getReceiverAddress().toByteArray()));
+    Assert.assertTrue(Base58.encode58Check(transaction.getReceiverAddress().toByteArray())
+      .equalsIgnoreCase(PublicMethed.getAddressString(receiverAccountKey)));
+    //logger.info("sender address is " + Base58.encode58Check(transaction
+      .getSenderAddress().toByteArray()));
+    Assert.assertTrue(Base58.encode58Check(transaction.getSenderAddress().toByteArray())
+      .equalsIgnoreCase(PublicMethed.getAddressString(delayAccount2Key)));
    // logger.info("delaySeconds is " + transaction.getDelaySeconds());
     Assert.assertTrue(delaySecond == transaction.getDelaySeconds());
     //logger.info("DelayUntil " + transaction.getDelayUntil());
@@ -176,11 +188,13 @@ public class DelayTransactionStress {
     Assert.assertTrue(transaction.getPublishTime() < System.currentTimeMillis());
     //Assert.assertTrue(transaction.getDelayUntil() + 60000 == transaction.getExpiration());
     getTransactionById = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("transaction stage in txid is " + getTransactionById.get().getRawData().getDeferredStage().getStage());
+    logger.info("transaction stage in txid is " + getTransactionById.get().getRawData()
+      .getDeferredStage().getStage());
 
     Assert.assertTrue(getTransactionById.get().getRawData().getDeferredStage().getStage() == 1);
     getTransactionById = PublicMethed.getTransactionById(finalTxid, blockingStubFull);
-    logger.info("transaction stage in final id is " + getTransactionById.get().getRawData().getDeferredStage().getStage());
+    logger.info("transaction stage in final id is " + getTransactionById
+      .get().getRawData().getDeferredStage().getStage());
     Assert.assertTrue(getTransactionById.get().getRawData().getDeferredStage().getStage() == 0);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -188,30 +202,39 @@ public class DelayTransactionStress {
 
     PublicMethed.getDeferredTransactionById(finalTxid,blockingStubFull);
     deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
-    finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
+    finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction()
+      .getRawData().toByteArray()));
     transaction = deferredTransactionById.get();
     logger.info(finalTxid);
-    //logger.info("receiver address is " + Base58.encode58Check(transaction.getReceiverAddress().toByteArray()));
-    //logger.info("receiver address is " + Base58.encode58Check(transaction.getSenderAddress().toByteArray()));
+    //logger.info("receiver address is " + Base58.encode58Check(transaction.getReceiverAddress()
+      .toByteArray()));
+    //logger.info("receiver address is " + Base58.encode58Check(transaction.getSenderAddress()
+      .toByteArray()));
     //logger.info("delaySeconds is " + transaction.getDelaySeconds());
     //logger.info("DelayUntil " + transaction.getDelayUntil());
     //logger.info("Expiration " + transaction.getExpiration());
     //logger.info("PublishTime " + transaction.getPublishTime());
     getTransactionById = PublicMethed.getTransactionById(txid, blockingStubFull);
-    logger.info("transaction stage in txid is " + getTransactionById.get().getRawData().getDeferredStage().getStage());
+    logger.info("transaction stage in txid is " + getTransactionById.get().getRawData()
+      .getDeferredStage().getStage());
     getTransactionById = PublicMethed.getTransactionById(finalTxid, blockingStubFull);
-    logger.info("transaction stage in final id is " + getTransactionById.get().getRawData().getDeferredStage().getStage());
+    logger.info("transaction stage in final id is " + getTransactionById.get().getRawData()
+      .getDeferredStage().getStage());
 
 
 
     //Query balance after delay send coin.
-    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount2Address, blockingStubFull).getBalance();
-    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccountAddress, blockingStubFull).getBalance();
+    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount2Address,
+       blockingStubFull).getBalance();
+    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccountAddress,
+       blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
     logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
 
-    Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == sendCoinAmout + 100000L);
-    Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
+    Assert.assertTrue(deplayAccountBeforeBalance - deplayAccountAfterBalance == sendCoinAmout
+       + 100000L);
+    Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance
+       == sendCoinAmout);
 
   }*/
 
@@ -234,24 +257,25 @@ public class DelayTransactionStress {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Do delay send coin transaction.
-    Long delaySecond = 4L;
-    Long createAccountFee = 100000L;
-
-
     logger.info("----------------No balance to send coin--------------------");
     //Test no balance to send coin.
     //Query balance before send coin.
-    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    Long deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address,
+        blockingStubFull).getBalance();
+    Long recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
-    Assert.assertFalse(PublicMethed.sendcoinDelayed(receiverAccount4Address, sendCoinAmount, delaySecond,delayAccount3Address,
-        delayAccount3Key, blockingStubFull));
+    Long delaySecond = 4L;
+    Assert.assertFalse(PublicMethed.sendcoinDelayed(receiverAccount4Address, sendCoinAmount,
+        delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.
-    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    Long deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address,
+        blockingStubFull).getBalance();
+    Long recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
     logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
 
@@ -264,17 +288,23 @@ public class DelayTransactionStress {
 
     logger.info("----------------No balance to create account send coin--------------------");
     //Test delay send coin to create account.
-    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address,
+        blockingStubFull).getBalance();
+    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
-    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address, deplayAccountBeforeBalance - createAccountFee, delaySecond,delayAccount3Address,
+    Long createAccountFee = 100000L;
+    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
+        deplayAccountBeforeBalance - createAccountFee, delaySecond,delayAccount3Address,
         delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.
-    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull)
+        .getBalance();
+    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
     logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
 
@@ -285,21 +315,27 @@ public class DelayTransactionStress {
     logger.info("---------------Balance enough to create account send coin--------------------");
     //Test delay send coin to create account.
     createAccountFee = 100000L;
-    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    deplayAccountBeforeBalance = PublicMethed.queryAccount(delayAccount3Address,
+        blockingStubFull).getBalance();
+    recevierAccountBeforeBalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountBeforeBalance " + deplayAccountBeforeBalance);
     logger.info("recevierAccountBeforeBalance " + recevierAccountBeforeBalance);
-    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address, deplayAccountBeforeBalance - createAccountFee - delayTransactionFee, delaySecond,delayAccount3Address,
-        delayAccount3Key, blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoinDelayed(receiverAccount4Address,
+        deplayAccountBeforeBalance - createAccountFee - delayTransactionFee,
+        delaySecond,delayAccount3Address, delayAccount3Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Query balance after delay send coin.
-    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address, blockingStubFull).getBalance();
-    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address, blockingStubFull).getBalance();
+    deplayAccountAfterBalance = PublicMethed.queryAccount(delayAccount3Address,
+        blockingStubFull).getBalance();
+    recevierAccountAfterDelayalance = PublicMethed.queryAccount(receiverAccount4Address,
+        blockingStubFull).getBalance();
     logger.info("deplayAccountAfterBalance " + deplayAccountAfterBalance);
     logger.info("recevierAccountAfterDelayalance " + recevierAccountAfterDelayalance);
-    Long receiverBalanceShouldBe = deplayAccountBeforeBalance - createAccountFee - delayTransactionFee;
+    Long receiverBalanceShouldBe = deplayAccountBeforeBalance - createAccountFee
+        - delayTransactionFee;
 
     Assert.assertEquals(recevierAccountAfterDelayalance, receiverBalanceShouldBe);
     Assert.assertTrue(deplayAccountAfterBalance == 0);

@@ -85,26 +85,37 @@ public class DelayTransaction011 {
     Assert.assertTrue(PublicMethed.sendcoin(noBandwidthAddress, 10000000000L,fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    while (PublicMethed.queryAccount(noBandwidthAddress,blockingStubFull).getFreeNetUsage() < 4700L) {
-      PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,blockingStubFull);
+    while (PublicMethed.queryAccount(noBandwidthAddress,blockingStubFull).getFreeNetUsage()
+        < 4700L) {
+      PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,
+          blockingStubFull);
     }
-    PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,blockingStubFull);
-    PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,blockingStubFull);
-    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(noBandwidthAddress,blockingStubFull).getBalance() - 3000L,noBandwidthAddress,noBandwidthKey,blockingStubFull));
-    logger.info("balance is: " +  PublicMethed.queryAccount(noBandwidthAddress,blockingStubFull).getBalance());
-    logger.info("Free net usage is " + PublicMethed.queryAccount(noBandwidthAddress,blockingStubFull).getFreeNetUsage());
+    PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,
+        blockingStubFull);
+    PublicMethed.sendcoin(delayAccount2Address,1L,noBandwidthAddress,noBandwidthKey,
+        blockingStubFull);
+    Assert.assertTrue(PublicMethed.sendcoin(fromAddress,PublicMethed.queryAccount(
+        noBandwidthAddress,blockingStubFull).getBalance() - 3000L,noBandwidthAddress,
+        noBandwidthKey,blockingStubFull));
+    logger.info("balance is: " +  PublicMethed.queryAccount(noBandwidthAddress,
+        blockingStubFull).getBalance());
+    logger.info("Free net usage is " + PublicMethed.queryAccount(noBandwidthAddress,
+        blockingStubFull).getFreeNetUsage());
 
     String updateAccountName = "account_" + Long.toString(System.currentTimeMillis());
     byte[] accountNameBytes = ByteArray.fromString(updateAccountName);
-    String txid = PublicMethed.updateAccountDelayGetTxid(noBandwidthAddress,accountNameBytes,10L,noBandwidthKey,blockingStubFull);
+    String txid = PublicMethed.updateAccountDelayGetTxid(noBandwidthAddress,accountNameBytes,
+        10L,noBandwidthKey,blockingStubFull);
     logger.info(txid);
-    Assert.assertTrue(PublicMethed.getTransactionById(txid,blockingStubFull).get().getRawData().getContractCount() == 0);
+    Assert.assertTrue(PublicMethed.getTransactionById(txid,blockingStubFull)
+        .get().getRawData().getContractCount() == 0);
 
     Assert.assertTrue(PublicMethed.sendcoin(noBandwidthAddress, 103332L - 550L,fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    txid = PublicMethed.updateAccountDelayGetTxid(noBandwidthAddress,accountNameBytes,10L,noBandwidthKey,blockingStubFull);
+    txid = PublicMethed.updateAccountDelayGetTxid(noBandwidthAddress,accountNameBytes,
+        10L,noBandwidthKey,blockingStubFull);
 
   }
 
