@@ -72,7 +72,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
@@ -94,7 +93,6 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -487,10 +485,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
-        case CancelDeferredTransactionContract:
-          owner = contractParameter.unpack(CancelDeferredTransactionContract.class)
-              .getOwnerAddress();
-          break;
         // todo add other contract
         default:
           return null;
@@ -623,9 +617,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         break;
       case AccountPermissionUpdateContract:
         clazz = AccountPermissionUpdateContract.class;
-        break;
-      case CancelDeferredTransactionContract:
-        clazz = CancelDeferredTransactionContract.class;
         break;
       // todo add other contract
       default:
@@ -898,52 +889,5 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
-  }
-
-  public ByteString getSenderAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-
-    return ByteString.copyFrom(getOwner(contract));
-  }
-
-  public long getDeferredSeconds() {
-    return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
-  }
-
-  public void setDeferredSeconds(long delaySeconds) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
-        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public void setDeferredStage(int stage) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setStage(stage).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public int getDeferredStage() {
-    return this.transaction.getRawData().getDeferredStage().getStage();
-  }
-
-  public ByteString getToAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-    byte[] address = getToAddress(contract);
-    if (address == null) {
-      return ByteString.copyFrom("".getBytes());
-    }
-
-    return ByteString.copyFrom(address);
   }
 }

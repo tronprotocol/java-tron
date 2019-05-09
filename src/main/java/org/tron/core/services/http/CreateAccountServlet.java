@@ -13,7 +13,6 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
@@ -42,10 +41,6 @@ public class CreateAccountServlet extends HttpServlet {
           .getInstance();
 
       JSONObject input = JSONObject.parseObject(contract);
-      if (input.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = input.getLong(Constant.DELAY_SECONDS);
-        tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
-      }
       tx = setTransactionPermissionId(input, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {

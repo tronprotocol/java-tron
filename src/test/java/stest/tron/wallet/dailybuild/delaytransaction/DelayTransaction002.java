@@ -15,7 +15,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.DeferredTransaction;
+//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -47,7 +47,7 @@ public class DelayTransaction002 {
 
 
   Optional<TransactionInfo> infoById = null;
-  Optional<DeferredTransaction> deferredTransactionById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
   Optional<Transaction> getTransactionById = null;
 
 
@@ -119,11 +119,11 @@ public class DelayTransaction002 {
     String txid = PublicMethed.sendcoinDelayedGetTxid(receiverAccountAddress, sendCoinAmount, delaySecond,delayAccount1Address,
         delayAccount1Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
-    DeferredTransaction transaction = deferredTransactionById.get();
-    String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
+    //deferredTransactionById = PublicMethed.getDeferredTransactionById(txid,blockingStubFull);
+    //DeferredTransaction transaction = deferredTransactionById.get();
+    //String finalTxid = ByteArray.toHexString(Sha256Hash.hash(transaction.getTransaction().getRawData().toByteArray()));
 
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(finalTxid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(finalTxid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAccountAddress,receiverAccountKey,blockingStubFull));
     Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,delayAccount1Address,delayAccount1Key,blockingStubFull));

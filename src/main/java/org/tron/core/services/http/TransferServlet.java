@@ -44,10 +44,6 @@ public class TransferServlet extends HttpServlet {
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract)
           .getInstance();
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
-      }
       tx = setTransactionPermissionId(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {

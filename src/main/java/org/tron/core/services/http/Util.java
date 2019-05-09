@@ -33,7 +33,6 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -58,7 +57,6 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 
 
@@ -188,15 +186,6 @@ public class Util {
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
     return Hash.sha3omit12(combined);
-  }
-
-  public static JSONObject printDeferredTransactionToJSON(DeferredTransaction deferredTransaction,
-                                                          boolean selfType) {
-    String string = JsonFormat.printToString(deferredTransaction, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
-    jsonObject.put("transaction", printTransactionToJSON(deferredTransaction.getTransaction(),
-        selfType));
-    return jsonObject;
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
@@ -377,13 +366,6 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(accountPermissionUpdateContract, selfType));
             break;
-          case CancelDeferredTransactionContract:
-            CancelDeferredTransactionContract cancelDeferredTransactionContract = contractParameter
-                .unpack(CancelDeferredTransactionContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(cancelDeferredTransactionContract,
-                    selfType));
-            break;
           case ClearABIContract:
             Contract.ClearABIContract clearABIContract = contractParameter
                 .unpack(Contract.ClearABIContract.class);
@@ -415,13 +397,6 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
-
-    if (Objects.nonNull(transaction.getRawData().getDeferredStage())
-        && transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
-      jsonTransaction.put("delaySeconds",
-          transaction.getRawData().getDeferredStage().getDelaySeconds());
-      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
-    }
     return jsonTransaction;
   }
 
@@ -630,13 +605,6 @@ public class Util {
             JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
                 accountPermissionUpdateContractBuilder, selfType);
             any = Any.pack(accountPermissionUpdateContractBuilder.build());
-            break;
-          case "CancelDeferredTransactionContract":
-            CancelDeferredTransactionContract.Builder cancelDeferredTransactionContractBuilder =
-                CancelDeferredTransactionContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
-                cancelDeferredTransactionContractBuilder, selfType);
-            any = Any.pack(cancelDeferredTransactionContractBuilder.build());
             break;
           case "ClearABIContract":
             Contract.ClearABIContract.Builder clearABIContract =
