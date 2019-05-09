@@ -1354,42 +1354,43 @@ public class Wallet {
         ShieldedTransferContract zkContract = contract1.getParameter()
             .unpack(ShieldedTransferContract.class);
 
-        PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-        cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
-        PedersenHash cm1 = cmCapsule1.getInstance();
-
-        PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-        cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
-        PedersenHash cm2 = cmCapsule2.getInstance();
-
         System.out.println("Update existing witness");
-
-        if (witness != null) {
-          witness.append(cm1);
-          witness.append(cm2);
-        }
 
         if (new TransactionCapsule(transaction1).getTransactionId().getByteString().equals(txId)) {
           System.out.println("foundTx");
           found = true;
-          if (outPoint.getIndex() == 0) {
-            tree.append(cm1);
-            witness = tree.getTreeCapsule().deepCopy()
-                .toMerkleTreeContainer().toVoucher();
-            witness.append(cm2);
-          } else {
-            tree.append(cm1);
-            tree.append(cm2);
-            witness = tree.getTreeCapsule().deepCopy()
-                .toMerkleTreeContainer().toVoucher();
+          int index = 0;
+          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
+              zkContract.getReceiveDescriptionList()){
+            PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
+            cmCapsule.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm = cmCapsule.getInstance();
+
+            if (outPoint.getIndex() < index) {
+              tree.append(cm);
+            }else if(outPoint.getIndex() == index){
+              tree.append(cm);
+              witness = tree.getTreeCapsule().deepCopy()
+                  .toMerkleTreeContainer().toVoucher();
+            }else {
+              witness.append(cm);
+            }
           }
 
         } else {
-          tree.append(cm1);
-          tree.append(cm2);
+          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
+              zkContract.getReceiveDescriptionList()){
+            PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
+            cmCapsule.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm = cmCapsule.getInstance();
+            if (witness != null) {
+              witness.append(cm);
+            }else {
+              tree.append(cm);
+            }
+
+          }
         }
-
-
       }
     }
 
