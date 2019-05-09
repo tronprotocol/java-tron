@@ -2204,11 +2204,11 @@ public class Wallet {
           for (org.tron.protos.Contract.ReceiveDescription r : stContract
               .getReceiveDescriptionList()) {
 
+            System.out.println("aaa");
             NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
             c_out.data = r.getCOut().toByteArray();
 
-            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(
-                c_out,//ciphertext
+            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(c_out,//ciphertext
                 ovk,
                 r.getValueCommitment().toByteArray(), //cv
                 r.getNoteCommitment().toByteArray(), //cmu
@@ -2216,6 +2216,7 @@ public class Wallet {
             );
 
             if (notePlaintext.isPresent()) {
+              System.out.println("bbb");
               SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
 
               //decode c_enc with pkd、esk
@@ -2230,7 +2231,7 @@ public class Wallet {
                       r.getNoteCommitment().toByteArray());
 
               if (foo.isPresent()) {
-
+                System.out.println("ccc");
                 BaseNotePlaintext.NotePlaintext bar = foo.get();
 
                 Note note = Note.newBuilder()
