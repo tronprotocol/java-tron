@@ -4,6 +4,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.Librustzcash;
@@ -23,9 +25,6 @@ import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 @Slf4j(topic = "actuator")
@@ -132,12 +131,24 @@ public class ShieldedTransferActuator extends AbstractActuator {
               .getClass() + "]");
     }
 
+    if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
+      throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+          " the committee");
+    }
+
     byte[] signHash;
     try {
       signHash = TransactionCapsule.hash(tx);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+
+    if (!checkSender(shieldedTransferContract)) {
+      return false;
+    }
+    if (!checkReceiver(shieldedTransferContract)) {
+      return false;
     }
 
     long fee = calcFee();
@@ -169,7 +180,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     if (CollectionUtils.isEmpty(spendDescriptions)
         && CollectionUtils.isEmpty(receiveDescriptions)) {
-      throw new ContractValidateException("no proof found in transaction");
+      throw new ContractValidateException("no Description found in transaction");
     }
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
@@ -215,6 +226,36 @@ public class ShieldedTransferActuator extends AbstractActuator {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException("librustzcashSaplingFinalCheck error");
       }
+    }
+    return true;
+  }
+
+  private boolean checkSender(ShieldedTransferContract shieldedTransferContract)
+      throws ContractValidateException {
+    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0
+        && shieldedTransferContract.getSpendDescriptionCount() > 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, more than 1 senders");
+    }
+    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length == 0
+        && shieldedTransferContract.getSpendDescriptionCount() == 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, no sender");
+    }
+    if (shieldedTransferContract.getSpendDescriptionCount() > 10) {
+      throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
+          + " should not be more than 10");
+    }
+    return true;
+  }
+
+  private boolean checkReceiver(ShieldedTransferContract shieldedTransferContract)
+      throws ContractValidateException {
+    if (shieldedTransferContract.getTransparentToAddress().toByteArray().length == 0
+        && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, no receiver");
+    }
+    if (shieldedTransferContract.getReceiveDescriptionCount() > 10) {
+      throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
+          + " should not be more than 10");
     }
     return true;
   }
@@ -287,13 +328,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     long fee = 0;
-    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
-    if (Wallet.addressValid(toAddress)) {
-      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
-      if (transparentToAccount == null) {
-        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-      }
-    }
+//    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
+//    if (Wallet.addressValid(toAddress)) {
+//      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
+//      if (transparentToAccount == null) {
+//        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+//      }
+//    }
     fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }

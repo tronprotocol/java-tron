@@ -1125,7 +1125,12 @@ message OvkDecryptParameters {
 }
 
 message DecryptNotes {
-  repeated Note notes = 1;
+  message NoteTx{
+    Note note = 1;
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    int32 index = 3; //the index of note in receive
+  }
+  repeated NoteTx noteTxs = 1;
 }
 
 message Note {

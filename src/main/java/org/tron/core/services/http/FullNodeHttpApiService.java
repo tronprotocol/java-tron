@@ -8,8 +8,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
-import org.tron.core.config.args.Args;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.core.config.args.Args;
 
 @Component
 @Slf4j(topic = "API")
@@ -179,6 +179,12 @@ public class FullNodeHttpApiService implements Service {
   private CreateShieldedTransactionServlet createShieldedTransactionServlet;
   @Autowired
   private GetRcmServlet getRcmServlet;
+  @Autowired
+  private ScanNoteByBlockrangeAndIvkServlet scanNoteByBlockrangeAndIvkServlet;
+  @Autowired
+  private  ScanNoteByBlockrangeAndOvkServlet scanNoteByBlockrangeAndOvkServlet;
+  @Autowired
+  private GetMerkleTreeWitnessInfoServlet getMerkleTreeWitnessInfoServlet;
 
   @Override
   public void init() {
@@ -291,7 +297,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
-
+      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(getMerkleTreeWitnessInfoServlet),
+          "/getmerkletreewitnessinfo");
 
       server.start();
     } catch (Exception e) {

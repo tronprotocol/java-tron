@@ -62,28 +62,17 @@ import org.tron.core.exception.*;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.zen.KeyStore;
-import org.tron.core.zen.ZenTransactionBuilder;
-import org.tron.core.zen.ZenTransactionBuilderFactory;
-import org.tron.core.zen.ZenWallet;
-import org.tron.core.zen.ZkChainParams;
+import org.tron.core.zen.*;
 import org.tron.core.zen.address.*;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherCapsule;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.PedersenHashCapsule;
-import org.tron.core.zen.note.BaseNote;
-import org.tron.core.zen.note.BaseNotePlaintext;
-import org.tron.core.zen.note.NoteEncryption;
-import org.tron.core.zen.note.NoteEntry;
-import org.tron.core.zen.note.SaplingOutgoingPlaintext;
+import org.tron.core.zen.merkle.*;
+import org.tron.core.zen.note.*;
 import org.tron.core.zen.transaction.Recipient;
 import org.tron.core.zen.utils.KeyIo;
 import org.tron.core.zen.walletdb.CKeyMetadata;
 import org.tron.core.zen.zip32.ExtendedSpendingKey;
 import org.tron.core.zen.zip32.HDSeed;
 import org.tron.core.zen.zip32.HdChain;
+import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.*;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.*;
@@ -1361,16 +1350,16 @@ public class Wallet {
     for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
       Contract contract1 = transaction1.getRawData().getContract(0);
-      if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
-        ZksnarkV0TransferContract zkContract = contract1.getParameter()
-            .unpack(ZksnarkV0TransferContract.class);
+      if (contract1.getType() == ContractType.ShieldedTransferContract) {
+        ShieldedTransferContract zkContract = contract1.getParameter()
+            .unpack(ShieldedTransferContract.class);
 
         PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-        cmCapsule1.setContent(zkContract.getCm1());
+        cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
         PedersenHash cm1 = cmCapsule1.getInstance();
 
         PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-        cmCapsule2.setContent(zkContract.getCm2());
+        cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
         PedersenHash cm2 = cmCapsule2.getInstance();
 
         System.out.println("Update existing witness");
@@ -1434,17 +1423,17 @@ public class Wallet {
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
-        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+        if (contract1.getType() == ContractType.ShieldedTransferContract) {
 
-          ZksnarkV0TransferContract zkContract = contract1.getParameter()
-              .unpack(ZksnarkV0TransferContract.class);
+          ShieldedTransferContract zkContract = contract1.getParameter()
+              .unpack(ShieldedTransferContract.class);
 
           PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getCm1());
+          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
           PedersenHash cm1 = cmCapsule1.getInstance();
 
           PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getCm2());
+          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
           PedersenHash cm2 = cmCapsule2.getInstance();
 
           witnessList.forEach(wit -> {
@@ -1480,17 +1469,17 @@ public class Wallet {
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
-        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+        if (contract1.getType() == ContractType.ShieldedTransferContract) {
 
-          ZksnarkV0TransferContract zkContract = contract1.getParameter()
-              .unpack(ZksnarkV0TransferContract.class);
+          ShieldedTransferContract zkContract = contract1.getParameter()
+              .unpack(ShieldedTransferContract.class);
 
           PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getCm1());
+          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
           PedersenHash cm1 = cmCapsule1.getInstance();
 
           PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getCm2());
+          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
           PedersenHash cm2 = cmCapsule2.getInstance();
 
           witness.append(cm1);
@@ -1501,9 +1490,39 @@ public class Wallet {
     }
   }
 
+  private void validateInput(OutputPointInfo request) throws BadItemException {
+
+    if (request.getBlockNum() < 0) {
+      throw new BadItemException("request.getBlockNum() < 0");
+    }
+
+    if (!request.hasOutPoint1() && !request.hasOutPoint2()) {
+      throw new BadItemException("!request.hasOutPoint1() && !request.hasOutPoint2()");
+    }
+
+    if (request.hasOutPoint1()) {
+      OutputPoint outPoint1 = request.getOutPoint1();
+      if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
+        throw new BadItemException(
+            "outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0");
+      }
+    }
+    if (request.hasOutPoint2()) {
+      OutputPoint outPoint2 = request.getOutPoint2();
+
+      if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
+        throw new BadItemException(
+            "outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0");
+      }
+    }
+
+  }
+
   public IncrementalMerkleVoucherInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
+
+    validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
 
@@ -1594,6 +1613,10 @@ public class Wallet {
       return null;
     }
     return null;
+  }
+
+  public long getShieldedTransactionFee(){
+    return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request) throws ContractValidateException, RuntimeException{
@@ -2128,53 +2151,64 @@ public class Wallet {
 
     blockList.getBlockList().forEach(block -> {
 
-      for (Transaction t : block.getTransactionsList()) {
+      for (Transaction transaction : block.getTransactionsList()) {
 
-        for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+        TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+        byte[] txid = transactionCapsule.getTransactionId().getBytes();
 
-          if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
-            continue;
-          }
+        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData().getContractList();
+        if(contracts.size() == 0){
+          continue;
+        }
 
-          org.tron.protos.Contract.ShieldedTransferContract stContract = null;
-          try {
-            stContract = c.getParameter()
-                .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
-          } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException("unpack ShieldedTransferContract failed.");
-          }
+        org.tron.protos.Protocol.Transaction.Contract c = contracts.get(0);
 
-          for (org.tron.protos.Contract.ReceiveDescription r : stContract
-              .getReceiveDescriptionList()) {
+        if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
+          continue;
+        }
 
-            Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext
-                .decrypt(
-                    r.getCEnc().toByteArray(),//ciphertext
-                    ivk,
-                    r.getEpk().toByteArray(),//epk
-                    r.getNoteCommitment().toByteArray() //cmu
-                );
+        org.tron.protos.Contract.ShieldedTransferContract stContract = null;
+        try {
+          stContract = c.getParameter()
+              .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
+        } catch (InvalidProtocolBufferException e) {
+          throw new RuntimeException("unpack ShieldedTransferContract failed.");
+        }
 
-            if (notePlaintext.isPresent()) {
-              BaseNotePlaintext.NotePlaintext noteText = notePlaintext.get();
+        for(int index = 0; index < stContract.getReceiveDescriptionList().size(); index++){
+          org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
-              byte[] pk_d = new byte[32];
-              if (!Librustzcash.librustzcashIvkToPkd(ivk, noteText.d.getData(), pk_d)) {
-                continue;
-              }
+          Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext
+              .decrypt(
+                  r.getCEnc().toByteArray(),//ciphertext
+                  ivk,
+                  r.getEpk().toByteArray(),//epk
+                  r.getNoteCommitment().toByteArray() //cmu
+              );
 
-              Note note = Note.newBuilder()
-                  .setD(ByteString.copyFrom(noteText.d.getData()))
-                  .setValue(noteText.value)
-                  .setRcm(ByteString.copyFrom(noteText.rcm))
-                  .setPkD(ByteString.copyFrom(pk_d))
-                  .build();
+          if (notePlaintext.isPresent()) {
+            BaseNotePlaintext.NotePlaintext noteText = notePlaintext.get();
 
-              builder.addNotes(note);
+            byte[] pk_d = new byte[32];
+            if (!Librustzcash.librustzcashIvkToPkd(ivk, noteText.d.getData(), pk_d)) {
+              continue;
             }
-          } // end of ReceiveDescriptionList
 
-        } // end of contract
+            Note note = Note.newBuilder()
+                .setD(ByteString.copyFrom(noteText.d.getData()))
+                .setValue(noteText.value)
+                .setRcm(ByteString.copyFrom(noteText.rcm))
+                .setPkD(ByteString.copyFrom(pk_d))
+                .build();
+            DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
+                    .setNote(note)
+                    .setTxid(ByteString.copyFrom(txid))
+                    .setIndex(index)
+                    .build();
+
+            builder.addNoteTxs(noteTx);
+          }
+        } // end of ReceiveDescriptionList
 
       } // end of transaction
 
@@ -2198,30 +2232,37 @@ public class Wallet {
 
     blockList.getBlockList().forEach(block -> {
 
-      for (Transaction t : block.getTransactionsList()) {
+      for (Transaction transaction : block.getTransactionsList()) {
 
-        for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
+        TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+        byte[] txid = transactionCapsule.getTransactionId().getBytes();
 
-          if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
-            continue;
-          }
+        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData().getContractList();
+        if(contracts.size() == 0){
+          continue;
+        }
 
-          org.tron.protos.Contract.ShieldedTransferContract stContract = null;
-          try {
-            stContract = c.getParameter()
-                .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
-          } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException("unpack ShieldedTransferContract failed.");
-          }
+        org.tron.protos.Protocol.Transaction.Contract c = contracts.get(0);
 
-          for (org.tron.protos.Contract.ReceiveDescription r : stContract
-              .getReceiveDescriptionList()) {
+        if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
+          continue;
+        }
+
+        org.tron.protos.Contract.ShieldedTransferContract stContract = null;
+        try {
+          stContract = c.getParameter()
+              .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
+        } catch (InvalidProtocolBufferException e) {
+          throw new RuntimeException("unpack ShieldedTransferContract failed.");
+        }
+
+        for(int index = 0; index < stContract.getReceiveDescriptionList().size(); index++){
+          org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
             NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
             c_out.data = r.getCOut().toByteArray();
 
-            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(
-                c_out,//ciphertext
+            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(c_out,//ciphertext
                 ovk,
                 r.getValueCommitment().toByteArray(), //cv
                 r.getNoteCommitment().toByteArray(), //cmu
@@ -2229,6 +2270,7 @@ public class Wallet {
             );
 
             if (notePlaintext.isPresent()) {
+
               SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
 
               //decode c_enc with pkd、esk
@@ -2253,13 +2295,17 @@ public class Wallet {
                     .setPkD(ByteString.copyFrom(decrypted_out_ct_unwrapped.pk_d))
                     .build();
 
-                builder.addNotes(note);
+                DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
+                        .setNote(note)
+                        .setTxid(ByteString.copyFrom(txid))
+                        .setIndex(index)
+                        .build();
+
+                builder.addNoteTxs(noteTx);
               }
             }
 
           } // end of ReceiveDescriptionList
-
-        } // end of contract
 
       } // end of transaction
 
