@@ -169,7 +169,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     if (CollectionUtils.isEmpty(spendDescriptions)
         && CollectionUtils.isEmpty(receiveDescriptions)) {
-      throw new ContractValidateException("no proof found in transaction");
+      throw new ContractValidateException("no Description found in transaction");
     }
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
