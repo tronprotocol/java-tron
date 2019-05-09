@@ -666,10 +666,10 @@ service Wallet {
   // end for shiededTransaction
 
   //protocol p47
-  rpc ScanNoteByBlockRangeAndIvk (IvkDecryptParameters) returns (DecryptNotes) {
+  rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
   };
 
-  rpc ScanNoteByBlockRangeAndOvk (OvkDecryptParameters) returns (DecryptNotes) {
+  rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
   };
 
   rpc GetSpendingKey (EmptyMessage) returns (BytesMessage) {
