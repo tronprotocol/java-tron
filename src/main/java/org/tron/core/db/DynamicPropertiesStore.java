@@ -93,8 +93,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT
       = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT".getBytes();
 
-  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
-      .getBytes();
+  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE =
+      "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE".getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
@@ -1302,7 +1302,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void addSystemContractAndSetPermission(int id){
+  public void addSystemContractAndSetPermission(int id) {
     byte[] availableContractType = getAvailableContractType();
     availableContractType[id / 8] |= (1 << id % 8);
     saveAvailableContractType(availableContractType);
@@ -1313,8 +1313,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void updateDynamicStoreByConfig(){
-    if(Args.getInstance().getAllowTvmConstantinople() != 0){
+  public void updateDynamicStoreByConfig() {
+    if(Args.getInstance().getAllowTvmConstantinople() != 0) {
       saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
       addSystemContractAndSetPermission(48);
     }
@@ -1539,8 +1539,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveLatestBlockHeaderHash(ByteString h) {
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
-    if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
-    }
+//    if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
+//    }
   }
 
   public void saveStateFlag(int n) {
