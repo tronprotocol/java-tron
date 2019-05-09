@@ -32,7 +32,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,24 +39,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
-import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
-import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
@@ -117,7 +103,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
-  private final static ExecutorService executorService = Executors
+  private static final ExecutorService executorService = Executors
       .newFixedThreadPool(Args.getInstance().getValidContractProtoThreadNum());
 
   /**
@@ -302,9 +288,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       List<ByteString> approveList)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
-//    if (signature.size() % 65 != 0) {
-//      throw new SignatureFormatException("Signature size is " + signature.size());
-//    }
+    //    if (signature.size() % 65 != 0) {
+    //      throw new SignatureFormatException("Signature size is " + signature.size());
+    //    }
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
           "Signature count is " + (sigs.size()) + " more than key counts of permission : "
@@ -449,15 +435,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SetAccountIdContract:
           owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
           break;
-//        case BuyStorageContract:
-//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-//          break;
-//        case BuyStorageBytesContract:
-//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-//          break;
-//        case SellStorageContract:
-//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-//          break;
+        //case BuyStorageContract:
+        //  owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+        //  break;
+        //case BuyStorageBytesContract:
+        //  owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+        //  break;
+        //case SellStorageContract:
+        //  owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        //  break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
@@ -510,6 +496,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           validContractProto(transaction.getRawData().getContract(0));
           return true;
         } catch (Exception e) {
+          logger.error("{}", e.getMessage());
         }
         return false;
       });
@@ -629,9 +616,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     com.google.protobuf.Message contractMessage = parse(clazz,
         Message.getCodedInputStream(src.toByteArray()));
 
-//    if (!src.equals(contractMessage)) {
-//      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-//    }
+    //    if (!src.equals(contractMessage)) {
+    //      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    //    }
 
     Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
@@ -768,8 +755,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
-    if (this.transaction.getSignatureCount() >
-        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+    if (this.transaction.getSignatureCount() > manager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
       throw new ValidateSignatureException("too many signatures");
     }
     byte[] hash = this.getRawHash().getBytes();

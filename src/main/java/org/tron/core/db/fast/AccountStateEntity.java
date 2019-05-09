@@ -16,7 +16,7 @@ public class AccountStateEntity {
     Account.Builder builder = Account.newBuilder();
     builder.setAddress(account.getAddress());
     builder.setBalance(account.getBalance());
-//    builder.putAllAssetV2(account.getAssetV2Map());
+    //builder.putAllAssetV2(account.getAssetV2Map());
     builder.setAllowance(account.getAllowance());
     this.account = builder.build();
   }
