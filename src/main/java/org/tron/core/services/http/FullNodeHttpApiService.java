@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -9,8 +10,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.config.args.Args;
-
-import java.io.File;
 
 @Component
 @Slf4j(topic = "API")
@@ -182,6 +181,8 @@ public class FullNodeHttpApiService implements Service {
   private ScanNoteByBlockrangeAndIvkServlet scanNoteByBlockrangeAndIvkServlet;
   @Autowired
   private  ScanNoteByBlockrangeAndOvkServlet scanNoteByBlockrangeAndOvkServlet;
+  @Autowired
+  private GetMerkleTreeWitnessInfoServlet getMerkleTreeWitnessInfoServlet;
 
   @Override
   public void init() {
@@ -295,6 +296,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
       context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByBlockrangeAndOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(getMerkleTreeWitnessInfoServlet),
+          "/getmerkletreewitnessinfo");
 
 
       server.start();

@@ -1686,35 +1686,6 @@ public class RpcApiService implements Service {
     public void getMerkleTreeWitnessInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
-      if (request.getBlockNum() < 0) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
-      }
-
-      if (!request.hasOutPoint1() && !request.hasOutPoint2()) {
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
-      }
-      if (request.hasOutPoint1()) {
-        OutputPoint outPoint1 = request.getOutPoint1();
-        if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
-          responseObserver.onNext(null);
-          responseObserver.onCompleted();
-          return;
-        }
-      }
-      if (request.hasOutPoint2()) {
-        OutputPoint outPoint2 = request.getOutPoint2();
-
-        if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
-          responseObserver.onNext(null);
-          responseObserver.onCompleted();
-          return;
-        }
-      }
-
       try {
         IncrementalMerkleVoucherInfo witnessInfo = wallet
             .getMerkleTreeWitnessInfo(request);
@@ -1729,12 +1700,6 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-//    @Override
-//    public void generateShieldAddress(EmptyMessage request,
-//        StreamObserver<ShieldAddress> responseObserver) {
-//      responseObserver.onNext(wallet.generateShieldAddress());
-//      responseObserver.onCompleted();
-//    }
 
     @Override
     public void getZKBlockByLimitNext(BlockLimit request,
