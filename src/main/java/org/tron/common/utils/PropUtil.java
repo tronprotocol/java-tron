@@ -20,7 +20,7 @@ public class PropUtil {
   public static String readProperty(String file, String key) {
     InputStream is = null;
     FileInputStream fis = null;
-    Properties prop = null;
+    Properties prop;
     try {
       prop = new Properties();
       fis = new FileInputStream(file);
@@ -32,23 +32,17 @@ public class PropUtil {
       logger.error("{}", e);
       return "";
     } finally {
-      if (prop != null) {
-        prop = null;
-      }
-      //fis
       try {
         if (fis != null) {
           fis.close();
-          fis = null;
         }
       } catch (Exception e) {
         logger.warn("{}", e);
       }
-      //is
+
       try {
         if (is != null) {
           is.close();
-          is = null;
         }
       } catch (Exception e) {
         logger.error("{}", e);
@@ -59,8 +53,8 @@ public class PropUtil {
   public static boolean writeProperty(String file, String key, String value) {
     FileInputStream in = null;
     OutputStream out = null;
-    BufferedReader br;
-    BufferedWriter bw;
+    BufferedReader br = null;
+    BufferedWriter bw = null;
     Properties properties = new Properties();
 
     try {
@@ -80,8 +74,29 @@ public class PropUtil {
         if (in != null) {
           in.close();
         }
+      } catch (Exception e) {
+        logger.warn("{}", e);
+      }
+
+      try {
+        if (br != null) {
+          br.close();
+        }
+      } catch (Exception e) {
+        logger.warn("{}", e);
+      }
+
+      try {
         if (out != null) {
           out.close();
+        }
+      } catch (Exception e) {
+        logger.warn("{}", e);
+      }
+
+      try {
+        if (bw != null) {
+          bw.close();
         }
       } catch (Exception e) {
         logger.warn("{}", e);
