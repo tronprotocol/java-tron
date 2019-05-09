@@ -108,11 +108,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     //handle receives
     for (ReceiveDescription receive : receives) {
-      merkleContainer.saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+      merkleContainer
+          .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
-
 
   @Override
   public boolean validate() throws ContractValidateException {
@@ -237,9 +237,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getSpendDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no sender");
     }
-    if (shieldedTransferContract.getSpendDescriptionCount() > 10) {
+    if (shieldedTransferContract.getSpendDescriptionCount() > 2) {
       throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
-          + " should not be more than 10");
+          + " should not be more than 2");
     }
     return true;
   }
@@ -250,9 +250,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no receiver");
     }
-    if (shieldedTransferContract.getReceiveDescriptionCount() > 10) {
+    if (shieldedTransferContract.getReceiveDescriptionCount() > 2) {
       throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
-          + " should not be more than 10");
+          + " should not be more than 2");
     }
     return true;
   }
