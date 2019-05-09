@@ -155,7 +155,7 @@ public class Wallet {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;  //default testnet
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -418,6 +418,42 @@ public class Wallet {
     return trx;
   }
 
+  private static byte[] getSelector(byte[] data) {
+    if (data == null || data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
+  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.sign(privateKey);
+    return trx;
+  }
+
+  public TransactionCapsule addSign(TransactionSign transactionSign)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey, dbManager.getAccountStore());
+    return trx;
+  }
+
+  public static boolean checkPermissionOprations(Permission permission, Contract contract)
+      throws PermissionException {
+    ByteString operations = permission.getOperations();
+    if (operations.size() != 32) {
+      throw new PermissionException("operations size must 32");
+    }
+    int contractType = contract.getTypeValue();
+    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
+    return b;
+  }
+
   /**
    * Broadcast a transaction.
    */
@@ -425,7 +461,7 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
+
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -469,6 +505,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
+      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
@@ -520,40 +557,15 @@ public class Wallet {
     }
   }
 
-  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.sign(privateKey);
-    return trx;
-  }
-
-  public TransactionCapsule addSign(TransactionSign transactionSign)
-      throws PermissionException, SignatureException, SignatureFormatException {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.addSign(privateKey, dbManager.getAccountStore());
-    return trx;
-  }
-
-  public static boolean checkPermissionOprations(Permission permission, Contract contract)
-      throws PermissionException {
-    ByteString operations = permission.getOperations();
-    if (operations.size() != 32) {
-      throw new PermissionException("operations size must 32");
-    }
-    int contractType = contract.getTypeValue();
-    boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
-    return b;
-  }
-
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
-    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
+
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
     try {
@@ -601,54 +613,6 @@ public class Wallet {
       resultBuilder.setMessage(permEx.getMessage());
     } catch (Exception ex) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
-    }
-    tswBuilder.setResult(resultBuilder);
-    return tswBuilder.build();
-  }
-
-  public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
-    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
-    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
-    trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
-    Return.Builder retBuilder = Return.newBuilder();
-    retBuilder.setResult(true).setCode(response_code.SUCCESS);
-    trxExBuilder.setResult(retBuilder);
-    tswBuilder.setTransaction(trxExBuilder);
-    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
-        .newBuilder();
-    try {
-      Contract contract = trx.getRawData().getContract(0);
-      byte[] owner = TransactionCapsule.getOwner(contract);
-      AccountCapsule account = dbManager.getAccountStore().get(owner);
-      if (account == null) {
-        throw new PermissionException("Account is not exist!");
-      }
-
-      if (trx.getSignatureCount() > 0) {
-        List<ByteString> approveList = new ArrayList<ByteString>();
-        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
-        for (ByteString sig : trx.getSignatureList()) {
-          if (sig.size() < 65) {
-            throw new SignatureFormatException(
-                "Signature size is " + sig.size());
-          }
-          String base64 = TransactionCapsule.getBase64FromByteString(sig);
-          byte[] address = ECKey.signatureToAddress(hash, base64);
-          approveList.add(ByteString.copyFrom(address)); //out put approve list.
-        }
-        tswBuilder.addAllApprovedList(approveList);
-      }
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
-    } catch (SignatureFormatException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (SignatureException signEx) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
-      resultBuilder.setMessage(signEx.getMessage());
-    } catch (Exception ex) {
-      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
       resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
     }
     tswBuilder.setResult(resultBuilder);
@@ -972,113 +936,98 @@ public class Wallet {
     return builder.build();
   }
 
+  public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+
+    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
+    tswBuilder.setTransaction(trxExBuilder);
+    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
+        .newBuilder();
+    try {
+      Contract contract = trx.getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      AccountCapsule account = dbManager.getAccountStore().get(owner);
+      if (account == null) {
+        throw new PermissionException("Account is not exist!");
+      }
+
+      if (trx.getSignatureCount() > 0) {
+        List<ByteString> approveList = new ArrayList<ByteString>();
+        byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
+        for (ByteString sig : trx.getSignatureList()) {
+          if (sig.size() < 65) {
+            throw new SignatureFormatException(
+                "Signature size is " + sig.size());
+          }
+          String base64 = TransactionCapsule.getBase64FromByteString(sig);
+          byte[] address = ECKey.signatureToAddress(hash, base64);
+          approveList.add(ByteString.copyFrom(address)); //out put approve list.
+        }
+        tswBuilder.addAllApprovedList(approveList);
+      }
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
+    } catch (SignatureFormatException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (SignatureException signEx) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR);
+      resultBuilder.setMessage(signEx.getMessage());
+    } catch (Exception ex) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+    }
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
+  }
+
   public AccountNetMessage getAccountNet(ByteString accountAddress) {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    long netLimit = processor
+        .calculateGlobalNetLimit(accountCapsule);
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+
     AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
-    if (accountCapsule == null) {
-      return null;
-    }
-
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-    processor.updateUsage(accountCapsule);
-
-    long netLimit = processor
-        .calculateGlobalNetLimit(accountCapsule);
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-
-    Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-      });
-    } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
-      });
-    }
-
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
         .setNetLimit(netLimit)
         .setTotalNetLimit(totalNetLimit)
         .setTotalNetWeight(totalNetWeight)
-        .putAllAssetNetUsed(allFreeAssetNetUsage)
-        .putAllAssetNetLimit(assetNetLimitMap);
-    return builder.build();
-  }
-
-  public AccountResourceMessage getAccountResource(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.isEmpty()) {
-      return null;
-    }
-    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
-    if (accountCapsule == null) {
-      return null;
-    }
-
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-    processor.updateUsage(accountCapsule);
-
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
-    energyProcessor.updateUsage(accountCapsule);
-
-    long netLimit = processor
-        .calculateGlobalNetLimit(accountCapsule);
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-    long energyLimit = energyProcessor
-        .calculateGlobalEnergyLimit(accountCapsule);
-    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
-
-    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
-    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
-
-    Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-      });
-    } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
-      });
-    }
-
-    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
-        .setFreeNetLimit(freeNetLimit)
-        .setNetUsed(accountCapsule.getNetUsage())
-        .setNetLimit(netLimit)
-        .setTotalNetLimit(totalNetLimit)
-        .setTotalNetWeight(totalNetWeight)
-        .setEnergyLimit(energyLimit)
-        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
-        .setTotalEnergyLimit(totalEnergyLimit)
-        .setTotalEnergyWeight(totalEnergyWeight)
-        .setStorageLimit(storageLimit)
-        .setStorageUsed(storageUsage)
         .putAllAssetNetUsed(allFreeAssetNetUsage)
         .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
@@ -1179,16 +1128,68 @@ public class Wallet {
     return builder.build();
   }
 
-  public Block getBlockById(ByteString BlockId) {
-    if (Objects.isNull(BlockId)) {
+  public AccountResourceMessage getAccountResource(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
-    Block block = null;
-    try {
-      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
-    } catch (StoreException e) {
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
     }
-    return block;
+
+    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
+    processor.updateUsage(accountCapsule);
+
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    energyProcessor.updateUsage(accountCapsule);
+
+    long netLimit = processor
+        .calculateGlobalNetLimit(accountCapsule);
+    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
+    long energyLimit = energyProcessor
+        .calculateGlobalEnergyLimit(accountCapsule);
+    long totalEnergyLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    Map<String, Long> allFreeAssetNetUsage;
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
+        .setEnergyLimit(energyLimit)
+        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTotalEnergyLimit(totalEnergyLimit)
+        .setTotalEnergyWeight(totalEnergyWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
   }
 
   public BlockList getBlocksByLimitNext(long number, long limit) {
@@ -1208,6 +1209,19 @@ public class Wallet {
     return blockListBuilder.build();
   }
 
+  public Block getBlockById(ByteString blockId) {
+    if (Objects.isNull(blockId)) {
+      return null;
+    }
+    Block block = null;
+    try {
+      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
+    } catch (StoreException e) {
+      return null;
+    }
+    return block;
+  }
+
   public Transaction getTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1217,6 +1231,7 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
@@ -1233,6 +1248,7 @@ public class Wallet {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
@@ -1249,24 +1265,10 @@ public class Wallet {
       proposalCapsule = dbManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
-    }
-    return null;
-  }
-
-  public Exchange getExchangeById(ByteString exchangeId) {
-    if (Objects.isNull(exchangeId)) {
-      return null;
-    }
-    ExchangeCapsule exchangeCapsule = null;
-    try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
-    } catch (StoreException e) {
-    }
-    if (exchangeCapsule != null) {
-      return exchangeCapsule.getInstance();
     }
     return null;
   }
@@ -1343,6 +1345,39 @@ public class Wallet {
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
+  public Exchange getExchangeById(ByteString exchangeId) {
+    if (Objects.isNull(exchangeId)) {
+      return null;
+    }
+    ExchangeCapsule exchangeCapsule = null;
+    try {
+      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+    } catch (StoreException e) {
+      return null;
+    }
+    if (exchangeCapsule != null) {
+      return exchangeCapsule.getInstance();
+    }
+    return null;
+  }
+
+  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account is not exist or the account does not have code hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    if (Objects.nonNull(contractCapsule)) {
+      return contractCapsule.getInstance();
+    }
+    return null;
+  }
+
   public Transaction callConstantContract(TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
@@ -1350,7 +1385,6 @@ public class Wallet {
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node don't support constant");
     }
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
     List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
@@ -1359,13 +1393,14 @@ public class Wallet {
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
-
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
-        new ProgramInvokeFactoryImpl(), true);
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
     VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+        new ProgramInvokeFactoryImpl(), true);
     runtime.execute();
     runtime.go();
     runtime.finalization();
@@ -1391,35 +1426,6 @@ public class Wallet {
     }
     trxCap.setResult(ret);
     return trxCap.getInstance();
-  }
-
-  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
-    byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account is not exist or the account does not have code hash!");
-      return null;
-    }
-
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
-    if (Objects.nonNull(contractCapsule)) {
-      return contractCapsule.getInstance();
-    }
-    return null;
-  }
-
-
-  private static byte[] getSelector(byte[] data) {
-    if (data == null ||
-        data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
