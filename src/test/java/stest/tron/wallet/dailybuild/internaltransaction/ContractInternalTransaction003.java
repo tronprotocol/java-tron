@@ -513,6 +513,7 @@ public class ContractInternalTransaction003 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("InfoById:" + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     int transactionsCount = infoById.get().getInternalTransactionsCount();
     Assert.assertEquals(184, transactionsCount);
