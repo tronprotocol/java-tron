@@ -157,12 +157,16 @@ public class DelayTransaction003 {
     final Long receiverAssetBalanceOfbeforeTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
 
-    String txid = PublicMethed.transferAssetDelayGetTxid(receiverAssetAddress, assetId.toByteArray(),
-        transferAssetAmount, delaySecond,assetOwnerAddress, assetOwnerKey, blockingStubFull);
+    String txid = PublicMethed.transferAssetDelayGetTxid(receiverAssetAddress,
+        assetId.toByteArray(), transferAssetAmount, delaySecond,assetOwnerAddress, assetOwnerKey,
+        blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAssetAddress,receiverassetKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
-    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,receiverAssetAddress,
+    // receiverassetKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
+        assetOwnerKey,blockingStubFull));
+    //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
+    // assetOwnerKey,blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -172,9 +176,12 @@ public class DelayTransaction003 {
         .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
 
 
-    Assert.assertEquals(ownerAssetBalanceOfbeforeTransferAsset, ownerAssetBalanceAfterTransferAsset);
-    Assert.assertTrue(receiverAssetBalanceAfterTransferAsset == receiverAssetBalanceOfbeforeTransferAsset);
-    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,assetOwnerKey,blockingStubFull));
+    Assert.assertEquals(ownerAssetBalanceOfbeforeTransferAsset, ownerAssetBalanceAfterTransferAsset
+    );
+    Assert.assertTrue(receiverAssetBalanceAfterTransferAsset
+        == receiverAssetBalanceOfbeforeTransferAsset);
+    Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
+        assetOwnerKey,blockingStubFull));
 
   }
 
@@ -184,7 +191,8 @@ public class DelayTransaction003 {
     final Long ownerAssetBalanceOfbeforeTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId, assetOwnerKey,blockingStubFull);
 
-    String txid = PublicMethed.unfreezeAssetDelayGetTxid(assetOwnerAddress,delaySecond,assetOwnerKey,blockingStubFull);
+    String txid = PublicMethed.unfreezeAssetDelayGetTxid(assetOwnerAddress,delaySecond,
+        assetOwnerKey,blockingStubFull);
 
 
 

@@ -723,6 +723,30 @@ public class HttpMethed {
     return responseContent.getString("txID");
   }
 
+  /**
+   * constructor.
+   */
+  public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
+       String contractAddress,String functionSelector, String parameter, Long feeLimit,
+                                                     String fromKey) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      userBaseObj2.addProperty("fee_limit", feeLimit);
+
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
   /**
    * constructor.
