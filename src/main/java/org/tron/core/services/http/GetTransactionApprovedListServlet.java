@@ -5,15 +5,13 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Transaction;
-
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -32,8 +30,8 @@ public class GetTransactionApprovedListServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      boolean visible = getVisiblePost( input );
-      Transaction transaction = Util.packTransaction(input, visible );
+      boolean visible = Util.getVisiblePost(input);
+      Transaction transaction = Util.packTransaction(input, visible);
       TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionApprovedList(reply, visible));

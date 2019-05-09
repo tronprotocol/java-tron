@@ -1,5 +1,9 @@
 package org.tron.core.services.http;
 
+import static org.tron.core.services.http.Util.getHexAddress;
+import static org.tron.core.services.http.Util.getVisiblePost;
+import static org.tron.core.services.http.Util.setTransactionPermissionId;
+
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
@@ -19,8 +23,6 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import static org.tron.core.services.http.Util.*;
 
 
 @Component
@@ -42,7 +44,7 @@ public class DeployContractServlet extends HttpServlet {
       CreateSmartContract.Builder build = CreateSmartContract.newBuilder();
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String owner_address = jsonObject.getString("owner_address");
-      if ( visible ) {
+      if (visible) {
         owner_address = getHexAddress(owner_address);
       }
       byte[] ownerAddress = ByteArray.fromHexString(owner_address);
@@ -59,7 +61,6 @@ public class DeployContractServlet extends HttpServlet {
       ABI.Builder abiBuilder = ABI.newBuilder();
       JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
 
-      long feeLimit = jsonObject.getLongValue("fee_limit");
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
@@ -84,6 +85,7 @@ public class DeployContractServlet extends HttpServlet {
         smartBuilder.setName(name);
       }
 
+      long feeLimit = jsonObject.getLongValue("fee_limit");
       build.setNewContract(smartBuilder);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();

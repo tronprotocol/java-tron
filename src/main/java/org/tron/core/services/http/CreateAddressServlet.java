@@ -1,21 +1,19 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-
-import static org.tron.core.services.http.Util.getHexString;
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -27,10 +25,10 @@ public class CreateAddressServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
+      boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
-      if ( visible ) {
-        input = getHexString( input );
+      if (visible) {
+        input = Util.getHexString(input);
       }
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("value", input);
@@ -53,10 +51,10 @@ public class CreateAddressServlet extends HttpServlet {
     }
   }
 
-  private String CovertStringToHex(String input ) {
+  private String covertStringToHex(String input) {
     JSONObject jsonObject = JSONObject.parseObject(input);
     String value = jsonObject.getString("value");
-    jsonObject.put("value", getHexString(value) );
+    jsonObject.put("value", Util.getHexString(value));
     return jsonObject.toJSONString();
   }
 
@@ -65,9 +63,9 @@ public class CreateAddressServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      boolean visible = getVisiblePost(input);
-      if ( visible ) {
-        input = CovertStringToHex( input );
+      boolean visible = Util.getVisiblePost(input);
+      if (visible) {
+        input = covertStringToHex(input);
       }
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
