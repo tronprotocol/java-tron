@@ -65,7 +65,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         String funcType = entry.getString("type");
         Boolean anonymous = entry.getBoolean("anonymous");
-        if (funcType == null || !funcType.equalsIgnoreCase("event")) {
+        if (!"event".equalsIgnoreCase(funcType)) {
           continue;
         }
 
