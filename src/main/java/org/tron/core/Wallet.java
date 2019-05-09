@@ -1490,9 +1490,39 @@ public class Wallet {
     }
   }
 
+  private void validateInput(OutputPointInfo request) throws BadItemException {
+
+    if (request.getBlockNum() < 0) {
+      throw new BadItemException("request.getBlockNum() < 0");
+    }
+
+    if (!request.hasOutPoint1() && !request.hasOutPoint2()) {
+      throw new BadItemException("!request.hasOutPoint1() && !request.hasOutPoint2()");
+    }
+
+    if (request.hasOutPoint1()) {
+      OutputPoint outPoint1 = request.getOutPoint1();
+      if (outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0) {
+        throw new BadItemException(
+            "outPoint1.getHash() == null || outPoint1.getIndex() > 1 || outPoint1.getIndex() < 0");
+      }
+    }
+    if (request.hasOutPoint2()) {
+      OutputPoint outPoint2 = request.getOutPoint2();
+
+      if (outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0) {
+        throw new BadItemException(
+            "outPoint2.getHash() == null || outPoint2.getIndex() > 1 || outPoint2.getIndex() < 0");
+      }
+    }
+
+  }
+
   public IncrementalMerkleVoucherInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
+
+    validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
 
