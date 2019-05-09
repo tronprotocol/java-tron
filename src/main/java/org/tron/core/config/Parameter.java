@@ -5,7 +5,6 @@ import lombok.Getter;
 public class Parameter {
 
   public class ChainConstant {
-
     public static final long TRANSFER_FEE = 0; // free
     public static final int WITNESS_STANDBY_LENGTH = 127;
     public static final int SOLIDIFIED_THRESHOLD = 70; // 70%
@@ -18,7 +17,6 @@ public class Parameter {
     public static final long PRECISION = 1_000_000;
     public static final long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     public static final long MS_PER_YEAR = 365 * 24 * 3600 * 1000L;
-
     public static final long MAINTENANCE_SKIP_SLOTS = 2;
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
@@ -28,7 +26,6 @@ public class Parameter {
   }
 
   public class NodeConstant {
-
     public static final long SYNC_RETURN_BATCH_NUM = 1000;
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
     public static final long MAX_BLOCKS_IN_PROCESS = 400;
@@ -39,7 +36,6 @@ public class Parameter {
   }
 
   public class NetConstants {
-
     public static final long GRPC_IDLE_TIME_OUT = 60000L;
     public static final long ADV_TIME_OUT = 20000L;
     public static final long SYNC_TIME_OUT = 5000L;
@@ -55,7 +51,6 @@ public class Parameter {
   }
 
   public class DatabaseConstants {
-
     public static final int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
     public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
@@ -63,7 +58,6 @@ public class Parameter {
   }
 
   public class AdaptiveResourceLimitConstants {
-
     public static final int CONTRACT_RATE_NUMERATOR = 99;
     public static final int CONTRACT_RATE_DENOMINATOR = 100;
     public static final int EXPAND_RATE_NUMERATOR = 1000;
@@ -97,29 +91,13 @@ public class Parameter {
     ALLOW_ADAPTIVE_ENERGY, // 1, 21
     UPDATE_ACCOUNT_PERMISSION_FEE, // 100, 22
     MULTI_SIGN_FEE, // 1, 23
-//    ALLOW_DEFERRED_TRANSACTION, // 1, 24
-//    DEFERRED_TRANSACTION_FEE, // 100_000, 25
-//    CANCEL_DEFERRED_TRANSACTION_FEE, // 50_000, 26
-//    MAX_DEFERRED_TRANSACTION_PROCESS_TIME, // 100, 27
-    ALLOW_PROTO_FILTER_NUM,//1, 28
-    ALLOW_ACCOUNT_STATE_ROOT,//1, 29
+    ALLOW_PROTO_FILTER_NUM, // 1, 28
+    ALLOW_ACCOUNT_STATE_ROOT, // 1, 29
     ALLOW_TVM_CONSTANTINOPLE, // 1, 30
-//    ONE_DAY_NET_LIMIT,
-//    MAX_FROZEN_TIME,
-//    MIN_FROZEN_TIME,
-//    MAX_FROZEN_SUPPLY_NUMBER,
-//    MAX_FROZEN_SUPPLY_TIME,
-//    MIN_FROZEN_SUPPLY_TIME,
-//    WITNESS_ALLOWANCE_FROZEN_TIME,
-//    PUBLIC_NET_LIMIT,
-//    FREE_NET_LIMIT,
-//    TOTAL_NET_LIMIT,
-//    EXCHANGE_BALANCE_LIMIT,
   }
 
   @Deprecated
   public class ForkBlockVersionConsts {
-
     public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;
   }
@@ -129,6 +107,7 @@ public class Parameter {
     VERSION_3_2_2(6),
     VERSION_3_5(7),
     VERSION_3_6(8);
+
     @Getter
     private int value;
 

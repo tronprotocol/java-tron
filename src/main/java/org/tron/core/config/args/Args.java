@@ -234,9 +234,6 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-  //  @Getter
-//  @Setter
-//  private long syncNodeCount;
   @Getter
   @Setter
   @Parameter(names = {"--save-internaltx"})
@@ -770,9 +767,6 @@ public class Args {
 
     INSTANCE.nodeP2pPingInterval =
         config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
-//
-//    INSTANCE.syncNodeCount =
-//        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
