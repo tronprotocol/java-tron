@@ -692,6 +692,9 @@ service Wallet {
 
   rpc GetSaplingPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
   }
+
+  rpc GetRcm (EmptyMessage) returns (BytesMessage) {
+  }
 };
 
 service WalletSolidity {
@@ -1149,7 +1152,7 @@ message ReceiveNote {
 }
 
 message PrivateParameters {
-  bytes from_address = 1;
+  bytes transparent_from_address = 1;
   bytes ask = 2;
   bytes nsk = 3;
   bytes ovk = 4;
