@@ -15,7 +15,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.DeferredTransaction;
+//import org.tron.protos.Protocol.DeferredTransaction;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -41,7 +41,7 @@ public class DelayTransaction011 {
       .getLong("defaultParameter.cancleDelayTransactionFee");
 
   public static final long ONE_DELAY_SECONDS = 60 * 60 * 24L;
-  Optional<DeferredTransaction> deferredTransactionById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
 
   ECKey ecKey = new ECKey(Utils.getRandom());
   byte[] noBandwidthAddress = ecKey.getAddress();

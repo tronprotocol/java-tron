@@ -21,7 +21,6 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -32,7 +31,6 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -98,7 +96,7 @@ public class ManagerTest {
   @Test
   public void setBlockReference()
       throws ContractExeException, UnLinkedBlockException, ValidateScheduleException, BadBlockException,
-      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      ContractValidateException, ValidateSignatureException, BadItemException, ItemNotFoundException, AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -228,7 +226,7 @@ public class ManagerTest {
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -301,7 +299,7 @@ public class ManagerTest {
       TransactionExpirationException, TooBigTransactionException,
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -428,7 +426,7 @@ public class ManagerTest {
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
       ItemNotFoundException, HeaderNotFound, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException, ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
     Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
     long size = dbManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
@@ -565,37 +563,5 @@ public class ManagerTest {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
-  }
-
-  @Test
-  public void testPushScheduledTransaction() throws BadItemException {
-    BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
-        BlockHeader.newBuilder().setRawData(
-            raw.newBuilder().setTimestamp(System.currentTimeMillis())
-                .setParentHash(ByteString.copyFrom(
-                    ByteArray
-                        .fromHexString(
-                            "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81")))
-        )).build());
-
-    TransferContract tc =
-        TransferContract.newBuilder()
-            .setAmount(10)
-            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
-            .setToAddress(ByteString.copyFromUtf8("bbb"))
-            .build();
-    blockCapsule.getTimeStamp();
-
-    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
-    trx.setDeferredSeconds(100);
-    trx.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    dbManager.pushScheduledTransaction(blockCapsule, new TransactionCapsule(trx.getData()));
-    DeferredTransactionCapsule capsule = dbManager.getDeferredTransactionStore()
-        .getByTransactionId(trx.getTransactionId().getByteString());
-    Assert.assertNotNull(capsule);
-    dbManager.cancelDeferredTransaction(trx.getTransactionId().getByteString());
-    capsule = dbManager.getDeferredTransactionStore()
-        .getByTransactionId(trx.getTransactionId().getByteString());
-    Assert.assertNull(capsule);
   }
 }

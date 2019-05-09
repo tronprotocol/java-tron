@@ -413,10 +413,6 @@ public class Args {
 
   @Getter
   @Setter
-  private int allowDeferredTransaction;
-
-  @Getter
-  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -543,7 +539,6 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowMultiSign = 0;
-    INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -853,10 +848,6 @@ public class Args {
     INSTANCE.allowMultiSign =
         config.hasPath("committee.allowMultiSign") ? config
             .getInt("committee.allowMultiSign") : 0;
-
-    INSTANCE.allowDeferredTransaction =
-        config.hasPath("committee.allowDeferredTransaction") ? config
-            .getInt("committee.allowDeferredTransaction") : 0;
 
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config

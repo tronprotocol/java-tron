@@ -26,7 +26,7 @@ import org.tron.core.Wallet;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DeferredTransaction;
+//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -57,7 +57,7 @@ public class DelayTransaction001 {
 
   public static final long MAX_DEFERRED_TRANSACTION_DELAY_SECONDS = 45 * 24 * 3_600L; //45 days
   Optional<TransactionInfo> infoById = null;
-  Optional<DeferredTransaction> deferredTransactionById = null;
+  //Optional<DeferredTransaction> deferredTransactionById = null;
   Optional<Transaction> getTransactionById = null;
 
 
@@ -121,6 +121,7 @@ public class DelayTransaction001 {
         delayAccount1Key, blockingStubFull));
   }
 
+  /*
   @Test(enabled = false, description = "Get deferred transaction by id")
   public void test2getDeferredTransactionByid() {
     //get account
@@ -221,7 +222,8 @@ public class DelayTransaction001 {
     Assert.assertTrue(recevierAccountAfterDelayalance - recevierAccountBeforeBalance == sendCoinAmout);
 
 
-  }
+
+  }*/
 
   @Test(enabled = false, description = "Delay send coin")
   public void test3DelaySendCoin() {
