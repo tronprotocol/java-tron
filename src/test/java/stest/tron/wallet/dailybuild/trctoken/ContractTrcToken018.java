@@ -135,8 +135,7 @@ public class ContractTrcToken018 {
 
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    logger.info("" + code);
-    logger.info("" + abi);
+
     String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
             maxFeeLimit, 0L, 0, 10000,
