@@ -177,6 +177,8 @@ public class FullNodeHttpApiService implements Service {
   private GetSaplingPaymentAddressServlet getSaplingPaymentAddressServlet;
   @Autowired
   private CreateShieldedTransactionServlet createShieldedTransactionServlet;
+  @Autowired
+  private GetRcmServlet getRcmServlet;
 
   @Override
   public void init() {
@@ -288,6 +290,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
+      context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
 
 
       server.start();

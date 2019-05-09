@@ -1895,6 +1895,19 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getRcm(EmptyMessage request, StreamObserver<BytesMessage> responseObserver) {
+      BytesMessage rcm = wallet.getRcm();
+
+      if (null != rcm) {
+        responseObserver.onNext(rcm);
+      } else {
+        responseObserver.onNext(null);
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void scanNoteByBlockRangeAndIvk(GrpcAPI.IvkDecryptParameters request,
         io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 

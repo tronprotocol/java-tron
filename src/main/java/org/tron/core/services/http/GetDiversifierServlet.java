@@ -39,21 +39,6 @@ public class GetDiversifierServlet extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            GrpcAPI.DiversifierMessage d = wallet.getDiversifier();
-
-            if (d != null) {
-                response.getWriter().println(JsonFormat.printToString(d));
-            } else {
-                response.getWriter().println("{}");
-            }
-        } catch (Exception e) {
-            logger.debug("Exception: {}", e.getMessage());
-            try {
-                response.getWriter().println(Util.printErrorMsg(e));
-            } catch (IOException ioe) {
-                logger.debug("IOException: {}", ioe.getMessage());
-            }
-        }
+       doPost(request, response);
     }
 }
