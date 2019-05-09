@@ -380,7 +380,7 @@ public class ContractTrcToken014 {
         "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
