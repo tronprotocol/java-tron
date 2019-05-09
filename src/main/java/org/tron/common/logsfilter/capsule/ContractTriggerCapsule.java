@@ -24,7 +24,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
   @Getter
   @Setter
-  ContractTrigger contractTrigger;
+  private ContractTrigger contractTrigger;
 
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
@@ -65,7 +65,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
         String funcType = entry.getString("type");
         Boolean anonymous = entry.getBoolean("anonymous");
-        if (funcType == null || !funcType.equalsIgnoreCase("event")) {
+        if (funcType == null || !"event".equalsIgnoreCase(funcType)) {
           continue;
         }
 
