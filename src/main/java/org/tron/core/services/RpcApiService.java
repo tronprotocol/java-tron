@@ -1895,7 +1895,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void scanNoteByBlockRangeAndIvk(GrpcAPI.IvkDecryptParameters request,
+    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
         io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
@@ -1905,14 +1905,14 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       } else {
         responseObserver.onNext(
-            wallet.scanNoteByBlockRangeAndIvk(startNum, endNum, request.getIvk().toByteArray()));
+            wallet.scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray()));
       }
       responseObserver.onCompleted();
 
     }
 
     @Override
-    public void scanNoteByBlockRangeAndOvk(GrpcAPI.OvkDecryptParameters request,
+    public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
@@ -1922,7 +1922,7 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       } else {
         responseObserver.onNext(
-            wallet.scanNoteByBlockRangeAndOvk(startNum, endNum, request.getOvk().toByteArray()));
+            wallet.scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray()));
       }
       responseObserver.onCompleted();
 

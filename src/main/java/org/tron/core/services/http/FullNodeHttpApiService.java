@@ -179,9 +179,9 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateShieldedTransactionServlet createShieldedTransactionServlet;
   @Autowired
-  private ScanNoteByBlockrangeAndIvkServlet scanNoteByBlockrangeAndIvkServlet;
+  private ScanNoteByIvkServlet scanNoteByIvkServlet;
   @Autowired
-  private  ScanNoteByBlockrangeAndOvkServlet scanNoteByBlockrangeAndOvkServlet;
+  private ScanNoteByOvkServlet scanNoteByOvkServlet;
 
   @Override
   public void init() {
@@ -293,8 +293,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
-      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
 
 
       server.start();

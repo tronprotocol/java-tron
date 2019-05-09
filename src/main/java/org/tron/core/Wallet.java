@@ -2096,7 +2096,7 @@ public class Wallet {
   /*
    * try to get cm belongs to ivk
    */
-  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndIvk(long startNum, long endNum, byte[] ivk) {
+  public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum, byte[] ivk) {
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
 
@@ -2171,13 +2171,15 @@ public class Wallet {
 
     }); //end of blocklist
 
-    return builder.build();
+    GrpcAPI.DecryptNotes decryptNotes = builder.build();
+    System.out.println("decryptNotes size: " + decryptNotes.getNoteTxsList().size());
+    return decryptNotes;
   }
 
   /*
    * try to get cm belongs to ovk
    */
-  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndOvk(long startNum, long endNum, byte[] ovk) {
+  public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum, byte[] ovk) {
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
 
