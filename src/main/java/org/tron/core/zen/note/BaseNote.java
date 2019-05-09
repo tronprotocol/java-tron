@@ -15,6 +15,12 @@ public class BaseNote {
     public byte[] pkD; // 256
     public byte[] r; // 256
 
+    public static byte[] generateR() {
+      byte[] r = new byte[32];
+      Librustzcash.librustzcashSaplingGenerateR(r);
+      return r;
+    }
+
     public Note(PaymentAddress address, long value) {
       this.value = value;
       this.d = address.getD();

@@ -11,6 +11,7 @@ import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium;
 import org.tron.core.Constant;
+import org.tron.core.zen.note.BaseNote.Note;
 import org.tron.core.zen.utils.KeyIo;
 import org.tron.core.zen.utils.PRF;
 
@@ -132,7 +133,7 @@ public class SpendingKey {
 
     diversifierT.setData(d);
     Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
-    byte[] rcm = org.tron.keystore.Wallet.generateRandomBytes(32);
+    byte[] rcm = Note.generateR();
     System.out.println("rcm is " + ByteUtil.toHexString(rcm));
     if (op.isPresent()) {
       System.out.println(
