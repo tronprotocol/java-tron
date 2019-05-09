@@ -13,6 +13,9 @@ import org.spongycastle.util.encoders.Hex;
 @Slf4j(topic = "Parser")
 public class ContractEventParserJson extends ContractEventParser {
 
+  private static final String INPUTS_STR = "inputs";
+  private static final String INDEXED_STR = "indexed";
+
   /**
    * parse Event Topic into map NOTICE: In solidity, Indexed Dynamic types's topic is just
    * EVENT_INDEXED_ARGS
@@ -25,13 +28,13 @@ public class ContractEventParserJson extends ContractEventParser {
 
     // the first is the signature.
     int index = 1;
-    JSONArray inputs = entry.getJSONArray("inputs");
+    JSONArray inputs = entry.getJSONArray(INPUTS_STR);
 
     // in case indexed topics doesn't match
     if (topicsMatched(topicList, entry)) {
       for (int i = 0; i < inputs.size(); ++i) {
         JSONObject param = inputs.getJSONObject(i);
-        Boolean indexed = param.getBoolean("indexed");
+        Boolean indexed = param.getBoolean(INDEXED_STR);
         if (indexed == null || !indexed) {
           continue;
         }
@@ -70,7 +73,7 @@ public class ContractEventParserJson extends ContractEventParser {
     }
 
     // the first is the signature.
-    JSONArray inputs = entry.getJSONArray("inputs");
+    JSONArray inputs = entry.getJSONArray(INPUTS_STR);
     Integer startIndex = 0;
 
     try {
@@ -79,7 +82,7 @@ public class ContractEventParserJson extends ContractEventParser {
       if (inputs != null) {
         for (Integer i = 0; i < inputs.size(); ++i) {
           JSONObject param = inputs.getJSONObject(i);
-          Boolean indexed = param.getBoolean("indexed");
+          Boolean indexed = param.getBoolean(INDEXED_STR);
           if (indexed != null && indexed) {
             continue;
           }
@@ -111,10 +114,10 @@ public class ContractEventParserJson extends ContractEventParser {
       return true;
     }
     int inputSize = 1;
-    JSONArray inputs = entry.getJSONArray("inputs");
+    JSONArray inputs = entry.getJSONArray(INPUTS_STR);
     for (int i = 0; i < inputs.size(); i++) {
       JSONObject param = inputs.getJSONObject(i);
-      Boolean indexed = param.getBoolean("indexed");
+      Boolean indexed = param.getBoolean(INDEXED_STR);
       if (indexed != null && indexed) {
         inputSize++;
       }
