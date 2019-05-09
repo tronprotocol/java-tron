@@ -1596,6 +1596,10 @@ public class Wallet {
     return null;
   }
 
+  public long getShieldedTransactionFee(){
+    return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+  }
+
   public TransactionCapsule createShieldedTransaction(PrivateParameters request) throws ContractValidateException, RuntimeException{
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 

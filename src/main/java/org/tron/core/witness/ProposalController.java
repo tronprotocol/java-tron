@@ -210,10 +210,6 @@ public class ProposalController {
           break;
         }
         case (25): {
-          manager.getDynamicPropertiesStore().saveZksnarkTransactionFee(entry.getValue());
-          break;
-        }
-        case (30): {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
           break;
         }

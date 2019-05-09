@@ -136,7 +136,8 @@ public class ZenTransactionBuilder {
 //    }
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    contractBuilder.setFee(10 * 1000000);
+
+    contractBuilder.setFee(wallet.getShieldedTransactionFee());
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
