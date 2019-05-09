@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j(topic = "API")
-public class ScanNoteByBlockrangeAndOvkServlet extends HttpServlet {
+public class ScanNoteByIvkServlet extends HttpServlet{
     @Autowired
     private Wallet wallet;
 
@@ -30,9 +30,9 @@ public class ScanNoteByBlockrangeAndOvkServlet extends HttpServlet {
             long startNum = jsonObject.getLong("startNum");
             long endNum = jsonObject.getLong("endNum");
 
-            String ovk = jsonObject.getString("ovk");
+            String ivk = jsonObject.getString("ivk");
 
-            GrpcAPI.DecryptNotes notes = wallet.scanNoteByBlockRangeAndOvk(startNum,endNum, ByteArray.fromHexString(ovk));
+            GrpcAPI.DecryptNotes notes = wallet.scanNoteByIvk(startNum,endNum,ByteArray.fromHexString(ivk));
 
             response.getWriter()
                     .println(JsonFormat.printToString(notes));
@@ -51,9 +51,9 @@ public class ScanNoteByBlockrangeAndOvkServlet extends HttpServlet {
         try {
             long startNum = Long.parseLong(request.getParameter("startNum"));
             long endNum = Long.parseLong(request.getParameter("endNum"));
-            String ovk = request.getParameter("ovk");
+            String ivk = request.getParameter("ivk");
 
-            GrpcAPI.DecryptNotes notes = wallet.scanNoteByBlockRangeAndOvk(startNum,endNum,ByteArray.fromHexString(ovk));
+            GrpcAPI.DecryptNotes notes = wallet.scanNoteByIvk(startNum,endNum,ByteArray.fromHexString(ivk));
 
             response.getWriter()
                     .println(JsonFormat.printToString(notes));

@@ -13,6 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
@@ -88,6 +89,11 @@ public class ZenTransactionBuilder {
 
   public void addSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
+    valueBalance -= value;
+  }
+
+  public void addSaplingOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
+    receives.add(new ReceiveDescriptionInfo(ovk, new Note(d, pkD, value, r), memo));
     valueBalance -= value;
   }
 

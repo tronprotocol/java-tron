@@ -1623,17 +1623,17 @@ public class Wallet {
   public TransactionCapsule createShieldedTransaction(PrivateParameters request) throws ContractValidateException, RuntimeException{
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
-    byte[] fromAddress = request.getFromAddress().toByteArray();
+    byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
     byte[] ask = request.getAsk().toByteArray();
     byte[] nsk = request.getNsk().toByteArray();
     byte[] ovk = request.getOvk().toByteArray();
 
-    if (ArrayUtils.isEmpty(fromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+    if (ArrayUtils.isEmpty(transparentFromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       throw new ContractValidateException("No input address");
     }
 
     long fromAmount = request.getFromAmount();
-    if (!ArrayUtils.isEmpty(fromAddress) && fromAmount <= 0) {
+    if (!ArrayUtils.isEmpty(transparentFromAddress) && fromAmount <= 0) {
       throw new ContractValidateException("Input amount must > 0");
     }
 
@@ -1654,8 +1654,8 @@ public class Wallet {
     }
 
     // add
-    if (!ArrayUtils.isEmpty(fromAddress)) {
-      builder.setTransparentInput(fromAddress, fromAmount);
+    if (!ArrayUtils.isEmpty(transparentFromAddress)) {
+      builder.setTransparentInput(transparentFromAddress, fromAmount);
     }
 
     if (!ArrayUtils.isEmpty(transparentToAddress)) {
@@ -1683,8 +1683,11 @@ public class Wallet {
     for (ReceiveNote receiveNote : shieldedReceives) {
       DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
       builder.addSaplingOutput(ovk,
-          new PaymentAddress(diversifierT, receiveNote.getNote().getPkD().toByteArray()),
-          receiveNote.getNote().getValue(), new byte[512]);
+          diversifierT,
+          receiveNote.getNote().getPkD().toByteArray(),
+          receiveNote.getNote().getValue(),
+          receiveNote.getNote().getRcm().toByteArray(),
+          new byte[512]);
     }
 
     TransactionCapsule transactionCapsule = null;
@@ -1787,6 +1790,16 @@ public class Wallet {
             .build();
 
     return diversifierMessage;
+  }
+
+  public BytesMessage getRcm() {
+    byte [] rcm;
+    try {
+      rcm = BaseNote.Note.generateR();
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(rcm)).build();
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public SaplingPaymentAddressMessage getSaplingPaymentAddress(IncomingViewingKey ivk, DiversifierT d){
@@ -2127,7 +2140,7 @@ public class Wallet {
   /*
    * try to get cm belongs to ivk
    */
-  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndIvk(long startNum, long endNum, byte[] ivk) {
+  public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum, byte[] ivk) {
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
 
@@ -2202,13 +2215,15 @@ public class Wallet {
 
     }); //end of blocklist
 
-    return builder.build();
+    GrpcAPI.DecryptNotes decryptNotes = builder.build();
+    System.out.println("decryptNotes size: " + decryptNotes.getNoteTxsList().size());
+    return decryptNotes;
   }
 
   /*
    * try to get cm belongs to ovk
    */
-  public GrpcAPI.DecryptNotes scanNoteByBlockRangeAndOvk(long startNum, long endNum, byte[] ovk) {
+  public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum, byte[] ovk) {
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
 

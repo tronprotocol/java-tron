@@ -178,9 +178,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateShieldedTransactionServlet createShieldedTransactionServlet;
   @Autowired
-  private ScanNoteByBlockrangeAndIvkServlet scanNoteByBlockrangeAndIvkServlet;
+  private ScanNoteByIvkServlet scanNoteByIvkServlet;
   @Autowired
-  private  ScanNoteByBlockrangeAndOvkServlet scanNoteByBlockrangeAndOvkServlet;
+  private ScanNoteByOvkServlet scanNoteByOvkServlet;
+  @Autowired
+  private GetRcmServlet getRcmServlet;
   @Autowired
   private GetMerkleTreeWitnessInfoServlet getMerkleTreeWitnessInfoServlet;
 
@@ -294,11 +296,11 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
-      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
+      context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
       context.addServlet(new ServletHolder(getMerkleTreeWitnessInfoServlet),
           "/getmerkletreewitnessinfo");
-
 
       server.start();
     } catch (Exception e) {
