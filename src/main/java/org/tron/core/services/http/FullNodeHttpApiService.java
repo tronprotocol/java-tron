@@ -180,6 +180,8 @@ public class FullNodeHttpApiService implements Service {
   private CreateShieldedTransactionServlet createShieldedTransactionServlet;
   @Autowired
   private ScanNoteByBlockrangeAndIvkServlet scanNoteByBlockrangeAndIvkServlet;
+  @Autowired
+  private  ScanNoteByBlockrangeAndOvkServlet scanNoteByBlockrangeAndOvkServlet;
 
   @Override
   public void init() {
@@ -291,7 +293,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getSaplingPaymentAddressServlet), "/getsaplingpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
-      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyblockrangeandivkservlet");
+      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByBlockrangeAndOvkServlet), "/scannotebyovk");
 
 
       server.start();

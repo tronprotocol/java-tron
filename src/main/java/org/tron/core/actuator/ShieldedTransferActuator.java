@@ -4,6 +4,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.Librustzcash;
@@ -23,9 +25,6 @@ import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-
-import java.util.Arrays;
-import java.util.List;
 
 
 @Slf4j(topic = "actuator")
@@ -287,13 +286,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     long fee = 0;
-    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
-    if (Wallet.addressValid(toAddress)) {
-      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
-      if (transparentToAccount == null) {
-        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-      }
-    }
+//    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
+//    if (Wallet.addressValid(toAddress)) {
+//      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
+//      if (transparentToAccount == null) {
+//        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
+//      }
+//    }
     fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }
