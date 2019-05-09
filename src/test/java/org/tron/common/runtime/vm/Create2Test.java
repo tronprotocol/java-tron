@@ -7,10 +7,9 @@ import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
-import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -86,18 +85,18 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
     String methodSign = "deploy(bytes,uint256)";
 
     // deploy contract
-    Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, factoryCode, value, fee, consumeUserResourcePercent, null);
     byte[] factoryAddress = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
 
     // Trigger contract method: deploy(bytes,uint)
     long salt = 100L;
     String hexInput = AbiUtil.parseMethod(methodSign, Arrays.asList(testCode, salt));
-    TVMTestResult result =  TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    TVMTestResult result =  TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
@@ -111,16 +110,16 @@ triggercontract Txxxxxxxxxxx deploy(bytes,uint256) bytes,uint256 false 100000000
     String methodToTrigger  = "plusOne()";
     for (int i = 1; i < 3; i++) {
       hexInput = AbiUtil.parseMethod(methodToTrigger, Collections.emptyList());
-      result = TVMTestUtils
-          .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+      result = TvmTestUtils
+          .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
               actualContract, Hex.decode(hexInput), 0, fee, manager, null);
       Assert.assertNull(result.getRuntime().getRuntimeError());
       Assert.assertEquals(result.getRuntime().getResult().getHReturn(), new DataWord(i).getData());
     }
 
     // deploy contract again
-    result =  TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    result =  TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNotNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(result.getRuntime().getRuntimeError(), "REVERT opcode executed");

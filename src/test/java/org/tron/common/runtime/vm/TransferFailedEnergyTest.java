@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
-import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.Wallet;
@@ -228,20 +228,20 @@ contract Caller {
     long consumeUserResourcePercent = 0;
 
 //     deploy contract
-    Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
     byte[] addressWithSufficientBalance = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     for (TestCase testCase : testCasesAfterAllowTvmConstantinop) {
       checkResult(testCase, addressWithSufficientBalance);
     }
 
-    trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, 0, fee, consumeUserResourcePercent, null);
     byte[] addressWithoutBalance = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     for (TestCase testCase : testCasesInsufficientBalance) {
@@ -264,20 +264,20 @@ contract Caller {
     long consumeUserResourcePercent = 0;
 
 //     deploy contract
-    Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
     byte[] addressWithSufficientBalance = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     for (TestCase testCase : testCasesBeforeAllowTvmConstantinop) {
       checkResult(testCase, addressWithSufficientBalance);
     }
 
-    trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, 0, fee, consumeUserResourcePercent, null);
     byte[] addressWithoutBalance = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     for (TestCase testCase : testCasesInsufficientBalance) {
@@ -290,8 +290,8 @@ contract Caller {
     String hexInput = AbiUtil.parseMethod(testCase.getMethod(), testCase.getParams());
     long fee = 100000000;
     long allEnergy = 1000000;
-    TVMTestResult result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    TVMTestResult result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     ProgramResult programResult = result.getRuntime().getResult();
     ReceiptCapsule receiptCapsule = result.getReceipt();
