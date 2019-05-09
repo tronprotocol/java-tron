@@ -1615,11 +1615,12 @@ public class Wallet {
     return null;
   }
 
-  public long getShieldedTransactionFee(){
+  public long getShieldedTransactionFee() {
     return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
-  public TransactionCapsule createShieldedTransaction(PrivateParameters request) throws ContractValidateException, RuntimeException{
+  public TransactionCapsule createShieldedTransaction(PrivateParameters request)
+      throws ContractValidateException, RuntimeException {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
     byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
@@ -1627,7 +1628,8 @@ public class Wallet {
     byte[] nsk = request.getNsk().toByteArray();
     byte[] ovk = request.getOvk().toByteArray();
 
-    if (ArrayUtils.isEmpty(transparentFromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+    if (ArrayUtils.isEmpty(transparentFromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils
+        .isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       throw new ContractValidateException("No input address");
     }
 
@@ -1637,7 +1639,8 @@ public class Wallet {
     }
 
     List<SpendNote> shieldedSpends = request.getShieldedSpendsList();
-    if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk)) && shieldedSpends.isEmpty()) {
+    if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))
+        && shieldedSpends.isEmpty()) {
       throw new ContractValidateException("No input note");
     }
 
@@ -1665,8 +1668,8 @@ public class Wallet {
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
-        IncrementalMerkleTreeCapsule merkleTreeCapsule = new IncrementalMerkleTreeCapsule(
-            spendNote.getPath().toByteArray());
+        IncrementalMerkleTreeCapsule merkleTreeCapsule = dbManager.getMerkleContainer()
+            .getMerkleTree(spendNote.getAnchor().toByteArray());
 
         GrpcAPI.Note note = spendNote.getNote();
         BaseNote.Note baseNote = new BaseNote.Note(new DiversifierT(note.getD().toByteArray()),
@@ -1700,7 +1703,7 @@ public class Wallet {
   }
 
   public BytesMessage getSpendingKey() {
-    byte [] sk;
+    byte[] sk;
     try {
       sk = SpendingKey.random().getValue();
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(sk)).build();
@@ -1740,7 +1743,7 @@ public class Wallet {
       return null;
     }
 
-    byte [] ak;
+    byte[] ak;
     try {
       ak = ExpandedSpendingKey.getAkFromAsk(ask.toByteArray());
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(ak)).build();
@@ -1754,7 +1757,7 @@ public class Wallet {
       return null;
     }
 
-    byte [] nk;
+    byte[] nk;
     try {
       nk = ExpandedSpendingKey.getNkFromNsk(nsk.toByteArray());
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nk)).build();
@@ -1763,20 +1766,20 @@ public class Wallet {
     }
   }
 
-  public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk){
+  public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk) {
 
-    if(ak.length != 32 || nk.length != 32){
+    if (ak.length != 32 || nk.length != 32) {
       return null;
     }
 
     byte[] ivk = new byte[32]; // the incoming viewing key
     Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
     return IncomingViewingKeyMessage.newBuilder()
-            .setIvk(ByteString.copyFrom(ivk))
-            .build();
+        .setIvk(ByteString.copyFrom(ivk))
+        .build();
   }
 
-  public DiversifierMessage getDiversifier(){
+  public DiversifierMessage getDiversifier() {
     byte[] d;
     while (true) {
       d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
@@ -1785,14 +1788,14 @@ public class Wallet {
       }
     }
     DiversifierMessage diversifierMessage = DiversifierMessage.newBuilder()
-            .setD(ByteString.copyFrom(d))
-            .build();
+        .setD(ByteString.copyFrom(d))
+        .build();
 
     return diversifierMessage;
   }
 
   public BytesMessage getRcm() {
-    byte [] rcm;
+    byte[] rcm;
     try {
       rcm = BaseNote.Note.generateR();
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(rcm)).build();
@@ -1801,7 +1804,8 @@ public class Wallet {
     }
   }
 
-  public SaplingPaymentAddressMessage getSaplingPaymentAddress(IncomingViewingKey ivk, DiversifierT d){
+  public SaplingPaymentAddressMessage getSaplingPaymentAddress(IncomingViewingKey ivk,
+      DiversifierT d) {
     //get pk_d from paymentAddress
     SaplingPaymentAddressMessage spa = null;
 
@@ -1810,15 +1814,15 @@ public class Wallet {
     }
 
     Optional<PaymentAddress> op = ivk.address(d);
-    if(op.isPresent()){
+    if (op.isPresent()) {
       DiversifierMessage ds = DiversifierMessage.newBuilder()
-              .setD(ByteString.copyFrom(d.getData()))
-              .build();
+          .setD(ByteString.copyFrom(d.getData()))
+          .build();
 
       spa = SaplingPaymentAddressMessage.newBuilder()
-              .setD(ds)
-              .setPkD(ByteString.copyFrom(op.get().getPkD()))
-              .build();
+          .setD(ds)
+          .setPkD(ByteString.copyFrom(op.get().getPkD()))
+          .build();
 
     }
     return spa;
@@ -2156,8 +2160,9 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
 
-        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData().getContractList();
-        if(contracts.size() == 0){
+        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData()
+            .getContractList();
+        if (contracts.size() == 0) {
           continue;
         }
 
@@ -2175,7 +2180,7 @@ public class Wallet {
           throw new RuntimeException("unpack ShieldedTransferContract failed.");
         }
 
-        for(int index = 0; index < stContract.getReceiveDescriptionList().size(); index++){
+        for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
           Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext
@@ -2201,10 +2206,10 @@ public class Wallet {
                 .setPkD(ByteString.copyFrom(pk_d))
                 .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
-                    .setNote(note)
-                    .setTxid(ByteString.copyFrom(txid))
-                    .setIndex(index)
-                    .build();
+                .setNote(note)
+                .setTxid(ByteString.copyFrom(txid))
+                .setIndex(index)
+                .build();
 
             builder.addNoteTxs(noteTx);
           }
@@ -2237,8 +2242,9 @@ public class Wallet {
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
 
-        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData().getContractList();
-        if(contracts.size() == 0){
+        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData()
+            .getContractList();
+        if (contracts.size() == 0) {
           continue;
         }
 
@@ -2256,56 +2262,57 @@ public class Wallet {
           throw new RuntimeException("unpack ShieldedTransferContract failed.");
         }
 
-        for(int index = 0; index < stContract.getReceiveDescriptionList().size(); index++){
+        for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
-            NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
-            c_out.data = r.getCOut().toByteArray();
+          NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
+          c_out.data = r.getCOut().toByteArray();
 
-            Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext.decrypt(c_out,//ciphertext
-                ovk,
-                r.getValueCommitment().toByteArray(), //cv
-                r.getNoteCommitment().toByteArray(), //cmu
-                r.getEpk().toByteArray() //epk
-            );
+          Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext
+              .decrypt(c_out,//ciphertext
+                  ovk,
+                  r.getValueCommitment().toByteArray(), //cv
+                  r.getNoteCommitment().toByteArray(), //cmu
+                  r.getEpk().toByteArray() //epk
+              );
 
-            if (notePlaintext.isPresent()) {
+          if (notePlaintext.isPresent()) {
 
-              SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
+            SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
 
-              //decode c_enc with pkd、esk
-              NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
-              ciphertext.data = r.getCEnc().toByteArray();
+            //decode c_enc with pkd、esk
+            NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
+            ciphertext.data = r.getCEnc().toByteArray();
 
-              Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
-                  .decrypt(ciphertext,
-                      r.getEpk().toByteArray(),
-                      decrypted_out_ct_unwrapped.esk,
-                      decrypted_out_ct_unwrapped.pk_d,
-                      r.getNoteCommitment().toByteArray());
+            Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
+                .decrypt(ciphertext,
+                    r.getEpk().toByteArray(),
+                    decrypted_out_ct_unwrapped.esk,
+                    decrypted_out_ct_unwrapped.pk_d,
+                    r.getNoteCommitment().toByteArray());
 
-              if (foo.isPresent()) {
+            if (foo.isPresent()) {
 
-                BaseNotePlaintext.NotePlaintext bar = foo.get();
+              BaseNotePlaintext.NotePlaintext bar = foo.get();
 
-                Note note = Note.newBuilder()
-                    .setD(ByteString.copyFrom(bar.d.getData()))
-                    .setValue(bar.value)
-                    .setRcm(ByteString.copyFrom(bar.rcm))
-                    .setPkD(ByteString.copyFrom(decrypted_out_ct_unwrapped.pk_d))
-                    .build();
+              Note note = Note.newBuilder()
+                  .setD(ByteString.copyFrom(bar.d.getData()))
+                  .setValue(bar.value)
+                  .setRcm(ByteString.copyFrom(bar.rcm))
+                  .setPkD(ByteString.copyFrom(decrypted_out_ct_unwrapped.pk_d))
+                  .build();
 
-                DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
-                        .setNote(note)
-                        .setTxid(ByteString.copyFrom(txid))
-                        .setIndex(index)
-                        .build();
+              DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
+                  .setNote(note)
+                  .setTxid(ByteString.copyFrom(txid))
+                  .setIndex(index)
+                  .build();
 
-                builder.addNoteTxs(noteTx);
-              }
+              builder.addNoteTxs(noteTx);
             }
+          }
 
-          } // end of ReceiveDescriptionList
+        } // end of ReceiveDescriptionList
 
       } // end of transaction
 
