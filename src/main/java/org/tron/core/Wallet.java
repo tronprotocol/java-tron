@@ -1361,16 +1361,16 @@ public class Wallet {
     for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
       Contract contract1 = transaction1.getRawData().getContract(0);
-      if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
-        ZksnarkV0TransferContract zkContract = contract1.getParameter()
-            .unpack(ZksnarkV0TransferContract.class);
+      if (contract1.getType() == ContractType.ShieldedTransferContract) {
+        ShieldedTransferContract zkContract = contract1.getParameter()
+            .unpack(ShieldedTransferContract.class);
 
         PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-        cmCapsule1.setContent(zkContract.getCm1());
+        cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
         PedersenHash cm1 = cmCapsule1.getInstance();
 
         PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-        cmCapsule2.setContent(zkContract.getCm2());
+        cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
         PedersenHash cm2 = cmCapsule2.getInstance();
 
         System.out.println("Update existing witness");
@@ -1434,17 +1434,17 @@ public class Wallet {
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
-        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+        if (contract1.getType() == ContractType.ShieldedTransferContract) {
 
-          ZksnarkV0TransferContract zkContract = contract1.getParameter()
-              .unpack(ZksnarkV0TransferContract.class);
+          ShieldedTransferContract zkContract = contract1.getParameter()
+              .unpack(ShieldedTransferContract.class);
 
           PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getCm1());
+          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
           PedersenHash cm1 = cmCapsule1.getInstance();
 
           PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getCm2());
+          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
           PedersenHash cm2 = cmCapsule2.getInstance();
 
           witnessList.forEach(wit -> {
@@ -1480,17 +1480,17 @@ public class Wallet {
       for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
 
         Contract contract1 = transaction1.getRawData().getContract(0);
-        if (contract1.getType() == ContractType.ZksnarkV0TransferContract) {
+        if (contract1.getType() == ContractType.ShieldedTransferContract) {
 
-          ZksnarkV0TransferContract zkContract = contract1.getParameter()
-              .unpack(ZksnarkV0TransferContract.class);
+          ShieldedTransferContract zkContract = contract1.getParameter()
+              .unpack(ShieldedTransferContract.class);
 
           PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getCm1());
+          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
           PedersenHash cm1 = cmCapsule1.getInstance();
 
           PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getCm2());
+          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
           PedersenHash cm2 = cmCapsule2.getInstance();
 
           witness.append(cm1);
