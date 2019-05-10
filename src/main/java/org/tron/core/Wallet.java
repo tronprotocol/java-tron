@@ -2172,9 +2172,7 @@ public class Wallet {
 
     }); //end of blocklist
 
-    GrpcAPI.DecryptNotes decryptNotes = builder.build();
-    System.out.println("decryptNotes size: " + decryptNotes.getNoteTxsList().size());
-    return decryptNotes;
+    return builder.build();
   }
 
   /*
