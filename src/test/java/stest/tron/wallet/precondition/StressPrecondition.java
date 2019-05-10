@@ -167,6 +167,7 @@ public class StressPrecondition {
     }*/
     if (getChainParameters.get().getChainParameter(32).getValue() == 0L) {
       proposalMap.put(28L, 1L);
+      proposalMap.put(30L, 1L);
     }
     if (getChainParameters.get().getChainParameter(31).getValue() == 0L) {
       proposalMap.put(29L, 1L);
