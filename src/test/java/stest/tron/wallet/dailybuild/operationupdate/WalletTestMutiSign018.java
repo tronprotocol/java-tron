@@ -83,7 +83,7 @@ public class WalletTestMutiSign018 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
@@ -95,8 +95,8 @@ public class WalletTestMutiSign018 {
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
   }
 
-  @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
-  public void testMutiSignForClearContractAbi() {
+  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
+  public void test1MutiSignForClearContractAbi() {
     ecKey1 = new ECKey(Utils.getRandom());
     manager1Address = ecKey1.getAddress();
     manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -164,6 +164,139 @@ public class WalletTestMutiSign018 {
     Assert.assertTrue(PublicMethedForMutiSign
         .clearContractABI(contractAddress, ownerAddress, ownerKey,
             blockingStubFull, 2, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, ownerAddress, blockingStubFull));
+  }
+
+  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
+  public void test2MutiSignForClearContractAbiForDefault() {
+    ecKey1 = new ECKey(Utils.getRandom());
+    manager1Address = ecKey1.getAddress();
+    manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+
+    ecKey2 = new ECKey(Utils.getRandom());
+    manager2Address = ecKey2.getAddress();
+    manager2Key = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
+
+    ecKey3 = new ECKey(Utils.getRandom());
+    ownerAddress = ecKey3.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+    PublicMethed.printAddress(ownerKey);
+
+    long needcoin = updateAccountPermissionFee + multiSignFee * 4;
+
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needcoin + 100000000L, fromAddress, testKey002,
+            blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 1, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
+
+    permissionKeyString[0] = manager1Key;
+    permissionKeyString[1] = manager2Key;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    ownerKeyString[0] = ownerKey;
+    ownerKeyString[1] = manager1Key;
+    String operationsDefault = "7fff1fc0034e0100000000000000000000000000000000000000000000000000";
+    accountPermissionJson =
+        "{\"owner_permission\":{\"type\":0,\"permission_name\":\"owner\",\"threshold\":2,\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(ownerKey)
+            + "\",\"weight\":1}]},"
+            + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
+            + "\"operations\":\"" + operationsDefault + "\","
+            + "\"keys\":["
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
+            + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
+            + "]}]}";
+    logger.info(accountPermissionJson);
+    PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson, ownerAddress, ownerKey,
+        blockingStubFull, ownerKeyString);
+
+    Long maxFeeLimit = 1000000000L;
+    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String contractName = "testConstantContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    byte[] contractAddress = PublicMethedForMutiSign.deployContract1(contractName, abi, code,
+        "", maxFeeLimit,
+        0L, 100, null, ownerKey, ownerAddress, blockingStubFull, 2, permissionKeyString);
+    logger.info("address:" + Base58.encode58Check(contractAddress));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString() != null);
+    Assert.assertTrue(PublicMethedForMutiSign
+        .clearContractABI(contractAddress, ownerAddress, ownerKey,
+            blockingStubFull, 2, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull));
+    Assert.assertTrue(
+        PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, ownerAddress, blockingStubFull));
+  }
+
+
+  @Test(enabled = false, threadPoolSize = 1, invocationCount = 1)
+  public void test3MutiSignForClearContractAbiForDefault() {
+    ecKey3 = new ECKey(Utils.getRandom());
+    ownerAddress = ecKey3.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
+    PublicMethed.printAddress(ownerKey);
+
+    long needcoin = updateAccountPermissionFee + multiSignFee * 4;
+
+    Assert.assertTrue(
+        PublicMethed.sendcoin(ownerAddress, needcoin + 100000000L, fromAddress, testKey002,
+            blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 0, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceForReceiver(fromAddress, 1000000000, 0, 1, ByteString.copyFrom(ownerAddress),
+            testKey002, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
+        .getBalance();
+    logger.info("balanceBefore: " + balanceBefore);
+
+    String[] activeDefaultKeyString = new String[1];
+
+    activeDefaultKeyString[0] = ownerKey;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Long maxFeeLimit = 1000000000L;
+    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
+    String contractName = "testConstantContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    byte[] contractAddress = PublicMethedForMutiSign.deployContract1(contractName, abi, code,
+        "", maxFeeLimit,
+        0L, 100, null, ownerKey, ownerAddress, blockingStubFull, 2, activeDefaultKeyString);
+    logger.info("address:" + Base58.encode58Check(contractAddress));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString() != null);
+    Assert.assertTrue(PublicMethedForMutiSign
+        .clearContractABI(contractAddress, ownerAddress, ownerKey,
+            blockingStubFull, 2, activeDefaultKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(
