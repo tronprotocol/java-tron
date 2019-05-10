@@ -34,7 +34,7 @@ import org.tron.common.runtime.vm.program.Stack;
 public class VM {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String ENERGY_LOG_FORMATE = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
+  private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
 
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
@@ -123,8 +123,8 @@ public class VM {
         case SUICIDE:
           energyCost = energyCosts.getSUICIDE();
           DataWord suicideAddressWord = stack.get(stack.size() - 1);
-          if (isDeadAccount(program, suicideAddressWord) &&
-              !program.getBalance(program.getContractAddress()).isZero()) {
+          if (isDeadAccount(program, suicideAddressWord)
+              && !program.getBalance(program.getContractAddress()).isZero()) {
             energyCost += energyCosts.getNEW_ACCT_SUICIDE();
           }
           break;
@@ -258,7 +258,7 @@ public class VM {
           DataWord codeSize = stack.get(stack.size() - 3);
           energyCost = energyCosts.getCREATE();
           energyCost += calcMemEnergy(energyCosts, oldMemSize,
-                  memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
+              memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
           energyCost += DataWord.sizeInWords(codeSize.intValueSafe()) * energyCosts.getSHA3_WORD();
 
           break;
@@ -911,7 +911,7 @@ public class VM {
           program.step();
         }
         break;
-        case EXTCODEHASH:{
+        case EXTCODEHASH: {
           DataWord address = program.stackPop();
           byte[] codeHash = program.getCodeHashAt(address);
           program.stackPush(codeHash);

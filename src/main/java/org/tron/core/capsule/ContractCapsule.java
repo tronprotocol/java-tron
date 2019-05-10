@@ -15,6 +15,9 @@
 
 package org.tron.core.capsule;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -25,9 +28,6 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 @Slf4j(topic = "capsule")
 public class ContractCapsule implements ProtoCapsule<SmartContract> {
@@ -74,7 +74,8 @@ public class ContractCapsule implements ProtoCapsule<SmartContract> {
   }
 
   public void setCodeHash(byte[] codeHash) {
-    this.smartContract = this.smartContract.toBuilder().setCodeHash(ByteString.copyFrom(codeHash)).build();
+    this.smartContract = this.smartContract.toBuilder().setCodeHash(ByteString.copyFrom(codeHash))
+        .build();
   }
 
   @Override
