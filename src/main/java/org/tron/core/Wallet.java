@@ -1445,18 +1445,19 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
-          PedersenHash cm1 = cmCapsule1.getInstance();
+          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
+              zkContract.getReceiveDescriptionList()){
 
-          PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
-          PedersenHash cm2 = cmCapsule2.getInstance();
+            PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
+            cmCapsule2.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm2 = cmCapsule2.getInstance();
 
-          witnessList.forEach(wit -> {
-            wit.append(cm1);
-            wit.append(cm2);
-          });
+            witnessList.forEach(wit -> {
+              wit.append(cm2);
+            });
+
+          }
+
 
         }
       }
