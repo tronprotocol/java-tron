@@ -1341,8 +1341,14 @@ public class Wallet {
 
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
+    if(treeRoot == null){
+      throw new RuntimeException("treeRoot is null,blockNumbler:" + (blockNumber - 1));
+    }
     IncrementalMerkleTreeContainer tree = dbManager.getMerkleTreeStore()
         .get(treeRoot).toMerkleTreeContainer();
+    if(tree == null){
+      throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+    }
 
     //Get the block of blockNum
     BlockCapsule block = dbManager.getBlockByNum(blockNumber);
@@ -1397,8 +1403,7 @@ public class Wallet {
     }
 
     if (!found) {
-      logger.warn("not found cm");
-      return null;
+      throw new RuntimeException("not found cm");
     }
 
     return witness;
