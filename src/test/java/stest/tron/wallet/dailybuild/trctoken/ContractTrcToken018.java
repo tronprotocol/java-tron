@@ -261,7 +261,8 @@ public class ContractTrcToken018 {
 
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals(
-        "transfer trc10 failed: Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.",
+        "transfer trc10 failed: Validate InternalTransfer error, no ToAccount. "
+            + "And not allowed to create account in smart contract.",
         infoById.get().getResMessage().toStringUtf8());
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,
