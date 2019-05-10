@@ -486,9 +486,6 @@ public class Manager {
       new AssetUpdateHelper(this).doWork();
     }
 
-    if (Args.getInstance().getAllowZKSnarkTransaction() == 1) {
-      merkleTreeStore.addEmptyTree();
-    }
 
     initCacheTxs();
     revokingStore.enable();
@@ -502,6 +499,10 @@ public class Manager {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
+    }
+
+    if (Args.getInstance().getAllowZKSnarkTransaction() == 1) {
+      merkleTreeStore.addEmptyTree();
     }
   }
 
