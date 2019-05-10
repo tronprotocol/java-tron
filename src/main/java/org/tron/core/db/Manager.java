@@ -104,6 +104,8 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeStore;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherStore;
 import org.tron.core.zen.merkle.MerkleContainer;
@@ -483,6 +485,11 @@ public class Manager {
     if (Args.getInstance().isNeedToUpdateAsset() && needToUpdateAsset()) {
       new AssetUpdateHelper(this).doWork();
     }
+
+    if (Args.getInstance().getAllowZKSnarkTransaction() == 1) {
+      merkleTreeStore.addEmptyTree();
+    }
+
     initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors

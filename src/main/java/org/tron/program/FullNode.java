@@ -19,6 +19,8 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 
 @Slf4j(topic = "app")
 public class FullNode {
