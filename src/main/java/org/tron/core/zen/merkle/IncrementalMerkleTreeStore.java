@@ -36,6 +36,6 @@ public class IncrementalMerkleTreeStore
         (new IncrementalMerkleTreeCapsule()).toMerkleTreeContainer();
 
     put(container.getMerkleTreeKey(), container.getTreeCapsule());
-    logger.debug("addEmptyTree,root:" + ByteArray.toHexString(container.getMerkleTreeKey()));
+    logger.info("addEmptyTree,root:" + ByteArray.toHexString(container.getMerkleTreeKey()));
   }
 }
