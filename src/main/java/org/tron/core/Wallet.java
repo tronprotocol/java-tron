@@ -1499,9 +1499,9 @@ public class Wallet {
 
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
 
-      if (outputPoint.getHash() == null || outputPoint.getIndex() > 1 || outputPoint.getIndex() < 0) {
+      if (outputPoint.getHash() == null || outputPoint.getIndex() > 10 || outputPoint.getIndex() < 0) {
         throw new BadItemException(
-            "outPoint.getHash() == null || outPoint.getIndex() > 1 || outPoint.getIndex() < 0");
+            "outPoint.getHash() == null || outPoint.getIndex() > 10 || outPoint.getIndex() < 0");
       }
     }
   }
