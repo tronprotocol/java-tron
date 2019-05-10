@@ -155,7 +155,7 @@ public class Wallet {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;  //default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -418,31 +418,6 @@ public class Wallet {
     return trx;
   }
 
-  private static byte[] getSelector(byte[] data) {
-    if (data == null || data.length < 4) {
-      return null;
-    }
-
-    byte[] ret = new byte[4];
-    System.arraycopy(data, 0, ret, 0, 4);
-    return ret;
-  }
-
-  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.sign(privateKey);
-    return trx;
-  }
-
-  public TransactionCapsule addSign(TransactionSign transactionSign)
-      throws PermissionException, SignatureException, SignatureFormatException {
-    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
-    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
-    trx.addSign(privateKey, dbManager.getAccountStore());
-    return trx;
-  }
-
   public static boolean checkPermissionOprations(Permission permission, Contract contract)
       throws PermissionException {
     ByteString operations = permission.getOperations();
@@ -454,6 +429,17 @@ public class Wallet {
     return b;
   }
 
+  private static byte[] getSelector(byte[] data) {
+    if (data == null ||
+        data.length < 4) {
+      return null;
+    }
+
+    byte[] ret = new byte[4];
+    System.arraycopy(data, 0, ret, 0, 4);
+    return ret;
+  }
+
   /**
    * Broadcast a transaction.
    */
@@ -461,7 +447,7 @@ public class Wallet {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
     try {
-
+      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
@@ -505,7 +491,6 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
@@ -557,15 +542,29 @@ public class Wallet {
     }
   }
 
+  public TransactionCapsule getTransactionSign(TransactionSign transactionSign) {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.sign(privateKey);
+    return trx;
+  }
+
+  public TransactionCapsule addSign(TransactionSign transactionSign)
+      throws PermissionException, SignatureException, SignatureFormatException {
+    byte[] privateKey = transactionSign.getPrivateKey().toByteArray();
+    TransactionCapsule trx = new TransactionCapsule(transactionSign.getTransaction());
+    trx.addSign(privateKey, dbManager.getAccountStore());
+    return trx;
+  }
+
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
-
-    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
     try {
@@ -937,14 +936,13 @@ public class Wallet {
   }
 
   public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
+    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
-
-    TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     tswBuilder.setTransaction(trxExBuilder);
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
@@ -989,6 +987,7 @@ public class Wallet {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
+    AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
     if (accountCapsule == null) {
       return null;
@@ -1021,7 +1020,6 @@ public class Wallet {
       });
     }
 
-    AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
@@ -1132,6 +1130,7 @@ public class Wallet {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
     }
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
     if (accountCapsule == null) {
       return null;
@@ -1174,7 +1173,6 @@ public class Wallet {
       });
     }
 
-    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
     builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
         .setFreeNetLimit(freeNetLimit)
         .setNetUsed(accountCapsule.getNetUsage())
@@ -1209,19 +1207,6 @@ public class Wallet {
     return blockListBuilder.build();
   }
 
-  public Block getBlockById(ByteString blockId) {
-    if (Objects.isNull(blockId)) {
-      return null;
-    }
-    Block block = null;
-    try {
-      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
-    } catch (StoreException e) {
-      return null;
-    }
-    return block;
-  }
-
   public Transaction getTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1231,7 +1216,6 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
-      return null;
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
@@ -1248,7 +1232,6 @@ public class Wallet {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
-      return null;
     }
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
@@ -1265,12 +1248,23 @@ public class Wallet {
       proposalCapsule = dbManager.getProposalStore()
           .get(proposalId.toByteArray());
     } catch (StoreException e) {
-      return null;
     }
     if (proposalCapsule != null) {
       return proposalCapsule.getInstance();
     }
     return null;
+  }
+
+  public Block getBlockById(ByteString BlockId) {
+    if (Objects.isNull(BlockId)) {
+      return null;
+    }
+    Block block = null;
+    try {
+      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+    } catch (StoreException e) {
+    }
+    return block;
   }
 
 
@@ -1353,27 +1347,9 @@ public class Wallet {
     try {
       exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
-      return null;
     }
     if (exchangeCapsule != null) {
       return exchangeCapsule.getInstance();
-    }
-    return null;
-  }
-
-  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
-    byte[] address = bytesMessage.getValue().toByteArray();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
-    if (accountCapsule == null) {
-      logger.error(
-          "Get contract failed, the account is not exist or the account does not have code hash!");
-      return null;
-    }
-
-    ContractCapsule contractCapsule = dbManager.getContractStore()
-        .get(bytesMessage.getValue().toByteArray());
-    if (Objects.nonNull(contractCapsule)) {
-      return contractCapsule.getInstance();
     }
     return null;
   }
@@ -1385,6 +1361,7 @@ public class Wallet {
     if (!Args.getInstance().isSupportConstant()) {
       throw new ContractValidateException("this node don't support constant");
     }
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
     List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
@@ -1393,14 +1370,13 @@ public class Wallet {
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
+
+    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+        new ProgramInvokeFactoryImpl(), true);
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
     VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
-        new ProgramInvokeFactoryImpl(), true);
     runtime.execute();
     runtime.go();
     runtime.finalization();
@@ -1426,6 +1402,23 @@ public class Wallet {
     }
     trxCap.setResult(ret);
     return trxCap.getInstance();
+  }
+
+  public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {
+    byte[] address = bytesMessage.getValue().toByteArray();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
+    if (accountCapsule == null) {
+      logger.error(
+          "Get contract failed, the account is not exist or the account does not have code hash!");
+      return null;
+    }
+
+    ContractCapsule contractCapsule = dbManager.getContractStore()
+        .get(bytesMessage.getValue().toByteArray());
+    if (Objects.nonNull(contractCapsule)) {
+      return contractCapsule.getInstance();
+    }
+    return null;
   }
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
