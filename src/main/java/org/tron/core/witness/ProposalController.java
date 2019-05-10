@@ -205,15 +205,15 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveMultiSignFee(entry.getValue());
           break;
         }
-        case (28): {
+        case (24): {
           manager.getDynamicPropertiesStore().saveAllowProtoFilterNum(entry.getValue());
           break;
         }
-        case (29): {
+        case (25): {
           manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
           break;
         }
-        case (30): {
+        case (26): {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
           break;
