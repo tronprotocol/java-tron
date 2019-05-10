@@ -1344,10 +1344,17 @@ public class Wallet {
     if(treeRoot == null){
       throw new RuntimeException("treeRoot is null,blockNumbler:" + (blockNumber - 1));
     }
+
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
         .get(treeRoot);
     if(treeCapsule == null){
-      throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+      if(ByteArray.toHexString(treeRoot).equals(
+          "fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e")){
+        treeCapsule = new IncrementalMerkleTreeCapsule();
+      }else {
+        throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+      }
+
     }
     IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
 
