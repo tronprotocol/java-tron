@@ -148,8 +148,6 @@ public class ContractGrammar001 {
     String abi1 = retMap1.get("abI").toString();
     String library = retMap1.get("library").toString();
     String libraryAddress = library + Base58.encode58Check(contractAddress);
-    //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test2Grammar002.sol:Set:"
-    //        + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, libraryAddress, testKeyForGrammarAddress,
@@ -186,7 +184,6 @@ public class ContractGrammar001 {
     String abi1 = retMap1.get("abI").toString();
     String library = retMap1.get("library").toString();
     String libraryAddress = library
-        //"/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test3Grammar003.sol:Set:"
         + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
@@ -233,7 +230,6 @@ public class ContractGrammar001 {
     String library = retMap1.get("library").toString();
     String libraryAddress = null;
     libraryAddress = library
-        //    "/Users/tron/dev/git/20190225Tron/java-tron/src/test/resources/soliditycode/contractGrammar001test4Grammar004.sol:Search:"
         + Base58.encode58Check(contractAddress);
     contractAddress1 = PublicMethed
         .deployContractForLibrary(contractName1, abi1, code1, "", maxFeeLimit,
