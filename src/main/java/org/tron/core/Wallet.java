@@ -1516,6 +1516,8 @@ public class Wallet {
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
 
+    logger.debug(request.toString());
+
     validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
