@@ -1553,7 +1553,7 @@ public class Wallet {
     int synBlockNum = request.getBlockNum();
     if (synBlockNum != 0) {
       //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-      updateWitnesses(witnessList, largeBlockNum, synBlockNum);
+      updateWitnesses(witnessList, largeBlockNum+1, synBlockNum);
     }
 
     for (IncrementalMerkleVoucherContainer w : witnessList){
