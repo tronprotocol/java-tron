@@ -1383,7 +1383,7 @@ public class Wallet {
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
             PedersenHash cm = cmCapsule.getInstance();
 
-            if (outPoint.getIndex() < index) {
+            if (index < outPoint.getIndex()) {
               tree.append(cm);
             }else if(outPoint.getIndex() == index){
               tree.append(cm);
@@ -1392,6 +1392,8 @@ public class Wallet {
             }else {
               witness.append(cm);
             }
+
+            index ++;
           }
 
         } else {
@@ -1633,16 +1635,17 @@ public class Wallet {
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
-        IncrementalMerkleTreeCapsule merkleTreeCapsule = dbManager.getMerkleContainer()
-            .getMerkleTree(spendNote.getAnchor().toByteArray());
+
 
         GrpcAPI.Note note = spendNote.getNote();
         BaseNote.Note baseNote = new BaseNote.Note(new DiversifierT(note.getD().toByteArray()),
             note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
 
+        IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
+            spendNote.getVoucher()).toMerkleVoucherContainer();
         builder.addSaplingSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
-            spendNote.getAnchor().toByteArray(),
-            merkleTreeCapsule.toMerkleTreeContainer().toVoucher());
+            spendNote.getVoucher().getRt().toByteArray(),
+            voucherContainer    );
       }
     }
 

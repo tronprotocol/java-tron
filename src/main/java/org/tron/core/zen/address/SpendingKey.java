@@ -135,6 +135,10 @@ public class SpendingKey {
     Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
     byte[] rcm = Note.generateR();
     System.out.println("rcm is " + ByteUtil.toHexString(rcm));
+
+    byte[] alpha = Note.generateR();
+    System.out.println("alpha is " + ByteUtil.toHexString(alpha));
+
     if (op.isPresent()) {
       System.out.println(
           "sk.Address:" + KeyIo.EncodePaymentAddress(op.get()));
