@@ -896,14 +896,14 @@ public class JsonFormat {
   }
 
   /**
-   * Is this an octal digit?
+   * Is this an octal digit.
    */
   private static boolean isOctal(char c) {
     return ('0' <= c) && (c <= '7');
   }
 
   /**
-   * Is this a hex digit?
+   * Is this a hex digit.
    */
   private static boolean isHex(char c) {
     return (('0' <= c) && (c <= '9')) || (('a' <= c) && (c <= 'f'))
@@ -1178,7 +1178,7 @@ public class JsonFormat {
     }
 
     /**
-     * Are we at the end of the input?
+     * Are we at the end of the input.
      */
     public boolean atEnd() {
       return currentToken.length() == 0;
@@ -1338,7 +1338,7 @@ public class JsonFormat {
 //                  ++i;
 //                  code = digitValue(input.charAt(i));
 //                } else {
-//                  throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
+//                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
 //                }
 //                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
 //                  ++i;
@@ -1368,7 +1368,6 @@ public class JsonFormat {
 //        result[pos++] = (byte) c;
 //      }
 //    }
-//
 //    return ByteString.copyFrom(result, 0, pos);
       try {
         return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
