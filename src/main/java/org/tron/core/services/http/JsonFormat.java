@@ -38,6 +38,7 @@ import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
@@ -49,6 +50,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -439,8 +441,8 @@ public class JsonFormat {
    * detected after the field ends, the next field will be parsed automatically
    */
   protected static void mergeField(Tokenizer tokenizer,
-      ExtensionRegistry extensionRegistry,
-      Message.Builder builder, boolean selfType) throws ParseException {
+      ExtensionRegistry extensionRegistry, Message.Builder builder,
+      boolean selfType) throws ParseException {
     FieldDescriptor field;
     Descriptor type = builder.getDescriptorForType();
     final ExtensionRegistry.ExtensionInfo extension;
@@ -894,14 +896,14 @@ public class JsonFormat {
   }
 
   /**
-   * Is this an octal digit?
+   * Is this an octal digit.
    */
   private static boolean isOctal(char c) {
     return ('0' <= c) && (c <= '7');
   }
 
   /**
-   * Is this a hex digit?
+   * Is this a hex digit.
    */
   private static boolean isHex(char c) {
     return (('0' <= c) && (c <= '9')) || (('a' <= c) && (c <= 'f'))
@@ -1176,7 +1178,7 @@ public class JsonFormat {
     }
 
     /**
-     * Are we at the end of the input?
+     * Are we at the end of the input.
      */
     public boolean atEnd() {
       return currentToken.length() == 0;
@@ -1336,7 +1338,7 @@ public class JsonFormat {
 //                  ++i;
 //                  code = digitValue(input.charAt(i));
 //                } else {
-//                  throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
+//                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
 //                }
 //                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
 //                  ++i;
@@ -1366,7 +1368,6 @@ public class JsonFormat {
 //        result[pos++] = (byte) c;
 //      }
 //    }
-//
 //    return ByteString.copyFrom(result, 0, pos);
       try {
         return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));

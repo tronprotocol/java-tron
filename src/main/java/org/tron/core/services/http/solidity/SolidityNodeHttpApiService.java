@@ -10,6 +10,7 @@ import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.*;
 
+
 @Component
 @Slf4j(topic = "API")
 public class SolidityNodeHttpApiService implements Service {
@@ -106,13 +107,19 @@ public class SolidityNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/walletsolidity/getdelegatedresourceaccountindex");
       context
-          .addServlet(new ServletHolder(getExchangeByIdServlet), "/walletsolidity/getexchangebyid");
-      context.addServlet(new ServletHolder(listExchangesServlet), "/walletsolidity/listexchanges");
+          .addServlet(new ServletHolder(getExchangeByIdServlet),
+              "/walletsolidity/getexchangebyid");
+      context.addServlet(new ServletHolder(listExchangesServlet),
+          "/walletsolidity/listexchanges");
 
-      context.addServlet(new ServletHolder(getAccountByIdServlet), "/walletsolidity/getaccountbyid");
-      context.addServlet(new ServletHolder(getBlockByIdServlet), "/walletsolidity/getblockbyid");
-      context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/walletsolidity/getblockbylimitnext");
-      context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getAccountByIdServlet),
+          "/walletsolidity/getaccountbyid");
+      context.addServlet(new ServletHolder(getBlockByIdServlet),
+          "/walletsolidity/getblockbyid");
+      context.addServlet(new ServletHolder(getBlockByLimitNextServlet),
+          "/walletsolidity/getblockbylimitnext");
+      context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
+          "/walletsolidity/getblockbylatestnum");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
