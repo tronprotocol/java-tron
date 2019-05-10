@@ -87,9 +87,8 @@ message OutputPoint {
 }
 
 message OutputPointInfo {
-  OutputPoint out_point_1 = 1;
-  OutputPoint out_point_2 = 2;
-  int32 block_num = 3;
+  repeated OutputPoint out_points = 1;
+  int32 block_num = 2;
 }
 
 message PedersenHash {
