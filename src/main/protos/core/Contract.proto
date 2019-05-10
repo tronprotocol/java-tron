@@ -111,10 +111,8 @@ message IncrementalMerkleVoucher {
 }
 
 message IncrementalMerkleVoucherInfo {
-  IncrementalMerkleVoucher voucher1 = 1;
-  bytes path1 = 2;
-  IncrementalMerkleVoucher voucher2 = 3;
-  bytes path2 = 4;
+  repeated IncrementalMerkleVoucher vouchers = 1;
+  repeated bytes paths = 2;
   int32 block_num = 5;
 }
 

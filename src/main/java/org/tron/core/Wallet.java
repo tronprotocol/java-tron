@@ -1327,6 +1327,9 @@ public class Wallet {
     //Get blockNum from transactionInfo
     TransactionInfoCapsule transactionInfoCapsule1 = dbManager.getTransactionHistoryStore()
         .get(txId.toByteArray());
+    if(transactionInfoCapsule1 == null){
+      throw new RuntimeException("tx is not found:"+ByteArray.toHexString(txId.toByteArray()));
+    }
     return transactionInfoCapsule1.getBlockNumber();
   }
 
@@ -1354,8 +1357,6 @@ public class Wallet {
       if (contract1.getType() == ContractType.ShieldedTransferContract) {
         ShieldedTransferContract zkContract = contract1.getParameter()
             .unpack(ShieldedTransferContract.class);
-
-        System.out.println("Update existing witness");
 
         if (new TransactionCapsule(transaction1).getTransactionId().getByteString().equals(txId)) {
           System.out.println("foundTx");
@@ -1396,7 +1397,7 @@ public class Wallet {
     }
 
     if (!found) {
-      logger.warn("not found valid cm");
+      logger.warn("not found cm");
       return null;
     }
 
@@ -1415,9 +1416,9 @@ public class Wallet {
     long latestBlockHeaderNumber = dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumber();
 
-    if (end >= latestBlockHeaderNumber) {
+    if (end > latestBlockHeaderNumber) {
       throw new RuntimeException(
-          "synBlockNum is too large, cmBlockNum plus synBlockNum must be less than latestBlockNumber");
+          "synBlockNum is too large, cmBlockNum plus synBlockNum must be <= latestBlockNumber");
     }
 
     for (long n = start; n <= end; n++) {
@@ -1538,8 +1539,8 @@ public class Wallet {
 
     for (IncrementalMerkleVoucherContainer w : witnessList){
       w.getVoucherCapsule().resetRt();
-      result.setVoucher1(w.getVoucherCapsule().getInstance());
-      result.setPath1(ByteString.copyFrom(w.path().encode()));
+      result.addVouchers(w.getVoucherCapsule().getInstance());
+      result.addPaths(ByteString.copyFrom(w.path().encode()));
     }
 
     return result.build();
