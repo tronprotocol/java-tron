@@ -118,7 +118,7 @@ public class AdvService {
     invToFetchCache.put(item, System.currentTimeMillis());
     invToFetch.put(item, System.currentTimeMillis());
 
-    if (InventoryType.BLOCK.equals(item.getType())){
+    if (InventoryType.BLOCK.equals(item.getType())) {
       consumerInvToFetch();
     }
 

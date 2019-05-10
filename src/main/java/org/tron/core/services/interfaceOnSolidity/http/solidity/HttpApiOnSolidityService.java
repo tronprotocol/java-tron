@@ -24,10 +24,6 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetTransactionInfoByIdOnSolidityServlet getTransactionInfoByIdOnSolidityServlet;
   @Autowired
-  private GetDeferredTransactionByIdOnSolidyServlet getDeferredTransactionByIdOnSolidyServlet;
-  @Autowired
-  private GetDeferredTransactionInfoByIdOnSolidyServlet getDeferredTransactionInfoByIdOnSolidyServlet;
-  @Autowired
   private ListWitnessesOnSolidityServlet listWitnessesOnSolidityServlet;
   @Autowired
   private GetAssetIssueListOnSolidityServlet getAssetIssueListOnSolidityServlet;
@@ -44,13 +40,15 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private GetDelegatedResourceOnSolidityServlet getDelegatedResourceOnSolidityServlet;
   @Autowired
-  private GetDelegatedResourceAccountIndexOnSolidityServlet getDelegatedResourceAccountIndexOnSolidityServlet;
+  private GetDelegatedResourceAccountIndexOnSolidityServlet
+      getDelegatedResourceAccountIndexOnSolidityServlet;
   @Autowired
   private GetExchangeByIdOnSolidityServlet getExchangeByIdOnSolidityServlet;
   @Autowired
   private ListExchangesOnSolidityServlet listExchangesOnSolidityServlet;
   @Autowired
-  private GetTransactionCountByBlockNumOnSolidityServlet getTransactionCountByBlockNumOnSolidityServlet;
+  private GetTransactionCountByBlockNumOnSolidityServlet
+      getTransactionCountByBlockNumOnSolidityServlet;
   @Autowired
   private GetAssetIssueByNameOnSolidityServlet getAssetIssueByNameOnSolidityServlet;
   @Autowired
@@ -111,13 +109,13 @@ public class HttpApiOnSolidityService implements Service {
       context.addServlet(new ServletHolder(listExchangesOnSolidityServlet),
           "/walletsolidity/listexchanges");
       context.addServlet(new ServletHolder(getAccountByIdOnSolidityServlet),
-              "/walletsolidity/getaccountbyid");
+          "/walletsolidity/getaccountbyid");
       context.addServlet(new ServletHolder(getBlockByIdOnSolidityServlet),
-              "/walletsolidity/getblockbyid");
+          "/walletsolidity/getblockbyid");
       context.addServlet(new ServletHolder(getBlockByLimitNextOnSolidityServlet),
-              "/walletsolidity/getblockbylimitnext");
+          "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
-              "/walletsolidity/getblockbylatestnum");
+          "/walletsolidity/getblockbylatestnum");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
@@ -125,10 +123,6 @@ public class HttpApiOnSolidityService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
               "/walletsolidity/gettransactioninfobyid");
-      context.addServlet(new ServletHolder(getDeferredTransactionByIdOnSolidyServlet),
-          "/walletsolidity/getdeferredtransactionbyid");
-      context.addServlet(new ServletHolder(getDeferredTransactionInfoByIdOnSolidyServlet),
-          "/walletsolidity/getdeferredtransactioninfobyid");
 
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),

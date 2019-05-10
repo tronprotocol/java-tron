@@ -1,11 +1,13 @@
 package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,9 +22,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
 
 
 @Component
@@ -43,7 +42,7 @@ public class EasyTransferAssetServlet extends HttpServlet {
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
-      visible = getVisiblePost(input);
+      visible = Util.getVisiblePost(input);
       EasyTransferAssetMessage.Builder build = EasyTransferAssetMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
       byte[] privateKey = wallet.pass2Key(build.getPassPhrase().toByteArray());
@@ -90,7 +89,7 @@ public class EasyTransferAssetServlet extends HttpServlet {
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
       try {
-        response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible ));
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }

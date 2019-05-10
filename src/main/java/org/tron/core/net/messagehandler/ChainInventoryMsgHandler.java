@@ -68,10 +68,10 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         logger.info("Block {} from {} is processed", blockId.getString(), peer.getNode().getHost());
       }
     }
-//
-//    if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
-//      peer.setNeedSyncFromPeer(false);
-//    }
+
+    //if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
+    //  peer.setNeedSyncFromPeer(false);
+    //}
 
     if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty()) ||
         (chainInventoryMessage.getRemainNum() != 0

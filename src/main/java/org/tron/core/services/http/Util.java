@@ -8,7 +8,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.List;
-import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
 import org.tron.protos.Contract.ExchangeInjectContract;
@@ -58,16 +56,15 @@ import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
-
-
-
 
 @Slf4j(topic = "API")
 public class Util {
 
   public static final String PERMISSION_ID = "Permission_id";
+  public static final String VISIBLE = "visible";
+  public static final String TRANSACTION = "transaction";
+  public static final String VALUE = "value";
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -110,7 +107,7 @@ public class Util {
     transactions.stream().forEach(transaction -> {
       jsonArray.add(printTransactionToJSON(transaction, selfType));
     });
-    jsonObject.put("transaction", jsonArray);
+    jsonObject.put(TRANSACTION, jsonArray);
 
     return jsonObject.toJSONString();
   }
@@ -126,7 +123,7 @@ public class Util {
 
   public static String printEasyTransferResponse(EasyTransferResponse response, boolean selfType) {
     JSONObject jsonResponse = JSONObject.parseObject(JsonFormat.printToString(response, selfType));
-    jsonResponse.put("transaction", printTransactionToJSON(response.getTransaction(), selfType));
+    jsonResponse.put(TRANSACTION, printTransactionToJSON(response.getTransaction(), selfType));
     return jsonResponse.toJSONString();
   }
 
@@ -136,7 +133,7 @@ public class Util {
 
   public static String printCreateTransaction(Transaction transaction, boolean selfType) {
     JSONObject jsonObject = printTransactionToJSON(transaction, selfType);
-    jsonObject.put("visible", selfType);
+    jsonObject.put(VISIBLE, selfType);
     return jsonObject.toJSONString();
   }
 
@@ -147,8 +144,8 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       JSONObject transactionOjbect = printTransactionToJSON(
           transactionExtention.getTransaction(), selfType);
-      transactionOjbect.put("visible", selfType);
-      jsonObject.put("transaction", transactionOjbect);
+      transactionOjbect.put(VISIBLE, selfType);
+      jsonObject.put(TRANSACTION, transactionOjbect);
     }
     return jsonObject.toJSONString();
   }
@@ -157,12 +154,12 @@ public class Util {
                                                   boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
-    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
+    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     jsonObjectExt
-        .put("transaction",
+        .put(TRANSACTION,
             printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
                 selfType));
-    jsonObject.put("transaction", jsonObjectExt);
+    jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
@@ -170,11 +167,11 @@ public class Util {
       TransactionApprovedList transactionApprovedList, boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
-    JSONObject jsonObjectExt = jsonObject.getJSONObject("transaction");
-    jsonObjectExt.put("transaction",
+    JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
+    jsonObjectExt.put(TRANSACTION,
         printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
             selfType));
-    jsonObject.put("transaction", jsonObjectExt);
+    jsonObject.put(TRANSACTION, jsonObjectExt);
     return jsonObject.toJSONString();
   }
 
@@ -188,15 +185,6 @@ public class Util {
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
     return Hash.sha3omit12(combined);
-  }
-
-  public static JSONObject printDeferredTransactionToJSON(DeferredTransaction deferredTransaction,
-                                                          boolean selfType) {
-    String string = JsonFormat.printToString(deferredTransaction, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
-    jsonObject.put("transaction", printTransactionToJSON(deferredTransaction.getTransaction(),
-        selfType));
-    return jsonObject;
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
@@ -377,13 +365,6 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(accountPermissionUpdateContract, selfType));
             break;
-          case CancelDeferredTransactionContract:
-            CancelDeferredTransactionContract cancelDeferredTransactionContract = contractParameter
-                .unpack(CancelDeferredTransactionContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(cancelDeferredTransactionContract,
-                    selfType));
-            break;
           case ClearABIContract:
             Contract.ClearABIContract clearABIContract = contractParameter
                 .unpack(Contract.ClearABIContract.class);
@@ -394,13 +375,13 @@ public class Util {
           default:
         }
         JSONObject parameter = new JSONObject();
-        parameter.put("value", contractJson);
+        parameter.put(VALUE, contractJson);
         parameter.put("type_url", contract.getParameterOrBuilder().getTypeUrl());
         JSONObject jsonContract = new JSONObject();
         jsonContract.put("parameter", parameter);
         jsonContract.put("type", contract.getType());
         if (contract.getPermissionId() > 0) {
-          jsonContract.put("Permission_id", contract.getPermissionId());
+          jsonContract.put(PERMISSION_ID, contract.getPermissionId());
         }
         contracts.add(jsonContract);
       } catch (InvalidProtocolBufferException e) {
@@ -415,13 +396,6 @@ public class Util {
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
-
-    if (Objects.nonNull(transaction.getRawData().getDeferredStage())
-        && transaction.getRawData().getDeferredStage().getDelaySeconds() > 0) {
-      jsonTransaction.put("delaySeconds",
-          transaction.getRawData().getDeferredStage().getDelaySeconds());
-      jsonTransaction.put("deferredStage", transaction.getRawData().getDeferredStage().getStage());
-    }
     return jsonTransaction;
   }
 
@@ -441,207 +415,200 @@ public class Util {
           case "AccountCreateContract":
             AccountCreateContract.Builder accountCreateContractBuilder = AccountCreateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 accountCreateContractBuilder, selfType);
             any = Any.pack(accountCreateContractBuilder.build());
             break;
           case "TransferContract":
             TransferContract.Builder transferContractBuilder = TransferContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 transferContractBuilder, selfType);
             any = Any.pack(transferContractBuilder.build());
             break;
           case "TransferAssetContract":
             TransferAssetContract.Builder transferAssetContractBuilder = TransferAssetContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 transferAssetContractBuilder, selfType);
             any = Any.pack(transferAssetContractBuilder.build());
             break;
           case "VoteAssetContract":
             VoteAssetContract.Builder voteAssetContractBuilder = VoteAssetContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 voteAssetContractBuilder, selfType);
             any = Any.pack(voteAssetContractBuilder.build());
             break;
           case "VoteWitnessContract":
             VoteWitnessContract.Builder voteWitnessContractBuilder =
                 VoteWitnessContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 voteWitnessContractBuilder, selfType);
             any = Any.pack(voteWitnessContractBuilder.build());
             break;
           case "WitnessCreateContract":
             WitnessCreateContract.Builder witnessCreateContractBuilder = WitnessCreateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 witnessCreateContractBuilder, selfType);
             any = Any.pack(witnessCreateContractBuilder.build());
             break;
           case "AssetIssueContract":
             AssetIssueContract.Builder assetIssueContractBuilder = AssetIssueContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 assetIssueContractBuilder, selfType);
             any = Any.pack(assetIssueContractBuilder.build());
             break;
           case "WitnessUpdateContract":
             WitnessUpdateContract.Builder witnessUpdateContractBuilder = WitnessUpdateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 witnessUpdateContractBuilder, selfType);
             any = Any.pack(witnessUpdateContractBuilder.build());
             break;
           case "ParticipateAssetIssueContract":
             ParticipateAssetIssueContract.Builder participateAssetIssueContractBuilder =
                 ParticipateAssetIssueContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 participateAssetIssueContractBuilder, selfType);
             any = Any.pack(participateAssetIssueContractBuilder.build());
             break;
           case "AccountUpdateContract":
             AccountUpdateContract.Builder accountUpdateContractBuilder = AccountUpdateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 accountUpdateContractBuilder, selfType);
             any = Any.pack(accountUpdateContractBuilder.build());
             break;
           case "FreezeBalanceContract":
             FreezeBalanceContract.Builder freezeBalanceContractBuilder = FreezeBalanceContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 freezeBalanceContractBuilder, selfType);
             any = Any.pack(freezeBalanceContractBuilder.build());
             break;
           case "UnfreezeBalanceContract":
             UnfreezeBalanceContract.Builder unfreezeBalanceContractBuilder = UnfreezeBalanceContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 unfreezeBalanceContractBuilder, selfType);
             any = Any.pack(unfreezeBalanceContractBuilder.build());
             break;
           case "WithdrawBalanceContract":
             WithdrawBalanceContract.Builder withdrawBalanceContractBuilder = WithdrawBalanceContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 withdrawBalanceContractBuilder, selfType);
             any = Any.pack(withdrawBalanceContractBuilder.build());
             break;
           case "UnfreezeAssetContract":
             UnfreezeAssetContract.Builder unfreezeAssetContractBuilder = UnfreezeAssetContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 unfreezeAssetContractBuilder, selfType);
             any = Any.pack(unfreezeAssetContractBuilder.build());
             break;
           case "UpdateAssetContract":
             UpdateAssetContract.Builder updateAssetContractBuilder = UpdateAssetContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 updateAssetContractBuilder, selfType);
             any = Any.pack(updateAssetContractBuilder.build());
             break;
           case "ProposalCreateContract":
             ProposalCreateContract.Builder createContractBuilder = ProposalCreateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 createContractBuilder, selfType);
             any = Any.pack(createContractBuilder.build());
             break;
           case "ProposalApproveContract":
             ProposalApproveContract.Builder approveContractBuilder = ProposalApproveContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 approveContractBuilder, selfType);
             any = Any.pack(approveContractBuilder.build());
             break;
           case "ProposalDeleteContract":
             ProposalDeleteContract.Builder deleteContractBuilder = ProposalDeleteContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 deleteContractBuilder, selfType);
             any = Any.pack(deleteContractBuilder.build());
             break;
           case "SetAccountIdContract":
             Contract.SetAccountIdContract.Builder setAccountid = Contract.SetAccountIdContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 setAccountid, selfType);
             any = Any.pack(setAccountid.build());
             break;
           case "CreateSmartContract":
             CreateSmartContract.Builder createSmartContractBuilder = CreateSmartContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 createSmartContractBuilder, selfType);
             any = Any.pack(createSmartContractBuilder.build());
             break;
           case "TriggerSmartContract":
             TriggerSmartContract.Builder triggerSmartContractBuilder = TriggerSmartContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 triggerSmartContractBuilder, selfType);
             any = Any.pack(triggerSmartContractBuilder.build());
             break;
           case "UpdateSettingContract":
             UpdateSettingContract.Builder updateSettingContractBuilder = UpdateSettingContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 updateSettingContractBuilder, selfType);
             any = Any.pack(updateSettingContractBuilder.build());
             break;
           case "ExchangeCreateContract":
             ExchangeCreateContract.Builder exchangeCreateContractBuilder = ExchangeCreateContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 exchangeCreateContractBuilder, selfType);
             any = Any.pack(exchangeCreateContractBuilder.build());
             break;
           case "ExchangeInjectContract":
             ExchangeInjectContract.Builder exchangeInjectContractBuilder = ExchangeInjectContract
                 .newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 exchangeInjectContractBuilder, selfType);
             any = Any.pack(exchangeInjectContractBuilder.build());
             break;
           case "ExchangeTransactionContract":
             ExchangeTransactionContract.Builder exchangeTransactionContractBuilder =
                 ExchangeTransactionContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 exchangeTransactionContractBuilder, selfType);
             any = Any.pack(exchangeTransactionContractBuilder.build());
             break;
           case "ExchangeWithdrawContract":
             ExchangeWithdrawContract.Builder exchangeWithdrawContractBuilder =
                 ExchangeWithdrawContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 exchangeWithdrawContractBuilder, selfType);
             any = Any.pack(exchangeWithdrawContractBuilder.build());
             break;
           case "UpdateEnergyLimitContract":
             UpdateEnergyLimitContract.Builder updateEnergyLimitContractBuilder =
                 UpdateEnergyLimitContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 updateEnergyLimitContractBuilder, selfType);
             any = Any.pack(updateEnergyLimitContractBuilder.build());
             break;
           case "AccountPermissionUpdateContract":
             AccountPermissionUpdateContract.Builder accountPermissionUpdateContractBuilder =
                 AccountPermissionUpdateContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 accountPermissionUpdateContractBuilder, selfType);
             any = Any.pack(accountPermissionUpdateContractBuilder.build());
-            break;
-          case "CancelDeferredTransactionContract":
-            CancelDeferredTransactionContract.Builder cancelDeferredTransactionContractBuilder =
-                CancelDeferredTransactionContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(),
-                cancelDeferredTransactionContractBuilder, selfType);
-            any = Any.pack(cancelDeferredTransactionContractBuilder.build());
             break;
           case "ClearABIContract":
             Contract.ClearABIContract.Builder clearABIContract =
                 Contract.ClearABIContract.newBuilder();
-            JsonFormat.merge(parameter.getJSONObject("value").toJSONString(), clearABIContract,
+            JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(), clearABIContract,
                 selfType);
             any = Any.pack(clearABIContract.build());
             break;
@@ -650,7 +617,7 @@ public class Util {
         }
         if (any != null) {
           String value = ByteArray.toHexString(any.getValue().toByteArray());
-          parameter.put("value", value);
+          parameter.put(VALUE, value);
           contract.put("parameter", parameter);
           contracts.add(contract);
         }
@@ -679,8 +646,8 @@ public class Util {
 
   public static boolean getVisible(final HttpServletRequest request) {
     boolean visible = false;
-    if (StringUtil.isNotBlank(request.getParameter("visible"))) {
-      visible = Boolean.valueOf(request.getParameter("visible"));
+    if (StringUtil.isNotBlank(request.getParameter(VISIBLE))) {
+      visible = Boolean.valueOf(request.getParameter(VISIBLE));
     }
     return visible;
   }
@@ -688,8 +655,8 @@ public class Util {
   public static boolean getVisiblePost(final String input) {
     boolean visible = false;
     JSONObject jsonObject = JSON.parseObject(input);
-    if (jsonObject.containsKey("visible")) {
-      visible = jsonObject.getBoolean("visible");
+    if (jsonObject.containsKey(VISIBLE)) {
+      visible = jsonObject.getBoolean(VISIBLE);
     }
 
     return visible;
@@ -726,10 +693,10 @@ public class Util {
 
   public static boolean getVisibleOnlyForSign(JSONObject jsonObject) {
     boolean visible = false;
-    if (jsonObject.containsKey("visible")) {
-      visible = jsonObject.getBoolean("visible");
-    } else if (jsonObject.getJSONObject("transaction").containsKey("visible")) {
-      visible = jsonObject.getJSONObject("transaction").getBoolean("visible");
+    if (jsonObject.containsKey(VISIBLE)) {
+      visible = jsonObject.getBoolean(VISIBLE);
+    } else if (jsonObject.getJSONObject(TRANSACTION).containsKey(VISIBLE)) {
+      visible = jsonObject.getJSONObject(TRANSACTION).getBoolean(VISIBLE);
     }
     return visible;
   }

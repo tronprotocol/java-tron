@@ -4,8 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpSelfFormatFieldName {
-  public static final Map<String, Integer> AddressFieldNameMap = new HashMap<>();
-  public static final Map<String, Integer> NameFieldNameMap = new HashMap<>();
+  private static Map<String, Integer> AddressFieldNameMap = new HashMap<>();
+  private static Map<String, Integer> NameFieldNameMap = new HashMap<>();
 
   static {
     //***** api.proto *****
