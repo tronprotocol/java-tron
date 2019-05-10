@@ -206,6 +206,7 @@ public class ProposalController {
         case (24): {
           if ( manager.getDynamicPropertiesStore().getAllowZksnarkTransaction() == 0 ) {
             manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+            manager.getMerkleTreeStore().addEmptyTree();
           }
           break;
         }
