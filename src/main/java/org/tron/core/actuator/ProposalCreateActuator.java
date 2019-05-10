@@ -288,7 +288,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (28): {
+      case (24): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
@@ -298,7 +298,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (29): {
+      case (25): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
@@ -308,7 +308,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
-      case (30): {
+      case (26): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
