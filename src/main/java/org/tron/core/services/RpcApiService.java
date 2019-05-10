@@ -1901,7 +1901,7 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
+      if (!(endNum > 0 && endNum > startNum)) {
         responseObserver.onNext(null);
       } else {
         responseObserver.onNext(
@@ -1918,7 +1918,7 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      if (!(endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM)) {
+      if (!(endNum > 0 && endNum > startNum)) {
         responseObserver.onNext(null);
       } else {
         responseObserver.onNext(
