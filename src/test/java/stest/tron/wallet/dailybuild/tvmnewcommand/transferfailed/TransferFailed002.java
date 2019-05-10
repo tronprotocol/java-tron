@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.transferfailed;
+package stest.tron.wallet.dailybuild.tvmnewcommand.transferfailed;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -27,7 +27,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class TransferFailed001 {
+public class TransferFailed002 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -89,8 +89,8 @@ public class TransferFailed001 {
   }
 
 
-  @Test(enabled = true, description = "Transfer balance enough")
-  public void test1TransferEnough() {
+  @Test(enabled = true, description = "Send balance enough")
+  public void test1SendEnough() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -124,78 +124,7 @@ public class TransferFailed001 {
     String txid = "";
     String num = "1";
     txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxInsufficientBalance(uint256)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    Optional<TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Long fee = infoById.get().getFee();
-    Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
-    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
-    logger.info("fee:" + fee);
-    logger.info("netUsed:" + netUsed);
-    logger.info("energyUsed:" + energyUsed);
-    logger.info("netFee:" + netFee);
-    logger.info("energyUsageTotal:" + energyUsageTotal);
-
-    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull1);
-    Long afterBalance = infoafter.getBalance();
-    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
-    Long afterNetUsed = resourceInfoafter.getNetUsed();
-    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-    logger.info("afterBalance:" + afterBalance);
-    logger.info("afterEnergyUsed:" + afterEnergyUsed);
-    logger.info("afterNetUsed:" + afterNetUsed);
-    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertTrue(afterBalance + fee - 1 == beforeBalance);
-    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
-    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
-    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-
-
-  }
-
-
-  @Test(enabled = true, description = "Transfer trx insufficient balance")
-  public void test2TransferTrxInsufficientBalance() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
-    String num = "1";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxInsufficientBalance(uint256)", num, false,
+        "testSendTrxInsufficientBalance(uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -224,11 +153,80 @@ public class TransferFailed001 {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
     logger.info("infoById:" + infoById);
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
-    Assert.assertEquals(
-        "REVERT opcode executed",
-        ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
+
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertTrue(afterBalance + fee - 1 == beforeBalance);
+    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
+    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
+    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+
+  }
+
+
+  @Test(enabled = true, description = "Send balance not enough")
+  public void test2SendNotEnough() {
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress, 100000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String contractName = "EnergyOfTransferFailedTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+    String txid = "";
+    String num = "1";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testSendTrxInsufficientBalance(uint256)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    logger.info("infoById:" + infoById);
+
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
@@ -239,8 +237,8 @@ public class TransferFailed001 {
   }
 
 
-  @Test(enabled = true, description = "Transfer trx nonexistent target")
-  public void test3TransferTrxNonexistentTarget() {
+  @Test(enabled = true, description = "Send trx nonexistent target")
+  public void test3SendTrxNonexistentTarget() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -277,7 +275,7 @@ public class TransferFailed001 {
     String num = "1" + ",\"" + Base58.encode58Check(nonexistentAddress) + "\"";
 
     txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxNonexistentTarget(uint256,address)", num, false,
+        "testSendTrxNonexistentTarget(uint256,address)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -325,8 +323,8 @@ public class TransferFailed001 {
   }
 
 
-  @Test(enabled = true, description = "Transfer trx to myself")
-  public void test4TransferTrxSelf() {
+  @Test(enabled = true, description = "Send trx self")
+  public void test4SendTrxSelf() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -359,9 +357,8 @@ public class TransferFailed001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String txid = "";
     String num = "1";
-
     txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxSelf(uint256)", num, false,
+        "testSendTrxSelf(uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -403,13 +400,14 @@ public class TransferFailed001 {
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
+    Assert.assertNotEquals(10000000, energyUsageTotal);
 
 
   }
 
 
-  @Test(enabled = true, description = "Transfer trx nonexistent target and insufficient balance")
-  public void test5TransferTrxNonexistentTarget() {
+  @Test(enabled = true, description = "Send trx nonexistent target and balance not enough")
+  public void test5SendTrxNonexistentTarget() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -443,10 +441,11 @@ public class TransferFailed001 {
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     byte[] nonexistentAddress = ecKey2.getAddress();
     String txid = "";
-    String num = "10000000" + ",\"" + Base58.encode58Check(nonexistentAddress) + "\"";
+
+    String num = "100000000" + ",\"" + Base58.encode58Check(contractExcAddress) + "\"";
 
     txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxNonexistentTarget(uint256,address)", num, false,
+        "testSendTrxNonexistentTarget(uint256,address)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -477,24 +476,18 @@ public class TransferFailed001 {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
-    Assert.assertEquals(
-        "REVERT opcode executed",
-        ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
-
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
     Assert.assertNotEquals(10000000, energyUsageTotal);
 
-
   }
 
 
-  @Test(enabled = true, description = "Transfer trx to myself and insufficient balance")
-  public void test6TransferTrxSelf() {
+  @Test(enabled = true, description = "Send trx self and balance not enough")
+  public void test6SendTrxSelf() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -527,10 +520,11 @@ public class TransferFailed001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     ECKey ecKey2 = new ECKey(Utils.getRandom());
     String txid = "";
+
     String num = "1000000000";
 
     txid = PublicMethed.triggerContract(contractAddress,
-        "testTransferTrxSelf(uint256)", num, false,
+        "testSendTrxSelf(uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -561,12 +555,7 @@ public class TransferFailed001 {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertEquals(contractResult.REVERT, infoById.get().getReceipt().getResult());
-    Assert.assertEquals(
-        "REVERT opcode executed",
-        ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
-
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);

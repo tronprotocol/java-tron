@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.transferfailed;
+package stest.tron.wallet.dailybuild.tvmnewcommand.transferfailed;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
