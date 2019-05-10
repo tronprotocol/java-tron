@@ -1516,7 +1516,6 @@ public class Wallet {
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
 
-
     validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
     result.setBlockNum(request.getBlockNum());
@@ -1529,10 +1528,13 @@ public class Wallet {
       }
     }
 
+    logger.debug("largeBlockNum:" + largeBlockNum);
+    int opIndex = 0;
+
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
       Long blockNum1 = getBlockNumber(outputPoint);
-      logger.debug("blockNum:" + blockNum1);
+      logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       IncrementalMerkleVoucherContainer witness = createWitness(outputPoint, blockNum1);
       updateLowWitness(witness, blockNum1, largeBlockNum);
       witnessList.add(witness);
