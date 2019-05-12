@@ -1344,11 +1344,20 @@ public class Wallet {
     if(treeRoot == null){
       throw new RuntimeException("treeRoot is null,blockNumbler:" + (blockNumber - 1));
     }
-    IncrementalMerkleTreeContainer tree = dbManager.getMerkleTreeStore()
-        .get(treeRoot).toMerkleTreeContainer();
-    if(tree == null){
-      throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+
+    IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
+        .get(treeRoot);
+    if(treeCapsule == null){
+      if(ByteArray.toHexString(treeRoot).equals(
+          "fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e")){
+        treeCapsule = new IncrementalMerkleTreeCapsule();
+      }else {
+        throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
+      }
+
     }
+    IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
+
 
     //Get the block of blockNum
     BlockCapsule block = dbManager.getBlockByNum(blockNumber);
@@ -1374,7 +1383,7 @@ public class Wallet {
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
             PedersenHash cm = cmCapsule.getInstance();
 
-            if (outPoint.getIndex() < index) {
+            if (index < outPoint.getIndex()) {
               tree.append(cm);
             }else if(outPoint.getIndex() == index){
               tree.append(cm);
@@ -1383,6 +1392,8 @@ public class Wallet {
             }else {
               witness.append(cm);
             }
+
+            index ++;
           }
 
         } else {
@@ -1436,18 +1447,19 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
-          PedersenHash cm1 = cmCapsule1.getInstance();
+          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
+              zkContract.getReceiveDescriptionList()){
 
-          PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
-          PedersenHash cm2 = cmCapsule2.getInstance();
+            PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
+            cmCapsule2.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm2 = cmCapsule2.getInstance();
 
-          witnessList.forEach(wit -> {
-            wit.append(cm1);
-            wit.append(cm2);
-          });
+            witnessList.forEach(wit -> {
+              wit.append(cm2);
+            });
+
+          }
+
 
         }
       }
@@ -1528,9 +1540,13 @@ public class Wallet {
       }
     }
 
+    logger.debug("largeBlockNum:" + largeBlockNum);
+    int opIndex = 0;
+
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
       Long blockNum1 = getBlockNumber(outputPoint);
+      logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       IncrementalMerkleVoucherContainer witness = createWitness(outputPoint, blockNum1);
       updateLowWitness(witness, blockNum1, largeBlockNum);
       witnessList.add(witness);
@@ -1539,7 +1555,7 @@ public class Wallet {
     int synBlockNum = request.getBlockNum();
     if (synBlockNum != 0) {
       //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-      updateWitnesses(witnessList, largeBlockNum, synBlockNum);
+      updateWitnesses(witnessList, largeBlockNum+1, synBlockNum);
     }
 
     for (IncrementalMerkleVoucherContainer w : witnessList){
@@ -1619,16 +1635,17 @@ public class Wallet {
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
-        IncrementalMerkleTreeCapsule merkleTreeCapsule = dbManager.getMerkleContainer()
-            .getMerkleTree(spendNote.getAnchor().toByteArray());
+
 
         GrpcAPI.Note note = spendNote.getNote();
         BaseNote.Note baseNote = new BaseNote.Note(new DiversifierT(note.getD().toByteArray()),
             note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
 
+        IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
+            spendNote.getVoucher()).toMerkleVoucherContainer();
         builder.addSaplingSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
-            spendNote.getAnchor().toByteArray(),
-            merkleTreeCapsule.toMerkleTreeContainer().toVoucher());
+            spendNote.getVoucher().getRt().toByteArray(),
+            voucherContainer    );
       }
     }
 

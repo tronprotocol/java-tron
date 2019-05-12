@@ -1,5 +1,7 @@
 package org.tron.core.zen.note;
 
+import com.google.protobuf.ByteString;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
@@ -61,5 +63,19 @@ public class BaseNote {
 
       return result;
     }
+  }
+
+  public static void main(String[] args) throws Exception {
+    byte[] result = new byte[32];
+    if (!Librustzcash.librustzcashSaplingComputeCm(
+        (ByteArray.fromHexString("fc6eb90855700861de6639")), (
+            ByteArray
+                .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19")),
+        9990000000L, (ByteArray.fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02")), result)) {
+      System.out.println(" error");
+    } else {
+      System.out.println(" ok");
+    }
+
   }
 }
