@@ -1,7 +1,5 @@
 package org.tron.core.zen.address;
 
-import java.util.Optional;
-import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,9 +9,13 @@ import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium;
 import org.tron.core.Constant;
+import org.tron.core.zen.note.BaseNote;
 import org.tron.core.zen.note.BaseNote.Note;
 import org.tron.core.zen.utils.KeyIo;
 import org.tron.core.zen.utils.PRF;
+
+import java.util.Optional;
+import java.util.Random;
 
 @AllArgsConstructor
 public class SpendingKey {
@@ -116,6 +118,7 @@ public class SpendingKey {
     System.out.println(
         "sk.defaultAddress:" + KeyIo.EncodePaymentAddress(sk.defaultAddress()));
 
+    System.out.println("rcm:" + ByteUtil.toHexString(BaseNote.Note.generateR()));
     // new sk
     System.out.println("---- random ----");
 
