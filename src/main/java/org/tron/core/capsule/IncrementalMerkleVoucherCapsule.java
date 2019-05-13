@@ -1,10 +1,12 @@
-package org.tron.core.zen.merkle;
+package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.ProtoCapsule;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucher;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.PedersenHash;

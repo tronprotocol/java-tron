@@ -22,7 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
@@ -391,6 +393,21 @@ public class ByteUtil {
           + Character.digit(s.charAt(i + 1), 16));
     }
     return data;
+  }
+
+
+  public static List<Boolean> convertBytesVectorToVector(final byte[] bytes) {
+    List<Boolean> ret = new ArrayList<>();
+
+    byte c;
+    for (int i = 0; i < bytes.length; i++) {
+      c = bytes[i];
+      for (int j = 0; j < 8; j++) {
+        ret.add(((c >> (7 - j)) & 1) == 1);
+      }
+    }
+
+    return ret;
   }
 
 }

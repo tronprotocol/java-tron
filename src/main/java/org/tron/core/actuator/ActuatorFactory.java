@@ -47,8 +47,6 @@ public class ActuatorFactory {
         return new UpdateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager);
-      case ZksnarkV0TransferContract:
-        return new ZkV0TransferActuator(contract.getParameter(), manager);
       case TransferAssetContract:
         return new TransferAssetActuator(contract.getParameter(), manager);
       case VoteAssetContract:

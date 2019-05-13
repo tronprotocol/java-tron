@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.ByteUtil;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
@@ -275,7 +278,7 @@ public class IncrementalMerkleTreeContainer {
     List<List<Boolean>> merklePath = new ArrayList<>();
 
     for (PedersenHash b : path) {
-      merklePath.add(MerkleUtils.convertBytesVectorToVector(b.getContent().toByteArray()));
+      merklePath.add(ByteUtil.convertBytesVectorToVector(b.getContent().toByteArray()));
     }
     merklePath = Lists.reverse(merklePath);
     index = Lists.reverse(index);
@@ -305,5 +308,42 @@ public class IncrementalMerkleTreeContainer {
 
   private boolean rightIsPresent() {
     return !treeCapsule.getRight().getContent().isEmpty();
+  }
+
+  public static class PathFiller {
+
+    private Deque<PedersenHash> queue;
+
+    public PathFiller(Deque<PedersenHash> queue) {
+      this.queue = queue;
+    }
+
+    public PedersenHash next(int depth) {
+      if (queue.size() > 0) {
+        return queue.poll();
+      } else {
+        return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(depth);
+      }
+    }
+  }
+
+  public static class EmptyMerkleRoots {
+
+    public static EmptyMerkleRoots emptyMerkleRootsInstance = new EmptyMerkleRoots();
+
+    private List<PedersenHashCapsule> emptyRoots = new ArrayList<>();
+
+    public EmptyMerkleRoots() {
+      emptyRoots.add(PedersenHashCapsule.uncommitted());
+      for (int d = 1; d <= DEPTH; d++) {
+        emptyRoots.add(
+            PedersenHashCapsule.combine(
+                emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
+      }
+    }
+
+    public PedersenHash emptyRoot(int depth) {
+      return emptyRoots.get(depth).getInstance();
+    }
   }
 }

@@ -1,11 +1,10 @@
-package org.tron.core.zen.merkle;
+package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.core.capsule.ProtoCapsule;
 import org.tron.protos.Contract.PedersenHash;
 
 
