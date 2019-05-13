@@ -7,6 +7,8 @@ import com.sun.jna.Pointer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
@@ -14,6 +16,8 @@ import org.apache.commons.io.FileUtils;
 public class Librustzcash {
 
   private static ILibrustzcash INSTANCE;
+
+  private static final Map<String, String> libraries = new ConcurrentHashMap<>();
 
   static {
     INSTANCE = (ILibrustzcash) Native
@@ -249,6 +253,10 @@ public class Librustzcash {
   }
 
   public static String getLibraryByName(String name) {
+    return libraries.computeIfAbsent(name , Librustzcash::getLibrary);
+  }
+
+  private static String getLibrary(String name) {
     String platform;
     String extension;
     if (Platform.isLinux()) {
@@ -265,7 +273,7 @@ public class Librustzcash {
     }
     InputStream in = Librustzcash.class.getClassLoader().getResourceAsStream(
         "native-package" + File.separator + platform + File.separator + name + extension);
-    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + name + extension);
+    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + name + "-" + System.currentTimeMillis() + extension);
     try {
       FileUtils.copyToFile(in, fileOut);
     } catch (IOException e) {
