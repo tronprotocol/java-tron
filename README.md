@@ -52,13 +52,16 @@
 
 ## What's TRON?
 
-TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
+TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.    
 
-The Tron Protocol, one of the largest blockchain based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem. 
 
-TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission, TRON is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+* Tron Protocol, one of the largest blockchain based operating systems in the world, offers scalable, high-availability and high-throughput support that underlies all the decentralized applications in the TRON ecosystem. 
 
-TRON Protocol and the Tron Virtual Machine (TVM) allow anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
+* Tron Virtual Machine (TVM) allow anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
+
+TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission.  
+It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+
 
 # Deploy
 * [Build](https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md) Please build java-tron after cloning the project  
