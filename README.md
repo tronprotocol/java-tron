@@ -73,10 +73,6 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
-# Advanced Configurations
-
-Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
-
 # Developer Community
 
 * [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
