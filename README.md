@@ -41,23 +41,14 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="#how-to-build">How to Build</a> •
-  <a href="#running">How to Run</a> •
-  <a href="#links">Links</a> •
-  <a href="http://developers.tron.network">Documentation</a> •
-  <a href="CONTRIBUTING.md">Contributing</a> •
-  <a href="#community">Community</a>
-</p>
-
 ## Table of Contents
 - [What is Tron?](#What's-TRON?)
-- [How to Build](#How-to-Build)
-- [How to Run](#How-to-Run)
+- [How to Build](#Build)
+- [How to Run](#Run)
 - [Qucik Start](#Quick-Start)
 - [Advanced Configurations](#Advanced-Configurations)
 - [Developer Community](#Developer-Community)
-- [Links](#Links)
+- [Resource](#Resource)
 - [Projects](#Projects)
 
 ## What's TRON?
