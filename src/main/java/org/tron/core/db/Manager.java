@@ -501,9 +501,6 @@ public class Manager {
       triggerCapsuleProcessThread.start();
     }
 
-    if (Args.getInstance().getAllowZKSnarkTransaction() == 1) {
-      merkleTreeStore.addEmptyTree();
-    }
   }
 
   public BlockId getGenesisBlockId() {

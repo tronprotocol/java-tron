@@ -31,11 +31,4 @@ public class IncrementalMerkleTreeStore
     return !ArrayUtils.isEmpty(value);
   }
 
-  public void addEmptyTree(){
-    IncrementalMerkleTreeContainer container =
-        (new IncrementalMerkleTreeCapsule()).toMerkleTreeContainer();
-
-    put(container.getMerkleTreeKey(), container.getTreeCapsule());
-    logger.info("addEmptyTree,root:" + ByteArray.toHexString(container.getMerkleTreeKey()));
-  }
 }
