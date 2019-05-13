@@ -188,6 +188,6 @@ In the `Program arguments` option, fill in `--witness`:
   
 Then, run `FullNode::main()` again.
 
-# Advanced Configurations
+## Advanced Configurations
 
 Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
