@@ -73,6 +73,11 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
+# Projects
+* [TRON Protocol](https://github.com/tronprotocol/protocol)
+* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
+* [Wallet Web](https://github.com/tronprotocol/wallet-web)
+
 # Developer Community
 
 * [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
@@ -94,11 +99,6 @@ in line with the general philosophy of the project and/or get some early feedbac
 * [White Paper](https://tron.network/resources?lng=&name=1)
 * [About](https://tron.network/about)
 * [FAQ](https://tron.network/faq)
-
-# Projects
-* [TRON Protocol](https://github.com/tronprotocol/protocol)
-* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
-* [Wallet Web](https://github.com/tronprotocol/wallet-web)
 
 # License
 * [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
