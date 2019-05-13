@@ -67,12 +67,8 @@ import org.tron.core.zen.*;
 import org.tron.core.zen.address.*;
 import org.tron.core.zen.merkle.*;
 import org.tron.core.zen.note.*;
-import org.tron.core.zen.transaction.Recipient;
-import org.tron.core.zen.utils.KeyIo;
-import org.tron.core.zen.walletdb.CKeyMetadata;
-import org.tron.core.zen.zip32.ExtendedSpendingKey;
-import org.tron.core.zen.zip32.HDSeed;
-import org.tron.core.zen.zip32.HdChain;
+import org.tron.core.zen.note.Note;
+import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.*;
 import org.tron.protos.Protocol;
@@ -89,7 +85,6 @@ import java.util.*;
 
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
-import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 
 @Slf4j
 @Component
@@ -1638,7 +1633,7 @@ public class Wallet {
 
 
         GrpcAPI.Note note = spendNote.getNote();
-        BaseNote.Note baseNote = new BaseNote.Note(new DiversifierT(note.getD().toByteArray()),
+        Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
             note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
 
         IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
@@ -1765,7 +1760,7 @@ public class Wallet {
   public BytesMessage getRcm() {
     byte[] rcm;
     try {
-      rcm = BaseNote.Note.generateR();
+      rcm = Note.generateR();
       return BytesMessage.newBuilder().setValue(ByteString.copyFrom(rcm)).build();
     } catch (Exception e) {
       return null;
@@ -2018,95 +2013,6 @@ public class Wallet {
 
   }
 
-  //for shield transactions
-
-  public String getNewZenAddress() {
-    //seed
-    //AccountCounter
-
-    // Create new metadata
-    long nCreationTime = System.currentTimeMillis();
-    CKeyMetadata metadata = new CKeyMetadata(nCreationTime);
-
-    // Try to get the seed
-    HDSeed seed = KeyStore.seed;
-    // init data for test
-    seed.random(32);
-
-    if (seed == null) {
-      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): HD seed not found");
-    }
-
-    ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
-    int bip44CoinType = ZkChainParams.BIP44CoinType;
-
-    // We use a fixed keypath scheme of m/32'/coin_type'/account'
-    // Derive m/32'
-    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
-    // Derive m/32'/coin_type'
-    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
-
-    System.out.println("depth=" + ByteArray.toInt(master32hCth.getDepth()));
-    System.out.println("depth=" + ByteArray.toStr(master32hCth.getParentFVKTag()));
-    System.out.println("depth=" + ByteArray.toInt(master32hCth.getChildIndex()));
-
-    // Derive account key at next index, skip keys already known to the wallet
-    ExtendedSpendingKey xsk = null;
-
-    while (xsk == null || KeyStore.haveSpendingKey(xsk.getExpsk().fullViewingKey())) {
-      //
-      xsk = master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
-      metadata.hdKeyPath = "m/32'/" + bip44CoinType + "'/" + HdChain.saplingAccountCounter + "'";
-      metadata.seedFp = HdChain.seedFp;
-      // Increment childkey index
-      HdChain.saplingAccountCounter++;
-    }
-
-    // Update the chain model in the database
-//    if (fFileBacked && !CWalletDB(strWalletFile).WriteHDChain(hdChain))
-//      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): Writing HD chain model failed");
-
-    IncomingViewingKey ivk = xsk.getExpsk().fullViewingKey().inViewingKey();
-    ZenWallet.mapSaplingZKeyMetadata.put(ivk, metadata);
-
-    PaymentAddress addr = xsk.DefaultAddress();
-    if (!ZenWallet.AddSaplingZKey(xsk, addr)) {
-      throw new RuntimeException("CWallet::GenerateNewSaplingZKey(): AddSaplingZKey failed");
-    }
-
-    // return default sapling payment address.
-    String paymentAddress = KeyIo.EncodePaymentAddress(addr);
-    System.out.println("paymentAddress = " + paymentAddress);
-    return paymentAddress;
-  }
-
-  public void sendZenCoinShield(String[] params) {
-    String fromAddr = params[0];
-    List<Recipient> outputs = new ArrayList<>();
-
-    ZenTransactionBuilderFactory constructor =
-        new ZenTransactionBuilderFactory(fromAddr, outputs);
-    TransactionCapsule result = constructor.build();
-//    broadcastTX();
-  }
-
-
-  public long getBalanceZenAddress(String address, int minDepth, boolean requireSpendingKey) {
-    long balance = 0;
-    List<NoteEntry> saplingEntries;
-
-    PaymentAddress filterAddresses = null;// TODO can be null
-    if (address.length() > 0) {
-      filterAddresses = KeyIo.decodePaymentAddress(address);
-    }
-
-    saplingEntries = ZenWallet.GetFilteredNotes(filterAddresses, true, requireSpendingKey);
-    for (NoteEntry entry : saplingEntries) {
-      balance += entry.note.value;
-    }
-
-    return balance;
-  }
 
   /*
    * try to get cm belongs to ivk
@@ -2151,7 +2057,7 @@ public class Wallet {
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
-          Optional<BaseNotePlaintext.NotePlaintext> notePlaintext = BaseNotePlaintext.NotePlaintext
+          Optional<NotePlaintext> notePlaintext = NotePlaintext
               .decrypt(
                   r.getCEnc().toByteArray(),//ciphertext
                   ivk,
@@ -2160,14 +2066,14 @@ public class Wallet {
               );
 
           if (notePlaintext.isPresent()) {
-            BaseNotePlaintext.NotePlaintext noteText = notePlaintext.get();
+            NotePlaintext noteText = notePlaintext.get();
 
             byte[] pk_d = new byte[32];
             if (!Librustzcash.librustzcashIvkToPkd(ivk, noteText.d.getData(), pk_d)) {
               continue;
             }
 
-            Note note = Note.newBuilder()
+            GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                 .setD(ByteString.copyFrom(noteText.d.getData()))
                 .setValue(noteText.value)
                 .setRcm(ByteString.copyFrom(noteText.rcm))
@@ -2233,10 +2139,10 @@ public class Wallet {
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
 
-          NoteEncryption.OutCiphertext c_out = new NoteEncryption.OutCiphertext();
+          Encryption.OutCiphertext c_out = new Encryption.OutCiphertext();
           c_out.data = r.getCOut().toByteArray();
 
-          Optional<SaplingOutgoingPlaintext> notePlaintext = SaplingOutgoingPlaintext
+          Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext
               .decrypt(c_out,//ciphertext
                   ovk,
                   r.getValueCommitment().toByteArray(), //cv
@@ -2246,13 +2152,13 @@ public class Wallet {
 
           if (notePlaintext.isPresent()) {
 
-            SaplingOutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
+            OutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
 
             //decode c_enc with pkd、esk
-            NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
+            Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
             ciphertext.data = r.getCEnc().toByteArray();
 
-            Optional<BaseNotePlaintext.NotePlaintext> foo = BaseNotePlaintext.NotePlaintext
+            Optional<NotePlaintext> foo = NotePlaintext
                 .decrypt(ciphertext,
                     r.getEpk().toByteArray(),
                     decrypted_out_ct_unwrapped.esk,
@@ -2261,9 +2167,9 @@ public class Wallet {
 
             if (foo.isPresent()) {
 
-              BaseNotePlaintext.NotePlaintext bar = foo.get();
+              NotePlaintext bar = foo.get();
 
-              Note note = Note.newBuilder()
+              GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                   .setD(ByteString.copyFrom(bar.d.getData()))
                   .setValue(bar.value)
                   .setRcm(ByteString.copyFrom(bar.rcm))

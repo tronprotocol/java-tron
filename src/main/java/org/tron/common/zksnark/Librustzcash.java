@@ -5,9 +5,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import java.io.File;
-import org.tron.core.zen.KeyStore;
-import org.tron.core.zen.zip32.HDSeed;
-import org.tron.core.zen.zip32.HDSeed.RawHDSeed;
 
 public class Librustzcash {
 
@@ -266,20 +263,5 @@ public class Librustzcash {
         "native-package" + File.separator + platform + File.separator + name + extension).getFile();
   }
 
-  public static void main(String[] args) throws Exception {
-    Librustzcash librustzcash = new Librustzcash();
-
-    byte[] aa = {0x16, 0x52, 0x52};
-
-    HDSeed seed = KeyStore.seed;
-    RawHDSeed rawHDSeed = new RawHDSeed();
-    seed.rawSeed = rawHDSeed;
-    seed.rawSeed.data = aa;
-    RawHDSeed rawSeed = seed.getRawSeed();
-
-    int ZIP32_XSK_SIZE = 169; // byte
-    byte[] m_bytes = new byte[ZIP32_XSK_SIZE];
-    librustzcash.librustzcashZip32XskMaster(rawSeed.getData(), rawSeed.getData().length, m_bytes);
-  }
 
 }

@@ -3,10 +3,12 @@ package org.tron.core.zen.address;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
 
+@Slf4j(topic = "shieldTransaction")
 @AllArgsConstructor
 public class ExpandedSpendingKey {
 
@@ -37,12 +39,12 @@ public class ExpandedSpendingKey {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
-    System.out.println("espsk.ask is : " + ByteUtil.toHexString(ask));
-    System.out.println("espsk.nsk is : " + ByteUtil.toHexString(nsk));
-    System.out.println("espsk.ovk is : " + ByteUtil.toHexString(ovk));
+    logger.debug("espsk.ask is : " + ByteUtil.toHexString(ask));
+    logger.debug("espsk.nsk is : " + ByteUtil.toHexString(nsk));
+    logger.debug("espsk.ovk is : " + ByteUtil.toHexString(ovk));
 
-    System.out.println("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
-    System.out.println("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
+    logger.debug("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
+    logger.debug("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
     return new FullViewingKey(ak, nk, ovk);
   }
 

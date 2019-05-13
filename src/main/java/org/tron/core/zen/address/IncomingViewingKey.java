@@ -4,10 +4,12 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
 
 // ivk
+@Slf4j(topic = "shieldTransaction")
 @AllArgsConstructor
 public class IncomingViewingKey {
 
@@ -19,9 +21,9 @@ public class IncomingViewingKey {
     byte[] pkD = new byte[32]; // 32
     if (Librustzcash.librustzcashCheckDiversifier(d.data)) {
       Librustzcash.librustzcashIvkToPkd(value, d.data, pkD);
-      System.out.println("address.ivk is: " + ByteUtil.toHexString(value));
-      System.out.println("address.d is: " + ByteUtil.toHexString(d.data));
-      System.out.println("address.pkd is: " + ByteUtil.toHexString(pkD));
+      logger.debug("address.ivk is: " + ByteUtil.toHexString(value));
+      logger.debug("address.d is: " + ByteUtil.toHexString(d.data));
+      logger.debug("address.pkd is: " + ByteUtil.toHexString(pkD));
       return Optional.of(new PaymentAddress(d, pkD));
     } else {
       return Optional.empty();

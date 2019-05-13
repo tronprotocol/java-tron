@@ -1,4 +1,4 @@
-package org.tron.core.zen.transaction;
+package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;

@@ -4,15 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium;
+import org.tron.common.zksnark.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
 import org.tron.core.Constant;
-import org.tron.core.zen.note.BaseNote;
-import org.tron.core.zen.note.BaseNote.Note;
-import org.tron.core.zen.utils.KeyIo;
-import org.tron.core.zen.utils.PRF;
+import org.tron.core.exception.BadItemException;
 
 import java.util.Optional;
 import java.util.Random;
@@ -51,13 +48,13 @@ public class SpendingKey {
     return expandedSpendingKey().fullViewingKey();
   }
 
-  public PaymentAddress defaultAddress() throws Exception {
+  public PaymentAddress defaultAddress() throws BadItemException {
     Optional<PaymentAddress> addrOpt =
         fullViewingKey().inViewingKey().address(defaultDiversifier());
     return addrOpt.get();
   }
 
-  public DiversifierT defaultDiversifier() throws Exception {
+  public DiversifierT defaultDiversifier() throws BadItemException {
     byte[] res = new byte[Constant.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
     System.arraycopy(this.value, 0, blob, 0, 32);
@@ -72,7 +69,7 @@ public class SpendingKey {
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
-        throw new Exception("librustzcash_check_diversifier did not return valid diversifier");
+        throw new BadItemException("librustzcash_check_diversifier did not return valid diversifier");
       }
       blob[33] += 1;
     }
@@ -98,53 +95,44 @@ public class SpendingKey {
   }
 
 
-  public static void main(String[] args) throws Exception {
-    SpendingKey sk = SpendingKey
-        .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
-    //   SpendingKey sk = SpendingKey.random();
-    System.out.println(sk.encode());
-    System.out.println(
-        "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
-    System.out.println(
-        "sk.fullViewKey()" + ByteUtil.toHexString(sk.fullViewingKey().encode()));
-    System.out.println(
-        "sk.ivk()" + ByteUtil.toHexString(sk.fullViewingKey().inViewingKey().getValue()));
-    System.out.println(
-        "sk.defaultDiversifier:" + ByteUtil.toHexString(sk.defaultDiversifier().getData()));
+  private static class PRF {
 
-    System.out.println(
-        "sk.defaultAddress:" + ByteUtil.toHexString(sk.defaultAddress().encode()));
-
-    System.out.println(
-        "sk.defaultAddress:" + KeyIo.EncodePaymentAddress(sk.defaultAddress()));
-
-    System.out.println("rcm:" + ByteUtil.toHexString(BaseNote.Note.generateR()));
-    // new sk
-    System.out.println("---- random ----");
-
-    sk = SpendingKey.random();
-
-    DiversifierT diversifierT = new DiversifierT();
-    // byte[] d = {'1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '0'};
-    byte[] d;
-    while (true) {
-      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
-      if (Librustzcash.librustzcashCheckDiversifier(d)) {
-        break;
-      }
+    public static byte[] prfAsk(byte[] sk) {
+      byte[] ask = new byte[32];
+      byte t = 0x00;
+      byte[] tmp = prfExpand(sk, t);
+      Librustzcash.librustzcashToScalar(tmp, ask);
+      return ask;
     }
 
-    diversifierT.setData(d);
-    Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
-    byte[] rcm = Note.generateR();
-    System.out.println("rcm is " + ByteUtil.toHexString(rcm));
+    public static byte[] prfNsk(byte[] sk) {
+      byte[] nsk = new byte[32];
+      byte t = 0x01;
+      byte[] tmp = prfExpand(sk, t);
+      Librustzcash.librustzcashToScalar(tmp, nsk);
+      return nsk;
+    }
 
-    byte[] alpha = Note.generateR();
-    System.out.println("alpha is " + ByteUtil.toHexString(alpha));
+    public static byte[] prfOvk(byte[] sk) {
+      byte[] ovk = new byte[32];
+      byte t = 0x02;
+      byte[] tmp = prfExpand(sk, t);
+      System.arraycopy(tmp, 0, ovk, 0, 32);
+      return ovk;
+    }
 
-    if (op.isPresent()) {
-      System.out.println(
-          "sk.Address:" + KeyIo.EncodePaymentAddress(op.get()));
+    private static byte[] prfExpand(byte[] sk, byte t) {
+      byte[] res = new byte[64];
+      byte[] blob = new byte[33];
+      System.arraycopy(sk, 0, blob, 0, 32);
+      blob[32] = t;
+      crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
+      Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
+          state, null, 0, 64, null, Constant.ZCASH_EXPANDSEED_PERSONALIZATION);
+      Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
+      Libsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
+
+      return res;
     }
   }
 }

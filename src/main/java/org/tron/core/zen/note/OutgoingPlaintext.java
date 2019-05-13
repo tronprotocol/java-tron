@@ -1,37 +1,38 @@
 package org.tron.core.zen.note;
 
-import static org.tron.core.zen.ZkChainParams.ZC_JUBJUB_POINT_SIZE;
-import static org.tron.core.zen.ZkChainParams.ZC_JUBJUB_SCALAR_SIZE;
-import static org.tron.core.zen.ZkChainParams.ZC_SAPLING_OUTPLAINTEXT_SIZE;
+import static org.tron.core.zen.note.ZenChainParams.ZC_JUBJUB_POINT_SIZE;
+import static org.tron.core.zen.note.ZenChainParams.ZC_JUBJUB_SCALAR_SIZE;
+import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.tron.core.zen.note.NoteEncryption.OutCiphertext;
-import org.tron.core.zen.note.NoteEncryption.OutPlaintext;
+import org.tron.core.zen.note.NoteEncryption.Encryption;
+import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
+import org.tron.core.zen.note.NoteEncryption.Encryption.OutPlaintext;
 
 @AllArgsConstructor
-public class SaplingOutgoingPlaintext {
+public class OutgoingPlaintext {
 
   public byte[] pk_d;
   public byte[] esk;
 
-  public static Optional<SaplingOutgoingPlaintext> decrypt(OutCiphertext ciphertext, byte[] ovk,
+  public static Optional<OutgoingPlaintext> decrypt(OutCiphertext ciphertext, byte[] ovk,
       byte[] cv, byte[] cm, byte[] epk) {
 
-    Optional<OutPlaintext> pt = NoteEncryption
+    Optional<OutPlaintext> pt = Encryption
         .AttemptSaplingOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
 
-    SaplingOutgoingPlaintext ret;
+    OutgoingPlaintext ret;
 
-    ret = SaplingOutgoingPlaintext.decode(pt.get());
+    ret = OutgoingPlaintext.decode(pt.get());
 
     return Optional.of(ret);
   }
 
-  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, SaplingNoteEncryption enc) {
+  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc) {
 
     OutPlaintext pt = this.encode();
     return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
@@ -40,7 +41,7 @@ public class SaplingOutgoingPlaintext {
   private OutPlaintext encode() {
     OutPlaintext ret = new OutPlaintext();
 
-    ret.data = new byte[ZC_SAPLING_OUTPLAINTEXT_SIZE];
+    ret.data = new byte[ZC_OUTPLAINTEXT_SIZE];
 
     System.arraycopy(pk_d, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
     System.arraycopy(esk, 0, ret.data, ZC_JUBJUB_SCALAR_SIZE, ZC_JUBJUB_POINT_SIZE);
@@ -49,13 +50,13 @@ public class SaplingOutgoingPlaintext {
   }
 
 
-  private static SaplingOutgoingPlaintext decode(OutPlaintext outPlaintext) {
+  private static OutgoingPlaintext decode(OutPlaintext outPlaintext) {
     byte[] data = outPlaintext.data;
 
-    SaplingOutgoingPlaintext ret = new SaplingOutgoingPlaintext(new byte[ZC_JUBJUB_SCALAR_SIZE],
+    OutgoingPlaintext ret = new OutgoingPlaintext(new byte[ZC_JUBJUB_SCALAR_SIZE],
         new byte[ZC_JUBJUB_POINT_SIZE]);
 
-    // ZC_SAPLING_OUTPLAINTEXT_SIZE = (ZC_JUBJUB_POINT_SIZE + ZC_JUBJUB_SCALAR_SIZE)
+    // ZC_OUTPLAINTEXT_SIZE = (ZC_JUBJUB_POINT_SIZE + ZC_JUBJUB_SCALAR_SIZE)
     System.arraycopy(data, 0, ret.pk_d, 0, ZC_JUBJUB_SCALAR_SIZE);
 
     System.arraycopy(data, ZC_JUBJUB_SCALAR_SIZE, ret.esk, 0, ZC_JUBJUB_POINT_SIZE);
@@ -82,8 +83,8 @@ public class SaplingOutgoingPlaintext {
     byte[] epk = {17, 110, 18, 94, -116, 26, 68, -70, 73, 113, -32, -86, -33, 26, -73, 74, 46, -116,
         -92, 107, 33, 60, -87, -20, 66, -121, -30, -49, -10, -29, -16, 22};
 
-    Optional<SaplingOutgoingPlaintext> ret = decrypt(outCiphertext, ovk, cv, cm, epk);
-    SaplingOutgoingPlaintext result = ret.get();
+    Optional<OutgoingPlaintext> ret = decrypt(outCiphertext, ovk, cv, cm, epk);
+    OutgoingPlaintext result = ret.get();
 
     System.out.println("plain text pkD size:" + result.pk_d.length);
     for (byte b : result.pk_d) {
@@ -97,7 +98,7 @@ public class SaplingOutgoingPlaintext {
     }
     System.out.println();
 
-    NoteEncryption.EncCiphertext ciphertext = new NoteEncryption.EncCiphertext();
+    Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
     byte[] data2 = {11, -22, -42, 12, 43, 55, 93, 0, 125, -5, 70, 123, -31, 13, 22, 67, 104, 126,
         -81, 83, -120, -112, 64, 35, -117, 90, 22, -21, 90, 99, -79, 18, 78, 109, 42, 70, 73, -3,
         -53, -116, -9, 11, -75, 83, -71, 39, -112, -74, 97, 104, 82, 66, -9, -30, 91, 90, 18, 64,
@@ -133,9 +134,9 @@ public class SaplingOutgoingPlaintext {
     byte[] cmu = {-122, 33, 122, -36, -48, -82, 25, 8, -10, 52, 30, -68, -62, -77, 116, -66, -121,
         -113, 126, 7, -93, 42, -58, -111, 118, 14, 72, -50, 115, -59, -6, 14};
 
-    Optional<BaseNotePlaintext.NotePlaintext> ret2 = BaseNotePlaintext.NotePlaintext
+    Optional<NotePlaintext> ret2 = NotePlaintext
         .decrypt(ciphertext, epk, result.esk, result.pk_d, cmu);
-    BaseNotePlaintext.NotePlaintext result2 = ret2.get();
+    NotePlaintext result2 = ret2.get();
 
     System.out.println("\n result2 rcm:");
     for (byte b : result2.rcm) {

@@ -17,22 +17,19 @@ import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.note.BaseNote.Note;
-import org.tron.core.zen.note.BaseNotePlaintext.NotePlaintext;
-import org.tron.core.zen.note.BaseNotePlaintext.SaplingNotePlaintextEncryptionResult;
-import org.tron.core.zen.note.SaplingNoteEncryption;
-import org.tron.core.zen.note.SaplingOutgoingPlaintext;
-import org.tron.core.zen.transaction.ReceiveDescriptionCapsule;
-import org.tron.core.zen.transaction.SpendDescriptionCapsule;
+import org.tron.core.zen.note.NotePlaintext;
+import org.tron.core.zen.note.NotePlaintext.SaplingNotePlaintextEncryptionResult;
+import org.tron.core.zen.note.Note;
+import org.tron.core.zen.note.NoteEncryption;
+import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.core.capsule.ReceiveDescriptionCapsule;
+import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 public class ZenTransactionBuilder {
-
-  //  CKeyStore keystore;
-  //  CMutableTransaction mtx;
 
   @Setter
   @Getter
@@ -60,14 +57,6 @@ public class ZenTransactionBuilder {
 
   }
 
-  //  List<TransparentInputInfo> tIns;
-
-  //  Optional<pair<byte[], PaymentAddress>> zChangeAddr;
-
-  //  Optional<CTxDstination> tChangeAddr;
-
-  // Throws if the anchor does not match the anchor used by
-  // previously-added Sapling spends.
   public void addSaplingSpend(
       ExpandedSpendingKey expsk,
       Note note,
@@ -117,30 +106,7 @@ public class ZenTransactionBuilder {
         .setToAmount(value);
   }
 
-  //
-  //  void SendChangeTo(PaymentAddress changeAddr, byte[] ovk);
-  //
-  //  void SendChangeTo(CTxDestination&changeAddr);
-
   public TransactionCapsule build() throws RuntimeException {
-
-    //
-    // Sapling spends and outputs
-    //
-
-//   // long change = contractBuilder.getValueBalance();
-//    change += contractBuilder.getFromAmount();
-//    change -= contractBuilder.getToAmount();
-//
-//    if (change < 0) {
-//      // TODO
-//      throw new RuntimeException("change cannot be negative");
-//    }
-//
-//    if (change > 0) {
-//      // TODO
-//    }
-
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     contractBuilder.setFee(wallet.getShieldedTransactionFee());
@@ -263,7 +229,7 @@ public class ZenTransactionBuilder {
     }
 
     SaplingNotePlaintextEncryptionResult enc = res.get();
-    SaplingNoteEncryption encryptor = enc.noteEncryption;
+    NoteEncryption encryptor = enc.noteEncryption;
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
@@ -287,8 +253,8 @@ public class ZenTransactionBuilder {
     receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
     receiveDescriptionCapsule.setZkproof(zkProof);
 
-    SaplingOutgoingPlaintext outPlaintext =
-        new SaplingOutgoingPlaintext(output.getNote().pkD, encryptor.esk);
+    OutgoingPlaintext outPlaintext =
+        new OutgoingPlaintext(output.getNote().pkD, encryptor.esk);
     receiveDescriptionCapsule.setCOut(outPlaintext
         .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),

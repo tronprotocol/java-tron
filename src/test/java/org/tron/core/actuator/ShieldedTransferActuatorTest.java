@@ -1,6 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.tron.core.zen.zip32.ExtendedSpendingKey.ZIP32_HARDENED_KEY_LIMIT;
 import com.google.protobuf.Any;
 import com.google.protobuf.Any.Builder;
 import com.google.protobuf.ByteString;
@@ -22,21 +21,19 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
-import org.tron.core.zen.ZkChainParams;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.zen.note.BaseNote.Note;
-import org.tron.core.zen.transaction.ReceiveDescriptionCapsule;
-import org.tron.core.zen.transaction.SpendDescriptionCapsule;
-import org.tron.core.zen.zip32.ExtendedSpendingKey;
-import org.tron.core.zen.zip32.HDSeed;
-import org.tron.core.zen.zip32.HdChain;
+import org.tron.core.zen.note.Note;
+import org.tron.core.capsule.ReceiveDescriptionCapsule;
+import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Protocol.AccountType;
@@ -117,7 +114,7 @@ public class ShieldedTransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
-  private Any getTransparentOutContract(long outAmount) {
+  private Any getTransparentOutContract(long outAmount) throws BadItemException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -126,7 +123,7 @@ public class ShieldedTransferActuatorTest {
             .build());
   }
 
-  private Any getTransparentToContract(long inAmount) {
+  private Any getTransparentToContract(long inAmount) throws BadItemException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -135,7 +132,7 @@ public class ShieldedTransferActuatorTest {
             .build());
   }
 
-  private Any getTransparentOutToContract(long outAmount, long inAmount) {
+  private Any getTransparentOutToContract(long outAmount, long inAmount) throws BadItemException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -187,26 +184,18 @@ public class ShieldedTransferActuatorTest {
   }
 
 
-  private SpendDescriptionCapsule generateSpendDescription() {
+  private SpendDescriptionCapsule generateSpendDescription() throws BadItemException {
     librustzcashInitZksnarkParams();
 
 
     ZenTransactionBuilder builder = null; //= new ZenTransactionBuilder();
 
     //generate extended spending key
-    String seedString = "ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee";
-    HDSeed seed = new HDSeed(ByteArray.fromHexString(seedString));
-    ExtendedSpendingKey master = ExtendedSpendingKey.Master(seed);
-    int bip44CoinType = ZkChainParams.BIP44CoinType;
-    ExtendedSpendingKey master32h = master.Derive(32 | ZIP32_HARDENED_KEY_LIMIT);
-    ExtendedSpendingKey master32hCth = master32h.Derive(bip44CoinType | ZIP32_HARDENED_KEY_LIMIT);
 
-    ExtendedSpendingKey xsk =
-        master32hCth.Derive(HdChain.saplingAccountCounter | ZIP32_HARDENED_KEY_LIMIT);
-
-    ExpandedSpendingKey expsk = xsk.getExpsk();
-
-    PaymentAddress address = xsk.DefaultAddress();
+    SpendingKey sk = SpendingKey
+        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
 
     //generate note cm to merkle root
     IncrementalMerkleTreeContainer tree =
@@ -255,7 +244,7 @@ public class ShieldedTransferActuatorTest {
 //    }
 //
 //    SaplingNotePlaintextEncryptionResult enc = res.get();
-//    SaplingNoteEncryption encryptor = enc.noteEncryption;
+//    NoteEncryption encryptor = enc.noteEncryption;
 //
 //    byte[] cv = new byte[32];
 //    byte[] zkProof = new byte[192];

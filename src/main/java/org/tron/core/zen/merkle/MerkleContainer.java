@@ -34,7 +34,6 @@ public class MerkleContainer {
     return capsule.toMerkleTreeContainer();
   }
 
-  //todo：
   public IncrementalMerkleTreeContainer getBestMerkle() {
     IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(lastTreeKey);
     if (capsule == null) {
