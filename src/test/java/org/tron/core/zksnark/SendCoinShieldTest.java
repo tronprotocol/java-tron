@@ -573,6 +573,7 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
@@ -655,6 +656,7 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
@@ -854,6 +856,7 @@ public class SendCoinShieldTest {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
