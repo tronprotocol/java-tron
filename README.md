@@ -73,7 +73,7 @@ Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
 
 # Contributing
-Thank you for all of [our contributors](graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+Thank you for all of [our contributors](https://github.com/tronprotocol/java-tron/graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
 If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
