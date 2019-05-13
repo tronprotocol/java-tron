@@ -64,7 +64,7 @@ TRON Protocol and the Tron Virtual Machine (TVM) allow anyone to develop decentr
 * [Build](https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md) Please build java-tron after cloning the project  
 * [Run](https://github.com/tronprotocol/java-tron/blob/fixReadMe/run.md) Run java-tron
 
-### CLI, HTTP-API, Architecture Diagram
+### Architecture Diagram
 ![](./docs/images/architecture_diagram.png)
 
 # Quick Start
