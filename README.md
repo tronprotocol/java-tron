@@ -75,17 +75,6 @@ Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
 
-# Resource
-
-* [Website](https://tron.network/)
-* [Documentation](http://developers.tron.network)
-* [Blog](https://tronprotocol.github.io/tron-blog/)
-* [Tronscan](https://tronscan.org/)
-* [Trxplorer](https://www.trxplorer.io/)
-* [White Paper](https://tron.network/resources?lng=&name=1)
-* [About](https://tron.network/about)
-* [FAQ](https://tron.network/faq)
-
 # Projects
 
 * [TRON Protocol](https://github.com/tronprotocol/protocol)
@@ -103,6 +92,16 @@ Thank you for all of [our contributors](https://github.com/tronprotocol/java-tro
 If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
 If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
 in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
+
+# Resource
+* [Website](https://tron.network/)
+* [Documentation](http://developers.tron.network)
+* [Blog](https://tronprotocol.github.io/tron-blog/)
+* [Tronscan](https://tronscan.org/)
+* [Trxplorer](https://www.trxplorer.io/)
+* [White Paper](https://tron.network/resources?lng=&name=1)
+* [About](https://tron.network/about)
+* [FAQ](https://tron.network/faq)
 
 # License
 * [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
