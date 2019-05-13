@@ -5,7 +5,12 @@ import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
+@Slf4j
 public class Librustzcash {
 
   private static ILibrustzcash INSTANCE;
@@ -258,9 +263,15 @@ public class Librustzcash {
     } else {
       throw new RuntimeException("unsupportedPlatformException");
     }
-
-    return Librustzcash.class.getClassLoader().getResource(
-        "native-package" + File.separator + platform + File.separator + name + extension).getFile();
+    InputStream in = Librustzcash.class.getClassLoader().getResourceAsStream(
+        "native-package" + File.separator + platform + File.separator + name + extension);
+    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + name + extension);
+    try {
+      FileUtils.copyToFile(in, fileOut);
+    } catch (IOException e) {
+      logger.error(e.getMessage(), e);
+    }
+    return fileOut.getAbsolutePath();
   }
 
 

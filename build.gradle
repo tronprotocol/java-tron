@@ -183,6 +183,9 @@ dependencies {
 
     // for jna, zksark
     compile group: 'com.sun.jna', name: 'jna', version: '3.0.9'
+
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    compile group: 'commons-io', name: 'commons-io', version: '2.6'
 }
 
 check.dependsOn 'lint'
