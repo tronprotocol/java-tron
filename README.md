@@ -62,7 +62,7 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 TRON Protocol and the Tron Virtual Machine (TVM) allow anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
 
 # Build
-**If you have firstly installed java-tron, please git clone the project and run ./gradlew build in java-tron**
+**If you have firstly installed java-tron, please git clone the project and run ./gradlew build in java-tron**   
 More detail in build.md(https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md)
 
 # Run
