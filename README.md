@@ -41,15 +41,14 @@
   </a>
 </p>
 
-## Table of Contents
-- [What is Tron?](#What's-TRON?)
-- [How to Build](#Build)
-- [How to Run](#Run)
-- [Qucik Start](#Quick-Start)
-- [Advanced Configurations](#Advanced-Configurations)
-- [Developer Community](#Developer-Community)
-- [Resource](#Resource)
-- [Projects](#Projects)
+<p align="center">
+  <a href="#how-to-build">How to Build</a> •
+  <a href="#running">How to Run</a> •
+  <a href="#links">Links</a> •
+  <a href="http://developers.tron.network">Documentation</a> •
+  <a href="CONTRIBUTING.md">Contributing</a> •
+  <a href="#community">Community</a>
+</p>
 
 ## What's TRON?
 
@@ -89,10 +88,11 @@ Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md)
 * [About](https://tron.network/about)
 * [FAQ](https://tron.network/faq)
 
-
-
 # Projects
 
 * [TRON Protocol](https://github.com/tronprotocol/protocol)
 * [Wallet Client](https://github.com/tronprotocol/wallet-cli)
 * [Wallet Web](https://github.com/tronprotocol/wallet-web)
+
+# License
+* [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
