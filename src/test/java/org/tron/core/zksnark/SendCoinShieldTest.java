@@ -64,6 +64,7 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NotePlaintext;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NoteEncryption;
+import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
@@ -266,7 +267,7 @@ public class SendCoinShieldTest {
 
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
@@ -281,7 +282,7 @@ public class SendCoinShieldTest {
 
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
     ReceiveDescriptionCapsule capsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -351,7 +352,7 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    builder.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
 
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(output, ctx);
@@ -405,7 +406,7 @@ public class SendCoinShieldTest {
     // generate output proof
     ZenTransactionBuilder builder2 = new ZenTransactionBuilder();
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    builder2.addSaplingOutput(fullViewingKey.getOvk(), paymentAddress2, 10000, new byte[512]);
+    builder2.addOutput(fullViewingKey.getOvk(), paymentAddress2, 10000, new byte[512]);
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder2.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder2.generateOutputProof(output, ctx);
     Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
@@ -417,7 +418,7 @@ public class SendCoinShieldTest {
     Assert.assertNotNull(cmu_opt);
 
     NotePlaintext pt = new NotePlaintext(note, new byte[512]);
-    NotePlaintext.SaplingNotePlaintextEncryptionResult enc = pt.encrypt(pkd).get();
+    NotePlaintextEncryptionResult enc = pt.encrypt(pkd).get();
 
     NoteEncryption encryptor = enc.noteEncryption;
 
@@ -506,7 +507,7 @@ public class SendCoinShieldTest {
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
-    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -514,7 +515,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -590,7 +591,7 @@ public class SendCoinShieldTest {
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
-    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -598,7 +599,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -692,7 +693,7 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-    //    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    //    builder.addSpend(expsk, note, anchor, voucher);
     //    SpendDescriptionInfo spend = builder.getSpends().get(0);
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer proofContext = Librustzcash.librustzcashSaplingProvingCtxInit();
@@ -740,7 +741,7 @@ public class SendCoinShieldTest {
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
 
-    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    builder.addSpend(expsk, note, anchor, voucher);
     builder.generateSpendProof(builder.getSpends().get(0), ctx);
 
     // generate output proof
@@ -749,7 +750,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
 
     // test create binding sig
@@ -791,7 +792,7 @@ public class SendCoinShieldTest {
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
-    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
@@ -799,7 +800,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
     builder
-        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -823,7 +824,7 @@ public class SendCoinShieldTest {
     Note note = new Note(address, 4010 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
-    builder.addSaplingSpend(expsk, note, anchor, voucher);
+    builder.addSpend(expsk, note, anchor, voucher);
     SpendDescriptionCapsule spendDescriptionCapsule = builder
         .generateSpendProof(builder.getSpends().get(0), ctx);
 
@@ -833,7 +834,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addSaplingOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
 

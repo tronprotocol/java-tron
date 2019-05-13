@@ -690,7 +690,7 @@ service Wallet {
   rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
   }
 
-  rpc GetSaplingPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
+  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
   }
 
   rpc GetRcm (EmptyMessage) returns (BytesMessage) {

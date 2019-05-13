@@ -99,7 +99,7 @@ public class NotePlaintext {
     return Optional.of(ret);
   }
 
-  public Optional<SaplingNotePlaintextEncryptionResult> encrypt(byte[] pk_d) {
+  public Optional<NotePlaintextEncryptionResult> encrypt(byte[] pk_d) {
 
     // Get the encryptor
     Optional<NoteEncryption> sne = NoteEncryption.fromDiversifier(d);
@@ -116,7 +116,7 @@ public class NotePlaintext {
     if (!encciphertext.isPresent()) {
       return Optional.empty();
     }
-    return Optional.of(new SaplingNotePlaintextEncryptionResult(encciphertext.get().data, enc));
+    return Optional.of(new NotePlaintextEncryptionResult(encciphertext.get().data, enc));
   }
 
   // todo:
@@ -190,7 +190,7 @@ public class NotePlaintext {
 
 
   @AllArgsConstructor
-  public class SaplingNotePlaintextEncryptionResult {
+  public class NotePlaintextEncryptionResult {
 
     public byte[] encCiphertext;
     public NoteEncryption noteEncryption;

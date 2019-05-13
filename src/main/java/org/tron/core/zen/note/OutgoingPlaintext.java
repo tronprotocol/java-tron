@@ -20,7 +20,7 @@ public class OutgoingPlaintext {
       byte[] cv, byte[] cm, byte[] epk) {
 
     Optional<OutPlaintext> pt = Encryption
-        .AttemptSaplingOutDecryption(ciphertext, ovk, cv, cm, epk);
+        .AttemptOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
@@ -35,7 +35,7 @@ public class OutgoingPlaintext {
   public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc) {
 
     OutPlaintext pt = this.encode();
-    return enc.encrypt_to_ourselves(ovk, cv, cm, pt);
+    return enc.encryptToOurselves(ovk, cv, cm, pt);
   }
 
   private OutPlaintext encode() {

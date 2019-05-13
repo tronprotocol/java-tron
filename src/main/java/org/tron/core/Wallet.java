@@ -1638,7 +1638,7 @@ public class Wallet {
 
         IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
             spendNote.getVoucher()).toMerkleVoucherContainer();
-        builder.addSaplingSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
+        builder.addSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
             spendNote.getVoucher().getRt().toByteArray(),
             voucherContainer    );
       }
@@ -1647,7 +1647,7 @@ public class Wallet {
     // sapling output
     for (ReceiveNote receiveNote : shieldedReceives) {
       DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
-      builder.addSaplingOutput(ovk,
+      builder.addOutput(ovk,
           diversifierT,
           receiveNote.getNote().getPkD().toByteArray(),
           receiveNote.getNote().getValue(),
@@ -1767,7 +1767,7 @@ public class Wallet {
     }
   }
 
-  public SaplingPaymentAddressMessage getSaplingPaymentAddress(IncomingViewingKey ivk,
+  public SaplingPaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) {
     //get pk_d from paymentAddress
     SaplingPaymentAddressMessage spa = null;
