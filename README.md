@@ -59,8 +59,7 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 * Tron Virtual Machine (TVM) allow anyone to develop decentralized applications (DAPPs) for themselves or their communities with smart contracts thereby making decentralized crowdfunding and token issuance easier than ever.
 
-TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission.  
-It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
+TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
 
 # Deploy
