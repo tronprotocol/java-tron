@@ -1,6 +1,9 @@
 package org.tron.core.zen.merkle;
 
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.protos.Contract.PedersenHash;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -84,6 +87,10 @@ public class IncrementalMerkleTreeContainer {
     return ret;
   }
 
+  /**
+   * append PedersenHash to the merkletree.
+   * @param obj
+   */
   public void append(PedersenHash obj) {
 
     if (isComplete(DEPTH)) {
@@ -146,6 +153,11 @@ public class IncrementalMerkleTreeContainer {
     return true;
   }
 
+  /**
+   * get the depth of the skip exist element.
+   * @param skip
+   * @return
+   */
   public int nextDepth(int skip) {
 
     if (!leftIsPresent()) {
@@ -190,6 +202,13 @@ public class IncrementalMerkleTreeContainer {
     return root(depth, fillerHashes);
   }
 
+  /**
+   * merge treeCapsule and fillerHashes to construct root path. if not present, use fillerHashes instead.
+   * if depth of treeCapsule < depth, use fillerHashes instead.
+   * @param depth
+   * @param fillerHashes
+   * @return root of merged tree
+   */
   public PedersenHash root(long depth, Deque<PedersenHash> fillerHashes) {
 
     PathFiller filler = new PathFiller(fillerHashes);
@@ -234,6 +253,11 @@ public class IncrementalMerkleTreeContainer {
     return path(fillerHashes);
   }
 
+  /**
+   * construct whole path from bottom right to root. if not present in treeCapsule, choose fillerHashes
+   * @param fillerHashes
+   * @return list of PedersenHash, list of existence, reversed.
+   */
   public MerklePath path(Deque<PedersenHash> fillerHashes) {
 
     if (!leftIsPresent()) {
