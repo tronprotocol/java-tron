@@ -72,18 +72,6 @@ Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md).
 
-# Contributing
-Thank you for all of [our contributors](https://github.com/tronprotocol/java-tron/graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
-If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
-in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
-
-# Developer Community
-
-* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
-* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
-
 # Resource
 
 * [Website](https://tron.network/)
@@ -100,6 +88,18 @@ in line with the general philosophy of the project and/or get some early feedbac
 * [TRON Protocol](https://github.com/tronprotocol/protocol)
 * [Wallet Client](https://github.com/tronprotocol/wallet-cli)
 * [Wallet Web](https://github.com/tronprotocol/wallet-web)
+
+# Contributing
+Thank you for all of [our contributors](https://github.com/tronprotocol/java-tron/graphs/contributors); this project wouldn’t be what it is without you! If you want to help out, please see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
+If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
+in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
+
+# Developer Community
+
+* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
+* [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
 
 # License
 * [MIT](https://github.com/tronprotocol/java-tron/blob/master/LICENSE)
