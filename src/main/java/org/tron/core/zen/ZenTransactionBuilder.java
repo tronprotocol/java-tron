@@ -316,6 +316,7 @@ public class ZenTransactionBuilder {
       this.voucher = voucher;
       alpha = new byte[32];
       Librustzcash.librustzcashSaplingGenerateR(alpha);
+      System.out.println("alpha is: " + ByteArray.toHexString(alpha));
     }
 
     public SpendDescriptionInfo(
