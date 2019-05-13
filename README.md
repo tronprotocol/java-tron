@@ -50,6 +50,16 @@
   <a href="#community">Community</a>
 </p>
 
+## Table of Contents
+- [What is Tron?](#What's-TRON?)
+- [How to Build](#How-to-Build)
+- [How to Run](#How-to-Run)
+- [Qucik Start](#Quick-Start)
+- [Advanced Configurations](#Advanced-Configurations)
+- [Developer Community](#Developer-Community)
+- [Links](#Links)
+- [Projects](#Projects)
+
 ## What's TRON?
 
 TRON is a project dedicated to building the infrastructure for a truly decentralized Internet.
