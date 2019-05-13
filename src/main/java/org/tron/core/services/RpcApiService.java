@@ -1841,13 +1841,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getSaplingPaymentAddress(IncomingViewingKeyDiversifierMessage request,
+    public void getZenPaymentAddress(IncomingViewingKeyDiversifierMessage request,
                                          StreamObserver<SaplingPaymentAddressMessage> responseObserver){
       IncomingViewingKeyMessage ivk = request.getIvk();
       DiversifierMessage d = request.getD();
 
       if(null != ivk && null != d) {
-        SaplingPaymentAddressMessage saplingPaymentAddressMessage = wallet.getSaplingPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+        SaplingPaymentAddressMessage saplingPaymentAddressMessage = wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
                 new DiversifierT(d.getD().toByteArray()));
         responseObserver.onNext(saplingPaymentAddressMessage);
       } else {

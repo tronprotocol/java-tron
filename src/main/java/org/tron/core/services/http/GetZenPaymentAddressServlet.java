@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j(topic = "API")
-public class GetSaplingPaymentAddressServlet extends HttpServlet {
+public class GetZenPaymentAddressServlet extends HttpServlet {
 
     @Autowired
     private Wallet wallet;
@@ -34,7 +34,7 @@ public class GetSaplingPaymentAddressServlet extends HttpServlet {
             String ivk = jsonObject.getString("ivk");
             String d = jsonObject.getString("d");
 
-            GrpcAPI.SaplingPaymentAddressMessage s = wallet.getSaplingPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
+            GrpcAPI.SaplingPaymentAddressMessage s = wallet.getPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
                     new DiversifierT(ByteArray.fromHexString(d)));
 
             response.getWriter()
@@ -55,7 +55,7 @@ public class GetSaplingPaymentAddressServlet extends HttpServlet {
             String ivk = request.getParameter("ivk");
             String d = request.getParameter("d");
 
-            GrpcAPI.SaplingPaymentAddressMessage s = wallet.getSaplingPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
+            GrpcAPI.SaplingPaymentAddressMessage s = wallet.getPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
                     new DiversifierT(ByteArray.fromHexString(d)));
 
             response.getWriter()

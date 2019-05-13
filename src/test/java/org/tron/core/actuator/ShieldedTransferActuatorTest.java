@@ -236,14 +236,14 @@ public class ShieldedTransferActuatorTest {
 //
 //    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
 //
-//    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext
+//    Optional<NotePlaintextEncryptionResult> res = notePlaintext
 //        .encrypt(output.getNote().pkD);
 //    if (!res.isPresent()) {
 //      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 //      throw new RuntimeException("Failed to encrypt note");
 //    }
 //
-//    SaplingNotePlaintextEncryptionResult enc = res.get();
+//    NotePlaintextEncryptionResult enc = res.get();
 //    NoteEncryption encryptor = enc.noteEncryption;
 //
 //    byte[] cv = new byte[32];

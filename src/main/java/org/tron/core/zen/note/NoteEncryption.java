@@ -67,7 +67,7 @@ public class NoteEncryption {
     return Optional.of(ciphertext);
   }
 
-  public OutCiphertext encrypt_to_ourselves(
+  public OutCiphertext encryptToOurselves(
       byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) {
     if (already_encrypted_out) {
       throw new RuntimeException("already encrypted to the recipient using this key");
@@ -212,7 +212,7 @@ public class NoteEncryption {
       return Optional.of(plaintext);
     }
 
-    public static Optional<OutPlaintext> AttemptSaplingOutDecryption(
+    public static Optional<OutPlaintext> AttemptOutDecryption(
         OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
 
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];

@@ -18,7 +18,7 @@ import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.NotePlaintext;
-import org.tron.core.zen.note.NotePlaintext.SaplingNotePlaintextEncryptionResult;
+import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
@@ -57,7 +57,7 @@ public class ZenTransactionBuilder {
 
   }
 
-  public void addSaplingSpend(
+  public void addSpend(
       ExpandedSpendingKey expsk,
       Note note,
       byte[] anchor,
@@ -66,7 +66,7 @@ public class ZenTransactionBuilder {
     valueBalance += note.value;
   }
 
-  public void addSaplingSpend(
+  public void addSpend(
       ExpandedSpendingKey expsk,
       Note note,
       byte[] alpha,
@@ -76,12 +76,12 @@ public class ZenTransactionBuilder {
     valueBalance += note.value;
   }
 
-  public void addSaplingOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
+  public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
     valueBalance -= value;
   }
 
-  public void addSaplingOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
+  public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(d, pkD, value, r), memo));
     valueBalance -= value;
   }
@@ -221,14 +221,14 @@ public class ZenTransactionBuilder {
 
     NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
 
-    Optional<SaplingNotePlaintextEncryptionResult> res = notePlaintext
+    Optional<NotePlaintextEncryptionResult> res = notePlaintext
         .encrypt(output.getNote().pkD);
     if (!res.isPresent()) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Failed to encrypt note");
     }
 
-    SaplingNotePlaintextEncryptionResult enc = res.get();
+    NotePlaintextEncryptionResult enc = res.get();
     NoteEncryption encryptor = enc.noteEncryption;
 
     byte[] cv = new byte[32];
