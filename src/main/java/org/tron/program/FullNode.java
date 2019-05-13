@@ -1,11 +1,9 @@
 package org.tron.program;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
@@ -19,8 +17,6 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeCapsule;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 
 @Slf4j(topic = "app")
 public class FullNode {

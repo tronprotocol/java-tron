@@ -1,10 +1,10 @@
-package org.tron.core.zen.merkle;
+package org.tron.core.db;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 
 @Component
 public class IncrementalMerkleVoucherStore

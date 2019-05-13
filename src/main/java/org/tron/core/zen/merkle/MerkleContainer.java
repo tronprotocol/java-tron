@@ -4,10 +4,11 @@ import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer.OutputPointUtil;
-import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
 public class MerkleContainer {
