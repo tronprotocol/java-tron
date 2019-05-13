@@ -155,7 +155,7 @@ public class Wallet {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;  //default testnet
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -1179,13 +1179,13 @@ public class Wallet {
     return builder.build();
   }
 
-  public Block getBlockById(ByteString BlockId) {
-    if (Objects.isNull(BlockId)) {
+  public Block getBlockById(ByteString blockId) {
+    if (Objects.isNull(blockId)) {
       return null;
     }
     Block block = null;
     try {
-      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
     }
     return block;
@@ -1217,6 +1217,7 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
@@ -1233,6 +1234,7 @@ public class Wallet {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
@@ -1264,6 +1266,7 @@ public class Wallet {
     try {
       exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (exchangeCapsule != null) {
       return exchangeCapsule.getInstance();
