@@ -76,6 +76,9 @@ https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md
 # Run
 https://github.com/tronprotocol/java-tron/blob/fixReadMe/run.md
 
+# Supported Operating Systems
+
+
 # Quick Start
 
 Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
@@ -89,11 +92,18 @@ Read the [Advanced Configurations](src/main/java/org/tron/core/config/README.md)
 * [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
 * [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
 
-# Links
+# Resource
 
 * [Website](https://tron.network/)
 * [Documentation](http://developers.tron.network)
 * [Blog](https://tronprotocol.github.io/tron-blog/)
+* [Tronscan](https://tronscan.org/)
+* [Trxplorer](https://www.trxplorer.io/)
+* [White Paper](https://tron.network/resources?lng=&name=1)
+* [About](https://tron.network/about)
+* [FAQ](https://tron.network/faq)
+
+
 
 # Projects
 
