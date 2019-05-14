@@ -1041,6 +1041,7 @@ public class SendCoinShieldTest {
     }
   }
 
+
   @Test
   public void testComputeCm() throws Exception {
       byte[] result = new byte[32];
