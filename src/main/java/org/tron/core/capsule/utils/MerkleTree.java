@@ -10,7 +10,7 @@ import org.tron.common.utils.Sha256Hash;
 @Getter
 public class MerkleTree {
 
-  private static volatile MerkleTree instance;
+  private static MerkleTree instance;
   private List<Sha256Hash> hashList;
   private List<Leaf> leaves;
   private Leaf root;
