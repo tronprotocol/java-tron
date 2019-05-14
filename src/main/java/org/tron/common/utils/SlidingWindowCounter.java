@@ -43,7 +43,7 @@ class SlotBaseCounter {
  */
 public class SlidingWindowCounter {
 
-  private SlotBaseCounter slotBaseCounter;
+  private volatile SlotBaseCounter slotBaseCounter;
   private volatile int windowSize;
   private volatile int head;
 
