@@ -130,6 +130,10 @@ public class WitnessService implements Service {
               Thread.sleep(timeToNextSecond);
             }
             this.blockProductionLoop();
+          } catch (InterruptedException ex) {
+            logger.info("ProductionLoop interrupted");
+          } catch (Exception ex) {
+            logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
           }

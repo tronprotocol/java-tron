@@ -42,6 +42,12 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       peer.setNeedSyncFromUs(true);
       remainNum = tronNetDelegate.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
+//
+//    if (!peer.isNeedSyncFromPeer()
+//        && !tronNetDelegate.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
+//        && tronNetDelegate.canChainRevoke(summaryChainIds.get(0).getNum())) {
+//      //startSyncWithPeer(peer);
+//    }
 
     peer.setLastSyncBlockId(blockIds.peekLast());
     peer.setRemainNum(remainNum);
@@ -81,10 +87,6 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
         unForkId = blockIds.get(i);
         break;
       }
-    }
-
-    if (unForkId == null) {
-      throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
     long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(),
