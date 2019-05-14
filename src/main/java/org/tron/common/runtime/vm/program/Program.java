@@ -464,6 +464,9 @@ public class Program {
       return;
     }
 
+    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
+    boolean contractAlreadyExists = existingAddr != null;
+
     Deposit deposit = getContractState().newDepositChild();
 
     //In case of hashing collisions, check for any balance before createAccount()
@@ -506,9 +509,7 @@ public class Program {
         getVmShouldEndInUs(), energyLimit.longValueSafe());
 
     ProgramResult createResult = ProgramResult.createEmpty();
-    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
 
-    boolean contractAlreadyExists = existingAddr != null;
     if (contractAlreadyExists) {
       createResult.setException(new BytecodeExecutionException(
           "Trying to create a contract with existing contract address: 0x" + Hex
@@ -644,8 +645,9 @@ public class Program {
         refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
         return;
       }
-    } else {
-      // transfer trc10 token validation
+    }
+    // transfer trc10 token validation
+    else {
       tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
@@ -654,6 +656,12 @@ public class Program {
         return;
       }
     }
+
+    // FETCH THE CODE
+    AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
+
+    byte[] programCode =
+        accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     // only for trx, not for token
     long contextBalance = 0L;
@@ -703,11 +711,6 @@ public class Program {
         !isTokenTransfer ? endowment : 0, data, "call", nonce,
         !isTokenTransfer ? null : tokenInfo);
     ProgramResult callResult = null;
-
-    // FETCH THE CODE
-    AccountCapsule accountCapsule = getContractState().getAccount(codeAddress);
-    byte[] programCode =
-        accountCapsule != null ? getContractState().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
     if (isNotEmpty(programCode)) {
       long vmStartInUs = System.nanoTime() / 1000;
       DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
@@ -797,8 +800,7 @@ public class Program {
   public void spendEnergy(long energyValue, String opName) {
     if (getEnergylimitLeftLong() < energyValue) {
       throw new OutOfEnergyException(
-          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
-              + " curOpEnergy[%d], usedEnergy[%d]",
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d], curOpEnergy[%d], usedEnergy[%d]",
           opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
     }
     getResult().spendEnergy(energyValue);
@@ -1153,6 +1155,8 @@ public class Program {
     int binDataStartPC = -1;
 
     while (index < code.length) {
+      final byte opCode = code[index];
+      OpCode op = OpCode.code(opCode);
 
       if (!mask.get(index)) {
         if (binDataStartPC == -1) {
@@ -1175,9 +1179,6 @@ public class Program {
       }
 
       sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
-
-      final byte opCode = code[index];
-      OpCode op = OpCode.code(opCode);
 
       if (op == null) {
         sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
@@ -1353,6 +1354,8 @@ public class Program {
     Deposit deposit = getContractState().newDepositChild();
 
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
+    byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
+    byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
 
     long endowment = msg.getEndowment().value().longValueExact();
     long senderBalance = 0;
@@ -1376,8 +1379,6 @@ public class Program {
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
 
-    byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
-    byte[] contextAddress = msg.getType().callIsStateless() ? senderAddress : codeAddress;
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
@@ -1444,14 +1445,16 @@ public class Program {
   }
 
   /**
-   * check TokenId TokenId  \ isTransferToken -----------------------------------------------------
-   * false                                     true -----------------------------------------------
+   * check TokenId
+   *
+   * TokenId  \ isTransferToken ---------------------------------------------------------------------------------------------
+   * false                                     true ---------------------------------------------------------------------------------------------
    * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------
    * [Long.Min, 0)        Not possible                               error
-   * -------------------------------------------------------------------------------------- 0
+   * --------------------------------------------------------------------------------------------- 0
    * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
-   * should not transfer trx） ---------------------------------------------------------------------
+   * should not transfer trx） ---------------------------------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed

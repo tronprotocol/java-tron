@@ -873,8 +873,8 @@ public class VM {
 
           program.stackPush(codeLength);
           program.step();
-          break;
         }
+        break;
         case CODECOPY:
         case EXTCODECOPY: {
 
@@ -909,8 +909,8 @@ public class VM {
 
           program.memorySave(memOffset, codeCopy);
           program.step();
-          break;
         }
+        break;
         case EXTCODEHASH: {
           DataWord address = program.stackPop();
           byte[] codeHash = program.getCodeHashAt(address);
@@ -1030,8 +1030,8 @@ public class VM {
           program.stackPush(word_1.clone());
           program.step();
 
-          break;
         }
+        break;
         case SWAP1:
         case SWAP2:
         case SWAP3:
@@ -1052,8 +1052,8 @@ public class VM {
           int n = op.val() - OpCode.SWAP1.val() + 2;
           stack.swap(stack.size() - 1, stack.size() - n);
           program.step();
-          break;
         }
+        break;
         case LOG0:
         case LOG1:
         case LOG2:
@@ -1087,8 +1087,8 @@ public class VM {
 
           program.getResult().addLogInfo(logInfo);
           program.step();
-          break;
         }
+        break;
         case MLOAD: {
           DataWord addr = program.stackPop();
           DataWord data = program.memoryLoad(addr);
@@ -1262,12 +1262,12 @@ public class VM {
           }
 
           program.stackPush(data);
-          break;
         }
+        break;
         case JUMPDEST: {
           program.step();
-          break;
         }
+        break;
         case CREATE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
@@ -1370,8 +1370,8 @@ public class VM {
           }
 
           program.step();
-          break;
         }
+        break;
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1392,8 +1392,8 @@ public class VM {
           if (op == REVERT) {
             program.getResult().setRevert();
           }
-          break;
         }
+        break;
         case SUICIDE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
