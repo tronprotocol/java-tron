@@ -645,9 +645,8 @@ public class Program {
         refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
         return;
       }
-    }
-    // transfer trc10 token validation
-    else {
+    } else {
+      // transfer trc10 token validation
       tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
       long senderBalance = deposit.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
@@ -800,7 +799,8 @@ public class Program {
   public void spendEnergy(long energyValue, String opName) {
     if (getEnergylimitLeftLong() < energyValue) {
       throw new OutOfEnergyException(
-          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d], curOpEnergy[%d], usedEnergy[%d]",
+          "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
+              + " curOpEnergy[%d], usedEnergy[%d]",
           opName, invoke.getEnergyLimit(), energyValue, getResult().getEnergyUsed());
     }
     getResult().spendEnergy(energyValue);
@@ -1445,16 +1445,14 @@ public class Program {
   }
 
   /**
-   * check TokenId
-   *
-   * TokenId  \ isTransferToken ---------------------------------------------------------------------------------------------
-   * false                                     true ---------------------------------------------------------------------------------------------
+   * check TokenId TokenId  \ isTransferToken -------------------------------------------------------------------
+   * false                                     true -----------------------------------------------
    * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------
    * [Long.Min, 0)        Not possible                               error
    * --------------------------------------------------------------------------------------------- 0
    * allowed and only allowed                    error (guaranteed in CALLTOKEN) transfertoken id=0
-   * should not transfer trx） ---------------------------------------------------------------------------------------------
+   * should not transfer trx） ---------------------------------------------------------------------
    * (0-100_0000]          Not possible                              error
    * ---------------------------------------------------------------------------------------------
    * (100_0000, Long.Max]  Not possible                             allowed
