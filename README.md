@@ -66,17 +66,9 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 * [Build](https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md) Please build java-tron after cloning the project  
 * [Run](https://github.com/tronprotocol/java-tron/blob/fixReadMe/run.md) Run java-tron
 
-### Architecture Diagram
-![](./docs/images/architecture_diagram.png)
-
 # Quick Start
 
 Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
-
-# Projects
-* [TRON Protocol](https://github.com/tronprotocol/protocol)
-* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
-* [Wallet Web](https://github.com/tronprotocol/wallet-web)
 
 # Developer Community
 
@@ -89,6 +81,11 @@ Thank you for all of [our contributors](https://github.com/tronprotocol/java-tro
 If you'd like to contribute to java-tron, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.   
 If you wish to submit more complex changes though, please check up with the core devs first on [our gitter channel](https://gitter.im/tronprotocol/allcoredev) to ensure those changes are 
 in line with the general philosophy of the project and/or get some early feedback which can make both your efforts much lighter as well as our review and merge procedures quick and simple.
+
+# Projects
+* [TRON Protocol](https://github.com/tronprotocol/protocol)
+* [Wallet Client](https://github.com/tronprotocol/wallet-cli)
+* [Wallet Web](https://github.com/tronprotocol/wallet-web)
 
 # Resource
 * [Website](https://tron.network/)
