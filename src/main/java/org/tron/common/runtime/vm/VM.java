@@ -34,7 +34,7 @@ import org.tron.common.runtime.vm.program.Stack;
 public class VM {
 
   private static final BigInteger _32_ = BigInteger.valueOf(32);
-  private static final String ENERGY_LOG_FORMATE = "{} Op:[{}]  Energy:[{}] Deep:[{}] Hint:[{}]";
+  private static final String ENERGY_LOG_FORMATE = "{}    Op: [{}]  Energy: [{}] Deep: [{}]  Hint: [{}]";
 
   // 3MB
   private static final BigInteger MEM_LIMIT = BigInteger.valueOf(3L * 1024 * 1024);
@@ -123,8 +123,8 @@ public class VM {
         case SUICIDE:
           energyCost = energyCosts.getSUICIDE();
           DataWord suicideAddressWord = stack.get(stack.size() - 1);
-          if (isDeadAccount(program, suicideAddressWord)
-              && !program.getBalance(program.getContractAddress()).isZero()) {
+          if (isDeadAccount(program, suicideAddressWord) &&
+              !program.getBalance(program.getContractAddress()).isZero()) {
             energyCost += energyCosts.getNEW_ACCT_SUICIDE();
           }
           break;
@@ -211,6 +211,7 @@ public class VM {
         case CALLTOKEN:
           // here, contract call an other contract, or a library, and so on
           energyCost = energyCosts.getCALL();
+          DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
           DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
@@ -246,7 +247,6 @@ public class VM {
           DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
           getEnergyLimitLeft.sub(new DataWord(energyCost));
 
-          DataWord callEnergyWord = stack.get(stack.size() - 1);
           adjustedCallEnergy = program.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
           energyCost += adjustedCallEnergy.longValueSafe();
           break;
@@ -258,7 +258,7 @@ public class VM {
           DataWord codeSize = stack.get(stack.size() - 3);
           energyCost = energyCosts.getCREATE();
           energyCost += calcMemEnergy(energyCosts, oldMemSize,
-              memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
+                  memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
           energyCost += DataWord.sizeInWords(codeSize.intValueSafe()) * energyCosts.getSHA3_WORD();
 
           break;
@@ -873,8 +873,8 @@ public class VM {
 
           program.stackPush(codeLength);
           program.step();
-          break;
         }
+        break;
         case CODECOPY:
         case EXTCODECOPY: {
 
@@ -909,9 +909,9 @@ public class VM {
 
           program.memorySave(memOffset, codeCopy);
           program.step();
-          break;
         }
-        case EXTCODEHASH: {
+        break;
+        case EXTCODEHASH:{
           DataWord address = program.stackPop();
           byte[] codeHash = program.getCodeHashAt(address);
           program.stackPush(codeHash);
@@ -1030,8 +1030,8 @@ public class VM {
           program.stackPush(word_1.clone());
           program.step();
 
-          break;
         }
+        break;
         case SWAP1:
         case SWAP2:
         case SWAP3:
@@ -1052,8 +1052,8 @@ public class VM {
           int n = op.val() - OpCode.SWAP1.val() + 2;
           stack.swap(stack.size() - 1, stack.size() - n);
           program.step();
-          break;
         }
+        break;
         case LOG0:
         case LOG1:
         case LOG2:
@@ -1087,8 +1087,8 @@ public class VM {
 
           program.getResult().addLogInfo(logInfo);
           program.step();
-          break;
         }
+        break;
         case MLOAD: {
           DataWord addr = program.stackPop();
           DataWord data = program.memoryLoad(addr);
@@ -1262,8 +1262,8 @@ public class VM {
           }
 
           program.stackPush(data);
-          break;
         }
+        break;
         case JUMPDEST: {
           program.step();
         }
@@ -1370,8 +1370,8 @@ public class VM {
           }
 
           program.step();
-          break;
         }
+        break;
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1392,8 +1392,8 @@ public class VM {
           if (op == REVERT) {
             program.getResult().setRevert();
           }
-          break;
         }
+        break;
         case SUICIDE: {
           if (program.isStaticCall()) {
             throw new Program.StaticCallModificationException();
