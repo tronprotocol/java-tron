@@ -8,7 +8,6 @@ import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer.OutputPointUtil;
 
 @Slf4j
 public class MerkleContainer {
