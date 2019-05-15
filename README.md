@@ -94,6 +94,7 @@ in line with the general philosophy of the project and/or get some early feedbac
 * [Tronscan](https://tronscan.org/)
 * [Trxplorer](https://www.trxplorer.io/)
 * [White Paper](https://tron.network/resources?lng=&name=1)
+* [TRON Quickstart](https://developers.tron.network/docs/getting-started-1)
 * [About](https://tron.network/about)
 * [FAQ](https://tron.network/faq)
 
