@@ -111,6 +111,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       merkleContainer
           .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
+    currentMerkle.wfcheck();
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
