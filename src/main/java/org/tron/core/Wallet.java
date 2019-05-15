@@ -1297,23 +1297,6 @@ public class Wallet {
     return null;
   }
 
-  public IncrementalMerkleVoucher getMerkleTreeWitness(byte[] hash, int index) {
-    if (Objects.isNull(hash) || index < 0) {
-      return null;
-    }
-
-    IncrementalMerkleVoucherCapsule merkleWitnessCapsule =
-        dbManager.getMerkleContainer().getVoucher(hash, index);
-
-    if (merkleWitnessCapsule != null) {
-      logger.info("getMerkleTreeWitness");
-      merkleWitnessCapsule.resetRt();
-      return merkleWitnessCapsule.getInstance();
-    }
-
-    return null;
-  }
-
   private long getBlockNumber(OutputPoint outPoint)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
@@ -1519,7 +1502,7 @@ public class Wallet {
     }
   }
 
-  public IncrementalMerkleVoucherInfo getMerkleTreeWitnessInfo(OutputPointInfo request)
+  public IncrementalMerkleVoucherInfo getMerkleTreeVoucherInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
 

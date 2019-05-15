@@ -357,7 +357,7 @@ public class MerkleContainerTest {
 
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
-        .getMerkleTreeWitnessInfo(outputPointInfo);
+        .getMerkleTreeVoucherInfo(outputPointInfo);
 
     Assert.assertEquals(number, merkleTreeWitnessInfo.getBlockNum());
 //    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
