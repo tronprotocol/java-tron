@@ -587,12 +587,6 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.TransferContract, responseObserver);
     }
 
-    @Override
-    public void zksnarkV0TransferTrx(ZksnarkV0TransferContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ZksnarkV0TransferContract, responseObserver);
-    }
-
     private void createTransactionExtention(Message request, ContractType contractType,
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
