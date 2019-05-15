@@ -359,7 +359,6 @@ public class MerkleContainerTest {
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);
 
-    Assert.assertEquals(number, merkleTreeWitnessInfo.getBlockNum());
 //    Assert.assertEquals(txId1, merkleTreeWitnessInfo.getWitness1().getOutputPoint().getHash());
     Assert.assertEquals(0, merkleTreeWitnessInfo.getVouchers(0).getOutputPoint().getIndex());
 //    Assert
