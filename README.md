@@ -66,8 +66,8 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 # Deploy
-* [Build](https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md) Please build java-tron after cloning the project  
-* [Run](https://github.com/tronprotocol/java-tron/blob/fixReadMe/run.md) Run java-tron
+* [Build](https://github.com/tronprotocol/java-tron/blob/readMeFix/build.md) Please build java-tron after cloning the project  
+* [Run](https://github.com/tronprotocol/java-tron/blob/readMeFix/run.md) Run java-tron
 
 # Developer Community
 
