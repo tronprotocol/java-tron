@@ -50,8 +50,8 @@ public class DeployContractServlet extends HttpServlet {
       byte[] ownerAddress = ByteArray.fromHexString(owner_address);
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build
-          .setCallTokenValue(jsonObject.getLongValue("call_token_value"))
-          .setTokenId(jsonObject.getLongValue("token_id"));
+          .setCallTokenValue(Util.getJsonLongValue(jsonObject,"call_token_value"))
+          .setTokenId(Util.getJsonLongValue(jsonObject,"token_id"));
 
       String abi = jsonObject.getString("abi");
       StringBuffer abiSB = new StringBuffer("{");
@@ -65,9 +65,10 @@ public class DeployContractServlet extends HttpServlet {
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)
-          .setCallValue(jsonObject.getLongValue("call_value"))
-          .setConsumeUserResourcePercent(jsonObject.getLongValue("consume_user_resource_percent"))
-          .setOriginEnergyLimit(jsonObject.getLongValue("origin_energy_limit"));
+          .setCallValue(Util.getJsonLongValue(jsonObject,"call_value"))
+          .setConsumeUserResourcePercent(Util.getJsonLongValue(jsonObject,
+              "consume_user_resource_percent"))
+          .setOriginEnergyLimit(Util.getJsonLongValue(jsonObject,"origin_energy_limit"));
       if (!ArrayUtils.isEmpty(ownerAddress)) {
         smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
       }
@@ -85,7 +86,7 @@ public class DeployContractServlet extends HttpServlet {
         smartBuilder.setName(name);
       }
 
-      long feeLimit = jsonObject.getLongValue("fee_limit");
+      long feeLimit = Util.getJsonLongValue(jsonObject,"fee_limit");
       build.setNewContract(smartBuilder);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
