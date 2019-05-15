@@ -18,14 +18,11 @@
 
 package org.tron.common.overlay.discover;
 
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Random;
-import lombok.extern.slf4j.Slf4j;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 
-@Slf4j(topic = "discover")
 public class RefreshTask extends DiscoverTask {
 
   public RefreshTask(NodeManager nodeManager) {
@@ -33,13 +30,9 @@ public class RefreshTask extends DiscoverTask {
   }
 
   public static byte[] getNodeId() {
+    Random gen = new Random();
     byte[] id = new byte[64];
-    try {
-      Random gen = SecureRandom.getInstanceStrong();
-      gen.nextBytes(id);
-    } catch (Exception e) {
-      logger.error("{}", e);
-    }
+    gen.nextBytes(id);
     return id;
   }
 

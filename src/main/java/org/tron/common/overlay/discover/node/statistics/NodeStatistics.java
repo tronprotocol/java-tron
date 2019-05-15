@@ -194,7 +194,7 @@ public class NodeStatistics {
     public void add(double value) {
       last = value;
       sum += value;
-      count += 1;
+      count++;
     }
 
     public double getLast() {

@@ -130,7 +130,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     byte[] types1 = dbManager.getDynamicPropertiesStore().getAvailableContractType();
     for (int i = 0; i < 256; i++) {
       boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
-      boolean t = ((types1[(i / 8)] & 0xff) & (1 << (i % 8))) != 0;
+      boolean t = (types1[(i / 8)] & (1 << (i % 8))) != 0;
       if (b && !t) {
         throw new ContractValidateException(i + " isn't a validate ContractType");
       }
