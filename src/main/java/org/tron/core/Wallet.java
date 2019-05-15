@@ -1352,8 +1352,13 @@ public class Wallet {
             .unpack(ShieldedTransferContract.class);
 
         if (new TransactionCapsule(transaction1).getTransactionId().getByteString().equals(txId)) {
-          System.out.println("foundTx");
+          logger.debug("foundTx");
           found = true;
+
+          if(outPoint.getIndex() >= zkContract.getReceiveDescriptionCount()){
+            throw new RuntimeException("outPoint.getIndex():"+outPoint.getIndex()+" >= zkContract.getReceiveDescriptionCount():"+zkContract.getReceiveDescriptionCount());
+          }
+
           int index = 0;
           for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
               zkContract.getReceiveDescriptionList()){
@@ -1428,22 +1433,20 @@ public class Wallet {
           for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
               zkContract.getReceiveDescriptionList()){
 
-            PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-            cmCapsule2.setContent(receiveDescription.getNoteCommitment());
-            PedersenHash cm2 = cmCapsule2.getInstance();
+            PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
+            cmCapsule.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm = cmCapsule.getInstance();
 
             witnessList.forEach(wit -> {
-              wit.append(cm2);
+              wit.append(cm);
             });
 
           }
-
 
         }
       }
     }
   }
-
 
   private void updateLowWitness(IncrementalMerkleVoucherContainer witness, long blockNum1,  long blockNum2)
       throws ItemNotFoundException, BadItemException,
@@ -1467,16 +1470,14 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          PedersenHashCapsule cmCapsule1 = new PedersenHashCapsule();
-          cmCapsule1.setContent(zkContract.getReceiveDescriptionList().get(0).getNoteCommitment());
-          PedersenHash cm1 = cmCapsule1.getInstance();
+          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
+              zkContract.getReceiveDescriptionList()){
 
-          PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
-          cmCapsule2.setContent(zkContract.getReceiveDescriptionList().get(1).getNoteCommitment());
-          PedersenHash cm2 = cmCapsule2.getInstance();
-
-          witness.append(cm1);
-          witness.append(cm2);
+            PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
+            cmCapsule.setContent(receiveDescription.getNoteCommitment());
+            PedersenHash cm = cmCapsule.getInstance();
+            witness.append(cm);
+          }
 
         }
       }
@@ -1485,19 +1486,22 @@ public class Wallet {
 
   private void validateInput(OutputPointInfo request) throws BadItemException {
 
-    if (request.getBlockNum() < 0) {
-      throw new BadItemException("request.getBlockNum() < 0");
+    if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
+      throw new BadItemException("request.BlockNum must be range in【0，1000】");
     }
 
     if (request.getOutPointsCount()<1 || request.getOutPointsCount()>10) {
-      throw new BadItemException("request.getOutPointsCount()<1 || request.getOutPointsCount()>10");
+      throw new BadItemException("request.OutPointsCount must be range in【1，10】");
     }
 
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
 
-      if (outputPoint.getHash() == null || outputPoint.getIndex() > 10 || outputPoint.getIndex() < 0) {
+      if (outputPoint.getHash() == null){
+        throw new BadItemException( "outPoint.getHash() == null");
+        }
+      if(outputPoint.getIndex() >= Constant.ZC_OUTPUT_DESC_MAX_SIZE || outputPoint.getIndex() < 0) {
         throw new BadItemException(
-            "outPoint.getHash() == null || outPoint.getIndex() > 10 || outPoint.getIndex() < 0");
+            "outPoint.getIndex() > "+Constant.ZC_OUTPUT_DESC_MAX_SIZE+" || outPoint.getIndex() < 0");
       }
     }
   }
@@ -1525,6 +1529,9 @@ public class Wallet {
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
       Long blockNum1 = getBlockNumber(outputPoint);
       logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
+      if(blockNum1 + 100 < largeBlockNum){
+        throw new RuntimeException("blockNum:"+blockNum1+" + 100 < largeBlockNum:"+largeBlockNum);
+      }
       IncrementalMerkleVoucherContainer witness = createWitness(outputPoint, blockNum1);
       updateLowWitness(witness, blockNum1, largeBlockNum);
       witnessList.add(witness);

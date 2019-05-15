@@ -63,4 +63,6 @@ public class Constant {
 
   public static int ZC_DIVERSIFIER_SIZE = 11;
 
+  public static int ZC_OUTPUT_DESC_MAX_SIZE = 10;
+
 }
