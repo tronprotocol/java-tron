@@ -1709,8 +1709,9 @@ public class RpcApiService implements Service {
     if (apiServer != null) {
       try {
         apiServer.awaitTermination();
-      } catch (Exception e) {
+      } catch (InterruptedException e) {
         logger.warn("{}", e);
+        Thread.currentThread().interrupt();
       }
     }
   }
