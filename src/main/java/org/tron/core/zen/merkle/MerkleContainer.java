@@ -77,60 +77,18 @@ public class MerkleContainer {
     return tree;
   }
 
-  // todo : to delete later
-  @Deprecated
-  public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
-      byte[] rt, byte[] cm1, byte[] cm2, byte[] hash) {
-
-    IncrementalMerkleTreeContainer tree =
-        this.manager.getMerkleTreeStore().get(rt).toMerkleTreeContainer();
-
-    tree = saveCmIntoMerkleTree(tree, cm1);
-
-    IncrementalMerkleVoucherContainer voucherContainer1 =
-        tree.getTreeCapsule().deepCopy().toMerkleTreeContainer().toVoucher();
-
-    tree = saveCmIntoMerkleTree(tree, cm2);
-
-    voucherContainer1 = saveCmIntoMerkleVoucher(voucherContainer1, cm2);
-
-    IncrementalMerkleVoucherContainer coucherContainer2 = tree.toVoucher();
-
-    voucherContainer1.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 0);
-    putMerkleVoucherIntoStore(
-        voucherContainer1.getMerkleVoucherKey(), voucherContainer1.getVoucherCapsule());
-    coucherContainer2.getVoucherCapsule().setOutputPoint(ByteString.copyFrom(hash), 1);
-    putMerkleVoucherIntoStore(
-        coucherContainer2.getMerkleVoucherKey(), coucherContainer2.getVoucherCapsule());
-
-    putMerkleTreeIntoStore(tree.getMerkleTreeKey(), tree.getTreeCapsule());
-    return tree;
-  }
-
-  public IncrementalMerkleVoucherContainer saveCmIntoMerkleVoucher(
-      IncrementalMerkleVoucherContainer tree, byte[] cm) {
-    PedersenHashCapsule sha256CompressCapsule1 = new PedersenHashCapsule();
-    sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
-    tree.append(sha256CompressCapsule1.getInstance());
-
-    return tree;
-  }
-
   public void putMerkleTreeIntoStore(byte[] key, IncrementalMerkleTreeCapsule capsule) {
     this.manager.getMerkleTreeStore().put(key, capsule);
   }
 
-  public void putMerkleVoucherIntoStore(byte[] key, IncrementalMerkleVoucherCapsule capsule) {
-    this.manager.getMerkleVoucherStore().put(key, capsule);
-  }
-
   public MerklePath merklePath(byte[] rt) {
+    if(!merkleRootExist(rt)){
+      return null;
+    }
+
     IncrementalMerkleTreeContainer tree =
         this.manager.getMerkleTreeStore().get(rt).toMerkleTreeContainer();
     return tree.path();
   }
 
-  public IncrementalMerkleVoucherCapsule getVoucher(byte[] hash, int index) {
-    return this.manager.getMerkleVoucherStore().get(OutputPointUtil.outputPointToKey(hash, index));
-  }
 }
