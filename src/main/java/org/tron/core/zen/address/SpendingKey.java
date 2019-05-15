@@ -95,6 +95,20 @@ public class SpendingKey {
   }
 
 
+  public static byte[] ovkForShieldingFromTaddr(byte[] data) {
+    crypto_generichash_blake2b_state.ByReference state  = null;
+    Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
+    byte[] intermediate = new byte[64];
+    Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);
+
+    // I_L = I[0..32]
+    byte[] intermediate_L = new byte[32];
+    System.arraycopy(intermediate_L, 0, intermediate, 0, 32);
+
+    // ovk = truncate_32(PRF^expand(I_L, [0x02]))
+    return PRF.prfOvk(intermediate_L);
+  }
+
   private static class PRF {
 
     public static byte[] prfAsk(byte[] sk) {
