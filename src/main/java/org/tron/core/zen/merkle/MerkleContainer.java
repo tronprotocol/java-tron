@@ -39,10 +39,6 @@ public class MerkleContainer {
     if (capsule == null) {
       IncrementalMerkleTreeContainer container =
           (new IncrementalMerkleTreeCapsule()).toMerkleTreeContainer();
-
-      this.manager
-          .getMerkleTreeStore()
-          .put(container.getMerkleTreeKey(), container.getTreeCapsule());
       return container;
     }
     return capsule.toMerkleTreeContainer();
