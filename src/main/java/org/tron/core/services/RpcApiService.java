@@ -1710,7 +1710,8 @@ public class RpcApiService implements Service {
       try {
         apiServer.awaitTermination();
       } catch (InterruptedException e) {
-        logger.debug(e.getMessage(), e);
+        logger.warn("{}", e);
+        Thread.currentThread().interrupt();
       }
     }
   }
