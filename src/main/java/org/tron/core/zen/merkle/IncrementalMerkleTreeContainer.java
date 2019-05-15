@@ -29,10 +29,6 @@ public class IncrementalMerkleTreeContainer {
     return treeCapsule;
   }
 
-  public int DynamicMemoryUsage() {
-    return 32 + 32 + treeCapsule.getParents().size() * 32;
-  }
-
   public void wfcheck() {
     if (treeCapsule.getParents().size() >= DEPTH) {
       throw new RuntimeException("tree has too many parents");

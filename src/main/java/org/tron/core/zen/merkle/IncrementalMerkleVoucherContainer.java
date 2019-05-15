@@ -91,37 +91,8 @@ public class IncrementalMerkleVoucherContainer {
   public PedersenHash root() {
     return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
-
-  public byte[] getMerkleVoucherKey() {
-    OutputPoint outputPoint = voucherCapsule.getOutputPoint();
-
-    if (outputPoint.getHash().isEmpty()) {
-      throw new RuntimeException("outputPoint is not initialized");
-    }
-    return OutputPointUtil.outputPointToKey(outputPoint);
-  }
-
-  public byte[] getRootArray() {
-    return root().getContent().toByteArray();
-  }
-
   private boolean cursorExist() {
     return !voucherCapsule.getCursor().isEmptyTree();
-  }
-
-  public static class OutputPointUtil {
-
-    public static byte[] outputPointToKey(OutputPoint outputPoint) {
-      return outputPointToKey(outputPoint.getHash().toByteArray(), outputPoint.getIndex());
-    }
-
-    public static byte[] outputPointToKey(byte[] hashBytes, int index) {
-      byte[] indexBytes = ByteArray.fromInt(index);
-      byte[] rs = new byte[hashBytes.length + indexBytes.length];
-      System.arraycopy(hashBytes, 0, rs, 0, hashBytes.length);
-      System.arraycopy(indexBytes, 0, rs, hashBytes.length, indexBytes.length);
-      return rs;
-    }
   }
 
   public int size() {
