@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package org.tron.common.runtime.vm.program.invoke;
 
 import com.google.protobuf.ByteString;
@@ -34,6 +35,8 @@ import org.tron.protos.Protocol.SmartContract;
 
 
 /**
+ * .
+ *
  * @author Roman Mandeleil
  * @since 03.06.2014
  */
@@ -60,8 +63,9 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     this.deposit.createAccount(ownerAddress, Protocol.AccountType.Normal);
 
     this.deposit.createAccount(contractAddress, Protocol.AccountType.Contract);
-    this.deposit.createContract(contractAddress, new ContractCapsule(SmartContract.newBuilder().setContractAddress(
-        ByteString.copyFrom(contractAddress)).build()));
+    this.deposit.createContract(contractAddress,
+        new ContractCapsule(SmartContract.newBuilder().setContractAddress(
+            ByteString.copyFrom(contractAddress)).build()));
     this.deposit.saveCode(contractAddress,
         Hex.decode("385E60076000396000605f556014600054601e60"
             + "205463abcddcba6040545b51602001600a525451"
@@ -124,13 +128,11 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
     return null;
   }
 
-  /*****************/
-  /***  msg data ***/
-  /**
-   * *************
-   */
+  /****************.
+   /***  msg data **.
+   /***************.
 
-  /*     CALLDATALOAD  op   */
+   /*     CALLDATALOAD  op   */
   public DataWord getDataValue(DataWord indexData) {
 
     byte[] data = new byte[32];
