@@ -1512,7 +1512,6 @@ public class Wallet {
 
     validateInput(request);
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
-    result.setBlockNum(request.getBlockNum());
 
     long largeBlockNum = 0;
     for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){

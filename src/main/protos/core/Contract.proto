@@ -113,7 +113,6 @@ message IncrementalMerkleVoucher {
 message IncrementalMerkleVoucherInfo {
   repeated IncrementalMerkleVoucher vouchers = 1;
   repeated bytes paths = 2;
-  int32 block_num = 5;
 }
 
 message ZksnarkV0TransferContract {
