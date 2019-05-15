@@ -61,14 +61,13 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
+# Quick Start
+
+Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 # Deploy
 * [Build](https://github.com/tronprotocol/java-tron/blob/fixReadMe/build.md) Please build java-tron after cloning the project  
 * [Run](https://github.com/tronprotocol/java-tron/blob/fixReadMe/run.md) Run java-tron
-
-# Quick Start
-
-Read the [Quick Start](https://developers.tron.network/docs/getting-started-1).
 
 # Developer Community
 
