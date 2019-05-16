@@ -211,6 +211,7 @@ public class VM {
         case CALLTOKEN:
           // here, contract call an other contract, or a library, and so on
           energyCost = energyCosts.getCALL();
+          DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
           DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
 
@@ -246,7 +247,6 @@ public class VM {
           DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
           getEnergyLimitLeft.sub(new DataWord(energyCost));
 
-          DataWord callEnergyWord = stack.get(stack.size() - 1);
           adjustedCallEnergy = program.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
           energyCost += adjustedCallEnergy.longValueSafe();
           break;
