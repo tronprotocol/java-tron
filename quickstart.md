@@ -22,6 +22,11 @@ Please refer to the Docker official website to download and install the latest D
 git clone https://github.com/TRON-US/docker-tron-quickstart.git
 ```  
 
+### Pull the image using docker:
+```shell
+docker pull trontools/quickstart
+```  
+
 ## Setup TRON Quickstart   
 ### TRON Quickstart Build
 Run the docker run command to launch TRON Quickstart. TRON Quickstart exposes port 9090 for Full Node, Solidity Node, and Event Server.
