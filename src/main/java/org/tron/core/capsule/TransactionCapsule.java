@@ -87,7 +87,6 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -406,9 +405,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case TransferContract:
           owner = contractParameter.unpack(TransferContract.class).getOwnerAddress();
           break;
-        case ZksnarkV0TransferContract:
-          owner = contractParameter.unpack(ZksnarkV0TransferContract.class).getOwnerAddress();
-          break;
         case TransferAssetContract:
           owner = contractParameter.unpack(TransferAssetContract.class).getOwnerAddress();
           break;
@@ -674,39 +670,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return true;
   }
 
-  public void validateZkSignature() throws ValidateSignatureException {
-    if (this.getInstance().getSignatureZkCount() !=
-        this.getInstance().getRawData().getContractCount()) {
-      throw new ValidateSignatureException("miss sig or contract");
-    }
-    for (int i = 0; i < this.transaction.getSignatureCount(); ++i) {
-      try {
-        Transaction.Contract contract = this.getInstance().getRawData().getContract(i);
-        Any contractParameter = contract.getParameter();
-        ZksnarkV0TransferContract zkContract = contractParameter
-            .unpack(ZksnarkV0TransferContract.class);
-        byte[] message = ZksnarkUtils.computeZkSignInput(zkContract);
-        byte[] pk = zkContract.getPksig().toByteArray();
-        PublicKey publicKey = ZksnarkUtils.byte2PublicKey(pk);
-        EdDSAEngine engine = new EdDSAEngine();
-        engine.initVerify(publicKey);
-        isVerified = engine
-            .verifyOneShot(message, this.getInstance().getSignatureZk(i).toByteArray());
-        if (!isVerified) {
-          throw new ValidateSignatureException("sig error");
-        }
-      } catch (InvalidProtocolBufferException e) {
-        isVerified = false;
-        throw new ValidateSignatureException(e.getMessage());
-      } catch (InvalidKeyException e) {
-        isVerified = false;
-        throw new ValidateSignatureException(e.getMessage());
-      } catch (SignatureException e) {
-        isVerified = false;
-        throw new ValidateSignatureException(e.getMessage());
-      }
-    }
-  }
 
   /**
    * validate signature

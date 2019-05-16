@@ -587,12 +587,6 @@ public class RpcApiService implements Service {
       createTransactionExtention(request, ContractType.TransferContract, responseObserver);
     }
 
-    @Override
-    public void zksnarkV0TransferTrx(ZksnarkV0TransferContract request,
-        StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.ZksnarkV0TransferContract, responseObserver);
-    }
-
     private void createTransactionExtention(Message request, ContractType contractType,
         StreamObserver<TransactionExtention> responseObserver) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
@@ -1667,28 +1661,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getMerkleTreeWitness(OutputPoint request,
-        StreamObserver<IncrementalMerkleVoucher> responseObserver) {
-
-      ByteString hash = request.getHash();
-      int index = request.getIndex();
-
-      if (null != hash && index >= 0) {
-        IncrementalMerkleVoucher witness = wallet.getMerkleTreeWitness(hash.toByteArray(), index);
-        responseObserver.onNext(witness);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getMerkleTreeWitnessInfo(OutputPointInfo request,
+    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
 
       try {
         IncrementalMerkleVoucherInfo witnessInfo = wallet
-            .getMerkleTreeWitnessInfo(request);
+            .getMerkleTreeVoucherInfo(request);
         responseObserver.onNext(witnessInfo);
       } catch (Exception ex) {
         //todo,return error message

@@ -47,7 +47,6 @@ import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
 import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Contract.WitnessUpdateContract;
-import org.tron.protos.Contract.ZksnarkV0TransferContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
@@ -297,12 +296,6 @@ public class Util {
                 .unpack(ExchangeTransactionContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(exchangeTransactionContract));
-            break;
-          case ZksnarkV0TransferContract:
-            ZksnarkV0TransferContract zksnarkV0TransferContract = contractParameter
-                .unpack(ZksnarkV0TransferContract.class);
-            contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(zksnarkV0TransferContract));
             break;
           case AccountPermissionUpdateContract:
             AccountPermissionUpdateContract accountPermissionUpdateContract = contractParameter

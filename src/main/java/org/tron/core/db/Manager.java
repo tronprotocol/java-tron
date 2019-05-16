@@ -169,9 +169,6 @@ public class Manager {
   @Autowired
   @Getter
   private IncrementalMerkleTreeStore merkleTreeStore;
-  @Autowired
-  @Getter
-  private IncrementalMerkleVoucherStore merkleVoucherStore;
 
   // for network
   @Autowired
@@ -1769,7 +1766,6 @@ public class Manager {
     closeOneStore(exchangeV2Store);
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
-    closeOneStore(merkleVoucherStore);
     logger.info("******** end to close db ********");
   }
 

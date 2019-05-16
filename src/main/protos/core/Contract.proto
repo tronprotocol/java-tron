@@ -48,29 +48,6 @@ message TransferContract {
 }
 
 
-message BN128G1 {
-  bytes x = 1;
-  bytes y = 2;
-}
-
-message BN128G2 {
-  bytes x1 = 1;
-  bytes x2 = 2;
-  bytes y1 = 3;
-  bytes y2 = 4;
-}
-
-message zkv0proof {
-  BN128G1 a = 1;
-  BN128G1 a_p = 2;
-  BN128G2 b = 3;
-  BN128G1 b_p = 4;
-  BN128G1 c = 5;
-  BN128G1 c_p = 6;
-  BN128G1 k = 7;
-  BN128G1 h = 8;
-}
-
 message AuthenticationPath {
   repeated bool value = 1;
 }
@@ -113,29 +90,8 @@ message IncrementalMerkleVoucher {
 message IncrementalMerkleVoucherInfo {
   repeated IncrementalMerkleVoucher vouchers = 1;
   repeated bytes paths = 2;
-  int32 block_num = 5;
 }
 
-message ZksnarkV0TransferContract {
-  bytes owner_address = 1;
-  bytes to_address = 2;
-  int64 v_from_pub = 3;
-  int64 v_to_pub = 4;
-  bytes rt = 5;
-  bytes nf1 = 6;
-  bytes nf2 = 7;
-  bytes cm1 = 8;
-  bytes cm2 = 9;
-  bytes pksig = 10;
-  bytes randomSeed = 11;
-  bytes epk = 12;
-  int64 fee = 13;
-  bytes h1 = 20;
-  bytes h2 = 21;
-  bytes C1 = 22;
-  bytes C2 = 23;
-  zkv0proof proof = 30;
-}
 
 message ShieldAddress {
   bytes private_address = 1;

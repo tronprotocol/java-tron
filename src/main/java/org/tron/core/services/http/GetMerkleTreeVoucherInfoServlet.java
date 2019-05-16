@@ -15,7 +15,7 @@ import org.tron.protos.Contract.OutputPointInfo;
 
 @Component
 @Slf4j(topic = "API")
-public class GetMerkleTreeWitnessInfoServlet extends HttpServlet {
+public class GetMerkleTreeVoucherInfoServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
@@ -31,7 +31,7 @@ public class GetMerkleTreeWitnessInfoServlet extends HttpServlet {
       Util.checkBodySize(input);
       OutputPointInfo.Builder build = OutputPointInfo.newBuilder();
       JsonFormat.merge(input, build);
-      IncrementalMerkleVoucherInfo reply = wallet.getMerkleTreeWitnessInfo(build.build());
+      IncrementalMerkleVoucherInfo reply = wallet.getMerkleTreeVoucherInfo(build.build());
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply));
       } else {
