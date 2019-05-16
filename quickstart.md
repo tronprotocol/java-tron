@@ -17,79 +17,127 @@ Please refer to the Docker official website to download and install the latest D
   This will be used to interact with the Full and Solidity Nodes via Tron-Web.  
   Node.JS Console Download(https://nodejs.org/en/)
   
-### Clone TRON Quickstart
+### Clone TRON Quickstart  
+```shell
+git clone https://github.com/tronprotocol/docker-tron-quickstart.git
+```  
+
+## Setup TRON Quickstart   
+### TRON Quickstart Build
+Run the docker run command to launch TRON Quickstart. TRON Quickstart exposes port 9090 for Full Node, Solidity Node, and Event Server.
+```shell
+docker run -it --rm -p 9090:9090 --name tron -e "defaultBalance=100000" -e "showQueryString=true" -e "showBody=true" -e "formatJson=true" tron
+```  
+
+***Run Output:
+```shell
+Tron Quickstart v2.0.0
 
 
-  
+Start nodes and event server...
+[PM2] Spawning PM2 daemon with pm2_home=/root/.pm2
+[PM2] PM2 Successfully daemonized
+[PM2][WARN] Applications eventron not running, starting...
+[PM2] App [eventron] launched (1 instances)
+┌──────────┬────┬─────────┬──────┬─────┬────────┬─────────┬────────┬─────┬───────────┬──────┬──────────┐
+│ App name │ id │ version │ mode │ pid │ status │ restart │ uptime │ cpu │ mem       │ user │ watching │
+├──────────┼────┼─────────┼──────┼─────┼────────┼─────────┼────────┼─────┼───────────┼──────┼──────────┤
+│ eventron │ 0  │ N/A     │ fork │ 48  │ online │ 0       │ 0s     │ 0%  │ 24.8 MB   │ root │ disabled │
+└──────────┴────┴─────────┴──────┴─────┴────────┴─────────┴────────┴─────┴───────────┴──────┴──────────┘
+ Use `pm2 show <id|name>` to get more details about an app
+Start the http proxy for dApps...
+[HPM] Proxy created: /  ->  http://127.0.0.1:18191
+[HPM] Proxy created: /  ->  http://127.0.0.1:18190
+[HPM] Proxy created: /  ->  http://127.0.0.1:8060
 
-## Getting the code with git
+ Tron Quickstart listening on http://127.0.0.1:9090 
 
-* Use Git from the Terminal, see the [Setting up Git](https://help.github.com/articles/set-up-git/) and [Fork a Repo](https://help.github.com/articles/fork-a-repo/) articles.
-* develop branch: the newest code 
-* master branch: more stable than develop.
-In the shell command, type:
-```bash
-git clone https://github.com/tronprotocol/java-tron.git
-git checkout -t origin/master
-```
 
-* For Mac, you can also install **[GitHub for Mac](https://mac.github.com/)** then **[fork and clone our repository](https://guides.github.com/activities/forking/)**. 
 
-* If you'd rather not use Git, [Download the ZIP](https://github.com/tronprotocol/java-tron/archive/develop.zip)
-
-## Including java-tron as dependency
-
-* If you don't want to checkout the code and build the project, you can include it directly as a dependency
-
-**Using gradle:**
-
-```
-repositories {
-   maven { url 'https://jitpack.io' }
-}
-dependencies {
-   implementation 'com.github.tronprotocol:java-tron:develop-SNAPSHOT'
-}
-```
-  
-**Using maven:**
-
-```xml
+ADMIN /admin/accounts-generation
+Sleeping for 1 second... Slept.
+Waiting when nodes are ready to generate 10 accounts...
+(1) Waiting for sync...
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+(2) Waiting for sync...
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+(3) Waiting for sync...
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+(4) Waiting for sync...
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+Sleeping for 1 second... Slept.
+(5) Waiting for sync...
 ...
-<repositories>
-  <repository>    
-      <id>jitpack.io</id>
-      <url>https://jitpack.io</url>
-  </repository>
-</repositories>
-...
-<dependency>
-    <groupId>com.github.tronprotocol</groupId>
-    <artifactId>java-tron</artifactId>
-    <version>develop-SNAPSHOT</version><!--You can use any of the tag/branch name available-->
-</dependency>
+Loading the accounts and waiting for the node to mine the transactions...
+(1) Waiting for receipts...
+Sending 100000 TRX to TU8E4BzdGg4adqTyRCEZrrkq2EXsUYHG2k
+Sending 100000 TRX to TGBN88CQN74i89Gy25749SUZr1HcTufF6z
+Sending 100000 TRX to TWtStDLxF7gAkYbrMgSAbKsNdXY2qMUSv5
+Sending 100000 TRX to TTvYtVvHKpdg9Q2Sfhc4uSsrNbtJV8DiJS
+Sending 100000 TRX to TTiJtZRijXeGDEQgQUK5eXcTchTt69siva
+Sending 100000 TRX to TDT6oLuRmVkHp3npeztqQR1g63KxcugFK9
+Sending 100000 TRX to TE8BVrC4MoqtFfsMJviERPn8vW1Uh8Mcdn
+Sending 100000 TRX to TADf7t8afXBTaHqyYLqRqxyrsPvwykxndv
+Sending 100000 TRX to TJ71yAB1Cq4Cw2TEq6Z6dwP6dJTB7vH75C
+Sending 100000 TRX to TPF46hEmM3AYWz9D2ix3yVpdePvyjdmJXd
+Sleeping for 3 seconds... Slept.
+(2) Waiting for receipts...
+Sleeping for 3 seconds... Slept.
+(3) Waiting for receipts...
+Sleeping for 3 seconds... Slept.
+(4) Waiting for receipts...
+Sleeping for 3 seconds... Slept.
+(5) Waiting for receipts...
+Sleeping for 3 seconds... Slept.
+(6) Waiting for receipts...
+Done.
+
+Available Accounts
+==================
+
+(0) TU8E4BzdGg4adqTyRCEZrrkq2EXsUYHG2k (100000 TRX)
+(1) TGBN88CQN74i89Gy25749SUZr1HcTufF6z (100000 TRX)
+(2) TWtStDLxF7gAkYbrMgSAbKsNdXY2qMUSv5 (100000 TRX)
+(3) TTvYtVvHKpdg9Q2Sfhc4uSsrNbtJV8DiJS (100000 TRX)
+(4) TTiJtZRijXeGDEQgQUK5eXcTchTt69siva (100000 TRX)
+(5) TDT6oLuRmVkHp3npeztqQR1g63KxcugFK9 (100000 TRX)
+(6) TE8BVrC4MoqtFfsMJviERPn8vW1Uh8Mcdn (100000 TRX)
+(7) TADf7t8afXBTaHqyYLqRqxyrsPvwykxndv (100000 TRX)
+(8) TJ71yAB1Cq4Cw2TEq6Z6dwP6dJTB7vH75C (100000 TRX)
+(9) TPF46hEmM3AYWz9D2ix3yVpdePvyjdmJXd (100000 TRX)
+
+Private Keys
+==================
+
+(0) be3179ecdde173172001922024e631f42dbedda4a897990d6f67a8f3075d4b4a
+(1) 6983092e286ee240e13e404d828d4ff65eb048c06958b7c956fcc35d8dc72dfa
+(2) 14afd09c60731007d728491529dc5e60d416dac0a41cc585fcbf7b24456216af
+(3) 3858720883b55c215e8d6cf1c3a273cc1f7f2885bdbf9039908835bc9386c3d8
+(4) 2ee3e1b2939b4369c603d53c10c8a0b0365438ab21a6f3bc0dba944a07c3e3b6
+(5) 7fe368488e8e291b518733e577c9ba6086831fbd6cb6c15ad1d488641604949b
+(6) 415f6afbe240e60d39cb813756d74a9fd596ea37ec188993738f1cc273285ce3
+(7) c65f5bb0eb63d6894d56b78a3a07208446e6ed1395fc380d5d6aa90355aa8785
+(8) 4c43f458d7866b80ba56a02ad664b3bcd393990efbabebaaca7aa154b4d08362
+(9) 93363a1e9ead687aeac03ed40abe30fee72d990b578bf6d36ab90438561dd037
+
+HD Wallet
+==================
+Mnemonic:      slice beach ensure roof mercy tired sail achieve payment flower suggest sad
+Base HD Path:  m/44'/60'/0'/0/{account_index}
+
+GET 200  - 41874.921 ms
 ```
-
-
-
-
-## Building from source code
-
-* Build in the Terminal
-
-```bash
-cd java-tron
-./gradlew build
-```
-
-
-* Build in [IntelliJ IDEA](https://www.jetbrains.com/idea/) (community version is enough):
-
-  **Please run ./gradlew build once to build the protocol files**
-
-  1. Start IntelliJ. Select `File` -> `Open`, then locate to the java-tron folder which you have git cloned to your local drive. Then click `Open` button on the right bottom.
-  2. Check on `Use auto-import` on the `Import Project from Gradle` dialog. Select JDK 1.8 in the `Gradle JVM` option. Then click `OK`.
-  3. IntelliJ will open the project and start gradle syncing, which will take several minutes, depending on your network connection and your IntelliJ configuration
-  4. Enable Annotations, `Preferences` -> Search `annotations` -> check `Enable Annotation Processing`.
-  5. After the syncing finished, select `Gradle` -> `Tasks` -> `build`, and then double click `build` option.
-  
