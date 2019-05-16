@@ -29,7 +29,7 @@ Run the docker run command to launch TRON Quickstart. TRON Quickstart exposes po
 docker run -it --rm -p 9090:9090 --name tron -e "defaultBalance=100000" -e "showQueryString=true" -e "showBody=true" -e "formatJson=true" tron
 ```  
 
-***Run Output:
+**Run Output:**
 ```shell
 Tron Quickstart v2.0.0
 
