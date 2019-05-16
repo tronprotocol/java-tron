@@ -153,7 +153,6 @@ import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleVoucher;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
@@ -1448,8 +1447,10 @@ public class Wallet {
         if (new TransactionCapsule(transaction).getTransactionId().getByteString().equals(txId)) {
           found = true;
 
-          if(outPoint.getIndex() >= zkContract.getReceiveDescriptionCount()){
-            throw new RuntimeException("outPoint.getIndex():"+outPoint.getIndex()+" >= zkContract.getReceiveDescriptionCount():"+zkContract.getReceiveDescriptionCount());
+          if (outPoint.getIndex() >= zkContract.getReceiveDescriptionCount()) {
+            throw new RuntimeException("outPoint.getIndex():" + outPoint.getIndex()
+                + " >= zkContract.getReceiveDescriptionCount():" + zkContract
+                .getReceiveDescriptionCount());
           }
 
           int index = 0;
@@ -1563,8 +1564,8 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
-              zkContract.getReceiveDescriptionList()){
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+              zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
@@ -1583,18 +1584,20 @@ public class Wallet {
       throw new BadItemException("request.BlockNum must be range in【0，1000】");
     }
 
-    if (request.getOutPointsCount()<1 || request.getOutPointsCount()>10) {
+    if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
       throw new BadItemException("request.OutPointsCount must be range in【1，10】");
     }
 
     for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
 
-      if (outputPoint.getHash() == null){
-        throw new BadItemException( "outPoint.getHash() == null");
-        }
-      if(outputPoint.getIndex() >= Constant.ZC_OUTPUT_DESC_MAX_SIZE || outputPoint.getIndex() < 0) {
+      if (outputPoint.getHash() == null) {
+        throw new BadItemException("outPoint.getHash() == null");
+      }
+      if (outputPoint.getIndex() >= Constant.ZC_OUTPUT_DESC_MAX_SIZE
+          || outputPoint.getIndex() < 0) {
         throw new BadItemException(
-            "outPoint.getIndex() > "+Constant.ZC_OUTPUT_DESC_MAX_SIZE+" || outPoint.getIndex() < 0");
+            "outPoint.getIndex() > " + Constant.ZC_OUTPUT_DESC_MAX_SIZE
+                + " || outPoint.getIndex() < 0");
       }
     }
   }
@@ -1621,8 +1624,9 @@ public class Wallet {
     for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
-      if(blockNum1 + 100 < largeBlockNum){
-        throw new RuntimeException("blockNum:"+blockNum1+" + 100 < largeBlockNum:"+largeBlockNum);
+      if (blockNum1 + 100 < largeBlockNum) {
+        throw new RuntimeException(
+            "blockNum:" + blockNum1 + " + 100 < largeBlockNum:" + largeBlockNum);
       }
       IncrementalMerkleVoucherContainer witness = createWitness(outputPoint, blockNum1);
       updateLowWitness(witness, blockNum1, largeBlockNum);
@@ -2066,7 +2070,6 @@ public class Wallet {
   }
 
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
-
     if (limit < 0 || offset < 0) {
       return null;
     }
@@ -2094,40 +2097,29 @@ public class Wallet {
 
   }
 
-
   /*
    * try to get cm belongs to ivk
    */
   public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum, byte[] ivk) {
-
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
-
     if (!(endNum > 0 && endNum > startNum)) {
       return builder.build();
     }
-
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
-
     blockList.getBlockList().forEach(block -> {
-
       for (Transaction transaction : block.getTransactionsList()) {
-
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
-
-        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData()
+        List<Transaction.Contract> contracts = transaction.getRawData()
             .getContractList();
         if (contracts.size() == 0) {
           continue;
         }
-
-        org.tron.protos.Protocol.Transaction.Contract c = contracts.get(0);
-
-        if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
+        Transaction.Contract c = contracts.get(0);
+        if (c.getType() != Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
-
-        org.tron.protos.Contract.ShieldedTransferContract stContract = null;
+        ShieldedTransferContract stContract = null;
         try {
           stContract = c.getParameter()
               .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
@@ -2136,8 +2128,7 @@ public class Wallet {
         }
 
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
-          org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
-
+          ReceiveDescription r = stContract.getReceiveDescription(index);
           Optional<NotePlaintext> notePlaintext = NotePlaintext
               .decrypt(
                   r.getCEnc().toByteArray(),//ciphertext
@@ -2169,11 +2160,8 @@ public class Wallet {
             builder.addNoteTxs(noteTx);
           }
         } // end of ReceiveDescriptionList
-
       } // end of transaction
-
     }); //end of blocklist
-
     return builder.build();
   }
 
@@ -2181,35 +2169,26 @@ public class Wallet {
    * try to get cm belongs to ovk
    */
   public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum, byte[] ovk) {
-
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
-
     if (!(endNum > 0 && endNum > startNum)) {
       return builder.build();
     }
 
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
-
     blockList.getBlockList().forEach(block -> {
-
       for (Transaction transaction : block.getTransactionsList()) {
-
         TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
-
-        List<org.tron.protos.Protocol.Transaction.Contract> contracts = transaction.getRawData()
+        List<Transaction.Contract> contracts = transaction.getRawData()
             .getContractList();
         if (contracts.size() == 0) {
           continue;
         }
-
-        org.tron.protos.Protocol.Transaction.Contract c = contracts.get(0);
-
+        Transaction.Contract c = contracts.get(0);
         if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
-
-        org.tron.protos.Contract.ShieldedTransferContract stContract = null;
+        ShieldedTransferContract stContract = null;
         try {
           stContract = c.getParameter()
               .unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
@@ -2218,11 +2197,9 @@ public class Wallet {
         }
 
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
-          org.tron.protos.Contract.ReceiveDescription r = stContract.getReceiveDescription(index);
-
+          ReceiveDescription r = stContract.getReceiveDescription(index);
           Encryption.OutCiphertext c_out = new Encryption.OutCiphertext();
           c_out.data = r.getCOut().toByteArray();
-
           Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext
               .decrypt(c_out,//ciphertext
                   ovk,
@@ -2232,13 +2209,10 @@ public class Wallet {
               );
 
           if (notePlaintext.isPresent()) {
-
             OutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext.get();
-
             //decode c_enc with pkd、esk
             Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
             ciphertext.data = r.getCEnc().toByteArray();
-
             Optional<NotePlaintext> foo = NotePlaintext
                 .decrypt(ciphertext,
                     r.getEpk().toByteArray(),
@@ -2247,9 +2221,7 @@ public class Wallet {
                     r.getNoteCommitment().toByteArray());
 
             if (foo.isPresent()) {
-
               NotePlaintext bar = foo.get();
-
               GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                   .setD(ByteString.copyFrom(bar.d.getData()))
                   .setValue(bar.value)
@@ -2266,13 +2238,9 @@ public class Wallet {
               builder.addNoteTxs(noteTx);
             }
           }
-
         } // end of ReceiveDescriptionList
-
       } // end of transaction
-
     }); //end of blocklist
-
     return builder.build();
   }
 }
