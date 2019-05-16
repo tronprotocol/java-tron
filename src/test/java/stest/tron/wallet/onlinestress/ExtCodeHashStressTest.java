@@ -344,7 +344,7 @@ public class ExtCodeHashStressTest {
 
     ExecutorService pool = Executors.newFixedThreadPool(30);
     Map<String, Boolean> addressMap = new ConcurrentHashMap<>();
-    int size = 10_000_000;
+    int size = 50_0_000;
     int stubSize = 30;
     List<WalletGrpc.WalletBlockingStub> stubs = new ArrayList<>();
     for (int i = 0; i < stubSize; i++) {
@@ -454,7 +454,7 @@ public class ExtCodeHashStressTest {
     BufferedReader reader = null;
     List<String> addresses = new ArrayList<>();
     try {
-      reader = new BufferedReader(new FileReader("src/test/resources/addresses"));
+      reader = new BufferedReader(new FileReader("src/test/resources/address2"));
       String line = reader.readLine();
       while (line != null) {
         System.out.println(line);
@@ -485,7 +485,7 @@ public class ExtCodeHashStressTest {
     try {
       Thread.sleep(100000000);
     } catch (
-    InterruptedException e) {
+        InterruptedException e) {
       e.printStackTrace();
     }
   }
@@ -515,9 +515,9 @@ public class ExtCodeHashStressTest {
     final String user001Key = testKey002;
 
     extCodeHashContractAddress = WalletClient
-        .decodeFromBase58Check("TEsdDpJQrLBDPmJfDF2Ex53iMfzetqHvn9");
+        .decodeFromBase58Check("TJGYcUspHrwPgy72YeaVjD4Skep9Ji8Pnn");
 
-    final long feeLimit = maxFeeLimit;
+    final long feeLimit = 102471600;
     count.getAndAdd(1);
     if (count.get() % 100 == 0) {
       long cost = (System.currentTimeMillis() - startTime) / 1000;
@@ -541,7 +541,7 @@ public class ExtCodeHashStressTest {
     List<String> addresses = new ArrayList<>();
     try {
       reader = new BufferedReader(new FileReader(
-          "/Users/tron/Documents/GitHub/java-tron-odyseeyv3.2/src/test/resources/addresses"));
+          "src/test/resources/address2"));
       String line = reader.readLine();
       while (line != null) {
         System.out.println(line);
@@ -602,9 +602,9 @@ public class ExtCodeHashStressTest {
     final String user001Key = testKey002;
 
     normalContractAddress = WalletClient
-        .decodeFromBase58Check("TCkqZ2YaCvmkc7bj8UCXVQs7wi7U4xr925");
+        .decodeFromBase58Check("TFUSarvJtCSQhDifdRaioytThohLSLCjq4");
 
-    final long feeLimit = maxFeeLimit;
+    final long feeLimit = 51079600;
     count.getAndAdd(1);
     if (count.get() % 100 == 0) {
       long cost = (System.currentTimeMillis() - startTime) / 1000;

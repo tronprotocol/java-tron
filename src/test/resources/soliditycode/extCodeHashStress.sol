@@ -32,3 +32,14 @@ contract Trigger {
         }
     }
  }
+
+  contract TriggerNormal {
+     function test(address[] memory addrs) public returns(uint i) {
+        bytes32 hash;
+        uint i = 0;
+        for (; i < addrs.length; i++) {
+            address addr = addrs[i];
+            addr.balance;
+        }
+     }
+  }
