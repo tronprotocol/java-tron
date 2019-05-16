@@ -2,8 +2,8 @@
 
 ## Introduction
 
-This guide walks the user through the TRON Quickstart (v2.0.0) image setup. The image exposes a Full Node, Solidity Node, and Event Server.  
-Through TRON Quickstart, the user can deploy DApps, smart contracts, and interact via the TronWeb library.
+This guide walks the user through the TRON Quickstart (v2.0.0) image setup.   
+The image exposes a Full Node, Solidity Node, and Event Server. Through TRON Quickstart, the user can deploy DApps, smart contracts, and interact via the TronWeb library.
 
 ## Dependencies  
 
