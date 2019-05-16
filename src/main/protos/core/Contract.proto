@@ -48,51 +48,6 @@ message TransferContract {
 }
 
 
-message AuthenticationPath {
-  repeated bool value = 1;
-}
-
-message MerklePath {
-  repeated AuthenticationPath authentication_paths = 1;
-  repeated bool index = 2;
-  bytes rt = 3;
-}
-
-message OutputPoint {
-  bytes hash = 1;
-  int32 index = 2;
-}
-
-message OutputPointInfo {
-  repeated OutputPoint out_points = 1;
-  int32 block_num = 2;
-}
-
-message PedersenHash {
-  bytes content = 1;
-}
-
-message IncrementalMerkleTree {
-  PedersenHash left = 1;
-  PedersenHash right = 2;
-  repeated PedersenHash parents = 3;
-}
-
-message IncrementalMerkleVoucher {
-  IncrementalMerkleTree tree = 1;
-  repeated PedersenHash filled = 2;
-  IncrementalMerkleTree cursor = 3;
-  int64 cursor_depth = 4;
-  bytes rt = 5;
-  OutputPoint output_point = 10;
-}
-
-message IncrementalMerkleVoucherInfo {
-  repeated IncrementalMerkleVoucher vouchers = 1;
-  repeated bytes paths = 2;
-}
-
-
 message ShieldAddress {
   bytes private_address = 1;
   bytes public_address = 2;
@@ -302,6 +257,52 @@ message AccountPermissionUpdateContract {
 }
 
 // for shielded transaction
+
+message AuthenticationPath {
+  repeated bool value = 1;
+}
+
+message MerklePath {
+  repeated AuthenticationPath authentication_paths = 1;
+  repeated bool index = 2;
+  bytes rt = 3;
+}
+
+message OutputPoint {
+  bytes hash = 1;
+  int32 index = 2;
+}
+
+message OutputPointInfo {
+  repeated OutputPoint out_points = 1;
+  int32 block_num = 2;
+}
+
+message PedersenHash {
+  bytes content = 1;
+}
+
+message IncrementalMerkleTree {
+  PedersenHash left = 1;
+  PedersenHash right = 2;
+  repeated PedersenHash parents = 3;
+}
+
+message IncrementalMerkleVoucher {
+  IncrementalMerkleTree tree = 1;
+  repeated PedersenHash filled = 2;
+  IncrementalMerkleTree cursor = 3;
+  int64 cursor_depth = 4;
+  bytes rt = 5;
+  OutputPoint output_point = 10;
+}
+
+message IncrementalMerkleVoucherInfo {
+  repeated IncrementalMerkleVoucher vouchers = 1;
+  repeated bytes paths = 2;
+}
+
+
 message GrothProof {
   bytes values = 1;
 }
