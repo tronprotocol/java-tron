@@ -19,7 +19,7 @@ Please refer to the Docker official website to download and install the latest D
   
 ### Clone TRON Quickstart  
 ```shell
-git clone https://github.com/tronprotocol/docker-tron-quickstart.git
+git clone https://github.com/TRON-US/docker-tron-quickstart.git
 ```  
 
 ## Setup TRON Quickstart   
