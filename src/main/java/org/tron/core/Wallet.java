@@ -18,6 +18,9 @@
 
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
+import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -27,6 +30,14 @@ import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.security.SignatureException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,10 +46,34 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.*;
+import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
+import org.tron.api.GrpcAPI.Address;
+import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
+import org.tron.api.GrpcAPI.DiversifierMessage;
+import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.Node;
+import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.ReceiveNote;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
+import org.tron.api.GrpcAPI.SpendNote;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
@@ -50,41 +85,101 @@ import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.*;
+import org.tron.common.utils.Base58;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.*;
-import org.tron.core.exception.*;
+import org.tron.core.db.AccountIdIndexStore;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.BandwidthProcessor;
+import org.tron.core.db.ContractStore;
+import org.tron.core.db.EnergyProcessor;
+import org.tron.core.db.Manager;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.NonUniqueObjectException;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.exception.StoreException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.zen.*;
-import org.tron.core.zen.address.*;
-import org.tron.core.zen.merkle.*;
-import org.tron.core.zen.note.*;
+import org.tron.core.zen.ZenTransactionBuilder;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
+import org.tron.core.zen.note.NotePlaintext;
+import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.AuthenticationPath;
+import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.IncrementalMerkleTree;
+import org.tron.protos.Contract.IncrementalMerkleVoucher;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.MerklePath;
-import org.tron.protos.Contract.*;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.Contract.ReceiveDescription;
+import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.*;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
+import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
+import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-
-import java.security.SignatureException;
-import java.util.*;
-
-import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
-import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 @Component
@@ -1322,8 +1417,8 @@ public class Wallet {
     //Get blockNum from transactionInfo
     TransactionInfoCapsule transactionInfoCapsule1 = dbManager.getTransactionHistoryStore()
         .get(txId.toByteArray());
-    if(transactionInfoCapsule1 == null){
-      throw new RuntimeException("tx is not found:"+ByteArray.toHexString(txId.toByteArray()));
+    if (transactionInfoCapsule1 == null) {
+      throw new RuntimeException("tx is not found:" + ByteArray.toHexString(txId.toByteArray()));
     }
     return transactionInfoCapsule1.getBlockNumber();
   }
@@ -1336,23 +1431,22 @@ public class Wallet {
 
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
-    if(treeRoot == null){
+    if (treeRoot == null) {
       throw new RuntimeException("treeRoot is null,blockNumbler:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
         .get(treeRoot);
-    if(treeCapsule == null){
-      if(ByteArray.toHexString(treeRoot).equals(
-          "fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e")){
+    if (treeCapsule == null) {
+      if (ByteArray.toHexString(treeRoot).equals(
+          "fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e")) {
         treeCapsule = new IncrementalMerkleTreeCapsule();
-      }else {
+      } else {
         throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
       }
 
     }
     IncrementalMerkleTreeContainer tree = treeCapsule.toMerkleTreeContainer();
-
 
     //Get the block of blockNum
     BlockCapsule block = dbManager.getBlockByNum(blockNumber);
@@ -1361,45 +1455,43 @@ public class Wallet {
 
     //get the witness in three parts
     boolean found = false;
-    for (Transaction transaction1 : block.getInstance().getTransactionsList()) {
+    for (Transaction transaction : block.getInstance().getTransactionsList()) {
 
-      Contract contract1 = transaction1.getRawData().getContract(0);
-      if (contract1.getType() == ContractType.ShieldedTransferContract) {
-        ShieldedTransferContract zkContract = contract1.getParameter()
+      Contract contract = transaction.getRawData().getContract(0);
+      if (contract.getType() == ContractType.ShieldedTransferContract) {
+        ShieldedTransferContract zkContract = contract.getParameter()
             .unpack(ShieldedTransferContract.class);
 
-        if (new TransactionCapsule(transaction1).getTransactionId().getByteString().equals(txId)) {
-          System.out.println("foundTx");
+        if (new TransactionCapsule(transaction).getTransactionId().getByteString().equals(txId)) {
           found = true;
           int index = 0;
-          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
-              zkContract.getReceiveDescriptionList()){
+          for (ReceiveDescription receiveDescription : zkContract.getReceiveDescriptionList()) {
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
             PedersenHash cm = cmCapsule.getInstance();
 
             if (index < outPoint.getIndex()) {
               tree.append(cm);
-            }else if(outPoint.getIndex() == index){
+            } else if (outPoint.getIndex() == index) {
               tree.append(cm);
               witness = tree.getTreeCapsule().deepCopy()
                   .toMerkleTreeContainer().toVoucher();
-            }else {
+            } else {
               witness.append(cm);
             }
 
-            index ++;
+            index++;
           }
 
         } else {
-          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
-              zkContract.getReceiveDescriptionList()){
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+              zkContract.getReceiveDescriptionList()) {
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
             PedersenHash cm = cmCapsule.getInstance();
             if (witness != null) {
               witness.append(cm);
-            }else {
+            } else {
               tree.append(cm);
             }
 
@@ -1442,8 +1534,8 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for(org.tron.protos.Contract.ReceiveDescription receiveDescription:
-              zkContract.getReceiveDescriptionList()){
+          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+              zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule2 = new PedersenHashCapsule();
             cmCapsule2.setContent(receiveDescription.getNoteCommitment());
@@ -1462,7 +1554,8 @@ public class Wallet {
   }
 
 
-  private void updateLowWitness(IncrementalMerkleVoucherContainer witness, long blockNum1,  long blockNum2)
+  private void updateLowWitness(IncrementalMerkleVoucherContainer witness, long blockNum1,
+      long blockNum2)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
     long start;
@@ -1470,7 +1563,7 @@ public class Wallet {
     if (blockNum1 < blockNum2) {
       start = blockNum1 + 1;
       end = blockNum2;
-    }else {
+    } else {
       return;
     }
 
@@ -1506,13 +1599,14 @@ public class Wallet {
       throw new BadItemException("request.getBlockNum() < 0");
     }
 
-    if (request.getOutPointsCount()<1 || request.getOutPointsCount()>10) {
+    if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
       throw new BadItemException("request.getOutPointsCount()<1 || request.getOutPointsCount()>10");
     }
 
-    for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
 
-      if (outputPoint.getHash() == null || outputPoint.getIndex() > 10 || outputPoint.getIndex() < 0) {
+      if (outputPoint.getHash() == null || outputPoint.getIndex() > 10
+          || outputPoint.getIndex() < 0) {
         throw new BadItemException(
             "outPoint.getHash() == null || outPoint.getIndex() > 10 || outPoint.getIndex() < 0");
       }
@@ -1528,9 +1622,9 @@ public class Wallet {
     result.setBlockNum(request.getBlockNum());
 
     long largeBlockNum = 0;
-    for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
-      if(blockNum1 > largeBlockNum){
+      if (blockNum1 > largeBlockNum) {
         largeBlockNum = blockNum1;
       }
     }
@@ -1539,7 +1633,7 @@ public class Wallet {
     int opIndex = 0;
 
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
-    for(org.tron.protos.Contract.OutputPoint outputPoint:request.getOutPointsList()){
+    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       IncrementalMerkleVoucherContainer witness = createWitness(outputPoint, blockNum1);
@@ -1550,10 +1644,10 @@ public class Wallet {
     int synBlockNum = request.getBlockNum();
     if (synBlockNum != 0) {
       //According to the blockNum in the request, obtain the block before [block2+1, blockNum], and update the two witnesses.
-      updateWitnesses(witnessList, largeBlockNum+1, synBlockNum);
+      updateWitnesses(witnessList, largeBlockNum + 1, synBlockNum);
     }
 
-    for (IncrementalMerkleVoucherContainer w : witnessList){
+    for (IncrementalMerkleVoucherContainer w : witnessList) {
       w.getVoucherCapsule().resetRt();
       result.addVouchers(w.getVoucherCapsule().getInstance());
       result.addPaths(ByteString.copyFrom(w.path().encode()));
@@ -1631,7 +1725,6 @@ public class Wallet {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
 
-
         GrpcAPI.Note note = spendNote.getNote();
         Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
             note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
@@ -1640,7 +1733,7 @@ public class Wallet {
             spendNote.getVoucher()).toMerkleVoucherContainer();
         builder.addSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
             spendNote.getVoucher().getRt().toByteArray(),
-            voucherContainer    );
+            voucherContainer);
       }
     }
 
