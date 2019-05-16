@@ -141,3 +141,21 @@ Base HD Path:  m/44'/60'/0'/0/{account_index}
 
 GET 200  - 41874.921 ms
 ```
+## Docker Commands
+A few Docker commands are useful for managing the TRON Quickstart Docker container on your machine.   
+
+**To list all active containers on your machine, run:**
+```shell
+docker container ps
+```  
+**Output:**
+```shell
+docker container ps
+
+CONTAINER ID        IMAGE               COMMAND                 CREATED             STATUS              PORTS                                              NAMES
+513078dc7816        tron                "./quickstart v2.0.0"   About an hour ago   Up About an hour    0.0.0.0:9090->9090/tcp, 0.0.0.0:18190->18190/tcp   tron
+```  
+**To kill an active container, run:**
+```shell
+docker container kill 513078dc7816   // use your container ID
+```  
