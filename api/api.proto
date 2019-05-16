@@ -613,9 +613,6 @@ service Wallet {
   rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
   }
 
-  rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
-  }
-
   rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
   }
 
@@ -657,7 +654,9 @@ service Wallet {
   // for shiededTransaction
   rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
-  // end for shiededTransaction
+
+  rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
+  }
 
   //protocol p47
   rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
@@ -689,6 +688,8 @@ service Wallet {
 
   rpc GetRcm (EmptyMessage) returns (BytesMessage) {
   }
+
+  // end for shiededTransaction
 };
 
 service WalletSolidity {
