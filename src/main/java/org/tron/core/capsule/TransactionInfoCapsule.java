@@ -1,7 +1,6 @@
 package org.tron.core.capsule;
 
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
+  import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
@@ -226,13 +225,4 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     return new TransactionInfoCapsule(builder.build());
   }
 
-  public static Log buildLog(LogInfo logInfo) {
-    List<ByteString> topics = Lists.newArrayList();
-    logInfo.getTopics().forEach(topic -> {
-      topics.add(ByteString.copyFrom(topic.getData()));
-    });
-    ByteString address = ByteString.copyFrom(logInfo.getAddress());
-    ByteString data = ByteString.copyFrom(logInfo.getData());
-    return Log.newBuilder().setAddress(address).addAllTopics(topics).setData(data).build();
-  }
 }
