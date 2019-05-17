@@ -16,7 +16,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
@@ -32,6 +34,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.ShieldedTransferActuator;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
@@ -77,6 +80,7 @@ import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 
 public class SendCoinShieldTest {
 
@@ -1181,7 +1185,6 @@ public class SendCoinShieldTest {
 
   @Test
   public void testTwoCMWithDiffSkInOneTx()  throws Exception {
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1241,6 +1244,581 @@ public class SendCoinShieldTest {
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
     actuator.get(0).execute(resultCapsule);
 
+  }
+
+  private void executeTx( TransactionCapsule transactionCap)throws Exception {
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate();
+    TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
+    actuator.get(0).execute(resultCapsule);
+  }
+
+  @Test
+  public void testValueBalance()  throws Exception {
+
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    //case 1， a public input, no input cm,  an output cm, no public output
+    {
+//      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+//      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+//      AccountCapsule ownerCapsule =
+//          new AccountCapsule(
+//              ByteString.copyFromUtf8("owner"),
+//              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+//              AccountType.Normal,
+//              110_000_000L);
+//
+//      dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+//      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),100_000_000);
+//
+//      // generate output proof
+//      SpendingKey spendingKey = SpendingKey.random();
+//      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+//      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+//      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+//      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+//
+//      TransactionCapsule transactionCap = builder.build();
+//
+//    // 100_000_000L + 0L !=  200_000_000L + 0L + 10_000_000L
+//      try{
+//        executeTx(transactionCap);
+//        Assert.fail();
+//      }catch (ContractValidateException e){
+//        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+//          throw e;
+//        }
+//      }
+    }
+
+    //case 2， a public input, no input cm,  an output cm, a public output
+    {
+//      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+//
+//      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+//      AccountCapsule ownerCapsule =
+//          new AccountCapsule(
+//              ByteString.copyFromUtf8("owner"),
+//              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+//              AccountType.Normal,
+//              110_000_000L);
+//      dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+//      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),100_000_000L);
+//
+//      // generate output proof
+//      SpendingKey spendingKey = SpendingKey.random();
+//      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+//      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+//      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+//      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+//
+//      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+//      AccountCapsule toCapsule =
+//          new AccountCapsule(
+//              ByteString.copyFromUtf8("to"),
+//              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+//              AccountType.Normal,
+//              0L);
+//      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+//      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+//
+//      TransactionCapsule transactionCap = builder.build();
+//
+////   100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
+//      try{
+//        executeTx(transactionCap);
+//        Assert.fail();
+//      }catch (ContractValidateException e){
+//        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+//          throw e;
+//        }
+//      }
+    }
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+//      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+//
+//      //prepare  cm
+//      SpendingKey sk1 = SpendingKey.random();
+//      ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
+//      PaymentAddress address1 = sk1.defaultAddress();
+//      Note note1 = new Note(address1, 110 * 1000000);
+//
+//      IncrementalMerkleTreeContainer tree =
+//          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+//      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+//      compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
+//      PedersenHash a = compressCapsule1.getInstance();
+//      tree.append(a);
+//      IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+//      byte[] anchor = voucher.root().getContent().toByteArray();
+//      dbManager
+//          .getMerkleContainer()
+//          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+//
+//      //add spendDesc into builder
+//      builder.addSpend(expsk1, note1, anchor, voucher);
+//
+//      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+//      AccountCapsule toCapsule =
+//          new AccountCapsule(
+//              ByteString.copyFromUtf8("to"),
+//              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+//              AccountType.Normal,
+//              0L);
+//      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+//      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+//
+//      TransactionCapsule transactionCap = builder.build();
+//
+//      //   0L + 110_000_000L  !=  200_000_000L + 0L + 10_000_000L
+//      try{
+//        executeTx(transactionCap);
+//        Assert.fail();
+//      }catch (ContractValidateException e){
+//        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+//          throw e;
+//        }
+//      }
+    }
+
+    //case 4， no public input, an input cm,  an output cm, no public output
+    {
+//      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+//
+//      //prepare  cm
+//      SpendingKey sk1 = SpendingKey.random();
+//      ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
+//      PaymentAddress address1 = sk1.defaultAddress();
+//      Note note1 = new Note(address1, 110 * 1000000);
+//
+//      IncrementalMerkleTreeContainer tree =
+//          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+//      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+//      compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
+//      PedersenHash a = compressCapsule1.getInstance();
+//      tree.append(a);
+//      IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+//      byte[] anchor = voucher.root().getContent().toByteArray();
+//      dbManager
+//          .getMerkleContainer()
+//          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+//
+//      //add spendDesc into builder
+//      builder.addSpend(expsk1, note1, anchor, voucher);
+//
+//      // generate output proof
+//      SpendingKey spendingKey = SpendingKey.random();
+//      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+//      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+//      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+//      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+//
+//      TransactionCapsule transactionCap = builder.build();
+//
+//      //   110_000_000L + 0L!=  200_000_000L + 0L + 10_000_000L
+//      try{
+//        executeTx(transactionCap);
+//        Assert.fail();
+//      }catch (ContractValidateException e){
+//        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+//          throw e;
+//        }
+//      }
+    }
+
+    //case 5， no public input, an input cm,  an output cm, a public output
+    {
+//      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+//
+//      //prepare  cm
+//      SpendingKey sk1 = SpendingKey.random();
+//      ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
+//      PaymentAddress address1 = sk1.defaultAddress();
+//      Note note1 = new Note(address1, 110 * 1000000);
+//
+//      IncrementalMerkleTreeContainer tree =
+//          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+//      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+//      compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
+//      PedersenHash a = compressCapsule1.getInstance();
+//      tree.append(a);
+//      IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+//      byte[] anchor = voucher.root().getContent().toByteArray();
+//      dbManager
+//          .getMerkleContainer()
+//          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+//
+//      //add spendDesc into builder
+//      builder.addSpend(expsk1, note1, anchor, voucher);
+//
+//      // generate output proof
+//      SpendingKey spendingKey = SpendingKey.random();
+//      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+//      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+//      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+//      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+//
+//
+//      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+//      AccountCapsule toCapsule =
+//          new AccountCapsule(
+//              ByteString.copyFromUtf8("to"),
+//              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+//              AccountType.Normal,
+//              0L);
+//      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+//      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+//
+//      TransactionCapsule transactionCap = builder.build();
+//
+//      //     0L + 110_000_000L !=  200_000_000L + 10_000_000L + 10_000_000L
+//      try{
+//        executeTx(transactionCap);
+//        Assert.fail();
+//      }catch (ContractValidateException e){
+//        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+//          throw e;
+//        }
+//      }
+    }
+
+  }
+
+//  @Test
+  public void TestCreateMultipleTxAtTheSameTime()  throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    List<TransactionCapsule> txList = Lists.newArrayList();
+
+    //case 1， a public input, no input cm,  an output cm, no public output
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule ownerCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("owner"),
+              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+              AccountType.Normal,
+              220_000_000L);
+
+      dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),210_000_000L);
+
+      // generate output proof
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      transactionCap1.setBlockNum(1);
+      txList.add(transactionCap1);
+
+    // 210_000_000L + 0L =  200_000_000L + 0L + 10_000_000L
+    }
+
+    //case 2， a public input, no input cm,  an output cm, a public output
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule ownerCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("owner"),
+              ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
+              AccountType.Normal,
+              230_000_000L);
+      dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
+      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),220_000_000L);
+
+      // generate output proof
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+
+      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule toCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("to"),
+              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+              AccountType.Normal,
+              0L);
+      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      transactionCap1.setBlockNum(2);
+      txList.add(transactionCap1);
+
+//   220_000_000L + 0L =  200_000_000L + 10_000_000L + 10_000_000L
+
+    }
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+      //prepare  cm
+      SpendingKey sk1 = SpendingKey.random();
+      ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
+      PaymentAddress address1 = sk1.defaultAddress();
+      Note note1 = new Note(address1, 20 * 1000000);
+
+      IncrementalMerkleTreeContainer tree =
+          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+      compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
+      PedersenHash a = compressCapsule1.getInstance();
+      tree.append(a);
+      IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager
+          .getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+
+      //add spendDesc into builder
+      builder.addSpend(expsk1, note1, anchor, voucher);
+
+      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule toCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("to"),
+              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+              AccountType.Normal,
+              0L);
+      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      transactionCap1.setBlockNum(3);
+      txList.add(transactionCap1);
+
+//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+    }
+
+    System.out.println("TxList size:" + txList.size());
+    txList.parallelStream().forEach(transactionCapsule -> {
+      try{
+        executeTx(transactionCapsule);
+        System.out.println("Success execute tx,num:"+transactionCapsule.getBlockNum());
+      }catch (Exception ex){
+        System.out.println(ex);
+      }
+    });
+
+    System.out.println("All done");
+
+  }
+
+//  @Test
+  public void TestCtxGeneratesTooMuchProof() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+      //prepare two cm with different sk, cm1 is used for fake spendDesc
+      SpendingKey sk1 = SpendingKey.random();
+      ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
+      PaymentAddress address1 = sk1.defaultAddress();
+      Note note1 = new Note(address1, 110 * 1000000);
+
+      SpendingKey sk2 = SpendingKey.random();
+      ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+      PaymentAddress address2 = sk2.defaultAddress();
+      Note note2 = new Note(address2, 20 * 1000000);
+
+      IncrementalMerkleTreeContainer tree =
+          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+      PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
+      compressCapsule1.setContent(ByteString.copyFrom(note1.cm()));
+      PedersenHash a = compressCapsule1.getInstance();
+      tree.append(a);
+      IncrementalMerkleVoucherContainer voucher1 = tree.toVoucher();
+      byte[] anchor1 = voucher1.root().getContent().toByteArray();
+      dbManager
+          .getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor1, voucher1.getVoucherCapsule().getTree());
+
+      PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+      compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+      PedersenHash a2 = compressCapsule2.getInstance();
+      tree.append(a2);
+      IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+      byte[] anchor2 = voucher2.root().getContent().toByteArray();
+      dbManager
+          .getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) {
+
+          SpendDescriptionInfo fakeSpend = new SpendDescriptionInfo(expsk1, note1, anchor1, voucher1);
+          super.generateSpendProof(fakeSpend,ctx);
+          return super.generateSpendProof(spend,ctx);
+        }
+      };
+
+      //add spendDesc into builder
+      builder.addSpend(expsk2, note2, anchor2, voucher2);
+
+      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule toCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("to"),
+              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+              AccountType.Normal,
+              0L);
+      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      try{
+        executeTx(transactionCap1);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+          throw e;
+        }
+        System.out.println("Done");
+      }
+
+//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+    }
+  }
+
+//  @Test
+  public void TestGeneratesProofWithDiffCtx() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+
+      SpendingKey sk2 = SpendingKey.random();
+      ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+      PaymentAddress address2 = sk2.defaultAddress();
+      Note note2 = new Note(address2, 20 * 1000000);
+
+      IncrementalMerkleTreeContainer tree =
+          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+
+      PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+      compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+      PedersenHash a2 = compressCapsule2.getInstance();
+      tree.append(a2);
+      IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+      byte[] anchor2 = voucher2.root().getContent().toByteArray();
+      dbManager
+          .getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) {
+          Pointer fakeCtx = Librustzcash.librustzcashSaplingProvingCtxInit();
+          return super.generateSpendProof(spend,fakeCtx);
+        }
+      };
+
+      //add spendDesc into builder
+      builder.addSpend(expsk2, note2, anchor2, voucher2);
+
+      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule toCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("to"),
+              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+              AccountType.Normal,
+              0L);
+      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      try{
+        executeTx(transactionCap1);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+          throw e;
+        }
+        System.out.println("Done");
+      }
+
+//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+    }
+  }
+
+
+    @Test
+  public void TestGeneratesProofWithWrongalpha() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+
+      SpendingKey sk2 = SpendingKey.random();
+      ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+      PaymentAddress address2 = sk2.defaultAddress();
+      Note note2 = new Note(address2, 20 * 1000000);
+
+      IncrementalMerkleTreeContainer tree =
+          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+
+      PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+      compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+      PedersenHash a2 = compressCapsule2.getInstance();
+      tree.append(a2);
+      IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+      byte[] anchor2 = voucher2.root().getContent().toByteArray();
+      dbManager
+          .getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+
+      //add spendDesc into builder
+      builder.addSpend(expsk2, note2, anchor2, voucher2);
+      builder.getSpends().get(0).alpha = ByteArray.fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7");
+
+      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      AccountCapsule toCapsule =
+          new AccountCapsule(
+              ByteString.copyFromUtf8("to"),
+              ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+              AccountType.Normal,
+              0L);
+      dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+      TransactionCapsule transactionCap1 = builder.build();
+      try{
+        executeTx(transactionCap1);
+        Assert.fail();
+      }catch (RuntimeException e){
+        if(!e.getMessage().equals("Spend proof failed")){
+          throw e;
+        }
+        System.out.println("Done");
+      }
+
+//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
+    }
   }
 
 }
