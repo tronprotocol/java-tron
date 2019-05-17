@@ -140,7 +140,6 @@ public class Manager {
   @Autowired
   @Getter
   private TransactionResultListStore resultStore;
-  @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
   private AccountIndexStore accountIndexStore;
@@ -1544,6 +1543,8 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         fastSyncCallBack.preExeTrans();
+        TransactionResult result = processTransaction(transactionCapsule, block);
+        transationResultCapsule.addTransactionResult(result);
         fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
@@ -1551,6 +1552,7 @@ public class Manager {
       fastSyncCallBack.exceptionFinish();
     }
 
+    block.setResult(transationResultCapsule);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
