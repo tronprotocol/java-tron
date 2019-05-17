@@ -134,6 +134,7 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
@@ -1743,7 +1744,7 @@ public class Wallet {
     TransactionCapsule transactionCapsule = null;
     try {
       transactionCapsule = builder.build();
-    } catch (RuntimeException e) {
+    } catch (ZksnarkException e) {
       logger.error("createShieldedTransaction except, error is " + e.toString());
     }
     return transactionCapsule;

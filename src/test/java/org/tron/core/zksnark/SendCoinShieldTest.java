@@ -52,6 +52,7 @@ import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.DiversifierT;
@@ -266,7 +267,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void generateOutputProof() {
+  public void generateOutputProof() throws ZksnarkException{
     librustzcashInitZksnarkParams();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
@@ -281,7 +282,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void verifyOutputProof() {
+  public void verifyOutputProof() throws ZksnarkException {
     librustzcashInitZksnarkParams();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey spendingKey = SpendingKey.random();
@@ -348,7 +349,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void verifyIvkDecryptReceive() {
+  public void verifyIvkDecryptReceive() throws ZksnarkException{
     //verify c_enc
     librustzcashInitZksnarkParams();
     ZenTransactionBuilder builder = new ZenTransactionBuilder();
@@ -494,7 +495,7 @@ public class SendCoinShieldTest {
       throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
       TaposException, TransactionExpirationException, ReceiptCheckErrException,
       DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException,ZksnarkException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -578,7 +579,7 @@ public class SendCoinShieldTest {
       throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
       TaposException, TransactionExpirationException, ReceiptCheckErrException,
       DupTransactionException, VMIllegalException, ValidateSignatureException,BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException {
+      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException ,ZksnarkException{
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -684,7 +685,7 @@ public class SendCoinShieldTest {
 
 
   @Test
-  public void testVerifySpendProof() throws BadItemException{
+  public void testVerifySpendProof() throws BadItemException,ZksnarkException{
     librustzcashInitZksnarkParams();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -732,7 +733,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void saplingBindingSig() throws BadItemException{
+  public void saplingBindingSig() throws BadItemException,ZksnarkException{
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -779,7 +780,7 @@ public class SendCoinShieldTest {
       throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
       TaposException, TransactionExpirationException, ReceiptCheckErrException,
       DupTransactionException, VMIllegalException, ValidateSignatureException,BadItemException,
-      ContractExeException, AccountResourceInsufficientException {
+      ContractExeException, AccountResourceInsufficientException,ZksnarkException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
@@ -819,7 +820,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void finalCheck()throws BadItemException {
+  public void finalCheck()throws BadItemException ,ZksnarkException{
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     librustzcashInitZksnarkParams();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1662,7 +1663,7 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
         @Override
         public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            Pointer ctx) {
+            Pointer ctx)throws ZksnarkException {
 
           SpendDescriptionInfo fakeSpend = new SpendDescriptionInfo(expsk1, note1, anchor1, voucher1);
           super.generateSpendProof(fakeSpend,ctx);
@@ -1728,7 +1729,7 @@ public class SendCoinShieldTest {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
         @Override
         public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-            Pointer ctx) {
+            Pointer ctx) throws ZksnarkException{
           Pointer fakeCtx = Librustzcash.librustzcashSaplingProvingCtxInit();
           return super.generateSpendProof(spend,fakeCtx);
         }
@@ -1810,7 +1811,7 @@ public class SendCoinShieldTest {
       try{
         executeTx(transactionCap1);
         Assert.fail();
-      }catch (RuntimeException e){
+      }catch (ZksnarkException e){
         if(!e.getMessage().equals("Spend proof failed")){
           throw e;
         }
