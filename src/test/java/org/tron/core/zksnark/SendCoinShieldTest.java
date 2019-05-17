@@ -1764,15 +1764,75 @@ public class SendCoinShieldTest {
   }
 
 
-    @Test
-  public void TestGeneratesProofWithWrongalpha() throws Exception {
+//  @Test
+  public void TestGeneratesProofWithWrongAlpha() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    //case 3， no public input, an input cm,  no output cm, a public output
+    {
+      SpendingKey sk2 = SpendingKey.random();
+      ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+      PaymentAddress address2 = sk2.defaultAddress();
+      Note note2 = new Note(address2, 20 * 1000000);
+
+      IncrementalMerkleTreeContainer tree =
+          new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+
+      PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+      compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+      PedersenHash a2 = compressCapsule2.getInstance();
+      tree.append(a2);
+      IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+      byte[] anchor2 = voucher2.root().getContent().toByteArray();
+
+      SpendDescriptionInfo spendDescriptionInfo = new SpendDescriptionInfo(expsk2, note2, anchor2,
+          voucher2);
+      byte[] bytes = ByteArray
+          .fromHexString("0eadb4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cbd");
+      spendDescriptionInfo.alpha = bytes;
+
+      byte[] dataToBeSigned = ByteArray.fromHexString("aaaaaaaaa");
+      byte[] result = new byte[64];
+      Librustzcash.librustzcashSaplingSpendSig(
+          spendDescriptionInfo.expsk.getAsk(),
+          spendDescriptionInfo.alpha,
+          dataToBeSigned,
+          result);
+    }
+  }
+
+
+//  @Test
+  public void TestGeneratesProofWithWrongRcm() throws Exception {
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    librustzcashInitZksnarkParams();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    // generate spend proof
+    SpendingKey sk = SpendingKey .random();
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+
+    Note note = new Note(address, 4010 * 1000000);
+//    note.r =  ByteArray
+//        .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
+
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    builder.addSpend(expsk, note, anchor, voucher);
+    SpendDescriptionCapsule spendDescriptionCapsule = builder
+        .generateSpendProof(builder.getSpends().get(0), ctx);
+
+  }
+
+//  @Test
+  public void TestWrongAsk() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
 
 
     //case 3， no public input, an input cm,  no output cm, a public output
     {
-
       SpendingKey sk2 = SpendingKey.random();
       ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
       PaymentAddress address2 = sk2.defaultAddress();
@@ -1791,11 +1851,27 @@ public class SendCoinShieldTest {
           .getMerkleContainer()
           .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
 
-      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      byte[] fakeAsk = ByteArray
+        .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
+
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        @Override
+        public void CreateSpendAuth(byte[] dataToBeSigned){
+          for (int i = 0; i < this.getSpends().size(); i++) {
+            byte[] result = new byte[64];
+            Librustzcash.librustzcashSaplingSpendSig(
+                fakeAsk,
+                this.getSpends().get(i).alpha,
+                dataToBeSigned,
+                result);
+            this.getContractBuilder().getSpendDescriptionBuilder(i)
+                .setSpendAuthoritySignature(ByteString.copyFrom(result));
+          }
+        }
+      };
 
       //add spendDesc into builder
       builder.addSpend(expsk2, note2, anchor2, voucher2);
-      builder.getSpends().get(0).alpha = ByteArray.fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb7");
 
       String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
       AccountCapsule toCapsule =
@@ -1811,15 +1887,221 @@ public class SendCoinShieldTest {
       try{
         executeTx(transactionCap1);
         Assert.fail();
-      }catch (ZksnarkException e){
-        if(!e.getMessage().equals("Spend proof failed")){
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingCheckSpend error")){
           throw e;
         }
         System.out.println("Done");
       }
 
-//         0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
+
+  private SpendDescriptionInfo generateDefaultSpend() throws BadItemException{
+    SpendingKey sk = SpendingKey.random();
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+    Note note = new Note(address, 20 * 1000000);
+
+    IncrementalMerkleTreeContainer tree =
+        new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
+
+    PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
+    compressCapsule.setContent(ByteString.copyFrom(note.cm()));
+    PedersenHash hash = compressCapsule.getInstance();
+    tree.append(hash);
+    IncrementalMerkleVoucherContainer voucher = tree.toVoucher();
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager
+        .getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+
+    return new SpendDescriptionInfo(expsk, note, anchor, voucher);
+  }
+
+  private String generateDefaultToAccount(){
+    String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+    AccountCapsule toCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("to"),
+            ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)),
+            AccountType.Normal,
+            0L);
+    dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+    return TO_ADDRESS;
+  }
+
+  private TransactionCapsule generateDefaultBuilder(ZenTransactionBuilder builder) throws BadItemException,ZksnarkException{
+    //add spendDesc into builder
+    SpendDescriptionInfo spendDescriptionInfo = generateDefaultSpend();
+    builder.addSpend(spendDescriptionInfo);
+
+    //add to transparent
+    String TO_ADDRESS = generateDefaultToAccount();
+    builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+
+    TransactionCapsule transactionCap = builder.build();
+    return transactionCap;
+  }
+
+
+//  @Test
+  public void TesDefaultBuilder() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
+    executeTx(transactionCapsule);
+  }
+
+//  @Test
+  public void TestWrongSpendRk() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        //set wrong rk
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) throws ZksnarkException{
+          SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
+          //The format is correct, but it does not belong to this
+          // note value ,fake : 200_000_000,real:20_000_000
+          byte[] fakeRk =  ByteArray
+              .fromHexString("a167824f65f874075cf81968f9f41096c28a2d9c6396601291f76782e6bdc0a4");
+          System.out.println("rk:"+ByteArray.toHexString(spendDescriptionCapsule.getRk().toByteArray()));
+          spendDescriptionCapsule.setRk(fakeRk);
+          return spendDescriptionCapsule;
+        }
+      };
+
+      TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
+
+      try{
+        executeTx(transactionCapsule);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingCheckSpend error")){
+          throw e;
+        }
+        System.out.println("Done");
+      }
+    }
+  }
+
+//  @Test
+  public void TestWrongSpendProof() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        //set wrong proof
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) throws ZksnarkException{
+          SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
+          //The format is correct, but it does not belong to this
+          // note value ,fake : 200_000_000,real:20_000_000
+          byte[] fakeProof =  ByteArray
+              .fromHexString("0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e42f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d4627021d");
+          System.out.println("zkproof:"+ByteArray.toHexString(spendDescriptionCapsule.getZkproof().toByteArray()));
+
+          spendDescriptionCapsule.setZkproof(fakeProof);
+          return spendDescriptionCapsule;
+        }
+      };
+
+      TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
+
+      try{
+        executeTx(transactionCapsule);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingCheckSpend error")){
+          throw e;
+        }
+        System.out.println("Done");
+      }
+    }
+  }
+
+//  @Test
+  public void TestWrongNf() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        //set wrong nf
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) throws ZksnarkException{
+          SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
+
+          //The format is correct, but it does not belong to this
+          // note value ,fake : 200_000_000,real:20_000_000
+          byte[] bytes =  ByteArray
+              .fromHexString("7b21b1bc8aba1bb8d5a3638ef8e3c741b84ca7c122053a1072a932c043a0a9500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");//256
+          System.out.println("nf:"+ByteArray.toHexString(spendDescriptionCapsule.getNullifier().toByteArray()));
+          spendDescriptionCapsule.setNullifier(bytes);
+          return spendDescriptionCapsule;
+        }
+      };
+
+      TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
+
+      try{
+        executeTx(transactionCapsule);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("librustzcashSaplingCheckSpend error")){
+          throw e;
+        }
+        System.out.println("Done");
+        return;
+      }
+    }
+  }
+
+//  @Test
+  public void TestWrongAnchor() throws Exception {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+
+    {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet){
+        //set wrong anchor
+        @Override
+        public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
+            Pointer ctx) throws ZksnarkException{
+          SpendDescriptionCapsule spendDescriptionCapsule = super.generateSpendProof(spend, ctx);
+          //The format is correct, but it does not belong to this
+          // note value ,fake : 200_000_000,real:20_000_000
+          byte[] bytes =  ByteArray
+              .fromHexString("bd7e296f492ffc23248b1815277b29af3a8970fff70f8256492bbea79b9a5e3e");//256
+          System.out.println("bytes:"+ByteArray.toHexString(spendDescriptionCapsule.getAnchor().toByteArray()));
+          spendDescriptionCapsule.setAnchor(bytes);
+          return spendDescriptionCapsule;
+        }
+      };
+
+      TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
+
+      try{
+        executeTx(transactionCapsule);
+        Assert.fail();
+      }catch (ContractValidateException e){
+        if(!e.getMessage().equals("Rt is invalid.")){
+          throw e;
+        }
+        System.out.println("Done");
+        return;
+      }
+    }
+  }
+
 
 }

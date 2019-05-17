@@ -22,6 +22,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -114,7 +115,7 @@ public class ShieldedTransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
-  private Any getTransparentOutContract(long outAmount) throws BadItemException{
+  private Any getTransparentOutContract(long outAmount) throws BadItemException,ZksnarkException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -123,7 +124,7 @@ public class ShieldedTransferActuatorTest {
             .build());
   }
 
-  private Any getTransparentToContract(long inAmount) throws BadItemException{
+  private Any getTransparentToContract(long inAmount) throws BadItemException,ZksnarkException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -132,7 +133,7 @@ public class ShieldedTransferActuatorTest {
             .build());
   }
 
-  private Any getTransparentOutToContract(long outAmount, long inAmount) throws BadItemException{
+  private Any getTransparentOutToContract(long outAmount, long inAmount) throws BadItemException,ZksnarkException{
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
@@ -184,7 +185,7 @@ public class ShieldedTransferActuatorTest {
   }
 
 
-  private SpendDescriptionCapsule generateSpendDescription() throws BadItemException {
+  private SpendDescriptionCapsule generateSpendDescription() throws BadItemException, ZksnarkException {
     librustzcashInitZksnarkParams();
 
 
