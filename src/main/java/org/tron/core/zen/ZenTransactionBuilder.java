@@ -58,6 +58,11 @@ public class ZenTransactionBuilder {
 
   }
 
+  public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
+    spends.add(spendDescriptionInfo);
+    valueBalance += spendDescriptionInfo.note.value;
+  }
+
   public void addSpend(
       ExpandedSpendingKey expsk,
       Note note,
@@ -138,16 +143,8 @@ public class ZenTransactionBuilder {
     }
 
     // Create Sapling spendAuth and binding signatures
-    for (int i = 0; i < spends.size(); i++) {
-      byte[] result = new byte[64];
-      Librustzcash.librustzcashSaplingSpendSig(
-          spends.get(i).expsk.getAsk(),
-          spends.get(i).alpha,
-          dataToBeSigned,
-          result);
-      contractBuilder.getSpendDescriptionBuilder(i)
-          .setSpendAuthoritySignature(ByteString.copyFrom(result));
-    }
+
+    CreateSpendAuth(dataToBeSigned);
 
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
@@ -170,6 +167,19 @@ public class ZenTransactionBuilder {
     Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
     return new TransactionCapsule(transaction);
+  }
+
+  public void CreateSpendAuth(byte[] dataToBeSigned){
+    for (int i = 0; i < spends.size(); i++) {
+      byte[] result = new byte[64];
+      Librustzcash.librustzcashSaplingSpendSig(
+          spends.get(i).expsk.getAsk(),
+          spends.get(i).alpha,
+          dataToBeSigned,
+          result);
+      contractBuilder.getSpendDescriptionBuilder(i)
+          .setSpendAuthoritySignature(ByteString.copyFrom(result));
+    }
   }
 
   public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
