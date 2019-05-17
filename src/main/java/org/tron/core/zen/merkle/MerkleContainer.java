@@ -69,9 +69,9 @@ public class MerkleContainer {
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
       IncrementalMerkleTreeContainer tree, byte[] cm) {
 
-    PedersenHashCapsule sha256CompressCapsule1 = new PedersenHashCapsule();
-    sha256CompressCapsule1.setContent(ByteString.copyFrom(cm));
-    tree.append(sha256CompressCapsule1.getInstance());
+    PedersenHashCapsule pedersenHashCapsule = new PedersenHashCapsule();
+    pedersenHashCapsule.setContent(ByteString.copyFrom(cm));
+    tree.append(pedersenHashCapsule.getInstance());
 
     return tree;
   }

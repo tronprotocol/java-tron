@@ -1717,14 +1717,15 @@ public class Wallet {
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
-
         GrpcAPI.Note note = spendNote.getNote();
         Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
             note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
 
         IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
             spendNote.getVoucher()).toMerkleVoucherContainer();
-        builder.addSpend(expsk, baseNote, spendNote.getAlpha().toByteArray(),
+        builder.addSpend(expsk,
+            baseNote,
+            spendNote.getAlpha().toByteArray(),
             spendNote.getVoucher().getRt().toByteArray(),
             voucherContainer);
       }

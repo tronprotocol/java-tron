@@ -1138,7 +1138,6 @@ message Note {
 message SpendNote {
   Note note = 3;
   bytes alpha = 4; // random number for spend authority signature
-//  bytes anchor = 5; // merkle root
   IncrementalMerkleVoucher voucher = 5;
   bytes path = 6; // path for cm from leaf to root in merkle tree
 }
