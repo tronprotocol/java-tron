@@ -42,12 +42,13 @@
 </p>
 
 <p align="center">
-  <a href="#how-to-build">How to Build</a> •
-  <a href="#running">How to Run</a> •
-  <a href="#links">Links</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#deploy">Deploy</a> •
+  <a href="#developer-community">Developer Community</a> •
   <a href="http://developers.tron.network">Documentation</a> •
-  <a href="CONTRIBUTING.md">Contributing</a> •
-  <a href="#community">Community</a>
+  <a href="#contributing">Contributing</a> •
+  <a href="#projects">Projects</a> •
+  <a href="#resource">Resource</a>
 </p>
 
 ## What's TRON?
