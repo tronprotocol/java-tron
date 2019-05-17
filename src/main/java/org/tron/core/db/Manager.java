@@ -137,6 +137,7 @@ public class Manager {
   @Autowired
   @Getter
   private BlockIndexStore blockIndexStore;
+  @Autowired
   @Getter
   private TransactionResultListStore resultStore;
   @Autowired
