@@ -42,8 +42,8 @@ public class CreateStressTransactionXml {
       "updateEnergyLimit",
       "triggerTimeoutContractCreatorMulti",
       "SendCoin(Delay)",
-      "transferTRC20"
-
+      "transferTRC20",
+      "ExtCodeHash"
   };
 
   @BeforeClass

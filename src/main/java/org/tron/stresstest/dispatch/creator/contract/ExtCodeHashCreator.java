@@ -13,7 +13,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.stresstest.AbiUtil;
+import org.tron.stresstest.AbiUtil2;
 import org.tron.stresstest.dispatch.AbstractTransactionCreator;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
@@ -53,7 +53,7 @@ public class ExtCodeHashCreator extends AbstractTransactionCreator implements
 
       contract = triggerCallContract(
           ownerAddressBytes, Wallet.decodeFromBase58Check(contractAddress), callValue,
-          Hex.decode(AbiUtil.parseMethod(methodSign, Arrays.asList(params))));
+          Hex.decode(AbiUtil2.parseMethod(methodSign, Arrays.asList(params))));
     } catch (EncodingException e) {
       e.printStackTrace();
     }
