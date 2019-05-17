@@ -25,6 +25,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.crypto.ECKey;
@@ -43,6 +45,10 @@ import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "capsule")
 public class BlockCapsule implements ProtoCapsule<Block> {
+
+  @Getter
+  @Setter
+  private TransactionResultListCapsule result;
 
   public static class BlockId extends Sha256Hash {
 
