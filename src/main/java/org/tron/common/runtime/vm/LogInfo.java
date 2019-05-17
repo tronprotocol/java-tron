@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
-import org.tron.protos.Protocol.TransactionResult.Log;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 /**
  * @author Roman Mandeleil

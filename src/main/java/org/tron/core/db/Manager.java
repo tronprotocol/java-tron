@@ -110,7 +110,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.TransactionResult;
+import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j(topic = "DB")
@@ -1200,7 +1200,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionResult processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
@@ -1263,7 +1263,7 @@ public class Manager {
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
-    TransactionResult transactionInfo = TransactionResultListCapsule
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
 
     TransactionInfoCapsule transactionInfo2 = TransactionInfoCapsule
@@ -1278,7 +1278,7 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    return transactionInfo;
+    return transactionInfo.getInstance();
   }
 
 
@@ -1386,7 +1386,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         fastSyncCallBack.preExeTrans();
-        TransactionResult result = processTransaction(trx, blockCapsule);
+        TransactionInfo result = processTransaction(trx, blockCapsule);
         fastSyncCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
@@ -1544,7 +1544,7 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         fastSyncCallBack.preExeTrans();
-        TransactionResult result = processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block);
         transationResultCapsule.addTransactionResult(result);
         fastSyncCallBack.exeTransFinish();
       }

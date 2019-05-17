@@ -178,7 +178,7 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
     List<Log> logList = new ArrayList<>();
     programResult.getLogInfoList().forEach(
         logInfo -> {
-          logList.add(buildLog(logInfo));
+          logList.add(LogInfo.buildLog(logInfo));
         }
     );
     builder.addAllLog(logList);
