@@ -851,7 +851,7 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      this.resultStore.put(block.getBlockId().getBytes(), block.getResult());
+      this.resultStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);

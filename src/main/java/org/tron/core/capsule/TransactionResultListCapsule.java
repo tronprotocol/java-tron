@@ -1,18 +1,9 @@
 package org.tron.core.capsule;
 
-import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.List;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.TransactionTrace;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Block;
+import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.code;
 import org.tron.protos.Protocol.TransactionResultList;
@@ -29,6 +20,14 @@ public class TransactionResultListCapsule implements ProtoCapsule<TransactionRes
     TransactionResultList.Builder build = transactionResultList.toBuilder().
         setBlockNumber(blockCapsule.getNum()).setBlockTimeStamp(blockCapsule.getTimeStamp());
     transactionResultList = build.build();
+  }
+
+  public TransactionResultListCapsule(byte[] data) throws BadItemException {
+    try {
+      this.transactionResultList = transactionResultList.parseFrom(data);
+    } catch (InvalidProtocolBufferException e) {
+      throw new BadItemException("TransactionInfoCapsule proto data parse exception");
+    }
   }
 
   public void addTransactionResult(TransactionInfo result) {

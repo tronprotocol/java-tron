@@ -103,6 +103,7 @@ import org.tron.core.db.ContractStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -1229,7 +1230,7 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    TransactionInfoCapsule transactionInfoCapsule = null;
+    TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
@@ -1239,7 +1240,13 @@ public class Wallet {
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
     }
-    return null;
+    try {
+      transactionInfoCapsule = dbManager.getResultStore().getTransactionInfo(transactionId.toByteArray());
+    } catch (BadItemException e) {
+      return null;
+    }
+
+    return transactionInfoCapsule.getInstance();
   }
 
   public Proposal getProposalById(ByteString proposalId) {
