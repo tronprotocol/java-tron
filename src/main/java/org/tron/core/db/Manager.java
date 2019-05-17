@@ -140,6 +140,7 @@ public class Manager {
   @Autowired
   @Getter
   private TransactionResultListStore resultStore;
+  @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
   private AccountIndexStore accountIndexStore;
