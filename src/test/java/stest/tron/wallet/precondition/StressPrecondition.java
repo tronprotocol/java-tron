@@ -121,6 +121,8 @@ public class StressPrecondition {
   byte[] commonContractAddress2;
   byte[] commonContractAddress3;
   byte[] commonContractAddress4;
+  byte[] commonContractAddress5;
+  byte[] commonContractAddress6;
 
 
   @BeforeSuite
@@ -198,7 +200,7 @@ public class StressPrecondition {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
           true, blockingStubFull);
-      waitProposalApprove(29,blockingStubFull);
+      waitProposalApprove(29, blockingStubFull);
     }
   }
 
@@ -449,6 +451,46 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
+  @Test(enabled = true)
+  public void test10DeploySmartContract5() {
+    String contractName = "Trigger";
+    String code = stest.tron.wallet.common.client.Configuration.getByPath("testng.conf")
+        .getString("code.code_veryLarge");
+    String abi = stest.tron.wallet.common.client.Configuration.getByPath("testng.conf")
+        .getString("abi.abi_veryLarge");
+
+    commonContractAddress5 = PublicMethed
+        .deployContract(contractName, abi, code, "", 1000000000L, 0L, 100, 10000, "0", 0, null,
+            triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey), blockingStubFull);
+    newContractAddress = WalletClient.encode58Check(commonContractAddress5);
+
+    oldAddress = readWantedText("stress.conf", "commonContractAddress5");
+    newAddress = "  commonContractAddress5 = " + newContractAddress;
+    logger.info("oldAddress " + oldAddress);
+    logger.info("newAddress " + newAddress);
+    replacAddressInConfig("stress.conf", oldAddress, newAddress);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+  }
+
+  @Test(enabled = true)
+  public void test11DeploySmartContract6() {
+    String contractName = "Trigger";
+    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"test\",\"outputs\":[{\"name\":\"i\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"addrs\",\"type\":\"address[]\"}],\"name\":\"test\",\"outputs\":[{\"name\":\"i\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
+    String code = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506101df8061003a6000396000f3fe608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506004361061006c577c01000000000000000000000000000000000000000000000000000000006000350463bb29998e8114610071578063d57498ea146100b6575b600080fd5b6100a46004803603602081101561008757600080fd5b503573ffffffffffffffffffffffffffffffffffffffff16610159565b60408051918252519081900360200190f35b6100a4600480360360208110156100cc57600080fd5b8101906020810181356401000000008111156100e757600080fd5b8201836020820111156100f957600080fd5b8035906020019184602083028401116401000000008311171561011b57600080fd5b919080806020026020016040519081016040528093929190818152602001838360200280828437600092019190915250929550610178945050505050565b6000805b6103e85a11156101725750600101813f61015d565b50919050565b600080805b83518110156101ac576000848281518110151561019657fe5b602090810290910101513f92505060010161017d565b939250505056fea165627a7a7230582033651916fb1624df072a51c976207dd49ce0af4f3479f46a4f81f293afcc5f2b0029";
+    commonContractAddress6 = PublicMethed
+        .deployContract(contractName, abi, code, "", 1000000000L, 0L, 100, 10000, "0", 0, null,
+            triggerOwnerKey, PublicMethed.getFinalAddress(triggerOwnerKey), blockingStubFull);
+    newContractAddress = WalletClient.encode58Check(commonContractAddress6);
+
+    oldAddress = readWantedText("stress.conf", "commonContractAddress6");
+    newAddress = "  commonContractAddress6 = " + newContractAddress;
+    logger.info("oldAddress " + oldAddress);
+    logger.info("newAddress " + newAddress);
+    replacAddressInConfig("stress.conf", oldAddress, newAddress);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+  }
 
 
   /**
@@ -515,7 +557,8 @@ public class StressPrecondition {
     return "";
   }
 
-  public static void waitProposalApprove(Integer proposalIndex,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static void waitProposalApprove(Integer proposalIndex,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Long currentTime = System.currentTimeMillis();
     while (System.currentTimeMillis() <= currentTime + 610000) {
       ChainParameters chainParameters = blockingStubFull
@@ -527,7 +570,6 @@ public class StressPrecondition {
       }
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
-
 
 
   }
