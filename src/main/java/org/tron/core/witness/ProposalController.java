@@ -206,33 +206,14 @@ public class ProposalController {
           break;
         }
         case (24): {
-          if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
-            manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
-            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(47);
-          }
-          break;
-        }
-        case (25): {
-          manager.getDynamicPropertiesStore().saveDeferredTransactionFee(entry.getValue());
-          break;
-        }
-        case (26): {
-          manager.getDynamicPropertiesStore().saveCancelDeferredTransactionFee(entry.getValue());
-          break;
-        }
-        case (27): {
-          manager.getDynamicPropertiesStore().saveMaxDeferredTransactionProcessTime(entry.getValue());
-          break;
-        }
-        case (28): {
           manager.getDynamicPropertiesStore().saveAllowProtoFilterNum(entry.getValue());
           break;
         }
-        case (29): {
+        case (25): {
           manager.getDynamicPropertiesStore().saveAllowAccountStateRoot(entry.getValue());
           break;
         }
-        case (30): {
+        case (26): {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
           break;

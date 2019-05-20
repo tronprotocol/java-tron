@@ -1,7 +1,5 @@
 package stest.tron.wallet.dailybuild.http;
 
-import static org.hamcrest.core.StringContains.containsString;
-
 import com.alibaba.fastjson.JSONObject;
 import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -31,44 +29,30 @@ public class HttpTestConstantContract001 {
   byte[] assetOwnerAddress = ecKey2.getAddress();
   String assetOwnerKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
   String contractAddress;
-  String abi;
+
   Long amount = 2048000000L;
 
-  String description = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetDescription");
-  String url = Configuration.getByPath("testng.conf")
-      .getString("defaultParameter.assetUrl");
-  private static final long now = System.currentTimeMillis();
-  private static String name = "testAssetIssue002_" + Long.toString(now);
-  private static final long totalSupply = now;
-  private static String assetIssueId;
   private static String contractName;
 
 
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Deploy smart contract by http")
-  public void test1DeployContract() {
+  @Test(enabled = true, description = "Deploy constant contract by http")
+  public void test1DeployConstantContract() {
     PublicMethed.printAddress(assetOwnerKey);
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.sendCoin(httpnode, fromAddress, assetOwnerAddress, amount, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-
-    response = HttpMethed.getAccount(httpnode, assetOwnerAddress);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
+    String filePath = "src/test/resources/soliditycode/constantContract001.sol";
     contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
-    abi = retMap.get("abI").toString();
-
+    String abi = retMap.get("abI").toString();
     String txid = HttpMethed.deployContractGetTxid(httpnode, contractName, abi, code, 1000000L,
         1000000000L, 100, 11111111111111L,
-        0L, null, 0L, assetOwnerAddress, assetOwnerKey);
+        0L, 0, 0L, assetOwnerAddress, assetOwnerKey);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
     logger.info(txid);
@@ -88,8 +72,8 @@ public class HttpTestConstantContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get contract by http")
-  public void test2GetContract() {
+  @Test(enabled = true, description = "Get constant contract by http")
+  public void test2GetConstantContract() {
     response = HttpMethed.getContract(httpnode, contractAddress);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -97,10 +81,6 @@ public class HttpTestConstantContract001 {
     Assert.assertEquals(responseContent.getString("contract_address"), contractAddress);
     Assert.assertEquals(responseContent.getString("origin_address"),
         ByteArray.toHexString(assetOwnerAddress));
-    Assert
-        .assertThat(responseContent.getString("abi")
-            , containsString("testView"));
-
     Assert.assertEquals(responseContent.getString("origin_energy_limit"), "11111111111111");
     Assert.assertEquals(responseContent.getString("name"), contractName);
   }
@@ -108,51 +88,26 @@ public class HttpTestConstantContract001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Trigger contract by http")
+  @Test(enabled = true, description = "Trigger constant contract without parameterString by http")
   public void test3TriggerConstantContract() {
-
-    HttpResponse httpResponse = HttpMethed
-        .triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
-            "testView()",
-            "");
-
-    responseContent = HttpMethed.parseResponseContent(httpResponse);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "{\"result\":true}");
-    Assert.assertEquals(responseContent.getString("constant_result"),
-        "[\"0000000000000000000000000000000000000000000000000000000000000001\"]");
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Trigger contract by http")
-  public void test4ClearABIContract() {
-
-    HttpResponse httpResponse = HttpMethed
-        .clearABiGetTxid(httpnode, assetOwnerAddress, contractAddress, assetOwnerKey);
-
-    responseContent = HttpMethed.parseResponseContent(httpResponse);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Get contract by http")
-  public void test5GetContract() {
-    response = HttpMethed.getContract(httpnode, contractAddress);
+    String param1 = "000000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(3);
+    String param2 = "00000000000000000000000000000000000000000000000000000000000000"
+        + Integer.toHexString(30);
+    logger.info(param1);
+    logger.info(param2);
+    String param = param1 + param2;
+    logger.info(ByteArray.toHexString(assetOwnerAddress));
+    response = HttpMethed.triggerConstantContract(httpnode, assetOwnerAddress, contractAddress,
+      "testPure(uint256,uint256)",param, 1000000000L,  assetOwnerKey);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("consume_user_resource_percent"), "100");
-    Assert.assertEquals(responseContent.getString("contract_address"), contractAddress);
-    Assert.assertEquals(responseContent.getString("origin_address"),
-        ByteArray.toHexString(assetOwnerAddress));
-    Assert.assertEquals(responseContent.getString("abi"), "{}");
-    Assert.assertEquals(responseContent.getString("origin_energy_limit"), "11111111111111");
-    Assert.assertEquals(responseContent.getString("name"), contractName);
+    Assert.assertTrue(!responseContent.getString("transaction").isEmpty());
+    JSONObject transactionObject = HttpMethed.parseStringContent(
+        responseContent.getString("transaction"));
+    Assert.assertTrue(!transactionObject.getString("raw_data").isEmpty());
+    Assert.assertTrue(!transactionObject.getString("raw_data_hex").isEmpty());
   }
 
   /**

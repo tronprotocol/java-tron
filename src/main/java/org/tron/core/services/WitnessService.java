@@ -130,10 +130,6 @@ public class WitnessService implements Service {
               Thread.sleep(timeToNextSecond);
             }
             this.blockProductionLoop();
-          } catch (InterruptedException ex) {
-            logger.info("ProductionLoop interrupted");
-          } catch (Exception ex) {
-            logger.error("unknown exception happened in witness loop", ex);
           } catch (Throwable throwable) {
             logger.error("unknown throwable happened in witness loop", throwable);
           }
@@ -260,23 +256,23 @@ public class WitnessService implements Service {
 
         block = generateBlock(scheduledTime, scheduledWitness,
             controller.lastHeadBlockIsMaintenance());
-      }
 
-      if (block == null) {
-        logger.warn("exception when generate block");
-        return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
-      }
+        if (block == null) {
+          logger.warn("exception when generate block");
+          return BlockProductionCondition.EXCEPTION_PRODUCING_BLOCK;
+        }
 
-      int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
+        int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
 
-      long timeout = Math
-          .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
-              ChainConstant.BLOCK_PRODUCED_INTERVAL);
-      if (DateTime.now().getMillis() - now > timeout) {
-        logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
-            DateTime.now());
-        tronApp.getDbManager().eraseBlock();
-        return BlockProductionCondition.TIME_OUT;
+        long timeout = Math
+            .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+                ChainConstant.BLOCK_PRODUCED_INTERVAL);
+        if (DateTime.now().getMillis() - now > timeout) {
+          logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
+              DateTime.now());
+          tronApp.getDbManager().eraseBlock();
+          return BlockProductionCondition.TIME_OUT;
+        }
       }
 
       logger.info(

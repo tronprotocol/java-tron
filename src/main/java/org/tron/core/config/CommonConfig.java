@@ -27,4 +27,5 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableAspectJAutoProxy
 @ComponentScan(basePackages = "org.tron")
 public class CommonConfig {
+
 }

@@ -25,7 +25,6 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -186,7 +185,6 @@ public class TronNetDelegate {
           | TooBigTransactionException
           | TooBigTransactionResultException
           | DupTransactionException
-          | DeferredTransactionException
           | TransactionExpirationException
           | BadNumberBlockException
           | BadBlockException
@@ -208,7 +206,6 @@ public class TronNetDelegate {
         | ValidateSignatureException
         | ContractExeException
         | DupTransactionException
-        | DeferredTransactionException
         | TaposException
         | TooBigTransactionException
         | TransactionExpirationException

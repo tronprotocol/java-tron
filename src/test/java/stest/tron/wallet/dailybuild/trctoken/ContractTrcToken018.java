@@ -260,7 +260,9 @@ public class ContractTrcToken018 {
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure",
+    Assert.assertEquals(
+        "transfer trc10 failed: Validate InternalTransfer error, no ToAccount. "
+            + "And not allowed to create account in smart contract.",
         infoById.get().getResMessage().toStringUtf8());
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,

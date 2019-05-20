@@ -17,7 +17,8 @@ public class TransactionMessage extends TronMessage {
     this.type = MessageTypes.TRX.asByte();
     if (Message.isFilter()) {
       compareBytes(data, transactionCapsule.getInstance().toByteArray());
-      transactionCapsule.validContractProto(transactionCapsule.getInstance().getRawData().getContract(0));
+      transactionCapsule
+          .validContractProto(transactionCapsule.getInstance().getRawData().getContract(0));
     }
   }
 

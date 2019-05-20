@@ -31,8 +31,11 @@ public class HttpTestMutiSign001 {
   String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   Long amount = 1000000000L;
   JsonArray keys = new JsonArray();
+  JsonArray activeKeys = new JsonArray();
   JsonObject manager1Wight = new JsonObject();
   JsonObject manager2Wight = new JsonObject();
+  JsonObject manager3Wight = new JsonObject();
+  JsonObject manager4Wight = new JsonObject();
   JsonObject ownerObject = new JsonObject();
   JsonObject witnessObject = new JsonObject();
   JsonObject activeObject = new JsonObject();
@@ -44,6 +47,14 @@ public class HttpTestMutiSign001 {
   private final String manager2Key = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] manager2Address = PublicMethed.getFinalAddress(manager2Key);
+
+  private final String manager3Key = Configuration.getByPath("testng.conf")
+      .getString("witness.key1");
+  private final byte[] manager3Address = PublicMethed.getFinalAddress(manager3Key);
+
+  private final String manager4Key = Configuration.getByPath("testng.conf")
+      .getString("witness.key2");
+  private final byte[] manager4Address = PublicMethed.getFinalAddress(manager4Key);
 
   /**
    * constructor.
@@ -71,12 +82,27 @@ public class HttpTestMutiSign001 {
     ownerObject.addProperty("threshold", 2);
     ownerObject.add("keys", keys);
 
+
+    manager3Wight.addProperty("address", ByteArray.toHexString(manager3Address));
+    manager3Wight.addProperty("weight", 1);
+
+    logger.info(manager3Wight.toString());
+    manager4Wight.addProperty("address", ByteArray.toHexString(manager4Address));
+    manager4Wight.addProperty("weight", 1);
+
+    logger.info(manager4Wight.toString());
+
+    activeKeys.add(manager3Wight);
+    activeKeys.add(manager4Wight);
+
+
+
     activeObject.addProperty("type", 2);
     activeObject.addProperty("permission_name", "active0");
     activeObject.addProperty("threshold", 2);
     activeObject.addProperty("operations",
         "7fff1fc0037e0000000000000000000000000000000000000000000000000000");
-    activeObject.add("keys", keys);
+    activeObject.add("keys", activeKeys);
 
     response = HttpMethed.accountPermissionUpdate(httpnode, ownerAddress, ownerObject,
         witnessObject, activeObject, ownerKey);
@@ -86,7 +112,7 @@ public class HttpTestMutiSign001 {
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Add transaction sign by http")
+  @Test(enabled = true, description = "Add transaction sign by http with permission id")
   public void test2AddTransactionSign() {
 
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -94,8 +120,28 @@ public class HttpTestMutiSign001 {
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
 
-    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, permissionKeyString);
+    String[] permissionKeyActive = new String[2];
+    permissionKeyActive[0] = manager3Key;
+    permissionKeyActive[1] = manager4Key;
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, 0,permissionKeyString);
     Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 10L, 2,permissionKeyString);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
+
+    logger.info("start permission id 2");
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 12L, 2,permissionKeyActive);
+    Assert.assertTrue(HttpMethed.verificationResult(response));
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 12L, 0,permissionKeyActive);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 11L, 1,permissionKeyActive);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
+
+    response = HttpMethed.sendCoin(httpnode, ownerAddress, fromAddress, 11L, 3,permissionKeyString);
+    Assert.assertFalse(HttpMethed.verificationResult(response));
 
 
   }

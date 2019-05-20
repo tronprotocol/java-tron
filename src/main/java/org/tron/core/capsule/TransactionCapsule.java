@@ -32,7 +32,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -40,24 +39,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
-import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
-import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountStore;
@@ -72,7 +58,6 @@ import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.CancelDeferredTransactionContract;
 import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.ExchangeCreateContract;
@@ -94,7 +79,6 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -119,7 +103,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   @Setter
   private TransactionTrace trxTrace;
 
-  private final static ExecutorService executorService = Executors
+  private static final ExecutorService executorService = Executors
       .newFixedThreadPool(Args.getInstance().getValidContractProtoThreadNum());
 
   /**
@@ -304,9 +288,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       List<ByteString> approveList)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
-//    if (signature.size() % 65 != 0) {
-//      throw new SignatureFormatException("Signature size is " + signature.size());
-//    }
+    //    if (signature.size() % 65 != 0) {
+    //      throw new SignatureFormatException("Signature size is " + signature.size());
+    //    }
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
           "Signature count is " + (sigs.size()) + " more than key counts of permission : "
@@ -451,15 +435,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case SetAccountIdContract:
           owner = contractParameter.unpack(SetAccountIdContract.class).getOwnerAddress();
           break;
-//        case BuyStorageContract:
-//          owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
-//          break;
-//        case BuyStorageBytesContract:
-//          owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
-//          break;
-//        case SellStorageContract:
-//          owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
-//          break;
+        //case BuyStorageContract:
+        //  owner = contractParameter.unpack(BuyStorageContract.class).getOwnerAddress();
+        //  break;
+        //case BuyStorageBytesContract:
+        //  owner = contractParameter.unpack(BuyStorageBytesContract.class).getOwnerAddress();
+        //  break;
+        //case SellStorageContract:
+        //  owner = contractParameter.unpack(SellStorageContract.class).getOwnerAddress();
+        //  break;
         case UpdateSettingContract:
           owner = contractParameter.unpack(UpdateSettingContract.class)
               .getOwnerAddress();
@@ -487,10 +471,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         case AccountPermissionUpdateContract:
           owner = contractParameter.unpack(AccountPermissionUpdateContract.class).getOwnerAddress();
           break;
-        case CancelDeferredTransactionContract:
-          owner = contractParameter.unpack(CancelDeferredTransactionContract.class)
-              .getOwnerAddress();
-          break;
         // todo add other contract
         default:
           return null;
@@ -516,6 +496,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           validContractProto(transaction.getRawData().getContract(0));
           return true;
         } catch (Exception e) {
+          logger.error("{}", e.getMessage());
         }
         return false;
       });
@@ -624,9 +605,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       case AccountPermissionUpdateContract:
         clazz = AccountPermissionUpdateContract.class;
         break;
-      case CancelDeferredTransactionContract:
-        clazz = CancelDeferredTransactionContract.class;
-        break;
       // todo add other contract
       default:
         break;
@@ -638,9 +616,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     com.google.protobuf.Message contractMessage = parse(clazz,
         Message.getCodedInputStream(src.toByteArray()));
 
-//    if (!src.equals(contractMessage)) {
-//      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
-//    }
+    //    if (!src.equals(contractMessage)) {
+    //      throw new P2pException(PROTOBUF_ERROR, PROTOBUF_ERROR.getDesc());
+    //    }
 
     Message.compareBytes(src.toByteArray(), contractMessage.toByteArray());
   }
@@ -777,8 +755,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
     }
-    if (this.transaction.getSignatureCount() >
-        manager.getDynamicPropertiesStore().getTotalSignNum()) {
+    if (this.transaction.getSignatureCount() > manager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
       throw new ValidateSignatureException("too many signatures");
     }
     byte[] hash = this.getRawHash().getBytes();
@@ -882,61 +860,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return toStringBuff.toString();
   }
 
-  public void setResult(Runtime runtime) {
-    RuntimeException exception = runtime.getResult().getException();
-    if (Objects.isNull(exception) && StringUtils
-        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
-      this.setResultCode(contractResult.SUCCESS);
-      return;
-    }
-    if (runtime.getResult().isRevert()) {
-      this.setResultCode(contractResult.REVERT);
-      return;
-    }
-    if (exception instanceof IllegalOperationException) {
-      this.setResultCode(contractResult.ILLEGAL_OPERATION);
-      return;
-    }
-    if (exception instanceof OutOfEnergyException) {
-      this.setResultCode(contractResult.OUT_OF_ENERGY);
-      return;
-    }
-    if (exception instanceof BadJumpDestinationException) {
-      this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
-      return;
-    }
-    if (exception instanceof OutOfTimeException) {
-      this.setResultCode(contractResult.OUT_OF_TIME);
-      return;
-    }
-    if (exception instanceof OutOfMemoryException) {
-      this.setResultCode(contractResult.OUT_OF_MEMORY);
-      return;
-    }
-    if (exception instanceof PrecompiledContractException) {
-      this.setResultCode(contractResult.PRECOMPILED_CONTRACT);
-      return;
-    }
-    if (exception instanceof StackTooSmallException) {
-      this.setResultCode(contractResult.STACK_TOO_SMALL);
-      return;
-    }
-    if (exception instanceof StackTooLargeException) {
-      this.setResultCode(contractResult.STACK_TOO_LARGE);
-      return;
-    }
-    if (exception instanceof JVMStackOverFlowException) {
-      this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
-      return;
-    }
-    if (exception instanceof Program.TransferException) {
-      this.setResultCode(contractResult.TRANSFER_FAILED);
-      return;
-    }
-    this.setResultCode(contractResult.UNKNOWN);
-    return;
-  }
-
   public void setResultCode(contractResult code) {
     Result ret = Result.newBuilder().setContractRet(code).build();
     if (this.transaction.getRetCount() > 0) {
@@ -953,52 +876,5 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return null;
     }
     return this.transaction.getRet(0).getContractRet();
-  }
-
-  public ByteString getSenderAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-
-    return ByteString.copyFrom(getOwner(contract));
-  }
-
-  public long getDeferredSeconds() {
-    return this.transaction.getRawData().getDeferredStage().getDelaySeconds();
-  }
-
-  public void setDeferredSeconds(long delaySeconds) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
-        .setStage(Constant.UNEXECUTEDDEFERREDTRANSACTION).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public void setDeferredStage(int stage) {
-    DeferredStage deferredStage = this.transaction.getRawData().toBuilder().
-        getDeferredStage().toBuilder().setStage(stage).build();
-    Transaction.raw rawData = this.transaction.toBuilder().getRawData().toBuilder()
-        .setDeferredStage(deferredStage).build();
-    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
-  }
-
-  public int getDeferredStage() {
-    return this.transaction.getRawData().getDeferredStage().getStage();
-  }
-
-  public ByteString getToAddress() {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    if (Objects.isNull(contract)) {
-      return null;
-    }
-    byte[] address = getToAddress(contract);
-    if (address == null) {
-      return ByteString.copyFrom("".getBytes());
-    }
-
-    return ByteString.copyFrom(address);
   }
 }

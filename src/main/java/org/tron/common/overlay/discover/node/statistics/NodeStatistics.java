@@ -18,6 +18,7 @@
 
 package org.tron.common.overlay.discover.node.statistics;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import org.tron.common.overlay.discover.node.Node;
@@ -185,7 +186,7 @@ public class NodeStatistics {
     private final String name;
     private volatile double last;
     private volatile double sum;
-    private volatile int count;
+    private AtomicInteger count = new AtomicInteger();
 
     public SimpleStatter(String name) {
       this.name = name;
@@ -194,7 +195,7 @@ public class NodeStatistics {
     public void add(double value) {
       last = value;
       sum += value;
-      count++;
+      count.incrementAndGet();
     }
 
     public double getLast() {
@@ -202,7 +203,7 @@ public class NodeStatistics {
     }
 
     public int getCount() {
-      return count;
+      return count.get();
     }
 
     public double getSum() {
@@ -210,7 +211,7 @@ public class NodeStatistics {
     }
 
     public double getAvrg() {
-      return count == 0 ? 0 : sum / count;
+      return count.get() == 0 ? 0 : sum / count.get();
     }
 
     public String getName() {

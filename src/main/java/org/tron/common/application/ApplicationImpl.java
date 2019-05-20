@@ -57,10 +57,6 @@ public class ApplicationImpl implements Application {
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
     tronNetService.close();
-    if (dbManager.getDeferredTransactionTask() != null
-        && !dbManager.getDeferredTransactionTask().isCancelled()) {
-      dbManager.getDeferredTransactionTask().cancel(false);
-    }
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();

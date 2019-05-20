@@ -1,11 +1,13 @@
 package org.tron.core.services.http.solidity;
 
 import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,8 +18,6 @@ import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.Util;
 import org.tron.protos.Protocol.Transaction;
 
-import static org.tron.core.services.http.Util.getVisible;
-import static org.tron.core.services.http.Util.getVisiblePost;
 
 @Component
 @Slf4j(topic = "API")
@@ -28,12 +28,12 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      boolean visible = getVisible(request);
+      boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
       Transaction reply = wallet
           .getTransactionById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply, visible ));
+        response.getWriter().println(Util.printTransaction(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -52,9 +52,9 @@ public class GetTransactionByIdSolidityServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      boolean visible = getVisiblePost(input);
+      boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
-      JsonFormat.merge(input, build, visible );
+      JsonFormat.merge(input, build, visible);
       Transaction reply = wallet.getTransactionById(build.build().getValue());
       if (reply != null) {
         response.getWriter().println(Util.printTransaction(reply, visible));
