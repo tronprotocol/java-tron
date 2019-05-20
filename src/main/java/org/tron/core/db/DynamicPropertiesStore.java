@@ -108,6 +108,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
 
   private static final byte[]  SHIELDED_TRANSACTION_FEE = "SHIELDED_TRANSACTION_FEE".getBytes();
+  //This value should be not negative
+  private static final byte[]  TOTAL_SHIELDED_POOL_VALUE = "TOTAL_SHIELDED_POOL_Value".getBytes();
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
@@ -171,6 +173,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] AVAILABLE_CONTRACT_TYPE = "AVAILABLE_CONTRACT_TYPE".getBytes();
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
+
+
+
 
 
   @Autowired
@@ -391,6 +396,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getShieldedTransactionFee();
     } catch (IllegalArgumentException e) {
       this.saveShieldedTransactionFee(10_000_000L); // 10TRX
+    }
+
+    try {
+      this.getTotalShieldedPoolValue();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalShieldedPoolValue(0L); // 0
     }
 
     try {
@@ -1029,6 +1040,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveShieldedTransactionFee(long fee) {
     this.put(SHIELDED_TRANSACTION_FEE,
             new BytesCapsule(ByteArray.fromLong(fee)));
+  }
+
+  public long getTotalShieldedPoolValue() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SHIELDED_POOL_VALUE))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found TOTAL_SHIELDED_POOL_Value"));
+  }
+
+  public void saveTotalShieldedPoolValue(long value) {
+    this.put(TOTAL_SHIELDED_POOL_VALUE,
+            new BytesCapsule(ByteArray.fromLong(value)));
   }
 
   public long getCreateAccountFee() {

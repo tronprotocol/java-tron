@@ -68,6 +68,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
           shieldedTransferContract.getToAmount());
     }
     ret.setStatus(fee, code.SUCESS);
+    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue()
+    totalShieldedPoolValue -= shieldedTransferContract.getToAmount() - shieldedTransferContract.getFromAmount() + fee;
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     return true;
   }
 
@@ -170,6 +173,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         if (dbManager.getNullfierStore().has(spendDescription.getNullifier().toByteArray())) {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
+
       }
     }
 
@@ -215,6 +219,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
       long valueBalance = shieldedTransferContract.getToAmount() -
           shieldedTransferContract.getFromAmount() + fee;
+      long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
+      totalShieldedPoolValue -= valueBalance;
+      if(totalShieldedPoolValue < 0){
+        throw new ContractValidateException("shieldedPoolValue error");
+      }
       if (!Librustzcash.librustzcashSaplingFinalCheck(
           ctx,
           valueBalance,
