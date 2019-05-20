@@ -454,9 +454,9 @@ public class StressPrecondition {
   @Test(enabled = true)
   public void test10DeploySmartContract5() {
     String contractName = "Trigger";
-    String code = stest.tron.wallet.common.client.Configuration.getByPath("testng.conf")
+    String code = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
         .getString("code.code_veryLarge");
-    String abi = stest.tron.wallet.common.client.Configuration.getByPath("testng.conf")
+    String abi = stest.tron.wallet.common.client.Configuration.getByPath("stress.conf")
         .getString("abi.abi_veryLarge");
 
     commonContractAddress5 = PublicMethed
