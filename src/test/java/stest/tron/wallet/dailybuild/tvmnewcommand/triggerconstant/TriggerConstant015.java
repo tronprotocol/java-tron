@@ -91,7 +91,8 @@ public class TriggerConstant015 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerConstantContract a constant function "
+      + "created by create2")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,

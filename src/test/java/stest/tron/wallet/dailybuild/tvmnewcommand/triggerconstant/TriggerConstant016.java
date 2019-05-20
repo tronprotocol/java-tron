@@ -90,7 +90,8 @@ public class TriggerConstant016 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-constant function created by create2")
+  @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
+      + "created by create2")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
@@ -180,8 +181,8 @@ public class TriggerConstant016 {
         .assertThat(transactionExtention.getResult().getCode().toString(),
             containsString("CONTRACT_EXE_ERROR"));
     Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8()
-            , containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
   }
 
 

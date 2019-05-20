@@ -101,8 +101,8 @@ public class ClearAbi007 {
         .assertThat(transactionExtention.getResult().getCode().toString(),
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8()
-            , containsString("contract validate error : Contract not exists"));
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : Contract not exists"));
     byte[] fakeAddress1 = "412B5D3405B2D26767C9C09886D53DEAFF6EB718AC111".getBytes();
 
     TransactionExtention transactionExtention1 = PublicMethed
@@ -112,8 +112,8 @@ public class ClearAbi007 {
         .assertThat(transactionExtention1.getResult().getCode().toString(),
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
-        .assertThat(transactionExtention1.getResult().getMessage().toStringUtf8()
-            , containsString("contract validate error : Contract not exists"));
+        .assertThat(transactionExtention1.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : Contract not exists"));
 
 
   }

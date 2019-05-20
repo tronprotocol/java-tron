@@ -484,8 +484,7 @@ public class ExtCodeHashStressTest {
 
     try {
       Thread.sleep(100000000);
-    } catch (
-        InterruptedException e) {
+    } catch (InterruptedException e) {
       e.printStackTrace();
     }
   }

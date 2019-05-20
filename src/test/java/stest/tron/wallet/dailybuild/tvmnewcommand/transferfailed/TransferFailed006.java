@@ -77,7 +77,7 @@ public class TransferFailed006 {
 
   }
 
-  @Test(enabled = true, description = "deploy contract for trigger")
+  @Test(enabled = true, description = "Deploy contract for trigger")
   public void deployContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(accountExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,

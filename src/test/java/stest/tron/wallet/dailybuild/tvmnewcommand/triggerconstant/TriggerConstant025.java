@@ -136,13 +136,10 @@ public class TriggerConstant025 {
     System.out.println(":" + ByteArray
         .toStr(transactionExtention.getResult().getMessage().toByteArray()));
 
-    Assert
-        .assertThat(transaction.getRet(0).getRet().toString(),
+    Assert.assertThat(transaction.getRet(0).getRet().toString(),
             containsString("FAILED"));
-    Assert
-        .assertThat(ByteArray
-                .toStr(transactionExtention.getResult().getMessage().toByteArray())
-            , containsString("REVERT opcode executed"));
+    Assert.assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+            containsString("REVERT opcode executed"));
 
 
   }

@@ -142,9 +142,8 @@ public class TriggerConstant026 {
         .assertThat(transaction.getRet(0).getRet().toString(),
             containsString("FAILED"));
     Assert
-        .assertThat(ByteArray
-                .toStr(transactionExtention.getResult().getMessage().toByteArray())
-            , containsString("REVERT opcode executed"));
+        .assertThat(ByteArray.toStr(transactionExtention.getResult().getMessage().toByteArray()),
+            containsString("REVERT opcode executed"));
 
 
   }

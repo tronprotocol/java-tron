@@ -99,7 +99,11 @@ public class TriggerConstant022 {
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
-    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"testNoPayable\",\"outputs\":[{\"name\":\"z\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"i\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";
+    String abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"testNoPayable\",\"outputs\":[{\""
+        + "name\":\"z\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable"
+        + "\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"i\",\"outputs\":"
+        + "[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\","
+        + "\"type\":\"function\"}]";
 
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
@@ -134,8 +138,8 @@ public class TriggerConstant022 {
         .assertThat(transactionExtention.getResult().getCode().toString(),
             containsString("CONTRACT_EXE_ERROR"));
     Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8()
-            , containsString("Attempt to call a state modifying opcode inside STATICCALL"));
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("Attempt to call a state modifying opcode inside STATICCALL"));
 
   }
 

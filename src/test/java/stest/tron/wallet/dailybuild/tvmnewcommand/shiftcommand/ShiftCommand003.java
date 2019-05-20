@@ -117,7 +117,6 @@ public class ShiftCommand003 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
 
     byte[] originNumber = new DataWord(
         ByteArray
@@ -130,6 +129,7 @@ public class ShiftCommand003 {
     System.arraycopy(originNumber, 0, paramBytes, valueNumber.length, originNumber.length);
     String param = Hex.toHexString(paramBytes);
     logger.info("param:" + param);
+    String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "shlTest(uint256,uint256)", param, true,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -193,7 +193,6 @@ public class ShiftCommand003 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
 
     byte[] originNumber = new DataWord(
         ByteArray
@@ -206,6 +205,7 @@ public class ShiftCommand003 {
     System.arraycopy(originNumber, 0, paramBytes, valueNumber.length, originNumber.length);
     String param = Hex.toHexString(paramBytes);
     logger.info("param:" + param);
+    String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "shrTest(uint256,uint256)", param, true,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
@@ -252,7 +252,8 @@ public class ShiftCommand003 {
   }
 
 
-  @Test(enabled = true, description = "Trigger new ShiftRightSigned with displacement number too short ")
+  @Test(enabled = true, description = "Trigger new ShiftRightSigned "
+      + "with displacement number too short ")
   public void test3ShiftRightSigned() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -269,7 +270,6 @@ public class ShiftCommand003 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String txid = "";
 
     byte[] originNumber = new DataWord(
         ByteArray
@@ -282,6 +282,7 @@ public class ShiftCommand003 {
     System.arraycopy(originNumber, 0, paramBytes, valueNumber.length, originNumber.length);
     String param = Hex.toHexString(paramBytes);
     logger.info("param:" + param);
+    String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "sarTest(uint256,uint256)", param, true,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);

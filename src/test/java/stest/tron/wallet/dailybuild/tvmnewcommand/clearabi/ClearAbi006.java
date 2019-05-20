@@ -97,16 +97,12 @@ public class ClearAbi006 {
     TransactionExtention transactionExtention = PublicMethed
         .clearContractABIForExtention(contractExcAddress1, contractExcAddress, contractExcKey,
             blockingStubFull);
-    Assert
-        .assertThat(transactionExtention.getResult().getCode().toString(),
-            containsString("CONTRACT_VALIDATE_ERROR"));
-    Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8()
-            , containsString("contract validate error : Contract not exists"));
-
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_VALIDATE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("contract validate error : Contract not exists"));
 
   }
-
 
   /**
    * constructor.
