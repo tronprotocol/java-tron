@@ -40,7 +40,7 @@ public class DiscoverTask implements Runnable {
 
   @Override
   public void run() {
-    discover(nodeId, 0, new ArrayList<Node>());
+    discover(nodeId, 0, new ArrayList<>());
   }
 
   public synchronized void discover(byte[] nodeId, int round, List<Node> prevTried) {
@@ -64,7 +64,6 @@ public class DiscoverTask implements Runnable {
             nodeManager.getNodeHandler(n).sendFindNode(nodeId);
             tried.add(n);
             wait(50);
-          } catch (InterruptedException e) {
           } catch (Exception ex) {
             logger.error("Unexpected Exception " + ex, ex);
           }

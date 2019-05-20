@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.solidity.GetDeferredTransactionInfoByIdSolidityServlet;
 
 @Component
 @Slf4j(topic = "API")
@@ -77,13 +76,7 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionByIdServlet getTransactionByIdServlet;
   @Autowired
-  private GetDeferredTransactionByIdServlet getDeferredTransactionByIdServlet;
-  @Autowired
   private GetTransactionInfoByIdServlet getTransactionInfoByIdServlet;
-  @Autowired
-  private GetDeferredTransactionInfoByIdServlet getDeferredTransactionInfoByIdServlet;
-  @Autowired
-  private CancelDeferredTransactionByIdServlet cancelDeferredTransactionByIdServlet;
   @Autowired
   private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
   @Autowired
@@ -119,7 +112,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private TriggerSmartContractServlet triggerSmartContractServlet;
   @Autowired
+  private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
   private GetContractServlet getContractServlet;
+  @Autowired
+  private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
   @Autowired
@@ -164,6 +161,11 @@ public class FullNodeHttpApiService implements Service {
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private SetAccountIdServlet setAccountServlet;
+  @Autowired
+  private GetAccountByIdServlet getAccountByIdServlet;
+
 
   @Override
   public void init() {
@@ -213,13 +215,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
-      context.addServlet(new ServletHolder(getDeferredTransactionByIdServlet),"/getdeferredtransactionbyid");
-      context.addServlet(new ServletHolder(cancelDeferredTransactionByIdServlet),"/canceldeferredtransactionbyid");
 
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
-      context.addServlet(
-          new ServletHolder(getDeferredTransactionInfoByIdServlet), "/getdeferredtransactioninfobyid");
       context.addServlet(
           new ServletHolder(getTransactionCountByBlockNumServlet),
           "/gettransactioncountbyblocknum");
@@ -244,7 +242,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
+      context.addServlet(new ServletHolder(triggerConstantContractServlet),
+          "/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
+      context.addServlet(new ServletHolder(clearABIServlet), "/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
       context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
@@ -270,6 +271,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
+      context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
 
       server.start();
     } catch (Exception e) {

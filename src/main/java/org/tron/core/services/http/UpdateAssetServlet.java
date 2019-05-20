@@ -1,17 +1,17 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -33,18 +33,15 @@ public class UpdateAssetServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = Util.getVisiblePost(contract);
       UpdateAssetContract.Builder build = UpdateAssetContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.UpdateAssetContract).getInstance();
-
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
-      }
+      tx = Util.setTransactionPermissionId(jsonObject, tx);
 
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

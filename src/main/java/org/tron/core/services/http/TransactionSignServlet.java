@@ -1,11 +1,13 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,15 +34,17 @@ public class TransactionSignServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       JSONObject input = JSONObject.parseObject(contract);
+      boolean visible = Util.getVisibleOnlyForSign(input);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
-      Transaction transaction = Util.packTransaction(strTransaction);
-      JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction));
+      Transaction transaction = Util.packTransaction(strTransaction, visible);
+      JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction,
+          visible));
       input.put("transaction", jsonTransaction);
       TransactionSign.Builder build = TransactionSign.newBuilder();
-      JsonFormat.merge(input.toJSONString(), build);
+      JsonFormat.merge(input.toJSONString(), build, visible);
       TransactionCapsule reply = wallet.getTransactionSign(build.build());
       if (reply != null) {
-        response.getWriter().println(Util.printTransaction(reply.getInstance()));
+        response.getWriter().println(Util.printCreateTransaction(reply.getInstance(), visible));
       } else {
         response.getWriter().println("{}");
       }

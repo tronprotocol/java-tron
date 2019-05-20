@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -112,11 +113,12 @@ public class ContractTrcToken060 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken060_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken060_transferTokenContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken060.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String tokenId = assetAccountId.toStringUtf8();
     long tokenValue = 0;
     long callValue = 5;
@@ -129,6 +131,7 @@ public class ContractTrcToken060 {
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     if (transferTokenTxid == null || infoById.get().getResultValue() != 0) {
       Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage());
@@ -197,6 +200,8 @@ public class ContractTrcToken060 {
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     if (triggerTxid == null || infoById.get().getResultValue() != 0) {
       Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
     }

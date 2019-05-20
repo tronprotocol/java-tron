@@ -84,18 +84,22 @@ public abstract class Message {
     }
   }
 
+  private static final Field field = ReflectionUtils
+      .findField(CodedInputStream.class, "explicitDiscardUnknownFields");
+
+  static {
+    ReflectionUtils.makeAccessible(field);
+  }
+
   public static CodedInputStream getCodedInputStream(byte[] data) {
     CodedInputStream codedInputStream = CodedInputStream.newInstance(data);
     if (isFilter()) {
-      Field field = ReflectionUtils
-          .findField(codedInputStream.getClass(), "explicitDiscardUnknownFields");
-      ReflectionUtils.makeAccessible(field);
       ReflectionUtils.setField(field, codedInputStream, true);
     }
     return codedInputStream;
   }
 
-  private static boolean isFilter() {
+  public static boolean isFilter() {
     return manager.getDynamicPropertiesStore().getAllowProtoFilterNum() == 1;
   }
 

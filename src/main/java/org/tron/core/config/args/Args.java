@@ -1,10 +1,10 @@
 package org.tron.core.config.args;
 
 import static java.lang.Math.max;
+import static java.lang.System.exit;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.google.common.collect.Maps;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
 import io.grpc.internal.GrpcUtil;
@@ -22,9 +22,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -134,6 +132,10 @@ public class Args {
       "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
   private String storageDbSynchronous = "";
 
+  @Parameter(names = {
+      "--contract-parse-enable"}, description = "enable contract parses in java-tron or not.(true or flase)")
+  private String contractParseEnable = "";
+
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
   private String storageIndexDirectory = "";
 
@@ -232,9 +234,6 @@ public class Args {
   @Setter
   private long nodeP2pPingInterval;
 
-  //  @Getter
-//  @Setter
-//  private long syncNodeCount;
   @Getter
   @Setter
   @Parameter(names = {"--save-internaltx"})
@@ -350,6 +349,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowTvmConstantinople; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -407,10 +410,6 @@ public class Args {
 
   @Getter
   @Setter
-  private int allowDeferredTransaction;
-
-  @Getter
-  @Setter
   private boolean vmTrace;
 
   @Getter
@@ -450,6 +449,9 @@ public class Args {
   @Getter
   private RocksDbSettings rocksDBCustomSettings;
 
+  @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
+  private boolean version;
+
   @Getter
   @Setter
   private long allowProtoFilterNum;
@@ -457,6 +459,10 @@ public class Args {
   @Getter
   @Setter
   private long allowAccountStateRoot;
+
+  @Getter
+  @Setter
+  private int validContractProtoThreadNum;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -509,6 +515,7 @@ public class Args {
     INSTANCE.allowCreationOfContracts = 0;
     INSTANCE.allowAdaptiveEnergy = 0;
     INSTANCE.allowTvmTransferTrc10 = 0;
+    INSTANCE.allowTvmConstantinople = 0;
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
@@ -529,10 +536,10 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowMultiSign = 0;
-    INSTANCE.allowDeferredTransaction = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
+    INSTANCE.validContractProtoThreadNum = 1;
   }
 
   /**
@@ -540,6 +547,12 @@ public class Args {
    */
   public static void setParam(final String[] args, final String confFileName) {
     JCommander.newBuilder().addObject(INSTANCE).build().parse(args);
+    if (INSTANCE.version) {
+      JCommander.getConsole()
+          .println(Version.getVersion() + "\n" + Version.versionName + "\n" + Version.versionCode);
+      exit(0);
+    }
+
     Config config = Configuration.getByFileName(INSTANCE.shellConfFileName, confFileName);
 
     if (config.hasPath("net.type") && "testnet".equalsIgnoreCase(config.getString("net.type"))) {
@@ -610,11 +623,11 @@ public class Args {
           } catch (IOException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           } catch (CipherException e) {
             logger.error(e.getMessage());
             logger.error("Witness node start faild!");
-            System.exit(-1);
+            exit(-1);
           }
         }
       }
@@ -661,6 +674,11 @@ public class Args {
         .filter(StringUtils::isNotEmpty)
         .map(Boolean::valueOf)
         .orElse(Storage.getDbVersionSyncFromConfig(config)));
+
+    INSTANCE.storage.setContractParseSwitch(Optional.ofNullable(INSTANCE.contractParseEnable)
+        .filter(StringUtils::isNotEmpty)
+        .map(Boolean::valueOf)
+        .orElse(Storage.getContractParseSwitchFromConfig(config)));
 
     INSTANCE.storage.setDbDirectory(Optional.ofNullable(INSTANCE.storageDbDirectory)
         .filter(StringUtils::isNotEmpty)
@@ -749,9 +767,6 @@ public class Args {
 
     INSTANCE.nodeP2pPingInterval =
         config.hasPath("node.p2p.pingInterval") ? config.getLong("node.p2p.pingInterval") : 0;
-//
-//    INSTANCE.syncNodeCount =
-//        config.hasPath("sync.node.count") ? config.getLong("sync.node.count") : 0;
 
     INSTANCE.nodeP2pVersion =
         config.hasPath("node.p2p.version") ? config.getInt("node.p2p.version") : 0;
@@ -828,10 +843,6 @@ public class Args {
         config.hasPath("committee.allowMultiSign") ? config
             .getInt("committee.allowMultiSign") : 0;
 
-    INSTANCE.allowDeferredTransaction =
-        config.hasPath("committee.allowDeferredTransaction") ? config
-            .getInt("committee.allowDeferredTransaction") : 0;
-
     INSTANCE.allowAdaptiveEnergy =
         config.hasPath("committee.allowAdaptiveEnergy") ? config
             .getInt("committee.allowAdaptiveEnergy") : 0;
@@ -847,6 +858,10 @@ public class Args {
     INSTANCE.allowTvmTransferTrc10 =
         config.hasPath("committee.allowTvmTransferTrc10") ? config
             .getInt("committee.allowTvmTransferTrc10") : 0;
+
+    INSTANCE.allowTvmConstantinople =
+        config.hasPath("committee.allowTvmConstantinople") ? config
+            .getInt("committee.allowTvmConstantinople") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;
@@ -919,6 +934,11 @@ public class Args {
     INSTANCE.allowAccountStateRoot =
         config.hasPath("committee.allowAccountStateRoot") ? config
             .getInt("committee.allowAccountStateRoot") : 0;
+
+    INSTANCE.validContractProtoThreadNum =
+        config.hasPath("node.validContractProto.threads") ? config
+            .getInt("node.validContractProto.threads")
+            : Runtime.getRuntime().availableProcessors();
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
@@ -1018,14 +1038,14 @@ public class Args {
     boolean useNativeQueue = false;
     int bindPort = 0;
     int sendQueueLength = 0;
-    if (config.hasPath("event.subscribe.native.useNativeQueue")){
+    if (config.hasPath("event.subscribe.native.useNativeQueue")) {
       useNativeQueue = config.getBoolean("event.subscribe.native.useNativeQueue");
 
-      if(config.hasPath("event.subscribe.native.bindport")){
+      if (config.hasPath("event.subscribe.native.bindport")) {
         bindPort = config.getInt("event.subscribe.native.bindport");
       }
 
-      if(config.hasPath("event.subscribe.native.sendqueuelength")){
+      if (config.hasPath("event.subscribe.native.sendqueuelength")) {
         sendQueueLength = config.getInt("event.subscribe.native.sendqueuelength");
       }
 
@@ -1300,6 +1320,8 @@ public class Args {
     logger.info("Backup priority: {}", args.getBackupPriority());
     logger.info("************************ Code version *************************");
     logger.info("Code version : {}", Version.getVersion());
+    logger.info("Version name: {}", Version.versionName);
+    logger.info("Version code: {}", Version.versionCode);
     logger.info("************************ DB config *************************");
     logger.info("DB version : {}", args.getStorage().getDbVersion());
     logger.info("DB engine : {}", args.getStorage().getDbEngine());

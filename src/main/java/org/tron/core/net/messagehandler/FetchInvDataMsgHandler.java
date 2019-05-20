@@ -28,7 +28,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class FetchInvDataMsgHandler implements TronMsgHandler {
 

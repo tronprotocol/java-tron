@@ -4,11 +4,13 @@ import java.io.IOException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.core.Wallet;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -19,9 +21,10 @@ public class GetNextMaintenanceTimeServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       NumberMessage reply = wallet.getNextMaintenanceTime();
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

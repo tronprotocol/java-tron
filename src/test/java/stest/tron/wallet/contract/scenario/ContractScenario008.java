@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -76,11 +77,13 @@ public class ContractScenario008 {
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
     Long shortFeeLimit = 900L;
-    String contractName = "Cat";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractScenario008_deployErc721CryptoKitties");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractScenario008_deployErc721CryptoKitties");
+
+    String filePath = "./src/test/resources/soliditycode/contractScenario008.sol";
+    String contractName = "KittyCore";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", shortFeeLimit,
         0L, 100, null, contract008Key, contract008Address, blockingStubFull);
 

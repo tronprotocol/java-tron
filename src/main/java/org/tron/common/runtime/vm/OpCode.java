@@ -127,6 +127,18 @@ public enum OpCode {
    * (0x1a) Retrieve single byte from word
    */
   BYTE(0x1a, 2, 1, OpCode.Tier.VeryLowTier),
+  /**
+   * (0x1b) Shift left
+   */
+  SHL(0x1b, 2, 1, OpCode.Tier.VeryLowTier),
+  /**
+   * (0x1c) Logical shift right
+   */
+  SHR(0x1c, 2, 1, OpCode.Tier.VeryLowTier),
+  /**
+   * (0x1d) Arithmetic shift right
+   */
+  SAR(0x1d, 2, 1, OpCode.Tier.VeryLowTier),
 
   /*  Cryptographic Operations    */
 
@@ -193,6 +205,10 @@ public enum OpCode {
    * (0x3c) Copy code running in current environment to memory with given offset
    */
   EXTCODECOPY(0x3c, 4, 0, OpCode.Tier.ExtTier),
+  /**
+   * (0x3f) Returns the keccak256 hash of a contract’s code
+   */
+  EXTCODEHASH(0x3f, 1, 1, OpCode.Tier.ExtTier),
 
   /*  Block Information   */
 
@@ -587,6 +603,11 @@ public enum OpCode {
    */
   DELEGATECALL(0xf4, 6, 1, OpCode.Tier.SpecialTier, CallFlags.Call, CallFlags.Stateless,
       CallFlags.Delegate),
+
+  /**
+   * (0xf5) Skinny CREATE2, same as CREATE but with deterministic address
+   */
+  CREATE2(0xf5, 4, 1, OpCode.Tier.SpecialTier),
 
   /**
    * opcode that can be used to call another contract (or itself) while disallowing any

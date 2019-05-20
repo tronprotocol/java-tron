@@ -25,7 +25,6 @@ import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DeferredTransactionException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -47,7 +46,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
 
@@ -156,7 +155,7 @@ public class TronNetDelegate {
         case TRX:
           TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {
-            return new TransactionMessage(tx.getData());
+            return new TransactionMessage(tx.getInstance());
           }
           throw new StoreException();
         default:
@@ -186,7 +185,6 @@ public class TronNetDelegate {
           | TooBigTransactionException
           | TooBigTransactionResultException
           | DupTransactionException
-          | DeferredTransactionException
           | TransactionExpirationException
           | BadNumberBlockException
           | BadBlockException
@@ -202,13 +200,12 @@ public class TronNetDelegate {
     try {
       dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
-        | ValidateSignatureException
         | VMIllegalException e) {
       throw new P2pException(TypeEnum.BAD_TRX, e);
     } catch (ContractValidateException
+        | ValidateSignatureException
         | ContractExeException
         | DupTransactionException
-        | DeferredTransactionException
         | TaposException
         | TooBigTransactionException
         | TransactionExpirationException

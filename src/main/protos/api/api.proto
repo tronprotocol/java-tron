@@ -92,9 +92,6 @@ service Wallet {
     };
   };
 
-  rpc CreateCancelDeferredTransactionContract (CancelDeferredTransactionContract) returns (TransactionExtention) {
-  };
-
   //modify the consume_user_resource_percent
   rpc UpdateSetting (UpdateSettingContract) returns (TransactionExtention) {
   };
@@ -398,16 +395,6 @@ service Wallet {
     };
   }
 
-  rpc GetDeferredTransactionById (BytesMessage) returns (DeferredTransaction) {
-    option (google.api.http) = {
-      post: "/wallet/getdeferredtransactionbyid"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/getdeferredtransactionbyid"
-      }
-    };
-  }
-
   rpc DeployContract (CreateSmartContract) returns (TransactionExtention) {
   }
 
@@ -415,6 +402,12 @@ service Wallet {
   }
 
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+  
+  rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
@@ -611,16 +604,6 @@ service Wallet {
     };
   }
 
-  rpc GetDeferredTransactionInfoById (BytesMessage) returns (TransactionInfo) {
-      option (google.api.http) = {
-        post: "/wallet/getdeferredtransactioninfobyid"
-        body: "*"
-        additional_bindings {
-          get: "/wallet/getdeferredtransactioninfobyid"
-        }
-      };
-    }
-
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
     option (google.api.http) = {
       post: "/wallet/accountpermissionupdate"
@@ -758,32 +741,12 @@ service WalletSolidity {
     };
   }
 
-  rpc GetDeferredTransactionById (BytesMessage) returns (DeferredTransaction) {
-    option (google.api.http) = {
-      post: "/walletsolidity/getdeferredtransactionbyid"
-      body: "*"
-      additional_bindings {
-        get: "/walletsolidity/getdeferredtransactionbyid"
-      }
-    };
-  }
-
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactioninfobyid"
-      }
-    };
-  }
-
-  rpc GetDeferredTransactionInfoById (BytesMessage) returns (TransactionInfo) {
-    option (google.api.http) = {
-      post: "/walletsolidity/getdeferredtransactioninfobyid"
-      body: "*"
-      additional_bindings {
-        get: "/walletsolidity/getdeferredtransactioninfobyid"
       }
     };
   }
@@ -860,7 +823,6 @@ message Return {
     SERVER_BUSY = 9;
     NO_CONNECTION = 10;
     NOT_ENOUGH_EFFECTIVE_CONNECTION = 11;
-    DEFERRED_SECONDS_ILLEGAL_ERROR = 12;
     OTHER_ERROR = 20;
   }
 

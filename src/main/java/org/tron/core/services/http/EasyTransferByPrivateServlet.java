@@ -1,11 +1,13 @@
 package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,12 +36,14 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
+    boolean visible = false;
     try {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      visible = Util.getVisiblePost(input);
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
       byte[] privateKey = build.getPrivateKey().toByteArray();
       ECKey ecKey = ECKey.fromPrivate(privateKey);
       byte[] owner = ecKey.getAddress();
@@ -55,13 +59,13 @@ public class EasyTransferByPrivateServlet extends HttpServlet {
       GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
       responseBuild.setResult(retur);
-      response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build()));
+      response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build(), visible));
     } catch (Exception e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
       try {
-        response.getWriter().println(JsonFormat.printToString(responseBuild.build()));
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
       } catch (IOException ioe) {
         logger.debug("IOException: {}", ioe.getMessage());
       }

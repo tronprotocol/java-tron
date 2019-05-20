@@ -2,6 +2,8 @@ package org.tron.core.net.message;
 
 import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Items;
 
@@ -16,7 +18,12 @@ public class BlocksMessage extends TronMessage {
     if (items.getType() == Items.ItemType.BLOCK) {
       blocks = items.getBlocksList();
     }
-    compareBytes(data, items.toByteArray());
+    if (isFilter() && CollectionUtils.isNotEmpty(blocks)) {
+      compareBytes(data, items.toByteArray());
+      for (Block block : blocks) {
+        TransactionCapsule.validContractProto(block.getTransactionsList());
+      }
+    }
   }
 
   public List<Block> getBlocks() {

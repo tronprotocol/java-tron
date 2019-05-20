@@ -87,24 +87,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
 
-  private static final byte[] MAX_DEFERRED_TRANSACTION_PROCESS_TIME = "MAX_DEFERRED_TRANSACTION_PROCESS_TIME"
-      .getBytes();
-
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
 
   private static final byte[] CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT
       = "CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT".getBytes();
 
-  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE = "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
+  private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE =
+      "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
       .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
-
-  private static final byte[] DEFERRED_TRANSACTION_FEE = "DEFERRED_TRANSACTION_FEE".getBytes();
-
-  private static final byte[] CANCEL_DEFERRED_TRANSACTION_FEE = "CANCEL_DEFERRED_TRANSACTION_FEE"
-      .getBytes();
 
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
 
@@ -161,9 +154,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   //Used only for multi sign, once，value is {0,1}
   private static final byte[] ALLOW_MULTI_SIGN = "ALLOW_MULTI_SIGN".getBytes();
 
-  //Used only for deferred transaction, once, value is {0,1}
-  private static final byte[] ALLOW_DEFERRED_TRANSACTION = "ALLOW_DEFERRED_TRANSACTION".getBytes();
-
   //token id,Incremental，The initial value is 1000000
   private static final byte[] TOKEN_ID_NUM = "TOKEN_ID_NUM".getBytes();
 
@@ -172,6 +162,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
+  private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
@@ -196,12 +187,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getAllowMultiSign();
     } catch (IllegalArgumentException e) {
       this.saveAllowMultiSign(Args.getInstance().getAllowMultiSign());
-    }
-
-    try {
-      this.getAllowDeferredTransaction();
-    } catch (IllegalArgumentException e) {
-      this.saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
     }
 
     try {
@@ -268,12 +253,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getMaxFrozenTime();
     } catch (IllegalArgumentException e) {
       this.saveMaxFrozenTime(3);
-    }
-
-    try {
-      this.getMaxDeferredTransactionProcessTime();
-    } catch (IllegalArgumentException e) {
-      this.saveMaxDeferredTransactionProcessTime(100);
     }
 
     try {
@@ -388,18 +367,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getTotalEnergyLimit();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyLimit(50_000_000_000L);
-    }
-
-    try {
-      this.getDeferredTransactionFee();
-    } catch (IllegalArgumentException e) {
-      this.saveDeferredTransactionFee(100_000L); // 0.1TRX
-    }
-
-    try {
-      this.getCancelDeferredTransactionFee();
-    } catch (IllegalArgumentException e) {
-      this.saveCancelDeferredTransactionFee(50_000L); // 0.05TRX
     }
 
     try {
@@ -529,6 +496,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowTvmConstantinople();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
+    }
+    try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
       String contractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
@@ -610,13 +582,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowAccountStateRoot();
     } catch (IllegalArgumentException e) {
-      this.saveAllowAccountStateRoot(0);
+      this.saveAllowAccountStateRoot(Args.getInstance().getAllowAccountStateRoot());
     }
 
     try {
       this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterNum(0);
+      this.saveAllowProtoFilterNum(Args.getInstance().getAllowProtoFilterNum());
     }
   }
 
@@ -705,20 +677,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toInt)
         .orElseThrow(
             () -> new IllegalArgumentException("not found MIN_FROZEN_TIME"));
-  }
-
-  public void saveMaxDeferredTransactionProcessTime(long maxDeferredTransactionProcessTime) {
-    this.put(MAX_DEFERRED_TRANSACTION_PROCESS_TIME,
-        new BytesCapsule(ByteArray.fromLong(maxDeferredTransactionProcessTime)));
-  }
-
-  public long getMaxDeferredTransactionProcessTime() {
-    return Optional.ofNullable(getUnchecked(MAX_DEFERRED_TRANSACTION_PROCESS_TIME))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "not found MAX_DEFERRED_TRANSACTION_PROCESS_TIME"));
   }
 
   public void saveMaxFrozenSupplyNumber(int maxFrozenSupplyNumber) {
@@ -943,33 +901,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
     saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
-  }
-
-  public void saveDeferredTransactionFee(long fee) {
-    this.put(DEFERRED_TRANSACTION_FEE,
-        new BytesCapsule(ByteArray.fromLong(fee)));
-  }
-
-  public long getDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(DEFERRED_TRANSACTION_FEE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found DEFERRED_TRANSACTION_FEE"));
-  }
-
-  public void saveCancelDeferredTransactionFee(long fee) {
-    this.put(CANCEL_DEFERRED_TRANSACTION_FEE,
-        new BytesCapsule(ByteArray.fromLong(fee)));
-  }
-
-  public long getCancelDeferredTransactionFee() {
-    return Optional.ofNullable(getUnchecked(CANCEL_DEFERRED_TRANSACTION_FEE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException(
-                "not found CANCEL_DEFERRED_TRANSACTION_FEE"));
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
@@ -1346,6 +1277,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found ALLOW_TVM_TRANSFER_TRC10"));
   }
 
+  public void saveAllowTvmConstantinople(long value) {
+    this.put(ALLOW_TVM_CONSTANTINOPLE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowTvmConstantinople() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CONSTANTINOPLE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_TVM_CONSTANTINOPLE"));
+  }
+
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1357,6 +1301,26 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found AVAILABLE_CONTRACT_TYPE"));
   }
+
+
+  public void addSystemContractAndSetPermission(int id){
+    byte[] availableContractType = getAvailableContractType();
+    availableContractType[id / 8] |= (1 << id % 8);
+    saveAvailableContractType(availableContractType);
+
+    byte[] activeDefaultOperations = getActiveDefaultOperations();
+    activeDefaultOperations[id / 8] |= (1 << id % 8);
+    saveActiveDefaultOperations(activeDefaultOperations);
+  }
+
+
+  public void updateDynamicStoreByConfig() {
+    if(Args.getInstance().getAllowTvmConstantinople() != 0) {
+      saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
+      addSystemContractAndSetPermission(48);
+    }
+  }
+
 
 
   public void saveActiveDefaultOperations(byte[] value) {
@@ -1430,19 +1394,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_MULTI_SIGN"));
-  }
-
-  public void saveAllowDeferredTransaction(long allowDeferredTransaction) {
-    this.put(ALLOW_DEFERRED_TRANSACTION,
-        new BytesCapsule(ByteArray.fromLong(allowDeferredTransaction)));
-  }
-
-  public long getAllowDeferredTransaction() {
-    return Optional.ofNullable(getUnchecked(ALLOW_DEFERRED_TRANSACTION))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ALLOW_DEFERRED_TRANSACTION"));
   }
 
   public long getAllowCreationOfContracts() {
@@ -1589,8 +1540,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void saveLatestBlockHeaderHash(ByteString h) {
     logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
-    if (revokingDB.getUnchecked(LATEST_BLOCK_HEADER_HASH).length == 32) {
-    }
   }
 
   public void saveStateFlag(int n) {

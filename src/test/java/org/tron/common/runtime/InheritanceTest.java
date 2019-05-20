@@ -88,14 +88,14 @@ public class InheritanceTest {
     long fee = 100000000;
     long consumeUserResourcePercent = 0;
 
-    byte[] contractAddress = TVMTestUtils.deployContractWholeProcessReturnContractAddress(
+    byte[] contractAddress = TvmTestUtils.deployContractWholeProcessReturnContractAddress(
         contractName, callerAddress, ABI, code, value, fee, consumeUserResourcePercent, null,
         deposit, null);
 
 
     /* =================================== CALL getName() return child value =================================== */
-    byte[] triggerData1 = TVMTestUtils.parseABI("getName()", "");
-    runtime = TVMTestUtils
+    byte[] triggerData1 = TvmTestUtils.parseAbi("getName()", "");
+    runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
             triggerData1,
             0, 1000000, deposit, null);
@@ -107,8 +107,8 @@ public class InheritanceTest {
             + "6261720000000000000000000000000000000000000000000000000000000000");
 
     /* =================================== CALL getNumber() return parent value=================================== */
-    byte[] triggerData2 = TVMTestUtils.parseABI("getNumber()", "");
-    runtime = TVMTestUtils
+    byte[] triggerData2 = TvmTestUtils.parseAbi("getNumber()", "");
+    runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
             triggerData2,
             0, 1000000, deposit, null);
@@ -118,8 +118,8 @@ public class InheritanceTest {
         "0000000000000000000000000000000000000000000000000000000000000064");
 
     /* =================================== CALL getId() call child function return parent field value=================================== */
-    byte[] triggerData3 = TVMTestUtils.parseABI("getId()", "");
-    runtime = TVMTestUtils
+    byte[] triggerData3 = TvmTestUtils.parseAbi("getId()", "");
+    runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
             triggerData3,
             0, 1000000, deposit, null);

@@ -13,7 +13,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
@@ -23,13 +25,19 @@ import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
 import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime.vm.program.Program.TransferException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
-import org.tron.core.actuator.ActuatorConstant;
-import org.tron.core.capsule.*;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ReceiptCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -37,6 +45,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -61,10 +70,6 @@ public class TransactionTrace {
   public TransactionCapsule getTrx() {
     return trx;
   }
-
-  @Getter
-  @Setter
-  private int deferredStage = 0;
 
   public enum TimeResultType {
     NORMAL,
@@ -114,8 +119,27 @@ public class TransactionTrace {
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-    if (runtime.isCallConstant()) {
-      throw new VMIllegalException("cannot call constant method ");
+    if (VMConfig.allowTvmConstantinople()) {
+      return;
+    }
+
+    TriggerSmartContract triggerContractFromTransaction = ContractCapsule
+        .getTriggerContractFromTransaction(this.getTrx().getInstance());
+    if (TrxType.TRX_CONTRACT_CALL_TYPE == this.trxType) {
+      DepositImpl deposit = DepositImpl.createRoot(dbManager);
+      ContractCapsule contract = deposit
+          .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
+      if (contract == null) {
+        logger.info("contract: {} is not in contract store", Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray()));
+        throw new ContractValidateException("contract: " + Wallet
+            .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
+            + " is not in contract store");
+      }
+      ABI abi = contract.getInstance().getAbi();
+      if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
+        throw new VMIllegalException("cannot call constant method");
+      }
     }
   }
 
@@ -283,6 +307,12 @@ public class TransactionTrace {
       receipt.setResult(contractResult.JVM_STACK_OVER_FLOW);
       return;
     }
+    if (exception instanceof TransferException) {
+      receipt.setResult(contractResult.TRANSFER_FAILED);
+      return;
+    }
+
+    logger.error("uncaught exception", exception);
     receipt.setResult(contractResult.UNKNOWN);
   }
 
@@ -296,28 +326,5 @@ public class TransactionTrace {
 
   public Runtime getRuntime() {
     return runtime;
-  }
-
-  public boolean chargeDeferredFee(long delaySeconds, TransactionResultCapsule resultCapsule)
-      throws ContractValidateException {
-    byte[] ownerAddress = TransactionCapsule.getOwner(trx.getInstance().getRawData().getContract(0));
-    if (ArrayUtils.isEmpty(ownerAddress)){
-      logger.error("empty owner address");
-      return false;
-    }
-
-    long fee = dbManager.getDynamicPropertiesStore().getDeferredTransactionFee() * (delaySeconds / (24 * 60 * 60) + 1);
-    try {
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
-      resultCapsule.setStatus(fee, Transaction.Result.code.SUCESS);
-    } catch (BalanceInsufficientException e) {
-      e.printStackTrace();
-      resultCapsule.setStatus(fee, Transaction.Result.code.FAILED);
-      throw new ContractValidateException(
-          "create deferred transaction error, insufficient fee.");
-    }
-
-    return true;
   }
 }

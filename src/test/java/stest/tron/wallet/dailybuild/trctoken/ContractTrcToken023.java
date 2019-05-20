@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -123,23 +124,21 @@ public class ContractTrcToken023 {
 
     // deploy transferTokenContract
     int originEnergyLimit = 50000;
+    String filePath2 = "src/test/resources/soliditycode/contractTrcToken023.sol";
     String contractName2 = "tokenTest";
-    String code2 = Configuration.getByPath("testng.conf")
-        .getString("code.code2_ContractTrcToken023_tokenTest");
-    String abi2 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi2_ContractTrcToken023_tokenTest");
+    HashMap retMap2 = PublicMethed.getBycodeAbi(filePath2, contractName2);
+    String code2 = retMap2.get("byteCode").toString();
+    String abi2 = retMap2.get("abI").toString();
     transferTokenContractAddress = PublicMethed
         .deployContract(contractName2, abi2, code2, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",
             0, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    String contractName = "BTest";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken023_tokenTest");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken023_tokenTest");
+    String contractName = "B";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath2, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     btestAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 0, originEnergyLimit, "0",

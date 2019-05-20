@@ -38,9 +38,11 @@ public interface Deposit {
 
   ContractCapsule getContract(byte[] address);
 
-  void saveCode(byte[] codeHash, byte[] code);
+  void updateContract(byte[] address, ContractCapsule contractCapsule);
 
-  byte[] getCode(byte[] codeHash);
+  void saveCode(byte[] address, byte[] code);
+
+  byte[] getCode(byte[] address);
 
   void putStorageValue(byte[] address, DataWord key, DataWord value);
 

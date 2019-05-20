@@ -14,7 +14,7 @@ import org.tron.core.db.fast.TrieService;
 import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
 
-@Slf4j
+@Slf4j(topic = "AccountState")
 @Component
 public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> implements
     DB<byte[], BytesCapsule> {

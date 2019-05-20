@@ -23,9 +23,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
+import org.zeromq.ZMQ;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import zmq.ZMQ.Event;
 
 @Slf4j
 public class ContractEvent001 {
@@ -249,9 +251,43 @@ public class ContractEvent001 {
         "triggerEventBytes()", "#", false,
         0, maxFeeLimit, event001Address, event001Key, blockingStubFull);
     logger.info(txid);
+  }
+
+  @Test(enabled = true, description = "Subscribe event client")
+  public void testEnergyCostDetail() {
+    ZMQ.Context context = ZMQ.context(1);
+    ZMQ.Socket req = context.socket(ZMQ.SUB);
+
+    req.subscribe("blockTrigger");
+    req.subscribe("transactionTrigger");
+    req.subscribe("contractLogTrigger");
+    req.subscribe("contractEventTrigger");
+    req.monitor("inproc://reqmoniter", ZMQ.EVENT_CONNECTED | ZMQ.EVENT_DISCONNECTED);
+    final ZMQ.Socket moniter = context.socket(ZMQ.PAIR);
+    moniter.connect("inproc://reqmoniter");
+    new Thread(new Runnable() {
+      public void run() {
+        while (true) {
+          Event event = Event.read(moniter.base());
+          System.out.println(event.event +  "  " + event.addr);
+        }
+      }
+
+    }).start();
+    req.connect("tcp://47.94.197.215:55555");
+    req.setReceiveTimeOut(10000);
+
+    while (true) {
+      byte[] message = req.recv();
+      if (message != null) {
+        System.out.println("receive : " + new String(message));
+      }
+    }
+
 
 
   }
+
 
   /**
    * constructor.
