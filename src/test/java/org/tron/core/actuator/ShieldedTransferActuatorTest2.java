@@ -40,8 +40,6 @@ import org.tron.core.zen.note.Note;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
@@ -589,11 +587,90 @@ public class ShieldedTransferActuatorTest2 {
     }
   }
 
+
   /**
-   * input shield note more than 2
+   * output shield note and input shield note should be less than 10
    */
   @Test
-  public void ShieldAddressMore2NoteToPublicAddressFailure() {
+  public void PublicToShieldAddressAndShieldToPublicAddressSuccess() {
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+
+    try {
+      int[] noteNumArray = {3, 6, 9 };
+      for (int noteNum : noteNumArray) {
+        System.out.println("NoteNum: " + noteNum );
+        //One step:public address to Multiple shield address
+        ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
+        //From amount
+        builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
+            (noteNum*AMOUNT + fee));
+        //TO amount
+        SpendingKey spendingKey = SpendingKey.random();
+        FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+        IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+        PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+        for (int i = 0; i < noteNum; i++) {
+          builderOne.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
+        }
+        TransactionCapsule transactionCapOne = builderOne.build();
+
+        //Add public address sign
+        TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
+        transactionSignBuild.setTransaction(transactionCapOne.getInstance());
+        transactionSignBuild.setPrivateKey(ByteString.copyFrom(
+            ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
+        transactionCapOne = wallet.addSign(transactionSignBuild.build());
+
+        Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
+        AccountCapsule accountCapsuleOne =
+            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+        Assert.assertEquals(accountCapsuleOne.getBalance(), OWNER_BALANCE-(noteNum*AMOUNT + fee));
+
+
+        //Two step:Multiple shield address to public address
+        ZenTransactionBuilder builderTwo = new ZenTransactionBuilder(wallet);
+        //From shield address
+        ExpandedSpendingKey expsk = spendingKey.expandedSpendingKey();
+        for (int i = 0; i < noteNum; i++) {
+          Note note = new Note(paymentAddress, AMOUNT);
+          IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+          byte[] anchor = voucher.root().getContent().toByteArray();
+          dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+              voucher.getVoucherCapsule().getTree());
+          builderTwo.addSpend(expsk, note, anchor, voucher);
+        }
+        //TO amount
+        builderTwo.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO),
+            (noteNum * AMOUNT - fee));
+        TransactionCapsule transactionCapTwo = builderTwo.build();
+
+        Assert.assertTrue(dbManager.pushTransaction(transactionCapTwo));
+        AccountCapsule accountCapsuleTwo =
+            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO));
+        Assert.assertEquals(accountCapsuleTwo.getBalance(), TO_BALANCE+(noteNum * AMOUNT - fee));
+
+
+        //Reset variable
+        AccountCapsule firstAccount =
+            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+        AccountCapsule secondAccount =
+            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO));
+        firstAccount.setBalance(OWNER_BALANCE);
+        secondAccount.setBalance(TO_BALANCE);
+        dbManager.getAccountStore().put(firstAccount.getAddress().toByteArray(), firstAccount);
+        dbManager.getAccountStore().put(secondAccount.getAddress().toByteArray(), secondAccount);
+      }
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * input shield note more than 10
+   */
+  @Test
+  public void ShieldAddressMore10NoteToPublicAddressFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -602,7 +679,7 @@ public class ShieldedTransferActuatorTest2 {
       SpendingKey sk = SpendingKey.random();
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
       PaymentAddress address = sk.defaultAddress();
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 11; i++) {
         Note note = new Note(address, AMOUNT);
         IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
         byte[] anchor = voucher.root().getContent().toByteArray();
@@ -611,7 +688,7 @@ public class ShieldedTransferActuatorTest2 {
         builder.addSpend(expsk, note, anchor, voucher);
       }
       //TO amount
-      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), 3 * AMOUNT - fee);
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), 10 * AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
 
       Any contract =
@@ -626,17 +703,17 @@ public class ShieldedTransferActuatorTest2 {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "ShieldedTransferContract error, number of spend notes should not be more than 2", e.getMessage());
+          "ShieldedTransferContract error, number of spend notes should not be more than 10", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
   }
 
   /**
-   * out shield note more than 2
+   * out shield note more than 10
    */
   @Test
-  public void publicAddressToShieldMoreThan2NoteFailure() {
+  public void publicAddressToShieldMoreThan10NoteFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -644,7 +721,7 @@ public class ShieldedTransferActuatorTest2 {
       //From amount
       builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT+fee);
       //TO amount
-      for (int i=0; i<3; i++) {
+      for (int i=0; i<10; i++) {
         SpendingKey spendingKey = SpendingKey.random();
         FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
         IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
