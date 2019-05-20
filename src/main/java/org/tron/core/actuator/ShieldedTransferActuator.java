@@ -68,7 +68,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           shieldedTransferContract.getToAmount());
     }
     ret.setStatus(fee, code.SUCESS);
-    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue()
+    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
     totalShieldedPoolValue -= shieldedTransferContract.getToAmount() - shieldedTransferContract.getFromAmount() + fee;
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     return true;
@@ -193,7 +193,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
                 || spendDescription.getAnchor() == null
                 || spendDescription.getNullifier() == null
                 || spendDescription.getZkproof() == null
-                || spendDescription.getSpendAuthoritySignature() == null)) {
+                || spendDescription.getSpendAuthoritySignature() == null) {
           throw new ContractValidateException("spend description null");
         }
         if (!Librustzcash.librustzcashSaplingCheckSpend(
