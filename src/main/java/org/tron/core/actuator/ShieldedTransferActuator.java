@@ -189,6 +189,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       for (SpendDescription spendDescription : spendDescriptions) {
+        if (spendDescription.getValueCommitment() == null
+                || spendDescription.getAnchor() == null
+                || spendDescription.getNullifier() == null
+                || spendDescription.getZkproof() == null
+                || spendDescription.getSpendAuthoritySignature() == null)) {
+          throw new ContractValidateException("spend description null");
+        }
         if (!Librustzcash.librustzcashSaplingCheckSpend(
             ctx,
             spendDescription.getValueCommitment().toByteArray(),
@@ -205,6 +212,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
 
       for (ReceiveDescription receiveDescription : receiveDescriptions) {
+        if(receiveDescription.getValueCommitment() == null
+                || receiveDescription.getNoteCommitment() == null
+                || receiveDescription.getEpk() == null
+                || receiveDescription.getZkproof().getValues() == null
+                || receiveDescription.getCEnc() == null
+                || receiveDescription.getCOut() == null){
+          throw new ContractValidateException("receive description null");
+        }
         if (!Librustzcash.librustzcashSaplingCheckOutput(
             ctx,
             receiveDescription.getValueCommitment().toByteArray(),
