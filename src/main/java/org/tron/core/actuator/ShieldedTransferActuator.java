@@ -238,9 +238,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getSpendDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no sender");
     }
-    if (shieldedTransferContract.getSpendDescriptionCount() > 2) {
+    if (shieldedTransferContract.getSpendDescriptionCount() > 10) {
       throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
-          + " should not be more than 2");
+          + " should not be more than 10");
     }
     return true;
   }
@@ -251,9 +251,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no receiver");
     }
-    if (shieldedTransferContract.getReceiveDescriptionCount() > 2) {
+    if (shieldedTransferContract.getReceiveDescriptionCount() > 10) {
       throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
-          + " should not be more than 2");
+          + " should not be more than 10");
     }
     return true;
   }
