@@ -86,7 +86,7 @@ public class ClearAbi007 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "Clear a not meet the rules address")
+  @Test(enabled = false, description = "Clear a not meet the rules address")
   public void testClearAbi() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,

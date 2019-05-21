@@ -87,7 +87,7 @@ public class TriggerConstant020 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerContract a non-payable function with ABI")
+  @Test(enabled = false, description = "TriggerContract a non-payable function with ABI")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,

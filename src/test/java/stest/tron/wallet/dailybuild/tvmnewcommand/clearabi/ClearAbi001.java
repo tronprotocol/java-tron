@@ -5,6 +5,7 @@ import static org.hamcrest.core.StringContains.containsString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -22,6 +23,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -89,10 +91,7 @@ public class ClearAbi001 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-  }
 
-  @Test(enabled = true, description = "Clear a contract created by other account")
-  public void testClearAbi() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -100,6 +99,10 @@ public class ClearAbi001 {
         .sendcoin(contractExcAddress1, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+  }
+
+  @Test(enabled = true, description = "Clear a contract created by other account")
+  public void testClearAbi001() {
     String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
     String contractName = "testConstantContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -146,6 +149,156 @@ public class ClearAbi001 {
 
   }
 
+
+  @Test(enabled = true, description = "Clear a contract with ABI created by itself")
+  public void testClearAbi002() {
+//    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+    String contractName = "testConstantContract";
+//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+//    String code = retMap.get("byteCode").toString();
+//    String abi = retMap.get("abI").toString();
+//
+//    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+//        0L, 100, null, contractExcKey,
+//        contractExcAddress, blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String txid = PublicMethed
+        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+  }
+
+
+  @Test(enabled = true, description = "Clear a contract without ABI")
+  public void testClearAbi003() {
+//    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+    String contractName = "testConstantContract";
+//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+//    String code = retMap.get("byteCode").toString();
+//    String abi = retMap.get("abI").toString();
+//
+//    contractAddress = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
+//        0L, 100, null, contractExcKey,
+//        contractExcAddress, blockingStubFull);
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String txid = PublicMethed
+        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
+    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
+    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
+    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
+
+
+  }
+
+  @Test(enabled = true, description = "Clear a account address")
+  public void testClearAbi004() {
+    TransactionExtention transactionExtention = PublicMethed
+        .clearContractABIForExtention(contractExcAddress, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("CONTRACT_VALIDATE_ERROR"));
+    Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : Contract not exists"));
+  }
+
+
+  @Test(enabled = true, description = "Clear a uninitialized account")
+  public void testClearAbi005() {
+
+    ECKey ecKeyN = new ECKey(Utils.getRandom());
+    byte[] contractExcAddressN = ecKeyN.getAddress();
+    String contractExcKeyN = ByteArray.toHexString(ecKeyN.getPrivKeyBytes());
+
+    TransactionExtention transactionExtention = PublicMethed
+        .clearContractABIForExtention(contractExcAddressN, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    Assert.assertThat(transactionExtention.getResult().getCode().toString(),
+        containsString("CONTRACT_VALIDATE_ERROR"));
+    Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+        containsString("contract validate error : Contract not exists"));
+
+  }
+
+  @Test(enabled = true, description = "Clear a not meet the rules address")
+  public void testClearAbi006() {
+    byte[] fakeAddress = "412B5D".getBytes();
+    TransactionExtention transactionExtention = PublicMethed
+        .clearContractABIForExtention(fakeAddress, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    Assert
+        .assertThat(transactionExtention.getResult().getCode().toString(),
+            containsString("CONTRACT_VALIDATE_ERROR"));
+    Assert
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : Contract not exists"));
+    byte[] fakeAddress1 = "412B5D3405B2D26767C9C09886D53DEAFF6EB718AC111".getBytes();
+
+    TransactionExtention transactionExtention1 = PublicMethed
+        .clearContractABIForExtention(fakeAddress1, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    Assert
+        .assertThat(transactionExtention1.getResult().getCode().toString(),
+            containsString("CONTRACT_VALIDATE_ERROR"));
+    Assert
+        .assertThat(transactionExtention1.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : Contract not exists"));
+
+
+  }
 
   /**
    * constructor.

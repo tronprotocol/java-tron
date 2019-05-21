@@ -89,7 +89,7 @@ public class TriggerConstant025 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerContract a view method with ABI ,method has "
+  @Test(enabled = false, description = "TriggerContract a view method with ABI ,method has "
       + "revert()")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed

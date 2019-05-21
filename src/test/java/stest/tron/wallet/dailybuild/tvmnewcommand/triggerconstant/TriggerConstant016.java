@@ -90,7 +90,7 @@ public class TriggerConstant016 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerConstantContract a non-constant function "
+  @Test(enabled = false, description = "TriggerConstantContract a non-constant function "
       + "created by create2")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed

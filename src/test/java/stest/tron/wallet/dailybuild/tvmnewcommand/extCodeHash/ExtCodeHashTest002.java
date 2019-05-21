@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.junit.runners.AllTests;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -28,6 +29,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class ExtCodeHashTest002 {
+  private final boolean AllTest = false;
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -74,7 +76,7 @@ public class ExtCodeHashTest002 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Deploy extcodehash contract")
+  @Test(enabled = AllTest, description = "Deploy extcodehash contract")
   public void test01DeployExtCodeHashContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -140,7 +142,7 @@ public class ExtCodeHashTest002 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "Get a contract extcodehash")
+  @Test(enabled = AllTest, description = "Get a contract extcodehash")
   public void test02GetContactCodeHash() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

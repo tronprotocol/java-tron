@@ -75,12 +75,38 @@ public class TransferFailed005 {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
+    {
+      Assert.assertTrue(PublicMethed
+          .sendcoin(accountExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
+              blockingStubFull));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+      String filePath = "src/test/resources/soliditycode/TransferFailed005.sol";
+      String contractName = "EnergyOfTransferFailedTest";
+      HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+      String code = retMap.get("byteCode").toString();
+      String abi = retMap.get("abI").toString();
+
+      contractAddress = PublicMethed
+          .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
+              null, accountExcKey, accountExcAddress, blockingStubFull);
+
+      filePath = "src/test/resources/soliditycode/TransferFailed005.sol";
+      contractName = "Caller";
+      retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+      code = retMap.get("byteCode").toString();
+      abi = retMap.get("abI").toString();
+
+      contractAddress1 = PublicMethed
+          .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
+              null, accountExcKey, accountExcAddress, blockingStubFull);
+    }
   }
 
-  @Test(enabled = true, description = "Deploy contract for trigger")
+  @Test(enabled = false, description = "Deploy contract for trigger")
   public void deployContract() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(accountExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(accountExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -90,14 +116,16 @@ public class TransferFailed005 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    String Txid1 = PublicMethed
+    contractAddress = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
+            null, accountExcKey, accountExcAddress, blockingStubFull);
+    /*String Txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(Txid1, blockingStubFull);
     contractAddress = infoById.get().getContractAddress().toByteArray();
-    Assert.assertEquals(0, infoById.get().getResultValue());
+    //Assert.assertEquals(0, infoById.get().getResultValue());*/
 
     filePath = "src/test/resources/soliditycode/TransferFailed005.sol";
     contractName = "Caller";
@@ -105,19 +133,21 @@ public class TransferFailed005 {
     code = retMap.get("byteCode").toString();
     abi = retMap.get("abI").toString();
 
-    Txid1 = PublicMethed
+    contractAddress1 = PublicMethed
+        .deployContract(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
+            null, accountExcKey, accountExcAddress, blockingStubFull);
+    /*Txid1 = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100L,
             null, accountExcKey, accountExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(Txid1, blockingStubFull);
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
     logger.info("caller address : " + Base58.encode58Check(contractAddress1));
-    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals(0, infoById.get().getResultValue());*/
   }
 
-  @Test(enabled = true, description = "TransferFailed for function call_value")
-  public void triggerContract() {
+  @Test(enabled = true, description = "TransferFailed for function call_value ")
+  public void triggerContract01() {
     Account info = null;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(accountExcAddress,
@@ -134,9 +164,8 @@ public class TransferFailed005 {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 1000100L, accountExcAddress, accountExcKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress1, 1, accountExcAddress, accountExcKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //Assert.assertTrue(PublicMethed
+    //    .sendcoin(contractAddress1, 1, accountExcAddress, accountExcKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     logger.info(
@@ -165,7 +194,7 @@ public class TransferFailed005 {
         infoById.get().getResMessage().toStringUtf8());
     Assert.assertEquals(1000100L,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
-    Assert.assertEquals(1L,
+    Assert.assertEquals(0L,
         PublicMethed.queryAccount(contractAddress1, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -189,7 +218,7 @@ public class TransferFailed005 {
         infoById.get().getResMessage().toStringUtf8());
     Assert.assertEquals(1000100L,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
-    Assert.assertEquals(1L,
+    Assert.assertEquals(0L,
         PublicMethed.queryAccount(contractAddress1, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -223,7 +252,7 @@ public class TransferFailed005 {
     Assert.assertEquals(infoById.get().getResult().toString(), "SUCESS");
     Assert.assertEquals(100L,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
-    Assert.assertEquals(1000001L,
+    Assert.assertEquals(1000000L,
         PublicMethed.queryAccount(contractAddress1, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
@@ -254,12 +283,211 @@ public class TransferFailed005 {
     Assert.assertEquals(infoById.get().getResult().toString(), "SUCESS");
     Assert.assertEquals(100L,
         PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
-    Assert.assertEquals(1000001L,
+    Assert.assertEquals(1000000L,
         PublicMethed.queryAccount(contractAddress1, blockingStubFull).getBalance());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
 
 
   }
+
+  @Test(enabled = true, description = "TransferFailed for create")
+  public void triggerContract02() {
+    Account info = null;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(accountExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(accountExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractAddress, 1000100L, accountExcAddress, accountExcKey, blockingStubFull));
+    //Assert.assertTrue(PublicMethed
+    //    .sendcoin(contractAddress1, 1, accountExcAddress, accountExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    logger.info(
+        "contractAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+    logger.info(
+        "callerAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress1, blockingStubFull)
+            .getBalance());
+    long paramValue = 1000000;
+    String param = "\"" + paramValue + "\"";
+
+    String triggerTxid = PublicMethed.triggerContract(contractAddress,
+        "testCreateTrxInsufficientBalance(uint256)", param, false, 0L,
+        maxFeeLimit, accountExcAddress, accountExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info(infoById.get().getReceipt().getResult() + "");
+
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    logger.info(
+        "contractAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+    logger.info(
+        "callerAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress1, blockingStubFull)
+            .getBalance());
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
+    Assert.assertFalse(infoById.get().getInternalTransactions(0).getRejected());
+    Assert.assertEquals(200L,
+        PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
+
+    triggerTxid = PublicMethed.triggerContract(contractAddress,
+        "testCreateTrxInsufficientBalance(uint256)", param, false, 0L,
+        maxFeeLimit, accountExcAddress, accountExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
+    fee = infoById.get().getFee();
+    netUsed = infoById.get().getReceipt().getNetUsage();
+    energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    netFee = infoById.get().getReceipt().getNetFee();
+    energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    logger.info(
+        "contractAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+    logger.info(
+        "callerAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress1, blockingStubFull)
+            .getBalance());
+
+    Assert.assertEquals(infoById.get().getResultValue(), 1);
+    Assert.assertEquals(infoById.get().getResMessage().toStringUtf8(), "REVERT opcode executed");
+    Assert.assertEquals(200L,
+        PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance());
+    Assert.assertEquals(1000000L,
+        PublicMethed.queryAccount(contractAddress1, blockingStubFull).getBalance());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
+
+
+  }
+
+  @Test(enabled = true, description = "TransferFailed for create2")
+  public void triggerContract03() {
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(accountExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(accountExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractAddress, 15L, accountExcAddress, accountExcKey, blockingStubFull));
+    logger.info(
+        "contractAddress balance before: " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+
+    String filePath = "./src/test/resources/soliditycode/TransferFailed007.sol";
+    String contractName = "Caller";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String testContractCode = retMap.get("byteCode").toString();
+    Long salt = 1L;
+
+    String param = "\"" + testContractCode + "\"," + salt;
+
+    String triggerTxid = PublicMethed.triggerContract(contractAddress,
+        "deploy(bytes,uint256)", param, false, 0L,
+        maxFeeLimit, accountExcAddress, accountExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    long afterBalance = 0L;
+    afterBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull)
+        .getBalance();
+    logger.info(
+        "contractAddress balance after : " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals("SUCESS", infoById.get().getResult().toString());
+    Assert.assertEquals(205L, afterBalance);
+    Assert.assertFalse(infoById.get().getInternalTransactions(0).getRejected());
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
+
+    triggerTxid = PublicMethed.triggerContract(contractAddress,
+        "deploy2(bytes,uint256)", param, false, 0L,
+        maxFeeLimit, accountExcAddress, accountExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    fee = infoById.get().getFee();
+    netUsed = infoById.get().getReceipt().getNetUsage();
+    energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    netFee = infoById.get().getReceipt().getNetFee();
+    energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    afterBalance = PublicMethed.queryAccount(contractAddress, blockingStubFull).getBalance();
+    logger.info(
+        "contractAddress balance after : " + PublicMethed
+            .queryAccount(contractAddress, blockingStubFull)
+            .getBalance());
+    Assert.assertEquals(1, infoById.get().getResultValue());
+    Assert.assertEquals("FAILED", infoById.get().getResult().toString());
+    Assert.assertEquals(205L, afterBalance);
+    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() < 10000000);
+
+  }
+
 
   /**
    * constructor.

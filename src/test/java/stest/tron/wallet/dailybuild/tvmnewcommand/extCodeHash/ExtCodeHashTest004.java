@@ -31,6 +31,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class ExtCodeHashTest004 {
+  private final boolean AllTest = false;
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -47,7 +48,6 @@ public class ExtCodeHashTest004 {
   private String testContractAddress = null;
 
   private String expectedCodeHash = null;
-
   private ECKey ecKey1 = new ECKey(Utils.getRandom());
   private byte[] dev001Address = ecKey1.getAddress();
   private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -77,7 +77,7 @@ public class ExtCodeHashTest004 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Deploy extcodehash contract")
+  @Test(enabled = AllTest, description = "Deploy extcodehash contract")
   public void test01DeployExtCodeHashContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -152,7 +152,7 @@ public class ExtCodeHashTest004 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "Get a not deployed create2 extcodehash")
+  @Test(enabled = AllTest, description = "Get a not deployed create2 extcodehash")
   public void test02GetCreate2CodeHash() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

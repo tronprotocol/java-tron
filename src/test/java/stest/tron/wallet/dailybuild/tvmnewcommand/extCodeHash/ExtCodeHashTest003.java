@@ -29,6 +29,8 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ExtCodeHashTest003 {
 
+  private final static boolean AllTest = false;
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -78,7 +80,7 @@ public class ExtCodeHashTest003 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Deploy extcodehash contract")
+  @Test(enabled = AllTest, description = "Deploy extcodehash contract")
   public void test01DeployExtCodeHashContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -144,7 +146,7 @@ public class ExtCodeHashTest003 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "Get a not exist account extcodehash")
+  @Test(enabled = AllTest, description = "Get a not exist account extcodehash")
   public void test02GetNotExistAddressCodeHash() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -226,7 +228,7 @@ public class ExtCodeHashTest003 {
     logger.info(smartContract.getBytecode().toStringUtf8());
   }
 
-  @Test(enabled = true, description = "Active the account and get extcodehash again")
+  @Test(enabled = AllTest, description = "Active the account and get extcodehash again")
   public void test03ActiveAccountGetCodeHash() {
 
     Assert.assertTrue(PublicMethed.sendcoin(testAddress, 1000000, fromAddress,

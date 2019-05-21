@@ -59,6 +59,9 @@ public class TransferFailed004 {
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
+  ECKey ecKey2 = new ECKey(Utils.getRandom());
+  byte[] nonexistentAddress = ecKey2.getAddress();
+
 
   @BeforeSuite
   public void beforeSuite() {
@@ -88,92 +91,8 @@ public class TransferFailed004 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-
-  @Test(enabled = true, description = "Suicide existent target")
-  public void test1SuicideExistentTarget() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 3000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] existentAddress = ecKey2.getAddress();
-    Assert.assertTrue(PublicMethed
-        .sendcoin(existentAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    String txid = "";
-    String num = "\"" + Base58.encode58Check(existentAddress) + "\"";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testSuicideNonexistentTarget(address)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    Optional<TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Long fee = infoById.get().getFee();
-    Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
-    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
-    logger.info("fee:" + fee);
-    logger.info("netUsed:" + netUsed);
-    logger.info("energyUsed:" + energyUsed);
-    logger.info("netFee:" + netFee);
-    logger.info("energyUsageTotal:" + energyUsageTotal);
-
-    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
-    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull1);
-    Long afterBalance = infoafter.getBalance();
-    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
-    Long afterNetUsed = resourceInfoafter.getNetUsed();
-    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-    logger.info("afterBalance:" + afterBalance);
-    logger.info("afterEnergyUsed:" + afterEnergyUsed);
-    logger.info("afterNetUsed:" + afterNetUsed);
-    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-    Account contractafter = PublicMethed.queryAccount(contractAddress, blockingStubFull1);
-    long contractBalance = contractafter.getBalance();
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(contractBalance, 0);
-
-    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
-    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
-    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-
-
-  }
-
-
   @Test(enabled = true, description = "Suicide nonexistent target")
-  public void test2SuicideNonexistentTarget() {
+  public void test1SuicideNonexistentTarget() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -204,8 +123,6 @@ public class TransferFailed004 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    ECKey ecKey2 = new ECKey(Utils.getRandom());
-    byte[] nonexistentAddress = ecKey2.getAddress();
     String txid = "";
     String num = "\"" + Base58.encode58Check(nonexistentAddress) + "\"";
 
@@ -214,7 +131,6 @@ public class TransferFailed004 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infobyid : --- " + infoById);
 
@@ -257,6 +173,88 @@ public class TransferFailed004 {
 
 
   }
+
+  @Test(enabled = true, description = "Suicide existent target")
+  public void test2SuicideExistentTarget() {
+    /*Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String contractName = "EnergyOfTransferFailedTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractAddress, 3000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));*/
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(nonexistentAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    String txid = "";
+    String num = "\"" + Base58.encode58Check(nonexistentAddress) + "\"";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testSuicideNonexistentTarget(address)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    Account contractafter = PublicMethed.queryAccount(contractAddress, blockingStubFull1);
+    long contractBalance = contractafter.getBalance();
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(contractBalance, 0);
+
+    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
+    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
+    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+
+  }
+
+
 
 
   /**

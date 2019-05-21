@@ -88,7 +88,7 @@ public class TriggerConstant021 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "TriggerContract a view function with ABI")
+  @Test(enabled = false, description = "TriggerContract a view function with ABI")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,

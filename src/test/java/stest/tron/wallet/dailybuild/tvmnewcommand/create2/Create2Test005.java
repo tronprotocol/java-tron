@@ -252,7 +252,6 @@ public class Create2Test005 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
-
   @Test(enabled = true, description = "Trigger test contract")
   public void test03TriggerTestContract() {
 

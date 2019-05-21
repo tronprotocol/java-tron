@@ -27,7 +27,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class ExtCodeHashTest006 {
-
+  private final boolean AllTest = false;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -77,7 +77,7 @@ public class ExtCodeHashTest006 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Get the EXTCODEHASH of an account created "
+  @Test(enabled = AllTest, description = "Get the EXTCODEHASH of an account created "
       + "in the current transaction")
   public void test01DeployExtCodeHashContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,

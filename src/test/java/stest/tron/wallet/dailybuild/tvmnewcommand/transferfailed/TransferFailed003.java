@@ -101,7 +101,7 @@ public class TransferFailed003 {
   @Test(enabled = true, description = "TransferToken enough tokenBalance")
   public void test1TransferTokenEnough() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 3100_000_000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -157,7 +157,6 @@ public class TransferFailed003 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -202,10 +201,10 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken insufficient tokenBalance")
   public void test2TransferTokenNotEnough() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -233,7 +232,6 @@ public class TransferFailed003 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -283,10 +281,10 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to nonexistent target")
   public void test3TransferTokenNonexistentTarget() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -370,10 +368,10 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to myself")
   public void test4TransferTokenSelf() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -401,7 +399,6 @@ public class TransferFailed003 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById:" + infoById);
     Long fee = infoById.get().getFee();
@@ -453,10 +450,10 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken notexist tokenID ")
   public void test5TransferTokenNotexist() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -486,7 +483,6 @@ public class TransferFailed003 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById:" + infoById);
     Long fee = infoById.get().getFee();
@@ -538,10 +534,10 @@ public class TransferFailed003 {
   @Test(enabled = true, description = "TransferToken to nonexistent target and "
       + "insufficient tokenBalance")
   public void test7TransferTokenNonexistentTarget() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -625,10 +621,10 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to myself and insufficient tokenBalance")
   public void test8TransferTokenSelf() {
-    Assert.assertTrue(PublicMethed
+    /*Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -656,7 +652,6 @@ public class TransferFailed003 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById:" + infoById);
     Long fee = infoById.get().getFee();
