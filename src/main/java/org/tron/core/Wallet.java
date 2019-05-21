@@ -93,7 +93,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -1241,7 +1240,7 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = dbManager.getResultStore().getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = dbManager.getTransactionRetStore().getTransactionInfo(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }

@@ -137,7 +137,7 @@ public class Manager {
   private BlockIndexStore blockIndexStore;
   @Autowired
   @Getter
-  private TransactionRetStore resultStore;
+  private TransactionRetStore transactionRetStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
@@ -849,7 +849,7 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      this.resultStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
+      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
