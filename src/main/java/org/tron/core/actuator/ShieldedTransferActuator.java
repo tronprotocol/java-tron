@@ -5,6 +5,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -68,6 +69,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
           shieldedTransferContract.getToAmount());
     }
     ret.setStatus(fee, code.SUCESS);
+    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
+    long valueBalance = shieldedTransferContract.getToAmount() -
+        shieldedTransferContract.getFromAmount() + fee;
+    totalShieldedPoolValue -= valueBalance;
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     return true;
   }
 
@@ -162,13 +168,18 @@ public class ShieldedTransferActuator extends AbstractActuator {
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {
+      HashSet<ByteString> nfSet = new HashSet<>();
       for (SpendDescription spendDescription : spendDescriptions) {
+        if (nfSet.contains(spendDescription.getNullifier())) {
+          throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
+        }
+        nfSet.add(spendDescription.getNullifier());
         if (!dbManager.getMerkleContainer()
             .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
         if (dbManager.getNullfierStore().has(spendDescription.getNullifier().toByteArray())) {
-          throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
+          throw new ContractValidateException("note has been spend in this transaction");
         }
       }
     }
@@ -185,13 +196,21 @@ public class ShieldedTransferActuator extends AbstractActuator {
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       for (SpendDescription spendDescription : spendDescriptions) {
+        if (spendDescription.getValueCommitment().isEmpty()
+            || spendDescription.getAnchor().isEmpty()
+            || spendDescription.getNullifier().isEmpty()
+            || spendDescription.getZkproof().isEmpty()
+            || spendDescription.getSpendAuthoritySignature().isEmpty()) {
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          throw new ContractValidateException("spend description null");
+        }
         if (!Librustzcash.librustzcashSaplingCheckSpend(
             ctx,
             spendDescription.getValueCommitment().toByteArray(),
             spendDescription.getAnchor().toByteArray(),
             spendDescription.getNullifier().toByteArray(),
             spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().getValues().toByteArray(),
+            spendDescription.getZkproof().toByteArray(),
             spendDescription.getSpendAuthoritySignature().toByteArray(),
             signHash
         )) {
@@ -201,12 +220,21 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
 
       for (ReceiveDescription receiveDescription : receiveDescriptions) {
+        if (receiveDescription.getValueCommitment().isEmpty()
+            || receiveDescription.getNoteCommitment().isEmpty()
+            || receiveDescription.getEpk().isEmpty()
+            || receiveDescription.getZkproof().isEmpty()
+            || receiveDescription.getCEnc().isEmpty()
+            || receiveDescription.getCOut().isEmpty()) {
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          throw new ContractValidateException("receive description null");
+        }
         if (!Librustzcash.librustzcashSaplingCheckOutput(
             ctx,
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().getValues().toByteArray()
+            receiveDescription.getZkproof().toByteArray()
         )) {
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("librustzcashSaplingCheckOutput error");
@@ -215,6 +243,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
       long valueBalance = shieldedTransferContract.getToAmount() -
           shieldedTransferContract.getFromAmount() + fee;
+      long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
+          .getTotalShieldedPoolValue();
+      totalShieldedPoolValue -= valueBalance;
+      if (totalShieldedPoolValue < 0) {
+        throw new ContractValidateException("shieldedPoolValue error");
+      }
       if (!Librustzcash.librustzcashSaplingFinalCheck(
           ctx,
           valueBalance,
@@ -274,10 +308,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
     if (hasTransparentFrom && !Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid transparent_from_address");
     }
+    if (!hasTransparentFrom && fromAmount != 0) {
+      throw new ContractValidateException("no transparent_from_address, from_amount should be 0");
+    }
     if (hasTransparentTo && !Wallet.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid transparent_to_address");
     }
-
+    if (!hasTransparentTo && toAmount != 0) {
+      throw new ContractValidateException("no transparent_to_address, to_amount should be 0");
+    }
     if (hasTransparentFrom && hasTransparentTo && Arrays.equals(toAddress, ownerAddress)) {
       throw new ContractValidateException("Can't transfer trx to yourself");
     }

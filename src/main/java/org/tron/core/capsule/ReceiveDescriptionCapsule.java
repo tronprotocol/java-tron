@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProtoCapsule;
-import org.tron.protos.Contract.GrothProof;
 import org.tron.protos.Contract.ReceiveDescription;
 
 @Slf4j(topic = "capsule")
@@ -34,7 +33,7 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescriptio
       ByteString ephemeralKey,
       ByteString encCiphertext,
       ByteString outCiphertext,
-      GrothProof zkproof) {
+      ByteString zkproof) {
     this.receiveDescription =
         ReceiveDescription.newBuilder()
             .setValueCommitment(cv)
@@ -112,16 +111,16 @@ public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescriptio
     this.receiveDescription = this.receiveDescription.toBuilder().setNoteCommitment(bytes).build();
   }
 
-  public GrothProof getZkproof() {
+  public ByteString getZkproof() {
     return this.receiveDescription.getZkproof();
   }
 
   public void setZkproof(byte[] proof) {
-    GrothProof proof1 = GrothProof.newBuilder().setValues(ByteString.copyFrom(proof)).build();
+    ByteString proof1 = ByteString.copyFrom(proof);
     this.receiveDescription = this.receiveDescription.toBuilder().setZkproof(proof1).build();
   }
 
-  public void setZkproof(GrothProof proof) {
+  public void setZkproof(ByteString proof) {
     this.receiveDescription = this.receiveDescription.toBuilder().setZkproof(proof).build();
   }
 
