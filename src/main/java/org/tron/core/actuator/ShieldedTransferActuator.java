@@ -69,7 +69,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
     ret.setStatus(fee, code.SUCESS);
     long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
-    totalShieldedPoolValue -= shieldedTransferContract.getToAmount() - shieldedTransferContract.getFromAmount() + fee;
+    long valueBalance = shieldedTransferContract.getToAmount() -
+        shieldedTransferContract.getFromAmount() + fee;
+    totalShieldedPoolValue -= valueBalance;
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     return true;
   }
@@ -194,6 +196,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
                 || spendDescription.getNullifier() == null
                 || spendDescription.getZkproof() == null
                 || spendDescription.getSpendAuthoritySignature() == null) {
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("spend description null");
         }
         if (!Librustzcash.librustzcashSaplingCheckSpend(
@@ -202,7 +205,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             spendDescription.getAnchor().toByteArray(),
             spendDescription.getNullifier().toByteArray(),
             spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().getValues().toByteArray(),
+            spendDescription.getZkproof().toByteArray(),
             spendDescription.getSpendAuthoritySignature().toByteArray(),
             signHash
         )) {
@@ -215,9 +218,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
         if(receiveDescription.getValueCommitment() == null
                 || receiveDescription.getNoteCommitment() == null
                 || receiveDescription.getEpk() == null
-                || receiveDescription.getZkproof().getValues() == null
+                || receiveDescription.getZkproof() == null
                 || receiveDescription.getCEnc() == null
                 || receiveDescription.getCOut() == null){
+          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("receive description null");
         }
         if (!Librustzcash.librustzcashSaplingCheckOutput(
@@ -225,7 +229,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().getValues().toByteArray()
+            receiveDescription.getZkproof().toByteArray()
         )) {
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("librustzcashSaplingCheckOutput error");

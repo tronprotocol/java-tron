@@ -109,7 +109,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[]  SHIELDED_TRANSACTION_FEE = "SHIELDED_TRANSACTION_FEE".getBytes();
   //This value should be not negative
-  private static final byte[]  TOTAL_SHIELDED_POOL_VALUE = "TOTAL_SHIELDED_POOL_Value".getBytes();
+  private static final byte[]  TOTAL_SHIELDED_POOL_VALUE = "TOTAL_SHIELDED_POOL_VALUE".getBytes();
 
   private static final byte[] EXCHANGE_CREATE_FEE = "EXCHANGE_CREATE_FEE".getBytes();
 
