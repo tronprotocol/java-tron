@@ -29,7 +29,7 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
     }
   }
 
-  public void addTransactionResult(TransactionInfo result) {
+  public void addTransactionInfo(TransactionInfo result) {
     this.transactionRet = this.transactionRet.toBuilder().addTransactioninfo(result).build();
   }
 

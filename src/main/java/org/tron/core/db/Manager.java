@@ -1389,7 +1389,7 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        transationRetCapsule.addTransactionResult(result);
+        transationRetCapsule.addTransactionInfo(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1543,7 +1543,7 @@ public class Manager {
         }
         fastSyncCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        transationRetCapsule.addTransactionResult(result);
+        transationRetCapsule.addTransactionInfo(result);
         fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
