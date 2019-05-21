@@ -103,9 +103,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   //record shielded transaction data.
-  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
+  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives)
+      throws ContractExeException {
     //handle spends
     for (SpendDescription spend : spends) {
+      if (dbManager.getNullfierStore().has(
+          new BytesCapsule(spend.getNullifier().toByteArray()).getData())) {
+        throw new ContractExeException("double spend");
+      }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
