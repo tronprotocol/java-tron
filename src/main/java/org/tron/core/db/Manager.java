@@ -31,8 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -70,7 +68,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultListCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -139,7 +137,7 @@ public class Manager {
   private BlockIndexStore blockIndexStore;
   @Autowired
   @Getter
-  private TransactionResultListStore resultStore;
+  private TransactionRetStore resultStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
@@ -1339,8 +1337,8 @@ public class Manager {
       logger.warn("Witness permission is wrong");
       return null;
     }
-    TransactionResultListCapsule transationResultCapsule =
-        new TransactionResultListCapsule(blockCapsule);
+    TransactionRetCapsule transationResultCapsule =
+        new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1533,8 +1531,8 @@ public class Manager {
       }
     }
 
-    TransactionResultListCapsule transationResultCapsule =
-        new TransactionResultListCapsule(block);
+    TransactionRetCapsule transationResultCapsule =
+        new TransactionRetCapsule(block);
 
     try {
       fastSyncCallBack.preExecute(block);

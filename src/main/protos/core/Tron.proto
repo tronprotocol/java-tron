@@ -369,7 +369,7 @@ message TransactionInfo {
   int64 exchange_id = 21;
 }
 
-message TransactionResultList {
+message TransactionRet {
   int64 blockNumber = 1;
   int64 blockTimeStamp = 2;
   repeated TransactionInfo transactioninfo = 3;

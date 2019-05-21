@@ -1,8 +1,6 @@
 package org.tron.core.db;
 
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -10,21 +8,20 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultListCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.exception.BadItemException;
 import java.util.Objects;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionResultList;
 
 @Slf4j(topic = "DB")
 @Component
-public class TransactionResultListStore  extends TronStoreWithRevoking<TransactionResultListCapsule>  {
+public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCapsule>  {
 
   @Autowired
   private TransactionStore transactionStore;
 
   @Autowired
-  public TransactionResultListStore(@Value("transactionResultListStore") String dbName) {
+  public TransactionRetStore(@Value("transactionRetStore") String dbName) {
     super(dbName);
   }
 
@@ -34,7 +31,7 @@ public class TransactionResultListStore  extends TronStoreWithRevoking<Transacti
       return null;
     }
     byte[] value = revokingDB.getUnchecked(ByteArray.fromLong(transactionCapsule.getBlockNum()));
-    TransactionResultListCapsule result = new TransactionResultListCapsule(value);
+    TransactionRetCapsule result = new TransactionRetCapsule(value);
     if (Objects.isNull(result)) {
       return null;
     }
