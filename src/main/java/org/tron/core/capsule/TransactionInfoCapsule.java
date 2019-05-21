@@ -1,6 +1,6 @@
 package org.tron.core.capsule;
 
-  import com.google.protobuf.ByteString;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.List;
@@ -224,5 +224,4 @@ public class TransactionInfoCapsule implements ProtoCapsule<TransactionInfo> {
 
     return new TransactionInfoCapsule(builder.build());
   }
-
 }
