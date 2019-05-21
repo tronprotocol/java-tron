@@ -1337,7 +1337,7 @@ public class Manager {
       logger.warn("Witness permission is wrong");
       return null;
     }
-    TransactionRetCapsule transationResultCapsule =
+    TransactionRetCapsule transationRetCapsule =
         new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
@@ -1389,7 +1389,7 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        transationResultCapsule.addTransactionResult(result);
+        transationRetCapsule.addTransactionResult(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1441,7 +1441,7 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
-    blockCapsule.setResult(transationResultCapsule);
+    blockCapsule.setResult(transationRetCapsule);
 
     try {
       this.pushBlock(blockCapsule);
@@ -1531,7 +1531,7 @@ public class Manager {
       }
     }
 
-    TransactionRetCapsule transationResultCapsule =
+    TransactionRetCapsule transationRetCapsule =
         new TransactionRetCapsule(block);
 
     try {
@@ -1543,7 +1543,7 @@ public class Manager {
         }
         fastSyncCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
-        transationResultCapsule.addTransactionResult(result);
+        transationRetCapsule.addTransactionResult(result);
         fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
@@ -1551,7 +1551,7 @@ public class Manager {
       fastSyncCallBack.exceptionFinish();
     }
 
-    block.setResult(transationResultCapsule);
+    block.setResult(transationRetCapsule);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
