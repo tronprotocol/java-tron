@@ -185,6 +185,8 @@ public class FullNodeHttpApiService implements Service {
   private GetRcmServlet getRcmServlet;
   @Autowired
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
+  @Autowired
+  private IsSpendServlet isSpendServlet;
 
   @Override
   public void init() {
@@ -301,6 +303,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
           "/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
 
       server.start();
     } catch (Exception e) {

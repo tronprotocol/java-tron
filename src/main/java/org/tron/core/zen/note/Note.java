@@ -58,4 +58,15 @@ public class Note {
 
     return result;
   }
+
+  public byte[] nullifier(byte[] ak, byte[] nk, long position) {
+
+    byte[] result = new byte[256]; // 256
+    if (!Librustzcash.librustzcashSaplingComputeNf(
+        d.getData(), pkD, value, r, ak, nk, position, result)) {
+      return null;
+    }
+
+    return result;
+  }
 }
