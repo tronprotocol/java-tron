@@ -689,6 +689,9 @@ service Wallet {
   rpc GetRcm (EmptyMessage) returns (BytesMessage) {
   }
 
+  rpc IsSpend (NoteParameters) returns (SpendResult) {
+  }
+
   // end for shiededTransaction
 };
 
@@ -1185,4 +1188,16 @@ message IncomingViewingKeyDiversifierMessage {
 message SaplingPaymentAddressMessage {
   DiversifierMessage d = 1;
   bytes pkD = 2;
+}
+
+message NoteParameters {
+  bytes ak = 1;
+  bytes nk = 2;
+  Note note = 3;
+  IncrementalMerkleVoucher voucher = 4;
+}
+
+message SpendResult {
+  bool result = 1;
+  string message = 2;
 }

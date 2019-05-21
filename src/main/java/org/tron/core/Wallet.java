@@ -60,6 +60,7 @@ import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.ProposalList;
@@ -68,6 +69,7 @@ import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
 import org.tron.api.GrpcAPI.SpendNote;
+import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
@@ -1414,7 +1416,7 @@ public class Wallet {
     //Get the tree in blockNum-1 position
     byte[] treeRoot = dbManager.getMerkleTreeIndexStore().get(blockNumber - 1);
     if (treeRoot == null) {
-      throw new RuntimeException("treeRoot is null,blockNumbler:" + (blockNumber - 1));
+      throw new RuntimeException("treeRoot is null,blockNumber:" + (blockNumber - 1));
     }
 
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
@@ -1875,6 +1877,41 @@ public class Wallet {
 
     }
     return spa;
+  }
+
+  public SpendResult isSpend(NoteParameters noteParameters) throws BadItemException{
+
+    GrpcAPI.Note note = noteParameters.getNote();
+    byte[] ak = noteParameters.getAk().toByteArray();
+    byte[] nk = noteParameters.getNk().toByteArray();
+
+    byte[] nf;
+    try {
+      Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
+          note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
+
+      IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
+          noteParameters.getVoucher()).toMerkleVoucherContainer();
+
+      nf = baseNote.nullifier(ak, nk, voucherContainer.position());
+    } catch (Exception e) {
+      throw new BadItemException("invalid request");
+    }
+
+    SpendResult result;
+    if (dbManager.getNullfierStore().has(nf)) {
+      result = SpendResult.newBuilder()
+          .setResult(true)
+          .setMessage("input note already spent")
+          .build();
+    } else {
+      result = SpendResult.newBuilder()
+          .setResult(false)
+          .setMessage("input note not spent or not exists")
+          .build();
+    }
+
+    return result;
   }
 
   public NodeList listNodes() {
