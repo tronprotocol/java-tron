@@ -191,11 +191,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       for (SpendDescription spendDescription : spendDescriptions) {
-        if (spendDescription.getValueCommitment() == null
-                || spendDescription.getAnchor() == null
-                || spendDescription.getNullifier() == null
-                || spendDescription.getZkproof() == null
-                || spendDescription.getSpendAuthoritySignature() == null) {
+        if (spendDescription.getValueCommitment().isEmpty()
+                || spendDescription.getAnchor().isEmpty()
+                || spendDescription.getNullifier().isEmpty()
+                || spendDescription.getZkproof().isEmpty()
+                || spendDescription.getSpendAuthoritySignature().isEmpty()) {
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("spend description null");
         }
@@ -215,12 +215,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
 
       for (ReceiveDescription receiveDescription : receiveDescriptions) {
-        if(receiveDescription.getValueCommitment() == null
-                || receiveDescription.getNoteCommitment() == null
-                || receiveDescription.getEpk() == null
-                || receiveDescription.getZkproof() == null
-                || receiveDescription.getCEnc() == null
-                || receiveDescription.getCOut() == null){
+        if(receiveDescription.getValueCommitment().isEmpty()
+                || receiveDescription.getNoteCommitment().isEmpty()
+                || receiveDescription.getEpk().isEmpty()
+                || receiveDescription.getZkproof().isEmpty()
+                || receiveDescription.getCEnc().isEmpty()
+                || receiveDescription.getCOut().isEmpty()){
           Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
           throw new ContractValidateException("receive description null");
         }
