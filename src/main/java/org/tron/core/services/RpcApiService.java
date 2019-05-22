@@ -1870,6 +1870,16 @@ public class RpcApiService implements Service {
 
     }
 
+    @Override
+    public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.isSpend(request));
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
   }
 
   @Override

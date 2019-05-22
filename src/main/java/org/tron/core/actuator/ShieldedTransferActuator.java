@@ -109,6 +109,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
    throws ContractExeException{
     //handle spends
     for (SpendDescription spend : spends) {
+      if (dbManager.getNullfierStore().has(
+          new BytesCapsule(spend.getNullifier().toByteArray()).getData())) {
+        throw new ContractExeException("double spend");
+      }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
 
@@ -196,6 +200,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
     List<ReceiveDescription> receiveDescriptions = shieldedTransferContract
         .getReceiveDescriptionList();
 
+    HashSet<ByteString> receiveSet = new HashSet<>();
+    for (ReceiveDescription receiveDescription : receiveDescriptions) {
+      if (receiveSet.contains(receiveDescription.getNoteCommitment())) {
+        throw new ContractValidateException("duplicate cm in receive_description");
+      }
+      receiveSet.add(receiveDescription.getNoteCommitment());
+    }
     if (CollectionUtils.isEmpty(spendDescriptions)
         && CollectionUtils.isEmpty(receiveDescriptions)) {
       throw new ContractValidateException("no Description found in transaction");
