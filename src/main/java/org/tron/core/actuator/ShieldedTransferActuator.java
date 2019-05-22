@@ -74,8 +74,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         .getTotalShieldedPoolValue();
     try {
       long valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-          shieldedTransferContract.getFromAmount()),fee);
-      totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue,valueBalance);
+          shieldedTransferContract.getFromAmount()), fee);
+      totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractExeException(e.getMessage());
@@ -270,14 +270,16 @@ public class ShieldedTransferActuator extends AbstractActuator {
           .getTotalShieldedPoolValue();
       try {
         valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-            shieldedTransferContract.getFromAmount()),fee);
-        totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue,valueBalance);
+            shieldedTransferContract.getFromAmount()), fee);
+        totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
       } catch (ArithmeticException e) {
         logger.debug(e.getMessage(), e);
+        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException(e.getMessage());
       }
 
       if (totalShieldedPoolValue < 0) {
+        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException("shieldedPoolValue error");
       }
       if (!Librustzcash.librustzcashSaplingFinalCheck(
@@ -289,7 +291,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         throw new ContractValidateException("librustzcashSaplingFinalCheck error");
       }
+      Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
+
     return true;
   }
 
@@ -333,6 +337,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     long fromAmount = shieldedTransferContract.getFromAmount();
     long toAmount = shieldedTransferContract.getToAmount();
+    if (fromAmount < 0) {
+      throw new ContractValidateException("from_amount should not be less than 0");
+    }
+    if (toAmount < 0) {
+      throw new ContractValidateException("to_amount should not be less than 0");
+    }
 
     if (hasTransparentFrom && !Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid transparent_from_address");
@@ -356,13 +366,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ContractValidateException("Validate ShieldedTransferContract error, "
             + "no OwnerAccount");
       }
-
       long balance = ownerAccount.getBalance();
-
       if (fromAmount <= 0) {
         throw new ContractValidateException("from_amount must be greater than 0");
       }
-
       if (balance < fromAmount) {
         throw new ContractValidateException(
             "Validate ShieldedTransferContract error, balance is not sufficient");
