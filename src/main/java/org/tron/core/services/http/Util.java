@@ -8,6 +8,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.math.BigDecimal;
+import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
@@ -713,9 +714,17 @@ public class Util {
     return Hex.toHexString(selector) + input;
   }
 
-  public static long getJsonLongValue(final JSONObject jsonObject, final String key) {
+  public static long getJsonLongValue(final JSONObject jsonObject, final String key) throws Exception {
+    return getJsonLongValue(jsonObject, key, false);
+  }
+
+  public static long getJsonLongValue(final JSONObject jsonObject, final String key, boolean required) throws Exception {
     BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    return bigDecimal.longValueExact();
+    
+    if (required && bigDecimal == null){
+      throw new InvalidParameterException("key [" + key + "] not exist");
+    }
+    return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 
 }
