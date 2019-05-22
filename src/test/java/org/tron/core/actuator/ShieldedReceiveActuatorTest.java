@@ -1,29 +1,20 @@
 package org.tron.core.actuator;
 
-import static junit.framework.TestCase.fail;
-import static org.tron.core.actuator.ShieldedReceiveActuatorTest.TestColumn.CV;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.muquit.libsodiumjna.SodiumLibrary;
 import com.sun.jna.Pointer;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.testng.internal.junit.ArrayAsserts;
 import org.tron.api.GrpcAPI;
-import org.tron.api.WalletGrpc;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -37,7 +28,6 @@ import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -79,7 +69,6 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
-import stest.tron.wallet.common.client.Configuration;
 
 @Slf4j
 public class ShieldedReceiveActuatorTest {
@@ -1052,6 +1041,118 @@ public class ShieldedReceiveActuatorTest {
       //if shield to shield or shield to transparent, librustzcashSaplingFinalCheck error
       Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error")
               || e.getMessage().equalsIgnoreCase("librustzcashSaplingFinalCheck error"));
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test signature for spend with some wrong column
+   */
+  @Test
+  public void testSpendSignatureWithWrongColumn() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    // generate shield spend
+    SpendingKey sk = SpendingKey.decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+    Note note = new Note(address, 100 * 1000000);
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+    builder.addSpend(expsk, note, anchor, voucher);
+
+    //shield transparent input
+    //createCapsule();
+    //builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE);
+
+    // generate output
+    SpendingKey sk1 = SpendingKey.random();
+    FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
+    IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
+    PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+
+    //build process
+    builder.getContractBuilder().setFee(wallet.getShieldedTransactionFee());
+
+    // Create Sapling SpendDescriptions
+    for (SpendDescriptionInfo spend : builder.getSpends()) {
+      SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+      builder.getContractBuilder().addSpendDescription(spendDescriptionCapsule.getInstance());
+    }
+
+    // Create Sapling OutputDescriptions
+    for (ReceiveDescriptionInfo receive : builder.getReceives()) {
+      ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(receive, ctx);
+      builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
+    }
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      hashOfTransaction = TransactionCapsule.hash(transactionCapsule);
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    // Create Sapling spendAuth
+    for (int i = 0; i < builder.getSpends().size(); i++) {
+      byte[] result = new byte[64];
+      Librustzcash.librustzcashSaplingSpendSig(
+              builder.getSpends().get(i).expsk.getAsk(),
+              Note.generateR(), //builder.getSpends().get(i).alpha,
+              hashOfTransaction,
+              result);
+      builder.getContractBuilder().getSpendDescriptionBuilder(i)
+              .setSpendAuthoritySignature(ByteString.copyFrom(result));
+    }
+
+    //create binding signatures
+    byte[] bindingSig = new byte[64];
+    Librustzcash.librustzcashSaplingBindingSig(
+            ctx,
+            builder.getValueBalance(),
+            hashOfTransaction,
+            bindingSig
+    );
+    builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
+
+    Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
+            .getRawDataBuilder()
+            .clearContract()
+            .addContract(Transaction.Contract.newBuilder()
+                    .setType(ContractType.ShieldedTransferContract)
+                    .setParameter(Any.pack(builder.getContractBuilder().build()))
+                    .build());
+
+    Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
+            .setRawData(rawBuilder).build();
+    TransactionCapsule transactionCap = new TransactionCapsule(transaction);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate(); //there is getSpendAuthoritySignature in librustzcashSaplingCheckSpend
+      Assert.assertFalse(true);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      //signature for spend with some wrong column
+      //if transparent to shield, ok
+      //if shield to shield or shield to transparent, librustzcashSaplingFinalCheck error
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
