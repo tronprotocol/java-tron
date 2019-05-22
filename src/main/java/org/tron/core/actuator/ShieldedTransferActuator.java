@@ -69,10 +69,18 @@ public class ShieldedTransferActuator extends AbstractActuator {
           shieldedTransferContract.getToAmount());
     }
     ret.setStatus(fee, code.SUCESS);
-    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue();
-    long valueBalance = shieldedTransferContract.getToAmount() -
-        shieldedTransferContract.getFromAmount() + fee;
-    totalShieldedPoolValue -= valueBalance;
+
+    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
+        .getTotalShieldedPoolValue();
+    try {
+      long valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
+          shieldedTransferContract.getFromAmount()),fee);
+      totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue,valueBalance);
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractExeException(e.getMessage());
+    }
+
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     return true;
   }
@@ -265,11 +273,18 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
 
-      long valueBalance = shieldedTransferContract.getToAmount() -
-          shieldedTransferContract.getFromAmount() + fee;
+      long valueBalance;
       long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
           .getTotalShieldedPoolValue();
-      totalShieldedPoolValue -= valueBalance;
+      try {
+        valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
+            shieldedTransferContract.getFromAmount()),fee);
+        totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue,valueBalance);
+      } catch (ArithmeticException e) {
+        logger.debug(e.getMessage(), e);
+        throw new ContractValidateException(e.getMessage());
+      }
+
       if (totalShieldedPoolValue < 0) {
         throw new ContractValidateException("shieldedPoolValue error");
       }
