@@ -48,7 +48,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
-            shieldedTransferContract.getFromAmount());
+            shieldedTransferContract.getFromAmount(), ret);
       }
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
     } catch (BalanceInsufficientException e) {
@@ -62,13 +62,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     executeShielded(shieldedTransferContract.getSpendDescriptionList(),
-        shieldedTransferContract.getReceiveDescriptionList());
+        shieldedTransferContract.getReceiveDescriptionList(), ret);
 
     if (shieldedTransferContract.getTransparentToAddress().toByteArray().length > 0) {
       executeTransparentTo(shieldedTransferContract.getTransparentToAddress().toByteArray(),
-          shieldedTransferContract.getToAmount());
+          shieldedTransferContract.getToAmount(), ret);
     }
-    ret.setStatus(fee, code.SUCESS);
 
     long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
         .getTotalShieldedPoolValue();
@@ -78,23 +77,28 @@ public class ShieldedTransferActuator extends AbstractActuator {
       totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
+    ret.setStatus(fee, code.SUCESS);
     return true;
   }
 
-  private void executeTransparentFrom(byte[] ownerAddress, long amount)
+  private void executeTransparentFrom(byte[] ownerAddress, long amount,
+      TransactionResultCapsule ret)
       throws ContractExeException {
     try {
       dbManager.adjustBalance(ownerAddress, -amount);
     } catch (BalanceInsufficientException e) {
+      ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
   }
 
-  private void executeTransparentTo(byte[] toAddress, long amount) throws ContractExeException {
+  private void executeTransparentTo(byte[] toAddress, long amount, TransactionResultCapsule ret)
+      throws ContractExeException {
     try {
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount == null) {
@@ -106,17 +110,20 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.adjustBalance(toAddress, amount);
     } catch (BalanceInsufficientException e) {
+      ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
   }
 
   //record shielded transaction data.
-  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives)
+  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives,
+      TransactionResultCapsule ret)
       throws ContractExeException {
     //handle spends
     for (SpendDescription spend : spends) {
       if (dbManager.getNullfierStore().has(
           new BytesCapsule(spend.getNullifier().toByteArray()).getData())) {
+        ret.setStatus(calcFee(), code.FAILED);
         throw new ContractExeException("double spend");
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
@@ -130,13 +137,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
       merkleContainer
           .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
-
     try {
       currentMerkle.wfcheck();
     } catch (ZksnarkException e) {
+      ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
-
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
