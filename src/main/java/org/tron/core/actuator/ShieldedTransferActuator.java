@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -39,25 +38,24 @@ public class ShieldedTransferActuator extends AbstractActuator {
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
     this.tx = tx;
-    try {
-      shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
   }
 
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
-
     long fee = calcFee();
     try {
+      shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount());
       }
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
     } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -106,7 +104,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   //record shielded transaction data.
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives)
-   throws ContractExeException{
+      throws ContractExeException {
     //handle spends
     for (SpendDescription spend : spends) {
       if (dbManager.getNullfierStore().has(
@@ -125,9 +123,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
           .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
 
-    try{
+    try {
       currentMerkle.wfcheck();
-    }catch (ZksnarkException e){
+    } catch (ZksnarkException e) {
       throw new ContractExeException(e.getMessage());
     }
 
@@ -141,6 +139,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
     if (this.dbManager == null) {
       throw new ContractValidateException("No dbManager!");
+    }
+    try {
+      shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
+    } catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
     }
     if (!this.contract.is(ShieldedTransferContract.class)) {
       throw new ContractValidateException(
