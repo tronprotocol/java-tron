@@ -24,8 +24,6 @@ import static org.tron.protos.Contract.WitnessUpdateContract;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.security.InvalidKeyException;
-import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,8 +37,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.crypto.eddsa.EdDSAEngine;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
 import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
@@ -373,6 +369,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     newContract.setToAmount(shieldedTransferContract.getToAmount());
     newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
     newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+    newContract.setFee(shieldedTransferContract.getFee());
     for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
       newContract
           .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
