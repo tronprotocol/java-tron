@@ -165,23 +165,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
-    if (!checkSender(shieldedTransferContract)) {
-      return false;
-    }
-    if (!checkReceiver(shieldedTransferContract)) {
-      return false;
-    }
+    //transparent verification
+    checkSender(shieldedTransferContract);
+    checkReceiver(shieldedTransferContract);
+    validateTransparent(shieldedTransferContract);
 
     long fee = calcFee();
     if (shieldedTransferContract.getFee() != fee) {
       throw new ContractValidateException("ShieldedTransferContract fee must equal " + fee);
     }
-
-    //transparent verification
-    if (!validateTransparent(shieldedTransferContract)) {
-      return false;
-    }
-
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {
@@ -286,7 +278,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     return true;
   }
 
-  private boolean checkSender(ShieldedTransferContract shieldedTransferContract)
+  private void checkSender(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
     if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0
         && shieldedTransferContract.getSpendDescriptionCount() > 0) {
@@ -300,10 +292,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
           + " should not be more than 10");
     }
-    return true;
   }
 
-  private boolean checkReceiver(ShieldedTransferContract shieldedTransferContract)
+  private void checkReceiver(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
     if (shieldedTransferContract.getTransparentToAddress().toByteArray().length == 0
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
@@ -313,10 +304,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
           + " should not be more than 10");
     }
-    return true;
   }
 
-  private boolean validateTransparent(ShieldedTransferContract shieldedTransferContract)
+  private void validateTransparent(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
     boolean hasTransparentFrom;
     boolean hasTransparentTo;
@@ -378,7 +368,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
-    return true;
   }
 
   @Override
