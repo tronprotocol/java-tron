@@ -2,6 +2,7 @@ package org.tron.core.zen.merkle;
 
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
 
 import java.util.ArrayDeque;
@@ -29,25 +30,25 @@ public class IncrementalMerkleTreeContainer {
     return treeCapsule;
   }
 
-  public void wfcheck() {
+  public void wfcheck() throws ZksnarkException{
     if (treeCapsule.getParents().size() >= DEPTH) {
-      throw new RuntimeException("tree has too many parents");
+      throw new ZksnarkException("tree has too many parents");
     }
     if (!treeCapsule.parentsIsEmpty()) {
       PedersenHashCapsule parentCompressCapsule =
           new PedersenHashCapsule(
               treeCapsule.getParents().get(treeCapsule.getParents().size() - 1));
       if (!parentCompressCapsule.isPresent()) {
-        throw new RuntimeException("tree has non-canonical representation of parent");
+        throw new ZksnarkException("tree has non-canonical representation of parent");
       }
     }
 
     if ((!leftIsPresent()) && rightIsPresent()) {
-      throw new RuntimeException("tree has non-canonical representation; right should not exist");
+      throw new ZksnarkException("tree has non-canonical representation; right should not exist");
     }
 
     if ((!leftIsPresent()) && treeCapsule.getParents().size() > 0) {
-      throw new RuntimeException(
+      throw new ZksnarkException(
           "tree has non-canonical representation; parents should be empty");
     }
   }

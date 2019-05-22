@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -19,6 +20,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
@@ -103,7 +105,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   //record shielded transaction data.
-  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives) {
+  private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives)
+   throws ContractExeException{
     //handle spends
     for (SpendDescription spend : spends) {
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
@@ -117,7 +120,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
       merkleContainer
           .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
     }
-    currentMerkle.wfcheck();
+
+    try{
+      currentMerkle.wfcheck();
+    }catch (ZksnarkException e){
+      throw new ContractExeException(e.getMessage());
+    }
+
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
