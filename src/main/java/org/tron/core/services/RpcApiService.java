@@ -34,6 +34,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
@@ -1755,13 +1756,12 @@ public class RpcApiService implements Service {
         StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
       ByteString spendingKey = request.getValue();
 
-      if (null != spendingKey) {
+      try {
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
-
-        responseObserver.onNext(response);
-      } else {
-        responseObserver.onNext(null);
+      } catch (BadItemException e) {
+        responseObserver.onError(e);
       }
+
       responseObserver.onCompleted();
     }
 
@@ -1769,10 +1769,10 @@ public class RpcApiService implements Service {
     public void getAkFromAsk(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
       ByteString ak = request.getValue();
 
-      if (null != ak) {
+      try {
         responseObserver.onNext(wallet.getAkFromAsk(ak));
-      } else {
-        responseObserver.onNext(null);
+      } catch (BadItemException e) {
+        responseObserver.onError(e);
       }
 
       responseObserver.onCompleted();
@@ -1782,10 +1782,10 @@ public class RpcApiService implements Service {
     public void getNkFromNsk(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
       ByteString nk = request.getValue();
 
-      if (null != nk) {
+      try {
         responseObserver.onNext(wallet.getNkFromNsk(nk));
-      } else {
-        responseObserver.onNext(null);
+      } catch (BadItemException e) {
+        responseObserver.onError(e);
       }
 
       responseObserver.onCompleted();
@@ -1796,13 +1796,13 @@ public class RpcApiService implements Service {
                                       StreamObserver<IncomingViewingKeyMessage> responseObserver){
       ByteString ak = request.getAk();
       ByteString nk = request.getNk();
-      if (null != ak && null != nk) {
-        IncomingViewingKeyMessage incomingViewingKeyMessage = wallet.getIncomingViewingKey(ak.toByteArray(),nk.toByteArray());
 
-        responseObserver.onNext(incomingViewingKeyMessage);
-      } else {
-        responseObserver.onNext(null);
+      try {
+        responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(),nk.toByteArray()));
+      } catch (BadItemException e) {
+        responseObserver.onError(e);
       }
+
       responseObserver.onCompleted();
     }
 
@@ -1810,11 +1810,7 @@ public class RpcApiService implements Service {
     public void getDiversifier(EmptyMessage request,
                                StreamObserver<DiversifierMessage> responseObserver){
       DiversifierMessage d = wallet.getDiversifier();
-      if (null != d) {
-        responseObserver.onNext(d);
-      } else {
-        responseObserver.onNext(null);
-      }
+      responseObserver.onNext(d);
       responseObserver.onCompleted();
     }
 
@@ -1824,12 +1820,14 @@ public class RpcApiService implements Service {
       IncomingViewingKeyMessage ivk = request.getIvk();
       DiversifierMessage d = request.getD();
 
-      if(null != ivk && null != d) {
-        SaplingPaymentAddressMessage saplingPaymentAddressMessage = wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+      try {
+        SaplingPaymentAddressMessage saplingPaymentAddressMessage =
+                wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
                 new DiversifierT(d.getD().toByteArray()));
+
         responseObserver.onNext(saplingPaymentAddressMessage);
-      } else {
-        responseObserver.onNext(null);
+      } catch (BadItemException e) {
+        responseObserver.onError(e);
       }
 
       responseObserver.onCompleted();
@@ -1843,11 +1841,11 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      if (!(endNum > 0 && endNum > startNum)) {
-        responseObserver.onNext(null);
-      } else {
-        responseObserver.onNext(
-            wallet.scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray()));
+      try{
+        DecryptNotes decryptNotes = wallet.scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      }catch (BadItemException e){
+        responseObserver.onError(e);
       }
       responseObserver.onCompleted();
 
@@ -1860,14 +1858,13 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      if (!(endNum > 0 && endNum > startNum)) {
-        responseObserver.onNext(null);
-      } else {
-        responseObserver.onNext(
-            wallet.scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray()));
+      try{
+        DecryptNotes decryptNotes = wallet.scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      }catch (BadItemException e){
+        responseObserver.onError(e);
       }
       responseObserver.onCompleted();
-
     }
 
     @Override

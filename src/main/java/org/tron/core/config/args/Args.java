@@ -450,6 +450,9 @@ public class Args {
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   private boolean version;
 
+  @Getter
+  private boolean allowShieldedTransactionApi;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -523,6 +526,7 @@ public class Args {
     INSTANCE.allowZKSnarkTransaction = 0;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.allowShieldedTransactionApi = false;
   }
 
   /**
@@ -905,6 +909,9 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.allowShieldedTransactionApi = config.hasPath("node.allowShieldedTransactionApi") ?
+            config.getBoolean("node.allowShieldedTransactionApi") : false;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
