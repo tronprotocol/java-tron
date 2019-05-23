@@ -1708,7 +1708,7 @@ public class Wallet {
     if (!ArrayUtils.isEmpty(nsk) && nsk.length != 32){
       throw new ContractValidateException("byte length of nsk should be 32");
     }
-    if (!ArrayUtils.isEmpty(ovk) && ask.length != 32){
+    if (!ArrayUtils.isEmpty(ovk) && ovk.length != 32){
       throw new ContractValidateException("byte length of ovk should be 32");
     }
 
