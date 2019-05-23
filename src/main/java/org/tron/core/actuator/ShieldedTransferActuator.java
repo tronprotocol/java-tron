@@ -220,79 +220,75 @@ public class ShieldedTransferActuator extends AbstractActuator {
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
-      for (SpendDescription spendDescription : spendDescriptions) {
-        if (spendDescription.getValueCommitment().isEmpty()
-            || spendDescription.getAnchor().isEmpty()
-            || spendDescription.getNullifier().isEmpty()
-            || spendDescription.getZkproof().isEmpty()
-            || spendDescription.getSpendAuthoritySignature().isEmpty()) {
-          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-          throw new ContractValidateException("spend description null");
+      try {
+        for (SpendDescription spendDescription : spendDescriptions) {
+          if (spendDescription.getValueCommitment().isEmpty()
+              || spendDescription.getAnchor().isEmpty()
+              || spendDescription.getNullifier().isEmpty()
+              || spendDescription.getZkproof().isEmpty()
+              || spendDescription.getSpendAuthoritySignature().isEmpty()) {
+            throw new ContractValidateException("spend description null");
+          }
+          if (!Librustzcash.librustzcashSaplingCheckSpend(
+              ctx,
+              spendDescription.getValueCommitment().toByteArray(),
+              spendDescription.getAnchor().toByteArray(),
+              spendDescription.getNullifier().toByteArray(),
+              spendDescription.getRk().toByteArray(),
+              spendDescription.getZkproof().toByteArray(),
+              spendDescription.getSpendAuthoritySignature().toByteArray(),
+              signHash
+          )) {
+            throw new ContractValidateException("librustzcashSaplingCheckSpend error");
+          }
         }
-        if (!Librustzcash.librustzcashSaplingCheckSpend(
+
+        for (ReceiveDescription receiveDescription : receiveDescriptions) {
+          if (receiveDescription.getValueCommitment().isEmpty()
+              || receiveDescription.getNoteCommitment().isEmpty()
+              || receiveDescription.getEpk().isEmpty()
+              || receiveDescription.getZkproof().isEmpty()
+              || receiveDescription.getCEnc().isEmpty()
+              || receiveDescription.getCOut().isEmpty()) {
+            throw new ContractValidateException("receive description null");
+          }
+          if (!Librustzcash.librustzcashSaplingCheckOutput(
+              ctx,
+              receiveDescription.getValueCommitment().toByteArray(),
+              receiveDescription.getNoteCommitment().toByteArray(),
+              receiveDescription.getEpk().toByteArray(),
+              receiveDescription.getZkproof().toByteArray()
+          )) {
+            throw new ContractValidateException("librustzcashSaplingCheckOutput error");
+          }
+        }
+
+        long valueBalance;
+        long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
+            .getTotalShieldedPoolValue();
+        try {
+          valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
+              shieldedTransferContract.getFromAmount()), fee);
+          totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
+        } catch (ArithmeticException e) {
+          logger.debug(e.getMessage(), e);
+          throw new ContractValidateException(e.getMessage());
+        }
+
+        if (totalShieldedPoolValue < 0) {
+          throw new ContractValidateException("shieldedPoolValue error");
+        }
+        if (!Librustzcash.librustzcashSaplingFinalCheck(
             ctx,
-            spendDescription.getValueCommitment().toByteArray(),
-            spendDescription.getAnchor().toByteArray(),
-            spendDescription.getNullifier().toByteArray(),
-            spendDescription.getRk().toByteArray(),
-            spendDescription.getZkproof().toByteArray(),
-            spendDescription.getSpendAuthoritySignature().toByteArray(),
+            valueBalance,
+            shieldedTransferContract.getBindingSignature().toByteArray(),
             signHash
         )) {
-          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-          throw new ContractValidateException("librustzcashSaplingCheckSpend error");
+          throw new ContractValidateException("librustzcashSaplingFinalCheck error");
         }
-      }
-
-      for (ReceiveDescription receiveDescription : receiveDescriptions) {
-        if (receiveDescription.getValueCommitment().isEmpty()
-            || receiveDescription.getNoteCommitment().isEmpty()
-            || receiveDescription.getEpk().isEmpty()
-            || receiveDescription.getZkproof().isEmpty()
-            || receiveDescription.getCEnc().isEmpty()
-            || receiveDescription.getCOut().isEmpty()) {
-          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-          throw new ContractValidateException("receive description null");
-        }
-        if (!Librustzcash.librustzcashSaplingCheckOutput(
-            ctx,
-            receiveDescription.getValueCommitment().toByteArray(),
-            receiveDescription.getNoteCommitment().toByteArray(),
-            receiveDescription.getEpk().toByteArray(),
-            receiveDescription.getZkproof().toByteArray()
-        )) {
-          Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-          throw new ContractValidateException("librustzcashSaplingCheckOutput error");
-        }
-      }
-
-      long valueBalance;
-      long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
-          .getTotalShieldedPoolValue();
-      try {
-        valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-            shieldedTransferContract.getFromAmount()), fee);
-        totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
-      } catch (ArithmeticException e) {
-        logger.debug(e.getMessage(), e);
+      } finally {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-        throw new ContractValidateException(e.getMessage());
       }
-
-      if (totalShieldedPoolValue < 0) {
-        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-        throw new ContractValidateException("shieldedPoolValue error");
-      }
-      if (!Librustzcash.librustzcashSaplingFinalCheck(
-          ctx,
-          valueBalance,
-          shieldedTransferContract.getBindingSignature().toByteArray(),
-          signHash
-      )) {
-        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-        throw new ContractValidateException("librustzcashSaplingFinalCheck error");
-      }
-      Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
 
     return true;
