@@ -6,6 +6,13 @@ import com.google.protobuf.Message;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
@@ -13,8 +20,50 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.*;
+import org.tron.api.GrpcAPI.AccountNetMessage;
+import org.tron.api.GrpcAPI.AccountPaginated;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
+import org.tron.api.GrpcAPI.Address;
+import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
+import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockExtention;
+import org.tron.api.GrpcAPI.BlockLimit;
+import org.tron.api.GrpcAPI.BlockList;
+import org.tron.api.GrpcAPI.BlockListExtention;
+import org.tron.api.GrpcAPI.BlockReference;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DelegatedResourceList;
+import org.tron.api.GrpcAPI.DelegatedResourceMessage;
+import org.tron.api.GrpcAPI.DiversifierMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
+import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
+import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
+import org.tron.api.GrpcAPI.EasyTransferMessage;
+import org.tron.api.GrpcAPI.EasyTransferResponse;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.Node;
+import org.tron.api.GrpcAPI.NodeList;
+import org.tron.api.GrpcAPI.NoteParameters;
+import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.ProposalList;
+import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
+import org.tron.api.GrpcAPI.SpendResult;
+import org.tron.api.GrpcAPI.TransactionApprovedList;
+import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionList;
+import org.tron.api.GrpcAPI.TransactionListExtention;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.ViewingKeyMessage;
+import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -42,18 +91,30 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Contract;
-import org.tron.protos.Contract.*;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.*;
+import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DynamicProperties;
+import org.tron.protos.Protocol.Exchange;
+import org.tron.protos.Protocol.NodeInfo;
+import org.tron.protos.Protocol.Proposal;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionSign;
 
 @Component
 @Slf4j(topic = "API")
@@ -1621,45 +1682,44 @@ public class RpcApiService implements Service {
           responseObserver);
     }
 
+//    @Override
+//    public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
+//      ByteString id = request.getValue();
+//      if (null != id) {
+//        BytesMessage trxId = wallet.getNullifier(id);
+//
+//        responseObserver.onNext(trxId);
+//      } else {
+//        responseObserver.onNext(null);
+//      }
+//      responseObserver.onCompleted();
+//    }
 
-    @Override
-    public void getNullifier(BytesMessage request, StreamObserver<BytesMessage> responseObserver) {
-      ByteString id = request.getValue();
-      if (null != id) {
-        BytesMessage trxId = wallet.getNullifier(id);
+//    @Override
+//    public void getMerklePath(BytesMessage request, StreamObserver<MerklePath> responseObserver) {
+//      ByteString rt = request.getValue();
+//      if (null != rt) {
+//        MerklePath merklePath = wallet.getMerklePath(rt);
+//
+//        responseObserver.onNext(merklePath);
+//      } else {
+//        responseObserver.onNext(null);
+//      }
+//      responseObserver.onCompleted();
+//    }
 
-        responseObserver.onNext(trxId);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getMerklePath(BytesMessage request, StreamObserver<MerklePath> responseObserver) {
-      ByteString rt = request.getValue();
-      if (null != rt) {
-        MerklePath merklePath = wallet.getMerklePath(rt);
-
-        responseObserver.onNext(merklePath);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getBestMerkleRoot(EmptyMessage request,
-        StreamObserver<BytesMessage> responseObserver) {
-      byte[] rt = wallet.getBestMerkleRoot();
-      if (rt == null) {
-        responseObserver.onNext(null);
-      } else {
-        responseObserver
-            .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
-      }
-      responseObserver.onCompleted();
-    }
+//    @Override
+//    public void getBestMerkleRoot(EmptyMessage request,
+//        StreamObserver<BytesMessage> responseObserver) {
+//      byte[] rt = wallet.getBestMerkleRoot();
+//      if (rt == null) {
+//        responseObserver.onNext(null);
+//      } else {
+//        responseObserver
+//            .onNext(BytesMessage.newBuilder().setValue(ByteString.copyFrom(rt)).build());
+//      }
+//      responseObserver.onCompleted();
+//    }
 
     @Override
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
@@ -1679,43 +1739,44 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-    @Override
-    public void getZKBlockByLimitNext(BlockLimit request,
-        StreamObserver<BlockListExtention> responseObserver) {
-      long startNum = request.getStartNum();
-      long endNum = request.getEndNum();
+//    @Override
+//    public void getZKBlockByLimitNext(BlockLimit request,
+//        StreamObserver<BlockListExtention> responseObserver) {
+//      long startNum = request.getStartNum();
+//      long endNum = request.getEndNum();
+//
+//      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
+//        responseObserver.onNext(blocklist2Extention(
+//            wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
+//      } else {
+//        responseObserver.onNext(null);
+//      }
+//      responseObserver.onCompleted();
+//    }
+//
+//    @Override
+//    public void getMerkleTreeOfBlock(NumberMessage request,
+//        StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
+//      long blockNumber = request.getNum();
+//      if (blockNumber >= 0) {
+//        BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
+//        builder.setNumber(blockNumber);
+//        IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock(blockNumber);
+//        if (tree != null) {
+//          builder.setMerkleTree(tree);
+//          responseObserver.onNext(builder.build());
+//        } else {
+//          responseObserver.onNext(null);
+//        }
+//      } else {
+//        responseObserver.onNext(null);
+//      }
+//      responseObserver.onCompleted();
+//    }
 
-      if (endNum > 0 && endNum > startNum && endNum - startNum <= BLOCK_LIMIT_NUM) {
-        responseObserver.onNext(blocklist2Extention(
-            wallet.getZKBlocksByLimitNext(startNum, endNum - startNum)));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
     @Override
-    public void getMerkleTreeOfBlock(NumberMessage request,
-        StreamObserver<BlockIncrementalMerkleTree> responseObserver) {
-      long blockNumber = request.getNum();
-      if (blockNumber >= 0) {
-        BlockIncrementalMerkleTree.Builder builder = BlockIncrementalMerkleTree.newBuilder();
-        builder.setNumber(blockNumber);
-        IncrementalMerkleTree tree = wallet.getMerkleTreeOfBlock(blockNumber);
-        if (tree != null) {
-          builder.setMerkleTree(tree);
-          responseObserver.onNext(builder.build());
-        } else {
-          responseObserver.onNext(null);
-        }
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void createShieldedTransaction(PrivateParameters request, StreamObserver<TransactionExtention> responseObserver) {
+    public void createShieldedTransaction(PrivateParameters request,
+        StreamObserver<TransactionExtention> responseObserver) {
 
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
@@ -1742,7 +1803,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getSpendingKey(EmptyMessage request, StreamObserver<BytesMessage> responseObserver) {
+    public void getSpendingKey(EmptyMessage request,
+        StreamObserver<BytesMessage> responseObserver) {
       try {
         responseObserver.onNext(wallet.getSpendingKey());
       } catch (Exception e) {
@@ -1793,12 +1855,12 @@ public class RpcApiService implements Service {
 
     @Override
     public void getIncomingViewingKey(ViewingKeyMessage request,
-                                      StreamObserver<IncomingViewingKeyMessage> responseObserver){
+        StreamObserver<IncomingViewingKeyMessage> responseObserver) {
       ByteString ak = request.getAk();
       ByteString nk = request.getNk();
 
       try {
-        responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(),nk.toByteArray()));
+        responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
       } catch (BadItemException e) {
         responseObserver.onError(e);
       }
@@ -1808,7 +1870,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getDiversifier(EmptyMessage request,
-                               StreamObserver<DiversifierMessage> responseObserver){
+        StreamObserver<DiversifierMessage> responseObserver) {
       DiversifierMessage d = wallet.getDiversifier();
       responseObserver.onNext(d);
       responseObserver.onCompleted();
@@ -1816,13 +1878,13 @@ public class RpcApiService implements Service {
 
     @Override
     public void getZenPaymentAddress(IncomingViewingKeyDiversifierMessage request,
-                                         StreamObserver<SaplingPaymentAddressMessage> responseObserver){
+        StreamObserver<SaplingPaymentAddressMessage> responseObserver) {
       IncomingViewingKeyMessage ivk = request.getIvk();
       DiversifierMessage d = request.getD();
 
       try {
         SaplingPaymentAddressMessage saplingPaymentAddressMessage =
-                wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+            wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
                 new DiversifierT(d.getD().toByteArray()));
 
         responseObserver.onNext(saplingPaymentAddressMessage);
@@ -1841,10 +1903,11 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      try{
-        DecryptNotes decryptNotes = wallet.scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
+      try {
+        DecryptNotes decryptNotes = wallet
+            .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      }catch (BadItemException e){
+      } catch (BadItemException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
@@ -1858,10 +1921,11 @@ public class RpcApiService implements Service {
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
 
-      try{
-        DecryptNotes decryptNotes = wallet.scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
+      try {
+        DecryptNotes decryptNotes = wallet
+            .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      }catch (BadItemException e){
+      } catch (BadItemException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();

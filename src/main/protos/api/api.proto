@@ -599,31 +599,30 @@ service Wallet {
     };
   }
 
-  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
-  }
-
-
-  rpc GetBestMerkleRoot (EmptyMessage) returns (BytesMessage) {
-  }
-
-  rpc GetNullifier (BytesMessage) returns (BytesMessage) {
-  }
-
-
-  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
-  }
-
-  rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
-  }
-
-  //Get zero-snark blockExtention list
-  rpc GetZKBlockByLimitNext (BlockLimit) returns (BlockListExtention) {
-  }
-
-  //Get the specified height block merkleTree
-  rpc GetMerkleTreeOfBlock (NumberMessage) returns (BlockIncrementalMerkleTree) {
-  }
-
+  //  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
+  //  }
+  //
+  //
+  //  rpc GetBestMerkleRoot (EmptyMessage) returns (BytesMessage) {
+  //  }
+  //
+  //  rpc GetNullifier (BytesMessage) returns (BytesMessage) {
+  //  }
+  //
+  //
+  //  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
+  //  }
+  //
+  //  rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
+  //  }
+  //
+  //  //Get zero-snark blockExtention list
+  //  rpc GetZKBlockByLimitNext (BlockLimit) returns (BlockListExtention) {
+  //  }
+  //
+  //  //Get the specified height block merkleTree
+  //  rpc GetMerkleTreeOfBlock (NumberMessage) returns (BlockIncrementalMerkleTree) {
+  //  }
 
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
     option (google.api.http) = {
@@ -658,7 +657,6 @@ service Wallet {
   rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
   }
 
-  //protocol p47
   rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
   };
 
@@ -1123,7 +1121,7 @@ message OvkDecryptParameters {
 }
 
 message DecryptNotes {
-  message NoteTx{
+  message NoteTx {
     Note note = 1;
     bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
     int32 index = 3; //the index of note in receive
@@ -1135,7 +1133,7 @@ message Note {
   int64 value = 1;
   bytes d = 2;
   bytes pkD = 3;
-  bytes rcm = 4;  // random 32
+  bytes rcm = 4; // random 32
 }
 
 message SpendNote {
