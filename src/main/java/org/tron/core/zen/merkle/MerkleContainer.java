@@ -43,6 +43,11 @@ public class MerkleContainer {
     return capsule.toMerkleTreeContainer();
   }
 
+  public void resetCurrentMerkleTree(){
+    IncrementalMerkleTreeContainer bestMerkle = getBestMerkle();
+    setCurrentMerkle(bestMerkle);
+  }
+
   public void saveCurrentMerkleTreeAsBestMerkleTree(long blockNum) {
     IncrementalMerkleTreeContainer treeContainer = getCurrentMerkle();
     setBestMerkle(blockNum, treeContainer);

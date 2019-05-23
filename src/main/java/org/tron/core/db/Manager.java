@@ -1521,6 +1521,8 @@ public class Manager {
       }
     }
 
+    merkleContainer.resetCurrentMerkleTree();
+
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
       transactionCapsule.setBlockNum(block.getNum());
       if (block.generatedByMyself) {
