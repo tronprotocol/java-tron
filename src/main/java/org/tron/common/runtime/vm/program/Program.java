@@ -1469,6 +1469,10 @@ public class Program {
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
+        if (VMConfig.allowTvmConstantinople()) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+        }
         throw new BytecodeExecutionException(
             VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
       }
