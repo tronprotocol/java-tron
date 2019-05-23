@@ -720,6 +720,7 @@ public class Util {
 
   public static long getJsonLongValue(final JSONObject jsonObject, final String key, boolean required) throws Exception {
     BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
+    
     if (required && bigDecimal == null){
       throw new InvalidParameterException("key [" + key + "] not exist");
     }
