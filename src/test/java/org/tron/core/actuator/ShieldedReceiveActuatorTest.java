@@ -85,6 +85,8 @@ public class ShieldedReceiveActuatorTest {
   private static Wallet wallet;
 
   public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM};
+  public enum TestSignMissingColumn {FROM_ADDRESS,FROM_AMOUNT,SPEND_DESCRITPION,RECEIVE_DESCRIPTION,TO_ADDRESS,TO_AMOUNT,FEE};
+  public enum TestReceiveMissingColumn{CV, CM, EPK, C_ENC, C_OUT, ZKPROOF};
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
@@ -130,7 +132,7 @@ public class ShieldedReceiveActuatorTest {
   /**
    * create temp transparent address for  test need.
    */
-  public void createCapsule() {
+  private void createCapsule() {
     AccountCapsule fromCapsule =
             new AccountCapsule(
                     ByteString.copyFromUtf8("owner"),
@@ -281,29 +283,17 @@ public class ShieldedReceiveActuatorTest {
 
   }
 
-  /**
-   * some column of receive description is null
-   */
-  @Test
-  public void testEmptyReceiveDescriptionWithEmptyColumn()
-          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-
-    // generate sk
+  private ZenTransactionBuilder generateBuilderWithoutColumnInDescription(ZenTransactionBuilder builder,
+          Pointer ctx,TestReceiveMissingColumn column)
+          throws ZksnarkException, BadItemException {
+    //transparent input
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-
-    //generate a note belongs to this sk
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
-    //put the voucher and anchor into db
     dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
-
     builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output
@@ -311,8 +301,7 @@ public class ShieldedReceiveActuatorTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(address, 90 * 1000000);
-    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
 
     //build process
     builder.getContractBuilder().setFee(wallet.getShieldedTransactionFee());
@@ -326,14 +315,46 @@ public class ShieldedReceiveActuatorTest {
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : builder.getReceives()) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(receive, ctx);
-      //set value_commitment to null
-      receiveDescriptionCapsule.setValueCommitment(ByteString.EMPTY);
-//      receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
-//      receiveDescriptionCapsule.setZkproof(ByteString.EMPTY.toByteArray());
-//      receiveDescriptionCapsule.setEpk(ByteString.EMPTY);
-//      receiveDescriptionCapsule.setCEnc(ByteString.EMPTY);
-//      receiveDescriptionCapsule.setCOut(ByteString.EMPTY);
+      switch(column){
+        case CV:
+          receiveDescriptionCapsule.setValueCommitment(ByteString.EMPTY);
+          break;
+        case CM:
+          receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
+          break;
+        case EPK:
+          receiveDescriptionCapsule.setEpk(ByteString.EMPTY);
+          break;
+        case ZKPROOF:
+          receiveDescriptionCapsule.setZkproof(ByteString.EMPTY);
+          break;
+        case C_ENC:
+          receiveDescriptionCapsule.setCEnc(ByteString.EMPTY);
+          break;
+        case C_OUT:
+          receiveDescriptionCapsule.setCOut(ByteString.EMPTY);
+          break;
+        default:
+          break;
+      }
+      builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
     }
+
+    return builder;
+  }
+
+  /**
+   * test of empty CV in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyCV()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.CV);
 
     // Empty output script.
     byte[] dataToBeSigned;//256
@@ -348,42 +369,8 @@ public class ShieldedReceiveActuatorTest {
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
     }
 
-    // Create Sapling spendAuth and binding signatures
-    for (int i = 0; i < builder.getSpends().size(); i++) {
-      byte[] result = new byte[64];
-      Librustzcash.librustzcashSaplingSpendSig(
-              builder.getSpends().get(i).expsk.getAsk(),
-              builder.getSpends().get(i).alpha,
-              dataToBeSigned,
-              result);
-      builder.getContractBuilder().getSpendDescriptionBuilder(i)
-              .setSpendAuthoritySignature(ByteString.copyFrom(result));
-    }
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
 
-    byte[] bindingSig = new byte[64];
-    Librustzcash.librustzcashSaplingBindingSig(
-            ctx,
-            builder.getValueBalance(),
-            dataToBeSigned,
-            bindingSig
-    );
-    builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
-    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-
-    Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
-            .getRawDataBuilder()
-            .clearContract()
-            .addContract(Transaction.Contract.newBuilder()
-                    .setType(ContractType.ShieldedTransferContract)
-                    .setParameter(Any.pack(builder.getContractBuilder().build()))
-                    .build());
-
-    Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
-            .setRawData(rawBuilder).build();
-
-    TransactionCapsule transactionCap = new TransactionCapsule(transaction);
-
-    updateTotalShieldedPoolValue(builder.getValueBalance());
     try {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
@@ -392,7 +379,212 @@ public class ShieldedReceiveActuatorTest {
       Assert.assertTrue(false);
     }catch (Exception e){
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertEquals("receive description null", e.getMessage());
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test of empty cm in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyCM()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.CM);
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      dataToBeSigned = transactionCapsule.hash(transactionCapsule);
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+
+      Assert.assertTrue(false);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("receive description null", e.getMessage());
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test of empty epk in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyEPK()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.EPK);
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      dataToBeSigned = transactionCapsule.hash(transactionCapsule);
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+
+      Assert.assertTrue(false);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("receive description null", e.getMessage());
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test of empty zkproof in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyZkproof()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.ZKPROOF);
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      dataToBeSigned = transactionCapsule.hash(transactionCapsule);
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+
+      Assert.assertTrue(false);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("receive description null", e.getMessage());
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test of empty c_enc in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyCenc()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.C_ENC);
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      dataToBeSigned = transactionCapsule.hash(transactionCapsule);
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+
+      Assert.assertTrue(false);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("receive description null", e.getMessage());
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test of empty c_out in receive description
+   */
+  @Test
+  public void testReceiveDescriptionWithEmptyCout()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilderWithoutColumnInDescription(builder,ctx,TestReceiveMissingColumn.C_OUT);
+
+    // Empty output script.
+    byte[] dataToBeSigned;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      dataToBeSigned = transactionCapsule.hash(transactionCapsule);
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,dataToBeSigned,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+
+      Assert.assertTrue(false);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("receive description null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -503,7 +695,7 @@ public class ShieldedReceiveActuatorTest {
     return receiveDescriptionCapsule;
   }
 
-  private TransactionCapsule changeBuild(ZenTransactionBuilder builder, Pointer ctx, TestColumn testColumn)
+  private TransactionCapsule changeBuildOutputProof(ZenTransactionBuilder builder, Pointer ctx, TestColumn testColumn)
           throws ZksnarkException {
     ShieldedTransferContract.Builder contractBuilder = builder.getContractBuilder();
 
@@ -563,16 +755,8 @@ public class ShieldedReceiveActuatorTest {
     return new TransactionCapsule(transaction);
   }
 
-  /**
-   * set wrong cm of receive description with modify column
-   */
-  @Test
-  public void testWrongCmCvReceiveDescription()
-          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+  private ZenTransactionBuilder generateBuilder(ZenTransactionBuilder builder, Pointer ctx )
+          throws ZksnarkException, BadItemException {
 
     // generate input
     SpendingKey sk = SpendingKey.random();
@@ -593,8 +777,24 @@ public class ShieldedReceiveActuatorTest {
     Note note2 = new Note(address, 90 * 1000000);
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r, new byte[512]);
 
-    TestColumn testColumn = TestColumn.PKD_CM;
-    TransactionCapsule transactionCap = changeBuild(builder, ctx, testColumn);
+    return builder;
+  }
+
+  /**
+   * test wrong value_commitment in ReceiveDescription
+   */
+  @Test
+  public void testWrongCvReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.CV;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
@@ -604,8 +804,147 @@ public class ShieldedReceiveActuatorTest {
       Assert.assertFalse(true);
     }catch(Exception e){
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("receive description null")
-              || e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+    }
+  }
+
+  /**
+   * test wrong zkproof in ReceiveDescription
+   */
+  @Test
+  public void testWrongZkproofReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.ZKPOOF;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+      Assert.assertFalse(true);
+    }catch(Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+    }
+  }
+
+  /**
+   * test note_commitment in ReceiveDescription generated by wrong d
+   */
+  @Test
+  public void testWrongDcmReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.D_CM;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+      Assert.assertFalse(true);
+    }catch(Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+    }
+  }
+
+  /**
+   * test note_commitment in ReceiveDescription generated by wrong pkd
+   */
+  @Test
+  public void testWrongPkdcmReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.PKD_CM;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+      Assert.assertFalse(true);
+    }catch(Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+    }
+  }
+
+  /**
+   * test note_commitment in ReceiveDescription generated by wrong value
+   */
+  @Test
+  public void testWrongVcmReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.VALUE_CM;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+      Assert.assertFalse(true);
+    }catch(Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+    }
+  }
+
+  /**
+   * test note_commitment in ReceiveDescription generated by wrong r
+   */
+  @Test
+  public void testWrongRcmReceiveDescription()
+          throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateBuilder(builder,ctx);
+
+    TestColumn testColumn = TestColumn.R_CM;
+    TransactionCapsule transactionCap = changeBuildOutputProof(builder, ctx, testColumn);
+
+    updateTotalShieldedPoolValue(builder.getValueBalance());
+
+    try {
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate();
+      Assert.assertFalse(true);
+    }catch(Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
     }
   }
 
@@ -908,20 +1247,101 @@ public class ShieldedReceiveActuatorTest {
     Assert.assertTrue(Librustzcash.librustzcashCheckDiversifier(data2));
   }
 
-  private byte[] hashWithMissingColumn(TransactionCapsule tx) throws InvalidProtocolBufferException {
+  private byte[] hashWithMissingColumn(TransactionCapsule tx,TestSignMissingColumn column)
+          throws InvalidProtocolBufferException {
     Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
     ShieldedTransferContract shieldedTransferContract = contractParameter
             .unpack(ShieldedTransferContract.class);
     ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
-    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-    //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-    newContract.setToAmount(shieldedTransferContract.getToAmount());
-    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-    newContract.setFee(shieldedTransferContract.getFee());
-    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-      newContract
-              .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+
+    switch(column){
+      case FROM_ADDRESS:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+      case FROM_AMOUNT:
+        //newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+      case SPEND_DESCRITPION:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+        //  newContract
+        //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        //}
+        break;
+      case RECEIVE_DESCRIPTION:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+      case TO_ADDRESS:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        //newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+      case TO_AMOUNT:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        //newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+      case FEE:
+        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+        newContract.setToAmount(shieldedTransferContract.getToAmount());
+        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+        //newContract.setFee(shieldedTransferContract.getFee());
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          newContract
+                  .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+        }
+        break;
+
+      default:
+          break;
     }
 
     Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
@@ -939,20 +1359,17 @@ public class ShieldedReceiveActuatorTest {
             .getBytes();
   }
 
-  /**
-   * test signature for transaction with some column missing
-   */
-  @Test
-  public void testSignWithMissingColumn() throws BadItemException, ContractValidateException,
-          ContractExeException, RuntimeException, ZksnarkException {
-    createCapsule();
-    librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-
+  private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder, Pointer ctx )
+          throws ZksnarkException, BadItemException {
     //transparent input
-    builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE);
+    SpendingKey sk = SpendingKey.random();
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+    Note note = new Note(address, 100 * 1000000);
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+    builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output
     SpendingKey sk1 = SpendingKey.random();
@@ -976,22 +1393,11 @@ public class ShieldedReceiveActuatorTest {
       builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
     }
 
-    // Empty output script.
-    byte[] hashOfTransaction;//256
-    TransactionCapsule transactionCapsule;
-    try {
-      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
-              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+    return builder;
+  }
 
-      //test case
-      hashOfTransaction = hashWithMissingColumn(transactionCapsule);
-      //end of test case
-
-    } catch (Exception ex) {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
-    }
-
+  private TransactionCapsule generateTransactionCapsule(ZenTransactionBuilder builder, Pointer ctx,
+          byte[] hashOfTransaction, TransactionCapsule transactionCapsule){
     // Create Sapling spendAuth
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
@@ -1013,7 +1419,6 @@ public class ShieldedReceiveActuatorTest {
             bindingSig
     );
     builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
-    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
             .getRawDataBuilder()
@@ -1029,6 +1434,115 @@ public class ShieldedReceiveActuatorTest {
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
+    return transactionCap;
+  }
+
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutFromAddress() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.FROM_ADDRESS);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutFromAmout() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.FROM_AMOUNT);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutSpendDescription() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.SPEND_DESCRITPION);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
     try {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
@@ -1036,11 +1550,169 @@ public class ShieldedReceiveActuatorTest {
       Assert.assertFalse(true);
     }catch (Exception e){
       Assert.assertTrue(e instanceof ContractValidateException);
-      //sign the transaction missing with SpendDescription,
-      //if transparent to shield, librustzcashSaplingCheckSpend error
-      //if shield to shield or shield to transparent, librustzcashSaplingFinalCheck error
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error")
-              || e.getMessage().equalsIgnoreCase("librustzcashSaplingFinalCheck error"));
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutReceiveDescription() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.RECEIVE_DESCRIPTION);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+      Assert.assertFalse(true);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
+    }
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutToAddress() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.TO_ADDRESS);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutToAmount() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.TO_AMOUNT);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+
+  }
+
+  /**
+   * test signature for transaction with some column missing
+   */
+  @Test
+  public void testSignWithoutFee() throws BadItemException, ContractValidateException,
+          ContractExeException, RuntimeException, ZksnarkException {
+    createCapsule();
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    builder = generateShield2ShieldBuilder(builder,ctx);
+
+    // Empty output script.
+    byte[] hashOfTransaction;//256
+    TransactionCapsule transactionCapsule;
+    try {
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+              builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      //test case
+      hashOfTransaction = hashWithMissingColumn(transactionCapsule,TestSignMissingColumn.FEE);
+      //end of test case
+
+    } catch (Exception ex) {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
+    }
+
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder,ctx,hashOfTransaction,transactionCapsule);
+
+    try {
+      //validate
+      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+      Assert.assertFalse(true);
+    }catch (Exception e){
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
