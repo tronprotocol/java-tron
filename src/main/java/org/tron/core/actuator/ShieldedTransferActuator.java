@@ -160,11 +160,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!this.contract.is(ShieldedTransferContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [ShieldedTransferContract],real type[" + contract
-              .getClass() + "]");
-    }
 
     if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
       throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
@@ -305,11 +300,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private void checkSender(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
-    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0
+    if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()
         && shieldedTransferContract.getSpendDescriptionCount() > 0) {
       throw new ContractValidateException("ShieldedTransferContract error, more than 1 senders");
     }
-    if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length == 0
+    if (shieldedTransferContract.getTransparentFromAddress().isEmpty()
         && shieldedTransferContract.getSpendDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no sender");
     }
@@ -321,7 +316,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private void checkReceiver(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
-    if (shieldedTransferContract.getTransparentToAddress().toByteArray().length == 0
+    if (shieldedTransferContract.getTransparentToAddress().isEmpty()
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no receiver");
     }
