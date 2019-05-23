@@ -56,7 +56,7 @@ public class GetProposalByIdServlet extends HttpServlet {
       if ( !jsonObject.containsKey("id") ) {
         throw new InvalidParameterException("Field 'id' must be set.");
       }
-      long id = Util.getJsonLongValue(jsonObject,"id");
+      long id = Util.getJsonLongValue(jsonObject,"id", true);
       Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));

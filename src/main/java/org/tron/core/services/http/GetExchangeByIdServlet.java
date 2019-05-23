@@ -34,7 +34,7 @@ public class GetExchangeByIdServlet extends HttpServlet {
       if ( !jsonObject.containsKey("id") ) {
         throw new InvalidParameterException("Field 'id' must be set.");
       }
-      long id = Util.getJsonLongValue(jsonObject,"id");
+      long id = Util.getJsonLongValue(jsonObject,"id", true);
       response.getWriter()
           .println(JsonFormat
               .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),
