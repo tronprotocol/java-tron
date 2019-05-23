@@ -50,25 +50,26 @@ public class DeployContractServlet extends HttpServlet {
       byte[] ownerAddress = ByteArray.fromHexString(owner_address);
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build
-          .setCallTokenValue(Util.getJsonLongValue(jsonObject,"call_token_value"))
-          .setTokenId(Util.getJsonLongValue(jsonObject,"token_id"));
+          .setCallTokenValue(Util.getOptionalJsonLongValue(jsonObject, "call_token_value"))
+          .setTokenId(Util.getOptionalJsonLongValue(jsonObject, "token_id"));
 
-      String abi = jsonObject.getString("abi");
-      StringBuffer abiSB = new StringBuffer("{");
-      abiSB.append("\"entrys\":");
-      abiSB.append(abi);
-      abiSB.append("}");
       ABI.Builder abiBuilder = ABI.newBuilder();
-      JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
-
+      if (jsonObject.containsKey("abi")) {
+        String abi = jsonObject.getString("abi");
+        StringBuffer abiSB = new StringBuffer("{");
+        abiSB.append("\"entrys\":");
+        abiSB.append(abi);
+        abiSB.append("}");
+        JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
+      }
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)
-          .setCallValue(Util.getJsonLongValue(jsonObject,"call_value"))
-          .setConsumeUserResourcePercent(Util.getJsonLongValue(jsonObject,
+          .setCallValue(Util.getOptionalJsonLongValue(jsonObject, "call_value"))
+          .setConsumeUserResourcePercent(Util.getOptionalJsonLongValue(jsonObject,
               "consume_user_resource_percent"))
-          .setOriginEnergyLimit(Util.getJsonLongValue(jsonObject,"origin_energy_limit"));
+          .setOriginEnergyLimit(Util.getOptionalJsonLongValue(jsonObject, "origin_energy_limit"));
       if (!ArrayUtils.isEmpty(ownerAddress)) {
         smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
       }
@@ -86,7 +87,7 @@ public class DeployContractServlet extends HttpServlet {
         smartBuilder.setName(name);
       }
 
-      long feeLimit = Util.getJsonLongValue(jsonObject,"fee_limit");
+      long feeLimit = Util.getOptionalJsonLongValue(jsonObject, "fee_limit");
       build.setNewContract(smartBuilder);
       Transaction tx = wallet
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();

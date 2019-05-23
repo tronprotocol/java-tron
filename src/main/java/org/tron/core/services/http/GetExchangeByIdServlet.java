@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -30,6 +31,9 @@ public class GetExchangeByIdServlet extends HttpServlet {
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
+      if ( !jsonObject.containsKey("id") ) {
+        throw new InvalidParameterException("Field 'id' must be set.");
+      }
       long id = Util.getJsonLongValue(jsonObject,"id");
       response.getWriter()
           .println(JsonFormat

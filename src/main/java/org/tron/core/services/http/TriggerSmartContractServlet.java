@@ -54,10 +54,10 @@ public class TriggerSmartContractServlet extends HttpServlet {
       String parameter = jsonObject.getString("parameter");
       String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-      build.setCallTokenValue(Util.getJsonLongValue(jsonObject,"call_token_value"));
-      build.setTokenId(Util.getJsonLongValue(jsonObject,"token_id"));
-      build.setCallValue(Util.getJsonLongValue(jsonObject,"call_value"));
-      long feeLimit = Util.getJsonLongValue(jsonObject,"fee_limit");
+      build.setCallTokenValue(Util.getOptionalJsonLongValue(jsonObject, "call_token_value"));
+      build.setTokenId(Util.getOptionalJsonLongValue(jsonObject, "token_id"));
+      build.setCallValue(Util.getOptionalJsonLongValue(jsonObject, "call_value"));
+      long feeLimit = Util.getOptionalJsonLongValue(jsonObject, "fee_limit");
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
@@ -77,7 +77,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
     } catch (Exception e) {
-      String errString = e.getMessage().replaceAll("\"","\'");
+      String errString = e.getMessage().replaceAll("\"", "\'");
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }

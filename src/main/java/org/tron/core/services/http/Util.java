@@ -718,4 +718,11 @@ public class Util {
     return bigDecimal.longValueExact();
   }
 
+  public static long getOptionalJsonLongValue(final JSONObject jsonObject, final String key) {
+    if (jsonObject != null && jsonObject.containsKey(key)) {
+      return getJsonLongValue(jsonObject, key);
+    } else {
+      return 0;
+    }
+  }
 }
