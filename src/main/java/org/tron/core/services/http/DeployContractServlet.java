@@ -53,13 +53,15 @@ public class DeployContractServlet extends HttpServlet {
           .setCallTokenValue(Util.getOptionalJsonLongValue(jsonObject, "call_token_value"))
           .setTokenId(Util.getOptionalJsonLongValue(jsonObject, "token_id"));
 
-      String abi = jsonObject.getString("abi");
-      StringBuffer abiSB = new StringBuffer("{");
-      abiSB.append("\"entrys\":");
-      abiSB.append(abi);
-      abiSB.append("}");
       ABI.Builder abiBuilder = ABI.newBuilder();
-      JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
+      if (jsonObject.containsKey("abi")) {
+        String abi = jsonObject.getString("abi");
+        StringBuffer abiSB = new StringBuffer("{");
+        abiSB.append("\"entrys\":");
+        abiSB.append(abi);
+        abiSB.append("}");
+        JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
+      }
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
