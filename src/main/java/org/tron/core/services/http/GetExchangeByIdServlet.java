@@ -31,10 +31,10 @@ public class GetExchangeByIdServlet extends HttpServlet {
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
-      if ( !jsonObject.containsKey("id") ) {
+      if (!jsonObject.containsKey("id")) {
         throw new InvalidParameterException("Field 'id' must be set.");
       }
-      long id = Util.getJsonLongValue(jsonObject,"id");
+      long id = Util.getJsonLongValue(jsonObject, "id");
       response.getWriter()
           .println(JsonFormat
               .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),
