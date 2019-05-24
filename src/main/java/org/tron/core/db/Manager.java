@@ -806,11 +806,8 @@ public class Manager {
 
   public void consumeBandwidth(TransactionCapsule trx, TransactionTrace trace)
       throws ContractValidateException, AccountResourceInsufficientException, TooBigTransactionResultException {
-    if (trx.getInstance().getRawData().getContract(0).getType()
-        != ContractType.ShieldedTransferContract) {
-      BandwidthProcessor processor = new BandwidthProcessor(this);
-      processor.consume(trx, trace);
-    }
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    processor.consume(trx, trace);
   }
 
 

@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ZksnarkV0TransferContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -74,7 +74,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     for (Contract contract : contracts) {
-      if (contract.getType() == ZksnarkV0TransferContract){
+      if (contract.getType() == ShieldedTransferContract){
         continue;
       }
       if (dbManager.getDynamicPropertiesStore().supportVM()) {

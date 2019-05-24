@@ -272,7 +272,6 @@ message Transaction {
       ExchangeTransactionContract = 44;
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
-      ZksnarkV0TransferContract = 50;
       ShieldedTransferContract = 51;
     }
     ContractType type = 1;
