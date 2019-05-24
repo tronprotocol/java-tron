@@ -132,8 +132,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     }
 
     // program result
-    ProgramResult programResult = trxTrace.getRuntime().getResult();
-    if (Objects.nonNull(trxTrace) && Objects.nonNull(programResult)) {
+    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) &&  Objects.nonNull(trxTrace.getRuntime().getResult())) {
+      ProgramResult programResult = trxTrace.getRuntime().getResult();
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 

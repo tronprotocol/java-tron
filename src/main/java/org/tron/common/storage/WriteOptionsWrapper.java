@@ -1,13 +1,13 @@
 package org.tron.common.storage;
 
+import lombok.Getter;
+
 public class WriteOptionsWrapper {
 
-  public org.rocksdb.WriteOptions rocks = null;
-  public org.iq80.leveldb.WriteOptions level = null;
-
-  private WriteOptionsWrapper() {
-
-  }
+  @Getter
+  private org.rocksdb.WriteOptions rocks = null;
+  @Getter
+  private org.iq80.leveldb.WriteOptions level = null;
 
   public static WriteOptionsWrapper getInstance() {
     WriteOptionsWrapper wapper = new WriteOptionsWrapper();
@@ -15,7 +15,6 @@ public class WriteOptionsWrapper {
     wapper.rocks = new org.rocksdb.WriteOptions();
     return wapper;
   }
-
 
   public WriteOptionsWrapper sync(boolean bool) {
     this.level.sync(bool);

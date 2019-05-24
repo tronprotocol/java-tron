@@ -61,6 +61,7 @@ public class EnergyCost {
   private final int EC_RECOVER = 3000;
   private final int EXT_CODE_SIZE = 20;
   private final int EXT_CODE_COPY = 20;
+  private final int EXT_CODE_HASH = 400;
   private final int NEW_ACCT_SUICIDE = 0;
 
   public int getSTEP() {
@@ -269,6 +270,10 @@ public class EnergyCost {
 
   public int getEXT_CODE_COPY() {
     return EXT_CODE_COPY;
+  }
+
+  public int getEXT_CODE_HASH() {
+    return EXT_CODE_HASH;
   }
 
   private static EnergyCost instance = null;

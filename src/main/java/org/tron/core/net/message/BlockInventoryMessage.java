@@ -3,7 +3,6 @@ package org.tron.core.net.message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.CollectionUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockInventory;
@@ -13,8 +12,8 @@ public class BlockInventoryMessage extends TronMessage {
   protected BlockInventory blockInventory;
 
   public BlockInventoryMessage(byte[] data) throws Exception {
+    super(data);
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
-    this.data = data;
     this.blockInventory = Protocol.BlockInventory.parseFrom(data);
   }
 

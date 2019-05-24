@@ -1,7 +1,7 @@
 package org.tron.common.runtime;
 
-import static org.tron.common.runtime.TVMTestUtils.generateDeploySmartContractAndGetTransaction;
-import static org.tron.common.runtime.TVMTestUtils.generateTriggerSmartContractAndGetTransaction;
+import static org.tron.common.runtime.TvmTestUtils.generateDeploySmartContractAndGetTransaction;
+import static org.tron.common.runtime.TvmTestUtils.generateTriggerSmartContractAndGetTransaction;
 
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
@@ -173,14 +173,14 @@ public class RuntimeImplTest {
     String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testNotConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     String code = "608060405234801561001057600080fd5b50610112806100206000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806321964a3914604e5780634c6bb6eb146078575b600080fd5b348015605957600080fd5b5060766004803603810190808035906020019092919050505060a2565b005b348015608357600080fd5b5060a06004803603810190808035906020019092919050505060c4565b005b600080600091505b8282101560bf576001905060018201915060aa565b505050565b600080600091505b8282101560e1576001905060018201915060cc565b5050505600a165627a7a72305820267cf0ebf31051a92ff62bed7490045b8063be9f1e1a22d07dce257654c8c17b0029";
     String libraryAddressPair = null;
-    TVMTestResult result = TVMTestUtils
-        .deployContractWithCreatorEnergyLimitAndReturnTVMTestResult(contractName, creatorAddress,
+    TVMTestResult result = TvmTestUtils
+        .deployContractWithCreatorEnergyLimitAndReturnTvmTestResult(contractName, creatorAddress,
             ABI, code, value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair, dbManager, null,
             creatorEnergyLimit);
 
     byte[] contractAddress = result.getContractAddress();
-    byte[] triggerData = TVMTestUtils.parseABI("testNotConstant()", null);
+    byte[] triggerData = TvmTestUtils.parseAbi("testNotConstant()", null);
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 
@@ -263,14 +263,14 @@ public class RuntimeImplTest {
     String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testNotConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     String code = "608060405234801561001057600080fd5b50610112806100206000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806321964a3914604e5780634c6bb6eb146078575b600080fd5b348015605957600080fd5b5060766004803603810190808035906020019092919050505060a2565b005b348015608357600080fd5b5060a06004803603810190808035906020019092919050505060c4565b005b600080600091505b8282101560bf576001905060018201915060aa565b505050565b600080600091505b8282101560e1576001905060018201915060cc565b5050505600a165627a7a72305820267cf0ebf31051a92ff62bed7490045b8063be9f1e1a22d07dce257654c8c17b0029";
     String libraryAddressPair = null;
-    TVMTestResult result = TVMTestUtils
-        .deployContractWithCreatorEnergyLimitAndReturnTVMTestResult(contractName, creatorAddress,
+    TVMTestResult result = TvmTestUtils
+        .deployContractWithCreatorEnergyLimitAndReturnTvmTestResult(contractName, creatorAddress,
             ABI, code, value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair, dbManager, null,
             creatorEnergyLimit);
 
     byte[] contractAddress = result.getContractAddress();
-    byte[] triggerData = TVMTestUtils.parseABI("testNotConstant()", null);
+    byte[] triggerData = TvmTestUtils.parseAbi("testNotConstant()", null);
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 
@@ -329,14 +329,14 @@ public class RuntimeImplTest {
     String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"count\",\"type\":\"uint256\"}],\"name\":\"testNotConstant\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]";
     String code = "608060405234801561001057600080fd5b50610112806100206000396000f3006080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff16806321964a3914604e5780634c6bb6eb146078575b600080fd5b348015605957600080fd5b5060766004803603810190808035906020019092919050505060a2565b005b348015608357600080fd5b5060a06004803603810190808035906020019092919050505060c4565b005b600080600091505b8282101560bf576001905060018201915060aa565b505050565b600080600091505b8282101560e1576001905060018201915060cc565b5050505600a165627a7a72305820267cf0ebf31051a92ff62bed7490045b8063be9f1e1a22d07dce257654c8c17b0029";
     String libraryAddressPair = null;
-    TVMTestResult result = TVMTestUtils
-        .deployContractWithCreatorEnergyLimitAndReturnTVMTestResult(contractName, creatorAddress,
+    TVMTestResult result = TvmTestUtils
+        .deployContractWithCreatorEnergyLimitAndReturnTvmTestResult(contractName, creatorAddress,
             ABI, code, value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair, dbManager, null,
             creatorEnergyLimit);
 
     byte[] contractAddress = result.getContractAddress();
-    byte[] triggerData = TVMTestUtils.parseABI("testNotConstant()", null);
+    byte[] triggerData = TvmTestUtils.parseAbi("testNotConstant()", null);
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 

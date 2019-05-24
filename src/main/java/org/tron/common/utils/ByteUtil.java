@@ -369,6 +369,10 @@ public class ByteUtil {
     return compare(bytes1, bytes2) == 0;
   }
 
+  public static boolean isNullOrZeroArray(byte[] array){
+    return (array == null) || (array.length == 0);
+  }
+
   // lexicographical order
   public static int compare(byte[] bytes1, byte[] bytes2) {
     Preconditions.checkNotNull(bytes1);

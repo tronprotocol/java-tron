@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -91,31 +92,6 @@ public class ContractLinkage006 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage006Address, 1000000L,
         0, 1, linkage006Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    contractName = "stackOutByContract";
-    code = "60806040526000805561026c806100176000396000f3006080604052600436106100565763ffffffff7c01"
-        + "0000000000000000000000000000000000000000000000000000000060003504166306661abd811461005b5"
-        + "780631548567714610082578063399ae724146100a8575b600080fd5b34801561006757600080fd5b506100"
-        + "706100cc565b60408051918252519081900360200190f35b6100a673fffffffffffffffffffffffffffffff"
-        + "fffffffff600435166024356100d2565b005b6100a673ffffffffffffffffffffffffffffffffffffffff60"
-        + "0435166024356101af565b60005481565b80600054101561017257600080546001018155604080517f15485"
-        + "67700000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffff"
-        + "ffffffffffffffffff851660048201526024810184905290513092631548567792604480820193918290030"
-        + "1818387803b15801561015557600080fd5b505af1158015610169573d6000803e3d6000fd5b505050506100"
-        + "d2565b8060005414156101ab5760405173ffffffffffffffffffffffffffffffffffffffff8316906000906"
-        + "0149082818181858883f150505050505b5050565b6000808055604080517f15485677000000000000000000"
-        + "00000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff851"
-        + "6600482015260248101849052905130926315485677926044808201939182900301818387803b1580156102"
-        + "2457600080fd5b505af1158015610238573d6000803e3d6000fd5b5050505050505600a165627a7a7230582"
-        + "0ecdc49ccf0dea5969829debf8845e77be6334f348e9dcaeabf7e98f2d6c7f5270029";
-    abi = "[{\"constant\":true,\"inputs\":[],\"name\":\"count\",\"outputs\":[{\"name\":\"\",\"type"
-        + "\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},"
-        + "{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"},{\"name\":\""
-        + "max\",\"type\":\"uint256\"}],\"name\":\"hack\",\"outputs\":[],\"payable\":true,\""
-        + "stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{"
-        + "\"name\":\"addr\",\"type\":\"address\"},{\"name\":\"max\",\"type\":\"uint256\"}],\""
-        + "name\":\"init\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type"
-        + "\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type"
-        + "\":\"constructor\"}]";
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage006Address,
         blockingStubFull);
     Account info;
@@ -134,6 +110,14 @@ public class ContractLinkage006 {
     logger.info("beforeNetLimit:" + beforeNetLimit);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage006.sol";
+    String contractName = "AA";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     //success ,balnace change.use EnergyUsed and NetUsed
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 1000L, 100, null, linkage006Key,
@@ -141,6 +125,7 @@ public class ContractLinkage006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("txid is " + txid);
     contractAddress = infoById.get().getContractAddress().toByteArray();
     Long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
     Long fee = infoById.get().getFee();
@@ -177,7 +162,7 @@ public class ContractLinkage006 {
     Assert.assertTrue((beforeNetUsed + netUsed) >= afterNetUsed);
     Assert.assertTrue((beforeEnergyUsed + energyUsed) >= afterEnergyUsed);
     PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
-        linkage006Address, blockingStubFull);
+        null, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Boundary value for contract stack(63 is the largest level)")
@@ -214,6 +199,7 @@ public class ContractLinkage006 {
     txid = PublicMethed.triggerContract(contractAddress,
         "init(address,uint256)", initParmes, false,
         0, 100000000L, linkage006Address2, linkage006Key2, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById1 = PublicMethed

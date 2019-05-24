@@ -1,5 +1,6 @@
 package org.tron.common.storage.leveldb;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.IOException;
@@ -9,12 +10,15 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.DBIterator;
+import org.apache.commons.lang3.StringUtils;
 import org.rocksdb.BlockBasedTableConfig;
 import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
@@ -29,6 +33,7 @@ import org.rocksdb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
 import org.tron.common.storage.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.iterator.RockStoreIterator;
@@ -37,12 +42,13 @@ import org.tron.core.db.common.iterator.RockStoreIterator;
 @NoArgsConstructor
 public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>> {
+  private static final String ENGINE = "ENGINE";
 
   private String dataBaseName;
   private RocksDB database;
   private boolean alive;
   private String parentName;
-  ReadOptions readOpts;
+  private ReadOptions readOpts;
 
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
 
@@ -153,18 +159,12 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
 
     // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if (engine.equals("")) {
-      if (!PropUtil.writeProperty(enginePath, "ENGINE", "ROCKSDB")) {
-        return false;
-      }
-    }
-    engine = PropUtil.readProperty(enginePath, "ENGINE");
-    if ("ROCKSDB".equals(engine)) {
-      return true;
-    } else {
+    String engine = PropUtil.readProperty(enginePath, ENGINE);
+    if (StringUtils.isEmpty(engine) && !PropUtil.writeProperty(enginePath, ENGINE, "ROCKSDB")) {
       return false;
     }
+    engine = PropUtil.readProperty(enginePath, ENGINE);
+    return "ROCKSDB".equals(engine);
   }
 
   public void initDB() {
@@ -181,9 +181,8 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       if (isAlive()) {
         return;
       }
-      if (dataBaseName == null) {
-        throw new NullPointerException("no name set to the dbStore");
-      }
+
+      Preconditions.checkNotNull(dataBaseName, "no name set to the dbStore");
 
       try (Options options = new Options()) {
 
@@ -259,7 +258,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       database.put(key, value);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -272,9 +271,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.put(optionsWrapper.rocks, key, value);
+      database.put(optionsWrapper.getRocks(), key, value);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -289,7 +288,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       return database.get(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException: {}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -305,7 +304,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     try {
       database.delete(key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -318,9 +317,9 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      database.delete(optionsWrapper.rocks, key);
+      database.delete(optionsWrapper.getRocks(), key);
     } catch (RocksDBException e) {
-      logger.error("RocksDBException:{}", e);
+      logger.error(e.getMessage(), e);
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -395,7 +394,7 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
     }
     resetDbLock.readLock().lock();
     try {
-      updateByBatchInner(rows, optionsWrapper.rocks);
+      updateByBatchInner(rows, optionsWrapper.getRocks());
     } catch (Exception e) {
       try {
         updateByBatchInner(rows);
@@ -485,6 +484,33 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
       long i = 0;
       for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
         result.add(iter.value());
+      }
+      return result;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getPrevious(byte[] key, long limit, int precision) {
+    if (quitIfNotAlive()) {
+      return null;
+    }
+    if (limit <= 0 || key.length < precision) {
+      return Collections.emptyMap();
+    }
+    resetDbLock.readLock().lock();
+    try (RocksIterator iterator = database.newIterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iterator.seekToFirst(); iterator.isValid() && i++ < limit; iterator.next()) {
+
+        if (iterator.key().length >= precision) {
+          if (ByteUtil.less(ByteUtil.parseBytes(key, 0, precision),
+              ByteUtil.parseBytes(iterator.key(), 0, precision))) {
+            break;
+          }
+          result.put(iterator.key(), iterator.value());
+        }
       }
       return result;
     } finally {

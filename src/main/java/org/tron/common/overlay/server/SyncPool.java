@@ -161,7 +161,7 @@ public class SyncPool {
     }
   }
 
-  public synchronized List<PeerConnection> getActivePeers() {
+  public List<PeerConnection> getActivePeers() {
     List<PeerConnection> peers = Lists.newArrayList();
     activePeers.forEach(peer -> {
       if (!peer.isDisconnect()) {
@@ -199,10 +199,7 @@ public class SyncPool {
   }
 
   public boolean isCanConnect() {
-    if (passivePeersCount.get() >= maxActiveNodes * (1 - activeFactor)) {
-      return false;
-    }
-    return true;
+    return passivePeersCount.get() < maxActiveNodes * (1 - activeFactor);
   }
 
   public void close() {
@@ -224,7 +221,7 @@ public class SyncPool {
 
   class NodeSelector implements Predicate<NodeHandler> {
 
-    Set<String> nodesInUse;
+    private Set<String> nodesInUse;
 
     public NodeSelector(Set<String> nodesInUse) {
       this.nodesInUse = nodesInUse;

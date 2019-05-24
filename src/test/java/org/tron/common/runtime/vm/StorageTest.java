@@ -1,35 +1,23 @@
 package org.tron.common.runtime.vm;
 
-import java.io.File;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
-import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.common.runtime.Runtime;
 
 @Slf4j
 public class StorageTest extends VMTestBase {
@@ -108,10 +96,10 @@ public class StorageTest extends VMTestBase {
     long consumeUserResourcePercent = 0;
 
     // deploy contract
-    Transaction trx = TVMTestUtils.generateDeploySmartContractAndGetTransaction(
+    Transaction trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractName, address, ABI, code, value, fee, consumeUserResourcePercent, null);
     byte[] contractAddress = Wallet.generateContractAddress(trx);
-    runtime = TVMTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // write storage
@@ -119,18 +107,18 @@ public class StorageTest extends VMTestBase {
     // 1,"abc"
     String params1 = "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000036162630000000000000000000000000000000000000000000000000000000000";
     String params2 = "0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000033132330000000000000000000000000000000000000000000000000000000000";
-    byte[] triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params1);
-    TVMTestResult result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params1);
+    TVMTestResult result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     // overwrite storage with same value
     // testPut(uint256,string) 1,"abc"
-    triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params1);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params1);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
@@ -139,9 +127,9 @@ public class StorageTest extends VMTestBase {
     // overwrite storage with same value
     // testPut(uint256,string) 1,"123"
 
-    triggerData = TVMTestUtils.parseABI("testPut(uint256,string)", params2);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    triggerData = TvmTestUtils.parseAbi("testPut(uint256,string)", params2);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, fee, manager, null);
 
     Assert.assertNull(result.getRuntime().getRuntimeError());
@@ -149,10 +137,10 @@ public class StorageTest extends VMTestBase {
 
     // delete storage
     // testDelete(uint256) 1
-    triggerData = TVMTestUtils.parseABI("testDelete(uint256)",
+    triggerData = TvmTestUtils.parseAbi("testDelete(uint256)",
         "0000000000000000000000000000000000000000000000000000000000000001");
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertNull(result.getRuntime().getResult().getException());
