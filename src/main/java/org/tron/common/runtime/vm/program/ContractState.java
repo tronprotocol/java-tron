@@ -116,6 +116,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
+    deposit.updateAccount(address, accountCapsule);
+  }
+
+  @Override
   public void saveCode(byte[] address, byte[] code) {
     deposit.saveCode(address, code);
   }

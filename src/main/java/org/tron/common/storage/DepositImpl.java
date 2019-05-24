@@ -260,6 +260,13 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(accountCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    accountCache.put(key, value);
+  }
+
+  @Override
   public synchronized ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
     if (contractCache.containsKey(key)) {

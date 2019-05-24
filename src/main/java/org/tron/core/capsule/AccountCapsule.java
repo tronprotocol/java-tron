@@ -986,4 +986,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
+  public void updateAccountType(AccountType accountType) {
+    this.account = this.account.toBuilder().setType(accountType).build();
+  }
+
 }

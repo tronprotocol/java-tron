@@ -77,6 +77,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.SmartContract;
 
 /**
@@ -464,22 +465,41 @@ public class Program {
       return;
     }
 
-    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
-    boolean contractAlreadyExists = existingAddr != null;
+    AccountCapsule existingAccount = getContractState().getAccount(newAddress);
+    boolean contractAlreadyExists = existingAccount != null;
 
+    if (VMConfig.allowTvmConstantinople()) {
+      contractAlreadyExists =
+          contractAlreadyExists && isContractExist(existingAccount, getContractState());
+    }
     Deposit deposit = getContractState().newDepositChild();
+    if (VMConfig.allowTvmConstantinople()) {
+      if (existingAccount == null) {
+        deposit.createAccount(newAddress, "CreatedByContract",
+            AccountType.Contract);
+      } else if (!contractAlreadyExists) {
+        existingAccount.updateAccountType(AccountType.Contract);
+        deposit.updateAccount(newAddress, existingAccount);
+      }
 
-    //In case of hashing collisions, check for any balance before createAccount()
-    long oldBalance = deposit.getBalance(newAddress);
+      if (!contractAlreadyExists) {
+        SmartContract newSmartContract = SmartContract.newBuilder()
+            .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+            .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+        deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+      }
+    } else {
+        deposit.createAccount(newAddress, "CreatedByContract",
+            Protocol.AccountType.Contract);
+        SmartContract newSmartContract = SmartContract.newBuilder()
+            .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+            .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+        deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+        // In case of hashing collisions, check for any balance before createAccount()
+        long oldBalance = deposit.getBalance(newAddress);
+        deposit.addBalance(newAddress, oldBalance);
+    }
 
-    SmartContract newSmartContract = SmartContract.newBuilder()
-        .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
-        .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
-    deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
-    deposit.createAccount(newAddress, "CreatedByContract",
-        Protocol.AccountType.Contract);
-
-    deposit.addBalance(newAddress, oldBalance);
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
@@ -626,6 +646,7 @@ public class Program {
       endowment = msg.getEndowment().value().longValueExact();
     } catch (ArithmeticException e) {
       if (VMConfig.allowTvmConstantinople()) {
+        refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
         throw new TransferException("endowment out of long range");
       } else {
         throw e;
@@ -1499,7 +1520,16 @@ public class Program {
   public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
     if (VMConfig.allowMultiSign()) { //allowMultiSigns proposal
       // tokenid should not get Long type overflow
-      long tokenId = tokenIdDataWord.sValue().longValueExact();
+      long tokenId;
+      try {
+        tokenId = tokenIdDataWord.sValue().longValueExact();
+      } catch (ArithmeticException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+        }
+        throw e;
+      }
+
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
       if (tokenId <= VMConstant.MIN_TOKEN_ID) {
         throw new BytecodeExecutionException(
@@ -1726,4 +1756,7 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
+  private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
+    return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
 }
