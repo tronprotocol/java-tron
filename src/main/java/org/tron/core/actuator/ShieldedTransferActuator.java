@@ -166,13 +166,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           " the committee");
     }
 
-    byte[] signHash;
-    try {
-      signHash = TransactionCapsule.hashShieldTransaction(tx);
-    } catch (InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-      throw new ContractValidateException(e.getMessage());
-    }
+    byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
 
     //transparent verification
     checkSender(shieldedTransferContract);

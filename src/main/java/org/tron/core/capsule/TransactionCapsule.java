@@ -54,6 +54,7 @@ import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
@@ -257,7 +258,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    if(this.isShieldedTransferTransaction()){
+      return Sha256Hash.of(TransactionCapsule.getShieldTransactionHashIgnoreTypeException(this));
+    }else {
+      return Sha256Hash.of(this.transaction.getRawData().toByteArray());
+    }
   }
 
   public void sign(byte[] privateKey) {
@@ -359,8 +364,32 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  public static byte[] hashShieldTransaction(TransactionCapsule tx) throws InvalidProtocolBufferException {
+  private boolean isShieldedTransferTransaction(){
+    Any contractParameter = this.getInstance().getRawData().getContract(0).getParameter();
+    return contractParameter.is(ShieldedTransferContract.class);
+  }
+
+  //make sure that contractType is validated before
+  //No exception will be thrown here
+  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx){
+    try{
+      return hashShieldTransaction(tx);
+    } catch (ContractValidateException e) {
+      logger.debug(e.getMessage(), e);
+    }catch (InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+    return null;
+  }
+
+  public static byte[] hashShieldTransaction(TransactionCapsule tx) throws ContractValidateException,InvalidProtocolBufferException {
     Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
+    if (!contractParameter.is(ShieldedTransferContract.class)) {
+      throw new ContractValidateException(
+          "contract type error,expected type [ShieldedTransferContract],real type[" + contractParameter
+              .getClass() + "]");
+    }
+
     ShieldedTransferContract shieldedTransferContract = contractParameter
         .unpack(ShieldedTransferContract.class);
     ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
@@ -647,7 +676,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         manager.getDynamicPropertiesStore().getTotalSignNum()) {
       throw new ValidateSignatureException("too many signatures");
     }
+
     byte[] hash = this.getRawHash().getBytes();
+
     try {
       if (!validateSignature(this.transaction, hash, manager)) {
         isVerified = false;

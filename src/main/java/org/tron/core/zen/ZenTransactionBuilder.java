@@ -132,15 +132,10 @@ public class ZenTransactionBuilder {
     // Empty output script.
     byte[] dataToBeSigned;//256
     TransactionCapsule transactionCapsule;
-    try {
-      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+    transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
-    } catch (Exception ex) {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
-      throw new ZksnarkException("Could not construct signature hash: " + ex.getMessage());
-    }
+    dataToBeSigned = transactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCapsule);
 
     // Create Sapling spendAuth and binding signatures
 
