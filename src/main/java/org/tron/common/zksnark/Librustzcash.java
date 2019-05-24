@@ -233,7 +233,7 @@ public class Librustzcash {
   }
 
   /*
-  * r: return random numbe,  32 bytes
+  * r: return random number,  32 bytes
   */
   public static byte[] librustzcashSaplingGenerateR(byte[] r) {
     if (!(r.length == 32)) {
@@ -417,7 +417,7 @@ public class Librustzcash {
 
   /*
   * ivk: 32 bytes
-  * d: 1 bytes
+  * d: 11 bytes
   * pk_d: 32 bytes
   */
   public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
