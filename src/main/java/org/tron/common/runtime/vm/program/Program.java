@@ -1463,12 +1463,25 @@ public class Program {
   public void checkTokenId(MessageCall msg) {
     if (VMConfig.allowMultiSign()) { //allowMultiSign proposal
       // tokenid should not get Long type overflow
-      long tokenId = msg.getTokenId().sValue().longValueExact();
+      long tokenId;
+      try {
+        tokenId = msg.getTokenId().sValue().longValueExact();
+      } catch (ArithmeticException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+        }
+        throw e;
+      }
       // tokenId can only be 0 when isTokenTransferMsg == false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
+        if (VMConfig.allowTvmConstantinople()) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+        }
         throw new BytecodeExecutionException(
             VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
       }

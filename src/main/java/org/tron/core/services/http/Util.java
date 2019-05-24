@@ -8,6 +8,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.math.BigDecimal;
+import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
@@ -115,7 +116,7 @@ public class Util {
   }
 
   public static JSONArray printTransactionListToJSON(List<TransactionCapsule> list,
-                                                     boolean selfType) {
+      boolean selfType) {
     JSONArray transactions = new JSONArray();
     list.stream().forEach(transactionCapsule -> {
       transactions.add(printTransactionToJSON(transactionCapsule.getInstance(), selfType));
@@ -140,7 +141,7 @@ public class Util {
   }
 
   public static String printTransactionExtention(TransactionExtention transactionExtention,
-                                                 boolean selfType) {
+      boolean selfType) {
     String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
@@ -153,7 +154,7 @@ public class Util {
   }
 
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
-                                                  boolean selfType) {
+      boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
@@ -678,7 +679,7 @@ public class Util {
   }
 
   public static Transaction setTransactionPermissionId(JSONObject jsonObject,
-                                                       Transaction transaction) {
+      Transaction transaction) {
     if (jsonObject.containsKey(PERMISSION_ID)) {
       int permissionId = jsonObject.getInteger(PERMISSION_ID);
       if (permissionId > 0) {
@@ -715,15 +716,14 @@ public class Util {
   }
 
   public static long getJsonLongValue(final JSONObject jsonObject, final String key) {
-    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    return bigDecimal.longValueExact();
+    return getJsonLongValue(jsonObject, key, false);
   }
 
-  public static long getOptionalJsonLongValue(final JSONObject jsonObject, final String key) {
-    if (jsonObject != null && jsonObject.containsKey(key)) {
-      return getJsonLongValue(jsonObject, key);
-    } else {
-      return 0;
+  public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
+    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
+    if (required && bigDecimal == null) {
+      throw new InvalidParameterException("key [" + key + "] not exist");
     }
+    return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 }
