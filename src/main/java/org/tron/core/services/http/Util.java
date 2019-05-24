@@ -714,14 +714,13 @@ public class Util {
     return Hex.toHexString(selector) + input;
   }
 
-  public static long getJsonLongValue(final JSONObject jsonObject, final String key) throws Exception {
+  public static long getJsonLongValue(final JSONObject jsonObject, final String key) {
     return getJsonLongValue(jsonObject, key, false);
   }
 
-  public static long getJsonLongValue(final JSONObject jsonObject, final String key, boolean required) throws Exception {
+  public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
     BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    
-    if (required && bigDecimal == null){
+    if (required && bigDecimal == null) {
       throw new InvalidParameterException("key [" + key + "] not exist");
     }
     return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
