@@ -215,11 +215,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         for (SpendDescription spendDescription : spendDescriptions) {
-          if (spendDescription.getValueCommitment().isEmpty()
-              || spendDescription.getAnchor().isEmpty()
-              || spendDescription.getNullifier().isEmpty()
-              || spendDescription.getZkproof().isEmpty()
-              || spendDescription.getSpendAuthoritySignature().isEmpty()) {
+          if (spendDescription.getValueCommitment().size() != 32
+              || spendDescription.getAnchor().size() != 32
+              || spendDescription.getNullifier().size() != 32
+              || spendDescription.getZkproof().size() != 192
+              || spendDescription.getSpendAuthoritySignature().size() != 64) {
             throw new ContractValidateException("spend description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckSpend(
@@ -237,12 +237,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if (receiveDescription.getValueCommitment().isEmpty()
-              || receiveDescription.getNoteCommitment().isEmpty()
-              || receiveDescription.getEpk().isEmpty()
-              || receiveDescription.getZkproof().isEmpty()
-              || receiveDescription.getCEnc().isEmpty()
-              || receiveDescription.getCOut().isEmpty()) {
+          if (receiveDescription.getValueCommitment().size() != 32
+              || receiveDescription.getNoteCommitment().size() != 32
+              || receiveDescription.getEpk().size() != 32
+              || receiveDescription.getZkproof().size() != 192
+              || receiveDescription.getCEnc().size() != 580
+              || receiveDescription.getCOut().size() != 80) {
             throw new ContractValidateException("receive description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
