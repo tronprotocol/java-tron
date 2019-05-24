@@ -15,9 +15,14 @@ import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.capsule.ReceiveDescriptionCapsule;
+import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -27,14 +32,10 @@ import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.zen.note.Note;
-import org.tron.core.capsule.ReceiveDescriptionCapsule;
-import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Protocol.AccountType;
@@ -115,32 +116,36 @@ public class ShieldedTransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
-  private Any getTransparentOutContract(long outAmount) throws BadItemException,ZksnarkException{
+  private Any getTransparentOutContract(long outAmount) throws BadItemException, ZksnarkException {
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setFromAmount(outAmount)
-            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
+            .setSpendDescription(0,
+                generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
-  private Any getTransparentToContract(long inAmount) throws BadItemException,ZksnarkException{
+  private Any getTransparentToContract(long inAmount) throws BadItemException, ZksnarkException {
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setToAmount(inAmount)
-            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
+            .setSpendDescription(0,
+                generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
-  private Any getTransparentOutToContract(long outAmount, long inAmount) throws BadItemException,ZksnarkException{
+  private Any getTransparentOutToContract(long outAmount, long inAmount)
+      throws BadItemException, ZksnarkException {
     return Any.pack(
         Contract.ShieldedTransferContract.newBuilder()
             .setTransparentFromAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setFromAmount(outAmount)
             .setTransparentToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setToAmount(inAmount)
-            .setSpendDescription(0, generateSpendDescription().getInstance()) //get a spend description
+            .setSpendDescription(0,
+                generateSpendDescription().getInstance()) //get a spend description
             .build());
   }
 
@@ -158,7 +163,7 @@ public class ShieldedTransferActuatorTest {
         .getResource("zcash-params" + File.separator + fileName).getFile();
   }
 
-  private void librustzcashInitZksnarkParams() {
+  private void librustzcashInitZksnarkParams() throws ZksnarkException {
 
     String spendPath = getParamsFile("sapling-spend.params");
     String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
@@ -166,8 +171,9 @@ public class ShieldedTransferActuatorTest {
     String outputPath = getParamsFile("sapling-output.params");
     String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
-    Librustzcash.librustzcashInitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
-        outputPath.getBytes(), outputPath.length(), outputHash);
+    Librustzcash.librustzcashInitZksnarkParams(
+        new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
+            outputPath.getBytes(), outputPath.length(), outputHash));
   }
 
   private PedersenHash String2PedersenHash(String str) {
@@ -185,9 +191,9 @@ public class ShieldedTransferActuatorTest {
   }
 
 
-  private SpendDescriptionCapsule generateSpendDescription() throws BadItemException, ZksnarkException {
+  private SpendDescriptionCapsule generateSpendDescription()
+      throws BadItemException, ZksnarkException {
     librustzcashInitZksnarkParams();
-
 
     ZenTransactionBuilder builder = null; //= new ZenTransactionBuilder();
 

@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ZksnarkException;
 
 @Component
 @Slf4j(topic = "API")
@@ -290,14 +292,16 @@ public class FullNodeHttpApiService implements Service {
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
 
-      context.addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
+      context
+          .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
       context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
       context.addServlet(new ServletHolder(getNkFromNskServlet), "/getnkfromnsk");
       context.addServlet(new ServletHolder(getSpendingKeyServlet), "/getspendingkey");
       context.addServlet(new ServletHolder(getDiversifierServlet), "/getdiversifier");
       context.addServlet(new ServletHolder(getIncomingViewingKeyServlet), "/getincomingviewingkey");
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
-      context.addServlet(new ServletHolder(createShieldedTransactionServlet), "/createshieldedtransaction");
+      context.addServlet(new ServletHolder(createShieldedTransactionServlet),
+          "/createshieldedtransaction");
       context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
@@ -333,8 +337,13 @@ public class FullNodeHttpApiService implements Service {
     String outputPath = getParamsFile("sapling-output.params");
     String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
-    Librustzcash.librustzcashInitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
-        outputPath.getBytes(), outputPath.length(), outputHash);
-    System.out.println("init zk param done");
+    try {
+      Librustzcash.librustzcashInitZksnarkParams(
+          new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
+              outputPath.getBytes(), outputPath.length(), outputHash));
+    } catch (ZksnarkException e) {
+      logger.error("librustzcashInitZksnarkParams fail!", e);
+    }
+    logger.info("init zk param done");
   }
 }
