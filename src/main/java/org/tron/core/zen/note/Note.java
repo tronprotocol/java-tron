@@ -50,7 +50,7 @@ public class Note {
     byte[] ak = vk.getAk();
     byte[] nk = vk.getNk();
 
-    byte[] result = new byte[256]; // 256
+    byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
         d.getData(), pkD, value, r, ak, nk, position, result)) {
       return null;
@@ -61,7 +61,7 @@ public class Note {
 
   public byte[] nullifier(byte[] ak, byte[] nk, long position) {
 
-    byte[] result = new byte[256]; // 256
+    byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
         d.getData(), pkD, value, r, ak, nk, position, result)) {
       return null;
