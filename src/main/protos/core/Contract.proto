@@ -328,7 +328,6 @@ message ShieldedTransferContract {
   bytes binding_signature = 5;
   bytes transparent_to_address = 6; // transparent address
   int64 to_amount = 7; // the amount to transparent to_address
-  int64 fee = 8;
 }
 // end shielded transaction
 

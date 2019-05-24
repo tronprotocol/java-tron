@@ -173,9 +173,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     validateTransparent(shieldedTransferContract);
 
     long fee = calcFee();
-    if (shieldedTransferContract.getFee() != fee) {
-      throw new ContractValidateException("ShieldedTransferContract fee must equal " + fee);
-    }
+
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
     if (CollectionUtils.isNotEmpty(spendDescriptions)) {

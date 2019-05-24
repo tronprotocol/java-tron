@@ -115,8 +115,6 @@ public class ZenTransactionBuilder {
   public TransactionCapsule build() throws ZksnarkException {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    contractBuilder.setFee(wallet.getShieldedTransactionFee());
-
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : spends) {
       SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
