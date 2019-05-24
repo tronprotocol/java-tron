@@ -3,7 +3,9 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
+import io.netty.util.internal.StringUtil;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -36,6 +38,22 @@ public class TriggerSmartContractServlet extends HttpServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
   }
 
+  protected void validateParameter(String contract) {
+    JSONObject jsonObject = JSONObject.parseObject(contract);
+    if (!jsonObject.containsKey("owner_address")
+        || StringUtil.isNullOrEmpty(jsonObject.getString("owner_address"))) {
+      throw new InvalidParameterException("owner_address isn't set.");
+    }
+    if (!jsonObject.containsKey("contract_address")
+        || StringUtil.isNullOrEmpty(jsonObject.getString("contract_address"))) {
+      throw new InvalidParameterException("contract_address isn't set.");
+    }
+    if (!jsonObject.containsKey("function_selector")
+        || StringUtil.isNullOrEmpty(jsonObject.getString("function_selector"))) {
+      throw new InvalidParameterException("function_selector isn't set.");
+    }
+  }
+
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
     TriggerSmartContract.Builder build = TriggerSmartContract.newBuilder();
@@ -48,6 +66,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       visible = Util.getVisiblePost(contract);
+      validateParameter(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
       String selector = jsonObject.getString("function_selector");
@@ -77,7 +96,10 @@ public class TriggerSmartContractServlet extends HttpServlet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
     } catch (Exception e) {
-      String errString = e.getMessage().replaceAll("\"", "\'");
+      String errString = null;
+      if (e.getMessage() != null) {
+        errString = e.getMessage().replaceAll("\"", "\'");
+      }
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }
