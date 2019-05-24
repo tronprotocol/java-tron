@@ -443,7 +443,7 @@ public class Wallet {
 
   public TransactionCapsule createTransactionCapsuleWithoutValidate(
       com.google.protobuf.Message message,
-      ContractType contractType) throws ContractValidateException {
+      ContractType contractType){
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     try {
       BlockId blockId = dbManager.getHeadBlockId();
