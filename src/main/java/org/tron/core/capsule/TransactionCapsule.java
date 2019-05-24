@@ -259,7 +259,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private Sha256Hash getRawHash() {
     if(this.isShieldedTransferTransaction()){
-      return Sha256Hash.of(TransactionCapsule.getShieldTransactionHashIgnoreTypeException(this));
+      return Sha256Hash.wrap(TransactionCapsule.getShieldTransactionHashIgnoreTypeException(this));
     }else {
       return Sha256Hash.of(this.transaction.getRawData().toByteArray());
     }
