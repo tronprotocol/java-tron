@@ -131,7 +131,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
     IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
-
+    try {
+      currentMerkle.wfcheck();
+    } catch (ZksnarkException e) {
+      ret.setStatus(calcFee(), code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    }
     //handle receives
     for (ReceiveDescription receive : receives) {
       merkleContainer
@@ -143,6 +148,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
+
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
