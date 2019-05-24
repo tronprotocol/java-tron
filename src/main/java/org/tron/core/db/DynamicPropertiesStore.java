@@ -618,11 +618,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveAllowAccountStateRoot(Args.getInstance().getAllowAccountStateRoot());
     }
 
-//    try {
-//      this.getAllowProtoFilterNum();
-//    } catch (IllegalArgumentException e) {
-//      this.saveAllowProtoFilterNum(Args.getInstance().getAllowProtoFilterNum());
-//    }
+    try {
+      this.getAllowProtoFilterNum();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowProtoFilterNum(Args.getInstance().getAllowProtoFilterNum());
+    }
   }
 
   public String intArrayToString(int[] a) {

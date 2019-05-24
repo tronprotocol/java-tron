@@ -457,6 +457,8 @@ public class Args {
 
   @Getter
   private boolean allowShieldedTransactionApi;
+
+  @Getter
   @Setter
   private long allowProtoFilterNum;
 
