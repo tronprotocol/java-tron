@@ -272,6 +272,7 @@ message Transaction {
       ExchangeTransactionContract = 44;
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
+      ClearABIContract = 48;
       ShieldedTransferContract = 51;
     }
     ContractType type = 1;
@@ -301,6 +302,7 @@ message Transaction {
       OUT_OF_TIME = 11;
       JVM_STACK_OVER_FLOW = 12;
       UNKNOWN = 13;
+      TRANSFER_FAILED = 14;
     }
     int64 fee = 1;
     code ret = 2;
@@ -389,6 +391,7 @@ message BlockHeader {
     int64 witness_id = 8;
     bytes witness_address = 9;
     int32 version = 10;
+    bytes accountStateRoot = 11;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
@@ -541,7 +544,7 @@ message SmartContract {
   int64 consume_user_resource_percent = 6;
   string name = 7;
   int64 origin_energy_limit = 8;
-
+  bytes code_hash = 9;
 }
 
 message InternalTransaction {
