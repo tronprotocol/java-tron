@@ -359,7 +359,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  public static byte[] hash(TransactionCapsule tx) throws InvalidProtocolBufferException {
+  public static byte[] hashShieldTransaction(TransactionCapsule tx) throws InvalidProtocolBufferException {
     Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
     ShieldedTransferContract shieldedTransferContract = contractParameter
         .unpack(ShieldedTransferContract.class);
