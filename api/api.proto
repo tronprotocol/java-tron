@@ -407,7 +407,7 @@ service Wallet {
 
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
-  
+
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
@@ -694,6 +694,16 @@ service Wallet {
   }
 
   rpc IsSpend (NoteParameters) returns (SpendResult) {
+  }
+
+  rpc CreateShieldedTransactionWithoutSpendAuthSig (PrivateParametersWithoutAsk) returns (TransactionExtention) {
+  };
+
+  rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
+  };
+
+  rpc GetNullifier (nfParameters) returns (BytesMessage) {
+
   }
 
   // end for shiededTransaction
@@ -1165,6 +1175,30 @@ message PrivateParameters {
   repeated ReceiveNote shieldedReceives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+}
+
+message PrivateParametersWithoutAsk {
+  bytes transparent_from_address = 1;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  int64 from_amount = 5;
+  repeated SpendNote shieldedSpends = 6;
+  repeated ReceiveNote shieldedReceives = 7;
+  bytes transparent_to_address = 8;
+  int64 to_amount = 9;
+}
+
+message SpendAuthSigParameters {
+  bytes ask = 1;
+  bytes tx_hash = 2;
+  bytes alpha = 3;
+}
+
+message nfParameters {
+  Note note = 1;
+  IncrementalMerkleVoucher voucher = 2;
+  bytes ak = 3;
+  bytes nk = 4;
 }
 
 message ExpandedSpendingKeyMessage {
