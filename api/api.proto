@@ -699,13 +699,16 @@ service Wallet {
   rpc CreateShieldedTransactionWithoutSpendAuthSig (PrivateParametersWithoutAsk) returns (TransactionExtention) {
   };
 
+  rpc getShieldTransactionHash (TransactionExtention) returns (BytesMessage) {
+
+  }
+
   rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
   };
 
   rpc GetNullifier (nfParameters) returns (BytesMessage) {
 
   }
-
   // end for shiededTransaction
 };
 
