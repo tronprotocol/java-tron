@@ -700,8 +700,7 @@ service Wallet {
   };
 
   rpc getShieldTransactionHash (TransactionExtention) returns (BytesMessage) {
-
-  }
+  };
 
   rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
   };
