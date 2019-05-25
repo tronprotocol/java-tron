@@ -12,19 +12,19 @@ import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.Wallet;
+import org.tron.core.capsule.ReceiveDescriptionCapsule;
+import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.note.NotePlaintext;
-import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
+import org.tron.core.zen.note.NotePlaintext;
+import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.core.capsule.ReceiveDescriptionCapsule;
-import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -163,7 +163,7 @@ public class ZenTransactionBuilder {
     return new TransactionCapsule(transaction);
   }
 
-  public void CreateSpendAuth(byte[] dataToBeSigned){
+  public void CreateSpendAuth(byte[] dataToBeSigned) {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
@@ -177,7 +177,7 @@ public class ZenTransactionBuilder {
   }
 
   public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-      Pointer ctx) throws ZksnarkException{
+      Pointer ctx) throws ZksnarkException {
 
     byte[] cm = spend.note.cm();
     byte[] nf = spend.note.nullifier(spend.expsk.fullViewingKey(), spend.voucher.position());
@@ -217,7 +217,8 @@ public class ZenTransactionBuilder {
     return spendDescriptionCapsule;
   }
 
-  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx) throws ZksnarkException {
+  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx)
+      throws ZksnarkException {
     byte[] cm = output.getNote().cm();
     if (ByteArray.isEmpty(cm)) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
