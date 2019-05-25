@@ -705,7 +705,7 @@ service Wallet {
   rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
   };
 
-  rpc GetNullifier (nfParameters) returns (BytesMessage) {
+  rpc GetNullifier (NfParameters) returns (BytesMessage) {
   };
   // end for shiededTransaction
 };
@@ -1195,7 +1195,7 @@ message SpendAuthSigParameters {
   bytes alpha = 3;
 }
 
-message nfParameters {
+message NfParameters {
   Note note = 1;
   IncrementalMerkleVoucher voucher = 2;
   bytes ak = 3;
