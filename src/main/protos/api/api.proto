@@ -706,8 +706,7 @@ service Wallet {
   };
 
   rpc GetNullifier (nfParameters) returns (BytesMessage) {
-
-  }
+  };
   // end for shiededTransaction
 };
 
