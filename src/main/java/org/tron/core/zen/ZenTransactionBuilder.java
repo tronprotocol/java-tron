@@ -113,41 +113,43 @@ public class ZenTransactionBuilder {
   }
 
   public TransactionCapsule build() throws ZksnarkException {
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-
-    // Create Sapling SpendDescriptions
-    for (SpendDescriptionInfo spend : spends) {
-      SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
-      contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
-    }
-
-    // Create Sapling OutputDescriptions
-    for (ReceiveDescriptionInfo receive : receives) {
-      ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
-      contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance());
-    }
-
-    // Empty output script.
-    byte[] dataHashToBeSigned;//256
     TransactionCapsule transactionCapsule;
-    transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    try {
+      // Create Sapling SpendDescriptions
+      for (SpendDescriptionInfo spend : spends) {
+        SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
+        contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
+      }
+      // Create Sapling OutputDescriptions
+      for (ReceiveDescriptionInfo receive : receives) {
+        ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
+        contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance());
+      }
+      // Empty output script.
+      byte[] dataHashToBeSigned;//256
+      transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-    dataHashToBeSigned = transactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+      dataHashToBeSigned = transactionCapsule
+          .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
 
-    // Create Sapling spendAuth and binding signatures
+      // Create Sapling spendAuth and binding signatures
+      CreateSpendAuth(dataHashToBeSigned);
 
-    CreateSpendAuth(dataHashToBeSigned);
-
-    byte[] bindingSig = new byte[64];
-    Librustzcash.librustzcashSaplingBindingSig(
-        ctx,
-        valueBalance,
-        dataHashToBeSigned,
-        bindingSig
-    );
-    contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
-    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      byte[] bindingSig = new byte[64];
+      Librustzcash.librustzcashSaplingBindingSig(
+          ctx,
+          valueBalance,
+          dataHashToBeSigned,
+          bindingSig
+      );
+      contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
+    } catch (ZksnarkException e) {
+      throw e;
+    } finally {
+      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    }
 
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
         .getRawDataBuilder()
@@ -156,7 +158,6 @@ public class ZenTransactionBuilder {
             Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
                 .setParameter(
                     Any.pack(contractBuilder.build())).build());
-
     Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
     return new TransactionCapsule(transaction);
