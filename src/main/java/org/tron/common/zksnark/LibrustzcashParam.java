@@ -21,7 +21,7 @@ public class LibrustzcashParam {
 
   public static void validAk(byte[] ak) throws ZksnarkException {
     validNull(ak);
-    
+
   }
 
   public static class InitZksnarkParams implements ValidParam {
