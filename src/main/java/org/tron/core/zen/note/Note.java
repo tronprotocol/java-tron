@@ -43,34 +43,26 @@ public class Note {
         new SaplingComputeCmParams(d.getData(), pkD, value, r, result))) {
       return null;
     }
-
     return result;
   }
 
-  // Call librustzcash to compute the nullifier
-
-  // position 64
   public byte[] nullifier(FullViewingKey vk, long position) throws ZksnarkException {
     byte[] ak = vk.getAk();
     byte[] nk = vk.getNk();
-
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
         new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
-
     return result;
   }
 
   public byte[] nullifier(byte[] ak, byte[] nk, long position) throws ZksnarkException {
-
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
         new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
-
     return result;
   }
 }

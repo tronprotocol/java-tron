@@ -19,49 +19,35 @@ public class OutgoingPlaintext {
 
   public static Optional<OutgoingPlaintext> decrypt(OutCiphertext ciphertext, byte[] ovk,
       byte[] cv, byte[] cm, byte[] epk) {
-
     Optional<OutPlaintext> pt = Encryption
         .AttemptOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
-
-    OutgoingPlaintext ret;
-
-    ret = OutgoingPlaintext.decode(pt.get());
-
+    OutgoingPlaintext ret = OutgoingPlaintext.decode(pt.get());
     return Optional.of(ret);
   }
 
   public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc) {
-
     OutPlaintext pt = this.encode();
     return enc.encryptToOurselves(ovk, cv, cm, pt);
   }
 
   private OutPlaintext encode() {
     OutPlaintext ret = new OutPlaintext();
-
     ret.data = new byte[ZC_OUTPLAINTEXT_SIZE];
-
     System.arraycopy(pk_d, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
     System.arraycopy(esk, 0, ret.data, ZC_JUBJUB_SCALAR_SIZE, ZC_JUBJUB_POINT_SIZE);
-
     return ret;
   }
 
-
   private static OutgoingPlaintext decode(OutPlaintext outPlaintext) {
     byte[] data = outPlaintext.data;
-
     OutgoingPlaintext ret = new OutgoingPlaintext(new byte[ZC_JUBJUB_SCALAR_SIZE],
         new byte[ZC_JUBJUB_POINT_SIZE]);
-
     // ZC_OUTPLAINTEXT_SIZE = (ZC_JUBJUB_POINT_SIZE + ZC_JUBJUB_SCALAR_SIZE)
     System.arraycopy(data, 0, ret.pk_d, 0, ZC_JUBJUB_SCALAR_SIZE);
-
     System.arraycopy(data, ZC_JUBJUB_SCALAR_SIZE, ret.esk, 0, ZC_JUBJUB_POINT_SIZE);
-
     return ret;
   }
 
