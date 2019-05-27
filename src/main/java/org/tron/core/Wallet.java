@@ -1988,7 +1988,6 @@ public class Wallet {
     if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
-
     byte[] result = new byte[64];
     SaplingSpendSigParams saplingSpendSigParams = new SaplingSpendSigParams(
             spendAuthSigParameters.getAsk().toByteArray(),
@@ -2000,10 +1999,9 @@ public class Wallet {
     return BytesMessage.newBuilder()
             .setValue(ByteString.copyFrom(result))
             .build();
-
   }
 
-  public BytesMessage getNullifier(NfParameters nfParameters) throws ZksnarkException {
+  public BytesMessage createShieldNullifier(NfParameters nfParameters) throws ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }

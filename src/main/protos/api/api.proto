@@ -705,7 +705,7 @@ service Wallet {
   rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
   };
 
-  rpc GetNullifier (NfParameters) returns (BytesMessage) {
+  rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
   };
   // end for shiededTransaction
 };
