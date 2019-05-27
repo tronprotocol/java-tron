@@ -10,7 +10,10 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingKaAgreeParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingKaDerivepublicParams;
 import org.tron.common.zksnark.Libsodium;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncPlaintext;
@@ -35,11 +38,12 @@ public class NoteEncryption {
   }
 
   //todo:
-  public static Optional<NoteEncryption> fromDiversifier(DiversifierT d) {
+  public static Optional<NoteEncryption> fromDiversifier(DiversifierT d) throws ZksnarkException {
     byte[] epk = new byte[32];
     byte[] esk = new byte[32];
     Librustzcash.librustzcashSaplingGenerateR(esk);
-    if (!Librustzcash.librustzcashSaplingKaDerivepublic(d.data, esk, epk)) {
+    if (!Librustzcash
+        .librustzcashSaplingKaDerivepublic(new SaplingKaDerivepublicParams(d.data, esk, epk))) {
       return Optional.empty();
     }
 
@@ -47,13 +51,14 @@ public class NoteEncryption {
 
   }
 
-  public Optional<EncCiphertext> encryptToRecipient(byte[] pk_d, EncPlaintext message) {
+  public Optional<EncCiphertext> encryptToRecipient(byte[] pk_d, EncPlaintext message)
+      throws ZksnarkException {
     if (already_encrypted_enc) {
-      throw new RuntimeException("already encrypted to the recipient using this key");
+      throw new ZksnarkException("already encrypted to the recipient using this key");
     }
 
     byte[] dhsecret = new byte[32];
-    if (!Librustzcash.librustzcashSaplingKaAgree(pk_d, esk, dhsecret)) {
+    if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(pk_d, esk, dhsecret))) {
       return Optional.empty();
     }
 
@@ -155,10 +160,10 @@ public class NoteEncryption {
 
 
     public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
-        byte[] ciphertext, byte[] ivk, byte[] epk) {
+        byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
 
-      if (!Librustzcash.librustzcashSaplingKaAgree(epk, ivk, dhsecret)) {
+      if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(epk, ivk, dhsecret))) {
         return Optional.empty();
       }
 
@@ -184,10 +189,10 @@ public class NoteEncryption {
     }
 
     public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
-        EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) {
+        EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
 
-      if (!Librustzcash.librustzcashSaplingKaAgree(pk_d, esk, dhsecret)) {
+      if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(pk_d, esk, dhsecret))) {
         return Optional.empty();
       }
 

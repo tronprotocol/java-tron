@@ -409,7 +409,7 @@ public class ShieldedTransferActuatorTest2 {
    * from amount equals 0 or negative number
    */
   @Test
-  public void publicAddressToShieldedInvalidFromAmount() {
+  public void publicAddressToShieldedInvalidFromAmount() throws ZksnarkException {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     long[] transferAmount = {0, -100};
@@ -494,7 +494,7 @@ public class ShieldedTransferActuatorTest2 {
    * Invalid from Address
    */
   @Test
-  public void publicAddressToShieldedInvalidFromAddress() {
+  public void publicAddressToShieldedInvalidFromAddress() throws ZksnarkException {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -852,7 +852,7 @@ public class ShieldedTransferActuatorTest2 {
    * transaction has no from address
    */
   @Test
-  public void publicAddressToShieldAddressNoFromAddressFailure() {
+  public void publicAddressToShieldAddressNoFromAddressFailure() throws ZksnarkException {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);

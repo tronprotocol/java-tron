@@ -6,6 +6,7 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutPlaintext;
@@ -64,7 +65,7 @@ public class OutgoingPlaintext {
     return ret;
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws ZksnarkException {
     OutCiphertext outCiphertext = new OutCiphertext();
     byte[] data = {5, -111, -54, 98, -101, -92, 109, 120, -84, -118, -81, 35, -25, 41, 107, -74,
         -47, 84, 55, -53, 44, -1, -13, -69, 61, -101, 51, -100, -2, 118, 88, 109, 22, -126, 88, 89,

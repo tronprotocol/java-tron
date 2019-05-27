@@ -10,6 +10,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingFinalCheckParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -139,8 +142,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
     //handle receives
     for (ReceiveDescription receive : receives) {
-      merkleContainer
-          .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+      try {
+        merkleContainer
+            .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+      } catch (ZksnarkException e) {
+        ret.setStatus(calcFee(), code.FAILED);
+        throw new ContractExeException(e.getMessage());
+      }
     }
     merkleContainer.setCurrentMerkle(currentMerkle);
   }
@@ -223,14 +231,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
             throw new ContractValidateException("spend description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckSpend(
-              ctx,
-              spendDescription.getValueCommitment().toByteArray(),
-              spendDescription.getAnchor().toByteArray(),
-              spendDescription.getNullifier().toByteArray(),
-              spendDescription.getRk().toByteArray(),
-              spendDescription.getZkproof().toByteArray(),
-              spendDescription.getSpendAuthoritySignature().toByteArray(),
-              signHash
+              new SaplingCheckSpendParams(ctx,
+                  spendDescription.getValueCommitment().toByteArray(),
+                  spendDescription.getAnchor().toByteArray(),
+                  spendDescription.getNullifier().toByteArray(),
+                  spendDescription.getRk().toByteArray(),
+                  spendDescription.getZkproof().toByteArray(),
+                  spendDescription.getSpendAuthoritySignature().toByteArray(),
+                  signHash)
           )) {
             throw new ContractValidateException("librustzcashSaplingCheckSpend error");
           }
@@ -246,11 +254,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
             throw new ContractValidateException("receive description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
-              ctx,
-              receiveDescription.getValueCommitment().toByteArray(),
-              receiveDescription.getNoteCommitment().toByteArray(),
-              receiveDescription.getEpk().toByteArray(),
-              receiveDescription.getZkproof().toByteArray()
+              new SaplingCheckOutputParams(ctx,
+                  receiveDescription.getValueCommitment().toByteArray(),
+                  receiveDescription.getNoteCommitment().toByteArray(),
+                  receiveDescription.getEpk().toByteArray(),
+                  receiveDescription.getZkproof().toByteArray())
           )) {
             throw new ContractValidateException("librustzcashSaplingCheckOutput error");
           }
@@ -272,13 +280,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("shieldedPoolValue error");
         }
         if (!Librustzcash.librustzcashSaplingFinalCheck(
-            ctx,
-            valueBalance,
-            shieldedTransferContract.getBindingSignature().toByteArray(),
-            signHash
+            new SaplingFinalCheckParams(ctx,
+                valueBalance,
+                shieldedTransferContract.getBindingSignature().toByteArray(),
+                signHash)
         )) {
           throw new ContractValidateException("librustzcashSaplingFinalCheck error");
         }
+      } catch (ZksnarkException e) {
+        throw new ContractValidateException(e.getMessage());
       } finally {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }

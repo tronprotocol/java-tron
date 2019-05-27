@@ -11,7 +11,23 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingFinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingKaAgreeParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingKaDerivepublicParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
+import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
 import org.tron.core.exception.ZksnarkException;
 
@@ -119,69 +135,51 @@ public class Librustzcash {
 
   public static void librustzcashZip32XskMaster(Zip32XskMasterParams params)
       throws ZksnarkException {
-    params.valid();
     INSTANCE.librustzcash_zip32_xsk_master(params.getData(), params.getSize(), params.getM_bytes());
   }
 
   public static void librustzcashInitZksnarkParams(InitZksnarkParams params)
       throws ZksnarkException {
-    params.valid();
     INSTANCE.librustzcash_init_zksnark_params(params.getSpend_path(), params.getSpend_path_len(),
         params.getSpend_hash(), params.getOutput_path(), params.getOutput_path_len(),
         params.getOutput_hash());
   }
 
-  public static void librustzcashZip32XskDerive(byte[] p_bytes, int i, byte[] m_bytes) {
-    if (!(p_bytes.length == 169 && m_bytes.length == 169)) {
-      throw new RuntimeException("librustzcash_zip32_xsk_derive invalid array size");
-    }
-    INSTANCE.librustzcash_zip32_xsk_derive(p_bytes, i, m_bytes);
+  public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params)
+      throws ZksnarkException {
+    INSTANCE.librustzcash_zip32_xsk_derive(params.getData(), params.getSize(), params.getM_bytes());
   }
 
-  public static boolean librustzcashZip32XfvkAddress(byte[] xfvk, byte[] j, byte[] j_ret,
-      byte[] addr_ret) {
-    if (!(xfvk.length == 169 && j.length == 11 && j_ret.length == 11 && addr_ret.length == 43)) {
-      throw new RuntimeException("librustzcash_zip32_xfvk_address invalid array size");
-    }
-    return INSTANCE.librustzcash_zip32_xfvk_address(xfvk, j, j_ret, addr_ret);
+  public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params)
+      throws ZksnarkException {
+    return INSTANCE.librustzcash_zip32_xfvk_address(params.getXfvk(), params.getJ(),
+        params.getJ_ret(), params.getAddr_ret());
   }
 
-  public static void librustzcashCrhIvk(byte[] ak, byte[] nk, byte[] ivk) {
-    if (!(ak.length == 32 && nk.length == 32 && ivk.length == 32)) {
-      throw new RuntimeException("librustzcash_crh_ivk invalid array size");
-    }
-    INSTANCE.librustzcash_crh_ivk(ak, nk, ivk);
+  public static void librustzcashCrhIvk(CrhIvkParams params) {
+    INSTANCE.librustzcash_crh_ivk(params.getAk(), params.getNk(), params.getIvk());
   }
 
-  public static boolean librustzcashSaplingKaAgree(byte[] p, byte[] sk, byte[] result) {
-    if (!(p.length == 32 && sk.length == 32 && result.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_ka_agree invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_ka_agree(p, sk, result);
+  public static boolean librustzcashSaplingKaAgree(SaplingKaAgreeParams params) {
+    return INSTANCE
+        .librustzcash_sapling_ka_agree(params.getP(), params.getSk(), params.getResult());
   }
 
-  public static boolean librustzcashSaplingComputeCm(byte[] d, byte[] pk_d, long value, byte[] r,
-      byte[] cm) {
-    if (!(d.length == 11 && pk_d.length == 32 && r.length == 32 && cm.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_compute_cm invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_compute_cm(d, pk_d, value, r, cm);
+  public static boolean librustzcashSaplingComputeCm(SaplingComputeCmParams params) {
+    return INSTANCE.librustzcash_sapling_compute_cm(params.getD(), params.getPk_d(),
+        params.getValue(), params.getR(), params.getCm());
   }
 
-  public static boolean librustzcashSaplingComputeNf(byte[] d, byte[] pk_d, long value_, byte[] r,
-      byte[] ak, byte[] nk, long position, byte[] result) {
-    if (!(d.length == 11 && pk_d.length == 32 && r.length == 32
-        && ak.length == 32 && nk.length == 32 && result.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_compute_nf invalid array size");
-    }
-    INSTANCE.librustzcash_sapling_compute_nf(d, pk_d, value_, r, ak, nk, position, result);
+  public static boolean librustzcashSaplingComputeNf(SaplingComputeNfParams params) {
+    INSTANCE.librustzcash_sapling_compute_nf(params.getD(), params.getPk_d(), params.getValue(),
+        params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     return true;
   }
 
   // void librustzcash_ask_to_ak(const unsigned char *ask, unsigned char *result);
-  public static byte[] librustzcashAskToAk(byte[] ask) {
+  public static byte[] librustzcashAskToAk(byte[] ask) throws ZksnarkException {
     if (!(ask.length == 32)) {
-      throw new RuntimeException("librustzcash_ask_to_ak invalid array size");
+      throw new ZksnarkException("librustzcash_ask_to_ak invalid array size");
     }
     byte[] ak = new byte[32];
     INSTANCE.librustzcash_ask_to_ak(ask, ak);
@@ -189,79 +187,60 @@ public class Librustzcash {
   }
 
   // void librustzcash_nsk_to_nk(const unsigned char *nsk, unsigned char *result);
-  public static byte[] librustzcashNskToNk(byte[] nsk) {
+  public static byte[] librustzcashNskToNk(byte[] nsk) throws ZksnarkException {
     if (!(nsk.length == 32)) {
-      throw new RuntimeException("librustzcash_nsk_to_nk invalid array size");
+      throw new ZksnarkException("librustzcash_nsk_to_nk invalid array size");
     }
     byte[] nk = new byte[32];
     INSTANCE.librustzcash_nsk_to_nk(nsk, nk);
     return nk;
   }
 
-  public static byte[] librustzcashSaplingGenerateR(byte[] r) {
+  public static byte[] librustzcashSaplingGenerateR(byte[] r) throws ZksnarkException {
     if (!(r.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_generate_r invalid array size");
+      throw new ZksnarkException("librustzcash_sapling_generate_r invalid array size");
     }
     INSTANCE.librustzcash_sapling_generate_r(r);
     return r;
   }
 
-  public static boolean librustzcashSaplingKaDerivepublic(byte[] diversifier, byte[] esk,
-      byte[] result) {
-    if (!(diversifier.length == 11 && esk.length == 32 && result.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_ka_derivepublic invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_ka_derivepublic(diversifier, esk, result);
+  public static boolean librustzcashSaplingKaDerivepublic(SaplingKaDerivepublicParams params) {
+    return INSTANCE.librustzcash_sapling_ka_derivepublic(params.getDiversifier(), params.getEsk(),
+        params.getResult());
   }
 
   public static Pointer librustzcashSaplingProvingCtxInit() {
     return INSTANCE.librustzcash_sapling_proving_ctx_init();
   }
 
-  public static boolean librustzcashCheckDiversifier(byte[] d) {
+  public static boolean librustzcashCheckDiversifier(byte[] d) throws ZksnarkException {
     if (!(d.length == 11)) {
-      throw new RuntimeException("librustzcash_check_diversifier invalid array size");
+      throw new ZksnarkException("librustzcash_check_diversifier invalid array size");
     }
     return INSTANCE.librustzcash_check_diversifier(d);
   }
 
-  public static boolean librustzcashSaplingSpendProof(Pointer ctx, byte[] ak, byte[] nsk, byte[] d,
-      byte[] r, byte[] alpha, long value, byte[] anchor, byte[] voucherPath, byte[] cv, byte[] rk,
-      byte[] zkproof) {
-
-    if (!(ak.length == 32 && nsk.length == 32 && d.length == 11 && r.length == 32
-        && alpha.length == 32 && anchor.length == 32 && voucherPath.length == 1 + 33 * 32 + 8
-        && cv.length == 32 && rk.length == 32 && zkproof.length == 192)) {
-      throw new RuntimeException("librustzcash_sapling_spend_proof invalid array size");
-    }
-    return INSTANCE
-        .librustzcash_sapling_spend_proof(ctx, ak, nsk, d, r, alpha, value, anchor, voucherPath, cv,
-            rk, zkproof);
+  public static boolean librustzcashSaplingSpendProof(SaplingSpendProofParams params) {
+    return INSTANCE.librustzcash_sapling_spend_proof(params.getCtx(), params.getAk(),
+        params.getNsk(), params.getD(), params.getR(), params.getAlpha(), params.getValue(),
+        params.getAnchor(), params.getVoucherPath(), params.getCv(), params.getRk(),
+        params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingOutputProof(Pointer ctx, byte[] esk, byte[] d,
-      byte[] pk_d, byte[] r, long value, byte[] cv, byte[] zkproof) {
-    if (!(esk.length == 32 && d.length == 11 && pk_d.length == 32 && r.length == 32
-        && cv.length == 32 && zkproof.length == 192)) {
-      throw new RuntimeException("librustzcash_sapling_output_proof invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_output_proof(ctx, esk, d, pk_d, r, value, cv, zkproof);
+  public static boolean librustzcashSaplingOutputProof(SaplingOutputProofParams params) {
+    return INSTANCE.librustzcash_sapling_output_proof(params.getCtx(), params.getEsk(),
+        params.getD(), params.getPk_d(), params.getR(), params.getValue(), params.getCv(),
+        params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingSpendSig(byte[] ask, byte[] alpha, byte[] sigHash,
-      byte[] result) {
-    if (!(ask.length == 32 && alpha.length == 32 && sigHash.length == 32 && result.length == 64)) {
-      throw new RuntimeException("librustzcash_sapling_spend_sig invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_spend_sig(ask, alpha, sigHash, result);
+  public static boolean librustzcashSaplingSpendSig(SaplingSpendSigParams params) {
+    return INSTANCE.librustzcash_sapling_spend_sig(params.getAsk(), params.getAlpha(),
+        params.getSigHash(), params.getResult());
   }
 
-  public static boolean librustzcashSaplingBindingSig(
-      Pointer ctx, long valueBalance, byte[] sighash, byte[] result) {
-    if (!(sighash.length == 32 && result.length == 64)) {
-      throw new RuntimeException("librustzcash_sapling_binding_sig invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_binding_sig(ctx, valueBalance, sighash, result);
+  public static boolean librustzcashSaplingBindingSig(SaplingBindingSigParams params) {
+    return INSTANCE.librustzcash_sapling_binding_sig(params.getCtx(), params.getValueBalance(),
+        params.getSighash(), params.getResult());
   }
 
   public static void librustzcashToScalar(byte[] value, byte[] data) {
@@ -279,50 +258,33 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_verification_ctx_init();
   }
 
-  public static boolean librustzcashSaplingCheckSpend(Pointer ctx, byte[] cv, byte[] anchor,
-      byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
-    if (!(cv.length == 32 && anchor.length == 32 && nullifier.length == 32 && rk.length == 32
-        && zkproof.length == 192 && spendAuthSig.length == 64 && sighashValue.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_check_spend invalid array size");
-    }
-    return INSTANCE
-        .librustzcash_sapling_check_spend(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
-            sighashValue);
+  public static boolean librustzcashSaplingCheckSpend(SaplingCheckSpendParams params) {
+    return INSTANCE.librustzcash_sapling_check_spend(params.getCtx(), params.getCv(),
+        params.getAnchor(), params.getNullifier(), params.getRk(), params.getZkproof(),
+        params.getSpendAuthSig(), params.getSighashValue());
   }
 
-  public static boolean librustzcashSaplingCheckOutput(Pointer ctx, byte[] cv, byte[] cm,
-      byte[] ephemeralKey, byte[] zkproof) {
-    if (!(cv.length == 32 && cm.length == 32 && ephemeralKey.length == 32
-        && zkproof.length == 192)) {
-      throw new RuntimeException("librustzcash_sapling_check_output invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_check_output(ctx, cv, cm, ephemeralKey, zkproof);
+  public static boolean librustzcashSaplingCheckOutput(SaplingCheckOutputParams params) {
+    return INSTANCE.librustzcash_sapling_check_output(params.getCtx(), params.getCv(),
+        params.getCm(), params.getEphemeralKey(), params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingFinalCheck(Pointer ctx, long valueBalance,
-      byte[] bindingSig, byte[] sighashValue) {
-    if (!(bindingSig.length == 64 && sighashValue.length == 32)) {
-      throw new RuntimeException("librustzcash_sapling_final_check invalid array size");
-    }
-    return INSTANCE.librustzcash_sapling_final_check(ctx, valueBalance, bindingSig, sighashValue);
+  public static boolean librustzcashSaplingFinalCheck(SaplingFinalCheckParams params) {
+    return INSTANCE.librustzcash_sapling_final_check(params.getCtx(), params.getValueBalance(),
+        params.getBindingSig(), params.getSighashValue());
   }
 
   public static void librustzcashSaplingVerificationCtxFree(Pointer ctx) {
     INSTANCE.librustzcash_sapling_verification_ctx_free(ctx);
   }
 
-  public static boolean librustzcashIvkToPkd(byte[] ivk, byte[] d, byte[] pk_d) {
-    if (!(ivk.length == 32 && d.length == 11 && pk_d.length == 32)) {
-      throw new RuntimeException("librustzcash_ivk_to_pkd invalid array size");
-    }
-    return INSTANCE.librustzcash_ivk_to_pkd(ivk, d, pk_d);
+  public static boolean librustzcashIvkToPkd(IvkToPkdParams params) {
+    return INSTANCE.librustzcash_ivk_to_pkd(params.getIvk(), params.getD(), params.getPk_d());
   }
 
-  public static void librustzcashMerkleHash(int depth, byte[] a, byte[] b, byte[] result) {
-    if (!(a.length == 32 && b.length == 32 && result.length == 32)) {
-      throw new RuntimeException("librustzcash_merkle_hash invalid array size");
-    }
-    INSTANCE.librustzcash_merkle_hash(depth, a, b, result);
+  public static void librustzcashMerkleHash(MerkleHashParams params) {
+    INSTANCE.librustzcash_merkle_hash(params.getDepth(), params.getA(), params.getB(),
+        params.getResult());
   }
 
   public static void librustzcash_tree_uncommitted(byte[] result) {

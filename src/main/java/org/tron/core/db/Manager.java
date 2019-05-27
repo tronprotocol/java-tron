@@ -101,6 +101,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -479,7 +480,6 @@ public class Manager {
       new AssetUpdateHelper(this).doWork();
     }
 
-
     initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
@@ -835,7 +835,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -850,7 +850,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException {
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -867,7 +867,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException {
+      VMIllegalException, ZksnarkException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -914,7 +914,8 @@ public class Manager {
             | TooBigTransactionException
             | TooBigTransactionResultException
             | ValidateScheduleException
-            | VMIllegalException e) {
+            | VMIllegalException
+            | ZksnarkException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -947,7 +948,8 @@ public class Manager {
                   | DupTransactionException
                   | TransactionExpirationException
                   | TooBigTransactionException
-                  | ValidateScheduleException e) {
+                  | ValidateScheduleException
+                  | ZksnarkException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -965,7 +967,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1451,6 +1453,8 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    } catch (ZksnarkException e) {
+      logger.info("zk error!", e.getMessage());
     }
 
     return null;
@@ -1497,7 +1501,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException {
     // todo set revoking db max size.
 
     // checkWitness

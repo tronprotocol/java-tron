@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
+import org.tron.core.exception.ZksnarkException;
 
 // Decryption using a Full Viewing Key
 
@@ -22,16 +24,16 @@ public class FullViewingKey {
   @Setter
   private byte[] ovk; // 256,the outgoing viewing key
 
-  public IncomingViewingKey inViewingKey() {
+  public IncomingViewingKey inViewingKey() throws ZksnarkException {
     byte[] ivk = new byte[32]; // the incoming viewing key
-    Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
+    Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
     System.out.println("inviewkey.ivk is: " + ByteUtil.toHexString(ivk));
     return new IncomingViewingKey(ivk);
   }
 
-  public boolean isValid() {
+  public boolean isValid() throws ZksnarkException {
     byte[] ivk = new byte[32];
-    Librustzcash.librustzcashCrhIvk(ak, nk, ivk);
+    Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
     return !Arrays.equals(ivk, new byte[32]);
   }
 

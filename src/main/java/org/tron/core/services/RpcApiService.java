@@ -88,6 +88,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Contract;
@@ -1835,6 +1836,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(wallet.getAkFromAsk(ak));
       } catch (BadItemException e) {
         responseObserver.onError(e);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
       }
 
       responseObserver.onCompleted();
@@ -1847,6 +1850,8 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.getNkFromNsk(nk));
       } catch (BadItemException e) {
+        responseObserver.onError(e);
+      } catch (ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1861,7 +1866,7 @@ public class RpcApiService implements Service {
 
       try {
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
-      } catch (BadItemException e) {
+      } catch (ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1871,8 +1876,12 @@ public class RpcApiService implements Service {
     @Override
     public void getDiversifier(EmptyMessage request,
         StreamObserver<DiversifierMessage> responseObserver) {
-      DiversifierMessage d = wallet.getDiversifier();
-      responseObserver.onNext(d);
+      try {
+        DiversifierMessage d = wallet.getDiversifier();
+        responseObserver.onNext(d);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
+      }
       responseObserver.onCompleted();
     }
 
@@ -1888,7 +1897,7 @@ public class RpcApiService implements Service {
                 new DiversifierT(d.getD().toByteArray()));
 
         responseObserver.onNext(saplingPaymentAddressMessage);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1907,7 +1916,7 @@ public class RpcApiService implements Service {
         DecryptNotes decryptNotes = wallet
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
@@ -1925,7 +1934,7 @@ public class RpcApiService implements Service {
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();

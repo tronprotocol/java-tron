@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.core.exception.ZksnarkException;
 
 @Slf4j(topic = "shieldTransaction")
 @AllArgsConstructor
@@ -27,15 +28,15 @@ public class ExpandedSpendingKey {
   }
 
 
-  public static byte [] getAkFromAsk(byte[] ask) {
+  public static byte [] getAkFromAsk(byte[] ask) throws ZksnarkException {
     return Librustzcash.librustzcashAskToAk(ask); // 256
   }
 
-  public static byte [] getNkFromNsk(byte[] nsk) {
+  public static byte [] getNkFromNsk(byte[] nsk) throws ZksnarkException {
     return Librustzcash.librustzcashNskToNk(nsk); // 256
   }
 
-  public FullViewingKey fullViewingKey() {
+  public FullViewingKey fullViewingKey() throws ZksnarkException {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 

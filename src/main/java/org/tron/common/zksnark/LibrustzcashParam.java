@@ -34,13 +34,14 @@ public class LibrustzcashParam {
     private String output_hash;
 
     public InitZksnarkParams(byte[] spend_path, int spend_path_len, String spend_hash,
-        byte[] output_path, int output_path_len, String output_hash) {
+        byte[] output_path, int output_path_len, String output_hash) throws ZksnarkException {
       this.spend_path = spend_path;
       this.spend_path_len = spend_path_len;
       this.spend_hash = spend_hash;
       this.output_path = output_path;
       this.output_path_len = output_path_len;
       this.output_hash = output_hash;
+      valid();
     }
 
     @Override
@@ -61,15 +62,16 @@ public class LibrustzcashParam {
     @Getter
     private byte[] m_bytes;
 
-    public Zip32XskMasterParams(byte[] data, int size, byte[] m_bytes) {
+    public Zip32XskMasterParams(byte[] data, int size, byte[] m_bytes) throws ZksnarkException {
       this.data = data;
       this.size = size;
       this.m_bytes = m_bytes;
+      valid();
     }
 
     @Override
     public void valid() throws ZksnarkException {
-      if(!(m_bytes.length == 169)){
+      if (!(m_bytes.length == 169)) {
         throw new ZksnarkException("librustzcash_zip32_xsk_master invalid array size");
       }
     }
@@ -77,7 +79,7 @@ public class LibrustzcashParam {
 
   public static class Zip32XskDeriveParams extends Zip32XskMasterParams implements ValidParam {
 
-    public Zip32XskDeriveParams(byte[] data, int size, byte[] m_bytes) {
+    public Zip32XskDeriveParams(byte[] data, int size, byte[] m_bytes) throws ZksnarkException {
       super(data, size, m_bytes);
     }
 
@@ -102,11 +104,13 @@ public class LibrustzcashParam {
     @Getter
     private byte[] addr_ret;
 
-    public Zip32XfvkAddressParams(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret) {
+    public Zip32XfvkAddressParams(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret)
+        throws ZksnarkException {
       this.xfvk = xfvk;
       this.j = j;
       this.j_ret = j_ret;
       this.addr_ret = addr_ret;
+      valid();
     }
 
     @Override
@@ -127,10 +131,11 @@ public class LibrustzcashParam {
     @Getter
     private byte[] ivk;
 
-    public CrhIvkParams(byte[] ak, byte[] nk, byte[] ivk) {
+    public CrhIvkParams(byte[] ak, byte[] nk, byte[] ivk) throws ZksnarkException {
       this.ak = ak;
       this.nk = nk;
       this.ivk = ivk;
+      valid();
     }
 
     @Override
@@ -151,10 +156,11 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingKaAgreeParams(byte[] p, byte[] sk, byte[] result) {
+    public SaplingKaAgreeParams(byte[] p, byte[] sk, byte[] result) throws ZksnarkException {
       this.p = p;
       this.sk = sk;
       this.result = result;
+      valid();
     }
 
     @Override
@@ -181,12 +187,14 @@ public class LibrustzcashParam {
     @Getter
     private byte[] cm;
 
-    public SaplingComputeCmParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm) {
+    public SaplingComputeCmParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm)
+        throws ZksnarkException {
       this.d = d;
       this.pk_d = pk_d;
       this.value = value;
       this.r = r;
       this.cm = cm;
+      valid();
     }
 
     @Override
@@ -223,7 +231,7 @@ public class LibrustzcashParam {
     private byte[] result;
 
     public SaplingComputeNfParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] ak, byte[] nk,
-        long position, byte[] result) {
+        long position, byte[] result) throws ZksnarkException {
       this.d = d;
       this.pk_d = pk_d;
       this.value = value;
@@ -232,6 +240,7 @@ public class LibrustzcashParam {
       this.nk = nk;
       this.position = position;
       this.result = result;
+      valid();
     }
 
     @Override
@@ -252,10 +261,12 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingKaDerivepublicParams(byte[] diversifier, byte[] esk, byte[] result) {
+    public SaplingKaDerivepublicParams(byte[] diversifier, byte[] esk, byte[] result)
+        throws ZksnarkException {
       this.diversifier = diversifier;
       this.esk = esk;
       this.result = result;
+      valid();
     }
 
     @Override
@@ -304,8 +315,8 @@ public class LibrustzcashParam {
     private byte[] zkproof;
 
     public SaplingSpendProofParams(Pointer ctx, byte[] ak, byte[] nsk, byte[] d, byte[] r,
-        byte[] alpha,
-        long value, byte[] anchor, byte[] voucherPath, byte[] cv, byte[] rk, byte[] zkproof) {
+        byte[] alpha, long value, byte[] anchor, byte[] voucherPath, byte[] cv, byte[] rk,
+        byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.ak = ak;
       this.nsk = nsk;
@@ -318,6 +329,7 @@ public class LibrustzcashParam {
       this.cv = cv;
       this.rk = rk;
       this.zkproof = zkproof;
+      valid();
     }
 
     @Override
@@ -354,7 +366,7 @@ public class LibrustzcashParam {
     private byte[] zkproof;
 
     public SaplingOutputProofParams(Pointer ctx, byte[] esk, byte[] d, byte[] pk_d, byte[] r,
-        long value, byte[] cv, byte[] zkproof) {
+        long value, byte[] cv, byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.esk = esk;
       this.d = d;
@@ -363,6 +375,7 @@ public class LibrustzcashParam {
       this.value = value;
       this.cv = cv;
       this.zkproof = zkproof;
+      valid();
     }
 
     @Override
@@ -386,11 +399,13 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingSpendSigParams(byte[] ask, byte[] alpha, byte[] sigHash, byte[] result) {
+    public SaplingSpendSigParams(byte[] ask, byte[] alpha, byte[] sigHash, byte[] result)
+        throws ZksnarkException {
       this.ask = ask;
       this.alpha = alpha;
       this.sigHash = sigHash;
       this.result = result;
+      valid();
     }
 
     @Override
@@ -414,11 +429,13 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingBindingSigParams(Pointer ctx, long valueBalance, byte[] sighash, byte[] result) {
+    public SaplingBindingSigParams(Pointer ctx, long valueBalance, byte[] sighash, byte[] result)
+        throws ZksnarkException {
       this.ctx = ctx;
       this.valueBalance = valueBalance;
       this.sighash = sighash;
       this.result = result;
+      valid();
     }
 
     @Override
@@ -455,8 +472,8 @@ public class LibrustzcashParam {
     private byte[] sighashValue;
 
     public SaplingCheckSpendParams(Pointer ctx, byte[] cv, byte[] anchor, byte[] nullifier,
-        byte[] rk,
-        byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue) {
+        byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue)
+        throws ZksnarkException {
       this.ctx = ctx;
       this.cv = cv;
       this.anchor = anchor;
@@ -465,6 +482,7 @@ public class LibrustzcashParam {
       this.zkproof = zkproof;
       this.spendAuthSig = spendAuthSig;
       this.sighashValue = sighashValue;
+      valid();
     }
 
     @Override
@@ -492,12 +510,13 @@ public class LibrustzcashParam {
     private byte[] zkproof;
 
     public SaplingCheckOutputParams(Pointer ctx, byte[] cv, byte[] cm, byte[] ephemeralKey,
-        byte[] zkproof) {
+        byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.cv = cv;
       this.cm = cm;
       this.ephemeralKey = ephemeralKey;
       this.zkproof = zkproof;
+      valid();
     }
 
     @Override
@@ -522,11 +541,12 @@ public class LibrustzcashParam {
     private byte[] sighashValue;
 
     public SaplingFinalCheckParams(Pointer ctx, long valueBalance, byte[] bindingSig,
-        byte[] sighashValue) {
+        byte[] sighashValue) throws ZksnarkException {
       this.ctx = ctx;
       this.valueBalance = valueBalance;
       this.bindingSig = bindingSig;
       this.sighashValue = sighashValue;
+      valid();
     }
 
     @Override
@@ -547,10 +567,11 @@ public class LibrustzcashParam {
     @Getter
     private byte[] pk_d;
 
-    public IvkToPkdParams(byte[] ivk, byte[] d, byte[] pk_d) {
+    public IvkToPkdParams(byte[] ivk, byte[] d, byte[] pk_d) throws ZksnarkException {
       this.ivk = ivk;
       this.d = d;
       this.pk_d = pk_d;
+      valid();
     }
 
     @Override
@@ -574,11 +595,12 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public MerkleHashParams(int depth, byte[] a, byte[] b, byte[] result) {
+    public MerkleHashParams(int depth, byte[] a, byte[] b, byte[] result) throws ZksnarkException {
       this.depth = depth;
       this.a = a;
       this.b = b;
       this.result = result;
+      valid();
     }
 
     @Override

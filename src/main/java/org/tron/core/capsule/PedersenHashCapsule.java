@@ -5,6 +5,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
 
 
@@ -47,12 +49,12 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return this.pedersenHash;
   }
 
-  public static PedersenHashCapsule combine(final PedersenHash a, final PedersenHash b, int depth) {
+  public static PedersenHashCapsule combine(final PedersenHash a, final PedersenHash b, int depth)
+      throws ZksnarkException {
     byte[] res = new byte[32];
 
-    Librustzcash
-        .librustzcashMerkleHash(depth, a.getContent().toByteArray(), b.getContent().toByteArray(),
-            res);
+    Librustzcash.librustzcashMerkleHash(new MerkleHashParams(depth, a.getContent().toByteArray(),
+        b.getContent().toByteArray(), res));
 
     PedersenHashCapsule pedersenHashCapsule = new PedersenHashCapsule();
     pedersenHashCapsule.setContent(ByteString.copyFrom(res));
@@ -75,7 +77,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return !pedersenHash.getContent().isEmpty();
   }
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws ZksnarkException {
     byte[] a =
         ByteArray.fromHexString("05655316a07e6ec8c9769af54ef98b30667bfb6302b32987d552227dae86a087");
     byte[] b =

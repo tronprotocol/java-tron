@@ -13,6 +13,7 @@ import org.tron.core.exception.BadItemException;
 
 import java.util.Optional;
 import java.util.Random;
+import org.tron.core.exception.ZksnarkException;
 
 @AllArgsConstructor
 public class SpendingKey {
@@ -21,7 +22,7 @@ public class SpendingKey {
   @Getter
   public byte[] value;
 
-  public static SpendingKey random() {
+  public static SpendingKey random() throws ZksnarkException {
     while (true) {
       SpendingKey sk = new SpendingKey(randomUint256());
       if (sk.fullViewingKey().isValid()) {
@@ -44,17 +45,17 @@ public class SpendingKey {
         PRF.prfAsk(this.value), PRF.prfNsk(this.value), PRF.prfOvk(this.value));
   }
 
-  public FullViewingKey fullViewingKey() {
+  public FullViewingKey fullViewingKey() throws ZksnarkException {
     return expandedSpendingKey().fullViewingKey();
   }
 
-  public PaymentAddress defaultAddress() throws BadItemException {
+  public PaymentAddress defaultAddress() throws BadItemException, ZksnarkException {
     Optional<PaymentAddress> addrOpt =
         fullViewingKey().inViewingKey().address(defaultDiversifier());
     return addrOpt.get();
   }
 
-  public DiversifierT defaultDiversifier() throws BadItemException {
+  public DiversifierT defaultDiversifier() throws BadItemException, ZksnarkException {
     byte[] res = new byte[Constant.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
     System.arraycopy(this.value, 0, blob, 0, 32);

@@ -5,6 +5,7 @@ import java.util.Deque;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.PedersenHash;
 
@@ -23,7 +24,7 @@ public class IncrementalMerkleVoucherContainer {
     this.voucherCapsule.setTree(tree.getTreeCapsule());
   }
 
-  private Deque<PedersenHash> partialPath() {
+  private Deque<PedersenHash> partialPath() throws ZksnarkException {
 
     Deque<PedersenHash> uncles = new ArrayDeque<>(voucherCapsule.getFilled());
 
@@ -35,7 +36,7 @@ public class IncrementalMerkleVoucherContainer {
     return uncles;
   }
 
-  public void append(PedersenHash obj) {
+  public void append(PedersenHash obj) throws ZksnarkException {
 
     if (cursorExist()) {
       IncrementalMerkleTreeCapsule cursor = voucherCapsule.getCursor();
@@ -76,7 +77,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule;
   }
 
-  public MerklePath path() {
+  public MerklePath path() throws ZksnarkException {
     return voucherCapsule.getTree().toMerkleTreeContainer().path(partialPath());
   }
 
@@ -88,7 +89,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule.getTree().toMerkleTreeContainer().size() - 1;
   }
 
-  public PedersenHash root() {
+  public PedersenHash root() throws ZksnarkException {
     return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
   private boolean cursorExist() {
