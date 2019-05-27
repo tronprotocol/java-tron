@@ -23,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -78,7 +79,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
-      if(receiverCapsule != null){
+      if(receiverAddressIsValid(receiverCapsule)){
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
             receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
@@ -204,6 +205,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     return true;
   }
 
+  private boolean receiverAddressIsValid(AccountCapsule receiverCapsule){
+    return receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract;
+  }
+
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
@@ -277,7 +282,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() <= 0) {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
-          if(receiverCapsule != null){
+          if(receiverAddressIsValid(receiverCapsule)){
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
               throw new ContractValidateException(
@@ -296,7 +301,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
-          if(receiverCapsule != null){
+          if(receiverAddressIsValid(receiverCapsule)){
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
               throw new ContractValidateException(
