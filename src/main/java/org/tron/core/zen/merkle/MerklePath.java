@@ -9,22 +9,14 @@ import org.tron.common.utils.ByteArray;
 public class MerklePath {
 
   @Getter
-  List<List<Boolean>> authenticationPath;
+  private List<List<Boolean>> authenticationPath;
 
   @Getter
-  List<Boolean> index;
+  private List<Boolean> index;
 
   public MerklePath(List<List<Boolean>> authenticationPath, List<Boolean> index) {
     this.authenticationPath = authenticationPath;
     this.index = index;
-  }
-
-  public List<List<Boolean>> getAuthenticationPath() {
-    return this.authenticationPath;
-  }
-
-  public List<Boolean> getIndex() {
-    return this.index;
   }
 
   public byte[] encode() {

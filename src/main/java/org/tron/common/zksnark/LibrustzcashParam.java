@@ -113,9 +113,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-      if (!(m_bytes.length == 169)) {
-        throw new ZksnarkException("librustzcash_zip32_xsk_master invalid array size");
-      }
+      validParamLength(m_bytes, 169);
     }
   }
 

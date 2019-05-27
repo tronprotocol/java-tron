@@ -62,7 +62,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return pedersenHashCapsule;
   }
 
-  public static PedersenHashCapsule uncommitted() {
+  public static PedersenHashCapsule uncommitted() throws ZksnarkException {
     byte[] res = new byte[32];
 
     Librustzcash.librustzcash_tree_uncommitted(res);

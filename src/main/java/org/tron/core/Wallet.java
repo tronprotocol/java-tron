@@ -1819,7 +1819,7 @@ public class Wallet {
   }
 
   public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey)
-      throws BadItemException {
+      throws BadItemException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }

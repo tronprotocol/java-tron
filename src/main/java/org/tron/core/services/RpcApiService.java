@@ -1847,7 +1847,7 @@ public class RpcApiService implements Service {
 
       try {
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
 

@@ -314,15 +314,14 @@ public class IncrementalMerkleTreeContainer {
     private List<PedersenHashCapsule> emptyRoots = new ArrayList<>();
 
     public EmptyMerkleRoots() {
-      emptyRoots.add(PedersenHashCapsule.uncommitted());
-      for (int d = 1; d <= DEPTH; d++) {
-        try {
+      try {
+        emptyRoots.add(PedersenHashCapsule.uncommitted());
+        for (int d = 1; d <= DEPTH; d++) {
           emptyRoots.add(PedersenHashCapsule.combine(
               emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
-        } catch (ZksnarkException e) {
-          logger.error("generate EmptyMerkleRoots error!", e);
-          break;
         }
+      } catch (ZksnarkException e) {
+        logger.error("generate EmptyMerkleRoots error!", e);
       }
     }
 

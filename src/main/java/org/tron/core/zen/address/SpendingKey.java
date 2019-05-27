@@ -39,7 +39,7 @@ public class SpendingKey {
     return sk;
   }
 
-  public ExpandedSpendingKey expandedSpendingKey() {
+  public ExpandedSpendingKey expandedSpendingKey() throws ZksnarkException {
     return new ExpandedSpendingKey(
         PRF.prfAsk(this.value), PRF.prfNsk(this.value), PRF.prfOvk(this.value));
   }
@@ -111,7 +111,7 @@ public class SpendingKey {
 
   private static class PRF {
 
-    public static byte[] prfAsk(byte[] sk) {
+    public static byte[] prfAsk(byte[] sk) throws ZksnarkException {
       byte[] ask = new byte[32];
       byte t = 0x00;
       byte[] tmp = prfExpand(sk, t);
@@ -119,7 +119,7 @@ public class SpendingKey {
       return ask;
     }
 
-    public static byte[] prfNsk(byte[] sk) {
+    public static byte[] prfNsk(byte[] sk) throws ZksnarkException {
       byte[] nsk = new byte[32];
       byte t = 0x01;
       byte[] tmp = prfExpand(sk, t);

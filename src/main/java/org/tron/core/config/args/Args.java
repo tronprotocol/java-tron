@@ -456,6 +456,7 @@ public class Args {
   private boolean version;
 
   @Getter
+  @Setter
   private boolean allowShieldedTransactionApi;
 
   @Getter
