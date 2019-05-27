@@ -1,5 +1,7 @@
 package org.tron.core.zen.address;
 
+import java.util.Optional;
+import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,9 +12,7 @@ import org.tron.common.zksnark.Libsodium.ILibsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
 import org.tron.core.Constant;
 import org.tron.core.exception.BadItemException;
-
-import java.util.Optional;
-import java.util.Random;
+import org.tron.core.exception.ZksnarkException;
 
 @AllArgsConstructor
 public class SpendingKey {
@@ -21,7 +21,7 @@ public class SpendingKey {
   @Getter
   public byte[] value;
 
-  public static SpendingKey random() {
+  public static SpendingKey random() throws ZksnarkException {
     while (true) {
       SpendingKey sk = new SpendingKey(randomUint256());
       if (sk.fullViewingKey().isValid()) {
@@ -39,22 +39,22 @@ public class SpendingKey {
     return sk;
   }
 
-  public ExpandedSpendingKey expandedSpendingKey() {
+  public ExpandedSpendingKey expandedSpendingKey() throws ZksnarkException {
     return new ExpandedSpendingKey(
         PRF.prfAsk(this.value), PRF.prfNsk(this.value), PRF.prfOvk(this.value));
   }
 
-  public FullViewingKey fullViewingKey() {
+  public FullViewingKey fullViewingKey() throws ZksnarkException {
     return expandedSpendingKey().fullViewingKey();
   }
 
-  public PaymentAddress defaultAddress() throws BadItemException {
+  public PaymentAddress defaultAddress() throws BadItemException, ZksnarkException {
     Optional<PaymentAddress> addrOpt =
         fullViewingKey().inViewingKey().address(defaultDiversifier());
     return addrOpt.get();
   }
 
-  public DiversifierT defaultDiversifier() throws BadItemException {
+  public DiversifierT defaultDiversifier() throws BadItemException, ZksnarkException {
     byte[] res = new byte[Constant.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
     System.arraycopy(this.value, 0, blob, 0, 32);
@@ -69,7 +69,8 @@ public class SpendingKey {
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
-        throw new BadItemException("librustzcash_check_diversifier did not return valid diversifier");
+        throw new BadItemException(
+            "librustzcash_check_diversifier did not return valid diversifier");
       }
       blob[33] += 1;
     }
@@ -94,9 +95,8 @@ public class SpendingKey {
     return result;
   }
 
-
   public static byte[] ovkForShieldingFromTaddr(byte[] data) {
-    crypto_generichash_blake2b_state.ByReference state  = null;
+    crypto_generichash_blake2b_state.ByReference state = null;
     Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
     byte[] intermediate = new byte[64];
     Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);
@@ -111,7 +111,7 @@ public class SpendingKey {
 
   private static class PRF {
 
-    public static byte[] prfAsk(byte[] sk) {
+    public static byte[] prfAsk(byte[] sk) throws ZksnarkException {
       byte[] ask = new byte[32];
       byte t = 0x00;
       byte[] tmp = prfExpand(sk, t);
@@ -119,7 +119,7 @@ public class SpendingKey {
       return ask;
     }
 
-    public static byte[] prfNsk(byte[] sk) {
+    public static byte[] prfNsk(byte[] sk) throws ZksnarkException {
       byte[] nsk = new byte[32];
       byte t = 0x01;
       byte[] tmp = prfExpand(sk, t);

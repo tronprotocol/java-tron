@@ -9,8 +9,13 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
@@ -29,7 +34,7 @@ import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
-
+@Slf4j
 public class ZenTransactionBuilder {
 
   @Setter
@@ -55,7 +60,6 @@ public class ZenTransactionBuilder {
   }
 
   public ZenTransactionBuilder() {
-
   }
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
@@ -67,7 +71,7 @@ public class ZenTransactionBuilder {
       ExpandedSpendingKey expsk,
       Note note,
       byte[] anchor,
-      IncrementalMerkleVoucherContainer voucher) {
+      IncrementalMerkleVoucherContainer voucher) throws ZksnarkException {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
     valueBalance += note.value;
   }
@@ -82,7 +86,8 @@ public class ZenTransactionBuilder {
     valueBalance += note.value;
   }
 
-  public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo) {
+  public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
+      throws ZksnarkException {
     receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
     valueBalance -= value;
   }
@@ -136,10 +141,10 @@ public class ZenTransactionBuilder {
 
       byte[] bindingSig = new byte[64];
       Librustzcash.librustzcashSaplingBindingSig(
-          ctx,
-          valueBalance,
-          dataHashToBeSigned,
-          bindingSig
+          new SaplingBindingSigParams(ctx,
+              valueBalance,
+              dataHashToBeSigned,
+              bindingSig)
       );
       contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
     } catch (ZksnarkException e) {
@@ -147,7 +152,6 @@ public class ZenTransactionBuilder {
     } finally {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
-
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
         .getRawDataBuilder()
         .clearContract()
@@ -160,14 +164,14 @@ public class ZenTransactionBuilder {
     return new TransactionCapsule(transaction);
   }
 
-  public void createSpendAuth(byte[] dataToBeSigned) {
+  public void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          spends.get(i).expsk.getAsk(),
-          spends.get(i).alpha,
-          dataToBeSigned,
-          result);
+          new SaplingSpendSigParams(spends.get(i).expsk.getAsk(),
+              spends.get(i).alpha,
+              dataToBeSigned,
+              result));
       contractBuilder.getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
@@ -190,18 +194,18 @@ public class ZenTransactionBuilder {
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
     if (!Librustzcash.librustzcashSaplingSpendProof(
-        ctx,
-        spend.expsk.fullViewingKey().getAk(),
-        spend.expsk.getNsk(),
-        spend.note.d.getData(),
-        spend.note.r,
-        spend.alpha,
-        spend.note.value,
-        spend.anchor,
-        voucherPath,
-        cv,
-        rk,
-        zkproof)) {
+        new SaplingSpendProofParams(ctx,
+            spend.expsk.fullViewingKey().getAk(),
+            spend.expsk.getNsk(),
+            spend.note.d.getData(),
+            spend.note.r,
+            spend.alpha,
+            spend.note.value,
+            spend.anchor,
+            voucherPath,
+            cv,
+            rk,
+            zkproof))) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Spend proof failed");
     }
@@ -237,14 +241,14 @@ public class ZenTransactionBuilder {
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     if (!Librustzcash.librustzcashSaplingOutputProof(
-        ctx,
-        encryptor.esk,
-        output.getNote().d.data,
-        output.getNote().pkD,
-        output.getNote().r,
-        output.getNote().value,
-        cv,
-        zkProof)) {
+        new SaplingOutputProofParams(ctx,
+            encryptor.esk,
+            output.getNote().d.data,
+            output.getNote().pkD,
+            output.getNote().r,
+            output.getNote().value,
+            cv,
+            zkProof))) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Output proof failed");
     }
@@ -268,7 +272,6 @@ public class ZenTransactionBuilder {
   public static class SpendDescriptionInfo {
 
     public ExpandedSpendingKey expsk;
-
     public Note note;
     public byte[] alpha;
     public byte[] anchor;
@@ -278,7 +281,7 @@ public class ZenTransactionBuilder {
         ExpandedSpendingKey expsk,
         Note note,
         byte[] anchor,
-        IncrementalMerkleVoucherContainer voucher) {
+        IncrementalMerkleVoucherContainer voucher) throws ZksnarkException {
       this.expsk = expsk;
       this.note = note;
       this.anchor = anchor;

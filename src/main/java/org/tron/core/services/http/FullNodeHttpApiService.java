@@ -190,6 +190,10 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetRcmServlet getRcmServlet;
   @Autowired
+  private CreateSpendAuthSigServlet createSpendAuthSigServlet;
+  @Autowired
+  private CreateShieldNullifierServlet createShieldNullifierServlet;
+  @Autowired
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
   @Autowired
   private IsSpendServlet isSpendServlet;
@@ -321,6 +325,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
           "/getmerkletreevoucherinfo");
       context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
+      context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
+      context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
 
       server.start();
     } catch (Exception e) {

@@ -1,6 +1,9 @@
 package org.tron.core.zen.note;
 
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
@@ -12,7 +15,7 @@ public class Note {
   public byte[] pkD; // 256
   public byte[] r; // 256
 
-  public Note(PaymentAddress address, long value) {
+  public Note(PaymentAddress address, long value) throws ZksnarkException {
     this.value = value;
     this.d = address.getD();
     this.pkD = address.getPkD();
@@ -27,46 +30,39 @@ public class Note {
     this.r = r;
   }
 
-  public static byte[] generateR() {
+  public static byte[] generateR() throws ZksnarkException {
     byte[] r = new byte[32];
     Librustzcash.librustzcashSaplingGenerateR(r);
     return r;
   }
 
   // Call librustzcash to compute the commitment
-  public byte[] cm() {
+  public byte[] cm() throws ZksnarkException {
     byte[] result = new byte[32];
-    if (!Librustzcash.librustzcashSaplingComputeCm(d.getData(), pkD, value, r, result)) {
+    if (!Librustzcash.librustzcashSaplingComputeCm(
+        new SaplingComputeCmParams(d.getData(), pkD, value, r, result))) {
       return null;
     }
-
     return result;
   }
 
-  // Call librustzcash to compute the nullifier
-
-  // position 64
-  public byte[] nullifier(FullViewingKey vk, long position) {
+  public byte[] nullifier(FullViewingKey vk, long position) throws ZksnarkException {
     byte[] ak = vk.getAk();
     byte[] nk = vk.getNk();
-
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
-        d.getData(), pkD, value, r, ak, nk, position, result)) {
+        new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
-
     return result;
   }
 
-  public byte[] nullifier(byte[] ak, byte[] nk, long position) {
-
+  public byte[] nullifier(byte[] ak, byte[] nk, long position) throws ZksnarkException {
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashSaplingComputeNf(
-        d.getData(), pkD, value, r, ak, nk, position, result)) {
+        new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
-
     return result;
   }
 }

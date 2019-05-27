@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -56,6 +57,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -88,6 +90,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Contract;
@@ -1846,7 +1849,7 @@ public class RpcApiService implements Service {
 
       try {
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1861,6 +1864,8 @@ public class RpcApiService implements Service {
         responseObserver.onNext(wallet.getAkFromAsk(ak));
       } catch (BadItemException e) {
         responseObserver.onError(e);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
       }
 
       responseObserver.onCompleted();
@@ -1873,6 +1878,8 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.getNkFromNsk(nk));
       } catch (BadItemException e) {
+        responseObserver.onError(e);
+      } catch (ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1887,7 +1894,7 @@ public class RpcApiService implements Service {
 
       try {
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
-      } catch (BadItemException e) {
+      } catch (ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1897,8 +1904,12 @@ public class RpcApiService implements Service {
     @Override
     public void getDiversifier(EmptyMessage request,
         StreamObserver<DiversifierMessage> responseObserver) {
-      DiversifierMessage d = wallet.getDiversifier();
-      responseObserver.onNext(d);
+      try {
+        DiversifierMessage d = wallet.getDiversifier();
+        responseObserver.onNext(d);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
+      }
       responseObserver.onCompleted();
     }
 
@@ -1914,7 +1925,7 @@ public class RpcApiService implements Service {
                 new DiversifierT(d.getD().toByteArray()));
 
         responseObserver.onNext(saplingPaymentAddressMessage);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
 
@@ -1933,7 +1944,7 @@ public class RpcApiService implements Service {
         DecryptNotes decryptNotes = wallet
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
@@ -1951,7 +1962,7 @@ public class RpcApiService implements Service {
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
-      } catch (BadItemException e) {
+      } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
@@ -1961,6 +1972,30 @@ public class RpcApiService implements Service {
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       try {
         responseObserver.onNext(wallet.isSpend(request));
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createShieldNullifier(GrpcAPI.NfParameters request,
+            io.grpc.stub.StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        BytesMessage nf = wallet
+                .createShieldNullifier(request);
+        responseObserver.onNext(nf);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createSpendAuthSig(SpendAuthSigParameters request, StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
+        responseObserver.onNext(spendAuthSig);
       } catch (Exception e) {
         responseObserver.onError(e);
       }

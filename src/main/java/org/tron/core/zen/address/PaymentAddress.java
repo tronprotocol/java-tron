@@ -16,22 +16,17 @@ public class PaymentAddress {
   byte[] pkD; // 256
 
   public byte[] encode() {
-
     byte[] mBytes = new byte[11 + 32];
-
     System.arraycopy(d.getData(), 0, mBytes, 0, 11);
     System.arraycopy(pkD, 0, mBytes, 11, 32);
     return mBytes;
   }
 
   public static PaymentAddress decode(byte[] data) {
-
     DiversifierT d = new DiversifierT();
     byte[] pkD = new byte[32];
     System.arraycopy(data, 0, d.data, 0, 11);
     System.arraycopy(data, 11, pkD, 0, 32);
-
     return new PaymentAddress(d, pkD);
   }
-
 }

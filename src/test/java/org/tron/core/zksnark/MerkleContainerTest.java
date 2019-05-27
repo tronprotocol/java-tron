@@ -14,6 +14,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
@@ -185,7 +186,7 @@ public class MerkleContainerTest {
     return transaction;
   }
 
-  private void initMerkleTreeWitnessInfo() {
+  private void initMerkleTreeWitnessInfo() throws ZksnarkException {
     {
       IncrementalMerkleTreeCapsule tree = new IncrementalMerkleTreeCapsule();
 
@@ -354,7 +355,7 @@ public class MerkleContainerTest {
     int number = 0;
     OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1).
         addOutPoints(outputPoint2).setBlockNum(number).build();
-
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);
@@ -388,7 +389,7 @@ public class MerkleContainerTest {
   }
 
   @Test
-  public void append() {
+  public void append() throws ZksnarkException {
     IncrementalMerkleTreeCapsule tree = new IncrementalMerkleTreeCapsule();
     int b = 255;
 

@@ -101,6 +101,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -847,7 +848,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException {
+      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException {
     block.generatedByMyself = true;
     long start = System.currentTimeMillis();
     pushBlock(block);
@@ -862,7 +863,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, BadBlockException {
+      VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -879,7 +880,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, BadBlockException {
+      VMIllegalException, ZksnarkException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -927,6 +928,7 @@ public class Manager {
             | TooBigTransactionResultException
             | ValidateScheduleException
             | VMIllegalException
+            | ZksnarkException
             | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
@@ -960,7 +962,8 @@ public class Manager {
                   | DupTransactionException
                   | TransactionExpirationException
                   | TooBigTransactionException
-                  | ValidateScheduleException e) {
+                  | ValidateScheduleException
+                  | ZksnarkException e) {
                 logger.warn(e.getMessage(), e);
               }
             }
@@ -978,7 +981,7 @@ public class Manager {
       UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
-      ReceiptCheckErrException, VMIllegalException {
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException {
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1297,7 +1300,8 @@ public class Manager {
     return this.blockIndexStore.get(num);
   }
 
-  public BlockCapsule getBlockByNum(final long num) throws ItemNotFoundException, BadItemException {
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
     return getBlockById(getBlockIdByNum(num));
   }
 
@@ -1316,8 +1320,9 @@ public class Manager {
       logger.info("It's not my turn, "
           + "and the first block after the maintenance period has just been processed.");
 
-      logger.info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
-          when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
+      logger
+          .info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
+              when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
 
       return null;
     }
@@ -1473,6 +1478,8 @@ public class Manager {
       logger.warn(e.getMessage(), e);
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
+    } catch (ZksnarkException e) {
+      logger.info("zk error!", e.getMessage());
     }
 
     return null;
@@ -1510,7 +1517,6 @@ public class Manager {
     return this.blockStore;
   }
 
-
   /**
    * process block.
    */
@@ -1518,7 +1524,7 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, BadBlockException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
@@ -1576,7 +1582,6 @@ public class Manager {
     updateRecentBlock(block);
     updateDynamicProperties(block);
   }
-
 
   private void updateTransHashCache(BlockCapsule block) {
     for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1976,7 +1981,8 @@ public class Manager {
         contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
-          logger.info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
+          logger
+              .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());
         }
       }
     }

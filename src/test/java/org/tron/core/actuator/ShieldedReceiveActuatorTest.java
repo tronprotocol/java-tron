@@ -21,6 +21,9 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -186,7 +189,8 @@ public class ShieldedReceiveActuatorTest {
     return org.tron.keystore.Wallet.generateRandomBytes(580);
   }
 
-  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
+      throws ZksnarkException {
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
@@ -639,14 +643,14 @@ public class ShieldedReceiveActuatorTest {
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     if (!Librustzcash.librustzcashSaplingOutputProof(
-        ctx,
-        encryptor.esk,
-        output.getNote().d.data,
-        output.getNote().pkD,
-        output.getNote().r,
-        output.getNote().value,
-        cv,
-        zkProof)) {
+        new SaplingOutputProofParams(ctx,
+            encryptor.esk,
+            output.getNote().d.data,
+            output.getNote().pkD,
+            output.getNote().r,
+            output.getNote().value,
+            cv,
+            zkProof))) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Output proof failed");
     }
@@ -757,10 +761,10 @@ public class ShieldedReceiveActuatorTest {
 
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
-        ctx,
-        builder.getValueBalance(),
-        dataToBeSigned,
-        bindingSig
+        new SaplingBindingSigParams(ctx,
+            builder.getValueBalance(),
+            dataToBeSigned,
+            bindingSig)
     );
     contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -1276,7 +1280,7 @@ public class ShieldedReceiveActuatorTest {
   test if random DiversifierT is valid.
  */
   @Test
-  public void testDiversifierT() {
+  public void testDiversifierT() throws ZksnarkException {
     //byte[] data = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
     byte[] data1 = ByteArray.fromHexString("93c9e5679850252b37a991");
     byte[] data2 = ByteArray.fromHexString("c50124c6a9a2e1700fc0b5");
@@ -1436,15 +1440,15 @@ public class ShieldedReceiveActuatorTest {
   }
 
   private TransactionCapsule generateTransactionCapsule(ZenTransactionBuilder builder, Pointer ctx,
-      byte[] hashOfTransaction, TransactionCapsule transactionCapsule) {
+      byte[] hashOfTransaction, TransactionCapsule transactionCapsule) throws ZksnarkException {
     // Create Sapling spendAuth
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          builder.getSpends().get(i).expsk.getAsk(),
-          builder.getSpends().get(i).alpha,
-          hashOfTransaction,
-          result);
+          new SaplingSpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
+              builder.getSpends().get(i).alpha,
+              hashOfTransaction,
+              result));
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
@@ -1452,10 +1456,10 @@ public class ShieldedReceiveActuatorTest {
     //create binding signatures
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
-        ctx,
-        builder.getValueBalance(),
-        hashOfTransaction,
-        bindingSig
+        new SaplingBindingSigParams(ctx,
+            builder.getValueBalance(),
+            hashOfTransaction,
+            bindingSig)
     );
     builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
 
@@ -1836,10 +1840,10 @@ public class ShieldedReceiveActuatorTest {
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          builder.getSpends().get(i).expsk.getAsk(),
-          Note.generateR(), //builder.getSpends().get(i).alpha,
-          hashOfTransaction,
-          result);
+          new SaplingSpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
+              Note.generateR(), //builder.getSpends().get(i).alpha,
+              hashOfTransaction,
+              result));
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
@@ -1847,10 +1851,10 @@ public class ShieldedReceiveActuatorTest {
     //create binding signatures
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
-        ctx,
-        builder.getValueBalance(),
-        hashOfTransaction,
-        bindingSig
+        new SaplingBindingSigParams(ctx,
+            builder.getValueBalance(),
+            hashOfTransaction,
+            bindingSig)
     );
     builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
 

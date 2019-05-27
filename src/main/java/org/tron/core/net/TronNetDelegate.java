@@ -40,6 +40,7 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
@@ -190,7 +191,8 @@ public class TronNetDelegate {
           | BadBlockException
           | NonCommonBlockException
           | ReceiptCheckErrException
-          | VMIllegalException e) {
+          | VMIllegalException
+          | ZksnarkException e) {
         throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }

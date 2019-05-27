@@ -1,10 +1,6 @@
 package org.tron.core.zen.merkle;
 
 import com.google.common.collect.Lists;
-import lombok.extern.slf4j.Slf4j;
-import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.Contract.PedersenHash;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -13,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
 
 @Slf4j
@@ -30,7 +27,7 @@ public class IncrementalMerkleTreeContainer {
     return treeCapsule;
   }
 
-  public void wfcheck() throws ZksnarkException{
+  public void wfcheck() throws ZksnarkException {
     if (treeCapsule.getParents().size() >= DEPTH) {
       throw new ZksnarkException("tree has too many parents");
     }
@@ -54,7 +51,6 @@ public class IncrementalMerkleTreeContainer {
   }
 
   public PedersenHash last() {
-
     if (rightIsPresent()) {
       return treeCapsule.getRight();
     } else if (leftIsPresent()) {
@@ -64,9 +60,7 @@ public class IncrementalMerkleTreeContainer {
     }
   }
 
-
   public int size() {
-
     int ret = 0;
     if (leftIsPresent()) {
       ret++;
@@ -86,14 +80,11 @@ public class IncrementalMerkleTreeContainer {
 
   /**
    * append PedersenHash to the merkletree.
-   * @param obj
    */
-  public void append(PedersenHash obj) {
-
+  public void append(PedersenHash obj) throws ZksnarkException {
     if (isComplete(DEPTH)) {
       throw new RuntimeException("tree is full");
     }
-
     if (!leftIsPresent()) {
       treeCapsule.setLeft(obj);
     } else if (!rightIsPresent()) {
@@ -101,10 +92,8 @@ public class IncrementalMerkleTreeContainer {
     } else {
       PedersenHashCapsule combined =
           PedersenHashCapsule.combine(treeCapsule.getLeft(), treeCapsule.getRight(), 0);
-
       treeCapsule.setLeft(obj);
       treeCapsule.clearRight();
-
       for (int i = 0; i < DEPTH; i++) {
         if (i < treeCapsule.getParents().size()) {
           PedersenHashCapsule parentCompressCapsule =
@@ -131,32 +120,25 @@ public class IncrementalMerkleTreeContainer {
   }
 
   public boolean isComplete(long depth) {
-
     if (!leftIsPresent() || !rightIsPresent()) {
       return false;
     }
-
     if (treeCapsule.getParents().size() != (depth - 1)) {
       return false;
     }
-
     for (PedersenHash parent : treeCapsule.getParents()) {
       PedersenHashCapsule parentCompressCapsule = new PedersenHashCapsule(parent);
       if (!parentCompressCapsule.isPresent()) {
         return false;
       }
     }
-
     return true;
   }
 
   /**
    * get the depth of the skip exist element.
-   * @param skip
-   * @return
    */
   public int nextDepth(int skip) {
-
     if (!leftIsPresent()) {
       if (skip != 0) {
         skip--;
@@ -164,7 +146,6 @@ public class IncrementalMerkleTreeContainer {
         return 0;
       }
     }
-
     if (!rightIsPresent()) {
       if (skip != 0) {
         skip--;
@@ -172,9 +153,7 @@ public class IncrementalMerkleTreeContainer {
         return 0;
       }
     }
-
     int d = 1;
-
     for (PedersenHash parent : treeCapsule.getParents()) {
       PedersenHashCapsule parentCompressCapsule = new PedersenHashCapsule(parent);
       if (!parentCompressCapsule.isPresent()) {
@@ -184,60 +163,48 @@ public class IncrementalMerkleTreeContainer {
           return d;
         }
       }
-
       d++;
     }
     return d + skip;
   }
 
-  public PedersenHash root() {
+  public PedersenHash root() throws ZksnarkException {
     return root(DEPTH, new ArrayDeque<PedersenHash>());
   }
 
-  public PedersenHash root(long depth) {
+  public PedersenHash root(long depth) throws ZksnarkException {
     Deque<PedersenHash> fillerHashes = new ArrayDeque<PedersenHash>();
     return root(depth, fillerHashes);
   }
 
   /**
-   * merge treeCapsule and fillerHashes to construct root path. if not present, use fillerHashes instead.
-   * if depth of treeCapsule < depth, use fillerHashes instead.
-   * @param depth
-   * @param fillerHashes
+   * merge treeCapsule and fillerHashes to construct root path. if not present, use fillerHashes
+   * instead. if depth of treeCapsule < depth, use fillerHashes instead.
+   *
    * @return root of merged tree
    */
-  public PedersenHash root(long depth, Deque<PedersenHash> fillerHashes) {
-
+  public PedersenHash root(long depth, Deque<PedersenHash> fillerHashes) throws ZksnarkException {
     PathFiller filler = new PathFiller(fillerHashes);
-
     PedersenHash combineLeft = leftIsPresent() ? treeCapsule.getLeft() : filler.next(0);
     PedersenHash combineRight = rightIsPresent() ? treeCapsule.getRight() : filler.next(0);
-
     PedersenHashCapsule root = PedersenHashCapsule.combine(combineLeft, combineRight, 0);
 
     int d = 1;
-
     for (PedersenHash parent : treeCapsule.getParents()) {
-
       PedersenHashCapsule parentCompressCapsule = new PedersenHashCapsule(parent);
       if (parentCompressCapsule.isPresent()) {
-
         root = PedersenHashCapsule.combine(parent, root.getInstance(), d);
       } else {
         PedersenHash next = filler.next(d);
-
         root = PedersenHashCapsule.combine(root.getInstance(), next, d);
       }
       d++;
     }
 
     while (d < depth) {
-
       PedersenHash left = root.getInstance();
       PedersenHash right = filler.next(d);
-
       PedersenHashCapsule result = PedersenHashCapsule.combine(left, right, d);
-
       root = result;
       d++;
     }
@@ -251,22 +218,19 @@ public class IncrementalMerkleTreeContainer {
   }
 
   /**
-   * construct whole path from bottom right to root. if not present in treeCapsule, choose fillerHashes
-   * @param fillerHashes
+   * construct whole path from bottom right to root. if not present in treeCapsule, choose
+   * fillerHashes
+   *
    * @return list of PedersenHash, list of existence, reversed.
    */
   public MerklePath path(Deque<PedersenHash> fillerHashes) {
-
     if (!leftIsPresent()) {
       throw new RuntimeException(
           "can't create an authentication path for the beginning of the tree");
     }
-
     PathFiller filler = new PathFiller(fillerHashes);
-
     List<PedersenHash> path = new ArrayList<>();
     List<Boolean> index = new ArrayList<>();
-
     if (rightIsPresent()) {
       index.add(true);
       path.add(treeCapsule.getLeft());
@@ -276,7 +240,6 @@ public class IncrementalMerkleTreeContainer {
     }
 
     int d = 1;
-
     for (PedersenHash parent : treeCapsule.getParents()) {
       PedersenHashCapsule parentCompressCapsule = new PedersenHashCapsule(parent);
       if (parentCompressCapsule.isPresent()) {
@@ -286,7 +249,6 @@ public class IncrementalMerkleTreeContainer {
         index.add(false);
         path.add(filler.next(d));
       }
-
       d++;
     }
 
@@ -297,21 +259,19 @@ public class IncrementalMerkleTreeContainer {
     }
 
     List<List<Boolean>> merklePath = new ArrayList<>();
-
     for (PedersenHash b : path) {
       merklePath.add(ByteUtil.convertBytesVectorToVector(b.getContent().toByteArray()));
     }
     merklePath = Lists.reverse(merklePath);
     index = Lists.reverse(index);
-
     return new MerklePath(merklePath, index);
   }
 
-  public byte[] getMerkleTreeKey() {
+  public byte[] getMerkleTreeKey() throws ZksnarkException {
     return getRootArray();
   }
 
-  public byte[] getRootArray() {
+  public byte[] getRootArray() throws ZksnarkException {
     return root().getContent().toByteArray();
   }
 
@@ -351,15 +311,17 @@ public class IncrementalMerkleTreeContainer {
   public static class EmptyMerkleRoots {
 
     public static EmptyMerkleRoots emptyMerkleRootsInstance = new EmptyMerkleRoots();
-
     private List<PedersenHashCapsule> emptyRoots = new ArrayList<>();
 
     public EmptyMerkleRoots() {
-      emptyRoots.add(PedersenHashCapsule.uncommitted());
-      for (int d = 1; d <= DEPTH; d++) {
-        emptyRoots.add(
-            PedersenHashCapsule.combine(
-                emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
+      try {
+        emptyRoots.add(PedersenHashCapsule.uncommitted());
+        for (int d = 1; d <= DEPTH; d++) {
+          emptyRoots.add(PedersenHashCapsule.combine(
+              emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
+        }
+      } catch (ZksnarkException e) {
+        logger.error("generate EmptyMerkleRoots error!", e);
       }
     }
 

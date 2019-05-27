@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.ProtoCapsule;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucher;
 import org.tron.protos.Contract.OutputPoint;
@@ -68,7 +69,7 @@ public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<Incremental
     this.voucher = this.voucher.toBuilder().setCursorDepth(cursorDepth).build();
   }
 
-  public void resetRt() {
+  public void resetRt() throws ZksnarkException {
     this.voucher =
         this.voucher.toBuilder().setRt(toMerkleVoucherContainer().root().getContent()).build();
   }

@@ -9,22 +9,14 @@ import org.tron.common.utils.ByteArray;
 public class MerklePath {
 
   @Getter
-  List<List<Boolean>> authenticationPath;
+  private List<List<Boolean>> authenticationPath;
 
   @Getter
-  List<Boolean> index;
+  private List<Boolean> index;
 
   public MerklePath(List<List<Boolean>> authenticationPath, List<Boolean> index) {
     this.authenticationPath = authenticationPath;
     this.index = index;
-  }
-
-  public List<List<Boolean>> getAuthenticationPath() {
-    return this.authenticationPath;
-  }
-
-  public List<Boolean> getIndex() {
-    return this.index;
   }
 
   public byte[] encode() {
@@ -50,9 +42,7 @@ public class MerklePath {
     indexLong = convertVectorToLong(index);
     byte[] indexBytes = ByteArray.fromLong(indexLong);
     ZksnarkUtils.sort(indexBytes);
-
     byte[] pathByteArray = ListList2Bytes(pathByteList);
-
     byte[] result = new byte[pathByteArray.length + 8];
     System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);
     System.arraycopy(indexBytes, 0, result,
@@ -63,7 +53,6 @@ public class MerklePath {
   private static byte[] ListList2Bytes(List<List<Byte>> v) {
     List<byte[]> resultList = Lists.newArrayList();
     resultList.add(WriteCompactSize(v.size()));
-
     for (List<Byte> list : v) {
       resultList.add(WriteCompactSize(list.size()));
       for (Byte b : list) {
@@ -71,7 +60,6 @@ public class MerklePath {
         resultList.add(bytes);
       }
     }
-
     int sum = resultList.stream().mapToInt(bytes -> bytes.length).sum();
     byte[] resultBytes = new byte[sum];
     int index = 0;
@@ -107,14 +95,12 @@ public class MerklePath {
     if (v.size() > 64) {
       throw new RuntimeException("boolean vector can't be larger than 64 bits");
     }
-
     long result = 0;
     for (int i = 0; i < v.size(); i++) {
       if (v.get(i)) {
         result |= (long) 1 << ((v.size() - 1) - i);
       }
     }
-
     return result;
   }
 }
