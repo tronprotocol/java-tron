@@ -154,7 +154,7 @@ public class ZenTransactionBuilder {
           .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
 
       if (dataHashToBeSigned == null) {
-        throw new ZksnarkException("sign transaction failed");
+        throw new ZksnarkException("cal transaction hash failed");
       }
 
       // Create Sapling spendAuth and binding signatures
