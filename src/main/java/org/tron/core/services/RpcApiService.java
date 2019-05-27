@@ -46,6 +46,7 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -56,6 +57,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -1970,6 +1972,30 @@ public class RpcApiService implements Service {
     public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
       try {
         responseObserver.onNext(wallet.isSpend(request));
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createShieldNullifier(GrpcAPI.NfParameters request,
+            io.grpc.stub.StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        BytesMessage nf = wallet
+                .createShieldNullifier(request);
+        responseObserver.onNext(nf);
+      } catch (ZksnarkException e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createSpendAuthSig(SpendAuthSigParameters request, StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
+        responseObserver.onNext(spendAuthSig);
       } catch (Exception e) {
         responseObserver.onError(e);
       }
