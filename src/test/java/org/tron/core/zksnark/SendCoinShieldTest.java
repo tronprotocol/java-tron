@@ -150,7 +150,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void testPathMock() throws ZksnarkException{
+  public void testPathMock() throws ZksnarkException {
     List<List<Boolean>> authenticationPath = Lists.newArrayList();
     Boolean[] authenticationArray = {true, false, true, false, true, false};
     for (int i = 0; i < 6; i++) {
@@ -507,7 +507,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     SpendingKey sk = SpendingKey
@@ -591,7 +591,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     SpendingKey sk = SpendingKey
@@ -792,6 +792,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
@@ -2140,6 +2141,4 @@ public class SendCoinShieldTest {
       }
     }
   }
-
-
 }
