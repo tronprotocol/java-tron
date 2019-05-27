@@ -1180,13 +1180,14 @@ message PrivateParameters {
 
 message PrivateParametersWithoutAsk {
   bytes transparent_from_address = 1;
-  bytes nsk = 2;
-  bytes ovk = 3;
-  int64 from_amount = 4;
-  repeated SpendNote shieldedSpends = 5;
-  repeated ReceiveNote shieldedReceives = 6;
-  bytes transparent_to_address = 7;
-  int64 to_amount = 8;
+  bytes ak = 2;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  int64 from_amount = 5;
+  repeated SpendNote shieldedSpends = 6;
+  repeated ReceiveNote shieldedReceives = 7;
+  bytes transparent_to_address = 8;
+  int64 to_amount = 9;
 }
 
 message SpendAuthSigParameters {

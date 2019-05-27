@@ -39,12 +39,6 @@ public class ExpandedSpendingKey {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
 
-    logger.debug("espsk.ask is : " + ByteUtil.toHexString(ask));
-    logger.debug("espsk.nsk is : " + ByteUtil.toHexString(nsk));
-    logger.debug("espsk.ovk is : " + ByteUtil.toHexString(ovk));
-
-    logger.debug("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
-    logger.debug("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
     return new FullViewingKey(ak, nk, ovk);
   }
 

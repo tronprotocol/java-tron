@@ -64,6 +64,7 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
@@ -1713,9 +1714,9 @@ public class Wallet {
   }
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
-      throws ContractValidateException, RuntimeException {
+      throws ContractValidateException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
-      throw new RuntimeException("ShieldedTransactionApi is not allowed");
+      throw new ZksnarkException("createshieldedtransaction is not allowed");
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -1723,16 +1724,6 @@ public class Wallet {
     byte[] ask = request.getAsk().toByteArray();
     byte[] nsk = request.getNsk().toByteArray();
     byte[] ovk = request.getOvk().toByteArray();
-
-    if (!ArrayUtils.isEmpty(ask) && ask.length != 32) {
-      throw new ContractValidateException("byte length of ask should be 32");
-    }
-    if (!ArrayUtils.isEmpty(nsk) && nsk.length != 32) {
-      throw new ContractValidateException("byte length of nsk should be 32");
-    }
-    if (!ArrayUtils.isEmpty(ovk) && ovk.length != 32) {
-      throw new ContractValidateException("byte length of ovk should be 32");
-    }
 
     if (ArrayUtils.isEmpty(transparentFromAddress) && (ArrayUtils.isEmpty(ask) || ArrayUtils
         .isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
@@ -1809,6 +1800,95 @@ public class Wallet {
 
   }
 
+  public TransactionCapsule createShieldedTransactionWithoutSpendAuthSig(
+      PrivateParametersWithoutAsk request)
+      throws ContractValidateException, ZksnarkException {
+    if (!getAllowShieldedTransactionApi()) {
+      throw new ZksnarkException("createshieldedtransactionwithoutspendauthsig is not allowed");
+    }
+
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
+
+    byte[] transparentFromAddress = request.getTransparentFromAddress().toByteArray();
+    byte[] ak = request.getAk().toByteArray();
+    byte[] nsk = request.getNsk().toByteArray();
+    byte[] ovk = request.getOvk().toByteArray();
+
+    if (ArrayUtils.isEmpty(transparentFromAddress) && (ArrayUtils.isEmpty(ak) || ArrayUtils
+        .isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+      throw new ContractValidateException("No input address");
+    }
+
+    long fromAmount = request.getFromAmount();
+    if (!ArrayUtils.isEmpty(transparentFromAddress) && fromAmount <= 0) {
+      throw new ContractValidateException("Input amount must > 0");
+    }
+
+    List<SpendNote> shieldedSpends = request.getShieldedSpendsList();
+    if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))
+        && shieldedSpends.isEmpty()) {
+      throw new ContractValidateException("No input note");
+    }
+
+    List<ReceiveNote> shieldedReceives = request.getShieldedReceivesList();
+    byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
+    if (shieldedReceives.isEmpty() && ArrayUtils.isEmpty(transparentToAddress)) {
+      throw new ContractValidateException("No output address");
+    }
+
+    long toAmount = request.getToAmount();
+    if (!ArrayUtils.isEmpty(transparentToAddress) && toAmount <= 0) {
+      throw new ContractValidateException("Output amount must > 0");
+    }
+
+    // add
+    if (!ArrayUtils.isEmpty(transparentFromAddress)) {
+      builder.setTransparentInput(transparentFromAddress, fromAmount);
+    }
+
+    if (!ArrayUtils.isEmpty(transparentToAddress)) {
+      builder.setTransparentOutput(transparentToAddress, toAmount);
+    }
+
+    // sapling input
+    if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
+      for (SpendNote spendNote : shieldedSpends) {
+        GrpcAPI.Note note = spendNote.getNote();
+        Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
+            note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
+
+        IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
+            spendNote.getVoucher()).toMerkleVoucherContainer();
+        builder.addSpend(ak,
+            nsk,
+            ovk,
+            baseNote,
+            spendNote.getAlpha().toByteArray(),
+            spendNote.getVoucher().getRt().toByteArray(),
+            voucherContainer);
+      }
+    }
+
+    // sapling output
+    for (ReceiveNote receiveNote : shieldedReceives) {
+      DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
+      builder.addOutput(ovk,
+          diversifierT,
+          receiveNote.getNote().getPkD().toByteArray(),
+          receiveNote.getNote().getValue(),
+          receiveNote.getNote().getRcm().toByteArray(),
+          new byte[512]);
+    }
+
+    TransactionCapsule transactionCapsule = null;
+    try {
+      transactionCapsule = builder.buildWithoutAsk();
+    } catch (ZksnarkException e) {
+      logger.error("createShieldedTransaction except, error is " + e.toString());
+    }
+    return transactionCapsule;
+
+  }
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {

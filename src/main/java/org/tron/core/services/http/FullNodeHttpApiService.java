@@ -168,6 +168,10 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
   @Autowired
+  private SetAccountIdServlet setAccountServlet;
+  @Autowired
+  private GetAccountByIdServlet getAccountByIdServlet;
+  @Autowired
   private GetExpandedSpendingKeyServlet getExpandedSpendingKeyServlet;
   @Autowired
   private GetAkFromAskServlet getAkFromAskServlet;
@@ -197,9 +201,8 @@ public class FullNodeHttpApiService implements Service {
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
   @Autowired
   private IsSpendServlet isSpendServlet;
-  private SetAccountIdServlet setAccountServlet;
   @Autowired
-  private GetAccountByIdServlet getAccountByIdServlet;
+  private CreateShieldedTransactionWithoutSpendAuthSigServlet createShieldedTransactionWithoutSpendAuthSigServlet;
 
   @Override
   public void init() {
@@ -319,6 +322,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getZenPaymentAddressServlet), "/getzenpaymentaddress");
       context.addServlet(new ServletHolder(createShieldedTransactionServlet),
           "/createshieldedtransaction");
+      context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
+          "/createshieldedtransactionwithoutspendauthsig");
       context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
