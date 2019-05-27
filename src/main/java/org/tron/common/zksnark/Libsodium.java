@@ -8,7 +8,6 @@ import com.sun.jna.Structure;
 public class Libsodium {
 
   private static ILibsodium INSTANCE;
-
   public static final int crypto_generichash_blake2b_PERSONALBYTES = 16;
   public static final int crypto_aead_chacha20poly1305_ietf_NPUBBYTES = 12;
   public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
@@ -17,7 +16,6 @@ public class Libsodium {
     INSTANCE = (ILibsodium) Native
         .loadLibrary(Librustzcash.getLibraryByName("libsodium"), ILibsodium.class);
   }
-
 
   public interface ILibsodium extends Library {
 
@@ -112,5 +110,4 @@ public class Libsodium {
     return INSTANCE
         .crypto_aead_chacha20poly1305_ietf_encrypt(c, clen_p, m, mlen, ad, adlen, nsec, npub, k);
   }
-
 }

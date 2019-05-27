@@ -674,6 +674,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       case AccountPermissionUpdateContract:
         clazz = AccountPermissionUpdateContract.class;
         break;
+      case ShieldedTransferContract:
+        clazz = ShieldedTransferContract.class;
+        break;
       // todo add other contract
       default:
         break;
