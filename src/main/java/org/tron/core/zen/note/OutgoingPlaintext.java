@@ -18,7 +18,7 @@ public class OutgoingPlaintext {
   public byte[] esk;
 
   public static Optional<OutgoingPlaintext> decrypt(OutCiphertext ciphertext, byte[] ovk,
-      byte[] cv, byte[] cm, byte[] epk) {
+      byte[] cv, byte[] cm, byte[] epk) throws ZksnarkException{
     Optional<OutPlaintext> pt = Encryption
         .AttemptOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt.isPresent()) {
@@ -28,7 +28,8 @@ public class OutgoingPlaintext {
     return Optional.of(ret);
   }
 
-  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc) {
+  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc)
+      throws ZksnarkException{
     OutPlaintext pt = this.encode();
     return enc.encryptToOurselves(ovk, cv, cm, pt);
   }

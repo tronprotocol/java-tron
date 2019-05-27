@@ -84,7 +84,7 @@ public class MerkleContainer {
     this.manager.getMerkleTreeStore().put(key, capsule);
   }
 
-  public MerklePath merklePath(byte[] rt) {
+  public MerklePath merklePath(byte[] rt) throws ZksnarkException{
     if (!merkleRootExist(rt)) {
       return null;
     }

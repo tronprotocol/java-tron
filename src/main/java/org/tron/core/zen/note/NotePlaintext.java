@@ -140,12 +140,12 @@ public class NotePlaintext {
     return ret;
   }
 
-  public static NotePlaintext decode(Encryption.EncPlaintext encPlaintext) {
+  public static NotePlaintext decode(Encryption.EncPlaintext encPlaintext) throws ZksnarkException{
     byte[] data = encPlaintext.data;
     byte[] valueLong = new byte[ZC_V_SIZE];
     ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
     if (encPlaintext.data[0] != 0x01) {
-      throw new RuntimeException("lead byte of SaplingNotePlaintext is not recognized");
+      throw new ZksnarkException("lead byte of SaplingNotePlaintext is not recognized");
     }
     NotePlaintext ret = new NotePlaintext();
     System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING, ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);

@@ -50,7 +50,7 @@ public class IncrementalMerkleVoucherContainer {
               .nextDepth(voucherCapsule.getFilled().size());
       voucherCapsule.setCursorDepth(nextDepth);
       if (nextDepth >= DEPTH) {
-        throw new RuntimeException("tree is full");
+        throw new ZksnarkException("tree is full");
       }
       if (nextDepth == 0) {
         voucherCapsule.addFilled(obj);
@@ -70,7 +70,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule.getTree().toMerkleTreeContainer().path(partialPath());
   }
 
-  public PedersenHash element() {
+  public PedersenHash element() throws ZksnarkException{
     return voucherCapsule.getTree().toMerkleTreeContainer().last();
   }
 

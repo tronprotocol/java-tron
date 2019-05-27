@@ -50,13 +50,13 @@ public class IncrementalMerkleTreeContainer {
     }
   }
 
-  public PedersenHash last() {
+  public PedersenHash last() throws ZksnarkException{
     if (rightIsPresent()) {
       return treeCapsule.getRight();
     } else if (leftIsPresent()) {
       return treeCapsule.getLeft();
     } else {
-      throw new RuntimeException("tree has no cursor");
+      throw new ZksnarkException("tree has no cursor");
     }
   }
 
@@ -83,7 +83,7 @@ public class IncrementalMerkleTreeContainer {
    */
   public void append(PedersenHash obj) throws ZksnarkException {
     if (isComplete(DEPTH)) {
-      throw new RuntimeException("tree is full");
+      throw new ZksnarkException("tree is full");
     }
     if (!leftIsPresent()) {
       treeCapsule.setLeft(obj);
@@ -212,7 +212,7 @@ public class IncrementalMerkleTreeContainer {
     return root.getInstance();
   }
 
-  public MerklePath path() {
+  public MerklePath path() throws ZksnarkException{
     Deque<PedersenHash> fillerHashes = new ArrayDeque<>();
     return path(fillerHashes);
   }
@@ -223,9 +223,9 @@ public class IncrementalMerkleTreeContainer {
    *
    * @return list of PedersenHash, list of existence, reversed.
    */
-  public MerklePath path(Deque<PedersenHash> fillerHashes) {
+  public MerklePath path(Deque<PedersenHash> fillerHashes) throws ZksnarkException{
     if (!leftIsPresent()) {
-      throw new RuntimeException(
+      throw new ZksnarkException(
           "can't create an authentication path for the beginning of the tree");
     }
     PathFiller filler = new PathFiller(fillerHashes);

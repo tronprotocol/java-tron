@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Getter;
 import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.exception.ZksnarkException;
 
 public class MerklePath {
 
@@ -19,7 +20,7 @@ public class MerklePath {
     this.index = index;
   }
 
-  public byte[] encode() {
+  public byte[] encode() throws ZksnarkException{
     assert (authenticationPath.size() == index.size());
     List<List<Byte>> pathByteList = Lists.newArrayList();
     long indexLong; // 64
@@ -91,9 +92,9 @@ public class MerklePath {
     return result;
   }
 
-  private static long convertVectorToLong(List<Boolean> v) {
+  private static long convertVectorToLong(List<Boolean> v) throws ZksnarkException{
     if (v.size() > 64) {
-      throw new RuntimeException("boolean vector can't be larger than 64 bits");
+      throw new ZksnarkException("boolean vector can't be larger than 64 bits");
     }
     long result = 0;
     for (int i = 0; i < v.size(); i++) {
