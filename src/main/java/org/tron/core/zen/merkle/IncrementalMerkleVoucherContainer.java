@@ -70,7 +70,7 @@ public class IncrementalMerkleVoucherContainer {
     return voucherCapsule.getTree().toMerkleTreeContainer().path(partialPath());
   }
 
-  public PedersenHash element() throws ZksnarkException{
+  public PedersenHash element() throws ZksnarkException {
     return voucherCapsule.getTree().toMerkleTreeContainer().last();
   }
 

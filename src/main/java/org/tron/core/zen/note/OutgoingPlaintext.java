@@ -18,7 +18,7 @@ public class OutgoingPlaintext {
   public byte[] esk;
 
   public static Optional<OutgoingPlaintext> decrypt(OutCiphertext ciphertext, byte[] ovk,
-      byte[] cv, byte[] cm, byte[] epk) throws ZksnarkException{
+      byte[] cv, byte[] cm, byte[] epk) throws ZksnarkException {
     Optional<OutPlaintext> pt = Encryption
         .AttemptOutDecryption(ciphertext, ovk, cv, cm, epk);
     if (!pt.isPresent()) {
@@ -26,20 +26,6 @@ public class OutgoingPlaintext {
     }
     OutgoingPlaintext ret = OutgoingPlaintext.decode(pt.get());
     return Optional.of(ret);
-  }
-
-  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc)
-      throws ZksnarkException{
-    OutPlaintext pt = this.encode();
-    return enc.encryptToOurselves(ovk, cv, cm, pt);
-  }
-
-  private OutPlaintext encode() {
-    OutPlaintext ret = new OutPlaintext();
-    ret.data = new byte[ZC_OUTPLAINTEXT_SIZE];
-    System.arraycopy(pk_d, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
-    System.arraycopy(esk, 0, ret.data, ZC_JUBJUB_SCALAR_SIZE, ZC_JUBJUB_POINT_SIZE);
-    return ret;
   }
 
   private static OutgoingPlaintext decode(OutPlaintext outPlaintext) {
@@ -147,5 +133,19 @@ public class OutgoingPlaintext {
     System.out.println();
 
     return;
+  }
+
+  public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc)
+      throws ZksnarkException {
+    OutPlaintext pt = this.encode();
+    return enc.encryptToOurselves(ovk, cv, cm, pt);
+  }
+
+  private OutPlaintext encode() {
+    OutPlaintext ret = new OutPlaintext();
+    ret.data = new byte[ZC_OUTPLAINTEXT_SIZE];
+    System.arraycopy(pk_d, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
+    System.arraycopy(esk, 0, ret.data, ZC_JUBJUB_SCALAR_SIZE, ZC_JUBJUB_POINT_SIZE);
+    return ret;
   }
 }

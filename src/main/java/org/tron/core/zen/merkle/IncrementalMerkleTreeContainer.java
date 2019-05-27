@@ -23,6 +23,10 @@ public class IncrementalMerkleTreeContainer {
     this.treeCapsule = treeCapsule;
   }
 
+  public static PedersenHash emptyRoot() {
+    return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(DEPTH);
+  }
+
   public IncrementalMerkleTreeCapsule getTreeCapsule() {
     return treeCapsule;
   }
@@ -50,7 +54,7 @@ public class IncrementalMerkleTreeContainer {
     }
   }
 
-  public PedersenHash last() throws ZksnarkException{
+  public PedersenHash last() throws ZksnarkException {
     if (rightIsPresent()) {
       return treeCapsule.getRight();
     } else if (leftIsPresent()) {
@@ -212,7 +216,7 @@ public class IncrementalMerkleTreeContainer {
     return root.getInstance();
   }
 
-  public MerklePath path() throws ZksnarkException{
+  public MerklePath path() throws ZksnarkException {
     Deque<PedersenHash> fillerHashes = new ArrayDeque<>();
     return path(fillerHashes);
   }
@@ -223,7 +227,7 @@ public class IncrementalMerkleTreeContainer {
    *
    * @return list of PedersenHash, list of existence, reversed.
    */
-  public MerklePath path(Deque<PedersenHash> fillerHashes) throws ZksnarkException{
+  public MerklePath path(Deque<PedersenHash> fillerHashes) throws ZksnarkException {
     if (!leftIsPresent()) {
       throw new ZksnarkException(
           "can't create an authentication path for the beginning of the tree");
@@ -277,10 +281,6 @@ public class IncrementalMerkleTreeContainer {
 
   public IncrementalMerkleVoucherContainer toVoucher() {
     return new IncrementalMerkleVoucherContainer(this);
-  }
-
-  public static PedersenHash emptyRoot() {
-    return EmptyMerkleRoots.emptyMerkleRootsInstance.emptyRoot(DEPTH);
   }
 
   private boolean leftIsPresent() {

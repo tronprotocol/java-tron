@@ -12,6 +12,8 @@ import org.tron.core.exception.ZksnarkException;
 @Slf4j
 public class MerkleContainer {
 
+  public static byte[] lastTreeKey = "LAST_TREE".getBytes();
+  public static byte[] currentTreeKey = "CURRENT_TREE".getBytes();
   @Setter
   @Getter
   private Manager manager;
@@ -22,15 +24,16 @@ public class MerkleContainer {
     return instance;
   }
 
-  public static byte[] lastTreeKey = "LAST_TREE".getBytes();
-  public static byte[] currentTreeKey = "CURRENT_TREE".getBytes();
-
   public IncrementalMerkleTreeContainer getCurrentMerkle() {
     IncrementalMerkleTreeCapsule capsule = manager.getMerkleTreeStore().get(currentTreeKey);
     if (capsule == null) {
       return getBestMerkle();
     }
     return capsule.toMerkleTreeContainer();
+  }
+
+  public void setCurrentMerkle(IncrementalMerkleTreeContainer treeContainer) {
+    manager.getMerkleTreeStore().put(currentTreeKey, treeContainer.getTreeCapsule());
   }
 
   public IncrementalMerkleTreeContainer getBestMerkle() {
@@ -60,10 +63,6 @@ public class MerkleContainer {
     manager.getMerkleTreeIndexStore().put(blockNum, treeContainer.getMerkleTreeKey());
   }
 
-  public void setCurrentMerkle(IncrementalMerkleTreeContainer treeContainer) {
-    manager.getMerkleTreeStore().put(currentTreeKey, treeContainer.getTreeCapsule());
-  }
-
   public boolean merkleRootExist(byte[] rt) {
     return this.manager.getMerkleTreeStore().contain(rt);
   }
@@ -84,7 +83,7 @@ public class MerkleContainer {
     this.manager.getMerkleTreeStore().put(key, capsule);
   }
 
-  public MerklePath merklePath(byte[] rt) throws ZksnarkException{
+  public MerklePath merklePath(byte[] rt) throws ZksnarkException {
     if (!merkleRootExist(rt)) {
       return null;
     }

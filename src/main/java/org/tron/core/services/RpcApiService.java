@@ -46,7 +46,6 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
-import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -124,9 +123,10 @@ import org.tron.protos.Protocol.TransactionSign;
 @Slf4j(topic = "API")
 public class RpcApiService implements Service {
 
+  private static final long BLOCK_LIMIT_NUM = 100;
+  private static final long TRANSACTION_LIMIT_NUM = 1000;
   private int port = Args.getInstance().getRpcPort();
   private Server apiServer;
-
   @Autowired
   private Manager dbManager;
   @Autowired
@@ -135,18 +135,13 @@ public class RpcApiService implements Service {
   private WalletSolidity walletSolidity;
   @Autowired
   private Wallet wallet;
-
   @Autowired
   private NodeInfoService nodeInfoService;
-
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
-
-  private static final long BLOCK_LIMIT_NUM = 100;
-  private static final long TRANSACTION_LIMIT_NUM = 1000;
 
   @Override
   public void init() {
@@ -227,6 +222,27 @@ public class RpcApiService implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
+  }
+
+  @Override
+  public void stop() {
+    if (apiServer != null) {
+      apiServer.shutdown();
+    }
+  }
+
+  /**
+   * ...
+   */
+  public void blockUntilShutdown() {
+    if (apiServer != null) {
+      try {
+        apiServer.awaitTermination();
+      } catch (InterruptedException e) {
+        logger.warn("{}", e);
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   /**
@@ -1935,7 +1951,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
-        io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
@@ -1953,7 +1969,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
-        io.grpc.stub.StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
 
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
@@ -1980,10 +1996,10 @@ public class RpcApiService implements Service {
 
     @Override
     public void createShieldNullifier(GrpcAPI.NfParameters request,
-            io.grpc.stub.StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
         BytesMessage nf = wallet
-                .createShieldNullifier(request);
+            .createShieldNullifier(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException e) {
         responseObserver.onError(e);
@@ -1992,7 +2008,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void createSpendAuthSig(SpendAuthSigParameters request, StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+    public void createSpendAuthSig(SpendAuthSigParameters request,
+        StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);
@@ -2000,28 +2017,6 @@ public class RpcApiService implements Service {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
-    }
-
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
-  }
-
-  /**
-   * ...
-   */
-  public void blockUntilShutdown() {
-    if (apiServer != null) {
-      try {
-        apiServer.awaitTermination();
-      } catch (InterruptedException e) {
-        logger.warn("{}", e);
-        Thread.currentThread().interrupt();
-      }
     }
   }
 }

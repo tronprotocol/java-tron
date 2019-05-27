@@ -20,37 +20,6 @@ public class MerklePath {
     this.index = index;
   }
 
-  public byte[] encode() throws ZksnarkException{
-    assert (authenticationPath.size() == index.size());
-    List<List<Byte>> pathByteList = Lists.newArrayList();
-    long indexLong; // 64
-    for (int i = 0; i < authenticationPath.size(); i++) {
-      pathByteList.add(Lists.newArrayList());
-      for (int p = 0; p < authenticationPath.get(i).size(); p++) {
-        byte bByte = (byte) (authenticationPath.get(i).get(p) ? 1
-            : 0);
-        int i1;
-        if (pathByteList.get(i).size() > (p / 8)) {
-          i1 = pathByteList.get(i).get(p / 8) | bByte << (7 - (p % 8));
-          pathByteList.get(i).set(p / 8, (byte) i1);
-        } else {
-          i1 = bByte << (7 - (p % 8));
-          pathByteList.get(i).add((byte) i1);
-        }
-
-      }
-    }
-    indexLong = convertVectorToLong(index);
-    byte[] indexBytes = ByteArray.fromLong(indexLong);
-    ZksnarkUtils.sort(indexBytes);
-    byte[] pathByteArray = ListList2Bytes(pathByteList);
-    byte[] result = new byte[pathByteArray.length + 8];
-    System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);
-    System.arraycopy(indexBytes, 0, result,
-        pathByteArray.length, 8);
-    return result;
-  }
-
   private static byte[] ListList2Bytes(List<List<Byte>> v) {
     List<byte[]> resultList = Lists.newArrayList();
     resultList.add(WriteCompactSize(v.size()));
@@ -92,7 +61,7 @@ public class MerklePath {
     return result;
   }
 
-  private static long convertVectorToLong(List<Boolean> v) throws ZksnarkException{
+  private static long convertVectorToLong(List<Boolean> v) throws ZksnarkException {
     if (v.size() > 64) {
       throw new ZksnarkException("boolean vector can't be larger than 64 bits");
     }
@@ -102,6 +71,37 @@ public class MerklePath {
         result |= (long) 1 << ((v.size() - 1) - i);
       }
     }
+    return result;
+  }
+
+  public byte[] encode() throws ZksnarkException {
+    assert (authenticationPath.size() == index.size());
+    List<List<Byte>> pathByteList = Lists.newArrayList();
+    long indexLong; // 64
+    for (int i = 0; i < authenticationPath.size(); i++) {
+      pathByteList.add(Lists.newArrayList());
+      for (int p = 0; p < authenticationPath.get(i).size(); p++) {
+        byte bByte = (byte) (authenticationPath.get(i).get(p) ? 1
+            : 0);
+        int i1;
+        if (pathByteList.get(i).size() > (p / 8)) {
+          i1 = pathByteList.get(i).get(p / 8) | bByte << (7 - (p % 8));
+          pathByteList.get(i).set(p / 8, (byte) i1);
+        } else {
+          i1 = bByte << (7 - (p % 8));
+          pathByteList.get(i).add((byte) i1);
+        }
+
+      }
+    }
+    indexLong = convertVectorToLong(index);
+    byte[] indexBytes = ByteArray.fromLong(indexLong);
+    ZksnarkUtils.sort(indexBytes);
+    byte[] pathByteArray = ListList2Bytes(pathByteList);
+    byte[] result = new byte[pathByteArray.length + 8];
+    System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);
+    System.arraycopy(indexBytes, 0, result,
+        pathByteArray.length, 8);
     return result;
   }
 }

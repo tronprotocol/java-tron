@@ -23,6 +23,17 @@ public class FullViewingKey {
   @Setter
   private byte[] ovk; // 256,the outgoing viewing key
 
+  public static FullViewingKey decode(byte[] data) {
+    byte[] ak = new byte[32];
+    byte[] nk = new byte[32];
+    byte[] ovk = new byte[32];
+    System.arraycopy(data, 0, ak, 0, 32);
+    System.arraycopy(data, 32, nk, 0, 32);
+    System.arraycopy(data, 64, ovk, 0, 32);
+
+    return new FullViewingKey(ak, nk, ovk);
+  }
+
   public IncomingViewingKey inViewingKey() throws ZksnarkException {
     byte[] ivk = new byte[32]; // the incoming viewing key
     Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
@@ -42,16 +53,5 @@ public class FullViewingKey {
     System.arraycopy(ovk, 0, m_bytes, 64, 32);
 
     return m_bytes;
-  }
-
-  public static FullViewingKey decode(byte[] data) {
-    byte[] ak = new byte[32];
-    byte[] nk = new byte[32];
-    byte[] ovk = new byte[32];
-    System.arraycopy(data, 0, ak, 0, 32);
-    System.arraycopy(data, 32, nk, 0, 32);
-    System.arraycopy(data, 64, ovk, 0, 32);
-
-    return new FullViewingKey(ak, nk, ovk);
   }
 }

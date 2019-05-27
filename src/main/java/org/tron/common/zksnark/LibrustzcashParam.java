@@ -8,11 +8,6 @@ import org.tron.core.exception.ZksnarkException;
 
 public class LibrustzcashParam {
 
-  interface ValidParam {
-
-    void valid() throws ZksnarkException;
-  }
-
   public static void validNull(byte[] value) throws ZksnarkException {
     if (ByteUtil.isNullOrZeroArray(value)) {
       throw new ZksnarkException("param is null");
@@ -52,6 +47,11 @@ public class LibrustzcashParam {
     for (int i = 0; i < 32; i++) {
       validByteValue(voucherPath[1 + i * 33], (byte) 0x20);
     }
+  }
+
+  interface ValidParam {
+
+    void valid() throws ZksnarkException;
   }
 
   public static class InitZksnarkParams implements ValidParam {

@@ -69,7 +69,7 @@ public class NoteEncryption {
   }
 
   public OutCiphertext encryptToOurselves(
-      byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) throws ZksnarkException{
+      byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) throws ZksnarkException {
     if (already_encrypted_out) {
       throw new ZksnarkException("already encrypted to the recipient using this key");
     }
@@ -89,27 +89,8 @@ public class NoteEncryption {
 
     public static final int NOTEENCRYPTION_CIPHER_KEYSIZE = 32;
 
-    public static class EncCiphertext {
-
-      public byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
-    }
-
-    public static class EncPlaintext {
-
-      public byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
-    }
-
-    public static class OutCiphertext {
-
-      public byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
-    }
-
-    public static class OutPlaintext {
-
-      public byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
-    }
-
-    public static void PRFOck(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) throws ZksnarkException{
+    public static void PRFOck(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
+        throws ZksnarkException {
       byte[] block = new byte[128];
       System.arraycopy(ovk, 0, block, 0, 32);
       System.arraycopy(cv, 0, block, 32, 32);
@@ -131,7 +112,7 @@ public class NoteEncryption {
       return;
     }
 
-    public static void KDFSapling(byte[] K, byte[] dhsecret, byte[] epk) throws ZksnarkException{
+    public static void KDFSapling(byte[] K, byte[] dhsecret, byte[] epk) throws ZksnarkException {
       byte[] block = new byte[64];
       System.arraycopy(dhsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
@@ -198,7 +179,8 @@ public class NoteEncryption {
     }
 
     public static Optional<OutPlaintext> AttemptOutDecryption(
-        OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) throws ZksnarkException{
+        OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
+        throws ZksnarkException {
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       PRFOck(K, ovk, cv, cm, epk);
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
@@ -213,6 +195,26 @@ public class NoteEncryption {
         return Optional.empty();
       }
       return Optional.of(plaintext);
+    }
+
+    public static class EncCiphertext {
+
+      public byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
+    }
+
+    public static class EncPlaintext {
+
+      public byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
+    }
+
+    public static class OutCiphertext {
+
+      public byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
+    }
+
+    public static class OutPlaintext {
+
+      public byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
     }
   }
 }

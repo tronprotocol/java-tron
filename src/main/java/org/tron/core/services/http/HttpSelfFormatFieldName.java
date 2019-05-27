@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpSelfFormatFieldName {
+
   private static Map<String, Integer> AddressFieldNameMap = new HashMap<>();
   private static Map<String, Integer> NameFieldNameMap = new HashMap<>();
 
@@ -144,7 +145,6 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.DelegatedResourceAccountIndex.account", 1);
     AddressFieldNameMap.put("protocol.DelegatedResourceAccountIndex.fromAccounts", 1);
     AddressFieldNameMap.put("protocol.DelegatedResourceAccountIndex.toAccounts", 1);
-
 
     //***** api.proto *****
     //Return

@@ -30,13 +30,43 @@ public class SpendingKey {
     }
   }
 
-  public String encode() {
-    return ByteArray.toHexString(value);
-  }
-
   public static SpendingKey decode(String hex) {
     SpendingKey sk = new SpendingKey(ByteArray.fromHexString(hex));
     return sk;
+  }
+
+  private static byte[] randomUint256() {
+    return generatePrivateKey(0l);
+  }
+
+  public static byte[] generatePrivateKey(long seed) {
+    byte[] result = new byte[32];
+    if (seed != 0L) {
+      new Random(seed).nextBytes(result);
+    } else {
+      new Random().nextBytes(result);
+    }
+    Integer i = result[0] & 0x0F;
+    result[0] = i.byteValue();
+    return result;
+  }
+
+  public static byte[] ovkForShieldingFromTaddr(byte[] data) {
+    crypto_generichash_blake2b_state.ByReference state = null;
+    Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
+    byte[] intermediate = new byte[64];
+    Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);
+
+    // I_L = I[0..32]
+    byte[] intermediate_L = new byte[32];
+    System.arraycopy(intermediate_L, 0, intermediate, 0, 32);
+
+    // ovk = truncate_32(PRF^expand(I_L, [0x02]))
+    return PRF.prfOvk(intermediate_L);
+  }
+
+  public String encode() {
+    return ByteArray.toHexString(value);
   }
 
   public ExpandedSpendingKey expandedSpendingKey() throws ZksnarkException {
@@ -77,36 +107,6 @@ public class SpendingKey {
     DiversifierT diversifierT = new DiversifierT();
     diversifierT.setData(res);
     return diversifierT;
-  }
-
-  private static byte[] randomUint256() {
-    return generatePrivateKey(0l);
-  }
-
-  public static byte[] generatePrivateKey(long seed) {
-    byte[] result = new byte[32];
-    if (seed != 0L) {
-      new Random(seed).nextBytes(result);
-    } else {
-      new Random().nextBytes(result);
-    }
-    Integer i = result[0] & 0x0F;
-    result[0] = i.byteValue();
-    return result;
-  }
-
-  public static byte[] ovkForShieldingFromTaddr(byte[] data) {
-    crypto_generichash_blake2b_state.ByReference state = null;
-    Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
-    byte[] intermediate = new byte[64];
-    Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);
-
-    // I_L = I[0..32]
-    byte[] intermediate_L = new byte[32];
-    System.arraycopy(intermediate_L, 0, intermediate, 0, 32);
-
-    // ovk = truncate_32(PRF^expand(I_L, [0x02]))
-    return PRF.prfOvk(intermediate_L);
   }
 
   private static class PRF {

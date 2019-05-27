@@ -35,6 +35,18 @@ public class ExpandedSpendingKey {
     return Librustzcash.librustzcashNskToNk(nsk); // 256
   }
 
+  public static ExpandedSpendingKey decode(byte[] m_bytes) {
+    ExpandedSpendingKey key = new ExpandedSpendingKey();
+
+    byte[] ask = ByteArray.subArray(m_bytes, 0, 32);
+    byte[] nsk = ByteArray.subArray(m_bytes, 32, 64);
+    byte[] ovk = ByteArray.subArray(m_bytes, 64, 96);
+    key.setAsk(ask);
+    key.setNsk(nsk);
+    key.setOvk(ovk);
+    return key;
+  }
+
   public FullViewingKey fullViewingKey() throws ZksnarkException {
     byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
     byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
@@ -46,18 +58,6 @@ public class ExpandedSpendingKey {
     logger.debug("fullViewKey.ak is : " + ByteUtil.toHexString(ak));
     logger.debug("fullViewKey.nk is : " + ByteUtil.toHexString(nk));
     return new FullViewingKey(ak, nk, ovk);
-  }
-
-  public static ExpandedSpendingKey decode(byte[] m_bytes) {
-    ExpandedSpendingKey key = new ExpandedSpendingKey();
-
-    byte[] ask = ByteArray.subArray(m_bytes, 0, 32);
-    byte[] nsk = ByteArray.subArray(m_bytes, 32, 64);
-    byte[] ovk = ByteArray.subArray(m_bytes, 64, 96);
-    key.setAsk(ask);
-    key.setNsk(nsk);
-    key.setOvk(ovk);
-    return key;
   }
 
   public byte[] encode() {
