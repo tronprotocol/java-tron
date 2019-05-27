@@ -91,8 +91,9 @@ public class Program {
   private static final int MAX_DEPTH = 64;
   //Max size for stack checks
   private static final int MAX_STACK_SIZE = 1024;
-  public static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
-      "validateForSmartContract failure";
+  private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
+      "validateForSmartContract failure:%s";
+  private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
 
   private BlockCapsule blockCap;
 
@@ -649,7 +650,7 @@ public class Program {
         refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
         throw new TransferException("endowment out of long range");
       } else {
-        throw e;
+      throw e;
       }
     }
     // transfer trx validation
@@ -1490,7 +1491,7 @@ public class Program {
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
           refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
       }
@@ -1501,10 +1502,10 @@ public class Program {
         // tokenId == 0 is a default value for token id DataWord.
         if (VMConfig.allowTvmConstantinople()) {
           refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw new BytecodeExecutionException(
-            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
   }
@@ -1525,7 +1526,7 @@ public class Program {
         tokenId = tokenIdDataWord.sValue().longValueExact();
       } catch (ArithmeticException e) {
         if (VMConfig.allowTvmConstantinople()) {
-          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;
       }
@@ -1533,7 +1534,7 @@ public class Program {
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
       if (tokenId <= VMConstant.MIN_TOKEN_ID) {
         throw new BytecodeExecutionException(
-            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
   }
