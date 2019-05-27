@@ -180,7 +180,8 @@ public class SendCoinShieldTest {
     return compressCapsule_in.getInstance();
   }
 
-  private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createComplexMerkleVoucherContainer(byte[] cm)
+      throws ZksnarkException {
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -204,7 +205,8 @@ public class SendCoinShieldTest {
     return voucher;
   }
 
-  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
+      throws ZksnarkException {
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());

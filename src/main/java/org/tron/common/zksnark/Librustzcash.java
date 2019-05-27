@@ -133,25 +133,21 @@ public class Librustzcash {
     void librustzcash_to_scalar(byte[] input, byte[] result);
   }
 
-  public static void librustzcashZip32XskMaster(Zip32XskMasterParams params)
-      throws ZksnarkException {
+  public static void librustzcashZip32XskMaster(Zip32XskMasterParams params) {
     INSTANCE.librustzcash_zip32_xsk_master(params.getData(), params.getSize(), params.getM_bytes());
   }
 
-  public static void librustzcashInitZksnarkParams(InitZksnarkParams params)
-      throws ZksnarkException {
+  public static void librustzcashInitZksnarkParams(InitZksnarkParams params) {
     INSTANCE.librustzcash_init_zksnark_params(params.getSpend_path(), params.getSpend_path_len(),
         params.getSpend_hash(), params.getOutput_path(), params.getOutput_path_len(),
         params.getOutput_hash());
   }
 
-  public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params)
-      throws ZksnarkException {
+  public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params) {
     INSTANCE.librustzcash_zip32_xsk_derive(params.getData(), params.getSize(), params.getM_bytes());
   }
 
-  public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params)
-      throws ZksnarkException {
+  public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params) {
     return INSTANCE.librustzcash_zip32_xfvk_address(params.getXfvk(), params.getJ(),
         params.getJ_ret(), params.getAddr_ret());
   }
@@ -349,6 +345,74 @@ public class Librustzcash {
       logger.error(e.getMessage(), e);
     }
     return fileOut.getAbsolutePath();
+  }
+
+  public static void main(String[] args) throws ZksnarkException {
+    byte[] d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    //byte[] d ={};
+    //byte[] pk_d = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    byte[] ivk = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+        9, 10, 11, 12, 13, 14, 15};
+    byte[] pk_d = new byte[32];
+    long value = 1;
+    byte[] r = {(byte) 0xb7, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
+        (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
+        0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65, (byte) 0xea,
+        (byte) 0xb4, 0x7d, 0x0e};
+    byte[] cm = new byte[32];
+    boolean check_d = librustzcashCheckDiversifier(d);
+    System.out.println("d is " + check_d);
+
+    ivk[31] = (byte) 0x10;
+    boolean check_pkd = librustzcashIvkToPkd(new IvkToPkdParams(ivk, d, pk_d));
+    System.out.println("pk_d is\n");
+    for (int j = 0; j < 32; j++) {
+      System.out.printf("%x ", pk_d[j]);
+      if ((j + 1) % 16 == 0) {
+        System.out.printf("\n");
+      }
+    }
+
+    boolean res = librustzcashSaplingComputeCm(new SaplingComputeCmParams(d, pk_d, value, r, cm));
+    System.out.println("cm is" + res);
+
+    //check range of alpha
+    byte[] ask = {(byte) 0xb7, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
+        (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
+        0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65, (byte) 0xea,
+        (byte) 0xb4, 0x7d, 0x0e};
+    byte[] alpha = {(byte) 0xb6, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97,
+        (byte) 0xd0, (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68,
+        (byte) 0xa6, 0x00, 0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33,
+        0x65, (byte) 0xea, (byte) 0xb4, 0x7d, 0x0e};
+    byte[] sighash = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7,
+        8, 9, 10, 11, 12, 13, 14, 15};
+    byte[] sigRes = new byte[64];
+    boolean boolSigRes = librustzcashSaplingSpendSig(
+        new SaplingSpendSigParams(ask, alpha, sighash, sigRes));
+    System.out.println("sig result " + boolSigRes);
+
+    byte[] nsk = {(byte) 0xb6, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
+        (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
+        0x3b, 0x34, 0x01, 0x01, 0x3b, 0x67, 0x06, (byte) 0xa9, (byte) 0xaf, 0x33, 0x65, (byte) 0xea,
+        (byte) 0xb4, 0x7d, 0x0e};
+    byte[] nk = new byte[32];
+    nk = librustzcashNskToNk(nsk);
+
+    for (int j = 0; j < 32; j++) {
+      System.out.printf("%x ", nk[j]);
+      if ((j + 1) % 16 == 0) {
+        System.out.printf("\n");
+      }
+    }
+
+    Pointer ctx = librustzcashSaplingProvingCtxInit();
+    byte[] resbindSig = new byte[64];
+    boolean boolBindSig = librustzcashSaplingBindingSig(
+        new SaplingBindingSigParams(ctx, value, null, resbindSig));
+    System.out.println("binding sig result " + boolBindSig);
+
+
   }
 
 

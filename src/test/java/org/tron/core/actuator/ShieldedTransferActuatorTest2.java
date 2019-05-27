@@ -158,7 +158,8 @@ public class ShieldedTransferActuatorTest2 {
     return builder.build();
   }
 
-  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm) {
+  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
+      throws ZksnarkException {
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
