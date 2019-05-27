@@ -34,103 +34,12 @@ import org.tron.core.exception.ZksnarkException;
 @Slf4j
 public class Librustzcash {
 
-  private static ILibrustzcash INSTANCE;
-
   private static final Map<String, String> libraries = new ConcurrentHashMap<>();
+  private static ILibrustzcash INSTANCE;
 
   static {
     INSTANCE = (ILibrustzcash) Native
         .loadLibrary(getLibraryByName("librustzcash"), ILibrustzcash.class);
-  }
-
-  public interface ILibrustzcash extends Library {
-
-    void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, String spend_hash,
-        byte[] output_path, int output_path_len, String output_hash);
-
-    void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
-
-    void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
-
-    boolean librustzcash_zip32_xfvk_address(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret);
-
-    void librustzcash_ask_to_ak(byte[] ask, byte[] result);
-
-    void librustzcash_sapling_compute_nf(byte[] d, byte[] pk_d, long value_, byte[] r, byte[] ak,
-        byte[] nk, long position, byte[] result);
-
-    void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
-
-    void librustzcash_sapling_generate_r(byte[] r);
-
-    boolean librustzcash_sapling_ka_derivepublic(byte[] diversifier, byte[] esk, byte[] result);
-
-    void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
-
-    boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
-
-    boolean librustzcash_check_diversifier(byte[] diversifier);
-
-    boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] diversifier, byte[] result);
-
-    boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r,
-        byte[] result);
-    //bool librustzcash_ivk_to_pkd(const unsigned char *ivk, const unsigned char *diversifier, unsigned char *result);
-//    bool librustzcash_sapling_compute_cm(
-//        const unsigned char *diversifier,
-//        const unsigned char *pk_d,
-//        const uint64_t value,
-//        const unsigned char *r,
-//        unsigned char *result
-//    );
-
-    Pointer librustzcash_sapling_proving_ctx_init();
-
-    boolean librustzcash_sapling_spend_proof(Pointer ctx, byte[] ak, byte[] nsk, byte[] diversifier,
-        byte[] rcm, byte[] ar, long value, byte[] anchor, byte[] witness, byte[] cv, byte[] rk,
-        byte[] zkproof);
-
-    boolean librustzcash_sapling_output_proof(Pointer ctx, byte[] esk, byte[] diversifier,
-        byte[] pk_d, byte[] rcm, long value, byte[] cv, byte[] zkproof);
-
-    boolean librustzcash_sapling_spend_sig(byte[] ask, byte[] ar, byte[] sighash, byte[] result);
-
-    boolean librustzcash_sapling_binding_sig(Pointer ctx, long valueBalance, byte[] sighash,
-        byte[] result);
-
-    void librustzcash_sapling_proving_ctx_free(Pointer ctx);
-
-    Pointer librustzcash_sapling_verification_ctx_init();
-
-    boolean librustzcash_sapling_check_spend(Pointer ctx, byte[] cv, byte[] anchor,
-        byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue);
-
-    boolean librustzcash_sapling_check_output(Pointer ctx, byte[] cv, byte[] cm,
-        byte[] ephemeralKey, byte[] zkproof);
-
-    boolean librustzcash_sapling_final_check(Pointer ctx, long valueBalance, byte[] bindingSig,
-        byte[] sighashValue);
-
-    void librustzcash_sapling_verification_ctx_free(Pointer ctx);
-
-    /// Computes a merkle tree hash for a given depth.
-    /// The `depth` parameter should not be larger than
-    /// 62.
-    ///
-    /// `a` and `b` each must be of length 32, and must each
-    /// be scalars of BLS12-381.
-    ///
-    /// The result of the merkle tree hash is placed in
-    /// `result`, which must also be of length 32.
-    void librustzcash_merkle_hash(int depth, byte[] a, byte[] b, byte[] result
-    );
-
-    /// Writes the "uncommitted" note value for empty leaves
-    /// of the merkle tree. `result` must be a valid pointer
-    /// to 32 bytes which will be written.
-    void librustzcash_tree_uncommitted(byte[] result);
-
-    void librustzcash_to_scalar(byte[] input, byte[] result);
   }
 
   public static void librustzcashZip32XskMaster(Zip32XskMasterParams params) {
@@ -183,8 +92,6 @@ public class Librustzcash {
     return ak;
   }
 
-  // void librustzcash_nsk_to_nk(const unsigned char *nsk, unsigned char *result);
-
   /**
    * @param nsk: the proof authorizing key, to genarate nk, 32 bytes
    * @return 32 bytes
@@ -195,6 +102,8 @@ public class Librustzcash {
     INSTANCE.librustzcash_nsk_to_nk(nsk, nk);
     return nk;
   }
+
+  // void librustzcash_nsk_to_nk(const unsigned char *nsk, unsigned char *result);
 
   /**
    * @return r: random number, less than r_J,   32 bytes
@@ -334,6 +243,96 @@ public class Librustzcash {
       logger.error(e.getMessage(), e);
     }
     return fileOut.getAbsolutePath();
+  }
+
+  public interface ILibrustzcash extends Library {
+
+    void librustzcash_init_zksnark_params(byte[] spend_path, int spend_path_len, String spend_hash,
+        byte[] output_path, int output_path_len, String output_hash);
+
+    void librustzcash_zip32_xsk_master(byte[] data, int size, byte[] m_bytes);
+
+    void librustzcash_zip32_xsk_derive(byte[] xsk_parent, int i, byte[] xsk_i);
+
+    boolean librustzcash_zip32_xfvk_address(byte[] xfvk, byte[] j, byte[] j_ret, byte[] addr_ret);
+
+    void librustzcash_ask_to_ak(byte[] ask, byte[] result);
+
+    void librustzcash_sapling_compute_nf(byte[] d, byte[] pk_d, long value_, byte[] r, byte[] ak,
+        byte[] nk, long position, byte[] result);
+
+    void librustzcash_nsk_to_nk(byte[] nsk, byte[] result);
+
+    void librustzcash_sapling_generate_r(byte[] r);
+
+    boolean librustzcash_sapling_ka_derivepublic(byte[] diversifier, byte[] esk, byte[] result);
+
+    void librustzcash_crh_ivk(byte[] ak, byte[] nk, byte[] result);
+
+    boolean librustzcash_sapling_ka_agree(byte[] p, byte[] sk, byte[] result);
+
+    boolean librustzcash_check_diversifier(byte[] diversifier);
+
+    boolean librustzcash_ivk_to_pkd(byte[] ivk, byte[] diversifier, byte[] result);
+
+    boolean librustzcash_sapling_compute_cm(byte[] diversifier, byte[] pk_d, long value, byte[] r,
+        byte[] result);
+    //bool librustzcash_ivk_to_pkd(const unsigned char *ivk, const unsigned char *diversifier, unsigned char *result);
+//    bool librustzcash_sapling_compute_cm(
+//        const unsigned char *diversifier,
+//        const unsigned char *pk_d,
+//        const uint64_t value,
+//        const unsigned char *r,
+//        unsigned char *result
+//    );
+
+    Pointer librustzcash_sapling_proving_ctx_init();
+
+    boolean librustzcash_sapling_spend_proof(Pointer ctx, byte[] ak, byte[] nsk, byte[] diversifier,
+        byte[] rcm, byte[] ar, long value, byte[] anchor, byte[] witness, byte[] cv, byte[] rk,
+        byte[] zkproof);
+
+    boolean librustzcash_sapling_output_proof(Pointer ctx, byte[] esk, byte[] diversifier,
+        byte[] pk_d, byte[] rcm, long value, byte[] cv, byte[] zkproof);
+
+    boolean librustzcash_sapling_spend_sig(byte[] ask, byte[] ar, byte[] sighash, byte[] result);
+
+    boolean librustzcash_sapling_binding_sig(Pointer ctx, long valueBalance, byte[] sighash,
+        byte[] result);
+
+    void librustzcash_sapling_proving_ctx_free(Pointer ctx);
+
+    Pointer librustzcash_sapling_verification_ctx_init();
+
+    boolean librustzcash_sapling_check_spend(Pointer ctx, byte[] cv, byte[] anchor,
+        byte[] nullifier, byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue);
+
+    boolean librustzcash_sapling_check_output(Pointer ctx, byte[] cv, byte[] cm,
+        byte[] ephemeralKey, byte[] zkproof);
+
+    boolean librustzcash_sapling_final_check(Pointer ctx, long valueBalance, byte[] bindingSig,
+        byte[] sighashValue);
+
+    void librustzcash_sapling_verification_ctx_free(Pointer ctx);
+
+    /// Computes a merkle tree hash for a given depth.
+    /// The `depth` parameter should not be larger than
+    /// 62.
+    ///
+    /// `a` and `b` each must be of length 32, and must each
+    /// be scalars of BLS12-381.
+    ///
+    /// The result of the merkle tree hash is placed in
+    /// `result`, which must also be of length 32.
+    void librustzcash_merkle_hash(int depth, byte[] a, byte[] b, byte[] result
+    );
+
+    /// Writes the "uncommitted" note value for empty leaves
+    /// of the merkle tree. `result` must be a valid pointer
+    /// to 32 bytes which will be written.
+    void librustzcash_tree_uncommitted(byte[] result);
+
+    void librustzcash_to_scalar(byte[] input, byte[] result);
   }
 
 }

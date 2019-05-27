@@ -150,7 +150,7 @@ public class SendCoinShieldTest {
   }
 
   @Test
-  public void testPathMock() {
+  public void testPathMock() throws ZksnarkException{
     List<List<Boolean>> authenticationPath = Lists.newArrayList();
     Boolean[] authenticationArray = {true, false, true, false, true, false};
     for (int i = 0; i < 6; i++) {

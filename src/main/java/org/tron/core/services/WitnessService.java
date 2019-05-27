@@ -47,11 +47,10 @@ public class WitnessService implements Service {
   private static final int PRODUCE_TIME_OUT = 500; // ms
   @Getter
   private static volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
-
-  private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
+  private Application tronApp;
   private Thread generateThread;
 
   @Getter
@@ -77,31 +76,6 @@ public class WitnessService implements Service {
   private AtomicLong dupBlockTime = new AtomicLong(0);
   private long blockCycle =
       ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
-
-  /**
-   * Construction method.
-   */
-  public WitnessService(Application tronApp, TronApplicationContext context) {
-    this.tronApp = tronApp;
-    this.context = context;
-    backupManager = context.getBean(BackupManager.class);
-    backupServer = context.getBean(BackupServer.class);
-    tronNetService = context.getBean(TronNetService.class);
-    generateThread = new Thread(scheduleProductionLoop);
-    manager = tronApp.getDbManager();
-    manager.setWitnessService(this);
-    controller = manager.getWitnessController();
-    new Thread(() -> {
-      while (needSyncCheck) {
-        try {
-          Thread.sleep(100);
-        } catch (Exception e) {
-        }
-      }
-      backupServer.initServer();
-    }).start();
-  }
-
   /**
    * Cycle thread to generate blocks
    */
@@ -135,6 +109,30 @@ public class WitnessService implements Service {
           }
         }
       };
+
+  /**
+   * Construction method.
+   */
+  public WitnessService(Application tronApp, TronApplicationContext context) {
+    this.tronApp = tronApp;
+    this.context = context;
+    backupManager = context.getBean(BackupManager.class);
+    backupServer = context.getBean(BackupServer.class);
+    tronNetService = context.getBean(TronNetService.class);
+    generateThread = new Thread(scheduleProductionLoop);
+    manager = tronApp.getDbManager();
+    manager.setWitnessService(this);
+    controller = manager.getWitnessController();
+    new Thread(() -> {
+      while (needSyncCheck) {
+        try {
+          Thread.sleep(100);
+        } catch (Exception e) {
+        }
+      }
+      backupServer.initServer();
+    }).start();
+  }
 
   /**
    * Loop to generate blocks

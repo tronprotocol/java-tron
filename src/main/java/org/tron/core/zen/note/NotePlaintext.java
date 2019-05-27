@@ -41,15 +41,15 @@ public class NotePlaintext {
     memo = memo;
   }
 
-  public Optional<Note> note(IncomingViewingKey ivk) throws ZksnarkException {
-    Optional<PaymentAddress> addr = ivk.address(d);
-    if (addr.isPresent()) {
-      return Optional.of(new Note(d, addr.get().getPkD(), value, rcm));
-    } else {
-      return Optional.empty();
-    }
-  }
-
+  /**
+   * decrypt with ivk
+   * @param ciphertext
+   * @param ivk
+   * @param epk
+   * @param cmu
+   * @return
+   * @throws ZksnarkException
+   */
   public static Optional<NotePlaintext> decrypt(
       byte[] ciphertext, byte[] ivk, byte[] epk, byte[] cmu) throws ZksnarkException {
     Optional<Encryption.EncPlaintext> pt =
@@ -73,6 +73,16 @@ public class NotePlaintext {
     return Optional.of(ret);
   }
 
+  /**
+   * decrypt with epk
+   * @param ciphertext
+   * @param epk
+   * @param esk
+   * @param pk_d
+   * @param cmu
+   * @return
+   * @throws ZksnarkException
+   */
   public static Optional<NotePlaintext> decrypt(
       Encryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu)
       throws ZksnarkException {
@@ -93,6 +103,15 @@ public class NotePlaintext {
     return Optional.of(ret);
   }
 
+  public Optional<Note> note(IncomingViewingKey ivk) throws ZksnarkException {
+    Optional<PaymentAddress> addr = ivk.address(d);
+    if (addr.isPresent()) {
+      return Optional.of(new Note(d, addr.get().getPkD(), value, rcm));
+    } else {
+      return Optional.empty();
+    }
+  }
+
   public Optional<NotePlaintextEncryptionResult> encrypt(byte[] pk_d) throws ZksnarkException {
     // Get the encryptor
     Optional<NoteEncryption> sne = NoteEncryption.fromDiversifier(d);
@@ -108,6 +127,36 @@ public class NotePlaintext {
       return Optional.empty();
     }
     return Optional.of(new NotePlaintextEncryptionResult(encciphertext.get().data, enc));
+  }
+
+  public static NotePlaintext decode(Encryption.EncPlaintext encPlaintext) throws ZksnarkException {
+    byte[] data = encPlaintext.data;
+    byte[] valueLong = new byte[ZC_V_SIZE];
+    ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
+    if (encPlaintext.data[0] != 0x01) {
+      throw new ZksnarkException("lead byte of SaplingNotePlaintext is not recognized");
+    }
+    NotePlaintext ret = new NotePlaintext();
+    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING, ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);
+    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, valueLong, 0, ZC_V_SIZE);
+    System.arraycopy(
+            data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ret.rcm, 0, ZC_R_SIZE);
+    System.arraycopy(
+            data,
+            ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
+            ret.memo,
+            0,
+            ZC_MEMO_SIZE);
+    for (int i = 0; i < valueLong.length / 2; i++) {
+      byte temp = valueLong[i];
+      valueLong[i] = valueLong[valueLong.length - 1 - i];
+      valueLong[valueLong.length - 1 - i] = temp;
+    }
+    buffer.put(valueLong, 0, valueLong.length);
+    buffer.flip();
+    ret.value = buffer.getLong();
+
+    return ret;
   }
 
   public Encryption.EncPlaintext encode() {
@@ -136,36 +185,6 @@ public class NotePlaintext {
         data,
         ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
         ZC_MEMO_SIZE);
-
-    return ret;
-  }
-
-  public static NotePlaintext decode(Encryption.EncPlaintext encPlaintext) {
-    byte[] data = encPlaintext.data;
-    byte[] valueLong = new byte[ZC_V_SIZE];
-    ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
-    if (encPlaintext.data[0] != 0x01) {
-      throw new RuntimeException("lead byte of SaplingNotePlaintext is not recognized");
-    }
-    NotePlaintext ret = new NotePlaintext();
-    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING, ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);
-    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, valueLong, 0, ZC_V_SIZE);
-    System.arraycopy(
-        data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ret.rcm, 0, ZC_R_SIZE);
-    System.arraycopy(
-        data,
-        ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
-        ret.memo,
-        0,
-        ZC_MEMO_SIZE);
-    for (int i = 0; i < valueLong.length / 2; i++) {
-      byte temp = valueLong[i];
-      valueLong[i] = valueLong[valueLong.length - 1 - i];
-      valueLong[valueLong.length - 1 - i] = temp;
-    }
-    buffer.put(valueLong, 0, valueLong.length);
-    buffer.flip();
-    ret.value = buffer.getLong();
 
     return ret;
   }

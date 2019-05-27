@@ -129,6 +129,13 @@ public class RpcApiServiceOnSolidity implements Service {
     return builder.build();
   }
 
+  @Override
+  public void stop() {
+    if (apiServer != null) {
+      apiServer.shutdown();
+    }
+  }
+
   /**
    * DatabaseApi.
    */
@@ -339,13 +346,6 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.setPrivateKey(priKeyStr);
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
-    }
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
     }
   }
 }

@@ -35,13 +35,6 @@ public class ExpandedSpendingKey {
     return Librustzcash.librustzcashNskToNk(nsk); // 256
   }
 
-  public FullViewingKey fullViewingKey() throws ZksnarkException {
-    byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
-    byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
-
-    return new FullViewingKey(ak, nk, ovk);
-  }
-
   public static ExpandedSpendingKey decode(byte[] m_bytes) {
     ExpandedSpendingKey key = new ExpandedSpendingKey();
 
@@ -52,6 +45,13 @@ public class ExpandedSpendingKey {
     key.setNsk(nsk);
     key.setOvk(ovk);
     return key;
+  }
+
+  public FullViewingKey fullViewingKey() throws ZksnarkException {
+    byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
+    byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
+
+    return new FullViewingKey(ak, nk, ovk);
   }
 
   public byte[] encode() {

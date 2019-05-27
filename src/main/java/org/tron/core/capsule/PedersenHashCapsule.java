@@ -31,24 +31,6 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     }
   }
 
-  public ByteString getContent() {
-    return this.pedersenHash.getContent();
-  }
-
-  public void setContent(ByteString content) {
-    this.pedersenHash = PedersenHash.newBuilder().setContent(content).build();
-  }
-
-  @Override
-  public byte[] getData() {
-    return this.pedersenHash.toByteArray();
-  }
-
-  @Override
-  public PedersenHash getInstance() {
-    return this.pedersenHash;
-  }
-
   public static PedersenHashCapsule combine(final PedersenHash a, final PedersenHash b, int depth)
       throws ZksnarkException {
     byte[] res = new byte[32];
@@ -73,10 +55,6 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return compressCapsule;
   }
 
-  public boolean isPresent() {
-    return !pedersenHash.getContent().isEmpty();
-  }
-
   public static void main(String[] args) throws ZksnarkException {
     byte[] a =
         ByteArray.fromHexString("05655316a07e6ec8c9769af54ef98b30667bfb6302b32987d552227dae86a087");
@@ -88,5 +66,27 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     PedersenHash result = combine(sa, sb, 25).getInstance();
     // 61a50a5540b4944da27cbd9b3d6ec39234ba229d2c461f4d719bc136573bf45b
     System.out.println(ByteArray.toHexString(result.getContent().toByteArray()));
+  }
+
+  public ByteString getContent() {
+    return this.pedersenHash.getContent();
+  }
+
+  public void setContent(ByteString content) {
+    this.pedersenHash = PedersenHash.newBuilder().setContent(content).build();
+  }
+
+  @Override
+  public byte[] getData() {
+    return this.pedersenHash.toByteArray();
+  }
+
+  @Override
+  public PedersenHash getInstance() {
+    return this.pedersenHash;
+  }
+
+  public boolean isPresent() {
+    return !pedersenHash.getContent().isEmpty();
   }
 }

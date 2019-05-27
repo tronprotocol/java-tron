@@ -4,8 +4,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucher;
@@ -53,12 +51,12 @@ public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<Incremental
     return new IncrementalMerkleTreeCapsule(this.voucher.getCursor());
   }
 
-  public void clearCursor() {
-    this.voucher = this.voucher.toBuilder().clearCursor().build();
-  }
-
   public void setCursor(IncrementalMerkleTreeCapsule cursor) {
     this.voucher = this.voucher.toBuilder().setCursor(cursor.getInstance()).build();
+  }
+
+  public void clearCursor() {
+    this.voucher = this.voucher.toBuilder().clearCursor().build();
   }
 
   public long getCursorDepth() {
