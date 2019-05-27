@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
@@ -44,7 +43,7 @@ public class MerkleContainer {
     return capsule.toMerkleTreeContainer();
   }
 
-  public void resetCurrentMerkleTree(){
+  public void resetCurrentMerkleTree() {
     IncrementalMerkleTreeContainer bestMerkle = getBestMerkle();
     setCurrentMerkle(bestMerkle);
   }
@@ -86,7 +85,7 @@ public class MerkleContainer {
   }
 
   public MerklePath merklePath(byte[] rt) {
-    if(!merkleRootExist(rt)){
+    if (!merkleRootExist(rt)) {
       return null;
     }
     IncrementalMerkleTreeContainer tree =

@@ -2,11 +2,9 @@ package org.tron.core.zen.merkle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
@@ -83,6 +81,7 @@ public class IncrementalMerkleVoucherContainer {
   public PedersenHash root() throws ZksnarkException {
     return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
+
   private boolean cursorExist() {
     return !voucherCapsule.getCursor().isEmptyTree();
   }

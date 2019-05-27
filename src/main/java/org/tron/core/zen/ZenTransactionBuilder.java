@@ -59,7 +59,8 @@ public class ZenTransactionBuilder {
     this.wallet = wallet;
   }
 
-  public ZenTransactionBuilder() {}
+  public ZenTransactionBuilder() {
+  }
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
     spends.add(spendDescriptionInfo);
@@ -272,6 +273,7 @@ public class ZenTransactionBuilder {
   }
 
   public static class SpendDescriptionInfo {
+
     public ExpandedSpendingKey expsk;
     public Note note;
     public byte[] alpha;
