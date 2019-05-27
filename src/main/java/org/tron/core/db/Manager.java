@@ -794,26 +794,23 @@ public class Manager {
 
   public void consumeMultiSignFee(TransactionCapsule trx, TransactionTrace trace)
       throws AccountResourceInsufficientException {
-    if (trx.getInstance().getRawData().getContract(0).getType()
-        != ContractType.ShieldedTransferContract) {
-      if (trx.getInstance().getSignatureCount() > 1) {
-        long fee = getDynamicPropertiesStore().getMultiSignFee();
+    if (trx.getInstance().getSignatureCount() > 1) {
+      long fee = getDynamicPropertiesStore().getMultiSignFee();
 
-        List<Contract> contracts = trx.getInstance().getRawData().getContractList();
-        for (Contract contract : contracts) {
-          byte[] address = TransactionCapsule.getOwner(contract);
-          AccountCapsule accountCapsule = getAccountStore().get(address);
-          try {
-            adjustBalance(accountCapsule, -fee);
-            adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
-          } catch (BalanceInsufficientException e) {
-            throw new AccountResourceInsufficientException(
-                "Account Insufficient  balance[" + fee + "] to MultiSign");
-          }
+      List<Contract> contracts = trx.getInstance().getRawData().getContractList();
+      for (Contract contract : contracts) {
+        byte[] address = TransactionCapsule.getOwner(contract);
+        AccountCapsule accountCapsule = getAccountStore().get(address);
+        try {
+          adjustBalance(accountCapsule, -fee);
+          adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+        } catch (BalanceInsufficientException e) {
+          throw new AccountResourceInsufficientException(
+              "Account Insufficient  balance[" + fee + "] to MultiSign");
         }
-
-        trace.getReceipt().setMultiSignFee(fee);
       }
+
+      trace.getReceipt().setMultiSignFee(fee);
     }
   }
 
