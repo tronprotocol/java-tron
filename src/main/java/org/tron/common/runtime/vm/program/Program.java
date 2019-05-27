@@ -479,6 +479,7 @@ public class Program {
             AccountType.Contract);
       } else if (!contractAlreadyExists) {
         existingAccount.updateAccountType(AccountType.Contract);
+        existingAccount.clearDelegatedResource();
         deposit.updateAccount(newAddress, existingAccount);
       }
 
