@@ -3,6 +3,7 @@ package org.tron.common.zksnark;
 import com.sun.jna.Pointer;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.exception.ZksnarkException;
 
 public class LibrustzcashParam {
@@ -10,6 +11,17 @@ public class LibrustzcashParam {
   interface ValidParam {
 
     void valid() throws ZksnarkException;
+  }
+
+  public static void validNull(byte[] value) throws ZksnarkException {
+    if (ByteUtil.isNullOrZeroArray(value)) {
+      throw new ZksnarkException("param is null");
+    }
+  }
+
+  public static void validAk(byte[] ak) throws ZksnarkException {
+    validNull(ak);
+
   }
 
   public static class InitZksnarkParams implements ValidParam {
@@ -118,11 +130,10 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * (ak,nk)--> ivk
-   * ak: spendAuthSig.publickey 32 bytes
-   * nk: 32 bytes
-   * ivk: incoming viewing key, 32 bytes
+   * (ak,nk)--> ivk ak: spendAuthSig.publickey 32 bytes nk: 32 bytes ivk: incoming viewing key, 32
+   * bytes
    */
   public static class CrhIvkParams implements ValidParam {
 
@@ -148,11 +159,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * KaAgree(sk,p)=[h_J*sk]p
-   * p: point, 32 bytes
-   * sk: 32 bytes
-   * result: 32 bytes
+   * KaAgree(sk,p)=[h_J*sk]p p: point, 32 bytes sk: 32 bytes result: 32 bytes
    */
   public static class SaplingKaAgreeParams implements ValidParam {
 
@@ -178,12 +187,10 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * Compute note commitment
-   * d: diversifier, 11 bytes
-   * pk_d: 32 bytes
-   * r: rcm,  32 bytes
-   * cm: note commitment, 32 bytes
+   * Compute note commitment d: diversifier, 11 bytes pk_d: 32 bytes r: rcm,  32 bytes cm: note
+   * commitment, 32 bytes
    */
   public static class SaplingComputeCmParams implements ValidParam {
 
@@ -218,14 +225,11 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * compute nullifier
-   * d: diversifier, 11 bytes
-   * pk_d, 32 bytes
-   * r: rcm,  32 bytes
-   * ak: spendAuthSig.PulicKey, 32 bytes
-   * nk: to genarate nullifier, 32 bytes
-   * result: nullifier, 32 bytes
+   * compute nullifier d: diversifier, 11 bytes pk_d, 32 bytes r: rcm,  32 bytes ak:
+   * spendAuthSig.PulicKey, 32 bytes nk: to genarate nullifier, 32 bytes result: nullifier, 32
+   * bytes
    */
   public static class SaplingComputeNfParams implements ValidParam {
 
@@ -272,10 +276,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * diversifier: d, 11 bytes
-   * esk: 32 bytes
-   * result: return 32 bytes
+   * diversifier: d, 11 bytes esk: 32 bytes result: return 32 bytes
    */
   public static class SaplingKaDerivepublicParams implements ValidParam {
 
@@ -302,18 +305,12 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * calculate spend proof
-   * ak: 32 bytes
-   * nsk: the proof authorizing key, 32 bytes
-   * d: 11 bytes
-   * r: rcm, 32 bytes
-   * alpha: random number, 32 bytes
-   * anchor: 32 bytes
-   * voucherPath: (1 + 33 * 32 + 8) bytes,  voucherPath[0]=0x20, voucherPath[1+i*33]=0x20,i=0,1,...31.
-   * cv: value commitment, 32 bytes
-   * rk: spendAuthSig.randomizePublicKey 32 bytes
-   * zkproof: spend proof, 192 bytes
+   * calculate spend proof ak: 32 bytes nsk: the proof authorizing key, 32 bytes d: 11 bytes r: rcm,
+   * 32 bytes alpha: random number, 32 bytes anchor: 32 bytes voucherPath: (1 + 33 * 32 + 8) bytes,
+   * voucherPath[0]=0x20, voucherPath[1+i*33]=0x20,i=0,1,...31. cv: value commitment, 32 bytes rk:
+   * spendAuthSig.randomizePublicKey 32 bytes zkproof: spend proof, 192 bytes
    */
   public static class SaplingSpendProofParams implements ValidParam {
 
@@ -377,12 +374,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * esk: 32 bytes
-   * d: 11 bytes
-   * pk_d: 32 bytes
-   * r: rcm, 32 bytes
-   * cv: value commitment, 32 bytes
+   * esk: 32 bytes d: 11 bytes pk_d: 32 bytes r: rcm, 32 bytes cv: value commitment, 32 bytes
    * zkproof: receive proof, 192 bytes
    */
   public static class SaplingOutputProofParams implements ValidParam {
@@ -430,11 +424,10 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * ask: the spend authorizing key, 32 bytes
-   * alpha: random number, 32 bytes
-   * sigHash: sha256 of transaction, 32 bytes
-   * result: spendAuthSig, 64 bytes
+   * ask: the spend authorizing key, 32 bytes alpha: random number, 32 bytes sigHash: sha256 of
+   * transaction, 32 bytes result: spendAuthSig, 64 bytes
    */
   public static class SaplingSpendSigParams implements ValidParam {
 
@@ -465,10 +458,10 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * Generate binding signature
-   * sighash: sha256 of transaction,32 bytes
-   * result: binding signature, 64 bytes
+   * Generate binding signature sighash: sha256 of transaction,32 bytes result: binding signature,
+   * 64 bytes
    */
   public static class SaplingBindingSigParams implements ValidParam {
 
@@ -499,14 +492,11 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * cv: value commitments, 32 bytes
-   * anchor: 32 bytes
-   * nullifier: 32 bytes
-   * rk: spendAuthSig.randomizePublicKey, 32 bytes
-   * zkproof: spend proof, 192 bytes
-   * spendAuthSig: 64 bytes
-   * sighashValue: sha256 of transaction, 32 bytes
+   * cv: value commitments, 32 bytes anchor: 32 bytes nullifier: 32 bytes rk:
+   * spendAuthSig.randomizePublicKey, 32 bytes zkproof: spend proof, 192 bytes spendAuthSig: 64
+   * bytes sighashValue: sha256 of transaction, 32 bytes
    */
   public static class SaplingCheckSpendParams implements ValidParam {
 
@@ -554,11 +544,10 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * cv: value commitments, 32 bytes
-   * cm: note commitment, 32 bytes
-   * ephemeralKey: 32 bytes
-   * zkproof: 192 bytes
+   * cv: value commitments, 32 bytes cm: note commitment, 32 bytes ephemeralKey: 32 bytes zkproof:
+   * 192 bytes
    */
   public static class SaplingCheckOutputParams implements ValidParam {
 
@@ -593,9 +582,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * bindingSig: 64 bytes
-   * sighashValue: sha256 of transaction,32 bytes
+   * bindingSig: 64 bytes sighashValue: sha256 of transaction,32 bytes
    */
   public static class SaplingFinalCheckParams implements ValidParam {
 
@@ -626,10 +615,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   * ivk: incoming viewing key, 32 bytes
-   * d: 11 bytes
-   * pk_d: 32 bytes
+   * ivk: incoming viewing key, 32 bytes d: 11 bytes pk_d: 32 bytes
    */
   public static class IvkToPkdParams implements ValidParam {
 
@@ -655,11 +643,9 @@ public class LibrustzcashParam {
 
     }
   }
+
   /**
-   *
-   * a: 32 bytes
-   * b: 32 bytes
-   * result: 32 bytes
+   * a: 32 bytes b: 32 bytes result: 32 bytes
    */
   public static class MerkleHashParams implements ValidParam {
 
