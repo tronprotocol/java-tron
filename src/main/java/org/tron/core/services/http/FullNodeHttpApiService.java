@@ -194,6 +194,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private CreateShieldNullifierServlet createShieldNullifierServlet;
   @Autowired
+  private GetShieldTransactionHashServlet getShieldTransactionHashServlet;
+  @Autowired
   private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
   @Autowired
   private IsSpendServlet isSpendServlet;
@@ -327,6 +329,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
       context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
+      context.addServlet(new ServletHolder(getShieldTransactionHashServlet), "/getshieldtransactionhash");
 
       server.start();
     } catch (Exception e) {

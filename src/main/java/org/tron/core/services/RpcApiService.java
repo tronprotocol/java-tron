@@ -2018,5 +2018,17 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getShieldTransactionHash(TransactionExtention request,
+            StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+      try {
+        BytesMessage transactionHash = wallet.getShieldTransactionHash(request);
+        responseObserver.onNext(transactionHash);
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
   }
 }
