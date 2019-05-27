@@ -405,6 +405,12 @@ service Wallet {
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+
+  rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
+  }
+
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/wallet/listwitnesses"
@@ -690,6 +696,17 @@ service Wallet {
   rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 
+  rpc CreateShieldedTransactionWithoutSpendAuthSig (PrivateParametersWithoutAsk) returns (TransactionExtention) {
+  };
+
+  rpc GetShieldTransactionHash (TransactionExtention) returns (BytesMessage) {
+  };
+
+  rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
+  };
+
+  rpc GetNullifier (NfParameters) returns (BytesMessage) {
+  };
   // end for shiededTransaction
 };
 
@@ -801,6 +818,7 @@ service WalletSolidity {
       }
     };
   }
+
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"
@@ -810,6 +828,7 @@ service WalletSolidity {
       }
     };
   }
+
   //Warning: do not invoke this interface provided by others.
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
     option (google.api.http) = {
@@ -1157,6 +1176,30 @@ message PrivateParameters {
   repeated ReceiveNote shieldedReceives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
+}
+
+message PrivateParametersWithoutAsk {
+  bytes transparent_from_address = 1;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  int64 from_amount = 5;
+  repeated SpendNote shieldedSpends = 6;
+  repeated ReceiveNote shieldedReceives = 7;
+  bytes transparent_to_address = 8;
+  int64 to_amount = 9;
+}
+
+message SpendAuthSigParameters {
+  bytes ask = 1;
+  bytes tx_hash = 2;
+  bytes alpha = 3;
+}
+
+message NfParameters {
+  Note note = 1;
+  IncrementalMerkleVoucher voucher = 2;
+  bytes ak = 3;
+  bytes nk = 4;
 }
 
 message ExpandedSpendingKeyMessage {

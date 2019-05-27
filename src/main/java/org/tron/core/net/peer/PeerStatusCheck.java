@@ -10,7 +10,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol.ReasonCode;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class PeerStatusCheck {
 

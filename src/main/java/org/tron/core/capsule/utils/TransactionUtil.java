@@ -18,6 +18,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.protos.Contract.TransferContract;
@@ -43,22 +44,12 @@ public class TransactionUtil {
         Contract.ContractType.TransferContract).getInstance();
   }
 
-  /**
-   * checkBalance.
-   */
-  private static boolean checkBalance(long totalBalance, long totalSpent) {
-    return totalBalance == totalSpent;
-  }
-
   public static boolean validAccountName(byte[] accountName) {
     if (ArrayUtils.isEmpty(accountName)) {
       return true;   //accountname can empty
     }
-    if (accountName.length > 200) {
-      return false;
-    }
-    // other rules.
-    return true;
+
+    return accountName.length <= 200;
   }
 
   public static boolean validAccountId(byte[] accountId) {
@@ -128,22 +119,15 @@ public class TransactionUtil {
     if (ArrayUtils.isEmpty(description)) {
       return true;   //description can empty
     }
-    if (description.length > 200) {
-      return false;
-    }
-    // other rules.
-    return true;
+
+    return description.length <= 200;
   }
 
   public static boolean validUrl(byte[] url) {
     if (ArrayUtils.isEmpty(url)) {
       return false;
     }
-    if (url.length > 256) {
-      return false;
-    }
-    // other rules.
-    return true;
+    return url.length <= 256;
   }
 
   public static boolean isNumber(byte[] id) {
@@ -155,12 +139,10 @@ public class TransactionUtil {
         return false;
       }
     }
-    if (id.length > 1 && id[0] == '0') {
-      return false;
-    }
 
-    return true;
+    return !(id.length > 1 && id[0] == '0');
   }
+
   /**
    * Get sender.
    */

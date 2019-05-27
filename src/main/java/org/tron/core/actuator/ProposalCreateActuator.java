@@ -1,8 +1,14 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.actuator.ActuatorConstant.ACCOUNT_EXCEPTION_STR;
+import static org.tron.core.actuator.ActuatorConstant.NOT_EXIST_STR;
+import static org.tron.core.actuator.ActuatorConstant.WITNESS_EXCEPTION_STR;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -17,11 +23,6 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
-
-import java.util.Map;
-import java.util.Objects;
-
-import static org.tron.core.actuator.ActuatorConstant.*;
 
 @Slf4j(topic = "actuator")
 public class ProposalCreateActuator extends AbstractActuator {
@@ -288,20 +289,52 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (24): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_PROTO_FILTER_NUM] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case (25): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1 && entry.getValue() != 0) {
+          throw new ContractValidateException(
+              "This value[ALLOW_ACCOUNT_STATE_ROOT] is only allowed to be 1 or 0");
+        }
+        break;
+      }
+      case (26): {
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");
+        }
+        if (dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10() == 0) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_TRANSFER_TRC10] proposal must be approved "
+                  + "before [ALLOW_TVM_CONSTANTINOPLE] can be proposed");
+        }
+        break;
+      }
+      case (27): {
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_ZKSNARK_TRANSACTION] is only allowed to be 1");
         }
         break;
       }
-      case (25): {
-        if ( !dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction() ) {
+      case (28): {
+        if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
           throw new ContractValidateException(
-                  "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
+              "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
         }
         if (entry.getValue() < 0 || entry.getValue() > 10_000_000_000L) {
           throw new ContractValidateException(
-                  "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
+              "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
         }
         break;
       }

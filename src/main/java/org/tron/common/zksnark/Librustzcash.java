@@ -176,7 +176,10 @@ public class Librustzcash {
     return true;
   }
 
-  // void librustzcash_ask_to_ak(const unsigned char *ask, unsigned char *result);
+  /**
+   * @param ask: the spend authorizing key,to genarate ak, 32 bytes
+   * @return ak 32 bytes
+   */
   public static byte[] librustzcashAskToAk(byte[] ask) throws ZksnarkException {
     if (!(ask.length == 32)) {
       throw new ZksnarkException("librustzcash_ask_to_ak invalid array size");
@@ -187,6 +190,11 @@ public class Librustzcash {
   }
 
   // void librustzcash_nsk_to_nk(const unsigned char *nsk, unsigned char *result);
+
+  /**
+   * @param nsk: the proof authorizing key, to genarate nk, 32 bytes
+   * @return 32 bytes
+   */
   public static byte[] librustzcashNskToNk(byte[] nsk) throws ZksnarkException {
     if (!(nsk.length == 32)) {
       throw new ZksnarkException("librustzcash_nsk_to_nk invalid array size");
@@ -196,6 +204,9 @@ public class Librustzcash {
     return nk;
   }
 
+  /**
+   * @return r: random number, less than r_J,   32 bytes
+   */
   public static byte[] librustzcashSaplingGenerateR(byte[] r) throws ZksnarkException {
     if (!(r.length == 32)) {
       throw new ZksnarkException("librustzcash_sapling_generate_r invalid array size");
@@ -213,6 +224,11 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_proving_ctx_init();
   }
 
+  /**
+   * check validity of d
+   *
+   * @param d: 11 bytes
+   */
   public static boolean librustzcashCheckDiversifier(byte[] d) throws ZksnarkException {
     if (!(d.length == 11)) {
       throw new ZksnarkException("librustzcash_check_diversifier invalid array size");
@@ -243,6 +259,12 @@ public class Librustzcash {
         params.getSighash(), params.getResult());
   }
 
+  /**
+   * convert value to 32-byte scalar
+   *
+   * @param value: 64 bytes
+   * @param data: return, 32 bytes
+   */
   public static void librustzcashToScalar(byte[] value, byte[] data) {
     if (!(value.length == 64 && data.length == 32)) {
       throw new RuntimeException("librustzcash_to_scalar invalid array size");
@@ -287,6 +309,9 @@ public class Librustzcash {
         params.getResult());
   }
 
+  /**
+   * @param result: uncommitted value, 32 bytes
+   */
   public static void librustzcash_tree_uncommitted(byte[] result) {
     if (!(result.length == 32)) {
       throw new RuntimeException("librustzcash_tree_uncommitted invalid array size");

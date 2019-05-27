@@ -321,8 +321,6 @@ public class ShieldedReceiveActuatorTest {
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
 
-    //build process
-    builder.getContractBuilder().setFee(wallet.getShieldedTransactionFee());
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -727,8 +725,6 @@ public class ShieldedReceiveActuatorTest {
       TestColumn testColumn)
       throws ZksnarkException {
     ShieldedTransferContract.Builder contractBuilder = builder.getContractBuilder();
-
-    contractBuilder.setFee(wallet.getShieldedTransactionFee());
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1306,9 +1302,7 @@ public class ShieldedReceiveActuatorTest {
         newContract.setToAmount(shieldedTransferContract.getToAmount());
         //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           newContract
               .addSpendDescription(
                   spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1320,9 +1314,7 @@ public class ShieldedReceiveActuatorTest {
         newContract.setToAmount(shieldedTransferContract.getToAmount());
         newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           newContract
               .addSpendDescription(
                   spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1334,7 +1326,6 @@ public class ShieldedReceiveActuatorTest {
         newContract.setToAmount(shieldedTransferContract.getToAmount());
         newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
         //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
         //  newContract
         //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1346,9 +1337,7 @@ public class ShieldedReceiveActuatorTest {
         newContract.setToAmount(shieldedTransferContract.getToAmount());
         newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           newContract
               .addSpendDescription(
                   spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1360,9 +1349,7 @@ public class ShieldedReceiveActuatorTest {
         newContract.setToAmount(shieldedTransferContract.getToAmount());
         newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         //newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           newContract
               .addSpendDescription(
                   spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1374,9 +1361,7 @@ public class ShieldedReceiveActuatorTest {
         //newContract.setToAmount(shieldedTransferContract.getToAmount());
         newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
         newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           newContract
               .addSpendDescription(
                   spendDescription.toBuilder().clearSpendAuthoritySignature().build());
@@ -1436,9 +1421,6 @@ public class ShieldedReceiveActuatorTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
-
-    //build process
-    builder.getContractBuilder().setFee(wallet.getShieldedTransactionFee());
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1825,10 +1807,7 @@ public class ShieldedReceiveActuatorTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
-
-    //build process
-    builder.getContractBuilder().setFee(wallet.getShieldedTransactionFee());
-
+    
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
       SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);

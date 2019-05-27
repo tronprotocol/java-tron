@@ -60,6 +60,7 @@ public class Storage {
   private static final String WRITE_BUFFER_SIZE_CONFIG_KEY = "writeBufferSize";
   private static final String CACHE_SIZE_CONFIG_KEY = "cacheSize";
   private static final String MAX_OPEN_FILES_CONFIG_KEY = "maxOpenFiles";
+  private static final String EVENT_SUBSCRIB_CONTRACT_PARSE = "event.subscribe.contractParse";
 
   /**
    * Default values of directory
@@ -67,6 +68,7 @@ public class Storage {
   private static final int DEFAULT_DB_VERSION = 2;
   private static final String DEFAULT_DB_ENGINE = "LEVELDB";
   private static final boolean DEFAULT_DB_SYNC = false;
+  private static final boolean DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE = true;
   private static final String DEFAULT_DB_DIRECTORY = "database";
   private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWTICH = "on";
@@ -115,6 +117,10 @@ public class Storage {
 
   @Getter
   @Setter
+  private boolean contractParseSwitch;
+
+  @Getter
+  @Setter
   private String transactionHistoreSwitch;
 
   /**
@@ -147,6 +153,11 @@ public class Storage {
   public static Boolean getDbVersionSyncFromConfig(final Config config) {
     return config.hasPath(DB_SYNC_CONFIG_KEY) ?
         config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
+  }
+
+  public static Boolean getContractParseSwitchFromConfig(final Config config) {
+    return config.hasPath(EVENT_SUBSCRIB_CONTRACT_PARSE) ?
+        config.getBoolean(EVENT_SUBSCRIB_CONTRACT_PARSE) : DEFAULT_EVENT_SUBSCRIB_CONTRACT_PARSE;
   }
 
   public static String getDbDirectoryFromConfig(final Config config) {

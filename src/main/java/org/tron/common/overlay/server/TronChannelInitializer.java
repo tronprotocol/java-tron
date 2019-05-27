@@ -42,7 +42,7 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
   private ApplicationContext ctx;
 
   @Autowired
-  ChannelManager channelManager;
+  private ChannelManager channelManager;
 
   private String remoteId;
 
@@ -75,10 +75,6 @@ public class TronChannelInitializer extends ChannelInitializer<NioSocketChannel>
     } catch (Exception e) {
       logger.error("Unexpected error: ", e);
     }
-  }
-
-  private boolean isInbound() {
-    return remoteId == null || remoteId.isEmpty();
   }
 
   public void setPeerDiscoveryMode(boolean peerDiscoveryMode) {

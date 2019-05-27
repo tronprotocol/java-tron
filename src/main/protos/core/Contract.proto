@@ -90,6 +90,11 @@ message UpdateEnergyLimitContract {
   int64 origin_energy_limit = 3;
 }
 
+message ClearABIContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+}
+
 message WitnessCreateContract {
   bytes owner_address = 1;
   bytes url = 2;
@@ -328,7 +333,6 @@ message ShieldedTransferContract {
   bytes binding_signature = 5;
   bytes transparent_to_address = 6; // transparent address
   int64 to_amount = 7; // the amount to transparent to_address
-  int64 fee = 8;
 }
 // end shielded transaction
 

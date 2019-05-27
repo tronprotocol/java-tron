@@ -2,6 +2,8 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.logsfilter.capsule.RawData;
+import org.tron.common.runtime.vm.LogInfo;
 
 public class ContractTrigger extends Trigger {
 
@@ -64,4 +66,16 @@ public class ContractTrigger extends Trigger {
   @Getter
   @Setter
   private long latestSolidifiedBlockNumber;
+
+  @Getter
+  @Setter
+  private LogInfo logInfo;
+
+  @Getter
+  @Setter
+  private RawData rawData;
+
+  @Getter
+  @Setter
+  private String abiString;
 }
