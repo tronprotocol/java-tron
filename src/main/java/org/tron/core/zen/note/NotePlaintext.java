@@ -172,6 +172,7 @@ public class NotePlaintext {
 
   @AllArgsConstructor
   public class NotePlaintextEncryptionResult {
+
     public byte[] encCiphertext;
     public NoteEncryption noteEncryption;
   }

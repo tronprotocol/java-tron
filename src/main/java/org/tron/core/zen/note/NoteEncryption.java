@@ -90,18 +90,22 @@ public class NoteEncryption {
     public static final int NOTEENCRYPTION_CIPHER_KEYSIZE = 32;
 
     public static class EncCiphertext {
+
       public byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
     }
 
     public static class EncPlaintext {
+
       public byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
     }
 
     public static class OutCiphertext {
+
       public byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
     }
 
     public static class OutPlaintext {
+
       public byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
     }
 

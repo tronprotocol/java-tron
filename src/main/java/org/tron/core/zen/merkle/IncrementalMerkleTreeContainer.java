@@ -294,6 +294,7 @@ public class IncrementalMerkleTreeContainer {
   public static class PathFiller {
 
     private Deque<PedersenHash> queue;
+
     public PathFiller(Deque<PedersenHash> queue) {
       this.queue = queue;
     }
