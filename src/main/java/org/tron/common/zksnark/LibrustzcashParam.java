@@ -19,9 +19,39 @@ public class LibrustzcashParam {
     }
   }
 
-  public static void validAk(byte[] ak) throws ZksnarkException {
-    validNull(ak);
+  public static void validObjectNull(Object object) throws ZksnarkException {
+    if (object == null) {
+      throw new ZksnarkException("param is null");
+    }
+  }
 
+  public static void validByteValue(byte src, byte desc) throws ZksnarkException {
+    if (src != desc) {
+      throw new ZksnarkException("param " + src + " not equals:" + desc);
+    }
+  }
+
+  public static void validParamLength(byte[] value, int length) throws ZksnarkException {
+    validNull(value);
+    if (value.length != length) {
+      throw new ZksnarkException("param length must be " + length);
+    }
+  }
+
+  public static void valid11Params(byte[] value) throws ZksnarkException {
+    validParamLength(value, 11);
+  }
+
+  public static void valid32Params(byte[] value) throws ZksnarkException {
+    validParamLength(value, 32);
+  }
+
+  public static void validVoucherPath(byte[] voucherPath) throws ZksnarkException {
+    validParamLength(voucherPath, 1 + 33 * 32 + 8);
+    validByteValue(voucherPath[0], (byte) 0x20);
+    for (int i = 0; i < 32; i++) {
+      validByteValue(voucherPath[1 + i * 33], (byte) 0x20);
+    }
   }
 
   public static class InitZksnarkParams implements ValidParam {
@@ -156,7 +186,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid32Params(ak);
+      valid32Params(nk);
+      valid32Params(ivk);
     }
   }
 
@@ -184,7 +216,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid32Params(p);
+      valid32Params(sk);
+      valid32Params(result);
     }
   }
 
@@ -222,7 +256,10 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid11Params(d);
+      valid32Params(pk_d);
+      valid32Params(r);
+      valid32Params(cm);
     }
   }
 
@@ -273,7 +310,12 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid11Params(d);
+      valid32Params(pk_d);
+      valid32Params(r);
+      valid32Params(ak);
+      valid32Params(nk);
+      valid32Params(result);
     }
   }
 
@@ -302,7 +344,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid11Params(diversifier);
+      valid32Params(esk);
+      valid32Params(result);
     }
   }
 
@@ -371,7 +415,17 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      valid32Params(ak);
+      valid32Params(nsk);
+      valid11Params(d);
+      valid32Params(r);
+      valid32Params(alpha);
+      valid32Params(anchor);
+      validVoucherPath(voucherPath);
+      valid32Params(cv);
+      valid32Params(rk);
+      validParamLength(zkproof, 192);
     }
   }
 
@@ -421,7 +475,13 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      valid32Params(esk);
+      valid11Params(d);
+      valid32Params(pk_d);
+      valid32Params(r);
+      valid32Params(cv);
+      validParamLength(zkproof, 192);
     }
   }
 
@@ -455,7 +515,10 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid32Params(ask);
+      valid32Params(alpha);
+      valid32Params(sigHash);
+      validParamLength(result, 64);
     }
   }
 
@@ -489,7 +552,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      valid32Params(sighash);
+      validParamLength(result, 64);
     }
   }
 
@@ -541,7 +606,14 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      valid32Params(cv);
+      valid32Params(anchor);
+      valid32Params(nullifier);
+      valid32Params(rk);
+      validParamLength(zkproof, 192);
+      validParamLength(spendAuthSig, 64);
+      valid32Params(sighashValue);
     }
   }
 
@@ -579,7 +651,11 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      valid32Params(cv);
+      valid32Params(cm);
+      valid32Params(ephemeralKey);
+      validParamLength(zkproof, 192);
     }
   }
 
@@ -612,7 +688,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validObjectNull(ctx);
+      validParamLength(bindingSig, 64);
+      valid32Params(sighashValue);
     }
   }
 
@@ -640,7 +718,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid32Params(ivk);
+      valid11Params(d);
+      valid32Params(pk_d);
     }
   }
 
@@ -672,7 +752,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      valid32Params(a);
+      valid32Params(b);
+      valid32Params(result);
     }
   }
 }
