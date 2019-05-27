@@ -109,7 +109,6 @@ import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Slf4j(topic = "DB")
