@@ -97,19 +97,9 @@ public class ZenTransactionBuilder {
     valueBalance -= value;
   }
 
-  // TODO
-  public void setTransparentInput(String address, long value) {
-    setTransparentInput(address.getBytes(), value);
-  }
-
   public void setTransparentInput(byte[] address, long value) {
     contractBuilder.setTransparentFromAddress(ByteString.copyFrom(address))
         .setFromAmount(value);
-  }
-
-  // TODO
-  public void setTransparentOutput(String address, long value) {
-    setTransparentOutput(address.getBytes(), value);
   }
 
   public void setTransparentOutput(byte[] address, long value) {
@@ -120,27 +110,34 @@ public class ZenTransactionBuilder {
   public TransactionCapsule build() throws ZksnarkException {
     TransactionCapsule transactionCapsule;
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
     try {
       // Create Sapling SpendDescriptions
       for (SpendDescriptionInfo spend : spends) {
         SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
         contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
       }
+
       // Create Sapling OutputDescriptions
       for (ReceiveDescriptionInfo receive : receives) {
         ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
         contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance());
       }
-      // Empty output script.
-      byte[] dataHashToBeSigned;//256
+
+      // Empty output script
+      byte[] dataHashToBeSigned; //256
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataHashToBeSigned = transactionCapsule
+      dataHashToBeSigned = TransactionCapsule
           .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
 
+      if (dataHashToBeSigned == null) {
+        throw new ZksnarkException("sign transaction failed");
+      }
+
       // Create Sapling spendAuth and binding signatures
-      CreateSpendAuth(dataHashToBeSigned);
+      createSpendAuth(dataHashToBeSigned);
 
       byte[] bindingSig = new byte[64];
       Librustzcash.librustzcashSaplingBindingSig(
@@ -167,7 +164,7 @@ public class ZenTransactionBuilder {
     return new TransactionCapsule(transaction);
   }
 
-  public void CreateSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
+  public void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
@@ -291,7 +288,6 @@ public class ZenTransactionBuilder {
       this.voucher = voucher;
       alpha = new byte[32];
       Librustzcash.librustzcashSaplingGenerateR(alpha);
-      logger.info("alpha is: {}", ByteArray.toHexString(alpha));
     }
 
     public SpendDescriptionInfo(
@@ -318,4 +314,5 @@ public class ZenTransactionBuilder {
     @Getter
     private byte[] memo; // 256
   }
+
 }

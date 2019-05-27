@@ -1884,7 +1884,7 @@ public class SendCoinShieldTest {
 
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         @Override
-        public void CreateSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
+        public void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
           for (int i = 0; i < this.getSpends().size(); i++) {
             byte[] result = new byte[64];
             Librustzcash.librustzcashSaplingSpendSig(

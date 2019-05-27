@@ -757,7 +757,7 @@ public class ShieldedReceiveActuatorTest {
 
     // Create Sapling spendAuth and binding signatures
 
-    builder.CreateSpendAuth(dataToBeSigned);
+    builder.createSpendAuth(dataToBeSigned);
 
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
