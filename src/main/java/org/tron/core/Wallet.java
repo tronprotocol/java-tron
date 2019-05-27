@@ -58,6 +58,7 @@ import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -68,6 +69,7 @@ import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -95,6 +97,8 @@ import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -1977,6 +1981,58 @@ public class Wallet {
     }
 
     return result;
+  }
+
+  public BytesMessage createSpendAuthSig(SpendAuthSigParameters spendAuthSigParameters)
+          throws ZksnarkException {
+    if (!getAllowShieldedTransactionApi()) {
+      throw new RuntimeException("ShieldedTransactionApi is not allowed");
+    }
+
+    byte[] result = new byte[64];
+    SaplingSpendSigParams saplingSpendSigParams = new SaplingSpendSigParams(
+            spendAuthSigParameters.getAsk().toByteArray(),
+            spendAuthSigParameters.getAlpha().toByteArray(),
+            spendAuthSigParameters.getTxHash().toByteArray(),
+            result);
+    Librustzcash.librustzcashSaplingSpendSig(saplingSpendSigParams);
+
+    return BytesMessage.newBuilder()
+            .setValue(ByteString.copyFrom(result))
+            .build();
+
+  }
+
+  public BytesMessage getNullifier(NfParameters nfParameters) throws ZksnarkException {
+    if (!getAllowShieldedTransactionApi()) {
+      throw new RuntimeException("ShieldedTransactionApi is not allowed");
+    }
+    byte[] ak = nfParameters.getAk().toByteArray();
+    byte[] nk = nfParameters.getNk().toByteArray();
+
+    byte[] result = new byte[32]; // 256
+    GrpcAPI.Note note = nfParameters.getNote();
+    IncrementalMerkleVoucherCapsule incrementalMerkleVoucherCapsule
+            = new IncrementalMerkleVoucherCapsule(nfParameters.getVoucher());
+    IncrementalMerkleVoucherContainer incrementalMerkleVoucherContainer
+            = new IncrementalMerkleVoucherContainer(incrementalMerkleVoucherCapsule);
+
+    SaplingComputeNfParams saplingComputeNfParams = new SaplingComputeNfParams(
+            note.getD().toByteArray(),
+            note.getPkD().toByteArray(),
+            note.getValue(),
+            note.getRcm().toByteArray(),
+            ak,
+            nk,
+            incrementalMerkleVoucherContainer.position(),
+            result);
+    if (!Librustzcash.librustzcashSaplingComputeNf(saplingComputeNfParams)) {
+      return null;
+    }
+
+    return BytesMessage.newBuilder()
+            .setValue(ByteString.copyFrom(result))
+            .build();
   }
 
   public NodeList listNodes() {

@@ -60,7 +60,6 @@ public class ZenTransactionBuilder {
   }
 
   public ZenTransactionBuilder() {
-
   }
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
@@ -276,7 +275,6 @@ public class ZenTransactionBuilder {
   public static class SpendDescriptionInfo {
 
     public ExpandedSpendingKey expsk;
-
     public Note note;
     public byte[] alpha;
     public byte[] anchor;

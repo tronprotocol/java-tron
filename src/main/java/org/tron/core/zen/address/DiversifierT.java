@@ -15,7 +15,6 @@ public class DiversifierT {
   public byte[] data = new byte[Constant.ZC_DIVERSIFIER_SIZE];
 
   public DiversifierT() {
-
   }
 
   public DiversifierT random() throws ZksnarkException {

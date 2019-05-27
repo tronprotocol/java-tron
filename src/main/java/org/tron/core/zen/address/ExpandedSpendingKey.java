@@ -27,12 +27,11 @@ public class ExpandedSpendingKey {
   public ExpandedSpendingKey() {
   }
 
-
-  public static byte [] getAkFromAsk(byte[] ask) throws ZksnarkException {
+  public static byte[] getAkFromAsk(byte[] ask) throws ZksnarkException {
     return Librustzcash.librustzcashAskToAk(ask); // 256
   }
 
-  public static byte [] getNkFromNsk(byte[] nsk) throws ZksnarkException {
+  public static byte[] getNkFromNsk(byte[] nsk) throws ZksnarkException {
     return Librustzcash.librustzcashNskToNk(nsk); // 256
   }
 

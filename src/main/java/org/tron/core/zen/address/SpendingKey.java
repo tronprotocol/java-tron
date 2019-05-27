@@ -1,5 +1,7 @@
 package org.tron.core.zen.address;
 
+import java.util.Optional;
+import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,9 +12,6 @@ import org.tron.common.zksnark.Libsodium.ILibsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
 import org.tron.core.Constant;
 import org.tron.core.exception.BadItemException;
-
-import java.util.Optional;
-import java.util.Random;
 import org.tron.core.exception.ZksnarkException;
 
 @AllArgsConstructor
@@ -70,7 +69,8 @@ public class SpendingKey {
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
-        throw new BadItemException("librustzcash_check_diversifier did not return valid diversifier");
+        throw new BadItemException(
+            "librustzcash_check_diversifier did not return valid diversifier");
       }
       blob[33] += 1;
     }
@@ -95,9 +95,8 @@ public class SpendingKey {
     return result;
   }
 
-
   public static byte[] ovkForShieldingFromTaddr(byte[] data) {
-    crypto_generichash_blake2b_state.ByReference state  = null;
+    crypto_generichash_blake2b_state.ByReference state = null;
     Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
     byte[] intermediate = new byte[64];
     Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);

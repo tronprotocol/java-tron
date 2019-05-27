@@ -2,11 +2,9 @@ package org.tron.core.zen.merkle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
@@ -25,26 +23,20 @@ public class IncrementalMerkleVoucherContainer {
   }
 
   private Deque<PedersenHash> partialPath() throws ZksnarkException {
-
     Deque<PedersenHash> uncles = new ArrayDeque<>(voucherCapsule.getFilled());
-
     if (cursorExist()) {
       uncles.add(
           voucherCapsule.getCursor().toMerkleTreeContainer().root(voucherCapsule.getCursorDepth()));
     }
-
     return uncles;
   }
 
   public void append(PedersenHash obj) throws ZksnarkException {
-
     if (cursorExist()) {
       IncrementalMerkleTreeCapsule cursor = voucherCapsule.getCursor();
       cursor.toMerkleTreeContainer().append(obj);
       voucherCapsule.setCursor(cursor);
-
       long cursorDepth = voucherCapsule.getCursorDepth();
-
       if (voucherCapsule.getCursor().toMerkleTreeContainer().isComplete(cursorDepth)) {
         voucherCapsule.addFilled(
             voucherCapsule.getCursor().toMerkleTreeContainer().root(cursorDepth));
@@ -56,13 +48,10 @@ public class IncrementalMerkleVoucherContainer {
               .getTree()
               .toMerkleTreeContainer()
               .nextDepth(voucherCapsule.getFilled().size());
-
       voucherCapsule.setCursorDepth(nextDepth);
-
       if (nextDepth >= DEPTH) {
         throw new RuntimeException("tree is full");
       }
-
       if (nextDepth == 0) {
         voucherCapsule.addFilled(obj);
       } else {
@@ -92,6 +81,7 @@ public class IncrementalMerkleVoucherContainer {
   public PedersenHash root() throws ZksnarkException {
     return voucherCapsule.getTree().toMerkleTreeContainer().root(DEPTH, partialPath());
   }
+
   private boolean cursorExist() {
     return !voucherCapsule.getCursor().isEmptyTree();
   }
