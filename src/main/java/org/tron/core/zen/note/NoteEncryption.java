@@ -25,7 +25,6 @@ public class NoteEncryption {
 
   // Ephemeral public key
   public byte[] epk;
-
   // Ephemeral secret key
   public byte[] esk;
 
@@ -37,7 +36,6 @@ public class NoteEncryption {
     this.esk = esk;
   }
 
-  //todo:
   public static Optional<NoteEncryption> fromDiversifier(DiversifierT d) throws ZksnarkException {
     byte[] epk = new byte[32];
     byte[] esk = new byte[32];
@@ -46,9 +44,7 @@ public class NoteEncryption {
         .librustzcashSaplingKaDerivepublic(new SaplingKaDerivepublicParams(d.data, esk, epk))) {
       return Optional.empty();
     }
-
     return Optional.of(new NoteEncryption(epk, esk));
-
   }
 
   public Optional<EncCiphertext> encryptToRecipient(byte[] pk_d, EncPlaintext message)
@@ -94,28 +90,23 @@ public class NoteEncryption {
     public static final int NOTEENCRYPTION_CIPHER_KEYSIZE = 32;
 
     public static class EncCiphertext {
-
       public byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
     }
 
     public static class EncPlaintext {
-
       public byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
     }
 
     public static class OutCiphertext {
-
       public byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
     }
 
     public static class OutPlaintext {
-
       public byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
     }
 
     public static void PRFOck(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
       byte[] block = new byte[128];
-
       System.arraycopy(ovk, 0, block, 0, 32);
       System.arraycopy(cv, 0, block, 32, 32);
       System.arraycopy(cm, 0, block, 64, 32);
@@ -138,14 +129,11 @@ public class NoteEncryption {
 
     public static void KDFSapling(byte[] K, byte[] dhsecret, byte[] epk) {
       byte[] block = new byte[64];
-
       System.arraycopy(dhsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
-
       byte[] personalization = new byte[Libsodium.crypto_generichash_blake2b_PERSONALBYTES];
       byte[] temp = "Zcash_SaplingKDF".getBytes();
       System.arraycopy(temp, 0, personalization, 0, temp.length);
-
       if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
           block, 64,
           null, 0, // No key.
@@ -158,23 +146,17 @@ public class NoteEncryption {
       return;
     }
 
-
     public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
         byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-
       if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(epk, ivk, dhsecret))) {
         return Optional.empty();
       }
-
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       KDFSapling(K, dhsecret, epk);
-
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
-
       if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
           plaintext.data, null,
           null,
@@ -184,26 +166,20 @@ public class NoteEncryption {
           cipher_nonce, K) != 0) {
         return Optional.empty();
       }
-
       return Optional.of(plaintext);
     }
 
     public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
         EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-
       if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(pk_d, esk, dhsecret))) {
         return Optional.empty();
       }
-
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       KDFSapling(K, dhsecret, epk);
-
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
-
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
-
       if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
           plaintext.data, null,
           null,
@@ -219,14 +195,11 @@ public class NoteEncryption {
 
     public static Optional<OutPlaintext> AttemptOutDecryption(
         OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
-
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       PRFOck(K, ovk, cv, cm, epk);
-
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       OutPlaintext plaintext = new OutPlaintext();
       plaintext.data = new byte[ZC_OUTPLAINTEXT_SIZE];
-
       if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(plaintext.data, null,
           null,
           ciphertext.data, ZC_OUTCIPHERTEXT_SIZE,
@@ -235,9 +208,7 @@ public class NoteEncryption {
           cipher_nonce, K) != 0) {
         return Optional.empty();
       }
-
       return Optional.of(plaintext);
     }
-
   }
 }

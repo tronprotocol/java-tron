@@ -75,11 +75,9 @@ public class MerkleContainer {
 
   public IncrementalMerkleTreeContainer saveCmIntoMerkleTree(
       IncrementalMerkleTreeContainer tree, byte[] cm) throws ZksnarkException {
-
     PedersenHashCapsule pedersenHashCapsule = new PedersenHashCapsule();
     pedersenHashCapsule.setContent(ByteString.copyFrom(cm));
     tree.append(pedersenHashCapsule.getInstance());
-
     return tree;
   }
 
@@ -91,10 +89,8 @@ public class MerkleContainer {
     if(!merkleRootExist(rt)){
       return null;
     }
-
     IncrementalMerkleTreeContainer tree =
         this.manager.getMerkleTreeStore().get(rt).toMerkleTreeContainer();
     return tree.path();
   }
-
 }
