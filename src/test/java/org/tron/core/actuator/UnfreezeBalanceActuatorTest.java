@@ -374,29 +374,6 @@ public class UnfreezeBalanceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule ownerResult =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-
-      Assert.assertEquals(initBalance + frozenBalance, ownerResult.getBalance());
-      Assert.assertEquals(0L, ownerResult.getTronPower());
-      Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForBandwidth());
-
-      //check DelegatedResourceAccountIndex
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleOwner = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getFromAccountsList().size());
-      Assert.assertEquals(0, delegatedResourceAccountIndexCapsuleOwner.getToAccountsList().size());
-
-      DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsuleReceiver = dbManager
-          .getDelegatedResourceAccountIndexStore().get(ByteArray.fromHexString(RECEIVER_ADDRESS));
-      Assert
-          .assertEquals(0, delegatedResourceAccountIndexCapsuleReceiver.getToAccountsList().size());
-      Assert
-          .assertEquals(0,
-              delegatedResourceAccountIndexCapsuleReceiver.getFromAccountsList().size());
-
     } catch (ContractValidateException e) {
       logger.error("",e);
       Assert.assertEquals(e.getMessage(),"Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
@@ -513,7 +490,6 @@ public class UnfreezeBalanceActuatorTest {
 
   @Test
   public void testUnfreezeDelegatedBalanceForCpu() {
-    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
     long now = System.currentTimeMillis();
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
 
@@ -528,7 +504,7 @@ public class UnfreezeBalanceActuatorTest {
     Assert.assertEquals(0L, receiver.getTronPower());
 
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
-    dbManager.getAccountStore().delete(receiver.createDbKey());
+    dbManager.getAccountStore().put(receiver.createDbKey(),receiver);
 
     DelegatedResourceCapsule delegatedResourceCapsule = new DelegatedResourceCapsule(
         owner.getAddress(),
@@ -607,13 +583,6 @@ public class UnfreezeBalanceActuatorTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
-      AccountCapsule ownerResult =
-          dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
-
-      Assert.assertEquals(initBalance + frozenBalance, ownerResult.getBalance());
-      Assert.assertEquals(0L, ownerResult.getTronPower());
-      Assert.assertEquals(0L, ownerResult.getDelegatedFrozenBalanceForEnergy());
     } catch (ContractValidateException e) {
       Assert.assertEquals(e.getMessage(),"Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
     } catch (ContractExeException e) {
