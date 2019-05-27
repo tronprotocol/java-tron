@@ -318,22 +318,22 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block;
   }
 
-  // no zero-snark tx return null
-  // else same block head, only zero-snark tx
-  public Block getZKInstance() {
-    Block.Builder blockBuild = Block.newBuilder();
-    blockBuild.setBlockHeader(this.block.getBlockHeader());
-
-    this.block.getTransactionsList().stream()
-            .filter( trx -> trx.getSignatureZkCount()>0)
-            .forEach( trx -> blockBuild.addTransactions(trx) );
-
-    if (blockBuild.getTransactionsCount() == 0) {
-      return null;
-    }
-
-    return blockBuild.build();
-  }
+//  // no zero-snark tx return null
+//  // else same block head, only zero-snark tx
+//  public Block getZKInstance() {
+//    Block.Builder blockBuild = Block.newBuilder();
+//    blockBuild.setBlockHeader(this.block.getBlockHeader());
+//
+//    this.block.getTransactionsList().stream()
+//            .filter( trx -> trx.getSignatureZkCount()>0)
+//            .forEach( trx -> blockBuild.addTransactions(trx) );
+//
+//    if (blockBuild.getTransactionsCount() == 0) {
+//      return null;
+//    }
+//
+//    return blockBuild.build();
+//  }
 
   public Sha256Hash getParentHash() {
     return Sha256Hash.wrap(this.block.getBlockHeader().getRawData().getParentHash());

@@ -91,7 +91,6 @@ import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.core.actuator.Actuator;
@@ -113,7 +112,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -451,7 +449,7 @@ public class Wallet {
 
   public TransactionCapsule createTransactionCapsuleWithoutValidate(
       com.google.protobuf.Message message,
-      ContractType contractType){
+      ContractType contractType) {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     try {
       BlockId blockId = dbManager.getHeadBlockId();
@@ -1298,16 +1296,6 @@ public class Wallet {
     return blockListBuilder.build();
   }
 
-  public BlockList getZKBlocksByLimitNext(long number, long limit) {
-    if (limit <= 0) {
-      return null;
-    }
-    BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
-        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getZKInstance()));
-    return blockListBuilder.build();
-  }
-
   public Transaction getTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
@@ -1374,7 +1362,7 @@ public class Wallet {
     return null;
   }
 
-  public boolean getAllowShieldedTransactionApi(){
+  public boolean getAllowShieldedTransactionApi() {
     return Args.getInstance().isAllowShieldedTransactionApi();
   }
 
@@ -1434,7 +1422,7 @@ public class Wallet {
   private long getBlockNumber(OutputPoint outPoint)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     ByteString txId = outPoint.getHash();
@@ -1452,7 +1440,7 @@ public class Wallet {
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     ByteString txId = outPoint.getHash();
@@ -1547,7 +1535,7 @@ public class Wallet {
       int synBlockNum)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     long start = large;
@@ -1627,7 +1615,7 @@ public class Wallet {
   }
 
   private void validateInput(OutputPointInfo request) throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
@@ -1655,7 +1643,7 @@ public class Wallet {
   public IncrementalMerkleVoucherInfo getMerkleTreeVoucherInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     validateInput(request);
@@ -1701,7 +1689,7 @@ public class Wallet {
   }
 
   public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (blockNum < 0) {
@@ -1724,7 +1712,7 @@ public class Wallet {
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
@@ -1734,13 +1722,13 @@ public class Wallet {
     byte[] nsk = request.getNsk().toByteArray();
     byte[] ovk = request.getOvk().toByteArray();
 
-    if (!ArrayUtils.isEmpty(ask) && ask.length != 32){
+    if (!ArrayUtils.isEmpty(ask) && ask.length != 32) {
       throw new ContractValidateException("byte length of ask should be 32");
     }
-    if (!ArrayUtils.isEmpty(nsk) && nsk.length != 32){
+    if (!ArrayUtils.isEmpty(nsk) && nsk.length != 32) {
       throw new ContractValidateException("byte length of nsk should be 32");
     }
-    if (!ArrayUtils.isEmpty(ovk) && ovk.length != 32){
+    if (!ArrayUtils.isEmpty(ovk) && ovk.length != 32) {
       throw new ContractValidateException("byte length of ovk should be 32");
     }
 
@@ -1820,7 +1808,7 @@ public class Wallet {
   }
 
   public BytesMessage getSpendingKey() {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     byte[] sk = SpendingKey.random().getValue();
@@ -1828,14 +1816,14 @@ public class Wallet {
   }
 
   public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey)
-          throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+      throws BadItemException {
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(spendingKey)) {
       throw new BadItemException("spendingKey is null");
     }
-    if(ByteArray.toHexString(spendingKey.toByteArray()).length() != 64){
+    if (ByteArray.toHexString(spendingKey.toByteArray()).length() != 64) {
       throw new BadItemException("the length of spendingKey's hexstring should be 64");
     }
 
@@ -1853,13 +1841,13 @@ public class Wallet {
   }
 
   public BytesMessage getAkFromAsk(ByteString ask) throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(ask)) {
       throw new BadItemException("ask is null");
     }
-    if(ByteArray.toHexString(ask.toByteArray()).length() != 64){
+    if (ByteArray.toHexString(ask.toByteArray()).length() != 64) {
       throw new BadItemException("the length of ask's hexstring should be 64");
     }
 
@@ -1869,13 +1857,13 @@ public class Wallet {
   }
 
   public BytesMessage getNkFromNsk(ByteString nsk) throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(nsk)) {
       throw new BadItemException("nsk is null");
     }
-    if(ByteArray.toHexString(nsk.toByteArray()).length() != 64){
+    if (ByteArray.toHexString(nsk.toByteArray()).length() != 64) {
       throw new BadItemException("the length of nsk's hexstring should be 64");
     }
 
@@ -1885,8 +1873,8 @@ public class Wallet {
   }
 
   public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk)
-          throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+      throws BadItemException {
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     if (ak.length != 32 || nk.length != 32) {
@@ -1901,7 +1889,7 @@ public class Wallet {
   }
 
   public DiversifierMessage getDiversifier() {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     byte[] d;
@@ -1919,7 +1907,7 @@ public class Wallet {
   }
 
   public BytesMessage getRcm() {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     byte[] rcm = Note.generateR();
@@ -1929,7 +1917,7 @@ public class Wallet {
 
   public SaplingPaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     //get pk_d from paymentAddress
@@ -1954,8 +1942,8 @@ public class Wallet {
     return spa;
   }
 
-  public SpendResult isSpend(NoteParameters noteParameters){
-    if(!getAllowShieldedTransactionApi()){
+  public SpendResult isSpend(NoteParameters noteParameters) {
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.Note note = noteParameters.getNote();
@@ -2242,13 +2230,14 @@ public class Wallet {
    * try to get cm belongs to ivk
    */
   public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum, byte[] ivk)
-          throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+      throws BadItemException {
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
-      throw new BadItemException("request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
+      throw new BadItemException(
+          "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
     }
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
     blockList.getBlockList().forEach(block -> {
@@ -2314,13 +2303,14 @@ public class Wallet {
    * try to get cm belongs to ovk
    */
   public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum, byte[] ovk)
-          throws BadItemException {
-    if(!getAllowShieldedTransactionApi()){
+      throws BadItemException {
+    if (!getAllowShieldedTransactionApi()) {
       throw new RuntimeException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(endNum > 0 && endNum > startNum)) {
-      throw new BadItemException("request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
+      throw new BadItemException(
+          "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
     }
 
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
