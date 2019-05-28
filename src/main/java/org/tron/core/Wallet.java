@@ -2075,18 +2075,17 @@ public class Wallet {
             .build();
   }
 
-  public BytesMessage getShieldTransactionHash(TransactionExtention transactionExtention)
+  public BytesMessage getShieldTransactionHash(Transaction transaction)
           throws ContractValidateException {
-    List<Contract> contract = transactionExtention.getTransaction().getRawData().getContractList();
+    List<Contract> contract = transaction.getRawData().getContractList();
     if(contract == null || contract.size() == 0){
-      return null;
+      throw new ContractValidateException("contract is null");
     }
     ContractType contractType = contract.get(0).getType();
     if(contractType != ContractType.ShieldedTransferContract){
       throw new ContractValidateException("Not a shielded transaction");
     }
-    TransactionCapsule transactionCapsule = new TransactionCapsule(
-            transactionExtention.getTransaction());
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     byte[] transactionHash = TransactionCapsule
             .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();

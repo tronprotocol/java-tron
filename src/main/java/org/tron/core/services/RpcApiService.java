@@ -2049,7 +2049,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void getShieldTransactionHash(TransactionExtention request,
+    public void getShieldTransactionHash(Transaction request,
             StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
         BytesMessage transactionHash = wallet.getShieldTransactionHash(request);
