@@ -93,7 +93,7 @@ public class SpendingKey {
     while (true) {
       ILibsodium.crypto_generichash_blake2b_state.ByReference state = new ILibsodium.crypto_generichash_blake2b_state.ByReference();
       Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-          state, null, 0, 64, null, Constant.ZCASH_EXPANDSEED_PERSONALIZATION);
+          state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
@@ -142,7 +142,7 @@ public class SpendingKey {
       blob[32] = t;
       crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
       Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-          state, null, 0, 64, null, Constant.ZCASH_EXPANDSEED_PERSONALIZATION);
+          state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
 
