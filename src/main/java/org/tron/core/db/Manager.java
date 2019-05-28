@@ -166,6 +166,7 @@ public class Manager {
   private StorageRowStore storageRowStore;
   @Autowired
   private NullifierStore nullifierStore;
+
   @Autowired
   @Getter
   private IncrementalMerkleTreeStore merkleTreeStore;
@@ -697,6 +698,15 @@ public class Manager {
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
+  }
+
+
+  public void adjustTotalShieldedPoolValue(long valueBalance)  throws BalanceInsufficientException {
+    long totalShieldedPoolValue = Math.subtractExact(getDynamicPropertiesStore().getTotalShieldedPoolValue(), valueBalance);
+    if (totalShieldedPoolValue < 0) {
+      throw new BalanceInsufficientException("Total shielded pool value can not below 0");
+    }
+    getDynamicPropertiesStore().saveTotalStoragePool(totalShieldedPoolValue);
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {

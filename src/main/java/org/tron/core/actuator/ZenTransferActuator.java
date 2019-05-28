@@ -33,6 +33,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
 public class ZenTransferActuator extends AbstractActuator {
+
   private TransactionCapsule tx;
   private ZenTransferContract zenTransferContract;
 
@@ -70,19 +71,21 @@ public class ZenTransferActuator extends AbstractActuator {
           zenTransferContract.getToAmount(), ret);
     }
 
-    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
-        .getTotalShieldedPoolValue();
+    //adjust and verify total shielded pool value
     try {
-      long valueBalance = Math.addExact(Math.subtractExact(zenTransferContract.getToAmount(),
-          zenTransferContract.getFromAmount()), fee);
-      totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
+      dbManager.adjustTotalShieldedPoolValue(
+          Math.addExact(Math.subtractExact(zenTransferContract.getToAmount(),
+              zenTransferContract.getFromAmount()), fee));
     } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     ret.setStatus(fee, code.SUCESS);
     return true;
   }
@@ -219,13 +222,6 @@ public class ZenTransferActuator extends AbstractActuator {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         for (SpendDescription spendDescription : spendDescriptions) {
-          if (spendDescription.getValueCommitment().size() != 32
-              || spendDescription.getAnchor().size() != 32
-              || spendDescription.getNullifier().size() != 32
-              || spendDescription.getZkproof().size() != 192
-              || spendDescription.getSpendAuthoritySignature().size() != 64) {
-            throw new ContractValidateException("spend description null");
-          }
           if (!Librustzcash.librustzcashSaplingCheckSpend(
               new SaplingCheckSpendParams(ctx,
                   spendDescription.getValueCommitment().toByteArray(),
@@ -241,11 +237,7 @@ public class ZenTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if (receiveDescription.getValueCommitment().size() != 32
-              || receiveDescription.getNoteCommitment().size() != 32
-              || receiveDescription.getEpk().size() != 32
-              || receiveDescription.getZkproof().size() != 192
-              || receiveDescription.getCEnc().size() != 580
+          if ( receiveDescription.getCEnc().size() != 580
               || receiveDescription.getCOut().size() != 80) {
             throw new ContractValidateException("receive description null");
           }
@@ -275,6 +267,7 @@ public class ZenTransferActuator extends AbstractActuator {
         if (totalShieldedPoolValue < 0) {
           throw new ContractValidateException("shieldedPoolValue error");
         }
+
         if (!Librustzcash.librustzcashSaplingFinalCheck(
             new SaplingFinalCheckParams(ctx,
                 valueBalance,
