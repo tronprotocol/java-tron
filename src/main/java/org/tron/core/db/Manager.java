@@ -221,7 +221,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   @Autowired
-  private AccountStateCallBack fastSyncCallBack;
+  private AccountStateCallBack accountStateCallBack;
 
   @Autowired
   private TrieService trieService;
@@ -432,7 +432,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setManager(this);
-    fastSyncCallBack.setManager(this);
+    accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
@@ -1318,7 +1318,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
     //
-    fastSyncCallBack.preExecute(blockCapsule);
+    accountStateCallBack.preExecute(blockCapsule);
 
     if (needCheckWitnessPermission && !witnessService.
         validateWitnessPermission(witnessCapsule.getAddress())) {
@@ -1369,9 +1369,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        fastSyncCallBack.preExeTrans();
+        accountStateCallBack.preExeTrans();
         processTransaction(trx, blockCapsule);
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1413,7 +1413,7 @@ public class Manager {
       }
     } // end of while
 
-    fastSyncCallBack.executeGenerateFinish();
+    accountStateCallBack.executeGenerateFinish();
 
     session.reset();
     if (postponedTrxCount > 0) {
@@ -1515,19 +1515,19 @@ public class Manager {
       }
     }
     try {
-      fastSyncCallBack.preExecute(block);
+      accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
-        fastSyncCallBack.preExeTrans();
+        accountStateCallBack.preExeTrans();
         processTransaction(transactionCapsule, block);
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.exeTransFinish();
       }
-      fastSyncCallBack.executePushFinish();
+      accountStateCallBack.executePushFinish();
     } finally {
-      fastSyncCallBack.exceptionFinish();
+      accountStateCallBack.exceptionFinish();
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());

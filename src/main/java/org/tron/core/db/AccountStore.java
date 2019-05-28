@@ -21,7 +21,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
   @Autowired
-  private AccountStateCallBack fastSyncCallBack;
+  private AccountStateCallBack accountStateCallBack;
 
   @Autowired
   private AccountStateStoreTrie accountStateStoreTrie;
@@ -41,7 +41,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
-    fastSyncCallBack.accountCallBack(key, item);
+    accountStateCallBack.accountCallBack(key, item);
   }
 
   /**
