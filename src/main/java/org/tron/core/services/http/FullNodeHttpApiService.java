@@ -1,7 +1,10 @@
 package org.tron.core.services.http;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -353,11 +356,19 @@ public class FullNodeHttpApiService implements Service {
   }
 
   private String getParamsFile(String fileName) {
-    return FullNodeHttpApiService.class.getClassLoader()
-        .getResource("params" + File.separator + fileName).getFile();
+    InputStream in = FullNodeHttpApiService.class.getClassLoader()
+        .getResourceAsStream("params" + File.separator + fileName);
+    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+    try {
+      FileUtils.copyToFile(in, fileOut);
+    } catch (IOException e) {
+      logger.error(e.getMessage(), e);
+    }
+    return fileOut.getAbsolutePath();
   }
 
   private void librustzcashInitZksnarkParams() {
+    logger.info("init zk param begin");
 
     String spendPath = getParamsFile("sapling-spend.params");
     String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
