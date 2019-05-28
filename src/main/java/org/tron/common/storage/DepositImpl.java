@@ -341,7 +341,7 @@ public class DepositImpl implements Deposit {
     } else {
       if (VMConfig.allowTvmConstantinople()) {
         ContractCapsule contract = getContract(address);
-        storage = new Storage(address, dbManager.getStorageRowStore(), contract.getTrxHash());
+        storage = new Storage(address, dbManager.getStorageRowStore(), contract);
       } else {
         storage = new Storage(address, dbManager.getStorageRowStore());
       }

@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.db.StorageRowStore;
 
@@ -27,7 +28,13 @@ public class Storage {
     this.store = store;
   }
 
-  public Storage(byte[] address, StorageRowStore store, byte[] trxHash) {
+  public Storage(byte[] address, StorageRowStore store, ContractCapsule contract) {
+    byte[] trxHash;
+    if (contract == null) {
+      trxHash = new byte[0];
+    } else {
+      trxHash = contract.getTrxHash();
+    }
     addrHash = addrHash(address, trxHash);
     this.store = store;
   }
