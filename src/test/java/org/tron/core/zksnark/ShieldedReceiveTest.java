@@ -150,7 +150,7 @@ public class ShieldedReceiveTest {
 
   private String getParamsFile(String fileName) {
     return ShieldedReceiveTest.class.getClassLoader()
-        .getResource("zcash-params" + File.separator + fileName).getFile();
+        .getResource("params" + File.separator + fileName).getFile();
   }
 
   private void librustzcashInitZksnarkParams() throws ZksnarkException {
