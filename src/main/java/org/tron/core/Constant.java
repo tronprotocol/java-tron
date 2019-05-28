@@ -57,7 +57,7 @@ public class Constant {
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
 
-  public static byte[] ZCASH_EXPANDSEED_PERSONALIZATION = {'Z', 'c', 'a', 's', 'h', '_', 'E', 'x',
+  public static byte[] ZCASH_EXPANDSEED_PERSONALIZATION = {'Z', 't', 'r', 'o', 'n', '_', 'E', 'x',
       'p', 'a', 'n', 'd', 'S', 'e', 'e', 'd'};
   public static int ZC_DIVERSIFIER_SIZE = 11;
   public static int ZC_OUTPUT_DESC_MAX_SIZE = 10;
