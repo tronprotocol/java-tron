@@ -190,11 +190,11 @@ public class FreezeBalanceActuator extends AbstractActuator {
             "Account[" + readableOwnerAddress + "] not exists");
       }
 
-      if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 1) {
-        if (receiverCapsule.getType() == AccountType.Contract) {
-          throw new ContractValidateException(
-              "Do not allow delegate resources to contract addresses");
-        }
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 1
+          && receiverCapsule.getType() == AccountType.Contract) {
+        throw new ContractValidateException(
+            "Do not allow delegate resources to contract addresses");
+
       }
 
     }
