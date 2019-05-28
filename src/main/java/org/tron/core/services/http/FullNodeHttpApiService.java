@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -274,11 +273,6 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
-
-      int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
-      if (maxHttpConnectNumber > 0) {
-        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
-      }
 
       server.start();
     } catch (Exception e) {
