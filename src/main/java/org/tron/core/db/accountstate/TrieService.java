@@ -1,4 +1,4 @@
-package org.tron.core.db.fast;
+package org.tron.core.db.accountstate;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 
 @Slf4j(topic = "AccountState")
 @Component
