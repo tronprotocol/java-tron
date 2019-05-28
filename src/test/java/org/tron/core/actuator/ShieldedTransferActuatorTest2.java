@@ -290,7 +290,7 @@ public class ShieldedTransferActuatorTest2 {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("ShieldedTransferContract fee must equal " + fee, e.getMessage());
+      Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
@@ -413,8 +413,9 @@ public class ShieldedTransferActuatorTest2 {
   public void publicAddressToShieldedInvalidFromAmount() throws ZksnarkException {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
-    long[] transferAmount = {0, -100};
-    for (long amount : transferAmount) {
+
+    try {
+      long amount = 0;
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
       //From amount
       builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), amount);
@@ -424,26 +425,53 @@ public class ShieldedTransferActuatorTest2 {
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
-      try {
-        TransactionCapsule transactionCap = builder.build();
+      TransactionCapsule transactionCap = builder.build();
 
-        Any contract =
-            transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-                .getParameter();
-        ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
-            transactionCap);
-        TransactionResultCapsule ret = new TransactionResultCapsule();
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
 
-        actuator.validate();
-        actuator.execute(ret);
-        Assert.assertTrue(false);
-      } catch (ContractValidateException e) {
-        Assert.assertTrue(e instanceof ContractValidateException);
-        Assert.assertEquals(
-            "from_amount must be greater than 0", e.getMessage());
-      } catch (Exception e) {
-        Assert.assertTrue(false);
-      }
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("from_amount must be greater than 0", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+
+    try {
+      long amount = -100;
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From amount
+      builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), amount);
+      //TO amount
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
+      TransactionCapsule transactionCap = builder.build();
+
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("from_amount should not be less than 0", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
     }
   }
 
@@ -453,41 +481,71 @@ public class ShieldedTransferActuatorTest2 {
   @Test
   public void publicAddressToShieldedInvalidToAmount() {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    long[] transferAmount = {0, -100};
-    for (long amount : transferAmount) {
-      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-      try {
-        //From amount
-        SpendingKey sk = SpendingKey.random();
-        ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-        PaymentAddress address = sk.defaultAddress();
-        Note note = new Note(address, AMOUNT);
-        IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-        byte[] anchor = voucher.root().getContent().toByteArray();
-        dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-            voucher.getVoucherCapsule().getTree());
-        builder.addSpend(expsk, note, anchor, voucher);
-        //TO amount
-        builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
-        TransactionCapsule transactionCap = builder.build();
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    try {
+      long amount = 0;
+      //From amount
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+          voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+      //TO amount
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
+      TransactionCapsule transactionCap = builder.build();
 
-        Any contract =
-            transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-                .getParameter();
-        ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
-            transactionCap);
-        TransactionResultCapsule ret = new TransactionResultCapsule();
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
 
-        actuator.validate();
-        actuator.execute(ret);
-        Assert.assertTrue(false);
-      } catch (ContractValidateException e) {
-        Assert.assertTrue(e instanceof ContractValidateException);
-        Assert.assertEquals(
-            "to_amount must be greater than 0", e.getMessage());
-      } catch (Exception e) {
-        Assert.assertTrue(false);
-      }
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("to_amount must be greater than 0", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+
+    try {
+      long amount = -100;
+      //From amount
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+          voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+      //TO amount
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
+      TransactionCapsule transactionCap = builder.build();
+
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("to_amount should not be less than 0", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
     }
   }
 
@@ -622,6 +680,7 @@ public class ShieldedTransferActuatorTest2 {
    */
   @Test
   public void PublicToShieldAddressAndShieldToPublicAddressSuccess() {
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
@@ -980,6 +1039,7 @@ public class ShieldedTransferActuatorTest2 {
    */
   @Test
   public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
@@ -1276,7 +1336,7 @@ public class ShieldedTransferActuatorTest2 {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "librustzcashSaplingFinalCheck error", e.getMessage());
+          "long overflow", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }

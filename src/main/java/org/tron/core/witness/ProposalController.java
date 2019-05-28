@@ -218,6 +218,7 @@ public class ProposalController {
         case (27): {
           if (manager.getDynamicPropertiesStore().getAllowZksnarkTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
           }
           break;
         }
