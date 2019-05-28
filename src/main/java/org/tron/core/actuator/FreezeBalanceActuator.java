@@ -18,6 +18,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
@@ -187,6 +188,13 @@ public class FreezeBalanceActuator extends AbstractActuator {
         String readableOwnerAddress = StringUtil.createReadableString(receiverAddress);
         throw new ContractValidateException(
             "Account[" + readableOwnerAddress + "] not exists");
+      }
+
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 1
+          && receiverCapsule.getType() == AccountType.Contract) {
+        throw new ContractValidateException(
+            "Do not allow delegate resources to contract addresses");
+
       }
 
     }
