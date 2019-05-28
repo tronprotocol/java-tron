@@ -79,7 +79,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       }
 
       AccountCapsule receiverCapsule = dbManager.getAccountStore().get(receiverAddress);
-      if (receiverAddressIsValid(receiverCapsule)) {
+      if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
             receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
@@ -205,10 +205,6 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     return true;
   }
 
-  private boolean receiverAddressIsValid(AccountCapsule receiverCapsule) {
-    return receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract;
-  }
-
   @Override
   public boolean validate() throws ContractValidateException {
     if (this.contract == null) {
@@ -259,10 +255,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
         String readableReceiverAddress = StringUtil.createReadableString(receiverAddress);
         if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() != 1) {
           throw new ContractValidateException(
-              "Account[" + readableReceiverAddress + "] not exists");
+              "Receiver Account[" + readableReceiverAddress + "] not exists");
         } else {
           logger.warn(
-              "Account[" + readableReceiverAddress + "] not exists,may be deleted");
+              "Receiver Account[" + readableReceiverAddress + "] not exists,may be deleted");
         }
 
       }
@@ -282,7 +278,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForBandwidth() <= 0) {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
-          if (receiverAddressIsValid(receiverCapsule)
+          if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
               && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
               < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
 
@@ -302,7 +298,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
-          if (receiverAddressIsValid(receiverCapsule)
+          if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
               && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
               < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
             throw new ContractValidateException(
