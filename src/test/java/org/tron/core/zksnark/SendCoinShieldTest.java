@@ -121,7 +121,6 @@ public class SendCoinShieldTest {
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(100_000L);
-
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(0);
   }
 
@@ -924,8 +923,7 @@ public class SendCoinShieldTest {
     System.out.println();
   }
 
-  @Test
-  public void testSpendingKey() throws Exception {
+  public void getSpendingKey() throws Exception {
     SpendingKey sk = SpendingKey
         .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
     //   SpendingKey sk = SpendingKey.random();
