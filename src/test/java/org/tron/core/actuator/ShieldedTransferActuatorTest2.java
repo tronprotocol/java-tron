@@ -290,7 +290,7 @@ public class ShieldedTransferActuatorTest2 {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("ShieldedTransferContract fee must equal " + fee, e.getMessage());
+      Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
@@ -440,7 +440,7 @@ public class ShieldedTransferActuatorTest2 {
       } catch (ContractValidateException e) {
         Assert.assertTrue(e instanceof ContractValidateException);
         Assert.assertEquals(
-            "from_amount must be greater than 0", e.getMessage());
+            "from_amount should not be less than 0", e.getMessage());
       } catch (Exception e) {
         Assert.assertTrue(false);
       }
@@ -484,7 +484,7 @@ public class ShieldedTransferActuatorTest2 {
       } catch (ContractValidateException e) {
         Assert.assertTrue(e instanceof ContractValidateException);
         Assert.assertEquals(
-            "to_amount must be greater than 0", e.getMessage());
+            "to_amount should not be less than 0", e.getMessage());
       } catch (Exception e) {
         Assert.assertTrue(false);
       }
@@ -1276,7 +1276,7 @@ public class ShieldedTransferActuatorTest2 {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals(
-          "librustzcashSaplingFinalCheck error", e.getMessage());
+          "long overflow", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
