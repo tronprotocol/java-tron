@@ -375,7 +375,7 @@ public class UnfreezeBalanceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(e.getMessage(),"Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
+      Assert.assertEquals(e.getMessage(),"Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -583,7 +583,7 @@ public class UnfreezeBalanceActuatorTest {
       actuator.validate();
       actuator.execute(ret);
     } catch (ContractValidateException e) {
-      Assert.assertEquals(e.getMessage(),"Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
+      Assert.assertEquals(e.getMessage(),"Receiver Account[a0abd4b9367799eaa3197fecb144eb71de1e049150] not exists");
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
