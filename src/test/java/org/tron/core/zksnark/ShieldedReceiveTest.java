@@ -58,6 +58,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.JsonFormat;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -1988,9 +1989,8 @@ public class ShieldedReceiveTest {
     TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
         builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
     //replace with interface
-    TransactionExtention transactionExtention = TransactionExtention.newBuilder()
-        .setTransaction(transactionCapsule.getInstance()).build();
-    BytesMessage transactionHash = wallet.getShieldTransactionHash(transactionExtention);
+    //System.out.println(JsonFormat.printToString(transactionCapsule.getInstance()));
+    BytesMessage transactionHash = wallet.getShieldTransactionHash(transactionCapsule.getInstance());
 
     if (transactionHash == null) {
       throw new ZksnarkException("cal transaction hash failed");
