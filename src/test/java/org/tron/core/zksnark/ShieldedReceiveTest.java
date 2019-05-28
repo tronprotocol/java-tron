@@ -183,8 +183,12 @@ public class ShieldedReceiveTest {
    */
   @Test
   public void testSetShieldedTransactionFee() {
+    long fee = wallet.getShieldedTransactionFee();
+
     dbManager.getDynamicPropertiesStore().saveShieldedTransactionFee(2_000_000);
     Assert.assertEquals(2_000_000, wallet.getShieldedTransactionFee());
+
+    dbManager.getDynamicPropertiesStore().saveShieldedTransactionFee(fee);
   }
 
   /**
