@@ -96,11 +96,17 @@ public class ShieldedReceiveTest {
 
   private static Wallet wallet;
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM};
+  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
 
-  public enum TestSignMissingColumn {FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION, RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT};
+  ;
 
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF};
+  public enum TestSignMissingColumn {FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION, RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT}
+
+  ;
+
+  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+
+  ;
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -150,7 +156,7 @@ public class ShieldedReceiveTest {
 
   private String getParamsFile(String fileName) {
     return ShieldedReceiveTest.class.getClassLoader()
-        .getResource("zcash-params" + File.separator + fileName).getFile();
+        .getResource("params" + File.separator + fileName).getFile();
   }
 
   private void librustzcashInitZksnarkParams() throws ZksnarkException {
@@ -357,8 +363,8 @@ public class ShieldedReceiveTest {
    * test of empty CV in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyCV() throws BadItemException,
-          ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+  public void testReceiveDescriptionWithEmptyCV()
+      throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
@@ -374,7 +380,7 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
       TransactionExtention transactionExtention = TransactionExtention.newBuilder()
-              .setTransaction(transactionCapsule.getInstance()).build();
+          .setTransaction(transactionCapsule.getInstance()).build();
 
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
@@ -1279,44 +1285,44 @@ public class ShieldedReceiveTest {
         .unpack(ShieldedTransferContract.class);
     ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
 
-    if(column != null) {
+    if (column != null) {
       switch (column) {
         case FROM_ADDRESS:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+              .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
-                  .getSpendDescriptionList()) {
+              .getSpendDescriptionList()) {
             newContract
-                    .addSpendDescription(
-                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+                .addSpendDescription(
+                    spendDescription.toBuilder().clearSpendAuthoritySignature().build());
           }
           break;
         case FROM_AMOUNT:
           //newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+              .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+              .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
-                  .getSpendDescriptionList()) {
+              .getSpendDescriptionList()) {
             newContract
-                    .addSpendDescription(
-                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+                .addSpendDescription(
+                    spendDescription.toBuilder().clearSpendAuthoritySignature().build());
           }
           break;
         case SPEND_DESCRITPION:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+              .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+              .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
           //  newContract
@@ -1328,43 +1334,43 @@ public class ShieldedReceiveTest {
           //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+              .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
-                  .getSpendDescriptionList()) {
+              .getSpendDescriptionList()) {
             newContract
-                    .addSpendDescription(
-                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+                .addSpendDescription(
+                    spendDescription.toBuilder().clearSpendAuthoritySignature().build());
           }
           break;
         case TO_ADDRESS:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+              .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+              .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           //newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
-                  .getSpendDescriptionList()) {
+              .getSpendDescriptionList()) {
             newContract
-                    .addSpendDescription(
-                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+                .addSpendDescription(
+                    spendDescription.toBuilder().clearSpendAuthoritySignature().build());
           }
           break;
         case TO_AMOUNT:
           newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+              .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
           //newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+              .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
           newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
           for (SpendDescription spendDescription : shieldedTransferContract
-                  .getSpendDescriptionList()) {
+              .getSpendDescriptionList()) {
             newContract
-                    .addSpendDescription(
-                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+                .addSpendDescription(
+                    spendDescription.toBuilder().clearSpendAuthoritySignature().build());
           }
           break;
         default:
@@ -1748,7 +1754,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
-    
+
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
       SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
@@ -1869,17 +1875,19 @@ public class ShieldedReceiveTest {
   }
 
   @AllArgsConstructor
-  class TransactionHash{
+  class TransactionHash {
+
     @Setter
     @Getter
     byte[] hash;
   }
+
   /**
    * test use isolate method to build the signature
    */
   @Test
   public void testIsolateSignature()
-          throws ZksnarkException, BadItemException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, BadItemException, ContractValidateException, ContractExeException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
@@ -1892,37 +1900,38 @@ public class ShieldedReceiveTest {
 
     //build transaction without spend signature and get transactionHash
     TransactionHash transactionHash = new TransactionHash(new byte[32]);
-    TransactionCapsule transactionCapsule = buildShieldedTransactionWithoutSpendAuthSig(sk.defaultAddress(),
-            sk.fullViewingKey().getAk(),
-            expsk.getNsk(),
-            expsk.getOvk(),
-            transactionHash,
-            builder,
-            ctx);
+    TransactionCapsule transactionCapsule = buildShieldedTransactionWithoutSpendAuthSig(
+        sk.defaultAddress(),
+        sk.fullViewingKey().getAk(),
+        expsk.getNsk(),
+        expsk.getOvk(),
+        transactionHash,
+        builder,
+        ctx);
 
     //filled with Sapling spendAuth in builder
     List<SpendDescriptionInfo> spends = builder.getSpends();
     for (int i = 0; i < spends.size(); i++) {
       //replace with interface
       SpendAuthSigParameters spendAuthSigParameters = SpendAuthSigParameters.newBuilder()
-              .setAsk(ByteString.copyFrom(expsk.getAsk())) //ask => ak
-              .setAlpha(ByteString.copyFrom(spends.get(i).alpha))
-              .setTxHash(ByteString.copyFrom(transactionHash.getHash()))
-              .build();
+          .setAsk(ByteString.copyFrom(expsk.getAsk())) //ask => ak
+          .setAlpha(ByteString.copyFrom(spends.get(i).alpha))
+          .setTxHash(ByteString.copyFrom(transactionHash.getHash()))
+          .build();
       BytesMessage spendAuthSig = wallet.createSpendAuthSig(spendAuthSigParameters);
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
-              .setSpendAuthoritySignature(spendAuthSig.getValue());
+          .setSpendAuthoritySignature(spendAuthSig.getValue());
     }
 
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
-            .getRawDataBuilder()
-            .clearContract()
-            .addContract(Transaction.Contract.newBuilder()
-                    .setType(ContractType.ShieldedTransferContract)
-                    .setParameter(Any.pack(builder.getContractBuilder().build()))
-                    .build());
+        .getRawDataBuilder()
+        .clearContract()
+        .addContract(Transaction.Contract.newBuilder()
+            .setType(ContractType.ShieldedTransferContract)
+            .setParameter(Any.pack(builder.getContractBuilder().build()))
+            .build());
     Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
-            .setRawData(rawBuilder).build();
+        .setRawData(rawBuilder).build();
 
     TransactionCapsule transactionCap = new TransactionCapsule(transaction);
     //validate
@@ -1935,23 +1944,23 @@ public class ShieldedReceiveTest {
   }
 
   public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
-          byte[] ak, byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned,
-          ZenTransactionBuilder builder,Pointer ctx)
-          throws ZksnarkException, BadItemException, ContractValidateException {
+      byte[] ak, byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned,
+      ZenTransactionBuilder builder, Pointer ctx)
+      throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
-            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     SpendDescriptionInfo skSpend = new SpendDescriptionInfo(ak,
-            nsk,
-            ovk,
-            note,
-            note.r, //?
-            anchor,
-            voucher
+        nsk,
+        ovk,
+        note,
+        note.r, //?
+        anchor,
+        voucher
     );
     builder.addSpend(skSpend);
 
@@ -1971,16 +1980,16 @@ public class ShieldedReceiveTest {
     // Create Sapling OutputDescriptions
     for (ReceiveDescriptionInfo receive : builder.getReceives()) {
       ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
-              .generateOutputProof(receive, ctx);
+          .generateOutputProof(receive, ctx);
       builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
     }
 
     // Empty output script
     TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
-            builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+        builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
     //replace with interface
     TransactionExtention transactionExtention = TransactionExtention.newBuilder()
-            .setTransaction(transactionCapsule.getInstance()).build();
+        .setTransaction(transactionCapsule.getInstance()).build();
     BytesMessage transactionHash = wallet.getShieldTransactionHash(transactionExtention);
 
     if (transactionHash == null) {
@@ -1991,10 +2000,10 @@ public class ShieldedReceiveTest {
     // Create binding signatures
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
-            new SaplingBindingSigParams(ctx,
-                    builder.getValueBalance(),
-                    dataHashToBeSigned.getHash(),
-                    bindingSig)
+        new SaplingBindingSigParams(ctx,
+            builder.getValueBalance(),
+            dataHashToBeSigned.getHash(),
+            bindingSig)
     );
     builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
     return transactionCapsule;

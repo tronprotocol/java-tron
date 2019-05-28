@@ -334,7 +334,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
       context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
-      context.addServlet(new ServletHolder(getShieldTransactionHashServlet), "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+          "/getshieldtransactionhash");
 
       server.start();
     } catch (Exception e) {
@@ -353,7 +354,7 @@ public class FullNodeHttpApiService implements Service {
 
   private String getParamsFile(String fileName) {
     return FullNodeHttpApiService.class.getClassLoader()
-        .getResource("zcash-params" + File.separator + fileName).getFile();
+        .getResource("params" + File.separator + fileName).getFile();
   }
 
   private void librustzcashInitZksnarkParams() {

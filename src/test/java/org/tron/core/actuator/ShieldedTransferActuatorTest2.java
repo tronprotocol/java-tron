@@ -128,7 +128,7 @@ public class ShieldedTransferActuatorTest2 {
 
   private static String getParamsFile(String fileName) {
     return ShieldedTransferActuatorTest2.class.getClassLoader()
-        .getResource("zcash-params" + File.separator + fileName).getFile();
+        .getResource("params" + File.separator + fileName).getFile();
   }
 
   private static void librustzcashInitZksnarkParams() throws ZksnarkException {
