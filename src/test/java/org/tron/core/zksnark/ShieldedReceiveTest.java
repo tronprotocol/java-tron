@@ -363,8 +363,7 @@ public class ShieldedReceiveTest {
    * test of empty CV in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyCV() throws BadItemException,
-      ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+  public void testReceiveDescriptionWithEmptyCV() throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
