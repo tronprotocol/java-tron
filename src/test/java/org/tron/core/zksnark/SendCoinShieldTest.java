@@ -131,19 +131,6 @@ public class SendCoinShieldTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
-  @Test
-  public void testNote() throws ZksnarkException {
-    PaymentAddress address = PaymentAddress.decode(new byte[43]);
-    long value = 100;
-    Note note = new Note(address, value);
-    ExpandedSpendingKey expsk = ExpandedSpendingKey.decode(new byte[96]);
-    long position = 1000_000;
-    byte[] cm = note.cm();
-    byte[] nf = note.nullifier(expsk.fullViewingKey(), position);
-    if (ByteArray.isEmpty(cm) || ByteArray.isEmpty(nf)) {
-      throw new RuntimeException("Spend is invalid");
-    }
-  }
 
   @Test
   public void testPathMock() throws ZksnarkException {
