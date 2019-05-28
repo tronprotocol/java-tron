@@ -491,15 +491,15 @@ public class Program {
         deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
       }
     } else {
-        deposit.createAccount(newAddress, "CreatedByContract",
-            Protocol.AccountType.Contract);
-        SmartContract newSmartContract = SmartContract.newBuilder()
-            .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
-            .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
-        deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
-        // In case of hashing collisions, check for any balance before createAccount()
-        long oldBalance = deposit.getBalance(newAddress);
-        deposit.addBalance(newAddress, oldBalance);
+      deposit.createAccount(newAddress, "CreatedByContract",
+          Protocol.AccountType.Contract);
+      SmartContract newSmartContract = SmartContract.newBuilder()
+          .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+          .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+      deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+      // In case of hashing collisions, check for any balance before createAccount()
+      long oldBalance = deposit.getBalance(newAddress);
+      deposit.addBalance(newAddress, oldBalance);
     }
 
     // [4] TRANSFER THE BALANCE
