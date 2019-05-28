@@ -353,7 +353,7 @@ public class FullNodeHttpApiService implements Service {
 
   private String getParamsFile(String fileName) {
     return FullNodeHttpApiService.class.getClassLoader()
-        .getResource("zcash-params" + File.separator + fileName).getFile();
+        .getResource("params" + File.separator + fileName).getFile();
   }
 
   private void librustzcashInitZksnarkParams() {
