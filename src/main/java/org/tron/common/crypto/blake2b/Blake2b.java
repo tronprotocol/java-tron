@@ -168,7 +168,7 @@ public class Blake2b {
     if (personalization != null) {
       if (personalization.length != 16) {
         throw new IllegalArgumentException(
-            "personalization length must be exactly 16 bytes");
+                "personalization length must be exactly 16 bytes");
       }
       this.personalization = new byte[16];
       arraycopy(personalization, 0, this.personalization, 0,

@@ -98,7 +98,7 @@ public class NoteEncryption {
       System.arraycopy(epk, 0, block, 96, 32);
 
       byte[] personalization = new byte[Libsodium.crypto_generichash_blake2b_PERSONALBYTES];
-      byte[] temp = "Zcash_Derive_ock".getBytes();
+      byte[] temp = "Ztron_Derive_ock".getBytes();
       System.arraycopy(temp, 0, personalization, 0, temp.length);
       if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
           block, 128,
@@ -117,7 +117,7 @@ public class NoteEncryption {
       System.arraycopy(dhsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
       byte[] personalization = new byte[Libsodium.crypto_generichash_blake2b_PERSONALBYTES];
-      byte[] temp = "Zcash_SaplingKDF".getBytes();
+      byte[] temp = "Ztron_SaplingKDF".getBytes();
       System.arraycopy(temp, 0, personalization, 0, temp.length);
       if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, NOTEENCRYPTION_CIPHER_KEYSIZE,
           block, 64,
