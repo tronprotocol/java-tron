@@ -10,6 +10,8 @@ import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
 import com.sun.jna.Pointer;
+import org.junit.Assert;
+import org.junit.Test;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
@@ -19,19 +21,18 @@ import org.tron.core.exception.ZksnarkException;
 
 public class LibrustzcashTest {
 
-  public static void main(String[] args) throws ZksnarkException {
-    testZcashParam();
-
+  @Test
+  public void testLibsodium() throws ZksnarkException {
     byte[] K = new byte[32];
     byte[] ovk = new byte[32];
     byte[] cv = new byte[32];
     byte[] cm = new byte[32];
     byte[] epk = new byte[32];
-
     test(K, ovk, cv, cm, epk);
   }
 
-  private static void testZcashParam() throws ZksnarkException {
+  @Test
+  public void testZcashParam() throws ZksnarkException {
     byte[] d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     //byte[] d ={};
     //byte[] pk_d = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
@@ -45,7 +46,7 @@ public class LibrustzcashTest {
         (byte) 0xb4, 0x7d, 0x0e};
     byte[] cm = new byte[32];
     boolean check_d = librustzcashCheckDiversifier(d);
-    System.out.println("d is " + check_d);
+    Assert.assertTrue(check_d);
 
     ivk[31] = (byte) 0x10;
     boolean check_pkd = librustzcashIvkToPkd(new IvkToPkdParams(ivk, d, pk_d));
@@ -56,9 +57,10 @@ public class LibrustzcashTest {
         System.out.printf("\n");
       }
     }
+    Assert.assertTrue(check_pkd);
 
     boolean res = librustzcashSaplingComputeCm(new SaplingComputeCmParams(d, pk_d, value, r, cm));
-    System.out.println("cm is" + res);
+    Assert.assertFalse(res);
 
     //check range of alpha
     byte[] ask = {(byte) 0xb7, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
@@ -74,7 +76,7 @@ public class LibrustzcashTest {
     byte[] sigRes = new byte[64];
     boolean boolSigRes = librustzcashSaplingSpendSig(
         new SaplingSpendSigParams(ask, alpha, sighash, sigRes));
-    System.out.println("sig result " + boolSigRes);
+    Assert.assertFalse(boolSigRes);
 
     byte[] nsk = {(byte) 0xb6, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
         (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
@@ -93,8 +95,8 @@ public class LibrustzcashTest {
     Pointer ctx = librustzcashSaplingProvingCtxInit();
     byte[] resbindSig = new byte[64];
     boolean boolBindSig = librustzcashSaplingBindingSig(
-        new SaplingBindingSigParams(ctx, value, null, resbindSig));
-    System.out.println("binding sig result " + boolBindSig);
+        new SaplingBindingSigParams(ctx, value, sighash, resbindSig));
+    Assert.assertFalse(boolBindSig);
   }
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
@@ -108,36 +110,20 @@ public class LibrustzcashTest {
     byte[] personalization = new byte[32];
     byte[] aa = "Zcash_Derive_ock".getBytes();
     System.arraycopy(aa, 0, personalization, 0, aa.length);
-    if (Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
+    Assert.assertTrue(Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
         block, 128,
         null, 0, // No key.
         null,    // No salt.
-        personalization
-    ) != 0) {
-      System.out.println("cryptoGenerichashBlack2bSaltPersonal return pok...");
-      //throw new RuntimeException("hash function failure");
-    } else {
-      System.out.println("cryptoGenerichashBlack2bSaltPersonal return ok....");
-      for (int i = 0; i < personalization.length; i++) {
-        System.out.print(personalization[i] + " ");
-      }
-      System.out.println();
-    }
+        personalization) == 0);
 
     byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
 
-    if (Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
+    Assert.assertTrue(Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
         new byte[1024], null,
         null,
         new byte[1024], 1024,
         null,
         0,
-        cipher_nonce, K) != 0) {
-      System.out.println("cryptoAeadChacha20poly1305IetfDecrypt return true.");
-    } else {
-      System.out.println("cryptoAeadChacha20poly1305IetfDecrypt return false.");
-    }
-
-    return;
+        cipher_nonce, K) != 0);
   }
 }
