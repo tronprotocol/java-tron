@@ -23,9 +23,6 @@ public class IncomingViewingKey {
     byte[] pkD = new byte[32]; // 32
     if (Librustzcash.librustzcashCheckDiversifier(d.data)) {
       Librustzcash.librustzcashIvkToPkd(new IvkToPkdParams(value, d.data, pkD));
-      logger.debug("address.ivk is: " + ByteUtil.toHexString(value));
-      logger.debug("address.d is: " + ByteUtil.toHexString(d.data));
-      logger.debug("address.pkd is: " + ByteUtil.toHexString(pkD));
       return Optional.of(new PaymentAddress(d, pkD));
     } else {
       return Optional.empty();

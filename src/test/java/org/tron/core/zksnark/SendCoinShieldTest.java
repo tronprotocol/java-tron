@@ -812,10 +812,10 @@ public class SendCoinShieldTest {
     }
   }
 
+  // @Test
   public void getSpendingKey() throws Exception {
     SpendingKey sk = SpendingKey
         .decode("0b862f0e70048551c08518ff49a19db027d62cdeeb2fa974db91c10e6ebcdc16");
-    //   SpendingKey sk = SpendingKey.random();
     System.out.println(sk.encode());
     System.out.println(
         "sk.expandedSpendingKey()" + ByteUtil.toHexString(sk.expandedSpendingKey().encode()));
@@ -834,9 +834,9 @@ public class SendCoinShieldTest {
     System.out.println("---- random ----");
 
     sk = SpendingKey.random();
+    System.out.println("sk is: " + ByteUtil.toHexString(sk.getValue()));
 
     DiversifierT diversifierT = new DiversifierT();
-    // byte[] d = {'1', '1', '1', '1', '1', '1', '1', '1', '1', '0', '0'};
     byte[] d;
     while (true) {
       d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
@@ -845,7 +845,24 @@ public class SendCoinShieldTest {
       }
     }
     diversifierT.setData(d);
-    Optional<PaymentAddress> op = sk.fullViewingKey().inViewingKey().address(diversifierT);
+    System.out.println("d is: " + ByteUtil.toHexString(d));
+
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    System.out.println("expsk-ask is: " + ByteUtil.toHexString(expsk.getAsk()));
+    System.out.println("expsk-nsk is: " + ByteUtil.toHexString(expsk.getNsk()));
+    System.out.println("expsk-ovk is: " + ByteUtil.toHexString(expsk.getOvk()));
+
+    FullViewingKey fullViewingKey = expsk.fullViewingKey();
+    System.out.println("fullviewkey-ak is: " + ByteUtil.toHexString(fullViewingKey.getAk()));
+    System.out.println("fullviewkey-nk is: " + ByteUtil.toHexString(fullViewingKey.getNk()));
+    System.out.println("fullviewkey-ovk is: " + ByteUtil.toHexString(fullViewingKey.getOvk()));
+
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    System.out.println("ivk is: " + ByteUtil.toHexString(incomingViewingKey.getValue()));
+
+    Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
+    System.out.println("pkD is: " + ByteUtil.toHexString(op.get().getPkD()));
+
     byte[] rcm = Note.generateR();
     System.out.println("rcm is " + ByteUtil.toHexString(rcm));
 
