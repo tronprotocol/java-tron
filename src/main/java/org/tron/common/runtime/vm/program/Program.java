@@ -487,7 +487,9 @@ public class Program {
       if (!contractAlreadyExists) {
         SmartContract newSmartContract = SmartContract.newBuilder()
             .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
-            .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+            .setOriginAddress(ByteString.copyFrom(senderAddress))
+            .setTrxHash(ByteString.copyFrom(rootTransactionId))
+            .build();
         deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
       }
     } else {

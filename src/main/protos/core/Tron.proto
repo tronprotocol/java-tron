@@ -543,6 +543,7 @@ message SmartContract {
   string name = 7;
   int64 origin_energy_limit = 8;
   bytes code_hash = 9;
+  bytes trx_hash = 10;
 }
 
 message InternalTransaction {

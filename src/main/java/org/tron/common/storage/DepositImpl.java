@@ -339,7 +339,12 @@ public class DepositImpl implements Deposit {
         storage = parentStorage;
       }
     } else {
-      storage = new Storage(address, dbManager.getStorageRowStore());
+      if (VMConfig.allowTvmConstantinople()) {
+        ContractCapsule contract = getContract(address);
+        storage = new Storage(address, dbManager.getStorageRowStore(), contract.getTrxHash());
+      } else {
+        storage = new Storage(address, dbManager.getStorageRowStore());
+      }
     }
     return storage;
   }
