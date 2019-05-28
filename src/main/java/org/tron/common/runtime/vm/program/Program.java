@@ -79,6 +79,7 @@ import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.Builder;
 
 /**
  * @author Roman Mandeleil
@@ -449,10 +450,11 @@ public class Program {
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
 
-    createContractImpl(value, programCode, newAddress);
+    createContractImpl(value, programCode, newAddress, false);
   }
 
-  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress) {
+  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress
+      , boolean isCreate2) {
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
@@ -485,9 +487,14 @@ public class Program {
       }
 
       if (!contractAlreadyExists) {
-        SmartContract newSmartContract = SmartContract.newBuilder()
-            .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
-            .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+        Builder builder = SmartContract.newBuilder();
+        builder.setContractAddress(ByteString.copyFrom(newAddress))
+            .setConsumeUserResourcePercent(100)
+            .setOriginAddress(ByteString.copyFrom(senderAddress));
+        if (isCreate2) {
+          builder.setTrxHash(ByteString.copyFrom(rootTransactionId));
+        }
+        SmartContract newSmartContract = builder.build();
         deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
       }
     } else {
@@ -1237,7 +1244,7 @@ public class Program {
 
     byte[] contractAddress = Wallet
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
-    createContractImpl(value, programCode, contractAddress);
+    createContractImpl(value, programCode, contractAddress, true);
   }
 
   static class ByteCodeIterator {
