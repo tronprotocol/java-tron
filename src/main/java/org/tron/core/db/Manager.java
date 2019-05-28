@@ -31,8 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -77,8 +75,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
-import org.tron.core.db.fast.TrieService;
-import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.accountstate.TrieService;
+import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -223,7 +221,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   @Autowired
-  private FastSyncCallBack fastSyncCallBack;
+  private AccountStateCallBack fastSyncCallBack;
 
   @Autowired
   private TrieService trieService;
