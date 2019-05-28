@@ -78,7 +78,7 @@ public class Storage {
 
   private static byte[] addrHash(byte[] address, byte[] trxHash) {
     if (ByteUtil.isNullOrZeroArray(trxHash)) {
-      return addrHash(address);
+      return Hash.sha3(address);
     }
     return Hash.sha3(ByteUtil.merge(address, trxHash));
   }
