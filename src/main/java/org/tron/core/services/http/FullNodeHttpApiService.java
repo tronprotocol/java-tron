@@ -334,7 +334,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(isSpendServlet), "/isspend");
       context.addServlet(new ServletHolder(createSpendAuthSigServlet), "/createspendauthsig");
       context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
-      context.addServlet(new ServletHolder(getShieldTransactionHashServlet), "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
+          "/getshieldtransactionhash");
 
       server.start();
     } catch (Exception e) {
