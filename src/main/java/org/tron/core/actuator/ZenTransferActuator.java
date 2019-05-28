@@ -36,6 +36,7 @@ public class ZenTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ZenTransferContract zenTransferContract;
+  private String zenTokenId = "000001";
 
   ZenTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
@@ -355,7 +356,7 @@ public class ZenTransferActuator extends AbstractActuator {
         throw new ContractValidateException("Validate ZenTransferContract error, "
             + "no OwnerAccount");
       }
-      long balance = ownerAccount.getBalance();
+      long balance = getZenBalance(ownerAccount);
       if (fromAmount <= 0) {
         throw new ContractValidateException("from_amount must be greater than 0");
       }
@@ -372,13 +373,17 @@ public class ZenTransferActuator extends AbstractActuator {
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount != null) {
         try {
-          Math.addExact(toAccount.getBalance(), toAmount);
+          Math.addExact(getZenBalance(toAccount), toAmount);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());
         }
       }
     }
+  }
+
+  private long getZenBalance(AccountCapsule account) {
+    return account.getAssetMapV2().get(zenTokenId);
   }
 
   @Override

@@ -683,6 +683,20 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
+      throws BalanceInsufficientException {
+    if (amount < 0) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this)) {
+        throw new BalanceInsufficientException("reduceAssetAmount failed !");
+      }
+    } else if (amount > 0) {
+      if (!account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
+        throw new BalanceInsufficientException("addAssetAmount failed !");
+      }
+    }
+    accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
 
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
