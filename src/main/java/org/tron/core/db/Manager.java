@@ -683,6 +683,12 @@ public class Manager {
     this.getAccountStore().put(account.getAddress().toByteArray(), account);
   }
 
+  public void adjustAssetBalanceV2(byte[] accountAddress,  String AssetID, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
+    adjustAssetBalanceV2(account, AssetID, amount);
+  }
+
   public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
       throws BalanceInsufficientException {
     if (amount < 0) {

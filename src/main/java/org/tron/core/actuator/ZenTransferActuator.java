@@ -53,7 +53,7 @@ public class ZenTransferActuator extends AbstractActuator {
         executeTransparentFrom(zenTransferContract.getTransparentFromAddress().toByteArray(),
             zenTransferContract.getFromAmount(), ret);
       }
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(), zenTokenId, fee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -95,7 +95,7 @@ public class ZenTransferActuator extends AbstractActuator {
       TransactionResultCapsule ret)
       throws ContractExeException {
     try {
-      dbManager.adjustBalance(ownerAddress, -amount);
+      dbManager.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -113,7 +113,7 @@ public class ZenTransferActuator extends AbstractActuator {
             dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
         dbManager.getAccountStore().put(toAddress, toAccount);
       }
-      dbManager.adjustBalance(toAddress, amount);
+      dbManager.adjustAssetBalanceV2(toAddress, zenTokenId, amount);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
