@@ -32,6 +32,8 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Slf4j(topic = "API")
 public class TriggerSmartContractServlet extends HttpServlet {
 
+  private final String functionSelector = "function_selector";
+
   @Autowired
   private Wallet wallet;
 
@@ -48,8 +50,8 @@ public class TriggerSmartContractServlet extends HttpServlet {
         || StringUtil.isNullOrEmpty(jsonObject.getString("contract_address"))) {
       throw new InvalidParameterException("contract_address isn't set.");
     }
-    if (!jsonObject.containsKey("function_selector")
-        || StringUtil.isNullOrEmpty(jsonObject.getString("function_selector"))) {
+    if (!jsonObject.containsKey(functionSelector)
+        || StringUtil.isNullOrEmpty(jsonObject.getString(functionSelector))) {
       throw new InvalidParameterException("function_selector isn't set.");
     }
   }
@@ -69,7 +71,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
       validateParameter(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      String selector = jsonObject.getString("function_selector");
+      String selector = jsonObject.getString(functionSelector);
       String parameter = jsonObject.getString("parameter");
       String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
@@ -97,7 +99,7 @@ public class TriggerSmartContractServlet extends HttpServlet {
     } catch (Exception e) {
       String errString = null;
       if (e.getMessage() != null) {
-        errString = e.getMessage().replaceAll("\"", "\'");
+        errString = e.getMessage().replaceAll("[\"]", "\'");
       }
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
