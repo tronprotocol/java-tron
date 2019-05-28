@@ -1,4 +1,4 @@
-package org.tron.core.actuator;
+package org.tron.core.zksnark;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -17,7 +17,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -32,6 +31,8 @@ import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.Actuator;
+import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -57,7 +58,6 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.JsonFormat;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -83,7 +83,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
-public class ShieldedReceiveActuatorTest {
+public class ShieldedReceiveTest {
 
   private static Manager dbManager;
   private static final String dbPath = "receive_description_test";
@@ -118,12 +118,6 @@ public class ShieldedReceiveActuatorTest {
     dbManager = context.getBean(Manager.class);
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
-
-//    System.out.println("fullnode:" + fullnode);
-//    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-//            .usePlaintext(true)
-//            .build();
-//    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**
@@ -133,9 +127,7 @@ public class ShieldedReceiveActuatorTest {
   public static void destroy() throws InterruptedException {
     Args.clearParam();
     context.destroy();
-//    if (channelFull != null) {
-//      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-//    }
+
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {
@@ -157,7 +149,7 @@ public class ShieldedReceiveActuatorTest {
   }
 
   private String getParamsFile(String fileName) {
-    return ShieldedReceiveActuatorTest.class.getClassLoader()
+    return ShieldedReceiveTest.class.getClassLoader()
         .getResource("zcash-params" + File.separator + fileName).getFile();
   }
 
@@ -230,22 +222,22 @@ public class ShieldedReceiveActuatorTest {
     //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
 
+    //generate output
     SpendingKey sk = SpendingKey.random();
     FullViewingKey fullViewingKey12 = sk.fullViewingKey();
     IncomingViewingKey ivk = fullViewingKey12.inViewingKey();
     PaymentAddress paymentAddress = ivk.address(new DiversifierT()).get();
-
     builder.addOutput(fullViewingKey12.getOvk(), paymentAddress,
         OWNER_BALANCE - wallet.getShieldedTransactionFee(), new byte[512]); //success
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
 
+    //online
     try {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -253,7 +245,6 @@ public class ShieldedReceiveActuatorTest {
           e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-
   }
 
   /**
@@ -265,17 +256,18 @@ public class ShieldedReceiveActuatorTest {
     createCapsule();
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(0);// or 1
-    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
+    //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
 
+    //generate output
     SpendingKey sk = SpendingKey.random();
     FullViewingKey fullViewingKey12 = sk.fullViewingKey();
     IncomingViewingKey ivk = fullViewingKey12.inViewingKey();
     PaymentAddress paymentAddress = ivk.address(new DiversifierT()).get();
-
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     builder.addOutput(fullViewingKey12.getOvk(), paymentAddress,
         OWNER_BALANCE - fee, new byte[512]); //success
 
@@ -299,12 +291,10 @@ public class ShieldedReceiveActuatorTest {
           e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-
   }
 
   private ZenTransactionBuilder generateBuilderWithoutColumnInDescription(
-      ZenTransactionBuilder builder,
-      Pointer ctx, TestReceiveMissingColumn column)
+      ZenTransactionBuilder builder, Pointer ctx, TestReceiveMissingColumn column)
       throws ZksnarkException, BadItemException {
     //transparent input
     SpendingKey sk = SpendingKey.random();
@@ -323,7 +313,6 @@ public class ShieldedReceiveActuatorTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
-
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -367,8 +356,8 @@ public class ShieldedReceiveActuatorTest {
    * test of empty CV in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyCV()
-      throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
+  public void testReceiveDescriptionWithEmptyCV() throws BadItemException,
+          ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -382,9 +371,8 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
-      TransactionExtention transactionExtention = TransactionExtention.newBuilder().setTransaction(transactionCapsule.getInstance()).build();
-      System.out.println(JsonFormat.printToString(transactionExtention));
+      TransactionExtention transactionExtention = TransactionExtention.newBuilder()
+              .setTransaction(transactionCapsule.getInstance()).build();
 
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
@@ -399,7 +387,6 @@ public class ShieldedReceiveActuatorTest {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -427,7 +414,6 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -469,7 +455,6 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -483,7 +468,6 @@ public class ShieldedReceiveActuatorTest {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -512,7 +496,6 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -526,7 +509,6 @@ public class ShieldedReceiveActuatorTest {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -555,7 +537,6 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -569,7 +550,6 @@ public class ShieldedReceiveActuatorTest {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -598,7 +578,6 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -612,7 +591,6 @@ public class ShieldedReceiveActuatorTest {
       //validate
       List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
       actuator.get(0).validate();
-
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
@@ -622,7 +600,7 @@ public class ShieldedReceiveActuatorTest {
   }
 
   /**
-   * test some column in ReceiveDescription is not wrong
+   * test some column in ReceiveDescription is wrong
    */
   private ReceiveDescriptionCapsule changeGenerateOutputProof(ReceiveDescriptionInfo output,
       Pointer ctx, TestColumn testColumn)
@@ -761,9 +739,7 @@ public class ShieldedReceiveActuatorTest {
     }
 
     // Create Sapling spendAuth and binding signatures
-
     builder.createSpendAuth(dataToBeSigned);
-
     byte[] bindingSig = new byte[64];
     Librustzcash.librustzcashSaplingBindingSig(
         new SaplingBindingSigParams(ctx,
@@ -818,7 +794,7 @@ public class ShieldedReceiveActuatorTest {
    * test wrong value_commitment in ReceiveDescription
    */
   @Test
-  public void testWrongCvReceiveDescription()
+  public void testReceiveDescriptionWithWrongCv()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -846,7 +822,7 @@ public class ShieldedReceiveActuatorTest {
    * test wrong zkproof in ReceiveDescription
    */
   @Test
-  public void testWrongZkproofReceiveDescription()
+  public void testReceiveDescriptionWithWrongZkproof()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -874,7 +850,7 @@ public class ShieldedReceiveActuatorTest {
    * test note_commitment in ReceiveDescription generated by wrong d
    */
   @Test
-  public void testWrongDcmReceiveDescription()
+  public void testReceiveDescriptionWithWrongD()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -902,7 +878,7 @@ public class ShieldedReceiveActuatorTest {
    * test note_commitment in ReceiveDescription generated by wrong pkd
    */
   @Test
-  public void testWrongPkdcmReceiveDescription()
+  public void testReceiveDescriptionWithWrongPkd()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -930,7 +906,7 @@ public class ShieldedReceiveActuatorTest {
    * test note_commitment in ReceiveDescription generated by wrong value
    */
   @Test
-  public void testWrongVcmReceiveDescription()
+  public void testReceiveDescriptionWithWrongValue()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -958,7 +934,7 @@ public class ShieldedReceiveActuatorTest {
    * test note_commitment in ReceiveDescription generated by wrong r
    */
   @Test
-  public void testWrongRcmReceiveDescription()
+  public void testReceiveDescriptionWithWrongRcm()
       throws BadItemException, ContractValidateException, ContractExeException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1019,13 +995,7 @@ public class ShieldedReceiveActuatorTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 20 * 1000000, new byte[512]);
-
-    SpendingKey sk2 = SpendingKey.random();
-    FullViewingKey fullViewingKey12 = sk2.fullViewingKey();
-    IncomingViewingKey ivk2 = fullViewingKey12.inViewingKey();
-    PaymentAddress paymentAddress2 = ivk2.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey12.getOvk(), paymentAddress2, 70 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     try {
@@ -1081,7 +1051,6 @@ public class ShieldedReceiveActuatorTest {
     TransactionCapsule transactionCap = builder.build();
     Assert.assertTrue(true);
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-
   }
 
   /**
@@ -1095,13 +1064,11 @@ public class ShieldedReceiveActuatorTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    // generate sk
+    // generate input
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-
-    //generate a note belongs to this sk
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -1109,8 +1076,9 @@ public class ShieldedReceiveActuatorTest {
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
+    //add two same cm
     builder.addSpend(expsk, note, anchor, voucher);
-    builder.addSpend(expsk, note, anchor, voucher); //same cm
+    builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output
     SpendingKey sk1 = SpendingKey.random();
@@ -1145,20 +1113,17 @@ public class ShieldedReceiveActuatorTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    // generate sk
+    // generate input
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-
-    //generate a note belongs to this sk
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
-
     builder.addSpend(expsk, note, anchor, voucher);
 
     // generate output
@@ -1166,8 +1131,8 @@ public class ShieldedReceiveActuatorTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-
     Note note2 = new Note(address, 45 * 1000000);
+    //add two same output note
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r,
         new byte[512]);
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r,
@@ -1199,20 +1164,18 @@ public class ShieldedReceiveActuatorTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    // generate sk
+    // generate input
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-
-    //generate a note belongs to this sk
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
-    //put the voucher and anchor into db
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
+    //set value that's bigger than own
     note.value += 10 * 1000000; //test case of insufficient money
 
     builder.addSpend(expsk, note, anchor, voucher);
@@ -1222,13 +1185,7 @@ public class ShieldedReceiveActuatorTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 20 * 1000000, new byte[512]);
-
-    SpendingKey sk2 = SpendingKey.random();
-    FullViewingKey fullViewingKey12 = sk2.fullViewingKey();
-    IncomingViewingKey ivk2 = fullViewingKey12.inViewingKey();
-    PaymentAddress paymentAddress2 = ivk2.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey12.getOvk(), paymentAddress2, 70 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
@@ -1253,14 +1210,16 @@ public class ShieldedReceiveActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+
+    //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), FROM_AMOUNT); // fail
     //builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
 
+    //generate output
     SpendingKey sk = SpendingKey.random();
     FullViewingKey fullViewingKey12 = sk.fullViewingKey();
     IncomingViewingKey ivk = fullViewingKey12.inViewingKey();
     PaymentAddress paymentAddress = ivk.address(new DiversifierT()).get();
-
     builder.addOutput(fullViewingKey12.getOvk(), paymentAddress,
         FROM_AMOUNT - wallet.getShieldedTransactionFee(), new byte[512]); // fail
     //builder.addOutput(fullViewingKey12.getOvk(), paymentAddress,
@@ -1289,7 +1248,6 @@ public class ShieldedReceiveActuatorTest {
     //byte[] data = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
     byte[] data1 = ByteArray.fromHexString("93c9e5679850252b37a991");
     byte[] data2 = ByteArray.fromHexString("c50124c6a9a2e1700fc0b5");
-
     Assert.assertFalse(Librustzcash.librustzcashCheckDiversifier(data1));
     Assert.assertTrue(Librustzcash.librustzcashCheckDiversifier(data2));
   }
@@ -1428,7 +1386,7 @@ public class ShieldedReceiveActuatorTest {
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,
       Pointer ctx)
       throws ZksnarkException, BadItemException {
-    //transparent input
+    //generate input
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
@@ -1503,9 +1461,8 @@ public class ShieldedReceiveActuatorTest {
     return transactionCap;
   }
 
-
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutFromAddress() throws BadItemException, ContractValidateException,
@@ -1540,10 +1497,11 @@ public class ShieldedReceiveActuatorTest {
 
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
+    Assert.assertTrue(true);
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutFromAmout() throws BadItemException, ContractValidateException,
@@ -1578,11 +1536,11 @@ public class ShieldedReceiveActuatorTest {
 
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
-
+    Assert.assertTrue(true);
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutSpendDescription() throws BadItemException, ContractValidateException,
@@ -1628,7 +1586,7 @@ public class ShieldedReceiveActuatorTest {
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutReceiveDescription()
@@ -1675,7 +1633,7 @@ public class ShieldedReceiveActuatorTest {
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutToAddress() throws BadItemException, ContractValidateException,
@@ -1710,11 +1668,11 @@ public class ShieldedReceiveActuatorTest {
 
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
-
+    Assert.assertTrue(true);
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutToAmount() throws BadItemException, ContractValidateException,
@@ -1749,11 +1707,11 @@ public class ShieldedReceiveActuatorTest {
 
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
-
+    Assert.assertTrue(true);
   }
 
   /**
-   * test signature for transaction with some column missing
+   * test signature for shield to shield transaction with some column missing
    */
   @Test
   public void testSignWithoutFee() throws BadItemException, ContractValidateException,
@@ -1798,7 +1756,7 @@ public class ShieldedReceiveActuatorTest {
   }
 
   /**
-   * test signature for spend with some wrong column
+   * test spend authorize signature with some wrong column
    */
   @Test
   public void testSpendSignatureWithWrongColumn()
@@ -1809,7 +1767,7 @@ public class ShieldedReceiveActuatorTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    // generate shield spend
+    // generate input
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
@@ -1999,11 +1957,10 @@ public class ShieldedReceiveActuatorTest {
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
             .getRawDataBuilder()
             .clearContract()
-            .addContract(
-                    Transaction.Contract.newBuilder()
-                            .setType(ContractType.ShieldedTransferContract)
-                            .setParameter(
-                                    Any.pack(builder.getContractBuilder().build())).build());
+            .addContract(Transaction.Contract.newBuilder()
+                    .setType(ContractType.ShieldedTransferContract)
+                    .setParameter(Any.pack(builder.getContractBuilder().build()))
+                    .build());
     Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
             .setRawData(rawBuilder).build();
 
@@ -2080,8 +2037,6 @@ public class ShieldedReceiveActuatorTest {
                     bindingSig)
     );
     builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
-
     return transactionCapsule;
   }
-
 }
