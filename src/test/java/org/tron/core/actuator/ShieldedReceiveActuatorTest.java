@@ -9,12 +9,18 @@ import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -25,7 +31,6 @@ import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
@@ -33,6 +38,7 @@ import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -51,6 +57,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.JsonFormat;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -89,20 +96,14 @@ public class ShieldedReceiveActuatorTest {
 
   private static Wallet wallet;
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM};
 
-  ;
+  public enum TestSignMissingColumn {FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION, RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT, FEE};
 
-  public enum TestSignMissingColumn {FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION, RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT, FEE}
-
-  ;
-
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
-
-  ;
+  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF};
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
     ADDRESS_ONE_PRIVATE_KEY = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
@@ -226,6 +227,7 @@ public class ShieldedReceiveActuatorTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
+    //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
 
     SpendingKey sk = SpendingKey.random();
@@ -380,6 +382,9 @@ public class ShieldedReceiveActuatorTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+
+      TransactionExtention transactionExtention = TransactionExtention.newBuilder().setTransaction(transactionCapsule.getInstance()).build();
+      System.out.println(JsonFormat.printToString(transactionExtention));
 
       dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
     } catch (Exception ex) {
@@ -1296,97 +1301,115 @@ public class ShieldedReceiveActuatorTest {
         .unpack(ShieldedTransferContract.class);
     ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
 
-    switch (column) {
-      case FROM_ADDRESS:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+    if(column != null) {
+      switch (column) {
+        case FROM_ADDRESS:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
-      case FROM_AMOUNT:
-        //newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
+          //newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
+        case FROM_AMOUNT:
+          //newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
-      case SPEND_DESCRITPION:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-        //  newContract
-        //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        //}
-        break;
-      case RECEIVE_DESCRIPTION:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
-      case TO_ADDRESS:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        //newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
+        case SPEND_DESCRITPION:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
-      case TO_AMOUNT:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        //newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
-      case FEE:
-        newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-        newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-        newContract.setToAmount(shieldedTransferContract.getToAmount());
-        newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-        newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-        //newContract.setFee(shieldedTransferContract.getFee());
-        for (SpendDescription spendDescription : shieldedTransferContract
-            .getSpendDescriptionList()) {
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          //for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
+          //  newContract
+          //          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          //}
+          break;
+        case RECEIVE_DESCRIPTION:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+          //newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
           newContract
-              .addSpendDescription(
-                  spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-        }
-        break;
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
+        case TO_ADDRESS:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+          newContract
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
+          newContract
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          //newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
+        case TO_AMOUNT:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+          newContract
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          //newContract.setToAmount(shieldedTransferContract.getToAmount());
+          newContract
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
+        case FEE:
+          newContract.setFromAmount(shieldedTransferContract.getFromAmount());
+          newContract
+                  .addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
+          newContract.setToAmount(shieldedTransferContract.getToAmount());
+          newContract
+                  .setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
+          newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
+          //newContract.setFee(shieldedTransferContract.getFee());
+          for (SpendDescription spendDescription : shieldedTransferContract
+                  .getSpendDescriptionList()) {
+            newContract
+                    .addSpendDescription(
+                            spendDescription.toBuilder().clearSpendAuthoritySignature().build());
+          }
+          break;
 
-      default:
-        break;
+        default:
+          break;
+      }
     }
-
     Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
         .getRawDataBuilder()
         .clearContract()
@@ -1928,33 +1951,92 @@ public class ShieldedReceiveActuatorTest {
 
   }
 
+  @AllArgsConstructor
+  class TransactionHash{
+    @Setter
+    @Getter
+    byte[] hash;
+  }
   /**
-   * test of getMerkleTreeVoucherInfo before
+   * test use isolate method to build the signature
    */
   @Test
-  public void testGetVoucherInfoBeforeAllowZksnark()
-      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
+  public void testIsolateSignature()
+          throws ZksnarkException, BadItemException, ContractValidateException, ContractExeException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
-    // generate sk
-    SpendingKey sk = SpendingKey
-        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    // generate shield spend
+    SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-    PaymentAddress address = sk.defaultAddress();
 
-    //generate a note belongs to this sk
+    //build transaction without spend signature and get transactionHash
+    TransactionHash transactionHash = new TransactionHash(new byte[32]);
+    TransactionCapsule transactionCapsule = buildShieldedTransactionWithoutSpendAuthSig(sk.defaultAddress(),
+            sk.fullViewingKey().getAk(),
+            expsk.getNsk(),
+            expsk.getOvk(),
+            transactionHash,
+            builder,
+            ctx);
+
+    //filled with Sapling spendAuth in builder
+    List<SpendDescriptionInfo> spends = builder.getSpends();
+    for (int i = 0; i < spends.size(); i++) {
+      //replace with interface
+      SpendAuthSigParameters spendAuthSigParameters = SpendAuthSigParameters.newBuilder()
+              .setAsk(ByteString.copyFrom(expsk.getAsk())) //ask => ak
+              .setAlpha(ByteString.copyFrom(spends.get(i).alpha))
+              .setTxHash(ByteString.copyFrom(transactionHash.getHash()))
+              .build();
+      BytesMessage spendAuthSig = wallet.createSpendAuthSig(spendAuthSigParameters);
+      builder.getContractBuilder().getSpendDescriptionBuilder(i)
+              .setSpendAuthoritySignature(spendAuthSig.getValue());
+    }
+
+    Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
+            .getRawDataBuilder()
+            .clearContract()
+            .addContract(
+                    Transaction.Contract.newBuilder()
+                            .setType(ContractType.ShieldedTransferContract)
+                            .setParameter(
+                                    Any.pack(builder.getContractBuilder().build())).build());
+    Transaction transaction = transactionCapsule.getInstance().toBuilder().clearRawData()
+            .setRawData(rawBuilder).build();
+
+    TransactionCapsule transactionCap = new TransactionCapsule(transaction);
+    //validate
+    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    actuator.get(0).validate();
+    //execute
+    TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
+    boolean execute_result = actuator.get(0).execute(resultCapsule);
+    Assert.assertTrue(execute_result);
+  }
+
+  public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
+          byte[] ak, byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned,
+          ZenTransactionBuilder builder,Pointer ctx)
+          throws ZksnarkException, BadItemException, ContractValidateException {
+    // generate input
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
-    //put the voucher and anchor into db
     dbManager.getMerkleContainer()
-        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
-    builder.addSpend(expsk, note, anchor, voucher);
+    SpendDescriptionInfo skSpend = new SpendDescriptionInfo(ak,
+            nsk,
+            ovk,
+            note,
+            note.r, //?
+            anchor,
+            voucher
+    );
+    builder.addSpend(skSpend);
 
     // generate output
     SpendingKey sk1 = SpendingKey.random();
@@ -1963,27 +2045,43 @@ public class ShieldedReceiveActuatorTest {
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
 
-    updateTotalShieldedPoolValue(builder.getValueBalance());
-    TransactionCapsule transactionCap = builder.build();
+    // Create Sapling SpendDescriptions
+    for (SpendDescriptionInfo spend : builder.getSpends()) {
+      SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend, ctx);
+      builder.getContractBuilder().addSpendDescription(spendDescriptionCapsule.getInstance());
+    }
 
-//    //validate
-//    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
-//    actuator.get(0).validate();
-//    //execute
-//    TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
-//    boolean execute_result = actuator.get(0).execute(resultCapsule);
-//    Assert.assertTrue(execute_result);
+    // Create Sapling OutputDescriptions
+    for (ReceiveDescriptionInfo receive : builder.getReceives()) {
+      ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
+              .generateOutputProof(receive, ctx);
+      builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
+    }
 
-//    boolean ok = dbManager.pushTransaction(transactionCap);
+    // Empty output script
+    TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+            builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+    //replace with interface
+    TransactionExtention transactionExtention = TransactionExtention.newBuilder()
+            .setTransaction(transactionCapsule.getInstance()).build();
+    BytesMessage transactionHash = wallet.getShieldTransactionHash(transactionExtention);
 
-    //there is no need to sign the transaction
-    GrpcAPI.Return GrpcAPI_result = wallet.broadcastTransaction(transactionCap.getInstance());
+    if (transactionHash == null) {
+      throw new ZksnarkException("cal transaction hash failed");
+    }
+    dataHashToBeSigned.setHash(transactionHash.getValue().toByteArray());
 
-    Assert.assertTrue(GrpcAPI_result.getResult());
+    // Create binding signatures
+    byte[] bindingSig = new byte[64];
+    Librustzcash.librustzcashSaplingBindingSig(
+            new SaplingBindingSigParams(ctx,
+                    builder.getValueBalance(),
+                    dataHashToBeSigned.getHash(),
+                    bindingSig)
+    );
+    builder.getContractBuilder().setBindingSignature(ByteString.copyFrom(bindingSig));
 
-    String txID = ByteArray
-        .toHexString(Sha256Hash.hash(transactionCap.getInstance().getRawData().toByteArray()));
-    System.out.println(txID);
-
+    return transactionCapsule;
   }
+
 }
