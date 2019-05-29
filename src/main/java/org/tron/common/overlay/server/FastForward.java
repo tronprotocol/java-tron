@@ -16,6 +16,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db.WitnessScheduleStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol.ReasonCode;
@@ -29,7 +30,7 @@ public class FastForward {
 
   private Manager manager;
 
-  private WitnessStore witnessStore;
+  private WitnessScheduleStore witnessScheduleStore;
 
   private NodeManager nodeManager;
 
@@ -54,18 +55,14 @@ public class FastForward {
     }
 
     manager = ctx.getBean(Manager.class);
-    witnessStore = ctx.getBean(WitnessStore.class);
+    witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
     nodeManager = ctx.getBean(NodeManager.class);
     channelManager = ctx.getBean(ChannelManager.class);
     backupManager = ctx.getBean(BackupManager.class);
 
-    if (args.getFastForwardNodes().size() > 0) {
-      fastForwardNodes = args.getFastForwardNodes();
-    }
-
     executorService.scheduleWithFixedDelay(() -> {
       try {
-        if (witnessStore.get(witnessAddress) != null &&
+        if (witnessScheduleStore.getActiveWitnesses().contains(witnessAddress) &&
             backupManager.getStatus().equals(BackupStatusEnum.MASTER) &&
             !WitnessService.isNeedSyncCheck()) {
           connect();
@@ -90,11 +87,10 @@ public class FastForward {
       InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       channelManager.getActiveNodes().remove(address);
       channelManager.getActivePeers().forEach(channel -> {
-        if (channel.getNode().equals(node)) {
+        if (channel.getInetAddress().equals(address)) {
           channel.disconnect(ReasonCode.RESET);
         }
       });
     });
   }
-
 }

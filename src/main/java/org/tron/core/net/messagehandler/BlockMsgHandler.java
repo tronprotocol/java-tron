@@ -45,18 +45,24 @@ public class BlockMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     BlockMessage blockMessage = (BlockMessage) msg;
-
-    check(peer, blockMessage);
-
     BlockId blockId = blockMessage.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
+
+    if (fastForward || peer.isFastForwardPeer()) {
+      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
+    } else {
+      check(peer, blockMessage);
+    }
+
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
-      logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
-          System.currentTimeMillis() - peer.getAdvInvRequest().get(item));
-      peer.getAdvInvRequest().remove(item);
+      Long time = peer.getAdvInvRequest().remove(item);
+      if (time != null) {
+        logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
+            System.currentTimeMillis() - time);
+      }
       processBlock(peer, blockMessage.getBlockCapsule());
     }
   }
@@ -81,14 +87,19 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
-          peer.getInetAddress(), tronNetDelegate
-              .getHeadBlockId().getString());
+          peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
       syncService.startSync(peer);
       return;
     }
 
+    long headNum = tronNetDelegate.getHeadBlockId().getNum();
+    if (block.getNum() <= headNum) {
+      logger.info("Receive block num {} <= head num {}, from peer {}",
+          block.getNum(), headNum, peer.getInetAddress());
+    }
+
     if (fastForward && tronNetDelegate.validBlock(block)) {
-      advService.broadcast(new BlockMessage(block));
+      advService.fastForward(new BlockMessage(block));
     }
 
     tronNetDelegate.processBlock(block);

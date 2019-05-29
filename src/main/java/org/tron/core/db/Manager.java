@@ -103,6 +103,8 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetService;
+import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -164,6 +166,9 @@ public class Manager {
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
+
+  @Setter
+  private TronNetService tronNetService;
 
   // for network
   @Autowired
@@ -1428,6 +1433,8 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
+
+    tronNetService.fastForward(new BlockMessage(blockCapsule));
 
     try {
       this.pushBlock(blockCapsule);
