@@ -2465,11 +2465,11 @@ public class Wallet {
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes
         .newBuilder();
-    if (!(endNum > 0 && endNum > startNum)) {
+    if (!(startNum >= 0 && endNum > startNum
+            && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
+              "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
     }
-
     BlockList blockList = this
         .getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
