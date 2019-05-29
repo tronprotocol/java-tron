@@ -65,6 +65,7 @@ import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
@@ -828,7 +829,8 @@ public class SendCoinShieldTest {
 
     System.out.println("rcm:" + ByteUtil.toHexString(Note.generateR()));
 
-    for (int i = 0; i <10; i++) {
+    int count = 10;
+    for (int i = 0; i < count; i++) {
       // new sk
       System.out.println("---- random " + i + " ----");
 
@@ -867,6 +869,17 @@ public class SendCoinShieldTest {
 
       byte[] alpha = Note.generateR();
       System.out.println("alpha is " + ByteUtil.toHexString(alpha));
+
+      String address = KeyIo.encodePaymentAddress(op.get());
+      System.out.println("saplingaddress is: " + address);
+
+      // check
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(address);
+      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getD().getData()),
+          ByteUtil.toHexString(d));
+      Assert.assertEquals(ByteUtil.toHexString(paymentAddress.getPkD()),
+          ByteUtil.toHexString(op.get().getPkD()));
+
     }
   }
 
