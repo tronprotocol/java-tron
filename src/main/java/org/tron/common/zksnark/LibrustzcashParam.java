@@ -613,6 +613,26 @@ public class LibrustzcashParam {
       validParamLength(spendAuthSig, 64);
       valid32Params(sighashValue);
     }
+
+    public static SaplingCheckSpendParams decode(Pointer ctx, byte[] data, byte[] sigHashValue)
+        throws ZksnarkException {
+      byte[] cv = new byte[32];
+      byte[] anchor = new byte[32];
+      byte[] nullifier = new byte[32];
+      byte[] rk = new byte[32];
+      byte[] zkproof = new byte[192];
+      byte[] spendAuthSig = new byte[64];
+
+      System.arraycopy(data, 0, cv, 0, 32);
+      System.arraycopy(data, 32, anchor, 0, 32);
+      System.arraycopy(data, 64, nullifier, 0, 32);
+      System.arraycopy(data, 96, rk, 0, 32);
+      System.arraycopy(data, 128, zkproof, 0, 192);
+      System.arraycopy(data, 320, spendAuthSig, 0, 64);
+
+      return new SaplingCheckSpendParams(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
+          sigHashValue);
+    }
   }
 
   /**
