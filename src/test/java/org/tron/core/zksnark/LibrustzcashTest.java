@@ -10,14 +10,23 @@ import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
 import com.sun.jna.Pointer;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.FullNodeHttpApiService;
 
 public class LibrustzcashTest {
 
@@ -126,4 +135,82 @@ public class LibrustzcashTest {
         0,
         cipher_nonce, K) != 0);
   }
+
+  private String getParamsFile(String fileName) {
+    InputStream in = FullNodeHttpApiService.class.getClassLoader()
+        .getResourceAsStream("params" + File.separator + fileName);
+    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+    try {
+      FileUtils.copyToFile(in, fileOut);
+    } catch (IOException e) {
+    }
+    return fileOut.getAbsolutePath();
+  }
+
+  private void librustzcashInitZksnarkParams() {
+
+    String spendPath = getParamsFile("sapling-spend.params");
+    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
+
+    String outputPath = getParamsFile("sapling-output.params");
+    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
+
+    try {
+      Librustzcash.librustzcashInitZksnarkParams(
+          new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
+              outputPath.getBytes(), outputPath.length(), outputHash));
+    } catch (ZksnarkException e) {
+    }
+  }
+
+  public long benchmarkVerifySaplingSpend() throws ZksnarkException {
+    String spend = "8c6cf86bbb83bf0d075e5bd9bb4b5cd56141577be69f032880b11e26aa32aa5ef09fd00899e4b469fb11f38e9d09dc0379f0b11c23b5fe541765f76695120a03f0261d32af5d2a2b1e5c9a04200cd87d574dc42349de9790012ce560406a8a876a1e54cfcdc0eb74998abec2a9778330eeb2a0ac0e41d0c9ed5824fbd0dbf7da930ab299966ce333fd7bc1321dada0817aac5444e02c754069e218746bf879d5f2a20a8b028324fb2c73171e63336686aa5ec2e6e9a08eb18b87c14758c572f4531ccf6b55d09f44beb8b47563be4eff7a52598d80959dd9c9fee5ac4783d8370cb7d55d460053d3e067b5f9fe75ff2722623fb1825fcba5e9593d4205b38d1f502ff03035463043bd393a5ee039ce75a5d54f21b395255df6627ef96751566326f7d4a77d828aa21b1827282829fcbc42aad59cdb521e1a3aaa08b99ea8fe7fff0a04da31a52260fc6daeccd79bb877bdd8506614282258e15b3fe74bf71a93f4be3b770119edf99a317b205eea7d5ab800362b97384273888106c77d633600";
+    String dataToBeSigned = "2c596ec7f2d580471e0769fcc4a0b96b908394710cac0fd8cba7887bfe83bf2d";
+
+    long startTime = System.currentTimeMillis();
+    Pointer ctx = librustzcashSaplingProvingCtxInit();
+
+    SaplingCheckSpendParams saplingCheckSpendParams = SaplingCheckSpendParams.decode(ctx,
+        ByteArray.fromHexString(spend),
+        ByteArray.fromHexString(dataToBeSigned));
+
+    boolean ok = Librustzcash.librustzcashSaplingCheckSpend(saplingCheckSpendParams);
+
+    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+
+    long endTime = System.currentTimeMillis();
+    long time = endTime - startTime;
+
+    System.out.println("--- time is: " + time + ", result is " + ok);
+    return time;
+  }
+
+  // @Test
+  public void calBenchmarkVerifySaplingSpend() throws ZksnarkException {
+    librustzcashInitZksnarkParams();
+    System.out.println("--- load ok ---");
+
+    int count = 100;
+    long min_time = 500;
+    long max_time = 0;
+    double total_time = 0.0;
+
+    for (int i =0; i < count; i++) {
+      long time = benchmarkVerifySaplingSpend();
+      if (time < min_time) {
+        min_time = time;
+      }
+      if (time > max_time) {
+        max_time = time;
+      }
+      total_time += time;
+    }
+
+    System.out.println("---- result ----");
+    System.out.println("---- max_time is: " + max_time);
+    System.out.println("---- min_time is: " + min_time);
+    System.out.println("---- avg_time is: " + total_time/count);
+
+  }
+
 }
