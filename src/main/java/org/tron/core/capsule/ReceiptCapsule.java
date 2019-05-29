@@ -106,7 +106,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if (VMConfig.allowTvmConstantinople() && Objects.isNull(origin)) {
+    if (Objects.isNull(origin) && VMConfig.allowTvmConstantinople()) {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
       return;
     }

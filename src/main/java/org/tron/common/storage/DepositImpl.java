@@ -342,7 +342,7 @@ public class DepositImpl implements Deposit {
       storage = new Storage(address, dbManager.getStorageRowStore());
     }
     ContractCapsule contract = getContract(address);
-    if (contract != null) {
+    if (contract != null && !ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
       storage.generateAddrHash(contract.getTrxHash());
     }
     return storage;
