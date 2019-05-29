@@ -250,11 +250,11 @@ public class Create2Test020 {
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
-    byte[] a1 = infoById.get().getContractResult(0).toByteArray();
-    byte[] b1 = subByte(a, 11, 1);
-    byte[] c1 = subByte(a, 0, 11);
-    byte[] e1 = "41".getBytes();
-    byte[] d1 = subByte(a, 12, 20);
+    a = infoById.get().getContractResult(0).toByteArray();
+    b = subByte(a, 11, 1);
+    c = subByte(a, 0, 11);
+    e = "41".getBytes();
+    d = subByte(a, 12, 20);
 
     logger.info("a:" + ByteArray.toHexString(a));
 
