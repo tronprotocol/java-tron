@@ -96,7 +96,11 @@ public class Create2Test021 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalance(contractExcAddress,100000000L,0,contractExcKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalance(contractExcAddress, 1000000000L, 0, contractExcKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed
+        .freezeBalanceGetEnergy(contractExcAddress, 1000000000L, 0, 1, contractExcKey,
+            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/create2contractn.sol";
     String contractName = "Factory";
@@ -136,15 +140,16 @@ public class Create2Test021 {
     Account account1 = PublicMethed.queryAccount(bytes, blockingStubFull);
     int typeValue1 = account1.getTypeValue();
     Assert.assertEquals(0, typeValue1);
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,0,
-        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,1,
-        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress, 1000000L, 0, 0,
+        ByteString.copyFrom(bytes), contractExcKey, blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress, 1000000L, 0, 1,
+        ByteString.copyFrom(bytes), contractExcKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long beforeExcAccountBalance = PublicMethed.queryAccount(contractExcAddress,blockingStubFull).getBalance();
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getNetLimit() > 0);
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getEnergyLimit() > 0);
-
+    Long beforeExcAccountBalance = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
+        .getBalance();
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getNetLimit() > 0);
+    Assert
+        .assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getEnergyLimit() > 0);
 
     String contractName1 = "TestConstract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
@@ -158,14 +163,19 @@ public class Create2Test021 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,0,
-        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
-    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,1,
-        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
-    Long afterExcAccountBalance = PublicMethed.queryAccount(contractExcAddress,blockingStubFull).getBalance();
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getNetLimit() == 0);
-    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getEnergyLimit() == 0);
-    Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 1000000L*2);
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress, 1000000L, 0, 0,
+        ByteString.copyFrom(bytes), contractExcKey, blockingStubFull));
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress, 1000000L, 0, 1,
+        ByteString.copyFrom(bytes), contractExcKey, blockingStubFull));
+    Long afterExcAccountBalance = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
+        .getBalance();
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getNetLimit() == 0);
+    Assert
+        .assertTrue(PublicMethed.getAccountResource(bytes, blockingStubFull).getEnergyLimit() == 0);
+    logger.info("afterExcAccountBalance:" + afterExcAccountBalance);
+    logger.info("beforeExcAccountBalance:" + beforeExcAccountBalance);
+
+    Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 1000000L * 2);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -249,10 +259,10 @@ public class Create2Test021 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,null,blockingStubFull);
-    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,1,null,blockingStubFull);
-    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,bytes,blockingStubFull);
-    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,bytes,blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, null, blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 1, null, blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, bytes, blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, bytes, blockingStubFull);
 
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
