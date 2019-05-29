@@ -1,5 +1,6 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -58,6 +59,7 @@ public class Create2Test021 {
   private byte[] contractExcAddress = PublicMethed
       .getFinalAddress("9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4");
   private String contractExcKey = "9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4";
+  byte[] bytes;
 
 
   @BeforeSuite
@@ -86,13 +88,15 @@ public class Create2Test021 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
   }
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalance(contractExcAddress,100000000L,0,contractExcKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/create2contractn.sol";
     String contractName = "Factory";
@@ -118,16 +122,30 @@ public class Create2Test021 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    byte[] bytes = ByteArray.fromHexString("418EA294A47A944C75787DDB7270D73472AEE87FC0");
-    String param2 = "\"" + Base58.encode58Check(bytes) + "\"";
-    if (PublicMethed.queryAccount(bytes, blockingStubFull).getTypeValue() == 2) {
-      String txidn = PublicMethed
-          .triggerContract(bytes,
-              "testSuicideNonexistentTarget(address)", param2, false,
-              0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    }
+    bytes = ByteArray.fromHexString("418EA294A47A944C75787DDB7270D73472AEE87FC0");
+
+    String param2 = "\"" + Base58.encode58Check(contractExcAddress) + "\"";
+    String txidn = PublicMethed
+        .triggerContract(bytes,
+            "testSuicideNonexistentTarget(address)", param2, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(bytes, 1000000L, contractExcAddress, contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Account account1 = PublicMethed.queryAccount(bytes, blockingStubFull);
+    int typeValue1 = account1.getTypeValue();
+    Assert.assertEquals(0, typeValue1);
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,0,
+        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,1,
+        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long beforeExcAccountBalance = PublicMethed.queryAccount(contractExcAddress,blockingStubFull).getBalance();
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getNetLimit() > 0);
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getEnergyLimit() > 0);
+
+
     String contractName1 = "TestConstract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
@@ -140,6 +158,15 @@ public class Create2Test021 {
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,0,
+        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
+    Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(contractExcAddress,1000000L,0,1,
+        ByteString.copyFrom(bytes),contractExcKey,blockingStubFull));
+    Long afterExcAccountBalance = PublicMethed.queryAccount(contractExcAddress,blockingStubFull).getBalance();
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getNetLimit() == 0);
+    Assert.assertTrue(PublicMethed.getAccountResource(bytes,blockingStubFull).getEnergyLimit() == 0);
+    Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 1000000L*2);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -222,6 +249,11 @@ public class Create2Test021 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,null,blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,1,null,blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,bytes,blockingStubFull);
+    PublicMethed.unFreezeBalance(contractExcAddress,contractExcKey,0,bytes,blockingStubFull);
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
