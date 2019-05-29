@@ -453,8 +453,8 @@ public class Program {
     createContractImpl(value, programCode, newAddress, false);
   }
 
-  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress
-      , boolean isCreate2) {
+  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
+      boolean isCreate2) {
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {

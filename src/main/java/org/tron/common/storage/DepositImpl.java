@@ -329,22 +329,21 @@ public class DepositImpl implements Deposit {
     if (storageCache.containsKey(key)) {
       return storageCache.get(key);
     }
-
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
       if (VMConfig.getEnergyLimitHardFork()) {
+        // deep copy
         storage = new Storage(parentStorage);
       } else {
         storage = parentStorage;
       }
     } else {
-      if (VMConfig.allowTvmConstantinople()) {
-        ContractCapsule contract = getContract(address);
-        storage = new Storage(address, dbManager.getStorageRowStore(), contract);
-      } else {
-        storage = new Storage(address, dbManager.getStorageRowStore());
-      }
+      storage = new Storage(address, dbManager.getStorageRowStore());
+    }
+    ContractCapsule contract = getContract(address);
+    if (contract != null && !ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
+      storage.generateAddrHash(contract.getTrxHash());
     }
     return storage;
   }
