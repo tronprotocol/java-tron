@@ -275,24 +275,21 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             throw new ContractValidateException("no delegatedFrozenBalance(BANDWIDTH)");
           }
 
+          String errorMessage = "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
+              .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
+              + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
+              + "],this should never happen";
+
           if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0) {
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
-                      + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
-                      + "],this should never happen");
+              throw new ContractValidateException(errorMessage);
             }
           } else {
             if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForBandwidth[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForBandwidth() + "] < delegatedBandwidth["
-                      + delegatedResourceCapsule.getFrozenBalanceForBandwidth()
-                      + "],this should never happen");
+              throw new ContractValidateException(errorMessage);
             }
           }
 
@@ -304,24 +301,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           if (delegatedResourceCapsule.getFrozenBalanceForEnergy() <= 0) {
             throw new ContractValidateException("no delegateFrozenBalance(Energy)");
           }
+          errorMessage = "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
+              .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
+              + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
+              "],this should never happen";
           if (dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople() == 0) {
             if (receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
-                      + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
-                      "],this should never happen");
+              throw new ContractValidateException(errorMessage);
             }
           } else {
             if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
-              throw new ContractValidateException(
-                  "AcquiredDelegatedFrozenBalanceForEnergy[" + receiverCapsule
-                      .getAcquiredDelegatedFrozenBalanceForEnergy() + "] < delegatedEnergy["
-                      + delegatedResourceCapsule.getFrozenBalanceForEnergy() +
-                      "],this should never happen");
+              throw new ContractValidateException(errorMessage);
             }
           }
 
