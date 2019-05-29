@@ -106,11 +106,9 @@ public class ReceiptCapsule {
       return;
     }
 
-    if (VMConfig.allowTvmConstantinople()) {
-      if (Objects.isNull(origin)) {
-        payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
-        return;
-      }
+    if (VMConfig.allowTvmConstantinople() && Objects.isNull(origin)) {
+      payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
+      return;
     }
 
     if (caller.getAddress().equals(origin.getAddress())) {
