@@ -17,11 +17,10 @@
 package org.tron.core.zen.address;
 
 import java.io.ByteArrayOutputStream;
-import org.tron.common.utils.Bech32;
-import org.tron.common.utils.Bech32.Bech32Data;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.common.utils.Bech32;
+import org.tron.common.utils.Bech32.Bech32Data;
 
 
 public class KeyIo {
@@ -35,28 +34,17 @@ public class KeyIo {
     if (bech.hrp.equals(SAPLING_PAYMENT_ADDRESS)
         && bech.data.length == ConvertedSaplingPaymentAddressSize) {
       data = convertBits(bech.data, 0, ConvertedSaplingPaymentAddressSize, 5, 8, false);
-
       return PaymentAddress.decode(data);
     }
-
     return null;
   }
 
   public static String encodePaymentAddress(PaymentAddress zaddr) {
-    byte[] seraddr = zaddr.encode();
-
-    // version 1
-    // byte[] tmp = new byte[(seraddr.length * 8 + 4) / 5];
-    // System.arraycopy(seraddr, 0, tmp, 0, seraddr.length);
-    // byte[]  data = convertBits(tmp, 0, tmp.length, 8, 5, true);
-    // return Bech32.encode("ztestsapling", data) + "-" + Hex.toHexString(seraddr);
-
-    // version 2
+    byte[] serAddr = zaddr.encode();
     List<Byte> progBytes = new ArrayList<Byte>();
-    for (int i = 0; i < seraddr.length; i++) {
-      progBytes.add(seraddr[i]);
+    for (int i = 0; i < serAddr.length; i++) {
+      progBytes.add(serAddr[i]);
     }
-
     byte[] prog = convertBits(progBytes, 8, 5, true);
     return Bech32.encode(SAPLING_PAYMENT_ADDRESS, prog);
   }
@@ -105,7 +93,6 @@ public class KeyIo {
   }
 
   private static byte[] convertBits(List<Byte> data, int fromBits, int toBits, boolean pad) {
-
     int acc = 0;
     int bits = 0;
     int maxv = (1 << toBits) - 1;
@@ -117,8 +104,6 @@ public class KeyIo {
         throw new IllegalArgumentException();
       } else if ((b >> fromBits) > 0) {
         throw new IllegalArgumentException();
-      } else {
-        ;
       }
 
       acc = (acc << fromBits) | b;
@@ -133,8 +118,6 @@ public class KeyIo {
       ret.add((byte) ((acc << (toBits - bits)) & maxv));
     } else if (bits >= fromBits || (byte) (((acc << (toBits - bits)) & maxv)) != 0) {
       return null;
-    } else {
-      ;
     }
 
     byte[] buf = new byte[ret.size()];
@@ -143,13 +126,5 @@ public class KeyIo {
     }
 
     return buf;
-  }
-
-  public static void main(String[] args) throws Exception {
-    // byte[] tmp = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    byte[] tmp = {2, 0, 2, 0, 2, 0};
-    byte[] data = convertBits(tmp, 0, tmp.length, 8, 5, true);
-
-    System.out.println("test");
   }
 }
