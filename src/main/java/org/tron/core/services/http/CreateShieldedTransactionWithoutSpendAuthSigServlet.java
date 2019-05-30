@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -36,7 +38,14 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends HttpSer
       Transaction tx = wallet
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+
+      String txString = Util.printTransaction(tx);
+      JSONObject jsonObject = JSON.parseObject(txString);
+      if (jsonObject.containsKey("txID")) {
+        jsonObject.remove("txID");
+      }
+
+      response.getWriter().println(jsonObject.toJSONString());
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
