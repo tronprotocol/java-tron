@@ -187,7 +187,6 @@ dependencies {
     // https://mvnrepository.com/artifact/commons-io/commons-io
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
 
-    compile group: 'com.muquit.libsodiumjna', name: 'libsodium-jna', version: '1.0.4'
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
 }
 

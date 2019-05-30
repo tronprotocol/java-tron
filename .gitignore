@@ -36,7 +36,6 @@ src/main/java/org/tron/core/bftconsensus
 src/test/java/org/tron/consensus2
 src/main/java/META-INF/
 src/main/resources/META-INF/
-src/main/resources/params
 /bin/
 
 # Eclipse IDE specific files and folders

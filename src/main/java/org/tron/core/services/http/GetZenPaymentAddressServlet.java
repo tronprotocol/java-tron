@@ -33,7 +33,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
       String ivk = jsonObject.getString("ivk");
       String d = jsonObject.getString("d");
 
-      GrpcAPI.SaplingPaymentAddressMessage s = wallet
+      GrpcAPI.PaymentAddressMessage s = wallet
           .getPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
               new DiversifierT(ByteArray.fromHexString(d)));
 
@@ -55,7 +55,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
       String ivk = request.getParameter("ivk");
       String d = request.getParameter("d");
 
-      GrpcAPI.SaplingPaymentAddressMessage s = wallet
+      GrpcAPI.PaymentAddressMessage s = wallet
           .getPaymentAddress(new IncomingViewingKey(ByteArray.fromHexString(ivk)),
               new DiversifierT(ByteArray.fromHexString(d)));
 

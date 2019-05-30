@@ -13,10 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
@@ -133,13 +133,13 @@ public class ZenTransactionBuilder {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
 
     try {
-      // Create Sapling SpendDescriptions
+      // Create SpendDescriptions
       for (SpendDescriptionInfo spend : spends) {
         SpendDescriptionCapsule spendDescriptionCapsule = generateSpendProof(spend, ctx);
         contractBuilder.addSpendDescription(spendDescriptionCapsule.getInstance());
       }
 
-      // Create Sapling OutputDescriptions
+      // Create OutputDescriptions
       for (ReceiveDescriptionInfo receive : receives) {
         ReceiveDescriptionCapsule receiveDescriptionCapsule = generateOutputProof(receive, ctx);
         contractBuilder.addReceiveDescription(receiveDescriptionCapsule.getInstance());
@@ -157,14 +157,14 @@ public class ZenTransactionBuilder {
         throw new ZksnarkException("cal transaction hash failed");
       }
 
-      // Create Sapling spendAuth and binding signatures
+      // Create spendAuth and binding signatures
       if (withAsk) {
         createSpendAuth(dataHashToBeSigned);
       }
 
       byte[] bindingSig = new byte[64];
       Librustzcash.librustzcashSaplingBindingSig(
-          new SaplingBindingSigParams(ctx,
+          new BindingSigParams(ctx,
               valueBalance,
               dataHashToBeSigned,
               bindingSig)
@@ -191,7 +191,7 @@ public class ZenTransactionBuilder {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          new SaplingSpendSigParams(spends.get(i).expsk.getAsk(),
+          new SpendSigParams(spends.get(i).expsk.getAsk(),
               spends.get(i).alpha,
               dataToBeSigned,
               result));
@@ -231,7 +231,7 @@ public class ZenTransactionBuilder {
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
     if (!Librustzcash.librustzcashSaplingSpendProof(
-        new SaplingSpendProofParams(ctx,
+        new SpendProofParams(ctx,
             ak,
             nsk,
             spend.note.d.getData(),
@@ -276,7 +276,7 @@ public class ZenTransactionBuilder {
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     if (!Librustzcash.librustzcashSaplingOutputProof(
-        new SaplingOutputProofParams(ctx,
+        new OutputProofParams(ctx,
             encryptor.esk,
             output.getNote().d.data,
             output.getNote().pkD,

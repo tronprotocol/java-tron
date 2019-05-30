@@ -63,13 +63,13 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -96,10 +96,10 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -151,6 +151,7 @@ import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
@@ -160,11 +161,9 @@ import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NotePlaintext;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.AuthenticationPath;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.IncrementalMerkleTree;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.MerklePath;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.PedersenHash;
@@ -1387,10 +1386,9 @@ public class Wallet {
   }
 
 
-
   private long getBlockNumber(OutputPoint outPoint)
-          throws ItemNotFoundException, BadItemException,
-          InvalidProtocolBufferException, ZksnarkException {
+      throws ItemNotFoundException, BadItemException,
+      InvalidProtocolBufferException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
@@ -1676,7 +1674,7 @@ public class Wallet {
   }
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
-          throws ContractValidateException, RuntimeException, ZksnarkException {
+      throws ContractValidateException, RuntimeException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("createshieldedtransaction is not allowed");
     }
@@ -1723,13 +1721,17 @@ public class Wallet {
       builder.setTransparentOutput(transparentToAddress, toAmount);
     }
 
-    // sapling input
+    // input
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
         GrpcAPI.Note note = spendNote.getNote();
-        Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
-            note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
+        PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
+        if (paymentAddress == null) {
+          throw new ZksnarkException("paymentAddress format is wrong");
+        }
+        Note baseNote = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(), note.getValue(), note.getRcm().toByteArray());
 
         IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
             spendNote.getVoucher()).toMerkleVoucherContainer();
@@ -1741,15 +1743,16 @@ public class Wallet {
       }
     }
 
-    // sapling output
+    // output
     for (ReceiveNote receiveNote : shieldedReceives) {
-      DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
-      builder.addOutput(ovk,
-          diversifierT,
-          receiveNote.getNote().getPkD().toByteArray(),
-          receiveNote.getNote().getValue(),
-          receiveNote.getNote().getRcm().toByteArray(),
-          new byte[512]);
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+          receiveNote.getNote().getPaymentAddress());
+      if (paymentAddress == null) {
+        throw new ZksnarkException("paymentAddress format is wrong");
+      }
+      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
+          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+          receiveNote.getNote().getMemo().toByteArray());
     }
 
     TransactionCapsule transactionCapsule = null;
@@ -1812,12 +1815,16 @@ public class Wallet {
       builder.setTransparentOutput(transparentToAddress, toAmount);
     }
 
-    // sapling input
+    // input
     if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       for (SpendNote spendNote : shieldedSpends) {
         GrpcAPI.Note note = spendNote.getNote();
-        Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
-            note.getPkD().toByteArray(), note.getValue(), note.getRcm().toByteArray());
+        PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(note.getPaymentAddress());
+        if (paymentAddress == null) {
+          throw new ZksnarkException("paymentAddress format is wrong");
+        }
+        Note baseNote = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(), note.getValue(), note.getRcm().toByteArray());
 
         IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
             spendNote.getVoucher()).toMerkleVoucherContainer();
@@ -1831,15 +1838,16 @@ public class Wallet {
       }
     }
 
-    // sapling output
+    // output
     for (ReceiveNote receiveNote : shieldedReceives) {
-      DiversifierT diversifierT = new DiversifierT(receiveNote.getNote().getD().toByteArray());
-      builder.addOutput(ovk,
-          diversifierT,
-          receiveNote.getNote().getPkD().toByteArray(),
-          receiveNote.getNote().getValue(),
-          receiveNote.getNote().getRcm().toByteArray(),
-          new byte[512]);
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+          receiveNote.getNote().getPaymentAddress());
+      if (paymentAddress == null) {
+        throw new ZksnarkException("paymentAddress format is wrong");
+      }
+      builder.addOutput(ovk, paymentAddress.getD(), paymentAddress.getPkD(),
+          receiveNote.getNote().getValue(), receiveNote.getNote().getRcm().toByteArray(),
+          receiveNote.getNote().getMemo().toByteArray());
     }
 
     TransactionCapsule transactionCapsule = null;
@@ -1964,16 +1972,16 @@ public class Wallet {
 
   }
 
-  public SaplingPaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
+  public PaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
-    //get pk_d from paymentAddress
-    SaplingPaymentAddressMessage spa = null;
+
+    PaymentAddressMessage spa = null;
 
     if (!Librustzcash.librustzcashCheckDiversifier(d.getData())) {
-      throw new BadItemException("librustzcashCheckDiversifier d failed");
+      throw new BadItemException("d is not valid");
     }
 
     Optional<PaymentAddress> op = ivk.address(d);
@@ -1982,9 +1990,11 @@ public class Wallet {
           .setD(ByteString.copyFrom(d.getData()))
           .build();
 
-      spa = SaplingPaymentAddressMessage.newBuilder()
+      PaymentAddress paymentAddress = op.get();
+      spa = PaymentAddressMessage.newBuilder()
           .setD(ds)
-          .setPkD(ByteString.copyFrom(op.get().getPkD()))
+          .setPkD(ByteString.copyFrom(paymentAddress.getPkD()))
+          .setPaymentAddress(KeyIo.encodePaymentAddress(paymentAddress))
           .build();
 
     }
@@ -1999,9 +2009,13 @@ public class Wallet {
     GrpcAPI.Note note = noteParameters.getNote();
     byte[] ak = noteParameters.getAk().toByteArray();
     byte[] nk = noteParameters.getNk().toByteArray();
-
-    Note baseNote = new Note(new DiversifierT(note.getD().toByteArray()),
-        note.getPkD().toByteArray(), note.getValue(),
+    PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+        note.getPaymentAddress());
+    if (paymentAddress == null) {
+      throw new ZksnarkException("paymentAddress format is wrong");
+    }
+    Note baseNote = new Note(paymentAddress.getD(),
+        paymentAddress.getPkD(), note.getValue(),
         note.getRcm().toByteArray());
 
     IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
@@ -2026,21 +2040,21 @@ public class Wallet {
   }
 
   public BytesMessage createSpendAuthSig(SpendAuthSigParameters spendAuthSigParameters)
-          throws ZksnarkException {
+      throws ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] result = new byte[64];
-    SaplingSpendSigParams saplingSpendSigParams = new SaplingSpendSigParams(
-            spendAuthSigParameters.getAsk().toByteArray(),
-            spendAuthSigParameters.getAlpha().toByteArray(),
-            spendAuthSigParameters.getTxHash().toByteArray(),
-            result);
-    Librustzcash.librustzcashSaplingSpendSig(saplingSpendSigParams);
+    SpendSigParams spendSigPasrams = new SpendSigParams(
+        spendAuthSigParameters.getAsk().toByteArray(),
+        spendAuthSigParameters.getAlpha().toByteArray(),
+        spendAuthSigParameters.getTxHash().toByteArray(),
+        result);
+    Librustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
 
     return BytesMessage.newBuilder()
-            .setValue(ByteString.copyFrom(result))
-            .build();
+        .setValue(ByteString.copyFrom(result))
+        .build();
   }
 
   public BytesMessage createShieldNullifier(NfParameters nfParameters) throws ZksnarkException {
@@ -2053,42 +2067,45 @@ public class Wallet {
     byte[] result = new byte[32]; // 256
     GrpcAPI.Note note = nfParameters.getNote();
     IncrementalMerkleVoucherCapsule incrementalMerkleVoucherCapsule
-            = new IncrementalMerkleVoucherCapsule(nfParameters.getVoucher());
+        = new IncrementalMerkleVoucherCapsule(nfParameters.getVoucher());
     IncrementalMerkleVoucherContainer incrementalMerkleVoucherContainer
-            = new IncrementalMerkleVoucherContainer(incrementalMerkleVoucherCapsule);
-
-    SaplingComputeNfParams saplingComputeNfParams = new SaplingComputeNfParams(
-            note.getD().toByteArray(),
-            note.getPkD().toByteArray(),
-            note.getValue(),
-            note.getRcm().toByteArray(),
-            ak,
-            nk,
-            incrementalMerkleVoucherContainer.position(),
-            result);
-    if (!Librustzcash.librustzcashSaplingComputeNf(saplingComputeNfParams)) {
+        = new IncrementalMerkleVoucherContainer(incrementalMerkleVoucherCapsule);
+    PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
+        note.getPaymentAddress());
+    if (paymentAddress == null) {
+      throw new ZksnarkException("paymentAddress format is wrong");
+    }
+    ComputeNfParams computeNfParams = new ComputeNfParams(
+        paymentAddress.getD().getData(),
+        paymentAddress.getPkD(),
+        note.getValue(),
+        note.getRcm().toByteArray(),
+        ak,
+        nk,
+        incrementalMerkleVoucherContainer.position(),
+        result);
+    if (!Librustzcash.librustzcashComputeNf(computeNfParams)) {
       return null;
     }
 
     return BytesMessage.newBuilder()
-            .setValue(ByteString.copyFrom(result))
-            .build();
+        .setValue(ByteString.copyFrom(result))
+        .build();
   }
 
-  public BytesMessage getShieldTransactionHash(TransactionExtention transactionExtention)
-          throws ContractValidateException {
-    List<Contract> contract = transactionExtention.getTransaction().getRawData().getContractList();
-    if(contract == null || contract.size() == 0){
-      return null;
+  public BytesMessage getShieldTransactionHash(Transaction transaction)
+      throws ContractValidateException {
+    List<Contract> contract = transaction.getRawData().getContractList();
+    if (contract == null || contract.size() == 0) {
+      throw new ContractValidateException("contract is null");
     }
     ContractType contractType = contract.get(0).getType();
-    if(contractType != ContractType.ShieldedTransferContract){
+    if (contractType != ContractType.ShieldedTransferContract) {
       throw new ContractValidateException("Not a shielded transaction");
     }
-    TransactionCapsule transactionCapsule = new TransactionCapsule(
-            transactionExtention.getTransaction());
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
     byte[] transactionHash = TransactionCapsule
-            .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(transactionHash)).build();
   }
 
@@ -2436,11 +2453,13 @@ public class Wallet {
               continue;
             }
 
+            String paymentAddress = KeyIo.encodePaymentAddress(
+                new PaymentAddress(noteText.d, pk_d));
             GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
-                .setD(ByteString.copyFrom(noteText.d.getData()))
+                .setPaymentAddress(paymentAddress)
                 .setValue(noteText.value)
                 .setRcm(ByteString.copyFrom(noteText.rcm))
-                .setPkD(ByteString.copyFrom(pk_d))
+                .setMemo(ByteString.copyFrom(noteText.memo))
                 .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
                 .setNote(note)
@@ -2466,11 +2485,11 @@ public class Wallet {
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes
         .newBuilder();
-    if (!(endNum > 0 && endNum > startNum)) {
+    if (!(startNum >= 0 && endNum > startNum
+        && endNum - startNum <= 1000)) {
       throw new BadItemException(
           "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
     }
-
     BlockList blockList = this
         .getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
@@ -2530,12 +2549,13 @@ public class Wallet {
 
             if (foo.isPresent()) {
               NotePlaintext bar = foo.get();
+              String paymentAddress = KeyIo.encodePaymentAddress(
+                  new PaymentAddress(bar.d, decrypted_out_ct_unwrapped.pk_d));
               GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
-                  .setD(ByteString.copyFrom(bar.d.getData()))
+                  .setPaymentAddress(paymentAddress)
                   .setValue(bar.value)
                   .setRcm(ByteString.copyFrom(bar.rcm))
-                  .setPkD(ByteString
-                      .copyFrom(decrypted_out_ct_unwrapped.pk_d))
+                  .setMemo(ByteString.copyFrom(bar.memo))
                   .build();
 
               DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx
