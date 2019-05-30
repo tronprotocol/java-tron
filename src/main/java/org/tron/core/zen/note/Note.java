@@ -1,33 +1,56 @@
 package org.tron.core.zen.note;
 
+import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Optional;
+
+import static org.tron.core.zen.note.ZenChainParams.*;
 
 public class Note {
 
-  public long value = 0;
   public DiversifierT d;
   public byte[] pkD; // 256
-  public byte[] r; // 256
+  public long value = 0;
+  public byte[] rcm; // 256
+  public byte[] memo = new byte[ZC_MEMO_SIZE];
+
+  public Note() {
+    d = new DiversifierT();
+    rcm = new byte[ZC_R_SIZE];
+  }
 
   public Note(PaymentAddress address, long value) throws ZksnarkException {
     this.value = value;
     this.d = address.getD();
     this.pkD = address.getPkD();
-    r = new byte[32];
-    Librustzcash.librustzcashSaplingGenerateR(r);
+    rcm = new byte[32];
+    Librustzcash.librustzcashSaplingGenerateR(rcm);
   }
 
   public Note(DiversifierT d, byte[] pkD, long value, byte[] r) {
     this.d = d;
     this.pkD = pkD;
     this.value = value;
-    this.r = r;
+    this.rcm = r;
+  }
+
+  public Note(DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo){
+    this.d = d;
+    this.pkD = pkD;
+    this.value = value;
+    this.rcm = r;
+    this.memo = memo;
   }
 
   public static byte[] generateR() throws ZksnarkException {
@@ -40,7 +63,7 @@ public class Note {
   public byte[] cm() throws ZksnarkException {
     byte[] result = new byte[32];
     if (!Librustzcash.librustzcashComputeCm(
-        new ComputeCmParams(d.getData(), pkD, value, r, result))) {
+        new ComputeCmParams(d.getData(), pkD, value, rcm, result))) {
       return null;
     }
     return result;
@@ -51,7 +74,7 @@ public class Note {
     byte[] nk = vk.getNk();
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashComputeNf(
-        new ComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
+        new ComputeNfParams(d.getData(), pkD, value, rcm, ak, nk, position, result))) {
       return null;
     }
     return result;
@@ -60,9 +83,170 @@ public class Note {
   public byte[] nullifier(byte[] ak, byte[] nk, long position) throws ZksnarkException {
     byte[] result = new byte[32]; // 256
     if (!Librustzcash.librustzcashComputeNf(
-        new ComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
+        new ComputeNfParams(d.getData(), pkD, value, rcm, ak, nk, position, result))) {
       return null;
     }
     return result;
+  }
+
+
+  public Optional<Note> note(IncomingViewingKey ivk) throws ZksnarkException {
+    Optional<PaymentAddress> addr = ivk.address(d);
+    if (addr.isPresent()) {
+      return Optional.of(new Note(d, addr.get().getPkD(), value, rcm));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public Optional<NotePlaintextEncryptionResult> encrypt(byte[] pk_d) throws ZksnarkException {
+    // Get the encryptor
+    Optional<NoteEncryption> sne = NoteEncryption.fromDiversifier(d);
+    if (!sne.isPresent()) {
+      return Optional.empty();
+    }
+    NoteEncryption enc = sne.get();
+    // Create the plaintext
+    NoteEncryption.Encryption.EncPlaintext pt = this.encode();
+    // Encrypt the plaintext
+    Optional<NoteEncryption.Encryption.EncCiphertext> encciphertext = enc.encryptToRecipient(pk_d, pt);
+    if (!encciphertext.isPresent()) {
+      return Optional.empty();
+    }
+    return Optional.of(new NotePlaintextEncryptionResult(encciphertext.get().data, enc));
+  }
+
+  /**
+   * split data into several column of note
+   * @param encPlaintext
+   * @return
+   * @throws ZksnarkException
+   */
+  public static Note decode(NoteEncryption.Encryption.EncPlaintext encPlaintext) throws ZksnarkException {
+    byte[] data = encPlaintext.data;
+
+    ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
+    if (encPlaintext.data[0] != 0x01) {
+      throw new ZksnarkException("lead byte of NotePlaintext is not recognized");
+    }
+
+    Note ret = new Note();
+    byte[] noteD = new byte[ZC_DIVERSIFIER_SIZE];
+    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING, noteD, 0, ZC_DIVERSIFIER_SIZE);
+    ret.d.setData(noteD);
+
+    byte[] valueLong = new byte[ZC_V_SIZE];
+    System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, valueLong, 0, ZC_V_SIZE);
+    for (int i = 0; i < valueLong.length / 2; i++) {
+      byte temp = valueLong[i];
+      valueLong[i] = valueLong[valueLong.length - 1 - i];
+      valueLong[valueLong.length - 1 - i] = temp;
+    }
+    buffer.put(valueLong, 0, valueLong.length);
+    buffer.flip();
+    ret.value = buffer.getLong();
+
+    byte[] noteRcm = new byte[ZC_R_SIZE];
+    System.arraycopy(
+            data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, noteRcm, 0, ZC_R_SIZE);
+    ret.rcm = noteRcm;
+
+    byte[] noteMemo = new byte[ZC_MEMO_SIZE];
+    System.arraycopy(
+            data,
+            ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
+            noteMemo,
+            0,
+            ZC_MEMO_SIZE);
+    ret.memo = noteMemo;
+
+    return ret;
+  }
+
+  /**
+   * merge all column to construct EncPlaintext
+   * @return
+   */
+  public NoteEncryption.Encryption.EncPlaintext encode() {
+    ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
+    buffer.putLong(0, value);
+    byte[] valueLong = buffer.array();
+    for (int i = 0; i < valueLong.length / 2; i++) {
+      byte temp = valueLong[i];
+      valueLong[i] = valueLong[valueLong.length - 1 - i];
+      valueLong[valueLong.length - 1 - i] = temp;
+    }
+
+    byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE];
+    data[0] = 0x01;
+    System.arraycopy(d.data, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
+    System.arraycopy(valueLong, 0, data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, ZC_V_SIZE);
+    System.arraycopy(rcm, 0, data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ZC_R_SIZE);
+    System.arraycopy(
+            memo,
+            0,
+            data,
+            ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
+            ZC_MEMO_SIZE);
+
+    NoteEncryption.Encryption.EncPlaintext ret = new NoteEncryption.Encryption.EncPlaintext();
+    ret.data = data;
+    return ret;
+  }
+
+  /**
+   * decrypt ciphertext with ivk into Note
+   */
+  public static Optional<Note> decrypt(
+          byte[] ciphertext, byte[] ivk, byte[] epk, byte[] cmu) throws ZksnarkException {
+    Optional<NoteEncryption.Encryption.EncPlaintext> pt =
+            NoteEncryption.Encryption.AttemptEncDecryption(ciphertext, ivk, epk);
+    if (!pt.isPresent()) {
+      return Optional.empty();
+    }
+    Note ret = decode(pt.get());
+    byte[] pk_d = new byte[32];
+    if (!Librustzcash.librustzcashIvkToPkd(new LibrustzcashParam.IvkToPkdParams(ivk, ret.d.getData(), pk_d))) {
+      return Optional.empty();
+    }
+    byte[] cmu_expected = new byte[32];
+    if (!Librustzcash.librustzcashComputeCm(
+            new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
+      return Optional.empty();
+    }
+    if (!Arrays.equals(cmu, cmu_expected)) {
+      return Optional.empty();
+    }
+    return Optional.of(ret);
+  }
+
+  /**
+   * decrypt with epk
+   */
+  public static Optional<Note> decrypt(
+          NoteEncryption.Encryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu)
+          throws ZksnarkException {
+    Optional<NoteEncryption.Encryption.EncPlaintext> pt =
+            NoteEncryption.Encryption.AttemptEncDecryption(ciphertext, epk, esk, pk_d);
+    if (!pt.isPresent()) {
+      return Optional.empty();
+    }
+    Note ret = decode(pt.get());
+    byte[] cmu_expected = new byte[32];
+    if (!Librustzcash.librustzcashComputeCm(
+            new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
+      return Optional.empty();
+    }
+    if (!Arrays.equals(cmu, cmu_expected)) {
+      return Optional.empty();
+    }
+    return Optional.of(ret);
+  }
+
+  @AllArgsConstructor
+  public class NotePlaintextEncryptionResult {
+
+    public byte[] encCiphertext;
+    public NoteEncryption noteEncryption;
   }
 }

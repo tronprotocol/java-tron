@@ -717,7 +717,7 @@ public class ShieldedTransferActuatorTest2 {
           Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
               Note.generateR());
           listNote.add(note);
-          builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.r,
+          builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
               new byte[512]);
         }
         TransactionCapsule transactionCapOne = builderOne.build();
@@ -1075,12 +1075,12 @@ public class ShieldedTransferActuatorTest2 {
           Note.generateR());
       listNote.add(note);
       builderOne
-          .addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.r, new byte[512]);
+          .addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm, new byte[512]);
 
       for (int i = 0; i < noteNum - 1; i++) {
         note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
         listNote.add(note);
-        builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.r,
+        builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
             new byte[512]);
       }
       TransactionCapsule transactionCapOne = builderOne.build();
