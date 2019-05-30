@@ -945,14 +945,15 @@ public class SendCoinShieldTest {
     actuator.get(0).execute(resultCapsule);
   }
 
- // @Test
+  // @Test
   public void testValueBalance() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     //case 1， a public input, no input cm,  an output cm, no public output
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      String OWNER_ADDRESS =
+          Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
       AccountCapsule ownerCapsule =
           new AccountCapsule(
               ByteString.copyFromUtf8("owner"),
@@ -961,7 +962,7 @@ public class SendCoinShieldTest {
               110_000_000L);
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),100_000_000);
+      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000);
 
       // generate output proof
       SpendingKey spendingKey = SpendingKey.random();
@@ -972,12 +973,12 @@ public class SendCoinShieldTest {
 
       TransactionCapsule transactionCap = builder.build();
 
-    // 100_000_000L + 0L !=  200_000_000L + 0L + 10_000_000L
-      try{
+      // 100_000_000L + 0L !=  200_000_000L + 0L + 10_000_000L
+      try {
         executeTx(transactionCap);
         Assert.fail();
-      }catch (ContractValidateException e){
-        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+      } catch (ContractValidateException e) {
+        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
           throw e;
         }
       }
@@ -987,7 +988,8 @@ public class SendCoinShieldTest {
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
-      String OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      String OWNER_ADDRESS =
+          Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
       AccountCapsule ownerCapsule =
           new AccountCapsule(
               ByteString.copyFromUtf8("owner"),
@@ -995,7 +997,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               110_000_000L);
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS),100_000_000L);
+      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
       // generate output proof
       SpendingKey spendingKey = SpendingKey.random();
@@ -1004,7 +1006,8 @@ public class SendCoinShieldTest {
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
 
-      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      String TO_ADDRESS =
+          Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
       AccountCapsule toCapsule =
           new AccountCapsule(
               ByteString.copyFromUtf8("to"),
@@ -1012,16 +1015,16 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap = builder.build();
 
 //   100_000_000L + 0L !=  200_000_000L + 10_000_000L + 10_000_000L
-      try{
+      try {
         executeTx(transactionCap);
         Assert.fail();
-      }catch (ContractValidateException e){
-        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+      } catch (ContractValidateException e) {
+        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
           throw e;
         }
       }
@@ -1052,7 +1055,8 @@ public class SendCoinShieldTest {
       //add spendDesc into builder
       builder.addSpend(expsk1, note1, anchor, voucher);
 
-      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      String TO_ADDRESS =
+          Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
       AccountCapsule toCapsule =
           new AccountCapsule(
               ByteString.copyFromUtf8("to"),
@@ -1060,16 +1064,16 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap = builder.build();
 
       //   0L + 110_000_000L  !=  200_000_000L + 0L + 10_000_000L
-      try{
+      try {
         executeTx(transactionCap);
         Assert.fail();
-      }catch (ContractValidateException e){
-        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+      } catch (ContractValidateException e) {
+        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
           throw e;
         }
       }
@@ -1110,11 +1114,11 @@ public class SendCoinShieldTest {
       TransactionCapsule transactionCap = builder.build();
 
       //   110_000_000L + 0L!=  200_000_000L + 0L + 10_000_000L
-      try{
+      try {
         executeTx(transactionCap);
         Assert.fail();
-      }catch (ContractValidateException e){
-        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+      } catch (ContractValidateException e) {
+        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
           throw e;
         }
       }
@@ -1152,8 +1156,8 @@ public class SendCoinShieldTest {
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
 
-
-      String TO_ADDRESS = Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
+      String TO_ADDRESS =
+          Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
       AccountCapsule toCapsule =
           new AccountCapsule(
               ByteString.copyFromUtf8("to"),
@@ -1161,16 +1165,16 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap = builder.build();
 
       //     0L + 110_000_000L !=  200_000_000L + 10_000_000L + 10_000_000L
-      try{
+      try {
         executeTx(transactionCap);
         Assert.fail();
-      }catch (ContractValidateException e){
-        if(!e.getMessage().equals("librustzcashSaplingFinalCheck error")){
+      } catch (ContractValidateException e) {
+        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
           throw e;
         }
       }
