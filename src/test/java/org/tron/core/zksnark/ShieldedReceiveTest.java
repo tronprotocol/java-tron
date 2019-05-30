@@ -60,8 +60,7 @@ import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
-import org.tron.core.zen.note.NotePlaintext;
-import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
+import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ShieldedTransferContract;
@@ -617,9 +616,9 @@ public class ShieldedReceiveTest {
       throw new ZksnarkException("Output is invalid");
     }
 
-    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
+//    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
 
-    Optional<NotePlaintextEncryptionResult> res = notePlaintext
+    Optional<NotePlaintextEncryptionResult> res = output.getNote()
         .encrypt(output.getNote().pkD);
     if (!res.isPresent()) {
       Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -636,7 +635,7 @@ public class ShieldedReceiveTest {
             encryptor.esk,
             output.getNote().d.data,
             output.getNote().pkD,
-            output.getNote().r,
+            output.getNote().rcm,
             output.getNote().value,
             cv,
             zkProof))) {
@@ -695,7 +694,7 @@ public class ShieldedReceiveTest {
         }
         break;
       case R_CM:
-        newNote.r = Note.generateR();
+        newNote.rcm = Note.generateR();
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -791,7 +790,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(address, 90 * 1000000);
-    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r,
+    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
 
     return builder;
@@ -1150,9 +1149,9 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(address, 45 * 1000000);
     //add two same output note
-    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r,
+    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
-    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.r,
+    builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);//same output cm
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
@@ -1913,7 +1912,7 @@ public class ShieldedReceiveTest {
         nsk,
         ovk,
         note,
-        note.r, //?
+        note.rcm, //?
         anchor,
         voucher
     );

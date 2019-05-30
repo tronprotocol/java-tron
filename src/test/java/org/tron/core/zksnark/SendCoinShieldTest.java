@@ -6,10 +6,6 @@ import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -24,59 +20,27 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
-import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.*;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.capsule.ReceiveDescriptionCapsule;
-import org.tron.core.capsule.SpendDescriptionCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.AccountResourceInsufficientException;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.DupTransactionException;
-import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.TaposException;
-import org.tron.core.exception.TooBigTransactionException;
-import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.core.exception.TransactionExpirationException;
-import org.tron.core.exception.VMIllegalException;
-import org.tron.core.exception.ValidateSignatureException;
-import org.tron.core.exception.ZksnarkException;
+import org.tron.core.exception.*;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
-import org.tron.core.zen.address.DiversifierT;
-import org.tron.core.zen.address.ExpandedSpendingKey;
-import org.tron.core.zen.address.FullViewingKey;
-import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.core.zen.address.KeyIo;
-import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.address.*;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.MerklePath;
 import org.tron.core.zen.note.Note;
+import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
-import org.tron.core.zen.note.NotePlaintext;
-import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.PedersenHash;
@@ -85,6 +49,11 @@ import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 public class SendCoinShieldTest {
 
@@ -222,7 +191,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
     Note note = new Note(address, 100);
-    note.r = ByteArray
+    note.rcm = ByteArray
         .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -289,13 +258,14 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
 
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, new byte[512]);
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, memo);
 
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(output, ctx);
     Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
-    Optional<NotePlaintext> ret1 = NotePlaintext.decrypt(
+    Optional<Note> ret1 = Note.decrypt(
         receiveDescription.getCEnc().toByteArray(),//ciphertext
         fullViewingKey.inViewingKey().getValue(),
         receiveDescription.getEpk().toByteArray(),//epk
@@ -303,7 +273,7 @@ public class SendCoinShieldTest {
     );
 
     if (ret1.isPresent()) {
-      NotePlaintext noteText = ret1.get();
+      Note noteText = ret1.get();
 
       byte[] pk_d = new byte[32];
       if (!Librustzcash.librustzcashIvkToPkd(
@@ -314,7 +284,7 @@ public class SendCoinShieldTest {
 
       Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
       Assert.assertEquals(noteText.value, 4000);
-      Assert.assertArrayEquals(noteText.memo, new byte[512]);
+      Assert.assertArrayEquals(noteText.memo, memo);
 
       String paymentAddressStr = KeyIo.encodePaymentAddress(
           new PaymentAddress(noteText.d, pk_d));
@@ -323,6 +293,7 @@ public class SendCoinShieldTest {
           .setPaymentAddress(paymentAddressStr)
           .setValue(noteText.value)
           .setRcm(ByteString.copyFrom(noteText.rcm))
+          .setMemo(ByteString.copyFrom(noteText.memo))
           .build();
     }
 
@@ -350,12 +321,13 @@ public class SendCoinShieldTest {
 
     byte[] pkd = paymentAddress2.getPkD();
     Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    note.memo = memo;
 
     byte[] cmu_opt = note.cm();
     Assert.assertNotNull(cmu_opt);
 
-    NotePlaintext pt = new NotePlaintext(note, new byte[512]);
-    NotePlaintextEncryptionResult enc = pt.encrypt(pkd).get();
+    NotePlaintextEncryptionResult enc = note.encrypt(pkd).get();
     NoteEncryption encryptor = enc.noteEncryption;
     OutgoingPlaintext out_pt = new OutgoingPlaintext(note.pkD, encryptor.esk);
 
@@ -382,7 +354,7 @@ public class SendCoinShieldTest {
       //decrypt c_enc with pkd、esk
       Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
       ciphertext.data = enc.encCiphertext;
-      Optional<NotePlaintext> foo = NotePlaintext
+      Optional<Note> foo = Note
           .decrypt(ciphertext,
               encryptor.epk,
               decrypted_out_ct_unwrapped.esk,
@@ -390,10 +362,10 @@ public class SendCoinShieldTest {
               cmu_opt);
 
       if (foo.isPresent()) {
-        NotePlaintext bar = foo.get();
+        Note bar = foo.get();
         //verify result
-        Assert.assertEquals(bar.value, 4000);
-        Assert.assertArrayEquals(bar.memo, new byte[512]);
+        Assert.assertEquals(4000, bar.value);
+        Assert.assertArrayEquals(memo, bar.memo);
       } else {
         Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
         Assert.assertFalse(true);
@@ -455,7 +427,7 @@ public class SendCoinShieldTest {
           .unpack(Contract.ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
-      Optional<NotePlaintext> ret1 = NotePlaintext.decrypt(
+      Optional<Note> ret1 = Note.decrypt(
           receiveDescription.getCEnc().toByteArray(),//ciphertext
           ivk,
           receiveDescription.getEpk().toByteArray(),//epk
@@ -463,7 +435,7 @@ public class SendCoinShieldTest {
       );
 
       if (ret1.isPresent()) {
-        NotePlaintext noteText = ret1.get();
+        Note noteText = ret1.get();
         byte[] pk_d = new byte[32];
         if (!Librustzcash.librustzcashIvkToPkd(
             new IvkToPkdParams(incomingViewingKey.getValue(), noteText.d.getData(), pk_d))) {
@@ -544,7 +516,7 @@ public class SendCoinShieldTest {
         //decode c_enc with pkd、esk
         Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
         ciphertext.data = receiveDescription.getCEnc().toByteArray();
-        Optional<NotePlaintext> foo = NotePlaintext
+        Optional<Note> foo = Note
             .decrypt(ciphertext,
                 receiveDescription.getEpk().toByteArray(),
                 decrypted_out_ct_unwrapped.esk,
@@ -552,7 +524,7 @@ public class SendCoinShieldTest {
                 receiveDescription.getNoteCommitment().toByteArray());
 
         if (foo.isPresent()) {
-          NotePlaintext bar = foo.get();
+          Note bar = foo.get();
           //verify result
           Assert.assertEquals(bar.value, 4000 * 1000000);
           Assert.assertArrayEquals(bar.memo, new byte[512]);

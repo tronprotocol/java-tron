@@ -4,9 +4,9 @@ import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
-import org.tron.core.zen.note.NotePlaintext;
 import org.tron.core.zen.note.OutgoingPlaintext;
 
 public class NoteEncDecryTest {
@@ -92,9 +92,9 @@ public class NoteEncDecryTest {
         OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(pk_d,esk);
 
         //output
-        Optional<NotePlaintext> ret2 = NotePlaintext.decrypt(
+        Optional<Note> ret2 = Note.decrypt(
                 enc, epk, outgoingPlaintext.esk, outgoingPlaintext.pk_d, cmu);
-        NotePlaintext result2 = ret2.get();
+        Note result2 = ret2.get();
 
         byte[] rcm = new byte[]{-53,105,51,-112,-52,-9,-16,33,-98,-98,95,-124,114,27,7,-26,-68,116,
                 92,12,-71,118,64,38,-38,-56,114,-70,-38,-116,40,6};

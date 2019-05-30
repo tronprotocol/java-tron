@@ -3,9 +3,6 @@ package org.tron.core.zen;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.sun.jna.Pointer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,12 +25,15 @@ import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
-import org.tron.core.zen.note.NotePlaintext;
-import org.tron.core.zen.note.NotePlaintext.NotePlaintextEncryptionResult;
+import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class ZenTransactionBuilder {
@@ -101,12 +101,16 @@ public class ZenTransactionBuilder {
 
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
       throws ZksnarkException {
-    receives.add(new ReceiveDescriptionInfo(ovk, new Note(to, value), memo));
+    Note note = new Note(to, value);
+    note.memo = memo;
+    receives.add(new ReceiveDescriptionInfo(ovk, note));
     valueBalance -= value;
   }
 
   public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
-    receives.add(new ReceiveDescriptionInfo(ovk, new Note(d, pkD, value, r), memo));
+    Note note = new Note(d, pkD, value, r);
+    note.memo = memo;
+    receives.add(new ReceiveDescriptionInfo(ovk, note));
     valueBalance -= value;
   }
 
@@ -235,7 +239,7 @@ public class ZenTransactionBuilder {
             ak,
             nsk,
             spend.note.d.getData(),
-            spend.note.r,
+            spend.note.rcm,
             spend.alpha,
             spend.note.value,
             spend.anchor,
@@ -262,10 +266,11 @@ public class ZenTransactionBuilder {
       throw new ZksnarkException("Output is invalid");
     }
 
-    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
-
-    Optional<NotePlaintextEncryptionResult> res = notePlaintext
-        .encrypt(output.getNote().pkD);
+//    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
+//
+//    Optional<NotePlaintextEncryptionResult> res = notePlaintext
+//        .encrypt(output.getNote().pkD);
+    Optional<NotePlaintextEncryptionResult> res = output.getNote().encrypt(output.getNote().pkD);
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
@@ -280,7 +285,7 @@ public class ZenTransactionBuilder {
             encryptor.esk,
             output.getNote().d.data,
             output.getNote().pkD,
-            output.getNote().r,
+            output.getNote().rcm,
             output.getNote().value,
             cv,
             zkProof))) {
@@ -366,8 +371,8 @@ public class ZenTransactionBuilder {
     private byte[] ovk;
     @Getter
     private Note note;
-    @Getter
-    private byte[] memo; // 256
+//    @Getter
+//    private byte[] memo; // 256
   }
 
 }
