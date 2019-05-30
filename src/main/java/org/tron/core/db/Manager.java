@@ -61,7 +61,9 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ZenTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
@@ -106,6 +108,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.core.zen.merkle.MerkleContainer;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -549,6 +552,21 @@ public class Manager {
       }
     }
   }
+
+  /**
+   * issue zen coin
+   */
+  public void initZen() {
+
+    // TODO: init assetIssueContract
+    AssetIssueContract assetIssueContract =  AssetIssueContract.newBuilder().build();
+
+
+    AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
+    assetIssueCapsuleV2.setId(ZenTransferActuator.zenTokenId);
+    getAssetIssueV2Store().put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+  }
+
 
   /**
    * save account into database.
