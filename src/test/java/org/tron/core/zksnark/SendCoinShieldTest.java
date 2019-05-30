@@ -190,11 +190,29 @@ public class SendCoinShieldTest {
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-    PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100);
+
+    DiversifierT diversifierT = new DiversifierT();
+    byte[] d;
+    while (true) {
+      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+        break;
+      }
+    }
+    diversifierT.setData(d);
+
+    FullViewingKey fullViewingKey = expsk.fullViewingKey();
+
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
+
+    Note note = new Note(op.get(), 100);
     note.rcm = ByteArray
         .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
+
     byte[] anchor = voucher.root().getContent().toByteArray();
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
@@ -806,11 +824,12 @@ public class SendCoinShieldTest {
   public void testComputeCm() throws Exception {
     byte[] result = new byte[32];
     if (!Librustzcash.librustzcashComputeCm(new ComputeCmParams(
-        (ByteArray.fromHexString("fc6eb90855700861de6639")), (
+        (ByteArray.fromHexString("fc6eb90855700861de6639")),
         ByteArray
-            .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19")),
-        9990000000L, (ByteArray
-        .fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02")),
+            .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19"),
+        9990000000L,
+        ByteArray
+        .fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02"),
         result)
     )) {
       System.out.println(" error");
