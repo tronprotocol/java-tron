@@ -33,6 +33,7 @@ public class Parameter {
     public static final long MAX_BLOCKS_SYNC_FROM_ONE_PEER = 1000;
     public static final long SYNC_CHAIN_LIMIT_NUM = 500;
     public static final int MAX_TRANSACTION_PENDING = 2000;
+    public static final int MAX_HTTP_CONNECT_NUMBER = 50;
   }
 
   public class NetConstants {

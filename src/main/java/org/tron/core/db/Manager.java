@@ -76,8 +76,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
-import org.tron.core.db.fast.TrieService;
-import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.accountstate.TrieService;
+import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -226,7 +226,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   @Autowired
-  private FastSyncCallBack fastSyncCallBack;
+  private AccountStateCallBack accountStateCallBack;
 
   @Autowired
   private TrieService trieService;
@@ -437,7 +437,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setManager(this);
-    fastSyncCallBack.setManager(this);
+    accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
@@ -1330,7 +1330,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
     //
-    fastSyncCallBack.preExecute(blockCapsule);
+    accountStateCallBack.preExecute(blockCapsule);
 
     if (needCheckWitnessPermission && !witnessService.
         validateWitnessPermission(witnessCapsule.getAddress())) {
@@ -1383,13 +1383,12 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        fastSyncCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(trx, blockCapsule);
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.preExeTrans();
+        processTransaction(trx, blockCapsule);
+        accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        transationRetCapsule.addTransactionInfo(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1428,7 +1427,7 @@ public class Manager {
       }
     } // end of while
 
-    fastSyncCallBack.executeGenerateFinish();
+    accountStateCallBack.executeGenerateFinish();
 
     session.reset();
     if (postponedTrxCount > 0) {
@@ -1535,20 +1534,19 @@ public class Manager {
         new TransactionRetCapsule(block);
 
     try {
-      fastSyncCallBack.preExecute(block);
+      accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
-          transactionCapsule.setVerified(true);
+            transactionCapsule.setVerified(true);
         }
-        fastSyncCallBack.preExeTrans();
-        TransactionInfo result = processTransaction(transactionCapsule, block);
-        transationRetCapsule.addTransactionInfo(result);
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.preExeTrans();
+        processTransaction(transactionCapsule, block);
+        accountStateCallBack.exeTransFinish();
       }
-      fastSyncCallBack.executePushFinish();
+      accountStateCallBack.executePushFinish();
     } finally {
-      fastSyncCallBack.exceptionFinish();
+      accountStateCallBack.exceptionFinish();
     }
 
     block.setResult(transationRetCapsule);
