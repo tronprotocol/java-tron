@@ -1538,7 +1538,7 @@ public class Manager {
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
-            transactionCapsule.setVerified(true);
+          transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
         processTransaction(transactionCapsule, block);
