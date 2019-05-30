@@ -687,7 +687,7 @@ service Wallet {
   rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
   }
 
-  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
+  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (PaymentAddressMessage) {
   }
 
   rpc GetRcm (EmptyMessage) returns (BytesMessage) {
@@ -1227,7 +1227,7 @@ message IncomingViewingKeyDiversifierMessage {
   DiversifierMessage d = 2;
 }
 
-message SaplingPaymentAddressMessage {
+message PaymentAddressMessage {
   DiversifierMessage d = 1;
   bytes pkD = 2;
   string payment_address = 3;
