@@ -687,7 +687,7 @@ service Wallet {
   rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
   }
 
-  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (SaplingPaymentAddressMessage) {
+  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (PaymentAddressMessage) {
   }
 
   rpc GetRcm (EmptyMessage) returns (BytesMessage) {
@@ -699,7 +699,7 @@ service Wallet {
   rpc CreateShieldedTransactionWithoutSpendAuthSig (PrivateParametersWithoutAsk) returns (TransactionExtention) {
   };
 
-  rpc GetShieldTransactionHash (TransactionExtention) returns (BytesMessage) {
+  rpc GetShieldTransactionHash (Transaction) returns (BytesMessage) {
   };
 
   rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
@@ -1150,9 +1150,9 @@ message DecryptNotes {
 
 message Note {
   int64 value = 1;
-  bytes d = 2;
-  bytes pkD = 3;
-  bytes rcm = 4; // random 32
+  string payment_address = 2;
+  bytes rcm = 3; // random 32
+  bytes memo = 4;
 }
 
 message SpendNote {
@@ -1172,8 +1172,8 @@ message PrivateParameters {
   bytes nsk = 3;
   bytes ovk = 4;
   int64 from_amount = 5;
-  repeated SpendNote shieldedSpends = 6;
-  repeated ReceiveNote shieldedReceives = 7;
+  repeated SpendNote shielded_spends = 6;
+  repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
 }
@@ -1184,8 +1184,8 @@ message PrivateParametersWithoutAsk {
   bytes nsk = 3;
   bytes ovk = 4;
   int64 from_amount = 5;
-  repeated SpendNote shieldedSpends = 6;
-  repeated ReceiveNote shieldedReceives = 7;
+  repeated SpendNote shielded_spends = 6;
+  repeated ReceiveNote shielded_receives = 7;
   bytes transparent_to_address = 8;
   int64 to_amount = 9;
 }
@@ -1227,9 +1227,10 @@ message IncomingViewingKeyDiversifierMessage {
   DiversifierMessage d = 2;
 }
 
-message SaplingPaymentAddressMessage {
+message PaymentAddressMessage {
   DiversifierMessage d = 1;
   bytes pkD = 2;
+  string payment_address = 3;
 }
 
 message NoteParameters {
