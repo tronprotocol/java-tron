@@ -24,14 +24,14 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingFinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -263,7 +263,7 @@ public class SendCoinShieldTest {
     ReceiveDescription receiveDescription = capsule.getInstance();
     ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
     if (!Librustzcash.librustzcashSaplingCheckOutput(
-        new SaplingCheckOutputParams(ctx,
+        new CheckOutputParams(ctx,
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
@@ -594,14 +594,14 @@ public class SendCoinShieldTest {
 
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
-        new SaplingSpendSigParams(expsk.getAsk(),
+        new SpendSigParams(expsk.getAsk(),
             spend.alpha,
             getHash(),
             result));
 
     Pointer verifyContext = Librustzcash.librustzcashSaplingVerificationCtxInit();
     boolean ok = Librustzcash.librustzcashSaplingCheckSpend(
-        new SaplingCheckSpendParams(verifyContext,
+        new CheckSpendParams(verifyContext,
             spendDescriptionCapsule.getValueCommitment().toByteArray(),
             spendDescriptionCapsule.getAnchor().toByteArray(),
             spendDescriptionCapsule.getNullifier().toByteArray(),
@@ -641,7 +641,7 @@ public class SendCoinShieldTest {
     // test create binding sig
     byte[] bindingSig = new byte[64];
     boolean ret = Librustzcash.librustzcashSaplingBindingSig(
-        new SaplingBindingSigParams(ctx,
+        new BindingSigParams(ctx,
             builder.getValueBalance(),
             getHash(),
             bindingSig)
@@ -714,7 +714,7 @@ public class SendCoinShieldTest {
     //create binding sig
     byte[] bindingSig = new byte[64];
     boolean ret = Librustzcash.librustzcashSaplingBindingSig(
-        new SaplingBindingSigParams(ctx,
+        new BindingSigParams(ctx,
             builder.getValueBalance(),
             getHash(),
             bindingSig)
@@ -725,7 +725,7 @@ public class SendCoinShieldTest {
     ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
     byte[] result = new byte[64];
     Librustzcash.librustzcashSaplingSpendSig(
-        new SaplingSpendSigParams(expsk.getAsk(),
+        new SpendSigParams(expsk.getAsk(),
             builder.getSpends().get(0).alpha,
             getHash(),
             result));
@@ -733,7 +733,7 @@ public class SendCoinShieldTest {
     SpendDescription spendDescription = spendDescriptionCapsule.getInstance();
     boolean ok;
     ok = Librustzcash.librustzcashSaplingCheckSpend(
-        new SaplingCheckSpendParams(ctx,
+        new CheckSpendParams(ctx,
             spendDescription.getValueCommitment().toByteArray(),
             spendDescription.getAnchor().toByteArray(),
             spendDescription.getNullifier().toByteArray(),
@@ -747,7 +747,7 @@ public class SendCoinShieldTest {
     // check output
     ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
     ok = Librustzcash.librustzcashSaplingCheckOutput(
-        new SaplingCheckOutputParams(ctx,
+        new CheckOutputParams(ctx,
             receiveDescription.getValueCommitment().toByteArray(),
             receiveDescription.getNoteCommitment().toByteArray(),
             receiveDescription.getEpk().toByteArray(),
@@ -756,7 +756,7 @@ public class SendCoinShieldTest {
     Assert.assertTrue(ok);
     // final check
     ok = Librustzcash.librustzcashSaplingFinalCheck(
-        new SaplingFinalCheckParams(ctx,
+        new FinalCheckParams(ctx,
             builder.getValueBalance(),
             bindingSig,
             getHash())
@@ -798,7 +798,7 @@ public class SendCoinShieldTest {
   @Test
   public void testComputeCm() throws Exception {
     byte[] result = new byte[32];
-    if (!Librustzcash.librustzcashSaplingComputeCm(new SaplingComputeCmParams(
+    if (!Librustzcash.librustzcashComputeCm(new ComputeCmParams(
         (ByteArray.fromHexString("fc6eb90855700861de6639")), (
         ByteArray
             .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19")),
@@ -1483,7 +1483,7 @@ public class SendCoinShieldTest {
       byte[] dataToBeSigned = ByteArray.fromHexString("aaaaaaaaa");
       byte[] result = new byte[64];
       Librustzcash.librustzcashSaplingSpendSig(
-          new SaplingSpendSigParams(spendDescriptionInfo.expsk.getAsk(),
+          new SpendSigParams(spendDescriptionInfo.expsk.getAsk(),
               spendDescriptionInfo.alpha,
               dataToBeSigned,
               result));
@@ -1547,7 +1547,7 @@ public class SendCoinShieldTest {
           for (int i = 0; i < this.getSpends().size(); i++) {
             byte[] result = new byte[64];
             Librustzcash.librustzcashSaplingSpendSig(
-                new SaplingSpendSigParams(fakeAsk,
+                new SpendSigParams(fakeAsk,
                     this.getSpends().get(i).alpha,
                     dataToBeSigned,
                     result));

@@ -10,8 +10,8 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingKaAgreeParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingKaDerivepublicParams;
+import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
+import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
@@ -41,7 +41,7 @@ public class NoteEncryption {
     byte[] esk = new byte[32];
     Librustzcash.librustzcashSaplingGenerateR(esk);
     if (!Librustzcash
-        .librustzcashSaplingKaDerivepublic(new SaplingKaDerivepublicParams(d.data, esk, epk))) {
+        .librustzcashSaplingKaDerivepublic(new KaDerivepublicParams(d.data, esk, epk))) {
       return Optional.empty();
     }
     return Optional.of(new NoteEncryption(epk, esk));
@@ -54,7 +54,7 @@ public class NoteEncryption {
     }
 
     byte[] dhsecret = new byte[32];
-    if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(pk_d, esk, dhsecret))) {
+    if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
       return Optional.empty();
     }
 
@@ -131,10 +131,10 @@ public class NoteEncryption {
       return;
     }
 
-    public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
+    public static Optional<EncPlaintext> AttemptEncDecryption(
         byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-      if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(epk, ivk, dhsecret))) {
+      if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(epk, ivk, dhsecret))) {
         return Optional.empty();
       }
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
@@ -154,10 +154,10 @@ public class NoteEncryption {
       return Optional.of(plaintext);
     }
 
-    public static Optional<EncPlaintext> AttemptSaplingEncDecryption(
+    public static Optional<EncPlaintext> AttemptEncDecryption(
         EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-      if (!Librustzcash.librustzcashSaplingKaAgree(new SaplingKaAgreeParams(pk_d, esk, dhsecret))) {
+      if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
         return Optional.empty();
       }
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];

@@ -63,13 +63,13 @@ import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
+import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -96,10 +96,10 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
@@ -1721,7 +1721,7 @@ public class Wallet {
       builder.setTransparentOutput(transparentToAddress, toAmount);
     }
 
-    // sapling input
+    // input
     if (!(ArrayUtils.isEmpty(ask) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
       for (SpendNote spendNote : shieldedSpends) {
@@ -1743,7 +1743,7 @@ public class Wallet {
       }
     }
 
-    // sapling output
+    // output
     for (ReceiveNote receiveNote : shieldedReceives) {
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
           receiveNote.getNote().getPaymentAddress());
@@ -1815,7 +1815,7 @@ public class Wallet {
       builder.setTransparentOutput(transparentToAddress, toAmount);
     }
 
-    // sapling input
+    // input
     if (!(ArrayUtils.isEmpty(ak) || ArrayUtils.isEmpty(nsk) || ArrayUtils.isEmpty(ovk))) {
       for (SpendNote spendNote : shieldedSpends) {
         GrpcAPI.Note note = spendNote.getNote();
@@ -1838,7 +1838,7 @@ public class Wallet {
       }
     }
 
-    // sapling output
+    // output
     for (ReceiveNote receiveNote : shieldedReceives) {
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(
           receiveNote.getNote().getPaymentAddress());
@@ -1972,13 +1972,13 @@ public class Wallet {
 
   }
 
-  public SaplingPaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
+  public PaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
 
-    SaplingPaymentAddressMessage spa = null;
+    PaymentAddressMessage spa = null;
 
     if (!Librustzcash.librustzcashCheckDiversifier(d.getData())) {
       throw new BadItemException("d is not valid");
@@ -1991,7 +1991,7 @@ public class Wallet {
           .build();
 
       PaymentAddress paymentAddress = op.get();
-      spa = SaplingPaymentAddressMessage.newBuilder()
+      spa = PaymentAddressMessage.newBuilder()
           .setD(ds)
           .setPkD(ByteString.copyFrom(paymentAddress.getPkD()))
           .setPaymentAddress(KeyIo.encodePaymentAddress(paymentAddress))
@@ -2045,12 +2045,12 @@ public class Wallet {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] result = new byte[64];
-    SaplingSpendSigParams saplingSpendSigParams = new SaplingSpendSigParams(
+    SpendSigParams spendSigPasrams = new SpendSigParams(
         spendAuthSigParameters.getAsk().toByteArray(),
         spendAuthSigParameters.getAlpha().toByteArray(),
         spendAuthSigParameters.getTxHash().toByteArray(),
         result);
-    Librustzcash.librustzcashSaplingSpendSig(saplingSpendSigParams);
+    Librustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
 
     return BytesMessage.newBuilder()
         .setValue(ByteString.copyFrom(result))
@@ -2075,7 +2075,7 @@ public class Wallet {
     if (paymentAddress == null) {
       throw new ZksnarkException("paymentAddress format is wrong");
     }
-    SaplingComputeNfParams saplingComputeNfParams = new SaplingComputeNfParams(
+    ComputeNfParams computeNfParams = new ComputeNfParams(
         paymentAddress.getD().getData(),
         paymentAddress.getPkD(),
         note.getValue(),
@@ -2084,7 +2084,7 @@ public class Wallet {
         nk,
         incrementalMerkleVoucherContainer.position(),
         result);
-    if (!Librustzcash.librustzcashSaplingComputeNf(saplingComputeNfParams)) {
+    if (!Librustzcash.librustzcashComputeNf(computeNfParams)) {
       return null;
     }
 

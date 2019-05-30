@@ -1,8 +1,8 @@
 package org.tron.core.zen.note;
 
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
@@ -39,8 +39,8 @@ public class Note {
   // Call librustzcash to compute the commitment
   public byte[] cm() throws ZksnarkException {
     byte[] result = new byte[32];
-    if (!Librustzcash.librustzcashSaplingComputeCm(
-        new SaplingComputeCmParams(d.getData(), pkD, value, r, result))) {
+    if (!Librustzcash.librustzcashComputeCm(
+        new ComputeCmParams(d.getData(), pkD, value, r, result))) {
       return null;
     }
     return result;
@@ -50,8 +50,8 @@ public class Note {
     byte[] ak = vk.getAk();
     byte[] nk = vk.getNk();
     byte[] result = new byte[32]; // 256
-    if (!Librustzcash.librustzcashSaplingComputeNf(
-        new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
+    if (!Librustzcash.librustzcashComputeNf(
+        new ComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
     return result;
@@ -59,8 +59,8 @@ public class Note {
 
   public byte[] nullifier(byte[] ak, byte[] nk, long position) throws ZksnarkException {
     byte[] result = new byte[32]; // 256
-    if (!Librustzcash.librustzcashSaplingComputeNf(
-        new SaplingComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
+    if (!Librustzcash.librustzcashComputeNf(
+        new ComputeNfParams(d.getData(), pkD, value, r, ak, nk, position, result))) {
       return null;
     }
     return result;

@@ -193,7 +193,7 @@ public class LibrustzcashParam {
   /**
    * KaAgree(sk,p)=[h_J*sk]p p: point, 32 bytes sk: 32 bytes result: 32 bytes
    */
-  public static class SaplingKaAgreeParams implements ValidParam {
+  public static class KaAgreeParams implements ValidParam {
 
     @Setter
     @Getter
@@ -205,7 +205,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingKaAgreeParams(byte[] p, byte[] sk, byte[] result) throws ZksnarkException {
+    public KaAgreeParams(byte[] p, byte[] sk, byte[] result) throws ZksnarkException {
       this.p = p;
       this.sk = sk;
       this.result = result;
@@ -224,7 +224,7 @@ public class LibrustzcashParam {
    * Compute note commitment d: diversifier, 11 bytes pk_d: 32 bytes r: rcm,  32 bytes cm: note
    * commitment, 32 bytes
    */
-  public static class SaplingComputeCmParams implements ValidParam {
+  public static class ComputeCmParams implements ValidParam {
 
     @Setter
     @Getter
@@ -242,7 +242,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] cm;
 
-    public SaplingComputeCmParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm)
+    public ComputeCmParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm)
         throws ZksnarkException {
       this.d = d;
       this.pk_d = pk_d;
@@ -266,7 +266,7 @@ public class LibrustzcashParam {
    * spendAuthSig.PulicKey, 32 bytes nk: to genarate nullifier, 32 bytes result: nullifier, 32
    * bytes
    */
-  public static class SaplingComputeNfParams implements ValidParam {
+  public static class ComputeNfParams implements ValidParam {
 
     @Setter
     @Getter
@@ -293,7 +293,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingComputeNfParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] ak, byte[] nk,
+    public ComputeNfParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] ak, byte[] nk,
         long position, byte[] result) throws ZksnarkException {
       this.d = d;
       this.pk_d = pk_d;
@@ -320,7 +320,7 @@ public class LibrustzcashParam {
   /**
    * diversifier: d, 11 bytes esk: 32 bytes result: return 32 bytes
    */
-  public static class SaplingKaDerivepublicParams implements ValidParam {
+  public static class KaDerivepublicParams implements ValidParam {
 
     @Setter
     @Getter
@@ -332,7 +332,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingKaDerivepublicParams(byte[] diversifier, byte[] esk, byte[] result)
+    public KaDerivepublicParams(byte[] diversifier, byte[] esk, byte[] result)
         throws ZksnarkException {
       this.diversifier = diversifier;
       this.esk = esk;
@@ -354,7 +354,7 @@ public class LibrustzcashParam {
    * voucherPath[0]=0x20, voucherPath[1+i*33]=0x20,i=0,1,...31. cv: value commitment, 32 bytes rk:
    * spendAuthSig.randomizePublicKey 32 bytes zkproof: spend proof, 192 bytes
    */
-  public static class SaplingSpendProofParams implements ValidParam {
+  public static class SpendProofParams implements ValidParam {
 
     @Setter
     @Getter
@@ -393,7 +393,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] zkproof;
 
-    public SaplingSpendProofParams(Pointer ctx, byte[] ak, byte[] nsk, byte[] d, byte[] r,
+    public SpendProofParams(Pointer ctx, byte[] ak, byte[] nsk, byte[] d, byte[] r,
         byte[] alpha, long value, byte[] anchor, byte[] voucherPath, byte[] cv, byte[] rk,
         byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
@@ -431,7 +431,7 @@ public class LibrustzcashParam {
    * esk: 32 bytes d: 11 bytes pk_d: 32 bytes r: rcm, 32 bytes cv: value commitment, 32 bytes
    * zkproof: receive proof, 192 bytes
    */
-  public static class SaplingOutputProofParams implements ValidParam {
+  public static class OutputProofParams implements ValidParam {
 
     @Setter
     @Getter
@@ -458,7 +458,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] zkproof;
 
-    public SaplingOutputProofParams(Pointer ctx, byte[] esk, byte[] d, byte[] pk_d, byte[] r,
+    public OutputProofParams(Pointer ctx, byte[] esk, byte[] d, byte[] pk_d, byte[] r,
         long value, byte[] cv, byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.esk = esk;
@@ -487,7 +487,7 @@ public class LibrustzcashParam {
    * ask: the spend authorizing key, 32 bytes alpha: random number, 32 bytes sigHash: sha256 of
    * transaction, 32 bytes result: spendAuthSig, 64 bytes
    */
-  public static class SaplingSpendSigParams implements ValidParam {
+  public static class SpendSigParams implements ValidParam {
 
     @Setter
     @Getter
@@ -502,7 +502,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingSpendSigParams(byte[] ask, byte[] alpha, byte[] sigHash, byte[] result)
+    public SpendSigParams(byte[] ask, byte[] alpha, byte[] sigHash, byte[] result)
         throws ZksnarkException {
       this.ask = ask;
       this.alpha = alpha;
@@ -524,7 +524,7 @@ public class LibrustzcashParam {
    * Generate binding signature sighash: sha256 of transaction,32 bytes result: binding signature,
    * 64 bytes
    */
-  public static class SaplingBindingSigParams implements ValidParam {
+  public static class BindingSigParams implements ValidParam {
 
     @Setter
     @Getter
@@ -539,7 +539,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public SaplingBindingSigParams(Pointer ctx, long valueBalance, byte[] sighash, byte[] result)
+    public BindingSigParams(Pointer ctx, long valueBalance, byte[] sighash, byte[] result)
         throws ZksnarkException {
       this.ctx = ctx;
       this.valueBalance = valueBalance;
@@ -561,7 +561,7 @@ public class LibrustzcashParam {
    * spendAuthSig.randomizePublicKey, 32 bytes zkproof: spend proof, 192 bytes spendAuthSig: 64
    * bytes sighashValue: sha256 of transaction, 32 bytes
    */
-  public static class SaplingCheckSpendParams implements ValidParam {
+  public static class CheckSpendParams implements ValidParam {
 
     @Setter
     @Getter
@@ -588,7 +588,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] sighashValue;
 
-    public SaplingCheckSpendParams(Pointer ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+    public CheckSpendParams(Pointer ctx, byte[] cv, byte[] anchor, byte[] nullifier,
         byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] sighashValue)
         throws ZksnarkException {
       this.ctx = ctx;
@@ -614,7 +614,7 @@ public class LibrustzcashParam {
       valid32Params(sighashValue);
     }
 
-    public static SaplingCheckSpendParams decode(Pointer ctx, byte[] data, byte[] sigHashValue)
+    public static CheckSpendParams decode(Pointer ctx, byte[] data, byte[] sigHashValue)
         throws ZksnarkException {
       byte[] cv = new byte[32];
       byte[] anchor = new byte[32];
@@ -630,7 +630,7 @@ public class LibrustzcashParam {
       System.arraycopy(data, 128, zkproof, 0, 192);
       System.arraycopy(data, 320, spendAuthSig, 0, 64);
 
-      return new SaplingCheckSpendParams(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
+      return new CheckSpendParams(ctx, cv, anchor, nullifier, rk, zkproof, spendAuthSig,
           sigHashValue);
     }
   }
@@ -639,7 +639,7 @@ public class LibrustzcashParam {
    * cv: value commitments, 32 bytes cm: note commitment, 32 bytes ephemeralKey: 32 bytes zkproof:
    * 192 bytes
    */
-  public static class SaplingCheckOutputParams implements ValidParam {
+  public static class CheckOutputParams implements ValidParam {
 
     @Setter
     @Getter
@@ -657,7 +657,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] zkproof;
 
-    public SaplingCheckOutputParams(Pointer ctx, byte[] cv, byte[] cm, byte[] ephemeralKey,
+    public CheckOutputParams(Pointer ctx, byte[] cv, byte[] cm, byte[] ephemeralKey,
         byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.cv = cv;
@@ -680,7 +680,7 @@ public class LibrustzcashParam {
   /**
    * bindingSig: 64 bytes sighashValue: sha256 of transaction,32 bytes
    */
-  public static class SaplingFinalCheckParams implements ValidParam {
+  public static class FinalCheckParams implements ValidParam {
 
     @Setter
     @Getter
@@ -695,7 +695,7 @@ public class LibrustzcashParam {
     @Getter
     private byte[] sighashValue;
 
-    public SaplingFinalCheckParams(Pointer ctx, long valueBalance, byte[] bindingSig,
+    public FinalCheckParams(Pointer ctx, long valueBalance, byte[] bindingSig,
         byte[] sighashValue) throws ZksnarkException {
       this.ctx = ctx;
       this.valueBalance = valueBalance;

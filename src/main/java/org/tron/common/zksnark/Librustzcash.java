@@ -11,21 +11,21 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
+import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeNfParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingFinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingKaAgreeParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingKaDerivepublicParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingOutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
@@ -65,17 +65,17 @@ public class Librustzcash {
     INSTANCE.librustzcash_crh_ivk(params.getAk(), params.getNk(), params.getIvk());
   }
 
-  public static boolean librustzcashSaplingKaAgree(SaplingKaAgreeParams params) {
+  public static boolean librustzcashKaAgree(KaAgreeParams params) {
     return INSTANCE
         .librustzcash_sapling_ka_agree(params.getP(), params.getSk(), params.getResult());
   }
 
-  public static boolean librustzcashSaplingComputeCm(SaplingComputeCmParams params) {
+  public static boolean librustzcashComputeCm(ComputeCmParams params) {
     return INSTANCE.librustzcash_sapling_compute_cm(params.getD(), params.getPk_d(),
         params.getValue(), params.getR(), params.getCm());
   }
 
-  public static boolean librustzcashSaplingComputeNf(SaplingComputeNfParams params) {
+  public static boolean librustzcashComputeNf(ComputeNfParams params) {
     INSTANCE.librustzcash_sapling_compute_nf(params.getD(), params.getPk_d(), params.getValue(),
         params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     return true;
@@ -114,7 +114,7 @@ public class Librustzcash {
     return r;
   }
 
-  public static boolean librustzcashSaplingKaDerivepublic(SaplingKaDerivepublicParams params) {
+  public static boolean librustzcashSaplingKaDerivepublic(KaDerivepublicParams params) {
     return INSTANCE.librustzcash_sapling_ka_derivepublic(params.getDiversifier(), params.getEsk(),
         params.getResult());
   }
@@ -133,25 +133,25 @@ public class Librustzcash {
     return INSTANCE.librustzcash_check_diversifier(d);
   }
 
-  public static boolean librustzcashSaplingSpendProof(SaplingSpendProofParams params) {
+  public static boolean librustzcashSaplingSpendProof(SpendProofParams params) {
     return INSTANCE.librustzcash_sapling_spend_proof(params.getCtx(), params.getAk(),
         params.getNsk(), params.getD(), params.getR(), params.getAlpha(), params.getValue(),
         params.getAnchor(), params.getVoucherPath(), params.getCv(), params.getRk(),
         params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingOutputProof(SaplingOutputProofParams params) {
+  public static boolean librustzcashSaplingOutputProof(OutputProofParams params) {
     return INSTANCE.librustzcash_sapling_output_proof(params.getCtx(), params.getEsk(),
         params.getD(), params.getPk_d(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingSpendSig(SaplingSpendSigParams params) {
+  public static boolean librustzcashSaplingSpendSig(SpendSigParams params) {
     return INSTANCE.librustzcash_sapling_spend_sig(params.getAsk(), params.getAlpha(),
         params.getSigHash(), params.getResult());
   }
 
-  public static boolean librustzcashSaplingBindingSig(SaplingBindingSigParams params) {
+  public static boolean librustzcashSaplingBindingSig(BindingSigParams params) {
     return INSTANCE.librustzcash_sapling_binding_sig(params.getCtx(), params.getValueBalance(),
         params.getSighash(), params.getResult());
   }
@@ -176,18 +176,18 @@ public class Librustzcash {
     return INSTANCE.librustzcash_sapling_verification_ctx_init();
   }
 
-  public static boolean librustzcashSaplingCheckSpend(SaplingCheckSpendParams params) {
+  public static boolean librustzcashSaplingCheckSpend(CheckSpendParams params) {
     return INSTANCE.librustzcash_sapling_check_spend(params.getCtx(), params.getCv(),
         params.getAnchor(), params.getNullifier(), params.getRk(), params.getZkproof(),
         params.getSpendAuthSig(), params.getSighashValue());
   }
 
-  public static boolean librustzcashSaplingCheckOutput(SaplingCheckOutputParams params) {
+  public static boolean librustzcashSaplingCheckOutput(CheckOutputParams params) {
     return INSTANCE.librustzcash_sapling_check_output(params.getCtx(), params.getCv(),
         params.getCm(), params.getEphemeralKey(), params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingFinalCheck(SaplingFinalCheckParams params) {
+  public static boolean librustzcashSaplingFinalCheck(FinalCheckParams params) {
     return INSTANCE.librustzcash_sapling_final_check(params.getCtx(), params.getValueBalance(),
         params.getBindingSig(), params.getSighashValue());
   }

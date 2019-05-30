@@ -10,9 +10,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingFinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
@@ -229,7 +229,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             throw new ContractValidateException("spend description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckSpend(
-              new SaplingCheckSpendParams(ctx,
+              new CheckSpendParams(ctx,
                   spendDescription.getValueCommitment().toByteArray(),
                   spendDescription.getAnchor().toByteArray(),
                   spendDescription.getNullifier().toByteArray(),
@@ -252,7 +252,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             throw new ContractValidateException("receive description null");
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
-              new SaplingCheckOutputParams(ctx,
+              new CheckOutputParams(ctx,
                   receiveDescription.getValueCommitment().toByteArray(),
                   receiveDescription.getNoteCommitment().toByteArray(),
                   receiveDescription.getEpk().toByteArray(),
@@ -278,7 +278,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("shieldedPoolValue error");
         }
         if (!Librustzcash.librustzcashSaplingFinalCheck(
-            new SaplingFinalCheckParams(ctx,
+            new FinalCheckParams(ctx,
                 valueBalance,
                 shieldedTransferContract.getBindingSignature().toByteArray(),
                 signHash)

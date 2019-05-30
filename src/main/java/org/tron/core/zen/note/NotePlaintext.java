@@ -12,8 +12,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -43,17 +43,11 @@ public class NotePlaintext {
 
   /**
    * decrypt with ivk
-   * @param ciphertext
-   * @param ivk
-   * @param epk
-   * @param cmu
-   * @return
-   * @throws ZksnarkException
    */
   public static Optional<NotePlaintext> decrypt(
       byte[] ciphertext, byte[] ivk, byte[] epk, byte[] cmu) throws ZksnarkException {
     Optional<Encryption.EncPlaintext> pt =
-        Encryption.AttemptSaplingEncDecryption(ciphertext, ivk, epk);
+        Encryption.AttemptEncDecryption(ciphertext, ivk, epk);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
@@ -63,8 +57,8 @@ public class NotePlaintext {
       return Optional.empty();
     }
     byte[] cmu_expected = new byte[32];
-    if (!Librustzcash.librustzcashSaplingComputeCm(
-        new SaplingComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
+    if (!Librustzcash.librustzcashComputeCm(
+        new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
       return Optional.empty();
     }
     if (!Arrays.equals(cmu, cmu_expected)) {
@@ -75,26 +69,19 @@ public class NotePlaintext {
 
   /**
    * decrypt with epk
-   * @param ciphertext
-   * @param epk
-   * @param esk
-   * @param pk_d
-   * @param cmu
-   * @return
-   * @throws ZksnarkException
    */
   public static Optional<NotePlaintext> decrypt(
       Encryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d, byte[] cmu)
       throws ZksnarkException {
     Optional<Encryption.EncPlaintext> pt =
-        Encryption.AttemptSaplingEncDecryption(ciphertext, epk, esk, pk_d);
+        Encryption.AttemptEncDecryption(ciphertext, epk, esk, pk_d);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
     NotePlaintext ret = org.tron.core.zen.note.NotePlaintext.decode(pt.get());
     byte[] cmu_expected = new byte[32];
-    if (!Librustzcash.librustzcashSaplingComputeCm(
-        new SaplingComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
+    if (!Librustzcash.librustzcashComputeCm(
+        new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
       return Optional.empty();
     }
     if (!Arrays.equals(cmu, cmu_expected)) {
@@ -134,19 +121,19 @@ public class NotePlaintext {
     byte[] valueLong = new byte[ZC_V_SIZE];
     ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
     if (encPlaintext.data[0] != 0x01) {
-      throw new ZksnarkException("lead byte of SaplingNotePlaintext is not recognized");
+      throw new ZksnarkException("lead byte of NotePlaintext is not recognized");
     }
     NotePlaintext ret = new NotePlaintext();
     System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING, ret.d.getData(), 0, ZC_DIVERSIFIER_SIZE);
     System.arraycopy(data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, valueLong, 0, ZC_V_SIZE);
     System.arraycopy(
-            data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ret.rcm, 0, ZC_R_SIZE);
+        data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ret.rcm, 0, ZC_R_SIZE);
     System.arraycopy(
-            data,
-            ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
-            ret.memo,
-            0,
-            ZC_MEMO_SIZE);
+        data,
+        ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE + ZC_R_SIZE,
+        ret.memo,
+        0,
+        ZC_MEMO_SIZE);
     for (int i = 0; i < valueLong.length / 2; i++) {
       byte temp = valueLong[i];
       valueLong[i] = valueLong[valueLong.length - 1 - i];

@@ -1,10 +1,10 @@
 package org.tron.core.zksnark;
 
 import static org.tron.common.zksnark.Librustzcash.librustzcashCheckDiversifier;
+import static org.tron.common.zksnark.Librustzcash.librustzcashComputeCm;
 import static org.tron.common.zksnark.Librustzcash.librustzcashIvkToPkd;
 import static org.tron.common.zksnark.Librustzcash.librustzcashNskToNk;
 import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingBindingSig;
-import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingComputeCm;
 import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingProvingCtxInit;
 import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
@@ -18,12 +18,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingBindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingCheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.SaplingSpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
@@ -68,7 +68,7 @@ public class LibrustzcashTest {
     }
     Assert.assertTrue(check_pkd);
 
-    boolean res = librustzcashSaplingComputeCm(new SaplingComputeCmParams(d, pk_d, value, r, cm));
+    boolean res = librustzcashComputeCm(new ComputeCmParams(d, pk_d, value, r, cm));
     Assert.assertFalse(res);
 
     //check range of alpha
@@ -84,7 +84,7 @@ public class LibrustzcashTest {
         8, 9, 10, 11, 12, 13, 14, 15};
     byte[] sigRes = new byte[64];
     boolean boolSigRes = librustzcashSaplingSpendSig(
-        new SaplingSpendSigParams(ask, alpha, sighash, sigRes));
+        new SpendSigParams(ask, alpha, sighash, sigRes));
     Assert.assertFalse(boolSigRes);
 
     byte[] nsk = {(byte) 0xb6, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
@@ -104,7 +104,7 @@ public class LibrustzcashTest {
     Pointer ctx = librustzcashSaplingProvingCtxInit();
     byte[] resbindSig = new byte[64];
     boolean boolBindSig = librustzcashSaplingBindingSig(
-        new SaplingBindingSigParams(ctx, value, sighash, resbindSig));
+        new BindingSigParams(ctx, value, sighash, resbindSig));
     Assert.assertFalse(boolBindSig);
   }
 
@@ -163,18 +163,18 @@ public class LibrustzcashTest {
     }
   }
 
-  public long benchmarkVerifySaplingSpend() throws ZksnarkException {
+  public long benchmarkVerifySpend() throws ZksnarkException {
     String spend = "8c6cf86bbb83bf0d075e5bd9bb4b5cd56141577be69f032880b11e26aa32aa5ef09fd00899e4b469fb11f38e9d09dc0379f0b11c23b5fe541765f76695120a03f0261d32af5d2a2b1e5c9a04200cd87d574dc42349de9790012ce560406a8a876a1e54cfcdc0eb74998abec2a9778330eeb2a0ac0e41d0c9ed5824fbd0dbf7da930ab299966ce333fd7bc1321dada0817aac5444e02c754069e218746bf879d5f2a20a8b028324fb2c73171e63336686aa5ec2e6e9a08eb18b87c14758c572f4531ccf6b55d09f44beb8b47563be4eff7a52598d80959dd9c9fee5ac4783d8370cb7d55d460053d3e067b5f9fe75ff2722623fb1825fcba5e9593d4205b38d1f502ff03035463043bd393a5ee039ce75a5d54f21b395255df6627ef96751566326f7d4a77d828aa21b1827282829fcbc42aad59cdb521e1a3aaa08b99ea8fe7fff0a04da31a52260fc6daeccd79bb877bdd8506614282258e15b3fe74bf71a93f4be3b770119edf99a317b205eea7d5ab800362b97384273888106c77d633600";
     String dataToBeSigned = "2c596ec7f2d580471e0769fcc4a0b96b908394710cac0fd8cba7887bfe83bf2d";
 
     long startTime = System.currentTimeMillis();
     Pointer ctx = librustzcashSaplingProvingCtxInit();
 
-    SaplingCheckSpendParams saplingCheckSpendParams = SaplingCheckSpendParams.decode(ctx,
+    CheckSpendParams checkSpendParams = CheckSpendParams.decode(ctx,
         ByteArray.fromHexString(spend),
         ByteArray.fromHexString(dataToBeSigned));
 
-    boolean ok = Librustzcash.librustzcashSaplingCheckSpend(saplingCheckSpendParams);
+    boolean ok = Librustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
 
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
 
@@ -186,7 +186,7 @@ public class LibrustzcashTest {
   }
 
   // @Test
-  public void calBenchmarkVerifySaplingSpend() throws ZksnarkException {
+  public void calBenchmarkVerifySpend() throws ZksnarkException {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
@@ -195,8 +195,8 @@ public class LibrustzcashTest {
     long max_time = 0;
     double total_time = 0.0;
 
-    for (int i =0; i < count; i++) {
-      long time = benchmarkVerifySaplingSpend();
+    for (int i = 0; i < count; i++) {
+      long time = benchmarkVerifySpend();
       if (time < min_time) {
         min_time = time;
       }
@@ -209,7 +209,7 @@ public class LibrustzcashTest {
     System.out.println("---- result ----");
     System.out.println("---- max_time is: " + max_time);
     System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time/count);
+    System.out.println("---- avg_time is: " + total_time / count);
 
   }
 

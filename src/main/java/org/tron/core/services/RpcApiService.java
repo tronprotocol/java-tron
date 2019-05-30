@@ -51,12 +51,12 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.SaplingPaymentAddressMessage;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -1960,12 +1960,12 @@ public class RpcApiService implements Service {
 
     @Override
     public void getZenPaymentAddress(IncomingViewingKeyDiversifierMessage request,
-        StreamObserver<SaplingPaymentAddressMessage> responseObserver) {
+        StreamObserver<PaymentAddressMessage> responseObserver) {
       IncomingViewingKeyMessage ivk = request.getIvk();
       DiversifierMessage d = request.getD();
 
       try {
-        SaplingPaymentAddressMessage saplingPaymentAddressMessage =
+        PaymentAddressMessage saplingPaymentAddressMessage =
             wallet.getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
                 new DiversifierT(d.getD().toByteArray()));
 
@@ -2050,7 +2050,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void getShieldTransactionHash(Transaction request,
-            StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<GrpcAPI.BytesMessage> responseObserver) {
       try {
         BytesMessage transactionHash = wallet.getShieldTransactionHash(request);
         responseObserver.onNext(transactionHash);
