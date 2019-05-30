@@ -1263,7 +1263,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-    
+
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
@@ -1379,11 +1379,12 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        processTransaction(trx, blockCapsule);
+        TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
+        transationRetCapsule.addTransactionInfo(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1536,8 +1537,9 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
+        Optional.ofNullable(result).ifPresent(t -> transationRetCapsule.addTransactionInfo(result));
       }
       accountStateCallBack.executePushFinish();
     } finally {
