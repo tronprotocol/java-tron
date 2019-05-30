@@ -21,6 +21,7 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.*;
+import org.tron.common.zksnark.ZksnarkClient;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -541,6 +542,40 @@ public class SendCoinShieldTest {
 
   private byte[] getHash() {
     return Sha256Hash.of("this is a test".getBytes()).getBytes();
+  }
+
+  public void checkZksnark() throws BadItemException, ZksnarkException {
+    librustzcashInitZksnarkParams();
+    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    // generate spend proof
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    SpendingKey sk = SpendingKey
+        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+    Note note = new Note(address, 4010 * 1000000);
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager.getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+    builder.addSpend(expsk, note, anchor, voucher);
+    // generate output proof
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    builder
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    TransactionCapsule transactionCap = builder.build();
+    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    boolean ret = ZksnarkClient.getInstance().CheckZksnarkProof(transactionCap.getInstance(),
+        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
+        10 * 1000000
+    );
+    Assert.assertTrue(ret);
   }
 
   @Test
