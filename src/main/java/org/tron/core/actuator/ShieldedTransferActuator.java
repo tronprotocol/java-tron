@@ -37,6 +37,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ShieldedTransferContract shieldedTransferContract;
+  static public String zenTokenId = "000001";
+
 
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
@@ -53,7 +55,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount(), ret);
       }
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(), zenTokenId, fee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -72,19 +74,21 @@ public class ShieldedTransferActuator extends AbstractActuator {
           shieldedTransferContract.getToAmount(), ret);
     }
 
-    long totalShieldedPoolValue = dbManager.getDynamicPropertiesStore()
-        .getTotalShieldedPoolValue();
+    //adjust and verify total shielded pool value
     try {
-      long valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-          shieldedTransferContract.getFromAmount()), fee);
-      totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
+      dbManager.adjustTotalShieldedPoolValue(
+          Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
+              shieldedTransferContract.getFromAmount()), fee));
     } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      ret.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
+    } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
     }
 
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
     ret.setStatus(fee, code.SUCESS);
     return true;
   }
@@ -93,7 +97,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       TransactionResultCapsule ret)
       throws ContractExeException {
     try {
-      dbManager.adjustBalance(ownerAddress, -amount);
+      dbManager.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -111,7 +115,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
         dbManager.getAccountStore().put(toAddress, toAccount);
       }
-      dbManager.adjustBalance(toAddress, amount);
+      dbManager.adjustAssetBalanceV2(toAddress, zenTokenId, amount);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(calcFee(), code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -221,13 +225,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         for (SpendDescription spendDescription : spendDescriptions) {
-          if (spendDescription.getValueCommitment().size() != 32
-              || spendDescription.getAnchor().size() != 32
-              || spendDescription.getNullifier().size() != 32
-              || spendDescription.getZkproof().size() != 192
-              || spendDescription.getSpendAuthoritySignature().size() != 64) {
-            throw new ContractValidateException("spend description null");
-          }
           if (!Librustzcash.librustzcashSaplingCheckSpend(
               new CheckSpendParams(ctx,
                   spendDescription.getValueCommitment().toByteArray(),
@@ -243,11 +240,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if (receiveDescription.getValueCommitment().size() != 32
-              || receiveDescription.getNoteCommitment().size() != 32
-              || receiveDescription.getEpk().size() != 32
-              || receiveDescription.getZkproof().size() != 192
-              || receiveDescription.getCEnc().size() != 580
+          if (receiveDescription.getCEnc().size() != 580
               || receiveDescription.getCOut().size() != 80) {
             throw new ContractValidateException("receive description null");
           }
@@ -277,6 +270,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         if (totalShieldedPoolValue < 0) {
           throw new ContractValidateException("shieldedPoolValue error");
         }
+
         if (!Librustzcash.librustzcashSaplingFinalCheck(
             new FinalCheckParams(ctx,
                 valueBalance,
@@ -364,7 +358,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ContractValidateException("Validate ShieldedTransferContract error, "
             + "no OwnerAccount");
       }
-      long balance = ownerAccount.getBalance();
+      long balance = getZenBalance(ownerAccount);
       if (fromAmount <= 0) {
         throw new ContractValidateException("from_amount must be greater than 0");
       }
@@ -381,13 +375,17 @@ public class ShieldedTransferActuator extends AbstractActuator {
       AccountCapsule toAccount = dbManager.getAccountStore().get(toAddress);
       if (toAccount != null) {
         try {
-          Math.addExact(toAccount.getBalance(), toAmount);
+          Math.addExact(getZenBalance(toAccount), toAmount);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());
         }
       }
     }
+  }
+
+  private long getZenBalance(AccountCapsule account) {
+    return account.getAssetMapV2().get(zenTokenId);
   }
 
   @Override
