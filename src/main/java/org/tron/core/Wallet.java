@@ -1977,11 +1977,11 @@ public class Wallet {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
-    //get pk_d from paymentAddress
+
     SaplingPaymentAddressMessage spa = null;
 
     if (!Librustzcash.librustzcashCheckDiversifier(d.getData())) {
-      throw new BadItemException("librustzcashCheckDiversifier d failed");
+      throw new BadItemException("d is not valid");
     }
 
     Optional<PaymentAddress> op = ivk.address(d);
@@ -1990,9 +1990,11 @@ public class Wallet {
           .setD(ByteString.copyFrom(d.getData()))
           .build();
 
+      PaymentAddress paymentAddress = op.get();
       spa = SaplingPaymentAddressMessage.newBuilder()
           .setD(ds)
-          .setPkD(ByteString.copyFrom(op.get().getPkD()))
+          .setPkD(ByteString.copyFrom(paymentAddress.getPkD()))
+          .setPaymentAddress(KeyIo.encodePaymentAddress(paymentAddress))
           .build();
 
     }
