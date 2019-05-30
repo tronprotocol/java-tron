@@ -31,9 +31,10 @@ public class BroadcastServlet extends HttpServlet {
       boolean visible = Util.getVisiblePost(input);
       Transaction transaction = Util.packTransaction(input, visible);
       TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-      String transactionID = ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes());
+      String transactionID = ByteArray
+          .toHexString(transactionCapsule.getTransactionId().getBytes());
       GrpcAPI.Return retur = wallet.broadcastTransaction(transaction);
-      JSONObject res =  JSONObject.parseObject(JsonFormat.printToString(retur, visible));
+      JSONObject res = JSONObject.parseObject(JsonFormat.printToString(retur, visible));
       res.put("txid", transactionID);
       response.getWriter().println(res.toJSONString());
     } catch (Exception e) {
