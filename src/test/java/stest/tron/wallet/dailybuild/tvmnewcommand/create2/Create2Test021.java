@@ -61,6 +61,12 @@ public class Create2Test021 {
   private String contractExcKey =
       "9fc9b78370cdeab1bc11ba5e387e5e4f205f17d1957b1bebf4ce6d0330a448a4";
   byte[] bytes;
+  private static final long now = System.currentTimeMillis();
+  private static final String name = "Asset008_" + Long.toString(now);
+  private static final long totalSupply = now;
+  String description = "just-test";
+  String url = "https://github.com/tronprotocol/wallet-cli/";
+
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] resourceOnwerAddress = ecKey2.getAddress();
@@ -97,16 +103,22 @@ public class Create2Test021 {
 
   }
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
-  public void testTriggerContract() {
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
+  public void test1TriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .sendcoin(resourceOnwerAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(resourceOnwerAddress, 1000000000L + 1024000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    //Create 3 the same name token.
+    Long start = System.currentTimeMillis() + 2000;
+    Long end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed.createAssetIssue(resourceOnwerAddress,
+        name, totalSupply, 1, 1, start, end, 1, description, url,
+        2000L, 2000L, 1L, 1L, resourceOnwerKey, blockingStubFull));
     String filePath = "src/test/resources/soliditycode/create2contractn.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -267,6 +279,21 @@ public class Create2Test021 {
     Assert.assertEquals(account.getBalance(), 1000000);
   }
 
+  @Test(enabled = true, description = "Create2 contract can transfer trx and token.")
+  public void test2TriggerContract() {
+    //Trigger contract to transfer trx and token.
+    Account getAssetIdFromAccount = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull);
+    final ByteString assetAccountId = getAssetIdFromAccount.getAssetIssuedID();
+    Long contractBeforeBalance = PublicMethed.queryAccount(bytes,blockingStubFull).getBalance();
+
+
+
+
+
+
+
+
+  }
 
   /**
    * constructor.
