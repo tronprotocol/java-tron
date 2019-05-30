@@ -66,7 +66,7 @@ public class Create2Test021 {
   private static final long totalSupply = now;
   String description = "just-test";
   String url = "https://github.com/tronprotocol/wallet-cli/";
-
+  ByteString assetAccountId = null;
 
   ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] resourceOnwerAddress = ecKey2.getAddress();
@@ -109,7 +109,8 @@ public class Create2Test021 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     Assert.assertTrue(PublicMethed
-        .sendcoin(resourceOnwerAddress, 1000000000L + 1024000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(resourceOnwerAddress, 1000000000L + 1024000000L, testNetAccountAddress,
+            testNetAccountKey,
             blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -143,7 +144,7 @@ public class Create2Test021 {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
-    bytes = ByteArray.fromHexString("418EA294A47A944C75787DDB7270D73472AEE87FC0");
+    bytes = ByteArray.fromHexString("416CED4D6BF0AE10676347961BEFB7F47A8664AE36");
 
     String param2 = "\"" + Base58.encode58Check(contractExcAddress) + "\"";
     String txidn = PublicMethed
@@ -153,6 +154,17 @@ public class Create2Test021 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed
         .sendcoin(bytes, 1000000L, contractExcAddress, contractExcKey, blockingStubFull));
+    //Trigger contract to transfer trx and token.
+    Account getAssetIdFromAccount = PublicMethed
+        .queryAccount(resourceOnwerAddress, blockingStubFull);
+    assetAccountId = getAssetIdFromAccount.getAssetIssuedID();
+    Long contractBeforeBalance = PublicMethed.queryAccount(bytes, blockingStubFull).getBalance();
+
+    Assert.assertTrue(
+        PublicMethed.transferAsset(bytes, assetAccountId.toByteArray(), 100, resourceOnwerAddress,
+            resourceOnwerKey,
+            blockingStubFull));
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account account1 = PublicMethed.queryAccount(bytes, blockingStubFull);
     int typeValue1 = account1.getTypeValue();
@@ -194,12 +206,12 @@ public class Create2Test021 {
 
     Assert.assertTrue(afterExcAccountBalance - beforeExcAccountBalance == 0);
 
-    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress,resourceOnwerKey,
-        0,bytes,blockingStubFull));
-    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress,resourceOnwerKey,
-        1,bytes,blockingStubFull));
+    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
+        0, bytes, blockingStubFull));
+    Assert.assertTrue(PublicMethed.unFreezeBalance(resourceOnwerAddress, resourceOnwerKey,
+        1, bytes, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterUnfreezeBalance = PublicMethed.queryAccount(resourceOnwerAddress,blockingStubFull)
+    Long afterUnfreezeBalance = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull)
         .getBalance();
     Assert.assertTrue(afterUnfreezeBalance == beforeExcAccountBalance + 1000000L * 2);
 
@@ -281,18 +293,57 @@ public class Create2Test021 {
 
   @Test(enabled = true, description = "Create2 contract can transfer trx and token.")
   public void test2TriggerContract() {
-    //Trigger contract to transfer trx and token.
-    Account getAssetIdFromAccount = PublicMethed.queryAccount(resourceOnwerAddress, blockingStubFull);
-    final ByteString assetAccountId = getAssetIdFromAccount.getAssetIssuedID();
-    Long contractBeforeBalance = PublicMethed.queryAccount(bytes,blockingStubFull).getBalance();
+    Account accountbefore = PublicMethed.queryAccount(bytes, blockingStubFull);
+    int typeValue = accountbefore.getTypeValue();
+    Assert.assertEquals(2, typeValue);
+    long accountbeforeBalance = accountbefore.getBalance();
+    Assert.assertEquals(accountbeforeBalance, 1000000);
+    Account contractExcAddressbefore = PublicMethed
+        .queryAccount(contractExcAddress, blockingStubFull);
+    long contractExcAddressbeforeBalance = contractExcAddressbefore.getBalance();
 
+    String num = "1";
 
+    String txid = PublicMethed
+        .triggerContract(bytes,
+            "testTransfer(uint256)", num, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> transactionInfoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(transactionInfoById.get().getResultValue() == 0);
+    Long fee1 = transactionInfoById.get().getFee();
 
+    Account accountafter = PublicMethed.queryAccount(bytes, blockingStubFull);
+    long accountafterBalance = accountafter.getBalance();
+    Assert.assertTrue(accountbeforeBalance - 1 == accountafterBalance);
 
+    Account contractExcAddressafter = PublicMethed
+        .queryAccount(contractExcAddress, blockingStubFull);
+    long contractExcAddressafterBalance = contractExcAddressafter.getBalance();
+    Assert.assertTrue(contractExcAddressbeforeBalance + 1 - fee1 == contractExcAddressafterBalance);
 
+    num = "1" + ",\"" + assetAccountId.toStringUtf8() + "\"";
+    Long returnAddressBytesAccountCountBefore = PublicMethed
+        .getAssetIssueValue(bytes, assetAccountId, blockingStubFull);
+    Long contractExcAddressAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    String txid1 = PublicMethed
+        .triggerContract(bytes,
+            "testTransferToken(uint256,trcToken)", num, false,
+            0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> transactionInfoById1 = PublicMethed
+        .getTransactionInfoById(txid1, blockingStubFull);
+    Assert.assertTrue(transactionInfoById1.get().getResultValue() == 0);
+    Long returnAddressBytesAccountCountAfter = PublicMethed
+        .getAssetIssueValue(bytes, assetAccountId, blockingStubFull);
 
-
-
+    Long contractExcAddressAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Assert.assertTrue(
+        returnAddressBytesAccountCountBefore - 1 == returnAddressBytesAccountCountAfter);
+    Assert.assertTrue(
+        contractExcAddressAccountCountBefore + 1 == contractExcAddressAccountCountAfter);
   }
 
   /**
