@@ -1150,9 +1150,9 @@ message DecryptNotes {
 
 message Note {
   int64 value = 1;
-  bytes d = 2;
-  bytes pkD = 3;
-  bytes rcm = 4; // random 32
+  string payment_address = 2;
+  bytes rcm = 3; // random 32
+  bytes memo = 4;
 }
 
 message SpendNote {
@@ -1230,6 +1230,7 @@ message IncomingViewingKeyDiversifierMessage {
 message SaplingPaymentAddressMessage {
   DiversifierMessage d = 1;
   bytes pkD = 2;
+  string payment_address = 3;
 }
 
 message NoteParameters {
