@@ -2459,6 +2459,7 @@ public class Wallet {
                 .setPaymentAddress(paymentAddress)
                 .setValue(noteText.value)
                 .setRcm(ByteString.copyFrom(noteText.rcm))
+                .setMemo(ByteString.copyFrom(noteText.memo))
                 .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
                 .setNote(note)
@@ -2554,6 +2555,7 @@ public class Wallet {
                   .setPaymentAddress(paymentAddress)
                   .setValue(bar.value)
                   .setRcm(ByteString.copyFrom(bar.rcm))
+                  .setMemo(ByteString.copyFrom(bar.memo))
                   .build();
 
               DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx
