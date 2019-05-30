@@ -1263,12 +1263,7 @@ public class Manager {
 
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-
-    TransactionInfoCapsule transactionInfo2 = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, trace);
-
-    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo2);
-
+    
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
