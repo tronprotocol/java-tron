@@ -231,7 +231,7 @@ public class LibrustzcashTest {
     int success = 0;
     int fail = 0;
 
-    for (int i=0; i < 10; i++) {
+    for (int i=0; i < total; i++) {
 
       SpendingKey spendingKey = SpendingKey
           .decode("044ce61616fc962c9fb3ac3a71ce8bfc6dfd42d414eb8b64c3f7306861a7db36");
@@ -258,7 +258,8 @@ public class LibrustzcashTest {
         System.out.println("note is " + note.cm());
       } catch (ZksnarkException e) {
         System.out.println("failed: " + e.getMessage());
-        continue;
+        fail ++;
+        // continue;
       }
     }
     System.out.println("total is: " + total);
