@@ -102,14 +102,14 @@ public class ZenTransactionBuilder {
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
       throws ZksnarkException {
     Note note = new Note(to, value);
-    note.memo = memo;
+    note.setMemo(memo);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
     valueBalance -= value;
   }
 
   public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
     Note note = new Note(d, pkD, value, r);
-    note.memo = memo;
+    note.setMemo(memo);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
     valueBalance -= value;
   }
