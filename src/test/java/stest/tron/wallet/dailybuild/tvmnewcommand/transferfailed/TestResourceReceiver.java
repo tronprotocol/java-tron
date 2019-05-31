@@ -70,7 +70,7 @@ public class TestResourceReceiver {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -89,7 +89,7 @@ public class TestResourceReceiver {
   }
 
 
-  @Test(enabled = true, description = "Suicide existent Target")
+  @Test(enabled = false, description = "Suicide existent Target")
   public void test1SuicideExistentTarget() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
