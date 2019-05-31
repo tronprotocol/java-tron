@@ -349,6 +349,14 @@ public class SendCoinShieldTest {
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
 
+  public String byte2intstring(byte[] input){
+    StringBuilder sb = new StringBuilder();
+    for(byte b:input){
+      sb.append(String.valueOf((int)b) + ", ");
+    }
+    return sb.toString();
+  }
+
   @Test
   public void testDecryptReceiveWithOvk() throws Exception {
     //decode c_out with ovk.
