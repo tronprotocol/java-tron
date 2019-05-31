@@ -16,7 +16,7 @@ import org.tron.core.net.message.SyncBlockChainMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.PeerConnection;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class SyncBlockChainMsgHandler implements TronMsgHandler {
 
@@ -42,12 +42,6 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       peer.setNeedSyncFromUs(true);
       remainNum = tronNetDelegate.getHeadBlockId().getNum() - blockIds.peekLast().getNum();
     }
-//
-//    if (!peer.isNeedSyncFromPeer()
-//        && !tronNetDelegate.contain(Iterables.getLast(summaryChainIds), MessageTypes.BLOCK)
-//        && tronNetDelegate.canChainRevoke(summaryChainIds.get(0).getNum())) {
-//      //startSyncWithPeer(peer);
-//    }
 
     peer.setLastSyncBlockId(blockIds.peekLast());
     peer.setRemainNum(remainNum);
@@ -87,6 +81,10 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
         unForkId = blockIds.get(i);
         break;
       }
+    }
+
+    if (unForkId == null) {
+      throw new P2pException(TypeEnum.SYNC_FAILED, "unForkId is null");
     }
 
     long len = Math.min(tronNetDelegate.getHeadBlockId().getNum(),

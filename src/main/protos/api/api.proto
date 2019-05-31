@@ -404,6 +404,12 @@ service Wallet {
   rpc TriggerContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
+  }
+  
+  rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
+  }
+
   rpc ListWitnesses (EmptyMessage) returns (WitnessList) {
     option (google.api.http) = {
       post: "/wallet/listwitnesses"
@@ -734,6 +740,7 @@ service WalletSolidity {
       }
     };
   }
+
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
       post: "/walletsolidity/gettransactioninfobyid"
@@ -743,6 +750,7 @@ service WalletSolidity {
       }
     };
   }
+
   //Warning: do not invoke this interface provided by others.
   rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
     option (google.api.http) = {

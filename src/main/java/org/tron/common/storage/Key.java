@@ -5,10 +5,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import java.util.Arrays;
 
 public class Key {
-
-  private static int MAX_KEY_LENGTH = 32;
-  private static int MIN_KEY_LENGTH = 1;
-
   /**
    * data could not be null
    */
@@ -60,10 +56,7 @@ public class Key {
     }
 
     Key key = (Key) o;
-    if (Arrays.equals(key.getData(), this.data)) {
-      return true;
-    }
-    return false;
+    return Arrays.equals(key.getData(), this.data);
   }
 
   @Override

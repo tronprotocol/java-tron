@@ -12,7 +12,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
-import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -91,8 +91,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "6080604052348015600f57600080fd5b5060838061001e6000396000f300608060405260043610603e5763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166350bff6bf81146043575b600080fd5b348015604e57600080fd5b506055603e565b0000a165627a7a72305820f51282c5910e3ff1b5f2e9509f3cf23c7035027aae1947ab46e5a9252fb061eb0029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -104,9 +104,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testThrow()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testThrow()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 124;
@@ -142,8 +142,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "6080604052348015600f57600080fd5b5060838061001e6000396000f300608060405260043610603e5763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663357815c481146043575b600080fd5b348015604e57600080fd5b506055603e565b0000a165627a7a7230582054141931bcc37d4f266815f02d2fb113f5af20825cbce45d3b0f2fe90ac0145d0029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -155,9 +155,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testRequire()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testRequire()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 124;
@@ -198,8 +198,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "608060405234801561001057600080fd5b50610121806100206000396000f30060806040526004361060485763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632b813bc08114604d5780635df83fe7146061575b600080fd5b348015605857600080fd5b50605f6073565b005b348015606c57600080fd5b50605f6075565bfe5b3073ffffffffffffffffffffffffffffffffffffffff16632b813bc06113886040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600088803b15801560db57600080fd5b5087f115801560ee573d6000803e3d6000fd5b50505050505600a165627a7a7230582087d830c44fb566498789b212e3d0374f7a7589a2efdda11b3a4c03051b57891a0029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -211,9 +211,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testThisFunctionViaMessageCall()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testThisFunctionViaMessageCall()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 5339;
@@ -263,8 +263,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "608060405234801561001057600080fd5b506101e6806100206000396000f3006080604052600436106100405763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416637dbc1cb88114610045575b600080fd5b34801561005157600080fd5b5061005a61005c565b005b6000610066610108565b604051809103906000f080158015610082573d6000803e3d6000fd5b5090508073ffffffffffffffffffffffffffffffffffffffff16632b813bc06113886040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401600060405180830381600088803b1580156100ec57600080fd5b5087f1158015610100573d6000803e3d6000fd5b505050505050565b60405160a3806101188339019056006080604052348015600f57600080fd5b5060858061001e6000396000f300608060405260043610603e5763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416632b813bc081146043575b600080fd5b348015604e57600080fd5b5060556057565b005bfe00a165627a7a72305820c02c76575c2a0ada80c3f6db47f885cece6c254d1e7c79eb6ddc1c1d4e70ebae0029a165627a7a72305820cf879e62f738b44636adf61bd4b2fb38c10f027d2a4484d58baf44a06dc97bd90029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -276,9 +276,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testThatFunctionViaMessageCall()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testThatFunctionViaMessageCall()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 64125;
@@ -321,8 +321,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "608060405234801561001057600080fd5b5060d58061001f6000396000f3006080604052600436106100405763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416635d10a9e68114610045575b600080fd5b34801561005157600080fd5b5061005a61005c565b005b6000610066610087565b604051809103906000f080158015610082573d6000803e3d6000fd5b505050565b6040516013806100978339019056006080604052348015600f57600080fd5b50fe00a165627a7a72305820685ff8f74890f671deb4d3881a4b72ab0daac2ab0d36112e1ebdf98a43ac4d940029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -334,9 +334,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testNewContract()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testNewContract()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = feeLimit / 100;
@@ -385,8 +385,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "608060405234801561001057600080fd5b506101f5806100206000396000f3006080604052600436106100405763ffffffff7c01000000000000000000000000000000000000000000000000000000006000350416638a46bf6d8114610045575b600080fd5b61004d61004f565b005b600061005961015f565b604051809103906000f080158015610075573d6000803e3d6000fd5b5060408051600481526024810182526020810180517bffffffffffffffffffffffffffffffffffffffffffffffffffffffff167f60f59d44000000000000000000000000000000000000000000000000000000001781529151815193945073ffffffffffffffffffffffffffffffffffffffff851693600193829180838360005b8381101561010e5781810151838201526020016100f6565b50505050905090810190601f16801561013b5780820380516001836020036101000a031916815260200191505b5091505060006040518083038185875af11515925061015c91505057600080fd5b50565b604051605b8061016f8339019056006080604052348015600f57600080fd5b50603e80601d6000396000f3006080604052348015600f57600080fd5b500000a165627a7a72305820a82006ee5ac783bcea7085501eaed33360b3120278f1f39e611afedc9f4a693b0029a165627a7a72305820a50d9536f182fb6aefc737fdc3a675630e75a08de88deb6b1bee6d4b6dff04730029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -399,8 +399,8 @@ public class EnergyWhenRequireStyleTest {
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - expectEnergyUsageTotal * 100);
 
-    result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             0,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -410,9 +410,9 @@ public class EnergyWhenRequireStyleTest {
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testFallback()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testFallback()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 10, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal3 = 51833;
@@ -462,8 +462,8 @@ public class EnergyWhenRequireStyleTest {
     String code = "608060405234801561001057600080fd5b5060b68061001f6000396000f30060806040526004361060485763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166312065fe08114604d578063a26388bb146071575b600080fd5b348015605857600080fd5b50605f6085565b60408051918252519081900360200190f35b348015607c57600080fd5b5060836048565b005b3031905600a165627a7a7230582059cab3a7a5851a7852c728ec8729456a04dc022674976f3f26bfd51491dbf1080029";
     String libraryAddressPair = null;
 
-    TVMTestResult result = TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    TVMTestResult result = TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -475,9 +475,9 @@ public class EnergyWhenRequireStyleTest {
     byte[] contractAddress = result.getContractAddress();
 
     /* ====================================================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("testRevert()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("testRevert()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 146;

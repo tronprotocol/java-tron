@@ -46,7 +46,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
-@Slf4j
+@Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
 
@@ -155,7 +155,7 @@ public class TronNetDelegate {
         case TRX:
           TransactionCapsule tx = dbManager.getTransactionStore().get(hash.getBytes());
           if (tx != null) {
-            return new TransactionMessage(tx.getData());
+            return new TransactionMessage(tx.getInstance());
           }
           throw new StoreException();
         default:

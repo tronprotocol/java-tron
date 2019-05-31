@@ -140,8 +140,22 @@ public class HttpTestBlock001 {
   /**
    * constructor.
    */
+  @Test(enabled = true, description = "GetBlockById by http")
+  public void get08BlockByIdFromSolidity() {
+    response = HttpMethed.getBlockByIdFromSolidity(httpSoliditynode, blockId);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertEquals(blockId, responseContent.get("blockID").toString());
+  }
+
+
+
+  /**
+   * constructor.
+   */
   @Test(enabled = true, description = "List nodes by http")
-  public void get08ListNodes() {
+  public void get09ListNodes() {
     response = HttpMethed.listNodes(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -152,7 +166,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get next maintenance time by http")
-  public void get09NextMaintaenanceTime() {
+  public void get10NextMaintaenanceTime() {
     response = HttpMethed.getNextmaintenanceTime(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -165,7 +179,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get chain parameter by http")
-  public void get10ChainParameter() {
+  public void get11ChainParameter() {
     response = HttpMethed.getChainParameter(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -185,7 +199,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "get Node Info by http")
-  public void get11NodeInfo() {
+  public void get12NodeInfo() {
     response = HttpMethed.getNodeInfo(httpnode);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
@@ -197,7 +211,7 @@ public class HttpTestBlock001 {
    * constructor.
    */
   @Test(enabled = true, description = "Get transaction count by blocknum from solidity by http")
-  public void get12TransactionCountByBlocknumFromSolidity() {
+  public void get13TransactionCountByBlocknumFromSolidity() {
     response = HttpMethed.getTransactionCountByBlocknumFromSolidity(httpSoliditynode,
         currentBlockNum);
     Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
@@ -206,6 +220,38 @@ public class HttpTestBlock001 {
     Assert.assertTrue(responseContent.size() == 1);
     Assert.assertTrue(Integer.parseInt(responseContent.get("count").toString()) >= 0);
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetBlockByLimitNext by http")
+  public void get14BlockByLimitNextFromSolidity() {
+    response = HttpMethed.getBlockByLimitNextFromSolidity(httpSoliditynode,
+        currentBlockNum - 10, currentBlockNum);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    logger.info(responseContent.get("block").toString());
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("block").toString());
+    Assert.assertEquals(jsonArray.size(), 10);
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "GetBlockByLastNum by http")
+  public void get15BlockByLastNumFromSolidity() {
+    response = HttpMethed.getBlockByLastNumFromSolidity(httpSoliditynode, 8);
+    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    logger.info(responseContent.get("block").toString());
+    JSONArray jsonArray = JSONArray.parseArray(responseContent.get("block").toString());
+    Assert.assertEquals(jsonArray.size(), 8);
+  }
+
+
+
 
   /**
    * constructor.

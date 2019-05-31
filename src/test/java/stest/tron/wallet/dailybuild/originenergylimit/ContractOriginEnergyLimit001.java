@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.originenergylimit;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -82,12 +83,11 @@ public class ContractOriginEnergyLimit001 {
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    String contractName = "aContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_OriginEnergyLimit001");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_OriginEnergyLimit001");
-
+    String filePath = "src/test/resources/soliditycode/contractOriginEnergyLimit001.sol";
+    String contractName = "findArgsContractTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String contractAddress = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, -1, "0", 0,

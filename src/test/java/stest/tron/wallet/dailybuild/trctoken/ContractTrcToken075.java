@@ -5,6 +5,7 @@ import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -116,11 +117,12 @@ public class ContractTrcToken075 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken075_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken075_transferTokenContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken075.sol";
+    String contractName = "Dest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String tokenId = assetAccountId.toStringUtf8();
     long tokenValue = 100;
     long callValue = 5;
@@ -133,6 +135,7 @@ public class ContractTrcToken075 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     if (transferTokenTxid == null || infoById.get().getResultValue() != 0) {
       Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage());
@@ -190,9 +193,11 @@ public class ContractTrcToken075 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -205,9 +210,11 @@ public class ContractTrcToken075 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -221,9 +228,11 @@ public class ContractTrcToken075 {
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -235,9 +244,11 @@ public class ContractTrcToken075 {
         blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -249,9 +260,11 @@ public class ContractTrcToken075 {
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -261,12 +274,14 @@ public class ContractTrcToken075 {
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("BigInteger out of long range",
+    //Assert.assertEquals("BigInteger out of long range",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     // unfreeze resource

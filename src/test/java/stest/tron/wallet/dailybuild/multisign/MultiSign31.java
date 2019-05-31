@@ -334,8 +334,10 @@ public class MultiSign31 {
     TransactionSignWeight transactionSignWeight = PublicMethedForMutiSign
         .getTransactionSignWeight(transaction1, blockingStubFull);
     logger.info("transaction:" + transactionSignWeight);
+
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(returnResult1.getResult());
 
     logger.info("returnResult1:" + returnResult1);
@@ -814,6 +816,7 @@ public class MultiSign31 {
     Return returnResult1 = PublicMethedForMutiSign
         .broadcastTransaction1(transaction1, blockingStubFull);
     Assert.assertTrue(returnResult1.getResult());
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     logger.info("returnResult1:" + returnResult1);
     Account test001AddressAccount2 = PublicMethed.queryAccount(test001Address, blockingStubFull);

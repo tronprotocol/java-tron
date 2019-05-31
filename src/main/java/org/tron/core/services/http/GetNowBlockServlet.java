@@ -4,6 +4,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,9 +21,10 @@ public class GetNowBlockServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       Block reply = wallet.getNowBlock();
       if (reply != null) {
-        response.getWriter().println(Util.printBlock(reply));
+        response.getWriter().println(Util.printBlock(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

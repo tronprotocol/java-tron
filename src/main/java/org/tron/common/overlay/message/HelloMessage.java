@@ -12,7 +12,7 @@ import org.tron.protos.Protocol.HelloMessage.Builder;
 
 public class HelloMessage extends P2pMessage {
 
-  Protocol.HelloMessage helloMessage;
+  private Protocol.HelloMessage helloMessage;
 
   public HelloMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);

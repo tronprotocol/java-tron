@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.runtime.config.VMConfig;
@@ -102,6 +103,11 @@ public class ReceiptCapsule {
       long percent, long originEnergyLimit, EnergyProcessor energyProcessor, long now)
       throws BalanceInsufficientException {
     if (receipt.getEnergyUsageTotal() <= 0) {
+      return;
+    }
+
+    if (Objects.isNull(origin) && VMConfig.allowTvmConstantinople()) {
+      payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
       return;
     }
 

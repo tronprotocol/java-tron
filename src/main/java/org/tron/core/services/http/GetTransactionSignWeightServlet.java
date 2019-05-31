@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,10 +30,11 @@ public class GetTransactionSignWeightServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      Transaction transaction = Util.packTransaction(input);
+      boolean visible = Util.getVisiblePost(input);
+      Transaction transaction = Util.packTransaction(input, visible);
       TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
       if (reply != null) {
-        response.getWriter().println(Util.printTransactionSignWeight(reply));
+        response.getWriter().println(Util.printTransactionSignWeight(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

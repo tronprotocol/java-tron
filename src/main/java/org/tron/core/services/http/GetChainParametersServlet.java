@@ -4,6 +4,7 @@ import java.io.IOException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,8 @@ public class GetChainParametersServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      response.getWriter().println(JsonFormat.printToString(wallet.getChainParameters()));
+      boolean visible = Util.getVisible(request);
+      response.getWriter().println(JsonFormat.printToString(wallet.getChainParameters(), visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

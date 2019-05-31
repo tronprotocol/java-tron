@@ -113,6 +113,7 @@ public abstract class BaseNet {
     for (PeerConnection peer : peerConnections) {
       peer.close();
     }
+
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }

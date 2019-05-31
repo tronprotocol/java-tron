@@ -1,10 +1,13 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
+
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -30,11 +33,14 @@ public class TransferServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = Util.getVisiblePost(contract);
       TransferContract.Builder build = TransferContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract)
           .getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      tx = Util.setTransactionPermissionId(jsonObject, tx);
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

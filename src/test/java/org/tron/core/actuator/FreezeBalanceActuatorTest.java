@@ -195,6 +195,37 @@ public class FreezeBalanceActuatorTest {
     }
   }
 
+
+  @Test
+  public void testFreezeDelegatedBalanceForBandwidthWithContractAddress() {
+    AccountCapsule receiverCapsule =
+        new AccountCapsule(
+            ByteString.copyFromUtf8("receiver"),
+            ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)),
+            AccountType.Contract,
+            initBalance);
+    dbManager.getAccountStore().put(receiverCapsule.getAddress().toByteArray(), receiverCapsule);
+
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+
+    dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);
+    long frozenBalance = 1_000_000_000L;
+    long duration = 3;
+    FreezeBalanceActuator actuator = new FreezeBalanceActuator(
+        getDelegatedContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration),
+        dbManager);
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(e.getMessage(),"Do not allow delegate resources to contract addresses");
+    } catch (ContractExeException e) {
+      Assert.assertFalse(e instanceof ContractExeException);
+    }
+  }
+
   @Test
   public void testFreezeDelegatedBalanceForBandwidth() {
     dbManager.getDynamicPropertiesStore().saveAllowDelegateResource(1);

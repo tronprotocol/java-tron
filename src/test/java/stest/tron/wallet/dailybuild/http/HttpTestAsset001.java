@@ -129,6 +129,7 @@ public class HttpTestAsset001 {
    */
   @Test(enabled = true, description = "TransferAsset by http")
   public void test06TransferAsset() {
+    logger.info("Transfer asset.");
     response = HttpMethed.transferAsset(httpnode, assetAddress, participateAddress, assetIssueId,
         100L, assetKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
@@ -137,6 +138,8 @@ public class HttpTestAsset001 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     Assert.assertTrue(!responseContent.getString("assetV2").isEmpty());
+    //logger.info(responseContent.get("assetV2").toString());
+
   }
 
   /**

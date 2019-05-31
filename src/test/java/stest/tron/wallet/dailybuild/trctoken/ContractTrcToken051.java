@@ -5,6 +5,7 @@ import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -116,17 +117,25 @@ public class ContractTrcToken051 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // deploy transferTokenContract
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken051_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken051_transferTokenContract");
-    byte[] transferTokenContractAddress = PublicMethed
-        .deployContract(contractName, abi, code, "", maxFeeLimit,
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken051.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    byte[] transferTokenContractAddress;
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, 10000, assetAccountId.toStringUtf8(),
             0, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    transferTokenContractAddress = infoById.get().getContractAddress().toByteArray();
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Assert
         .assertTrue(PublicMethed.sendcoin(transferTokenContractAddress, 2048000000, fromAddress,
             testKey002, blockingStubFull));
@@ -209,11 +218,11 @@ public class ContractTrcToken051 {
     logger.info("afterAssetIssueContractAddress:" + afterAssetIssueContractAddress);
     logger.info("afterAssetIssueDev:" + afterAssetIssueDev);
 
-    Optional<TransactionInfo> infoById = PublicMethed
+    infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertFalse(infoById.get().getResultValue() == 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure, not valid token id",
+    Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
     Assert.assertEquals(beforeAssetIssueCount, afterAssetIssueCount);

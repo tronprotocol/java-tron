@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.grammar;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -89,22 +90,22 @@ public class ContractGrammar002 {
         .sendcoin(grammarAddress2, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String contractName = "dougContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar007");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar007");
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test1Grammar007_1.sol";
+    String contractName = "Doug";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String initParmes = ByteArray.toHexString(contractAddress);
-    String contractName1 = "mainContract";
-    String code1 = Configuration.getByPath("testng.conf")
-        .getString("code.code1_ContractGrammar002_testGrammar007") + "0000000000000000000000"
+    String filePath1 = "src/test/resources/soliditycode/contractGrammar002test1Grammar007_2.sol";
+    String contractName1 = "main";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
+    String code1 = retMap1.get("byteCode").toString() + "0000000000000000000000"
         + initParmes;
-    String abi1 = Configuration.getByPath("testng.conf")
-        .getString("abi.abi1_ContractGrammar002_testGrammar007");
+    String abi1 = retMap1.get("abI").toString();
     byte[] contractAddress1 = PublicMethed
         .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress2,
@@ -124,7 +125,7 @@ public class ContractGrammar002 {
     Assert.assertTrue(infoById1.get().getResultValue() == 0);
 
     String number1 = "687777";
-    String txid2 = PublicMethed.triggerContract(contractAddress,
+    String txid2 = PublicMethed.triggerContract(contractAddress1,
         "uintOfName(bytes32)", number1, false,
         0, maxFeeLimit, grammarAddress2, testKeyForGrammarAddress2, blockingStubFull);
     //    PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -137,11 +138,12 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Abstract function")
   public void test2Grammar008() {
-    String contractName = "catContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar008");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar008");
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test2Grammar008.sol";
+    String contractName = "Cat";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
@@ -170,19 +172,28 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Gas, value test")
   public void test3Grammar010() {
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test3Grammar010.sol";
+    String contractName = "Consumer";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
-    String contractName = "catContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar010");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar010");
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        20L, 100, null, testKeyForGrammarAddress2,
+        2000L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String contractName1 = "InfoFeed";
+    HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
+    String code1 = retMap1.get("byteCode").toString();
+    String abi1 = retMap1.get("abI").toString();
+
+    byte[] contractAddress1 = PublicMethed
+        .deployContract(contractName1, abi1, code1, "", maxFeeLimit,
+            0, 100, null, testKeyForGrammarAddress2,
+            grammarAddress2, blockingStubFull);
     String txid = "";
-    String initParmes = "\"" + Base58.encode58Check(grammarAddress2) + "\"";
+    String initParmes = "\"" + Base58.encode58Check(contractAddress1) + "\"";
     txid = PublicMethed.triggerContract(contractAddress,
         "setFeed(address)", initParmes, false,
         0, maxFeeLimit, grammarAddress2, testKeyForGrammarAddress2, blockingStubFull);
@@ -200,11 +211,11 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Call a named function")
   public void test4Grammar011() {
-    String contractName = "cContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar011");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar011");
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test4Grammar011.sol";
+    String contractName = "C";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
@@ -234,11 +245,12 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Call a native function")
   public void test5Grammar012() {
-    String contractName = "rtestContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar012");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar012");
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test4Grammar012.sol";
+    String contractName = "rTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
@@ -256,11 +268,12 @@ public class ContractGrammar002 {
 
   @Test(enabled = true, description = "Call a Destructor function")
   public void test6Grammar013() {
-    String contractName = "executefallbackContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractGrammar002_testGrammar013");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractGrammar002_testGrammar013");
+    String filePath = "src/test/resources/soliditycode/contractGrammar002test6Grammar013.sol";
+    String contractName = "Counter";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, testKeyForGrammarAddress2,
         grammarAddress2, blockingStubFull);
