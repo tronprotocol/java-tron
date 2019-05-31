@@ -1,7 +1,5 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
-import static org.hamcrest.core.StringContains.containsString;
-
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -30,7 +28,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class Create2Test020 {
+public class Create2Test023 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -109,8 +107,8 @@ public class Create2Test020 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/suicide002.sol";
-    String contractName = "Factory";
+    String filePath = "./src/test/resources/soliditycode/Create2Test023.sol";
+    String contractName = "factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
 
     String code = retMap.get("byteCode").toString();
@@ -149,8 +147,9 @@ public class Create2Test020 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "function create2 ")
+  @Test(enabled = true, description = "contract A new B contract,A suicide,contract B still exist")
   public void test02TriggerTestContract() {
+
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
             blockingStubFull), 0, 1,
@@ -178,17 +177,8 @@ public class Create2Test020 {
 
     Long callValue = Long.valueOf(0);
 
-    String filePath = "./src/test/resources/soliditycode/suicide002.sol";
-    String contractName = "TestConstract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String testContractCode = retMap.get("byteCode").toString();
-    Long salt = 1L;
-
-    String param = "\"" + testContractCode + "\"," + salt;
-
     String triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
-        "deploy(bytes,uint256)", param, false, callValue,
+        "testCreate()", "#", false, callValue,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -215,6 +205,12 @@ public class Create2Test020 {
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
+
+    TransactionInfo transactionInfo = infoById.get();
+    logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
+    logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
+
+
     byte[] a = infoById.get().getContractResult(0).toByteArray();
     byte[] b = subByte(a, 11, 1);
     byte[] c = subByte(a, 0, 11);
@@ -238,68 +234,45 @@ public class Create2Test020 {
     String addressFinal = Base58.encode58Check(ByteArray.fromHexString(exceptedResult));
     logger.info("B Address : " + addressFinal);
 
-    Assert.assertEquals(infoById.get().getResult().toString(),"SUCESS");
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-
-
-    triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
-        "deploy2(bytes,uint256)", param, false, callValue,
+    //B Address is created by A, Trigger contract B
+    triggerTxid = PublicMethed.triggerContract(ByteArray.fromHexString(exceptedResult),
+        "test()", "#", false, callValue,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
-
-    a = infoById.get().getContractResult(0).toByteArray();
-    b = subByte(a, 11, 1);
-    c = subByte(a, 0, 11);
-    e = "41".getBytes();
-    d = subByte(a, 12, 20);
-
-    logger.info("a:" + ByteArray.toHexString(a));
-
-    logger.info("b:" + ByteArray.toHexString(b));
-    logger.info("c:" + ByteArray.toHexString(c));
-
-    logger.info("d:" + ByteArray.toHexString(d));
-
-    logger.info("41" + ByteArray.toHexString(d));
-    exceptedResult = "41" + ByteArray.toHexString(d);
-    realResult = ByteArray.toHexString(b);
-    Assert.assertEquals(realResult, "00");
-    Assert.assertNotEquals(realResult, "41");
+    Assert.assertEquals(infoById.get().getResultValue(),0);
+    Assert.assertEquals(ByteArray.toLong(infoById.get().getContractResult(0).toByteArray()),1);
+    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
 
 
-    addressFinal = Base58.encode58Check(ByteArray.fromHexString(exceptedResult));
-    logger.info("B Address : " + addressFinal);
-    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    devEnergyLimitAfter = accountResource.getEnergyLimit();
-    devEnergyUsageAfter = accountResource.getEnergyUsed();
-    devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
+    triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
+        "kill()", "#", false, callValue,
+        1000000000L, "0", 0, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    String note = ByteArray
+        .toStr(infoById.get().getInternalTransactions(0).getNote().toByteArray());
 
-    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    userEnergyLimitAfter = accountResource.getEnergyLimit();
-    userEnergyUsageAfter = accountResource.getEnergyUsed();
-    userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
-    TransactionInfo transactionInfo = infoById.get();
-    logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
-    logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
-
-    Assert.assertEquals(infoById.get().getResultValue(),1);
-    Assert.assertEquals(infoById.get().getResult().toString(),"FAILED");
-    Assert.assertThat(ByteArray.toStr(infoById.get().getResMessage().toByteArray()),
-        containsString("Not enough energy for 'SWAP1' operation executing: "));
+    Assert.assertEquals(infoById.get().getResultValue(),0);
+    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
+    Assert.assertEquals("suicide", note);
 
 
+
+    triggerTxid = PublicMethed.triggerContract(ByteArray.fromHexString(exceptedResult),
+        "test()", "#", false, callValue,
+        1000000000L, "0", 0, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+    Assert.assertEquals(infoById.get().getResultValue(),0);
+    Assert.assertEquals("SUCESS",infoById.get().getResult().toString());
+    Assert.assertEquals(1,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
 
   }
 
