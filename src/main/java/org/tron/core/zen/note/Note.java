@@ -1,6 +1,7 @@
 package org.tron.core.zen.note;
 
 import lombok.AllArgsConstructor;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
@@ -50,7 +51,18 @@ public class Note {
     this.pkD = pkD;
     this.value = value;
     this.rcm = r;
-    this.memo = memo;
+    this.setMemo(memo);
+  }
+
+  /**
+   * add the judgement of memo size
+   * @param memo
+   */
+  public void setMemo(byte[] memo) {
+    if(ByteArray.isEmpty(memo))
+      return;
+    int memoSize = memo.length < ZC_MEMO_SIZE ? memo.length : ZC_MEMO_SIZE;
+    System.arraycopy(memo, 0, this.memo, 0, memoSize);
   }
 
   public static byte[] generateR() throws ZksnarkException {
