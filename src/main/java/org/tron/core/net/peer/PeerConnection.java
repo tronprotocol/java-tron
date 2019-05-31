@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.discover.node.statistics.NodeStatistics.SimpleStatter;
 import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel;
@@ -172,7 +173,8 @@ public class PeerConnection extends Channel {
 //        nodeStatistics.toString());
 ////
     return String.format(
-        "Peer %s: [ %18s, ping %6s ms]-----------\n"
+        "Peer %s [%8s]\n"
+            + "ping msg: count %d, max-average-min-last: %d %d %d %d\n"
             + "connect time: %ds\n"
             + "last know block num: %s\n"
             + "needSyncFromPeer:%b\n"
@@ -183,10 +185,16 @@ public class PeerConnection extends Channel {
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
             + "blockInProcess:%d\n",
-        this.getNode().getHost() + ":" + this.getNode().getPort(),
-        this.getNode().getHexIdShort(),
-        (int) this.getPeerStats().getAvgLatency(),
-        (now - super.getStartTime()) / 1000,
+        getNode().getHost() + ":" + getNode().getPort(),
+        getNode().getHexIdShort(),
+
+        getNodeStatistics().pingMessageLatency.getCount(),
+        getNodeStatistics().pingMessageLatency.getMax(),
+        getNodeStatistics().pingMessageLatency.getAvrg(),
+        getNodeStatistics().pingMessageLatency.getMin(),
+        getNodeStatistics().pingMessageLatency.getLast(),
+
+        (now - getStartTime()) / 1000,
         blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),

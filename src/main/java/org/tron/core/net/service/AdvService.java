@@ -160,8 +160,7 @@ public class AdvService {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
-      trxCache.put(item,
-          new TransactionMessage(((TransactionMessage) msg).getTransactionCapsule().getInstance()));
+      trxCache.put(item, new TransactionMessage(trxMsg.getTransactionCapsule().getInstance()));
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
@@ -178,7 +177,8 @@ public class AdvService {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) == null && peer.getAdvInvSpread().getIfPresent(item) == null)
+        .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) == null
+            && peer.getAdvInvSpread().getIfPresent(item) == null)
         .collect(Collectors.toList());
 
     if (!fastForward) {

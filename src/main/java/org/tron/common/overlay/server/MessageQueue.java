@@ -30,6 +30,8 @@ public class MessageQueue {
 
   private volatile long sendTime;
 
+  private volatile long sendPing;
+
   private Thread sendMsgThread;
 
   private Channel channel;
@@ -84,14 +86,18 @@ public class MessageQueue {
     sendMsgThread.setName("sendMsgThread-" + ctx.channel().remoteAddress());
     sendMsgThread.start();
   }
-
+  
   public void setChannel(Channel channel) {
     this.channel = channel;
   }
 
   public boolean sendMessage(Message msg) {
-    if (msg instanceof PingMessage && sendTime > System.currentTimeMillis() - 10_000) {
-      return false;
+    long now = System.currentTimeMillis();
+    if (msg instanceof PingMessage) {
+      if (now - sendTime < 10_000 && now - sendPing < 60_000) {
+        return false;
+      }
+      sendPing = now;
     }
     if (needToLog(msg)) {
       logger.info("Send to {}, {} ", ctx.channel().remoteAddress(), msg);
@@ -111,10 +117,13 @@ public class MessageQueue {
       logger.info("Receive from {}, {}", ctx.channel().remoteAddress(), msg);
     }
     channel.getNodeStatistics().messageStatistics.addTcpInMessage(msg);
-    MessageRoundtrip messageRoundtrip = requestQueue.peek();
-    if (messageRoundtrip != null && messageRoundtrip.getMsg().getAnswerMessage() == msg
-        .getClass()) {
+    MessageRoundtrip rt = requestQueue.peek();
+    if (rt != null && rt.getMsg().getAnswerMessage() == msg.getClass()) {
       requestQueue.remove();
+      if (rt.getMsg() instanceof PingMessage) {
+        channel.getNodeStatistics().pingMessageLatency
+            .add(System.currentTimeMillis() - rt.getTime());
+      }
     }
   }
 
@@ -150,23 +159,22 @@ public class MessageQueue {
   }
 
   private void send() {
-    MessageRoundtrip messageRoundtrip = requestQueue.peek();
-    if (!sendMsgFlag || messageRoundtrip == null) {
+    MessageRoundtrip rt = requestQueue.peek();
+    if (!sendMsgFlag || rt == null) {
       return;
     }
-    if (messageRoundtrip.getRetryTimes() > 0 && !messageRoundtrip.hasToRetry()) {
+    if (rt.getRetryTimes() > 0 && !rt.hasToRetry()) {
       return;
     }
-    if (messageRoundtrip.getRetryTimes() > 0) {
+    if (rt.getRetryTimes() > 0) {
       channel.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.PING_TIMEOUT);
-      logger
-          .warn("Wait {} timeout. close channel {}.", messageRoundtrip.getMsg().getAnswerMessage(),
-              ctx.channel().remoteAddress());
+      logger.warn("Wait {} timeout. close channel {}.",
+          rt.getMsg().getAnswerMessage(), ctx.channel().remoteAddress());
       channel.close();
       return;
     }
 
-    Message msg = messageRoundtrip.getMsg();
+    Message msg = rt.getMsg();
 
     ctx.writeAndFlush(msg.getSendData()).addListener((ChannelFutureListener) future -> {
       if (!future.isSuccess()) {
@@ -174,8 +182,8 @@ public class MessageQueue {
       }
     });
 
-    messageRoundtrip.incRetryTimes();
-    messageRoundtrip.saveTime();
+    rt.incRetryTimes();
+    rt.saveTime();
   }
 
 }

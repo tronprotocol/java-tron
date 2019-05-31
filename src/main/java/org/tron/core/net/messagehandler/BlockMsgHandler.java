@@ -39,6 +39,8 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
 
+  private int threshold = 3;
+
   private boolean fastForward = Args.getInstance().isFastForward();
 
   @Override
@@ -60,7 +62,8 @@ public class BlockMsgHandler implements TronMsgHandler {
     } else {
       Long time = peer.getAdvInvRequest().remove(item);
       if (time != null) {
-        logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
+        logger.info("Receive block {} from {}, cost {}ms", blockId.getString(),
+            peer.getInetAddress(),
             System.currentTimeMillis() - time);
       }
       processBlock(peer, blockMessage.getBlockCapsule());
@@ -98,8 +101,13 @@ public class BlockMsgHandler implements TronMsgHandler {
           block.getNum(), headNum, peer.getInetAddress());
     }
 
-    if (fastForward && tronNetDelegate.validBlock(block)) {
-      advService.fastForward(new BlockMessage(block));
+    if (fastForward) {
+      if (headNum - block.getNum() > threshold) {
+        return;
+      }
+      if (tronNetDelegate.validBlock(block)) {
+        advService.fastForward(new BlockMessage(block));
+      }
     }
 
     tronNetDelegate.processBlock(block);
