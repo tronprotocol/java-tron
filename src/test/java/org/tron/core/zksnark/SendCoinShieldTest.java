@@ -427,7 +427,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -462,8 +463,8 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(noteText.value, 4000 * 1000000);
-        Assert.assertArrayEquals(noteText.memo, new byte[512]);
+        Assert.assertEquals( 4000 * 1000000,noteText.value);
+        Assert.assertArrayEquals(memo,noteText.memo);
       } else {
         Assert.assertFalse(true);
       }
@@ -503,7 +504,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -545,8 +547,8 @@ public class SendCoinShieldTest {
         if (foo.isPresent()) {
           Note bar = foo.get();
           //verify result
-          Assert.assertEquals(bar.value, 4000 * 1000000);
-          Assert.assertArrayEquals(bar.memo, new byte[512]);
+          Assert.assertEquals( 4000 * 1000000, bar.value);
+          Assert.assertArrayEquals(memo, bar.memo);
         } else {
           Assert.assertFalse(true);
         }
