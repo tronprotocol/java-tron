@@ -62,6 +62,8 @@ TRON is a project dedicated to building the infrastructure for a truly decentral
 
 TRON enables large-scale development and engagement. With over 2000 transactions per second (TPS), high concurrency, low latency and massive data transmission. It is ideal for building decentralized entertainment applications. Free features and incentive systems allow developers to create premium app experiences for users.
 
+For more information, please refer to our [Documentation Site](https://tronprotocol.github.io/documentation-EN/):
+
 # Quick Start
 
 * [Quick Start](./quickstart.md) TRON Quickstart image setup
