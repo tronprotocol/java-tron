@@ -25,7 +25,7 @@ fi
 
 
 versionPath="src/main/java/org/tron/program/Version.java"
-sed -i "s/versionName.*$/versionName = \"$versionName\";/g;s/versionCode.*$/versionCode = \"$versionCode\";/g" $versionPath
+sed -i -e "s/versionName.*$/versionName = \"$versionName\";/g;s/versionCode.*$/versionCode = \"$versionCode\";/g" $versionPath
 git add $versionPath
 git commit -m "update a new version. version name:$versionName,version code:$versionCode"
 git push origin $versionBranch
