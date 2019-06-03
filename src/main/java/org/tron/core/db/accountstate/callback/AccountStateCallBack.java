@@ -1,4 +1,4 @@
-package org.tron.core.db.fast.callback;
+package org.tron.core.db.accountstate.callback;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Internal;
@@ -16,8 +16,8 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;
-import org.tron.core.db.fast.AccountStateEntity;
-import org.tron.core.db.fast.storetrie.AccountStateStoreTrie;
+import org.tron.core.db.accountstate.AccountStateEntity;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
@@ -25,7 +25,7 @@ import org.tron.core.trie.TrieImpl.ScanAction;
 
 @Slf4j(topic = "AccountState")
 @Component
-public class FastSyncCallBack {
+public class AccountStateCallBack {
 
   private BlockCapsule blockCapsule;
   private volatile boolean execute = false;
