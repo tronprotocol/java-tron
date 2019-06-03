@@ -48,7 +48,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   @Getter
   @Setter
-  private TransactionResultListCapsule result;
+  private TransactionRetCapsule result;
 
   public static class BlockId extends Sha256Hash {
 

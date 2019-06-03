@@ -93,7 +93,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -103,6 +102,7 @@ import org.tron.core.db.ContractStore;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
@@ -1229,7 +1229,7 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    TransactionInfoCapsule transactionInfoCapsule = null;
+    TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
@@ -1239,7 +1239,13 @@ public class Wallet {
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
     }
-    return null;
+    try {
+      transactionInfoCapsule = dbManager.getTransactionRetStore().getTransactionInfo(transactionId.toByteArray());
+    } catch (BadItemException e) {
+      return null;
+    }
+
+    return transactionInfoCapsule.getInstance();
   }
 
   public Proposal getProposalById(ByteString proposalId) {

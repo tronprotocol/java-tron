@@ -31,8 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -70,7 +68,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionResultListCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -78,8 +76,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
-import org.tron.core.db.fast.TrieService;
-import org.tron.core.db.fast.callback.FastSyncCallBack;
+import org.tron.core.db.accountstate.TrieService;
+import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -110,7 +108,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.TransactionResult;
+import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j(topic = "DB")
@@ -137,8 +135,9 @@ public class Manager {
   @Autowired
   @Getter
   private BlockIndexStore blockIndexStore;
+  @Autowired
   @Getter
-  private TransactionResultListStore resultStore;
+  private TransactionRetStore transactionRetStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
@@ -227,7 +226,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   @Autowired
-  private FastSyncCallBack fastSyncCallBack;
+  private AccountStateCallBack accountStateCallBack;
 
   @Autowired
   private TrieService trieService;
@@ -438,7 +437,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setManager(this);
-    fastSyncCallBack.setManager(this);
+    accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
@@ -850,7 +849,7 @@ public class Manager {
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      this.resultStore.put(block.getBlockId().getBytes(), block.getResult());
+      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
@@ -1199,7 +1198,7 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public TransactionResult processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
@@ -1262,13 +1261,8 @@ public class Manager {
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
             new BytesCapsule(ByteArray.fromLong(trxCap.getBlockNum()))));
 
-    TransactionResult transactionInfo = TransactionResultListCapsule
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
-
-    TransactionInfoCapsule transactionInfo2 = TransactionInfoCapsule
-        .buildInstance(trxCap, blockCap, trace);
-
-    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo2);
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
@@ -1277,7 +1271,7 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    return transactionInfo;
+    return transactionInfo.getInstance();
   }
 
 
@@ -1331,15 +1325,15 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
     //
-    fastSyncCallBack.preExecute(blockCapsule);
+    accountStateCallBack.preExecute(blockCapsule);
 
     if (needCheckWitnessPermission && !witnessService.
         validateWitnessPermission(witnessCapsule.getAddress())) {
       logger.warn("Witness permission is wrong");
       return null;
     }
-    TransactionResultListCapsule transationResultCapsule =
-        new TransactionResultListCapsule(blockCapsule);
+    TransactionRetCapsule transationRetCapsule =
+        new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1384,13 +1378,13 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
-        fastSyncCallBack.preExeTrans();
-        TransactionResult result = processTransaction(trx, blockCapsule);
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.preExeTrans();
+        TransactionInfo result = processTransaction(trx, blockCapsule);
+        accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        transationResultCapsule.addTransactionResult(result);
+        transationRetCapsule.addTransactionInfo(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1429,7 +1423,7 @@ public class Manager {
       }
     } // end of while
 
-    fastSyncCallBack.executeGenerateFinish();
+    accountStateCallBack.executeGenerateFinish();
 
     session.reset();
     if (postponedTrxCount > 0) {
@@ -1442,7 +1436,7 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
-    blockCapsule.setResult(transationResultCapsule);
+    blockCapsule.setResult(transationRetCapsule);
 
     try {
       this.pushBlock(blockCapsule);
@@ -1532,24 +1526,27 @@ public class Manager {
       }
     }
 
-    TransactionResultListCapsule transationResultCapsule =
-        new TransactionResultListCapsule(block);
+    TransactionRetCapsule transationRetCapsule =
+        new TransactionRetCapsule(block);
 
     try {
-      fastSyncCallBack.preExecute(block);
+      accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
-        fastSyncCallBack.preExeTrans();
-        fastSyncCallBack.exeTransFinish();
+        accountStateCallBack.preExeTrans();
+        TransactionInfo result = processTransaction(transactionCapsule, block);
+        accountStateCallBack.exeTransFinish();
+        Optional.ofNullable(result).ifPresent(t -> transationRetCapsule.addTransactionInfo(result));
       }
-      fastSyncCallBack.executePushFinish();
+      accountStateCallBack.executePushFinish();
     } finally {
-      fastSyncCallBack.exceptionFinish();
+      accountStateCallBack.exceptionFinish();
     }
 
+    block.setResult(transationRetCapsule);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
