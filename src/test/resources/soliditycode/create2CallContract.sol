@@ -4,8 +4,8 @@ contract callerContract {
     function delegateCallCreate2(address called_address, bytes memory code, uint256 salt) public {
        called_address.delegatecall(abi.encodeWithSignature("deploy(bytes,uint256)",code,salt));
     }
-    function callCreate2(address called_address,bytes memory code, uint256 salt) public {
-       called_address.call(abi.encodeWithSignature("deploy(bytes,uint256)",code,salt));
+    function callCreate2(address called_address,bytes memory code, uint256 salt) public returns(bool,bytes memory){
+       return called_address.call(abi.encodeWithSignature("deploy(bytes,uint256)",code,salt));
     }
 }
 

@@ -90,7 +90,8 @@ public class Create2Test019 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "seted Value of Contract that created by create2,"
+      + " should not be stored after contact suicided ande create2 again")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
