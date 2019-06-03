@@ -463,7 +463,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean allowShieldedTransactionApi;
+  private boolean allowShieldedTransaction;
 
   @Getter
   @Setter
@@ -476,10 +476,6 @@ public class Args {
   @Getter
   @Setter
   private int validContractProtoThreadNum;
-
-  @Getter
-  @Setter
-  private boolean isOpenZen;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -556,11 +552,10 @@ public class Args {
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
-    INSTANCE.allowShieldedTransactionApi = false;
+    INSTANCE.allowShieldedTransaction = true;
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
-    INSTANCE.isOpenZen = true;
   }
 
   /**
@@ -956,8 +951,8 @@ public class Args {
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
-    INSTANCE.allowShieldedTransactionApi = config.hasPath("node.allowShieldedTransactionApi") ?
-        config.getBoolean("node.allowShieldedTransactionApi") : false;
+    INSTANCE.allowShieldedTransaction = config.hasPath("node.allowShieldedTransaction") ?
+        config.getBoolean("node.allowShieldedTransaction") : true;
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config
             .getInt("committee.allowProtoFilterNum") : 0;
@@ -971,10 +966,8 @@ public class Args {
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
 
-    INSTANCE.isOpenZen = config.hasPath("node.isOpenZen") ?
-        config.getBoolean("node.isOpenZen") : true;
     if (INSTANCE.isWitness()) {
-      INSTANCE.isOpenZen = true;
+      INSTANCE.allowShieldedTransaction = true;
     }
 
     initBackupProperty(config);

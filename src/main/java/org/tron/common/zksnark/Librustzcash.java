@@ -300,7 +300,7 @@ public class Librustzcash {
   }
 
   private static boolean isOpenZen() {
-    return Args.getInstance().isOpenZen();
+    return Args.getInstance().isAllowShieldedTransaction();
   }
 
   public static String getLibraryByName(String name) {

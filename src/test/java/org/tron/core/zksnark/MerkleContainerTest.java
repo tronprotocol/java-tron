@@ -355,7 +355,7 @@ public class MerkleContainerTest {
     int number = 0;
     OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1).
         addOutPoints(outputPoint2).setBlockNum(number).build();
-    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Args.getInstance().setAllowShieldedTransaction(true);
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);

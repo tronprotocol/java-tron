@@ -132,7 +132,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (Args.getInstance().isOpenZen()) {
+    if (Args.getInstance().isAllowShieldedTransaction()) {
       MerkleContainer merkleContainer = dbManager.getMerkleContainer();
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
