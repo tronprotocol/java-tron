@@ -47,6 +47,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.backup.DbBackupConfig;
 import org.tron.keystore.CipherException;
@@ -104,6 +105,11 @@ public class Args {
   @Setter
   @Parameter(names = {"--long-running-time"})
   private int longRunningTime = 10;
+
+  @Getter
+  @Setter
+  @Parameter(names = {"--max-connect-number"})
+  private int maxHttpConnectNumber = 50;
 
   @Getter
   @Parameter(description = "--seed-nodes")
@@ -543,6 +549,7 @@ public class Args {
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
     INSTANCE.allowZKSnarkTransaction = 0;
+    INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.allowShieldedTransactionApi = false;
@@ -813,6 +820,10 @@ public class Args {
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
         config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+
+    INSTANCE.maxHttpConnectNumber = config.hasPath("node.maxHttpConnectNumber") ?
+        config.getInt("node.maxHttpConnectNumber") : NodeConstant.MAX_HTTP_CONNECT_NUMBER;
+
     if (INSTANCE.blockProducedTimeOut < 30) {
       INSTANCE.blockProducedTimeOut = 30;
     }
