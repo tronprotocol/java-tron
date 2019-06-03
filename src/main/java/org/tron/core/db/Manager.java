@@ -1537,9 +1537,14 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
+<<<<<<< HEAD
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
         Optional.ofNullable(result).ifPresent(t -> transationRetCapsule.addTransactionInfo(result));
+=======
+        processTransaction(transactionCapsule, block);
+        accountStateCallBack.exeTransFinish();
+>>>>>>> e9e78b056b0380e6ae141c0f9ba0baef1348936c
       }
       accountStateCallBack.executePushFinish();
     } finally {
