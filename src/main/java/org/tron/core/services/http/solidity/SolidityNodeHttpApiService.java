@@ -21,12 +21,16 @@ import org.tron.core.services.http.GetBlockByNumServlet;
 import org.tron.core.services.http.GetDelegatedResourceAccountIndexServlet;
 import org.tron.core.services.http.GetDelegatedResourceServlet;
 import org.tron.core.services.http.GetExchangeByIdServlet;
+import org.tron.core.services.http.GetMerkleTreeVoucherInfoServlet;
 import org.tron.core.services.http.GetNodeInfoServlet;
 import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
+import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
+import org.tron.core.services.http.ScanNoteByIvkServlet;
+import org.tron.core.services.http.ScanNoteByOvkServlet;
 
 
 @Component
@@ -86,6 +90,16 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetBlockByLatestNumServlet getBlockByLatestNumServlet;
 
+  @Autowired
+  private ScanNoteByIvkServlet scanNoteByIvkServlet;
+  @Autowired
+  private ScanNoteByOvkServlet scanNoteByOvkServlet;
+  @Autowired
+  private GetMerkleTreeVoucherInfoServlet getMerkleTreeVoucherInfoServlet;
+  @Autowired
+  private IsSpendServlet isSpendServlet;
+
+
   @Override
   public void init() {
 
@@ -138,6 +152,11 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet),
           "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
+          "/walletsolidity/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendServlet), "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),
