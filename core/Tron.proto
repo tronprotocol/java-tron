@@ -338,41 +338,6 @@ message Transaction {
   repeated Result ret = 5;
 }
 
-message TransactionResult {
-  enum code {
-    SUCESS = 0;
-    FAILED = 1;
-  }
-  message Log {
-    bytes address = 1;
-    repeated bytes topics = 2;
-    bytes data = 3;
-  }
-  bytes id = 1;
-  int64 fee = 2;
-  repeated bytes contractResult = 5;
-  bytes contract_address = 6;
-  ResourceReceipt receipt = 7;
-  repeated Log log = 8;
-  code result = 9;
-  bytes resMessage = 10;
-
-  string assetIssueID = 14;
-  int64 withdraw_amount = 15;
-  int64 unfreeze_amount = 16;
-  repeated InternalTransaction internal_transactions = 17;
-  int64 exchange_received_amount = 18;
-  int64 exchange_inject_another_amount = 19;
-  int64 exchange_withdraw_another_amount = 20;
-  int64 exchange_id = 21;
-}
-
-message TransactionResultList {
-  int64 blockNumber = 1;
-  int64 blockTimeStamp = 2;
-  repeated TransactionResult transactionresult = 3;
-}
-
 message TransactionInfo {
   enum code {
     SUCESS = 0;
@@ -402,6 +367,12 @@ message TransactionInfo {
   int64 exchange_inject_another_amount = 19;
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
+}
+
+message TransactionRet {
+  int64 blockNumber = 1;
+  int64 blockTimeStamp = 2;
+  repeated TransactionInfo transactioninfo = 3;
 }
 
 message Transactions {
@@ -667,41 +638,6 @@ message NodeInfo {
     double maxTimeRatio = 17;
     int64 allowCreationOfContracts = 18;
     int64 allowAdaptiveEnergy = 19;
-  }
-
-  message TransactionResult {
-    enum code {
-      SUCESS = 0;
-      FAILED = 1;
-    }
-    message Log {
-      bytes address = 1;
-      repeated bytes topics = 2;
-      bytes data = 3;
-    }
-    bytes id = 1;
-    int64 fee = 2;
-    repeated bytes contractResult = 5;
-    bytes contract_address = 6;
-    ResourceReceipt receipt = 7;
-    repeated Log log = 8;
-    code result = 9;
-    bytes resMessage = 10;
-
-    string assetIssueID = 14;
-    int64 withdraw_amount = 15;
-    int64 unfreeze_amount = 16;
-    repeated InternalTransaction internal_transactions = 17;
-    int64 exchange_received_amount = 18;
-    int64 exchange_inject_another_amount = 19;
-    int64 exchange_withdraw_another_amount = 20;
-    int64 exchange_id = 21;
-  }
-
-  message TransactionResultList {
-    int64 blockNumber = 1;
-    int64 blockTimeStamp = 2;
-    repeated TransactionResult transactionresult = 3;
   }
 
   message MachineInfo {
