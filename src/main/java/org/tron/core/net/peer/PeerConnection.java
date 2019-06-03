@@ -43,8 +43,6 @@ public class PeerConnection extends Channel {
   @Autowired
   private AdvService advService;
 
-  private int invCacheSize = 100_000;
-
   @Setter
   @Getter
   private BlockId signUpErrorBlockId;
@@ -52,6 +50,8 @@ public class PeerConnection extends Channel {
   @Setter
   @Getter
   private HelloMessage helloMessage;
+
+  private int invCacheSize = 100_000;
 
   @Setter
   @Getter
@@ -76,7 +76,7 @@ public class PeerConnection extends Channel {
   }
 
   @Getter
-  private long blockBothHaveUpdateTime = System.currentTimeMillis();
+  private volatile long blockBothHaveUpdateTime = System.currentTimeMillis();
 
   @Setter
   @Getter
@@ -84,7 +84,7 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private long remainNum;
+  private volatile long remainNum;
 
   @Getter
   private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
@@ -108,11 +108,11 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private boolean needSyncFromPeer;
+  private volatile boolean needSyncFromPeer;
 
   @Setter
   @Getter
-  private boolean needSyncFromUs;
+  private volatile boolean needSyncFromUs;
 
   public boolean isIdle() {
     return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;

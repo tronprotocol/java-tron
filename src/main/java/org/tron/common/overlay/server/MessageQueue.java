@@ -86,7 +86,7 @@ public class MessageQueue {
     sendMsgThread.setName("sendMsgThread-" + ctx.channel().remoteAddress());
     sendMsgThread.start();
   }
-  
+
   public void setChannel(Channel channel) {
     this.channel = channel;
   }
