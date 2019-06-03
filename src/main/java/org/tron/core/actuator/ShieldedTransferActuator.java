@@ -38,7 +38,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ShieldedTransferContract shieldedTransferContract;
-  static public String zenTokenId = "000001";
+  static public String zenTokenId = Args.getInstance().getZenTokenId();
 
 
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
