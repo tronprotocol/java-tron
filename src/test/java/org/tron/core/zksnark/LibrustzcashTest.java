@@ -225,7 +225,6 @@ public class LibrustzcashTest {
 
   @Test
   public void testGenerateNote() throws Exception {
-    librustzcashInitZksnarkParams();
 
     int total = 10;
     int success = 0;
@@ -246,6 +245,46 @@ public class LibrustzcashTest {
         // PaymentAddress op = spendingKey.defaultAddress();
 
         Note note = new Note(op.get(), 100);
+        note.rcm = ByteArray
+            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+
+        byte[] cm = note.cm();
+        if (cm != null) {
+          success ++;
+        } else {
+          fail ++;
+        }
+        System.out.println("note is " + note.cm());
+      } catch (ZksnarkException e) {
+        System.out.println("failed: " + e.getMessage());
+        fail ++;
+        // continue;
+      }
+    }
+    System.out.println("total is: " + total);
+    System.out.println("success is: " + success);
+    System.out.println("fail is: " + fail);
+  }
+
+  @Test
+  public void testGenerateNoteWithDefault() throws Exception {
+
+    int total = 1000;
+    int success = 0;
+    int fail = 0;
+
+    for (int i=0; i < total; i++) {
+
+      SpendingKey spendingKey = SpendingKey
+          .decode("044ce61616fc962c9fb3ac3a71ce8bfc6dfd42d414eb8b64c3f7306861a7db36");
+      // SpendingKey spendingKey = SpendingKey.random();
+
+      try {
+        PaymentAddress address = spendingKey.defaultAddress();
+        System.out.println("d is: " + ByteArray.toHexString(address.getD().getData()));
+        System.out.println("pkd is: " + ByteArray.toHexString(address.getPkD()));
+
+        Note note = new Note(address, 100);
         note.rcm = ByteArray
             .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
 
