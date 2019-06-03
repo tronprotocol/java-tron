@@ -526,6 +526,69 @@ public class RpcApiService implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
+
+    @Override
+    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+
+      try {
+        IncrementalMerkleVoucherInfo witnessInfo = wallet
+            .getMerkleTreeVoucherInfo(request);
+        responseObserver.onNext(witnessInfo);
+      } catch (Exception ex) {
+        //todo,return error message
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
+        return;
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        DecryptNotes decryptNotes = wallet
+            .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+
+      try {
+        DecryptNotes decryptNotes = wallet
+            .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.isSpend(request));
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
   }
 
   /**
