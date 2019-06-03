@@ -1,9 +1,12 @@
 package org.tron.common.runtime.vm;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
@@ -12,9 +15,9 @@ import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.services.http.JsonFormat;
 import org.tron.protos.Protocol.SmartContract.ABI;
 
+@Slf4j
 public class LogInfoTriggerParser {
 
   private Long blockNum;
@@ -64,7 +67,13 @@ public class LogInfoTriggerParser {
       signMap.put(strContractAddr, creatorAddr); // mark as found.
 
       if (abi != null && abi.getEntrysCount() > 0) {
-        abiMap.put(strContractAddr, JsonFormat.printToString(abi, false));
+        try {
+          abiMap
+              .put(strContractAddr, JsonFormat.printer().includingDefaultValueFields().print(abi));
+        } catch (InvalidProtocolBufferException e) {
+          abiMap.put(strContractAddr, "");
+          logger.info("abi to json empty:" + txId, e);
+        }
       } else {
         abiMap.put(strContractAddr, "");
       }
