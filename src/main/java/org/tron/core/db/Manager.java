@@ -1434,7 +1434,9 @@ public class Manager {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
 
-    tronNetService.fastForward(new BlockMessage(blockCapsule));
+    if (tronNetService != null) {
+      tronNetService.fastForward(new BlockMessage(blockCapsule));
+    }
 
     try {
       this.pushBlock(blockCapsule);
