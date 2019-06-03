@@ -463,7 +463,7 @@ public class Args {
 
   @Getter
   @Setter
-  private boolean allowShieldedTransactionApi;
+  private boolean allowShieldedTransaction;
 
   @Getter
   @Setter
@@ -552,7 +552,7 @@ public class Args {
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
-    INSTANCE.allowShieldedTransactionApi = false;
+    INSTANCE.allowShieldedTransaction = true;
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
@@ -951,8 +951,8 @@ public class Args {
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
-    INSTANCE.allowShieldedTransactionApi = config.hasPath("node.allowShieldedTransactionApi") ?
-        config.getBoolean("node.allowShieldedTransactionApi") : false;
+    INSTANCE.allowShieldedTransaction = config.hasPath("node.allowShieldedTransaction") ?
+        config.getBoolean("node.allowShieldedTransaction") : true;
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config
             .getInt("committee.allowProtoFilterNum") : 0;
@@ -965,6 +965,10 @@ public class Args {
         config.hasPath("node.validContractProto.threads") ? config
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
+
+    if (INSTANCE.isWitness()) {
+      INSTANCE.allowShieldedTransaction = true;
+    }
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

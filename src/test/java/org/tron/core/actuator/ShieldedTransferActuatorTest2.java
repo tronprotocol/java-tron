@@ -680,7 +680,7 @@ public class ShieldedTransferActuatorTest2 {
    */
   @Test
   public void PublicToShieldAddressAndShieldToPublicAddressSuccess() {
-    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Args.getInstance().setAllowShieldedTransaction(true);
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
@@ -1039,7 +1039,7 @@ public class ShieldedTransferActuatorTest2 {
    */
   @Test
   public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
-    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Args.getInstance().setAllowShieldedTransaction(true);
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
