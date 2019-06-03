@@ -18,6 +18,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -131,26 +132,27 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-
-    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
-    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
-    try {
-      currentMerkle.wfcheck();
-    } catch (ZksnarkException e) {
-      ret.setStatus(calcFee(), code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-    //handle receives
-    for (ReceiveDescription receive : receives) {
+    if (Args.getInstance().isOpenZen()) {
+      MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+      IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
-        merkleContainer
-            .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+        currentMerkle.wfcheck();
       } catch (ZksnarkException e) {
         ret.setStatus(calcFee(), code.FAILED);
         throw new ContractExeException(e.getMessage());
       }
+      //handle receives
+      for (ReceiveDescription receive : receives) {
+        try {
+          merkleContainer
+              .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+        } catch (ZksnarkException e) {
+          ret.setStatus(calcFee(), code.FAILED);
+          throw new ContractExeException(e.getMessage());
+        }
+      }
+      merkleContainer.setCurrentMerkle(currentMerkle);
     }
-    merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
   @Override
