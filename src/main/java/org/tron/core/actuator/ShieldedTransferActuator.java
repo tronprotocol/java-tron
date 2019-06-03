@@ -18,6 +18,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -37,7 +38,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ShieldedTransferContract shieldedTransferContract;
-  static public String zenTokenId = "000001";
+  static public String zenTokenId = Args.getInstance().getZenTokenId();
 
 
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
