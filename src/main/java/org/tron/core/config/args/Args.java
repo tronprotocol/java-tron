@@ -471,6 +471,10 @@ public class Args {
   @Setter
   private int validContractProtoThreadNum;
 
+  @Getter
+  @Setter
+  private boolean isOpenZen;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -549,6 +553,7 @@ public class Args {
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
+    INSTANCE.isOpenZen = true;
   }
 
   /**
@@ -954,6 +959,12 @@ public class Args {
         config.hasPath("node.validContractProto.threads") ? config
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
+
+    INSTANCE.isOpenZen = config.hasPath("node.isOpenZen") ?
+        config.getBoolean("node.isOpenZen") : true;
+    if (INSTANCE.isWitness()) {
+      INSTANCE.isOpenZen = true;
+    }
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
