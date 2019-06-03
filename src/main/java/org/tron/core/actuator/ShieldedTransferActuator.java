@@ -193,7 +193,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (!dbManager.getMerkleContainer()
+        if (Args.getInstance().isAllowShieldedTransaction() && !dbManager.getMerkleContainer()
             .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
