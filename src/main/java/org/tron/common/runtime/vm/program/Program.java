@@ -1414,7 +1414,7 @@ public class Program {
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
       if (!isTokenTransfer) {
         try {
-          tranzsfer(deposit, senderAddress, contextAddress,
+          transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("transfer failure");
