@@ -13,6 +13,7 @@ import com.sun.jna.Pointer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,6 +28,14 @@ import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.zen.ZenTransactionBuilder;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.note.Note;
 
 public class LibrustzcashTest {
 
@@ -185,7 +194,7 @@ public class LibrustzcashTest {
     return time;
   }
 
-  // @Test
+  @Test
   public void calBenchmarkVerifySpend() throws ZksnarkException {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
@@ -211,6 +220,51 @@ public class LibrustzcashTest {
     System.out.println("---- min_time is: " + min_time);
     System.out.println("---- avg_time is: " + total_time / count);
 
+  }
+
+
+  @Test
+  public void testGenerateNote() throws Exception {
+    librustzcashInitZksnarkParams();
+
+    int total = 10;
+    int success = 0;
+    int fail = 0;
+
+    for (int i=0; i < total; i++) {
+
+      SpendingKey spendingKey = SpendingKey
+          .decode("044ce61616fc962c9fb3ac3a71ce8bfc6dfd42d414eb8b64c3f7306861a7db36");
+      // SpendingKey spendingKey = SpendingKey.random();
+
+      DiversifierT diversifierT = new DiversifierT().random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+      try {
+        Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
+        // PaymentAddress op = spendingKey.defaultAddress();
+
+        Note note = new Note(op.get(), 100);
+        note.rcm = ByteArray
+            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+
+        byte[] cm = note.cm();
+        if (cm != null) {
+          success ++;
+        } else {
+          fail ++;
+        }
+        System.out.println("note is " + note.cm());
+      } catch (ZksnarkException e) {
+        System.out.println("failed: " + e.getMessage());
+        fail ++;
+        // continue;
+      }
+    }
+    System.out.println("total is: " + total);
+    System.out.println("success is: " + success);
+    System.out.println("fail is: " + fail);
   }
 
 }

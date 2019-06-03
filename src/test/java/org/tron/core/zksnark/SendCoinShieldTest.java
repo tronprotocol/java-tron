@@ -6,6 +6,10 @@ import com.google.common.io.Files;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.sun.jna.Pointer;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -20,20 +24,51 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.*;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.ZksnarkClient;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.capsule.ReceiveDescriptionCapsule;
+import org.tron.core.capsule.SpendDescriptionCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.*;
+import org.tron.core.exception.AccountResourceInsufficientException;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.TaposException;
+import org.tron.core.exception.TooBigTransactionException;
+import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
-import org.tron.core.zen.address.*;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.KeyIo;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
@@ -50,11 +85,6 @@ import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 public class SendCoinShieldTest {
 
@@ -190,11 +220,29 @@ public class SendCoinShieldTest {
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-    PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100);
+
+    DiversifierT diversifierT = new DiversifierT();
+    byte[] d;
+    while (true) {
+      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+        break;
+      }
+    }
+    diversifierT.setData(d);
+
+    FullViewingKey fullViewingKey = expsk.fullViewingKey();
+
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
+
+    Note note = new Note(op.get(), 100);
     note.rcm = ByteArray
         .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
+
     byte[] anchor = voucher.root().getContent().toByteArray();
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
@@ -299,6 +347,14 @@ public class SendCoinShieldTest {
     }
 
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+  }
+
+  public String byte2intstring(byte[] input){
+    StringBuilder sb = new StringBuilder();
+    for(byte b:input){
+      sb.append(String.valueOf((int)b) + ", ");
+    }
+    return sb.toString();
   }
 
   @Test
@@ -409,7 +465,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -444,8 +501,8 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(noteText.value, 4000 * 1000000);
-        Assert.assertArrayEquals(noteText.memo, new byte[512]);
+        Assert.assertEquals( 4000 * 1000000,noteText.value);
+        Assert.assertArrayEquals(memo,noteText.memo);
       } else {
         Assert.assertFalse(true);
       }
@@ -453,6 +510,13 @@ public class SendCoinShieldTest {
     // end here
     Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ok);
+  }
+
+  @Test
+  public void testDefaultAddress() throws ZksnarkException, BadItemException {
+    PaymentAddress paymentAddress = SpendingKey.random().defaultAddress();
+    Assert.assertNotEquals("0000000000000000000000000000000000000000000000000000000000000000",
+        ByteArray.toHexString(paymentAddress.getPkD()));
   }
 
   @Test
@@ -485,7 +549,8 @@ public class SendCoinShieldTest {
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -527,8 +592,8 @@ public class SendCoinShieldTest {
         if (foo.isPresent()) {
           Note bar = foo.get();
           //verify result
-          Assert.assertEquals(bar.value, 4000 * 1000000);
-          Assert.assertArrayEquals(bar.memo, new byte[512]);
+          Assert.assertEquals( 4000 * 1000000, bar.value);
+          Assert.assertArrayEquals(memo, bar.memo);
         } else {
           Assert.assertFalse(true);
         }
@@ -806,11 +871,12 @@ public class SendCoinShieldTest {
   public void testComputeCm() throws Exception {
     byte[] result = new byte[32];
     if (!Librustzcash.librustzcashComputeCm(new ComputeCmParams(
-        (ByteArray.fromHexString("fc6eb90855700861de6639")), (
+        (ByteArray.fromHexString("fc6eb90855700861de6639")),
         ByteArray
-            .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19")),
-        9990000000L, (ByteArray
-        .fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02")),
+            .fromHexString("1abfbf64bc4934aaf7f29b9fea995e5a16e654e63dbe07db0ef035499d216e19"),
+        9990000000L,
+        ByteArray
+            .fromHexString("08e3a2ff1101b628147125b786c757b483f1cf7c309f8a647055bfb1ca819c02"),
         result)
     )) {
       System.out.println(" error");
