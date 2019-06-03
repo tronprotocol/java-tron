@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -316,7 +317,6 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
-
       context
           .addServlet(new ServletHolder(getExpandedSpendingKeyServlet), "/getexpandedspendingkey");
       context.addServlet(new ServletHolder(getAkFromAskServlet), "/getakfromask");
@@ -339,7 +339,10 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
       context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
           "/getshieldtransactionhash");
-
+      int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+      }
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());

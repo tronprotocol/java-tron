@@ -839,6 +839,18 @@ service WalletSolidity {
       }
     };
   }
+
+  rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
+  }
+
+  rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
+  }
+
+  rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
+  }
+
+  rpc IsSpend (NoteParameters) returns (SpendResult) {
+  }
 };
 
 service WalletExtension {

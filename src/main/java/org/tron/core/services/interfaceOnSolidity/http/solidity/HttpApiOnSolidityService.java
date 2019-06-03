@@ -1,6 +1,7 @@
 package org.tron.core.services.interfaceOnSolidity.http.solidity;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -20,12 +21,16 @@ import org.tron.core.services.interfaceOnSolidity.http.GetBlockByNumOnSoliditySe
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceAccountIndexOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetDelegatedResourceOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetExchangeByIdOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByIvkOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSolidityServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService implements Service {
@@ -81,6 +86,14 @@ public class HttpApiOnSolidityService implements Service {
   private GetBlockByLimitNextOnSolidityServlet getBlockByLimitNextOnSolidityServlet;
   @Autowired
   private GetBlockByLatestNumOnSolidityServlet getBlockByLatestNumOnSolidityServlet;
+  @Autowired
+  private GetMerkleTreeVoucherInfoOnSolidityServlet getMerkleTreeVoucherInfoOnSolidityServlet;
+  @Autowired
+  private ScanNoteByIvkOnSolidityServlet scanNoteByIvkOnSolidityServlet;
+  @Autowired
+  private ScanNoteByOvkOnSolidityServlet scanNoteByOvkOnSolidityServlet;
+  @Autowired
+  private IsSpendOnSolidityServlet isSpendOnSolidityServlet;
 
   @Override
   public void init() {
@@ -134,6 +147,11 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumOnSolidityServlet),
           "/walletsolidity/getblockbylatestnum");
+      context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
+          "/walletsolidity/getmerkletreevoucherinfo");
+      context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet), "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet), "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendOnSolidityServlet), "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
@@ -148,6 +166,10 @@ public class HttpApiOnSolidityService implements Service {
 
       context.addServlet(new ServletHolder(getNodeInfoOnSolidityServlet), "/wallet/getnodeinfo");
 
+      int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+      }
       server.start();
     } catch (Exception e) {
       logger.debug("IOException: {}", e.getMessage());
