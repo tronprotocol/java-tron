@@ -467,6 +467,10 @@ public class Args {
 
   @Getter
   @Setter
+  private String zenTokenId;
+
+  @Getter
+  @Setter
   private long allowProtoFilterNum;
 
   @Getter
@@ -553,6 +557,7 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.allowShieldedTransactionApi = false;
+    INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
@@ -953,6 +958,10 @@ public class Args {
 
     INSTANCE.allowShieldedTransactionApi = config.hasPath("node.allowShieldedTransactionApi") ?
         config.getBoolean("node.allowShieldedTransactionApi") : false;
+
+    INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
+        config.getString("node.zenTokenId") : "000000";
+
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config
             .getInt("committee.allowProtoFilterNum") : 0;
