@@ -347,7 +347,7 @@ public class ZenTransferActuator extends AbstractActuator {
       throw new ContractValidateException("no transparent_to_address, to_amount should be 0");
     }
     if (hasTransparentFrom && hasTransparentTo && Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Can't transfer trx to yourself");
+      throw new ContractValidateException("Can't transfer zen to yourself");
     }
 
     if (hasTransparentFrom) {

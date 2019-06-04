@@ -37,6 +37,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.ZenTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -1018,7 +1019,7 @@ public class SendCoinShieldTest {
     actuator.get(0).execute(resultCapsule);
   }
 
-  // @Test
+   @Test
   public void testValueBalance() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1033,6 +1034,9 @@ public class SendCoinShieldTest {
               ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
               AccountType.Normal,
               110_000_000L);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .putAssetV2(ZenTransferActuator.zenTokenId, 110_000_000L)
+          .build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000);
@@ -1069,6 +1073,10 @@ public class SendCoinShieldTest {
               ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
               AccountType.Normal,
               110_000_000L);
+
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .putAssetV2(ZenTransferActuator.zenTokenId, 110_000_000L)
+          .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
@@ -1254,7 +1262,7 @@ public class SendCoinShieldTest {
     }
   }
 
-  //  @Test
+    @Test
   public void TestCreateMultipleTxAtTheSameTime() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1271,6 +1279,9 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               220_000_000L);
 
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .putAssetV2(ZenTransferActuator.zenTokenId, 220_000_000L)
+          .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
 
@@ -1300,6 +1311,9 @@ public class SendCoinShieldTest {
               ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
               AccountType.Normal,
               230_000_000L);
+      ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
+          .putAssetV2(ZenTransferActuator.zenTokenId, 230_000_000L)
+          .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
 
@@ -1383,7 +1397,7 @@ public class SendCoinShieldTest {
     });
   }
 
-  //  @Test
+    @Test
   public void TestCtxGeneratesTooMuchProof() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1463,7 +1477,7 @@ public class SendCoinShieldTest {
     }
   }
 
-  //  @Test
+    @Test
   public void TestGeneratesProofWithDiffCtx() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1526,7 +1540,7 @@ public class SendCoinShieldTest {
     }
   }
 
-  //  @Test
+    @Test
   public void TestGeneratesProofWithWrongAlpha() throws Exception {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
@@ -1564,7 +1578,7 @@ public class SendCoinShieldTest {
   }
 
 
-  //  @Test
+    @Test
   public void TestGeneratesProofWithWrongRcm() throws Exception {
     Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
     librustzcashInitZksnarkParams();
