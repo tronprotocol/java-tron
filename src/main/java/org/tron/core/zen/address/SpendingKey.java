@@ -89,10 +89,11 @@ public class SpendingKey {
     byte[] res = new byte[Constant.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
     ZksnarkUtils.sort(this.value);
-    System.arraycopy(this.value, 0, blob, 2, 32);
-    blob[1] = 3;
-    blob[0] = 0;
+    System.arraycopy(this.value, 0, blob, 0, 32);
+    blob[32] = 3;
+    blob[33] = 0;
     while (true) {
+
       ILibsodium.crypto_generichash_blake2b_state.ByReference state = new ILibsodium.crypto_generichash_blake2b_state.ByReference();
       Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
           state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
