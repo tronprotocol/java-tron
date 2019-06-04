@@ -73,7 +73,6 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
         }
         hasPing = false;
         channel.getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
-        channel.getPeerStats().pong(sendPingTime);
         break;
       case P2P_DISCONNECT:
         channel.getNodeStatistics()

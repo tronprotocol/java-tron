@@ -1,5 +1,6 @@
 package org.tron.common.overlay.server;
 
+import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
@@ -13,10 +14,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
-import org.tron.core.db.WitnessStore;
+import org.tron.core.db.WitnessScheduleStore;
 import org.tron.core.services.WitnessService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -27,11 +26,7 @@ public class FastForward {
   @Autowired
   private ApplicationContext ctx;
 
-  private Manager manager;
-
-  private WitnessStore witnessStore;
-
-  private NodeManager nodeManager;
+  private WitnessScheduleStore witnessScheduleStore;
 
   private ChannelManager channelManager;
 
@@ -41,7 +36,8 @@ public class FastForward {
 
   private Args args = Args.getInstance();
   private List<Node> fastForwardNodes = args.getFastForwardNodes();
-  private byte[] witnessAddress = args.getLocalWitnesses().getWitnessAccountAddress();
+  private ByteString witnessAddress = ByteString
+      .copyFrom(args.getLocalWitnesses().getWitnessAccountAddress());
   private int keySize = args.getLocalWitnesses().getPrivateKeys().size();
 
   public void init() {
@@ -53,19 +49,13 @@ public class FastForward {
       return;
     }
 
-    manager = ctx.getBean(Manager.class);
-    witnessStore = ctx.getBean(WitnessStore.class);
-    nodeManager = ctx.getBean(NodeManager.class);
+    witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
     channelManager = ctx.getBean(ChannelManager.class);
     backupManager = ctx.getBean(BackupManager.class);
 
-    if (args.getFastForwardNodes().size() > 0) {
-      fastForwardNodes = args.getFastForwardNodes();
-    }
-
     executorService.scheduleWithFixedDelay(() -> {
       try {
-        if (witnessStore.get(witnessAddress) != null &&
+        if (witnessScheduleStore.getActiveWitnesses().contains(witnessAddress) &&
             backupManager.getStatus().equals(BackupStatusEnum.MASTER) &&
             !WitnessService.isNeedSyncCheck()) {
           connect();
@@ -90,11 +80,10 @@ public class FastForward {
       InetAddress address = new InetSocketAddress(node.getHost(), node.getPort()).getAddress();
       channelManager.getActiveNodes().remove(address);
       channelManager.getActivePeers().forEach(channel -> {
-        if (channel.getNode().equals(node)) {
+        if (channel.getInetAddress().equals(address)) {
           channel.disconnect(ReasonCode.RESET);
         }
       });
     });
   }
-
 }

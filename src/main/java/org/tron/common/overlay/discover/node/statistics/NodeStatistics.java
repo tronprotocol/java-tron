@@ -21,6 +21,7 @@ package org.tron.common.overlay.discover.node.statistics;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.ReasonCode;
@@ -48,12 +49,15 @@ public class NodeStatistics {
   public final MessageCount tcpFlow = new MessageCount();
 
   public final SimpleStatter discoverMessageLatency;
+  public final SimpleStatter pingMessageLatency;
+
   public final AtomicLong lastPongReplyTime = new AtomicLong(0L); // in milliseconds
 
   private Reputation reputation;
 
-  public NodeStatistics(Node node) {
-    discoverMessageLatency = new SimpleStatter(node.getIdString());
+  public NodeStatistics() {
+    discoverMessageLatency = new SimpleStatter();
+    pingMessageLatency = new SimpleStatter();
     reputation = new Reputation(this);
   }
 
@@ -182,40 +186,26 @@ public class NodeStatistics {
   }
 
   public class SimpleStatter {
+    private long sum;
+    @Getter
+    private long count;
+    @Getter
+    private long last;
+    @Getter
+    private long min;
+    @Getter
+    private long max;
 
-    private final String name;
-    private volatile double last;
-    private volatile double sum;
-    private AtomicInteger count = new AtomicInteger();
-
-    public SimpleStatter(String name) {
-      this.name = name;
-    }
-
-    public void add(double value) {
+    public void add(long value) {
       last = value;
       sum += value;
-      count.incrementAndGet();
+      min = min == 0? value : Math.min(min, value);
+      max = Math.max(max, value);
+      count++;
     }
 
-    public double getLast() {
-      return last;
-    }
-
-    public int getCount() {
-      return count.get();
-    }
-
-    public double getSum() {
-      return sum;
-    }
-
-    public double getAvrg() {
-      return count.get() == 0 ? 0 : sum / count.get();
-    }
-
-    public String getName() {
-      return name;
+    public long getAvrg() {
+      return count == 0 ? 0 : sum / count;
     }
 
   }

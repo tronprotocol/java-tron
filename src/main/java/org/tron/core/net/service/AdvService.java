@@ -97,7 +97,7 @@ public class AdvService {
 
   synchronized public boolean addInv(Item item) {
 
-    if (fastForward && !InventoryType.BLOCK.equals(item.getType())) {
+    if (fastForward) {
       return false;
     }
 
@@ -135,7 +135,7 @@ public class AdvService {
 
   public void broadcast(Message msg) {
 
-    if (fastForward && !(msg instanceof BlockMessage)) {
+    if (fastForward) {
       return;
     }
 
@@ -160,8 +160,7 @@ public class AdvService {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
-      trxCache.put(item,
-          new TransactionMessage(((TransactionMessage) msg).getTransactionCapsule().getInstance()));
+      trxCache.put(item, new TransactionMessage(trxMsg.getTransactionCapsule().getInstance()));
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;
@@ -173,6 +172,26 @@ public class AdvService {
       consumerInvToSpread();
     }
   }
+
+  public void fastForward(BlockMessage msg) {
+    Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
+    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) == null
+            && peer.getAdvInvSpread().getIfPresent(item) == null)
+        .collect(Collectors.toList());
+
+    if (!fastForward) {
+      peers = peers.stream().filter(peer -> peer.isFastForwardPeer()).collect(Collectors.toList());
+    }
+
+    peers.forEach(peer -> {
+      peer.sendMessage(msg);
+      peer.getAdvInvSpread().put(item, System.currentTimeMillis());
+      peer.setBlockBothHave(msg.getBlockId());
+    });
+  }
+
 
   public void onDisconnect(PeerConnection peer) {
     if (!peer.getAdvInvRequest().isEmpty()) {
@@ -228,6 +247,7 @@ public class AdvService {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .filter(peer -> !peer.isFastForwardPeer())
         .collect(Collectors.toList());
 
     if (invToSpread.isEmpty() || peers.isEmpty()) {
@@ -285,9 +305,6 @@ public class AdvService {
 
     public void sendInv() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
-        if (key.equals(InventoryType.TRX) && peer.isFastForwardPeer()) {
-          return;
-        }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
         }
