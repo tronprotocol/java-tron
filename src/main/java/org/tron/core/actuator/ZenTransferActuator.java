@@ -18,6 +18,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -53,7 +54,8 @@ public class ZenTransferActuator extends AbstractActuator {
         executeTransparentFrom(zenTransferContract.getTransparentFromAddress().toByteArray(),
             zenTransferContract.getFromAmount(), ret);
       }
-      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(), zenTokenId, fee);
+      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(),
+          zenTokenId, fee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -133,26 +135,27 @@ public class ZenTransferActuator extends AbstractActuator {
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-
-    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
-    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
-    try {
-      currentMerkle.wfcheck();
-    } catch (ZksnarkException e) {
-      ret.setStatus(calcFee(), code.FAILED);
-      throw new ContractExeException(e.getMessage());
-    }
-    //handle receives
-    for (ReceiveDescription receive : receives) {
+    if (Args.getInstance().isAllowShieldedTransaction()) {
+      MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+      IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
-        merkleContainer
-            .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+        currentMerkle.wfcheck();
       } catch (ZksnarkException e) {
         ret.setStatus(calcFee(), code.FAILED);
         throw new ContractExeException(e.getMessage());
       }
+      //handle receives
+      for (ReceiveDescription receive : receives) {
+        try {
+          merkleContainer
+              .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
+        } catch (ZksnarkException e) {
+          ret.setStatus(calcFee(), code.FAILED);
+          throw new ContractExeException(e.getMessage());
+        }
+      }
+      merkleContainer.setCurrentMerkle(currentMerkle);
     }
-    merkleContainer.setCurrentMerkle(currentMerkle);
   }
 
   @Override
@@ -193,7 +196,7 @@ public class ZenTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (!dbManager.getMerkleContainer()
+        if (Args.getInstance().isAllowShieldedTransaction() && !dbManager.getMerkleContainer()
             .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }
@@ -238,7 +241,7 @@ public class ZenTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if ( receiveDescription.getCEnc().size() != 580
+          if (receiveDescription.getCEnc().size() != 580
               || receiveDescription.getCOut().size() != 80) {
             throw new ContractValidateException("receive description null");
           }
