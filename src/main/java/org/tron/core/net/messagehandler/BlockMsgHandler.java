@@ -3,7 +3,9 @@ package org.tron.core.net.messagehandler;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
@@ -61,11 +63,12 @@ public class BlockMsgHandler implements TronMsgHandler {
       syncService.processBlock(peer, blockMessage);
     } else {
       Long time = peer.getAdvInvRequest().remove(item);
-      if (time != null) {
-        logger.info("Receive block {} from {}, cost {}ms", blockId.getString(),
-            peer.getInetAddress(),
-            System.currentTimeMillis() - time);
-      }
+      long cost = time == null ? 0 : System.currentTimeMillis() - time;
+      logger.info("Receive block {}, witness: {} from {}, fetch cost {}ms",
+          blockId.getString(),
+          Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()),
+          peer.getInetAddress(),
+          cost);
       processBlock(peer, blockMessage.getBlockCapsule());
     }
   }
@@ -97,7 +100,7 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
     if (block.getNum() <= headNum) {
-      logger.info("Receive block num {} <= head num {}, from peer {}",
+      logger.warn("Receive block num {} <= head num {}, from peer {}",
           block.getNum(), headNum, peer.getInetAddress());
     }
 
