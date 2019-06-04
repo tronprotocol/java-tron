@@ -32,6 +32,8 @@ import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
+import static org.tron.core.zen.note.ZenChainParams.*;
+
 
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
@@ -56,7 +58,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         executeTransparentFrom(shieldedTransferContract.getTransparentFromAddress().toByteArray(),
             shieldedTransferContract.getFromAmount(), ret);
       }
-      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(), zenTokenId, fee);
+      dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(),
+          zenTokenId, fee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -242,9 +245,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if (receiveDescription.getCEnc().size() != 580
-              || receiveDescription.getCOut().size() != 80) {
-            throw new ContractValidateException("receive description null");
+          if (receiveDescription.getCEnc().size() != ZC_ENCCIPHERTEXT_SIZE
+              || receiveDescription.getCOut().size() != ZC_OUTCIPHERTEXT_SIZE) {
+            throw new ContractValidateException("Cout or CEnc size error");
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
               new CheckOutputParams(ctx,
@@ -351,7 +354,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("no transparent_to_address, to_amount should be 0");
     }
     if (hasTransparentFrom && hasTransparentTo && Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Can't transfer trx to yourself");
+      throw new ContractValidateException("Can't transfer zen to yourself");
     }
 
     if (hasTransparentFrom) {
@@ -402,13 +405,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public long calcFee() {
     long fee = 0;
-//    byte[] toAddress = shieldedTransferContract.getTransparentToAddress().toByteArray();
-//    if (Wallet.addressValid(toAddress)) {
-//      AccountCapsule transparentToAccount = dbManager.getAccountStore().get(toAddress);
-//      if (transparentToAccount == null) {
-//        fee = dbManager.getDynamicPropertiesStore().getCreateAccountFee();
-//      }
-//    }
     fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }
