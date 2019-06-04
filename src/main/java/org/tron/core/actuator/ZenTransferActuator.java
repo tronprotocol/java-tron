@@ -383,7 +383,11 @@ public class ZenTransferActuator extends AbstractActuator {
   }
 
   private long getZenBalance(AccountCapsule account) {
-    return account.getAssetMapV2().get(zenTokenId);
+    if (account.getAssetMapV2().get(zenTokenId) == null) {
+      return 0L;
+    } else {
+      return account.getAssetMapV2().get(zenTokenId);
+    }
   }
 
   @Override
