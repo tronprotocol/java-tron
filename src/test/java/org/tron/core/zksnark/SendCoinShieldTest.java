@@ -37,7 +37,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
-import org.tron.core.actuator.ZenTransferActuator;
+import org.tron.core.actuator.ShieldedTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -1035,7 +1035,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               110_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ZenTransferActuator.zenTokenId, 110_000_000L)
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L)
           .build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
@@ -1075,7 +1075,7 @@ public class SendCoinShieldTest {
               110_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ZenTransferActuator.zenTokenId, 110_000_000L)
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 110_000_000L)
           .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
@@ -1280,7 +1280,7 @@ public class SendCoinShieldTest {
               220_000_000L);
 
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ZenTransferActuator.zenTokenId, 220_000_000L)
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 220_000_000L)
           .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 210_000_000L);
@@ -1312,7 +1312,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               230_000_000L);
       ownerCapsule.setInstance(ownerCapsule.getInstance().toBuilder()
-          .putAssetV2(ZenTransferActuator.zenTokenId, 230_000_000L)
+          .putAssetV2(ShieldedTransferActuator.zenTokenId, 230_000_000L)
           .build());
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
       builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 220_000_000L);
