@@ -516,7 +516,7 @@ public class Program {
         TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
         // TODO: unreachable exception
-        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
       }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
@@ -710,7 +710,7 @@ public class Program {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -723,7 +723,7 @@ public class Program {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1424,7 +1424,7 @@ public class Program {
           TransferAssetActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1557,6 +1557,10 @@ public class Program {
 
     public BytecodeExecutionException(String message) {
       super(message);
+    }
+
+    public BytecodeExecutionException(String message, Object... args) {
+      super(format(message, args));
     }
   }
 
