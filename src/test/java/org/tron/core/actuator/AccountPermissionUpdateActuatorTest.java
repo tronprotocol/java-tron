@@ -1106,7 +1106,7 @@ public class AccountPermissionUpdateActuatorTest {
     // note: The aim of this test case is to show how the current codes work.
     // The default value is 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract type
-    String validContractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037e0800000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1132,7 +1132,7 @@ public class AccountPermissionUpdateActuatorTest {
     // note: The aim of this test case is to show how the current codes work.
     // The default value is 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract type
-    String validContractType = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033e0800000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1157,7 +1157,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkAvailableContractType() {
-    String validContractType = "7fff1fc0037e0100000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0037e0900000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
@@ -1177,7 +1177,7 @@ public class AccountPermissionUpdateActuatorTest {
 
   @Test
   public void checkActiveDefaultOperations() {
-    String validContractType = "7fff1fc0033e0100000000000000000000000000000000000000000000000000";
+    String validContractType = "7fff1fc0033e0900000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];
     for (ContractType contractType : ContractType.values()) {
