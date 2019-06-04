@@ -100,7 +100,6 @@ public class SpendingKey {
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
       if (Librustzcash.librustzcashCheckDiversifier(res)) {
-        System.out.println("》》》》》》》》》》》》》》》》");
         break;
       } else if (blob[33] == 255) {
         throw new BadItemException(
