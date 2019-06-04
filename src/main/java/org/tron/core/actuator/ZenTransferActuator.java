@@ -31,6 +31,7 @@ import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Contract.ZenTransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import static org.tron.core.zen.note.ZenChainParams.*;
 
 @Slf4j(topic = "actuator")
 public class ZenTransferActuator extends AbstractActuator {
@@ -241,9 +242,9 @@ public class ZenTransferActuator extends AbstractActuator {
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
-          if (receiveDescription.getCEnc().size() != 580
-              || receiveDescription.getCOut().size() != 80) {
-            throw new ContractValidateException("receive description null");
+          if (receiveDescription.getCEnc().size() != ZC_ENCCIPHERTEXT_SIZE
+              || receiveDescription.getCOut().size() != ZC_OUTCIPHERTEXT_SIZE) {
+            throw new ContractValidateException("Cout or CEnc size error");
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
               new CheckOutputParams(ctx,
