@@ -77,7 +77,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.SmartContract.Builder;
 
 /**
  * @author Roman Mandeleil
@@ -90,8 +92,9 @@ public class Program {
   private static final int MAX_DEPTH = 64;
   //Max size for stack checks
   private static final int MAX_STACK_SIZE = 1024;
-  public static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
-      "validateForSmartContract failure";
+  private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
+      "validateForSmartContract failure:%s";
+  private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
 
   private BlockCapsule blockCap;
 
@@ -447,10 +450,11 @@ public class Program {
     byte[] newAddress = Wallet
         .generateContractAddress(rootTransactionId, nonce);
 
-    createContractImpl(value, programCode, newAddress);
+    createContractImpl(value, programCode, newAddress, false);
   }
 
-  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress) {
+  private void createContractImpl(DataWord value, byte[] programCode, byte[] newAddress,
+      boolean isCreate2) {
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
     if (logger.isDebugEnabled()) {
@@ -464,22 +468,47 @@ public class Program {
       return;
     }
 
-    AccountCapsule existingAddr = getContractState().getAccount(newAddress);
-    boolean contractAlreadyExists = existingAddr != null;
+    AccountCapsule existingAccount = getContractState().getAccount(newAddress);
+    boolean contractAlreadyExists = existingAccount != null;
 
+    if (VMConfig.allowTvmConstantinople()) {
+      contractAlreadyExists =
+          contractAlreadyExists && isContractExist(existingAccount, getContractState());
+    }
     Deposit deposit = getContractState().newDepositChild();
+    if (VMConfig.allowTvmConstantinople()) {
+      if (existingAccount == null) {
+        deposit.createAccount(newAddress, "CreatedByContract",
+            AccountType.Contract);
+      } else if (!contractAlreadyExists) {
+        existingAccount.updateAccountType(AccountType.Contract);
+        existingAccount.clearDelegatedResource();
+        deposit.updateAccount(newAddress, existingAccount);
+      }
 
-    //In case of hashing collisions, check for any balance before createAccount()
-    long oldBalance = deposit.getBalance(newAddress);
+      if (!contractAlreadyExists) {
+        Builder builder = SmartContract.newBuilder();
+        builder.setContractAddress(ByteString.copyFrom(newAddress))
+            .setConsumeUserResourcePercent(100)
+            .setOriginAddress(ByteString.copyFrom(senderAddress));
+        if (isCreate2) {
+          builder.setTrxHash(ByteString.copyFrom(rootTransactionId));
+        }
+        SmartContract newSmartContract = builder.build();
+        deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+      }
+    } else {
+      deposit.createAccount(newAddress, "CreatedByContract",
+          Protocol.AccountType.Contract);
+      SmartContract newSmartContract = SmartContract.newBuilder()
+          .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
+          .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
+      deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
+      // In case of hashing collisions, check for any balance before createAccount()
+      long oldBalance = deposit.getBalance(newAddress);
+      deposit.addBalance(newAddress, oldBalance);
+    }
 
-    SmartContract newSmartContract = SmartContract.newBuilder()
-        .setContractAddress(ByteString.copyFrom(newAddress)).setConsumeUserResourcePercent(100)
-        .setOriginAddress(ByteString.copyFrom(senderAddress)).build();
-    deposit.createContract(newAddress, new ContractCapsule(newSmartContract));
-    deposit.createAccount(newAddress, "CreatedByContract",
-        Protocol.AccountType.Contract);
-
-    deposit.addBalance(newAddress, oldBalance);
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
@@ -487,7 +516,7 @@ public class Program {
         TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
         // TODO: unreachable exception
-        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+        throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
       }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
@@ -626,9 +655,10 @@ public class Program {
       endowment = msg.getEndowment().value().longValueExact();
     } catch (ArithmeticException e) {
       if (VMConfig.allowTvmConstantinople()) {
+        refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
         throw new TransferException("endowment out of long range");
       } else {
-        throw e;
+      throw e;
       }
     }
     // transfer trx validation
@@ -680,7 +710,7 @@ public class Program {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
@@ -693,7 +723,7 @@ public class Program {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1214,7 +1244,7 @@ public class Program {
 
     byte[] contractAddress = Wallet
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
-    createContractImpl(value, programCode, contractAddress);
+    createContractImpl(value, programCode, contractAddress, true);
   }
 
   static class ByteCodeIterator {
@@ -1394,7 +1424,7 @@ public class Program {
           TransferAssetActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE);
+          throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1463,14 +1493,27 @@ public class Program {
   public void checkTokenId(MessageCall msg) {
     if (VMConfig.allowMultiSign()) { //allowMultiSign proposal
       // tokenid should not get Long type overflow
-      long tokenId = msg.getTokenId().sValue().longValueExact();
+      long tokenId;
+      try {
+        tokenId = msg.getTokenId().sValue().longValueExact();
+      } catch (ArithmeticException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
+        }
+        throw e;
+      }
       // tokenId can only be 0 when isTokenTransferMsg == false
       // or tokenId can be (MIN_TOKEN_ID, Long.Max] when isTokenTransferMsg == true
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
+        if (VMConfig.allowTvmConstantinople()) {
+          refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
+        }
         throw new BytecodeExecutionException(
-            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
   }
@@ -1486,11 +1529,20 @@ public class Program {
   public void checkTokenIdInTokenBalance(DataWord tokenIdDataWord) {
     if (VMConfig.allowMultiSign()) { //allowMultiSigns proposal
       // tokenid should not get Long type overflow
-      long tokenId = tokenIdDataWord.sValue().longValueExact();
+      long tokenId;
+      try {
+        tokenId = tokenIdDataWord.sValue().longValueExact();
+      } catch (ArithmeticException e) {
+        if (VMConfig.allowTvmConstantinople()) {
+          throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
+        }
+        throw e;
+      }
+
       // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
       if (tokenId <= VMConstant.MIN_TOKEN_ID) {
         throw new BytecodeExecutionException(
-            VALIDATE_FOR_SMART_CONTRACT_FAILURE + ", not valid token id");
+            String.format(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG));
       }
     }
   }
@@ -1505,6 +1557,10 @@ public class Program {
 
     public BytecodeExecutionException(String message) {
       super(message);
+    }
+
+    public BytecodeExecutionException(String message, Object... args) {
+      super(format(message, args));
     }
   }
 
@@ -1713,4 +1769,7 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
+  private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
+    return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
 }

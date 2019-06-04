@@ -32,20 +32,24 @@ public class ContractEventParserJson extends ContractEventParser {
 
     // in case indexed topics doesn't match
     if (topicsMatched(topicList, entry)) {
-      for (int i = 0; i < inputs.size(); ++i) {
-        JSONObject param = inputs.getJSONObject(i);
-        Boolean indexed = param.getBoolean(INDEXED);
-        if (indexed == null || !indexed) {
-          continue;
+      if (inputs != null) {
+        for (int i = 0; i < inputs.size(); ++i) {
+          JSONObject param = inputs.getJSONObject(i);
+          if (param != null) {
+            Boolean indexed = param.getBoolean(INDEXED);
+            if (indexed == null || !indexed) {
+              continue;
+            }
+            if (index >= topicList.size()) {
+              break;
+            }
+            String str = parseTopic(topicList.get(index++), param.getString("type"));
+            if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
+              map.put(param.getString("name"), str);
+            }
+            map.put("" + i, str);
+          }
         }
-        if (index >= topicList.size()) {
-          break;
-        }
-        String str = parseTopic(topicList.get(index++), param.getString("type"));
-        if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
-          map.put(param.getString("name"), str);
-        }
-        map.put("" + i, str);
       }
     } else {
       for (int i = 1; i < topicList.size(); ++i) {
@@ -82,21 +86,22 @@ public class ContractEventParserJson extends ContractEventParser {
       if (inputs != null) {
         for (Integer i = 0; i < inputs.size(); ++i) {
           JSONObject param = inputs.getJSONObject(i);
-          Boolean indexed = param.getBoolean(INDEXED);
-          if (indexed != null && indexed) {
-            continue;
-          }
+          if (param != null) {
+            Boolean indexed = param.getBoolean(INDEXED);
+            if (indexed != null && indexed) {
+              continue;
+            }
 
-          if (startIndex == 0) {
-            startIndex = i;
-          }
+            if (startIndex == 0) {
+              startIndex = i;
+            }
 
-          String str = parseDataBytes(data, param.getString("type"), index++);
-          if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
-            map.put(param.getString("name"), str);
+            String str = parseDataBytes(data, param.getString("type"), index++);
+            if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
+              map.put(param.getString("name"), str);
+            }
+            map.put("" + i, str);
           }
-          map.put("" + i, str);
-
         }
       } else {
         map.put("0", Hex.toHexString(data));
@@ -115,14 +120,17 @@ public class ContractEventParserJson extends ContractEventParser {
     }
     int inputSize = 1;
     JSONArray inputs = entry.getJSONArray(INPUTS);
-    for (int i = 0; i < inputs.size(); i++) {
-      JSONObject param = inputs.getJSONObject(i);
-      Boolean indexed = param.getBoolean(INDEXED);
-      if (indexed != null && indexed) {
-        inputSize++;
+    if (inputs != null) {
+      for (int i = 0; i < inputs.size(); i++) {
+        JSONObject param = inputs.getJSONObject(i);
+        if (param != null) {
+          Boolean indexed = param.getBoolean(INDEXED);
+          if (indexed != null && indexed) {
+            inputSize++;
+          }
+        }
       }
     }
     return inputSize == topicList.size();
   }
-
 }
