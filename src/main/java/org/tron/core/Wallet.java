@@ -1368,7 +1368,7 @@ public class Wallet {
   }
 
   public boolean getAllowShieldedTransactionApi() {
-    return Args.getInstance().isAllowShieldedTransactionApi();
+    return Args.getInstance().isAllowShieldedTransaction();
   }
 
   public BytesMessage getNullifier(ByteString id) {
