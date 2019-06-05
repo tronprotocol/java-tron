@@ -45,10 +45,6 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private BlockId signUpErrorBlockId;
-
-  @Setter
-  @Getter
   private HelloMessage helloMessage;
 
   private int invCacheSize = 100_000;
@@ -66,6 +62,9 @@ public class PeerConnection extends Channel {
   @Setter
   @Getter
   private Map<Item, Long> advInvRequest = new ConcurrentHashMap<>();
+
+  @Setter
+  private BlockId fastForwardBlock;
 
   @Getter
   private BlockId blockBothHave = new BlockId();
@@ -195,7 +194,7 @@ public class PeerConnection extends Channel {
         getNodeStatistics().pingMessageLatency.getLast(),
 
         (now - getStartTime()) / 1000,
-        blockBothHave.getNum(),
+        fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),

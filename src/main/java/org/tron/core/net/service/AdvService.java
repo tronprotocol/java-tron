@@ -188,7 +188,7 @@ public class AdvService {
     peers.forEach(peer -> {
       peer.sendMessage(msg);
       peer.getAdvInvSpread().put(item, System.currentTimeMillis());
-      peer.setBlockBothHave(msg.getBlockId());
+      peer.setFastForwardBlock(msg.getBlockId());
     });
   }
 
