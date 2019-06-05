@@ -762,13 +762,13 @@ public class ShieldedTransferActuatorTest {
       int[] noteNumArray = {3, 7, 10};
       for (int noteNum : noteNumArray) {
         //generate one block
-        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis()-3000, privateKey,
             false, false);
 
         //Step 1, public address to shield address
         List<Note> listNote = new ArrayList<>();
-        long ownerBalance = dbManager.getAccountStore().get(ByteArray
-            .fromHexString(PUBLIC_ADDRESS_ONE)).getBalance();
+        long ownerBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
+            .fromHexString(PUBLIC_ADDRESS_ONE)));
         ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
         //From amount
         builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
@@ -1121,7 +1121,7 @@ public class ShieldedTransferActuatorTest {
     try {
       int noteNum = 5;
       //generate one block
-      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis()-3000, privateKey,
           false, false);
 
       //Step 1, public address to shield address
@@ -1163,7 +1163,6 @@ public class ShieldedTransferActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
       Assert.assertEquals(getAssertBalance(accountCapsuleOne),
           ownerAssertBalance - AMOUNT - fee);
-
       //package transaction to block
       dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
           false, false);
@@ -1231,7 +1230,7 @@ public class ShieldedTransferActuatorTest {
             voucher.getVoucherCapsule().getTree());
         builder.addSpend(expsk, note, anchor, voucher);
       }
-      for (int i = 0; i < 1; i++) {
+      for (int i = 0; i < 4; i++) {
         Note note = new Note(address, 0);
         IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
         byte[] anchor = voucher.root().getContent().toByteArray();
