@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
@@ -33,6 +34,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
@@ -59,6 +61,7 @@ import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
@@ -79,9 +82,18 @@ public class ShieldedReceiveTest {
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
   private static final long FROM_AMOUNT = 110_000_000;
-
   private static Wallet wallet;
-
+  
+  private static final long  tokenId = 1;
+  private static final String ASSET_NAME = "trx";
+  private static final int TRX_NUM = 10;
+  private static final int NUM = 1;
+  private static final long START_TIME = 1;
+  private static final long END_TIME = 2;
+  private static final int VOTE_SCORE = 2;
+  private static final String DESCRIPTION = "TRX";
+  private static final String URL = "https://tron.network";
+  
   public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM};
   public enum TestSignMissingColumn {FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT};
@@ -103,6 +115,7 @@ public class ShieldedReceiveTest {
     dbManager = context.getBean(Manager.class);
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
+    Args.getInstance().setAllowShieldedTransaction(true);
   }
 
   /**
@@ -118,6 +131,32 @@ public class ShieldedReceiveTest {
     } else {
       logger.info("Release resources failure.");
     }
+  }
+  /**
+   * create temp Capsule test need.
+   */
+  @Before
+  public void createToken() {
+    Args.getInstance().setZenTokenId(String.valueOf(tokenId));
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
+    
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(FROM_ADDRESS)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(tokenId))
+                    .setTotalSupply(OWNER_BALANCE)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
   }
 
   /**
@@ -381,7 +420,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -423,7 +462,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -464,7 +503,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -506,7 +545,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -548,7 +587,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("Cout or CEnc size error", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -590,7 +629,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("Cout or CEnc size error", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -641,6 +680,8 @@ public class ShieldedReceiveTest {
     receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
     receiveDescriptionCapsule.setZkproof(zkProof);
 
+    System.out.println("right cm:" + ByteArray.toHexString(cm));
+    
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().pkD, encryptor.esk);
     receiveDescriptionCapsule.setCOut(outPlaintext
@@ -697,6 +738,8 @@ public class ShieldedReceiveTest {
       default:
         break;
     }
+  
+    System.out.println("wrong cm:" + ByteArray.toHexString(receiveDescriptionCapsule.getCm().toByteArray()));
 
     return receiveDescriptionCapsule;
   }
@@ -841,7 +884,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("librustzcashSaplingCheckOutput error",e.getMessage());
     }
   }
 
@@ -870,7 +913,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("librustzcashSaplingCheckOutput error",e.getMessage());
     }
   }
 
@@ -899,7 +942,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
   }
 
@@ -957,7 +1000,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
     }
   }
 
@@ -1888,9 +1931,8 @@ public class ShieldedReceiveTest {
   }
 
   public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
-      byte[] ak,
-      byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned, ZenTransactionBuilder builder,
-      Pointer ctx)
+      byte[] ak, byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned, ZenTransactionBuilder
+          builder, Pointer ctx)
       throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
     Note note = new Note(address, 100 * 1000000);
@@ -1903,7 +1945,7 @@ public class ShieldedReceiveTest {
         nsk,
         ovk,
         note,
-        note.rcm, //?
+        Note.generateR(),
         anchor,
         voucher
     );
