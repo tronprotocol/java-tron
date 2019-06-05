@@ -33,13 +33,10 @@ public class P2pHandler extends SimpleChannelInboundHandler<P2pMessage> {
 
   private volatile boolean hasPing = false;
 
-  private volatile long sendPingTime;
-
   @Override
-  public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+  public void handlerAdded(ChannelHandlerContext ctx) {
     pingTask = pingTimer.scheduleAtFixedRate(() -> {
       if (!hasPing) {
-        sendPingTime = System.currentTimeMillis();
         hasPing = msgQueue.sendMessage(PING_MESSAGE);
       }
     }, 10, 10, TimeUnit.SECONDS);

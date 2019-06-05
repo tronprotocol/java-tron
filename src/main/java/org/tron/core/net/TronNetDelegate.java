@@ -216,11 +216,8 @@ public class TronNetDelegate {
 
   public boolean validBlock(BlockCapsule block) throws P2pException {
     try {
-      if (!block.validateSignature(dbManager) ||
-          !witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())) {
-        return false;
-      }
-      return true;
+      return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())
+          && block.validateSignature(dbManager);
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
