@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -52,6 +53,9 @@ public class TronNetDelegate {
   private SyncPool syncPool;
 
   @Autowired
+  private ChannelManager channelManager;
+
+  @Autowired
   private Manager dbManager;
 
   @Autowired
@@ -71,6 +75,10 @@ public class TronNetDelegate {
       return super.offer(blockId);
     }
   };
+
+  public void trustNode (PeerConnection peer) {
+    channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
+  }
 
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
