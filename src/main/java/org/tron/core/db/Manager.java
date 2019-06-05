@@ -1776,6 +1776,7 @@ public class Manager {
     closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(transactionRetStore);
     logger.info("******** end to close db ********");
   }
 
