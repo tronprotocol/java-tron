@@ -667,6 +667,36 @@ public class LibrustzcashParam {
       valid();
     }
 
+    public static CheckOutputParams decode(Pointer ctx, byte[] data)
+        throws ZksnarkException {
+      byte[] cv = new byte[32];
+      byte[] cm = new byte[32];
+      byte[] ephemeralKey = new byte[32];
+      byte[] zkproof = new byte[192];
+
+      System.arraycopy(data, 0, cv, 0, 32);
+      System.arraycopy(data, 32, cm, 0, 32);
+      System.arraycopy(data, 64, ephemeralKey, 0, 32);
+      System.arraycopy(data, 96, zkproof, 0, 192);
+
+      return new CheckOutputParams(ctx, cv, cm, ephemeralKey, zkproof);
+    }
+
+    public static CheckOutputParams decodeZ(Pointer ctx, byte[] data)
+        throws ZksnarkException {
+      byte[] cv = new byte[32];
+      byte[] cm = new byte[32];
+      byte[] ephemeralKey = new byte[32];
+      byte[] zkproof = new byte[192];
+
+      System.arraycopy(data, 0, cv, 0, 32);
+      System.arraycopy(data, 32, cm, 0, 32);
+      System.arraycopy(data, 64, ephemeralKey, 0, 32);
+      System.arraycopy(data, 96 + 580 + 80, zkproof, 0, 192);
+
+      return new CheckOutputParams(ctx, cv, cm, ephemeralKey, zkproof);
+    }
+
     @Override
     public void valid() throws ZksnarkException {
       validObjectNull(ctx);
