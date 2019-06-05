@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -44,50 +42,40 @@ public class LogInfoTriggerParser {
       return list;
     }
 
-    Map<String, String> signMap = new HashMap<>();
-    Map<String, String> abiMap = new HashMap<>();
+    Map<String, String> addrMap = new HashMap<>();
+    Map<String, ABI> abiMap = new HashMap<>();
 
     for (LogInfo logInfo : logInfos) {
 
       byte[] contractAddress = MUtil.convertToTronAddress(logInfo.getAddress());
       String strContractAddr =
           ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
-      if (signMap.get(strContractAddr) != null) {
+      if (addrMap.get(strContractAddr) != null) {
         continue;
       }
       ContractCapsule contract = deposit.getContract(contractAddress);
       if (contract == null) {
-        signMap.put(strContractAddr, originAddress); // mark as found.
-        abiMap.put(strContractAddr, "");
+        // never
+        addrMap.put(strContractAddr, originAddress);
+        abiMap.put(strContractAddr, ABI.getDefaultInstance());
         continue;
       }
       ABI abi = contract.getInstance().getAbi();
       String creatorAddr = Wallet.encode58Check(
           MUtil.convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
-      signMap.put(strContractAddr, creatorAddr); // mark as found.
-
-      if (abi != null && abi.getEntrysCount() > 0) {
-        try {
-          abiMap
-              .put(strContractAddr, JsonFormat.printer().includingDefaultValueFields().print(abi));
-        } catch (InvalidProtocolBufferException e) {
-          abiMap.put(strContractAddr, "");
-          logger.info("abi to json empty:" + txId, e);
-        }
-      } else {
-        abiMap.put(strContractAddr, "");
-      }
+      addrMap.put(strContractAddr, creatorAddr);
+      abiMap.put(strContractAddr, abi);
     }
 
     int index = 1;
     for (LogInfo logInfo : logInfos) {
+
       byte[] contractAddress = MUtil.convertToTronAddress(logInfo.getAddress());
       String strContractAddr =
           ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
-
-      String abiString = abiMap.get(strContractAddr);
+      ABI abi = abiMap.get(strContractAddr);
       ContractTrigger event = new ContractTrigger();
-      String creatorAddr = signMap.get(strContractAddr);
+      String creatorAddr = addrMap.get(strContractAddr);
       event.setUniqueId(txId + "_" + index);
       event.setTransactionId(txId);
       event.setContractAddress(strContractAddr);
@@ -97,7 +85,7 @@ public class LogInfoTriggerParser {
       event.setBlockNumber(blockNum);
       event.setTimeStamp(blockTimestamp);
       event.setLogInfo(logInfo);
-      event.setAbiString(abiString);
+      event.setAbi(abi);
 
       list.add(event);
       index++;
