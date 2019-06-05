@@ -1,4 +1,3 @@
-
 version: 2
 jobs:
   build:
@@ -14,10 +13,14 @@ jobs:
     steps:
     - checkout
     - run:
-        name: Daily Build Report
-        command: curl http://60.205.215.34/Daily_Build_Task_Report
+        name: multi_os_result
+        command: echo "curl http://60.205.215.34/multi_os_result"
+#
+#    - run:
+#        name: Daily Build Report
+#        command: curl http://60.205.215.34/Daily_Build_Task_Report
+#
+#    - run:
+#        name: Download Links
+#        command: sh DownloadLinks.sh
 
-
-    - run:
-        name: Download Links
-        command: sh DownloadLinks.sh

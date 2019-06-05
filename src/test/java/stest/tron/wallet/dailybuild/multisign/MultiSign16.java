@@ -447,6 +447,8 @@ public class MultiSign16 {
         .printf(PublicMethedForMutiSign.printPermission(PublicMethed.queryAccount(ownerAddress,
             blockingStubFull).getWitnessPermission()));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     PublicMethedForMutiSign
         .recoverWitnessPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)

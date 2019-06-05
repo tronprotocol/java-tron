@@ -40,6 +40,8 @@ public abstract class Message {
 
   public abstract Node getFrom();
 
+  public abstract long getTimestamp();
+
   @Override
   public String toString() {
     return "[Message Type: " + getType() + ", len: " + (data == null ? 0 : data.length) + "]";
@@ -55,7 +57,7 @@ public abstract class Message {
     return getMessageId().hashCode();
   }
 
-  public static Node getNode(Endpoint endpoint){
+  public static Node getNode(Endpoint endpoint) {
     Node node = new Node(endpoint.getNodeId().toByteArray(),
         ByteArray.toStr(endpoint.getAddress().toByteArray()), endpoint.getPort());
     return node;

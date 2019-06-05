@@ -43,6 +43,9 @@ public class WalletTestWitness003 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
+  private final String testUpdateWitnessKey = Configuration.getByPath("testng.conf")
+      .getString("witness.key1");
+  private final byte[] updateAddress = PublicMethed.getFinalAddress(testUpdateWitnessKey);
   private static final byte[] INVAILD_ADDRESS = Base58
       .decodeFromBase58Check("27cu1ozb4mX3m2afY68FSAqn3HmMp815d48");
 
@@ -55,6 +58,10 @@ public class WalletTestWitness003 {
   byte[] updateUrl = updateWitnessUrl.getBytes();
   byte[] wrongUrl = nullUrl.getBytes();
   byte[] updateSpaceUrl = spaceUrl.getBytes();
+  private static final String tooLongUrl = "qagwqaswqaswqaswqaswqaswqaswqaswqaswqaswqaswqas"
+      + "wqaswqasw1qazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazx"
+      + "swedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedcvqazxswedc"
+      + "vqazxswedcvqazxswedcvqazxswedcvqazxswedcv";
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
@@ -70,6 +77,7 @@ public class WalletTestWitness003 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -80,26 +88,25 @@ public class WalletTestWitness003 {
     logger.info(ByteArray.toHexString(PublicMethed.getFinalAddress(lowBalTest)));
     logger.info(Base58.encode58Check(PublicMethed.getFinalAddress(lowBalTest)));
 
-
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true,description = "Invaild account to apply create witness")
+  @Test(enabled = true, description = "Invaild account to apply create witness")
   public void testInvaildToApplyBecomeWitness() {
-    Assert.assertFalse(createWitness(INVAILD_ADDRESS, createUrl, testKey002));
+    Assert.assertFalse(createWitnessNotBroadcast(INVAILD_ADDRESS, createUrl, testKey002));
   }
 
-  @Test(enabled = true,description = "Create witness")
+  @Test(enabled = true, description = "Create witness")
   public void testCreateWitness() {
     //If you are already is witness, apply failed
     //createWitness(fromAddress, createUrl, testKey002);
     //Assert.assertFalse(createWitness(fromAddress, createUrl, testKey002));
 
     //No balance,try to create witness.
-    Assert.assertFalse(createWitness(lowBalAddress, createUrl, lowBalTest));
+    Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     //Send enough coin to the apply account to make that account
     // has ability to apply become witness.
@@ -108,13 +115,20 @@ public class WalletTestWitness003 {
     Optional<WitnessList> result = Optional.ofNullable(witnesslist);
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
-      Assert.assertTrue(sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002));
-      Assert.assertTrue(createWitness(lowBalAddress, createUrl, lowBalTest));
+      Assert.assertTrue(PublicMethed
+          .sendcoin(lowBalAddress, costForCreateWitness, fromAddress, testKey002,
+              blockingStubFull));
+      //null url, update failed
+      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress, wrongUrl, testUpdateWitnessKey));
+      //too long url, update failed
+      Assert.assertFalse(createWitnessNotBroadcast(lowBalAddress,
+          tooLongUrl.getBytes(), testUpdateWitnessKey));
+      Assert.assertTrue(createWitnessNotBroadcast(lowBalAddress, createUrl, lowBalTest));
 
     }
   }
 
-  @Test(enabled = true,description = "Update witness")
+  @Test(enabled = true, description = "Update witness")
   public void testUpdateWitness() {
     GrpcAPI.WitnessList witnesslist = blockingStubFull
         .listWitnesses(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -122,17 +136,20 @@ public class WalletTestWitness003 {
     GrpcAPI.WitnessList witnessList = result.get();
     if (result.get().getWitnessesCount() < 6) {
       //null url, update failed
-      Assert.assertFalse(updateWitness(lowBalAddress, wrongUrl, lowBalTest));
+      Assert.assertFalse(updateWitness(updateAddress, wrongUrl, testUpdateWitnessKey));
+      //too long url, update failed
+      Assert.assertFalse(updateWitness(updateAddress, tooLongUrl.getBytes(), testUpdateWitnessKey));
       //Content space and special char, update success
-      Assert.assertTrue(updateWitness(lowBalAddress, updateSpaceUrl, lowBalTest));
+      Assert.assertTrue(updateWitness(updateAddress, updateSpaceUrl, testUpdateWitnessKey));
       //update success
-      Assert.assertTrue(updateWitness(lowBalAddress, updateUrl, lowBalTest));
+      Assert.assertTrue(updateWitness(updateAddress, updateUrl, testUpdateWitnessKey));
     } else {
       logger.info("Update witness case had been test.This time skip it.");
     }
 
 
   }
+
   /**
    * constructor.
    */
@@ -148,7 +165,7 @@ public class WalletTestWitness003 {
    * constructor.
    */
 
-  public Boolean createWitness(byte[] owner, byte[] url, String priKey) {
+  public Boolean createWitnessNotBroadcast(byte[] owner, byte[] url, String priKey) {
     ECKey temKey = null;
     try {
       BigInteger priK = new BigInteger(priKey, 16);
@@ -167,14 +184,9 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      return false;
-    } else {
-      return true;
-    }
-
+    return true;
   }
+
   /**
    * constructor.
    */
@@ -199,7 +211,7 @@ public class WalletTestWitness003 {
       return false;
     }
     transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
+    GrpcAPI.Return response = PublicMethed.broadcastTransaction(transaction, blockingStubFull);
     if (response.getResult() == false) {
       logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
       logger.info("response.getRestult() == false");
@@ -283,6 +295,7 @@ public class WalletTestWitness003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -292,6 +305,7 @@ public class WalletTestWitness003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */

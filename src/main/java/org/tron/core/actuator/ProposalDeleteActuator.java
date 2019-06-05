@@ -38,13 +38,11 @@ public class ProposalDeleteActuator extends AbstractActuator {
       ProposalCapsule proposalCapsule = (Objects.isNull(deposit)) ? dbManager.getProposalStore().
           get(ByteArray.fromLong(proposalDeleteContract.getProposalId())) :
           deposit.getProposalCapsule(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
-
       proposalCapsule.setState(State.CANCELED);
       if (Objects.isNull(deposit)) {
         dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      }
-      else{
-        deposit.putProposalValue(proposalCapsule.createDbKey(),proposalCapsule);
+      } else {
+        deposit.putProposalValue(proposalCapsule.createDbKey(), proposalCapsule);
       }
 
       ret.setStatus(fee, code.SUCESS);
@@ -87,7 +85,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if(!Objects.isNull(deposit)) {
+    if (!Objects.isNull(deposit)) {
       if (Objects.isNull(deposit.getAccount(ownerAddress))) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);

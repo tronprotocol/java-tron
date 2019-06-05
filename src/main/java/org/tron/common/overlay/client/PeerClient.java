@@ -13,13 +13,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.server.TronChannelInitializer;
 import org.tron.core.config.args.Args;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")
@@ -29,15 +27,11 @@ public class PeerClient {
   @Autowired
   private ApplicationContext ctx;
 
-  @Autowired
-  @Lazy
-  private NodeImpl node;
-
   private EventLoopGroup workerGroup;
 
   public PeerClient() {
     workerGroup = new NioEventLoopGroup(0, new ThreadFactory() {
-      AtomicInteger cnt = new AtomicInteger(0);
+      private AtomicInteger cnt = new AtomicInteger(0);
 
       @Override
       public Thread newThread(Runnable r) {
@@ -61,7 +55,7 @@ public class PeerClient {
     return connectAsync(node.getHost(), node.getPort(), node.getHexId(), discoveryMode)
         .addListener((ChannelFutureListener) future -> {
           if (!future.isSuccess()) {
-            logger.error("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
+            logger.warn("connect to {}:{} fail,cause:{}", node.getHost(), node.getPort(),
                 future.cause().getMessage());
             nodeHandler.getNodeStatistics().nodeDisconnectedLocal(ReasonCode.CONNECT_FAIL);
             nodeHandler.getNodeStatistics().notifyDisconnect();
@@ -70,14 +64,14 @@ public class PeerClient {
         });
   }
 
-  public ChannelFuture connectAsync(String host, int port, String remoteId, boolean discoveryMode) {
+  private ChannelFuture connectAsync(String host, int port, String remoteId,
+      boolean discoveryMode) {
 
     logger.info("connect peer {} {} {}", host, port, remoteId);
 
     TronChannelInitializer tronChannelInitializer = ctx
         .getBean(TronChannelInitializer.class, remoteId);
     tronChannelInitializer.setPeerDiscoveryMode(discoveryMode);
-    tronChannelInitializer.setNodeImpl(node);
 
     Bootstrap b = new Bootstrap();
     b.group(workerGroup);

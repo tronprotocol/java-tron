@@ -21,16 +21,23 @@ import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tron.api.GrpcAPI;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
+//import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+
 
 public class TransactionUtils {
 
   private static final Logger logger = LoggerFactory.getLogger("Transaction");
-  private static final  int RESERVE_BALANCE = 10;
+  private static final int RESERVE_BALANCE = 10;
+  public static final int NORMALTRANSACTION = 0;
+  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
+  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
+
   /**
    * constructor.
    */
@@ -41,6 +48,7 @@ public class TransactionUtils {
 
     return Sha256Hash.hash(tmp.build().toByteArray());
   }
+
   /**
    * constructor.
    */
@@ -95,6 +103,7 @@ public class TransactionUtils {
       return null;
     }
   }
+
   /**
    * constructor.
    */
@@ -116,6 +125,7 @@ public class TransactionUtils {
    * 3. check sign
    * 4. check balance
    */
+
   /**
    * constructor.
    */
@@ -145,6 +155,7 @@ public class TransactionUtils {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -165,6 +176,7 @@ public class TransactionUtils {
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
+
   /**
    * constructor.
    */
@@ -178,4 +190,32 @@ public class TransactionUtils {
     builder.setRawData(rowBuilder.build());
     return builder.build();
   }
+
+  /**
+   * constructor.
+   */
+  /*  public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds) {
+    DeferredStage deferredStage = transaction.getRawData().toBuilder()
+        .getDeferredStage().toBuilder().setDelaySeconds(delaySeconds)
+        .setStage(UNEXECUTEDDEFERREDTRANSACTION).build();
+    Transaction.raw rawData = transaction.toBuilder().getRawData()
+        .toBuilder().setDeferredStage(deferredStage).build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }*/
+
+  /*  *//**
+   * constructor.
+   *//*
+  public static GrpcAPI.TransactionExtention setDelaySecondsToExtension(GrpcAPI
+      .TransactionExtention transactionExtention, long delaySeconds) {
+    if (delaySeconds == 0) {
+      return transactionExtention;
+    }
+    GrpcAPI.TransactionExtention.Builder builder = transactionExtention.toBuilder();
+
+    Transaction transaction = setDelaySeconds(transactionExtention.getTransaction(), delaySeconds);
+    builder.setTransaction(transaction);
+
+    return builder.build();
+  }*/
 }

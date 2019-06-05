@@ -8,6 +8,7 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
@@ -41,6 +42,7 @@ import org.tron.protos.Protocol.AccountType;
 
 @Slf4j(topic = "deposit")
 public class DepositImpl implements Deposit {
+
   private static final byte[] LATEST_PROPOSAL_NUM = "LATEST_PROPOSAL_NUM".getBytes();
   private static final byte[] WITNESS_ALLOWANCE_FROZEN_TIME = "WITNESS_ALLOWANCE_FROZEN_TIME"
       .getBytes();
@@ -251,6 +253,20 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public void updateContract(byte[] address, ContractCapsule contractCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(contractCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    contractCache.put(key, value);
+  }
+
+  @Override
+  public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(accountCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    accountCache.put(key, value);
+  }
+
+  @Override
   public synchronized ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
     if (contractCache.containsKey(key)) {
@@ -271,27 +287,34 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public synchronized void saveCode(byte[] codeHash, byte[] code) {
-    Key key = Key.create(codeHash);
+  public synchronized void saveCode(byte[] address, byte[] code) {
+    Key key = Key.create(address);
     Value value = Value.create(code, Type.VALUE_TYPE_CREATE);
     codeCache.put(key, value);
+
+    if (VMConfig.allowTvmConstantinople()) {
+      ContractCapsule contract = getContract(address);
+      byte[] codeHash = Hash.sha3(code);
+      contract.setCodeHash(codeHash);
+      updateContract(address, contract);
+    }
   }
 
   @Override
-  public synchronized byte[] getCode(byte[] addr) {
-    Key key = Key.create(addr);
+  public synchronized byte[] getCode(byte[] address) {
+    Key key = Key.create(address);
     if (codeCache.containsKey(key)) {
       return codeCache.get(key).getCode().getData();
     }
 
     byte[] code;
     if (parent != null) {
-      code = parent.getCode(addr);
+      code = parent.getCode(address);
     } else {
-      if (null == getCodeStore().get(addr)) {
+      if (null == getCodeStore().get(address)) {
         code = null;
       } else {
-        code = getCodeStore().get(addr).getData();
+        code = getCodeStore().get(address).getData();
       }
     }
     if (code != null) {
@@ -306,11 +329,11 @@ public class DepositImpl implements Deposit {
     if (storageCache.containsKey(key)) {
       return storageCache.get(key);
     }
-
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
       if (VMConfig.getEnergyLimitHardFork()) {
+        // deep copy
         storage = new Storage(parentStorage);
       } else {
         storage = parentStorage;
@@ -318,12 +341,16 @@ public class DepositImpl implements Deposit {
     } else {
       storage = new Storage(address, dbManager.getStorageRowStore());
     }
+    ContractCapsule contract = getContract(address);
+    if (contract != null && !ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
+      storage.generateAddrHash(contract.getTrxHash());
+    }
     return storage;
   }
 
   @Override
   public synchronized AssetIssueCapsule getAssetIssue(byte[] tokenId) {
-    byte[] tokenIdWithoutLeadingZero =ByteUtil.stripLeadingZeroes(tokenId);
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     Key key = Key.create(tokenIdWithoutLeadingZero);
     if (assetIssueCache.containsKey(key)) {
       return assetIssueCache.get(key).getAssetIssue();
@@ -388,7 +415,8 @@ public class DepositImpl implements Deposit {
     if (accountCapsule == null) {
       accountCapsule = createAccount(address, AccountType.Normal);
     }
-    long balance = accountCapsule.getAssetMapV2().getOrDefault(new String(tokenIdWithoutLeadingZero),new Long(0));
+    long balance = accountCapsule.getAssetMapV2()
+        .getOrDefault(new String(tokenIdWithoutLeadingZero), new Long(0));
     if (value == 0) {
       return balance;
     }
@@ -400,8 +428,7 @@ public class DepositImpl implements Deposit {
     }
     if (value >= 0) {
       accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
-    }
-    else {
+    } else {
       accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager);
     }
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
@@ -439,16 +466,13 @@ public class DepositImpl implements Deposit {
   }
 
   /**
-   *
    * @param address address
-   * @param tokenId
-   *
-   * tokenIdstr in assetV2map is a string like "1000001". So before using this function, we need to do some conversion.
-   * usually we will use a DataWord as input. so the byte tokenId should be like DataWord.shortHexWithoutZeroX().getbytes().
-   * @return
+   * @param tokenId tokenIdstr in assetV2map is a string like "1000001". So before using this
+   * function, we need to do some conversion. usually we will use a DataWord as input. so the byte
+   * tokenId should be like DataWord.shortHexWithoutZeroX().getbytes().
    */
   @Override
-  public synchronized long getTokenBalance(byte[] address, byte[] tokenId){
+  public synchronized long getTokenBalance(byte[] address, byte[] tokenId) {
     AccountCapsule accountCapsule = getAccount(address);
     if (accountCapsule == null) {
       return 0;
@@ -556,7 +580,7 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public long getLatestProposalNum(){
+  public long getLatestProposalNum() {
     return Longs.fromByteArray(getDynamic(LATEST_PROPOSAL_NUM).getData());
   }
 
@@ -568,7 +592,7 @@ public class DepositImpl implements Deposit {
     }
 
     byte[] result = new byte[8];
-    System.arraycopy(frozenTime,0,result,8-frozenTime.length, frozenTime.length);
+    System.arraycopy(frozenTime, 0, result, 8 - frozenTime.length, frozenTime.length);
     return Longs.fromByteArray(result);
 
   }
@@ -583,7 +607,7 @@ public class DepositImpl implements Deposit {
     return Longs.fromByteArray(getDynamic(NEXT_MAINTENANCE_TIME).getData());
   }
 
-  public BytesCapsule getDynamic(byte[] word){
+  public BytesCapsule getDynamic(byte[] word) {
     Key key = Key.create(word);
     if (dynamicPropertiesCache.containsKey(key)) {
       return dynamicPropertiesCache.get(key).getDynamicProperties();
@@ -732,25 +756,26 @@ public class DepositImpl implements Deposit {
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     Key key = new Key(address);
-    accountCache.put(key,new Value(accountCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(accountCapsule.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
-  public void putVoteValue(byte[] address, VotesCapsule votesCapsule){
+  public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
     Key key = new Key(address);
-    votesCache.put(key,new Value(votesCapsule.getData(),Type.VALUE_TYPE_CREATE));
+    votesCache.put(key, new Value(votesCapsule.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
   public void putProposalValue(byte[] address, ProposalCapsule proposalCapsule) {
     Key key = new Key(address);
-    proposalCache.put(key,new Value(proposalCapsule.getData(),Type.VALUE_TYPE_CREATE));
+    proposalCache.put(key, new Value(proposalCapsule.getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
   public void putDynamicPropertiesWithLatestProposalNum(long num) {
     Key key = new Key(LATEST_PROPOSAL_NUM);
-    dynamicPropertiesCache.put(key, new Value(new BytesCapsule(ByteArray.fromLong(num)).getData(),Type.VALUE_TYPE_CREATE));
+    dynamicPropertiesCache.put(key,
+        new Value(new BytesCapsule(ByteArray.fromLong(num)).getData(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override

@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -115,11 +116,11 @@ public class ContractTrcToken080 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken0612_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken0612_transferTokenContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken080.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String tokenId = Long.toString(0);
     long tokenValue = 0;
     long callValue = 10;

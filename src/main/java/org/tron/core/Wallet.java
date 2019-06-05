@@ -75,6 +75,7 @@ import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.actuator.Actuator;
@@ -92,6 +93,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AccountIdIndexStore;
@@ -114,8 +116,9 @@ import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.TransactionMessage;
-import org.tron.core.net.node.NodeImpl;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.TransferContract;
@@ -145,12 +148,14 @@ public class Wallet {
   @Getter
   private final ECKey ecKey;
   @Autowired
-  private NodeImpl p2pNode;
+  private TronNetService tronNetService;
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
   @Autowired
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;  //default testnet
+  private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
@@ -279,6 +284,13 @@ public class Wallet {
 
   }
 
+  // for `CREATE2`
+  public static byte[] generateContractAddress2(byte[] address, byte[] salt, byte[] code) {
+    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
+    return Hash.sha3omit12(mergedData);
+  }
+
+  // for `CREATE`
   public static byte[] generateContractAddress(byte[] transactionRootId, long nonce) {
     byte[] nonceBytes = Longs.toByteArray(nonce);
     byte[] combined = new byte[transactionRootId.length + nonceBytes.length];
@@ -396,7 +408,8 @@ public class Wallet {
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
       long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance().getTrxExpirationTimeInMilliseconds();
+          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
+              .getTrxExpirationTimeInMilliseconds();
       trx.setExpiration(expiration);
       trx.setTimestamp();
     } catch (Exception e) {
@@ -411,18 +424,17 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
-    Message message = new TransactionMessage(signaturedTransaction);
-
     try {
+      Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
-        if (p2pNode.getActivePeer().isEmpty()) {
+        if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
         }
 
-        int count = (int) p2pNode.getActivePeer().stream()
+        int count = (int) tronNetDelegate.getActivePeer().stream()
             .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
             .count();
 
@@ -457,7 +469,7 @@ public class Wallet {
         trx.resetResult();
       }
       dbManager.pushTransaction(trx);
-      p2pNode.broadcast(message);
+      tronNetService.broadcast(message);
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
@@ -561,7 +573,7 @@ public class Wallet {
           throw new PermissionException("Permission type is error");
         }
         //check oprations
-        if (!checkPermissionOprations(permission, contract)){
+        if (!checkPermissionOprations(permission, contract)) {
           throw new PermissionException("Permission denied");
         }
       }
@@ -888,6 +900,28 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getMultiSignFee())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getUpdateAccountPermissionFee")
+        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowAccountStateRoot")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowProtoFilterNum")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
+        .build());
+
+    // ALLOW_TVM_CONSTANTINOPLE, // 1, 30
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmConstantinople")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
+            .build());
+
     return builder.build();
   }
 
@@ -1145,13 +1179,13 @@ public class Wallet {
     return builder.build();
   }
 
-  public Block getBlockById(ByteString BlockId) {
-    if (Objects.isNull(BlockId)) {
+  public Block getBlockById(ByteString blockId) {
+    if (Objects.isNull(blockId)) {
       return null;
     }
     Block block = null;
     try {
-      block = dbManager.getBlockStore().get(BlockId.toByteArray()).getInstance();
+      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
     } catch (StoreException e) {
     }
     return block;
@@ -1183,6 +1217,7 @@ public class Wallet {
       transactionCapsule = dbManager.getTransactionStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionCapsule != null) {
       return transactionCapsule.getInstance();
@@ -1199,6 +1234,7 @@ public class Wallet {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
@@ -1230,6 +1266,7 @@ public class Wallet {
     try {
       exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
     } catch (StoreException e) {
+      return null;
     }
     if (exchangeCapsule != null) {
       return exchangeCapsule.getInstance();
@@ -1282,49 +1319,81 @@ public class Wallet {
 
     byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
 
-    if (!isConstant(abi, selector)) {
-      return trxCap.getInstance();
+    if (isConstant(abi, selector)) {
+      return callConstantContract(trxCap, builder, retBuilder);
     } else {
-      if (!Args.getInstance().isSupportConstant()) {
-        throw new ContractValidateException("this node don't support constant");
-      }
-      DepositImpl deposit = DepositImpl.createRoot(dbManager);
-
-      Block headBlock;
-      List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
-      if (CollectionUtils.isEmpty(blockCapsuleList)) {
-        throw new HeaderNotFound("latest block not found");
-      } else {
-        headBlock = blockCapsuleList.get(0).getInstance();
-      }
-
-      Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
-          new ProgramInvokeFactoryImpl(), true);
-      VMConfig.initVmHardFork();
-      VMConfig.initAllowTvmTransferTrc10(dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-      VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-      runtime.execute();
-      runtime.go();
-      runtime.finalization();
-      // TODO exception
-      if (runtime.getResult().getException() != null) {
-        RuntimeException e = runtime.getResult().getException();
-        logger.warn("Constant call has error {}", e.getMessage());
-        throw e;
-      }
-
-      ProgramResult result = runtime.getResult();
-      TransactionResultCapsule ret = new TransactionResultCapsule();
-
-      builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
-      ret.setStatus(0, code.SUCESS);
-      if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
-        ret.setStatus(0, code.FAILED);
-        retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
-      }
-      trxCap.setResult(ret);
       return trxCap.getInstance();
     }
+  }
+
+  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+      TransactionCapsule trxCap, Builder builder,
+      Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    ContractStore contractStore = dbManager.getContractStore();
+    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+    byte[] isContractExiste = contractStore.findContractByHash(contractAddress);
+
+    if (ArrayUtils.isEmpty(isContractExiste)) {
+      throw new ContractValidateException("No contract or not a smart contract");
+    }
+
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node don't support constant");
+    }
+
+    return callConstantContract(trxCap, builder, retBuilder);
+  }
+
+  public Transaction callConstantContract(TransactionCapsule trxCap, Builder builder,
+      Return.Builder retBuilder)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node don't support constant");
+    }
+    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+
+    Block headBlock;
+    List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
+    if (CollectionUtils.isEmpty(blockCapsuleList)) {
+      throw new HeaderNotFound("latest block not found");
+    } else {
+      headBlock = blockCapsuleList.get(0).getInstance();
+    }
+
+    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+        new ProgramInvokeFactoryImpl(), true);
+    VMConfig.initVmHardFork();
+    VMConfig.initAllowTvmTransferTrc10(
+        dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
+    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    runtime.execute();
+    runtime.go();
+    runtime.finalization();
+    // TODO exception
+    if (runtime.getResult().getException() != null) {
+      RuntimeException e = runtime.getResult().getException();
+      logger.warn("Constant call has error {}", e.getMessage());
+      throw e;
+    }
+
+    ProgramResult result = runtime.getResult();
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+
+    builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
+    ret.setStatus(0, code.SUCESS);
+    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+      ret.setStatus(0, code.FAILED);
+      retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
+    }
+    if (runtime.getResult().isRevert()) {
+      ret.setStatus(0, code.FAILED);
+      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed")).build();
+    }
+    trxCap.setResult(ret);
+    return trxCap.getInstance();
   }
 
   public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {

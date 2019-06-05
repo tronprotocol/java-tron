@@ -21,12 +21,17 @@ public class KeepAliveMessage extends Message {
     data = backupMessage.toByteArray();
   }
 
-  public boolean getFlag(){
+  public boolean getFlag() {
     return backupMessage.getFlag();
   }
 
-  public int getPriority(){
+  public int getPriority() {
     return backupMessage.getPriority();
+  }
+
+  @Override
+  public long getTimestamp() {
+    return 0;
   }
 
   @Override

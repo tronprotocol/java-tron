@@ -4,6 +4,7 @@ import static org.hamcrest.core.StringContains.containsString;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -86,11 +87,12 @@ public class ContractUnknownException {
         .getBalance()));
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger selfdestruct method")
   public void testGrammar001() {
     Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress, 204800000,
         0, 1, testKeyForGrammarAddress, blockingStubFull));
     Account info;
@@ -108,16 +110,11 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
+    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testA";
-    String code = "60806040526000600a600e609f565b6040518091039082f0801580156028573d600080"
-        + "3e3d6000fd5b509050905080600160a060020a031663946644cd6040518163ffffffff167c0100"
-        + "000000000000000000000000000000000000000000000000000000028152600401600060405180"
-        + "830381600087803b158015608357600080fd5b505af11580156096573d6000803e3d6000fd5b50"
-        + "5050505060ad565b60405160088060ef83390190565b60358060ba6000396000f3006080604052"
-        + "600080fd00a165627a7a723058205f699e7434a691ee9a433c497973f2eee624efde40e7b7dd86"
-        + "512767fbe7752c0029608060405233ff00";
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"constructor\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             20L, 100, null, testKeyForGrammarAddress,
@@ -148,11 +145,12 @@ public class ContractUnknownException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger revert method")
   public void testGrammar002() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress2, 100000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress2, 10000000L,
         0, 1, testKeyForGrammarAddress2, blockingStubFull));
     Account info;
@@ -170,17 +168,11 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
+    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testB";
-    String code = "60806040526000600a600e609f565b6040518091039082f080158015602"
-        + "8573d6000803e3d6000fd5b509050905080600160a060020a031663946644cd6040"
-        + "518163ffffffff167c0100000000000000000000000000000000000000000000000"
-        + "000000000028152600401600060405180830381600087803b158015608357600080"
-        + "fd5b505af11580156096573d6000803e3d6000fd5b505050505060ae565b6040516"
-        + "00a806100f183390190565b6035806100bc6000396000f3006080604052600080fd"
-        + "00a165627a7a7230582036a40a807cbf71508011574ef42c706ad7b40d844807909"
-        + "c3b8630f9fb9ae6f700296080604052600080fd00";
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"constructor\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             20L, 100, null, testKeyForGrammarAddress2,
@@ -216,11 +208,12 @@ public class ContractUnknownException {
 
   }
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger assert method")
   public void testGrammar003() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress3, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress3, 1000000000L,
         0, 1, testKeyForGrammarAddress3, blockingStubFull));
     Account info;
@@ -238,16 +231,11 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
+    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testC";
-    String code = "60806040526000600a600e609f565b6040518091039082f0801580156028573d600"
-        + "0803e3d6000fd5b509050905080600160a060020a031663946644cd6040518163ffffffff16"
-        + "7c0100000000000000000000000000000000000000000000000000000000028152600401600"
-        + "060405180830381600087803b158015608357600080fd5b505af11580156096573d6000803e"
-        + "3d6000fd5b505050505060ad565b60405160078060ef83390190565b60358060ba600039600"
-        + "0f3006080604052600080fd00a165627a7a72305820970ee7543687d338b72131a122af927a"
-        + "698a081c0118577f49fffd8831a1195800296080604052fe00";
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"constructor\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             20L, 100, null, testKeyForGrammarAddress3,
@@ -282,11 +270,12 @@ public class ContractUnknownException {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = true, description = "trigger require method")
   public void testGrammar004() {
-    PublicMethed
+    Assert.assertTrue(PublicMethed
         .sendcoin(grammarAddress4, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(grammarAddress4, 100000000L,
         0, 1, testKeyForGrammarAddress4, blockingStubFull));
     Account info;
@@ -304,16 +293,11 @@ public class ContractUnknownException {
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     logger.info("beforeenergyLimit:" + beforeenergyLimit);
+    String filePath = "src/test/resources/soliditycode/contractUnknownException.sol";
     String contractName = "testD";
-    String code = "60806040526000600a600e609f565b6040518091039082f0801580156028573d"
-        + "6000803e3d6000fd5b509050905080600160a060020a031663946644cd6040518163fffff"
-        + "fff167c010000000000000000000000000000000000000000000000000000000002815260"
-        + "0401600060405180830381600087803b158015608357600080fd5b505af11580156096573"
-        + "d6000803e3d6000fd5b505050505060ae565b604051600a806100f183390190565b603580"
-        + "6100bc6000396000f3006080604052600080fd00a165627a7a72305820fd7ca23ea399b6d"
-        + "513a8d4eb084f5eb748b94fab6437bfb5ea9f4a03d9715c3400296080604052600080fd00";
-    String abi = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\""
-        + ",\"type\":\"constructor\"}]";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             20L, 100, null, testKeyForGrammarAddress4,

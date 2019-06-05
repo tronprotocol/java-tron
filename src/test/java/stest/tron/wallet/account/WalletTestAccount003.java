@@ -94,42 +94,46 @@ public class WalletTestAccount003 {
 
   @Test
   public void test1CreateAccount() {
-    Account noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
+    Account noCreateAccount = PublicMethed.queryAccount(lowBalTest, blockingStubFull);
     while (noCreateAccount.getBalance() != 0) {
       ecKey = new ECKey(Utils.getRandom());
       lowBalAddress = ecKey.getAddress();
       lowBalTest = ByteArray.toHexString(ecKey.getPrivKeyBytes());
-      noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
+      noCreateAccount = PublicMethed.queryAccount(lowBalTest, blockingStubFull);
     }
     Assert.assertTrue(sendCoin(lowBalAddress, 1L, fromAddress, testKey002));
-    noCreateAccount = queryAccount(lowBalTest, blockingStubFull);
+    noCreateAccount = PublicMethed.queryAccount(lowBalTest, blockingStubFull);
     logger.info(Long.toString(noCreateAccount.getBalance()));
     Assert.assertTrue(noCreateAccount.getBalance() == 1);
   }
 
   @Test(enabled = true)
   public void test2UpdateAccount() {
-    Assert.assertFalse(updateAccount(lowBalAddress,
-        mostLongNamePlusOneChar.getBytes(), lowBalTest));
-    //Assert.assertFalse(updateAccount(lowBalAddress, "".getBytes(), lowBalTest));
+    Assert.assertFalse(PublicMethed.updateAccount(lowBalAddress,
+        mostLongNamePlusOneChar.getBytes(), lowBalTest, blockingStubFull));
+    Assert.assertFalse(PublicMethed.updateAccount(lowBalAddress, "".getBytes(), lowBalTest,
+        blockingStubFull));
     String mostLongName = getRandomStr(33);
-    Assert.assertTrue(updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest));
+    Assert.assertTrue(PublicMethed.updateAccount(lowBalAddress, mostLongName.getBytes(), lowBalTest,
+        blockingStubFull));
     String firstUpdateName = getRandomStr(32);
-    Assert.assertFalse(updateAccount(lowBalAddress, firstUpdateName.getBytes(), lowBalTest));
+    Assert.assertFalse(PublicMethed.updateAccount(lowBalAddress, firstUpdateName.getBytes(),
+        lowBalTest, blockingStubFull));
     String secondUpdateName = getRandomStr(15);
-    Assert.assertFalse(updateAccount(lowBalAddress, secondUpdateName.getBytes(), lowBalTest));
+    Assert.assertFalse(PublicMethed.updateAccount(lowBalAddress, secondUpdateName.getBytes(),
+        lowBalTest, blockingStubFull));
   }
 
   @Test(enabled = true)
   public void test3NoBalanceCreateAssetIssue() {
-    Account lowaccount = queryAccount(lowBalTest, blockingStubFull);
+    Account lowaccount = PublicMethed.queryAccount(lowBalTest, blockingStubFull);
     if (lowaccount.getBalance() > 0) {
       Assert.assertTrue(sendCoin(toAddress, lowaccount.getBalance(), lowBalAddress, lowBalTest));
     }
     //Create AssetIssue failed when there is no enough balance.
     Assert.assertFalse(PublicMethed.createAssetIssue(lowBalAddress, name, TotalSupply, 1, 1,
-        now + 100000000L, now + 10000000000L, 2, description, url,10000L,
-        10000L,1L,1L,lowBalTest,blockingStubFull));
+        now + 100000000L, now + 10000000000L, 2, description, url, 10000L,
+        10000L, 1L, 1L, lowBalTest, blockingStubFull));
     logger.info("nobalancecreateassetissue");
   }
 
@@ -148,13 +152,14 @@ public class WalletTestAccount003 {
   @Test(enabled = true)
   public void test6NoFreezeBalanceToUnfreezeBalance() {
     //Unfreeze account failed when no freeze balance
-    Account noFreezeAccount = queryAccount(lowBalTest, blockingStubFull);
+    Account noFreezeAccount = PublicMethed.queryAccount(lowBalTest, blockingStubFull);
     if (noFreezeAccount.getFrozenCount() == 0) {
       Assert.assertFalse(unFreezeBalance(lowBalAddress, lowBalTest));
     } else {
       logger.info("This account has freeze balance, please test this case for manual");
     }
   }
+
   /**
    * constructor.
    */
@@ -165,6 +170,7 @@ public class WalletTestAccount003 {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -233,6 +239,7 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -288,33 +295,6 @@ public class WalletTestAccount003 {
       return Long.compare(((Account) o2).getBalance(), ((Account) o1).getBalance());
     }
   }
-  /**
-   * constructor.
-   */
-
-  public Account queryAccount(String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    byte[] address;
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    ECKey ecKey = temKey;
-    if (ecKey == null) {
-      String pubKey = loadPubKey(); //04 PubKey[128]
-      if (StringUtils.isEmpty(pubKey)) {
-        logger.warn("Warning: QueryAccount failed, no wallet address !!");
-        return null;
-      }
-      byte[] pubKeyAsc = pubKey.getBytes();
-      byte[] pubKeyHex = Hex.decode(pubKeyAsc);
-      ecKey = ECKey.fromPublicOnly(pubKeyHex);
-    }
-    return grpcQueryAccount(ecKey.getAddress(), blockingStubFull);
-  }
-
 
   public static String loadPubKey() {
     char[] buf = new char[0x100];
@@ -324,6 +304,7 @@ public class WalletTestAccount003 {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -333,6 +314,7 @@ public class WalletTestAccount003 {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -352,45 +334,7 @@ public class WalletTestAccount003 {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
-  /**
-   * constructor.
-   */
 
-  public boolean updateAccount(byte[] addressBytes, byte[] accountNameBytes, String priKey) {
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-
-    Contract.AccountUpdateContract.Builder builder = Contract.AccountUpdateContract.newBuilder();
-    ByteString basAddreess = ByteString.copyFrom(addressBytes);
-    ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
-
-    builder.setAccountName(bsAccountName);
-    builder.setOwnerAddress(basAddreess);
-
-    Contract.AccountUpdateContract contract = builder.build();
-    Protocol.Transaction transaction = blockingStubFull.updateAccount(contract);
-
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      logger.info("Please check!!! transaction == null");
-      return false;
-    }
-    transaction = signTransaction(ecKey, transaction);
-    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
-    if (response.getResult() == false) {
-      logger.info("Please check!!! response.getresult==false");
-      logger.info(ByteArray.toStr(response.getMessage().toByteArray()));
-      return false;
-    } else {
-      logger.info(name);
-      return true;
-    }
-  }
   /**
    * constructor.
    */
@@ -429,6 +373,7 @@ public class WalletTestAccount003 {
       return true;
     }
   }
+
   /**
    * constructor.
    */
@@ -475,6 +420,7 @@ public class WalletTestAccount003 {
     }
     return true;
   }
+
   /**
    * constructor.
    */
@@ -519,6 +465,7 @@ public class WalletTestAccount003 {
 
 
   }
+
   /**
    * constructor.
    */

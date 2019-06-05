@@ -92,7 +92,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         .distinct()
         .collect(toList());
     if (addressList.size() != permission.getKeysList().size()) {
-      throw new ContractValidateException("address should be distinct in permission " + permission.getType());
+      throw new ContractValidateException(
+          "address should be distinct in permission " + permission.getType());
     }
     for (Key key : permission.getKeysList()) {
       if (!Wallet.addressValid(key.getAddress().toByteArray())) {
@@ -109,7 +110,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     }
     if (weightSum < permission.getThreshold()) {
       throw new ContractValidateException(
-          "sum of all key's weight should not be less than threshold in permission " + permission.getType());
+          "sum of all key's weight should not be less than threshold in permission " + permission
+              .getType());
     }
 
     ByteString operations = permission.getOperations();
@@ -128,7 +130,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
     byte[] types1 = dbManager.getDynamicPropertiesStore().getAvailableContractType();
     for (int i = 0; i < 256; i++) {
       boolean b = (operations.byteAt(i / 8) & (1 << (i % 8))) != 0;
-      boolean t = (types1[(i / 8)] & (1 << (i % 8))) != 0;
+      boolean t = ((types1[(i / 8)] & 0xff) & (1 << (i % 8))) != 0;
       if (b && !t) {
         throw new ContractValidateException(i + " isn't a validate ContractType");
       }

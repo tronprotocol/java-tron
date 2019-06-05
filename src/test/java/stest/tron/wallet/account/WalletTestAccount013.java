@@ -26,6 +26,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestAccount013 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -96,14 +97,12 @@ public class WalletTestAccount013 {
     emptyAddress = ecKey3.getAddress();
     emptyKey = ByteArray.toHexString(ecKey3.getPrivKeyBytes());
 
-
     //sendcoin to Account013
     Assert.assertTrue(PublicMethed.sendcoin(account013Address,
         10000000000L, fromAddress, testKey002, blockingStubFull));
     //sendcoin to receiver
     Assert.assertTrue(PublicMethed.sendcoin(receiverDelegateAddress,
         10000000000L, toAddress, testKey003, blockingStubFull));
-
 
     //getAccountResource account013
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -249,7 +248,6 @@ public class WalletTestAccount013 {
     //FrozenBalanceForEnergy > 0
     Assert.assertTrue(afterFreezeEnergy > 0);
 
-
     //check DelegatedResourceAccountIndex for Account4
     Optional<Protocol.DelegatedResourceAccountIndex> delegatedResourceIndexResult1 =
         PublicMethed.getDelegatedResourceAccountIndex(
@@ -281,7 +279,6 @@ public class WalletTestAccount013 {
     Assert.assertTrue(PublicMethed.getAccountResource(account4DelegatedResourceAddress,
         blockingStubFull).getNetLimit() == 0);
 
-
     //unfreezebalance of Energy from Account4 to Account5
     Assert.assertTrue(PublicMethed.unFreezeBalance(
         account4DelegatedResourceAddress, account4DelegatedResourceKey,
@@ -309,12 +306,12 @@ public class WalletTestAccount013 {
     accountForAssetIssueKey = ByteArray.toHexString(ecKey7.getPrivKeyBytes());
     //sendcoin to Account7
     Assert.assertTrue(PublicMethed.sendcoin(accountForAssetIssueAddress,
-            10000000000L, toAddress, testKey003, blockingStubFull));
+        10000000000L, toAddress, testKey003, blockingStubFull));
     //account013 DelegateResource of bandwidth to accountForAssetIssue
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-            account013Address, 1000000000L, freezeDuration, 0,
-            ByteString.copyFrom(accountForAssetIssueAddress),
-            testKeyForAccount013, blockingStubFull));
+        account013Address, 1000000000L, freezeDuration, 0,
+        ByteString.copyFrom(accountForAssetIssueAddress),
+        testKeyForAccount013, blockingStubFull));
     //accountForAssetIssue AssetIssue
     long now = System.currentTimeMillis();
     String name = "testAccount013_" + Long.toString(now);
@@ -322,10 +319,10 @@ public class WalletTestAccount013 {
     String description = "zfbnb";
     String url = "aaa.com";
     Assert.assertTrue(PublicMethed.createAssetIssue(accountForAssetIssueAddress,
-            name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
-            System.currentTimeMillis() + 1000000000, 1, description, url,
-            2000L, 2000L, 500L, 1L,
-            accountForAssetIssueKey, blockingStubFull));
+        name, totalSupply, 1, 1, System.currentTimeMillis() + 2000,
+        System.currentTimeMillis() + 1000000000, 1, description, url,
+        2000L, 2000L, 500L, 1L,
+        accountForAssetIssueKey, blockingStubFull));
 
   }
 
@@ -396,7 +393,7 @@ public class WalletTestAccount013 {
     //PublicMethed.printAddress(accountForDeployKey);
     //sendcoin to Account6
     Assert.assertTrue(PublicMethed.sendcoin(accountForDeployAddress,
-            10000000000L, fromAddress, testKey002, blockingStubFull));
+        10000000000L, fromAddress, testKey002, blockingStubFull));
 
     //deploy contract under Account6
     Integer consumeUserResourcePercent = 0;
@@ -404,42 +401,42 @@ public class WalletTestAccount013 {
         .getLong("defaultParameter.maxFeeLimit");
     String contractName = "TestSStore";
     String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_WalletTestAccount013");
+        .getString("code.code_WalletTestAccount013");
     String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_WalletTestAccount013");
+        .getString("abi.abi_WalletTestAccount013");
 
     logger.info("TestSStore");
-    final byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",
-        maxFeeLimit, 0L, consumeUserResourcePercent,null,accountForDeployKey,
-        accountForDeployAddress,blockingStubFull);
+    final byte[] contractAddress = PublicMethed.deployContract(contractName, abi, code, "",
+        maxFeeLimit, 0L, consumeUserResourcePercent, null, accountForDeployKey,
+        accountForDeployAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Account4 DelegatedResource of Energy to Contract
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-        account4DelegatedResourceAddress,freezeAmount,freezeDuration,1,
-        ByteString.copyFrom(contractAddress),account4DelegatedResourceKey,blockingStubFull));
+        account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
+        ByteString.copyFrom(contractAddress), account4DelegatedResourceKey, blockingStubFull));
 
     //Account4 DelegatedResource Energy to deploy
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(
-        account4DelegatedResourceAddress,freezeAmount,freezeDuration,1,
+        account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
         ByteString.copyFrom(accountForDeployAddress),
-        account4DelegatedResourceKey,blockingStubFull));
+        account4DelegatedResourceKey, blockingStubFull));
 
     //get Energy of Account013，Account4，Contract before trigger contract
     final long account013CurrentEnergyUsed = PublicMethed.getAccountResource(
-        account013Address,blockingStubFull).getEnergyUsed();
+        account013Address, blockingStubFull).getEnergyUsed();
     final long account013CurrentBandwidthUsed = PublicMethed.getAccountResource(
-        account013Address,blockingStubFull).getFreeNetUsed();
+        account013Address, blockingStubFull).getFreeNetUsed();
     final long account4CurrentEnergyUsed = PublicMethed.getAccountResource(
-        account4DelegatedResourceAddress,blockingStubFull).getEnergyUsed();
+        account4DelegatedResourceAddress, blockingStubFull).getEnergyUsed();
     final long contractCurrentEnergyUsed = PublicMethed.getAccountResource(
-        contractAddress,blockingStubFull).getEnergyUsed();
+        contractAddress, blockingStubFull).getEnergyUsed();
     final long deployCurrentEnergyUsed = PublicMethed.getAccountResource(
-        accountForDeployAddress,blockingStubFull).getEnergyUsed();
+        accountForDeployAddress, blockingStubFull).getEnergyUsed();
 
     //Account013 trigger contract
     String txid = PublicMethed.triggerContract(contractAddress,
         "add2(uint256)", "1", false,
-        0, 1000000000L,"0",0,account013Address, testKeyForAccount013, blockingStubFull);
+        0, 1000000000L, "0", 0, account013Address, testKeyForAccount013, blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(String.valueOf(infoById.get().getResultValue()));
@@ -450,15 +447,15 @@ public class WalletTestAccount013 {
 
     //get Energy of Account013，Account4，Contract after trigger contract
     final long account013CurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-        account013Address,blockingStubFull).getEnergyUsed();
+        account013Address, blockingStubFull).getEnergyUsed();
     final long account013CurrentBandwidthUsedAfterTrig = PublicMethed.getAccountResource(
-        account013Address,blockingStubFull).getFreeNetUsed();
+        account013Address, blockingStubFull).getFreeNetUsed();
     final long account4CurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-        account4DelegatedResourceAddress,blockingStubFull).getEnergyUsed();
+        account4DelegatedResourceAddress, blockingStubFull).getEnergyUsed();
     final long contractCurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-        contractAddress,blockingStubFull).getEnergyUsed();
+        contractAddress, blockingStubFull).getEnergyUsed();
     final long deployCurrentEnergyUsedAfterTrig = PublicMethed.getAccountResource(
-        accountForDeployAddress,blockingStubFull).getEnergyUsed();
+        accountForDeployAddress, blockingStubFull).getEnergyUsed();
     //compare energy changed
     Assert.assertTrue(account013CurrentEnergyUsed == account013CurrentEnergyUsedAfterTrig);
     Assert.assertTrue(account4CurrentEnergyUsed == account4CurrentEnergyUsedAfterTrig);

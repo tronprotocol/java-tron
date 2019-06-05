@@ -122,13 +122,11 @@ public class MultiSign01 {
         ownerAddress, ownerKey, blockingStubFull,
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
 
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     ownerPermissionKeys.clear();
     ownerPermissionKeys.add(tmpKey02);
     ownerPermissionKeys.add(witnessKey001);
-
 
     Assert.assertEquals(2,
         PublicMethedForMutiSign.getActivePermissionKeyCount(PublicMethed.queryAccount(ownerAddress,
@@ -315,7 +313,7 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
         ownerAddress, ownerKey, blockingStubFull,
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
@@ -392,6 +390,7 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
         ownerAddress, ownerKey, blockingStubFull,
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);
@@ -753,7 +752,7 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethedForMutiSign.accountPermissionUpdate(accountPermissionJson,
         ownerAddress, ownerKey, blockingStubFull,
         ownerPermissionKeys.toArray(new String[ownerPermissionKeys.size()])));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceAfter = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceAfter: " + balanceAfter);

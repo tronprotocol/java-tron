@@ -11,7 +11,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.TVMTestResult;
-import org.tron.common.runtime.TVMTestUtils;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -105,9 +105,9 @@ public class EnergyWhenSendAndTransferTest {
         totalBalance - value - expectEnergyUsageTotal * 100);
 
     /* =================================== CALL simpleCall() =================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("simpleCall()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("simpleCall()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7370;
@@ -116,16 +116,17 @@ public class EnergyWhenSendAndTransferTest {
         totalBalance - value - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
 
     /* =================================== CALL complexCall() =================================== */
-    triggerData = TVMTestUtils.parseABI("complexCall()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    triggerData = TvmTestUtils.parseAbi("complexCall()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal3 = 9459;
     Assert.assertEquals(result.getReceipt().getEnergyUsageTotal(), expectEnergyUsageTotal3);
     Assert.assertEquals(result.getRuntime().getResult().isRevert(), true);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
-        totalBalance - value - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
+        totalBalance - value
+            - (expectEnergyUsageTotal + expectEnergyUsageTotal2 + expectEnergyUsageTotal3) * 100);
   }
 
   // solidity for sendTest and transferTest
@@ -161,7 +162,6 @@ public class EnergyWhenSendAndTransferTest {
   // }
 
 
-
   @Test
   public void sendTest()
       throws ContractExeException, ReceiptCheckErrException, ContractValidateException, VMIllegalException {
@@ -181,9 +181,9 @@ public class EnergyWhenSendAndTransferTest {
         totalBalance - value - expectEnergyUsageTotal * 100);
 
     /* =================================== CALL doSend() =================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("doSend()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("doSend()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7025;
@@ -215,9 +215,9 @@ public class EnergyWhenSendAndTransferTest {
         totalBalance - value - expectEnergyUsageTotal * 100);
 
     /* =================================== CALL doSend() =================================== */
-    byte[] triggerData = TVMTestUtils.parseABI("doTransfer()", null);
-    result = TVMTestUtils
-        .triggerContractAndReturnTVMTestResult(Hex.decode(OWNER_ADDRESS),
+    byte[] triggerData = TvmTestUtils.parseAbi("doTransfer()", null);
+    result = TvmTestUtils
+        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             contractAddress, triggerData, 0, feeLimit, dbManager, null);
 
     long expectEnergyUsageTotal2 = 7030;
@@ -238,8 +238,8 @@ public class EnergyWhenSendAndTransferTest {
     String code = "608060405261000c61004e565b604051809103906000f080158015610028573d6000803e3d6000fd5b5060008054600160a060020a031916600160a060020a039290921691909117905561005d565b60405160d68061020b83390190565b61019f8061006c6000396000f3006080604052600436106100325763ffffffff60e060020a60003504166306ce93af811461003757806340de221c1461004e575b600080fd5b34801561004357600080fd5b5061004c610063565b005b34801561005a57600080fd5b5061004c610103565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663cd95478c600a6003906040518363ffffffff1660e060020a0281526004016020604051808303818589803b1580156100d357600080fd5b5088f11580156100e7573d6000803e3d6000fd5b5050505050506040513d60208110156100ff57600080fd5b5050565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663b993e5e2600a6003906040518363ffffffff1660e060020a0281526004016020604051808303818589803b1580156100d357600080fd00a165627a7a72305820cb5f172ca9f81235a8b33ee1ddef9dd1b398644cf61228569356ff051bfaf3d10029608060405260c4806100126000396000f30060806040526004361060485763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663b993e5e28114604d578063cd95478c146065575b600080fd5b6053606b565b60408051918252519081900360200190f35b60536070565b602a90565b6000805b600a81101560945760008181526020819052604090208190556001016074565b50905600a165627a7a723058205ded543feb546472be4e116e713a2d46b8dafc823ca31256e67a1be92a6752730029";
     String libraryAddressPair = null;
 
-    return TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    return TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -254,8 +254,8 @@ public class EnergyWhenSendAndTransferTest {
     String code = "608060405261000c61004e565b604051809103906000f080158015610028573d6000803e3d6000fd5b5060008054600160a060020a031916600160a060020a039290921691909117905561005d565b604051606f806101c583390190565b6101598061006c6000396000f3006080604052600436106100565763ffffffff7c010000000000000000000000000000000000000000000000000000000060003504166312065fe0811461005b57806333182e8f14610082578063e3d237f914610099575b600080fd5b34801561006757600080fd5b506100706100ae565b60408051918252519081900360200190f35b34801561008e57600080fd5b506100976100b3565b005b3480156100a557600080fd5b506100976100f9565b303190565b6000805460405173ffffffffffffffffffffffffffffffffffffffff90911691906127109082818181858883f193505050501580156100f6573d6000803e3d6000fd5b50565b6000805460405173ffffffffffffffffffffffffffffffffffffffff90911691906127109082818181858883f150505050505600a165627a7a72305820677efa58ed7b277b589fe6626cb77f930caeb0f75c3ab638bfe07292db961a8200296080604052605e8060116000396000f3006080604052600160008181526020527fada5013122d395ba3c54772283fb069b10426056ef8ca54750cb9bb552a59e7d550000a165627a7a7230582029b27c10c1568d590fa66bc0b7d42537a314c78d028f59a188fa411f7fc15c4f0029";
     String libraryAddressPair = null;
 
-    return TVMTestUtils
-        .deployContractAndReturnTVMTestResult(contractName, address, ABI, code,
+    return TvmTestUtils
+        .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,
             value,
             feeLimit, consumeUserResourcePercent, libraryAddressPair,
             dbManager, null);
@@ -266,10 +266,10 @@ public class EnergyWhenSendAndTransferTest {
    */
   @After
   public void destroy() {
-    Args.clearParam();
     AppT.shutdownServices();
     AppT.shutdown();
     context.destroy();
+    Args.clearParam();
     if (FileUtil.deleteDir(new File(dbPath))) {
       logger.info("Release resources successful.");
     } else {

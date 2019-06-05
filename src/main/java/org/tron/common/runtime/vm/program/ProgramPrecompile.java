@@ -20,6 +20,7 @@ package org.tron.common.runtime.vm.program;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.OpCode;
 
@@ -79,7 +80,11 @@ public class ProgramPrecompile {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
     }
-    return new DataWord(0).getData();
+    if (VMConfig.allowTvmConstantinople()) {
+      return new byte[0];
+    } else {
+      return new DataWord(0).getData();
+    }
   }
 
   public boolean hasJumpDest(int pc) {

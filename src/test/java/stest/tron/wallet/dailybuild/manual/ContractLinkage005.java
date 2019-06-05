@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -86,50 +87,16 @@ public class ContractLinkage005 {
 
   @Test(enabled = true, description = "Every same trigger use same energy and net")
   public void testEnergyCostDetail() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Assert.assertTrue(PublicMethed.sendcoin(linkage005Address, 5000000000000L, fromAddress,
         testKey003, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.freezeBalance(linkage005Address, 250000000000L,
         0, linkage005Key, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage005Address, 250000000000L,
         0, 1, linkage005Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    contractName = "EnergyCost";
-    code = "6080604052600060035534801561001557600080fd5b5061027b806100256000396000f300608060405260"
-        + "0436106100825763ffffffff7c0100000000000000000000000000000000000000000000000000000000600"
-        + "0350416633755cd3c81146100875780637d965688146100b1578063a05b2577146100c9578063b0d6304d14"
-        + "6100e1578063bbe1d75b14610115578063f8a8fd6d1461012a578063fe75faab14610141575b600080fd5b3"
-        + "4801561009357600080fd5b5061009f600435610159565b60408051918252519081900360200190f35b3480"
-        + "156100bd57600080fd5b5061009f600435610178565b3480156100d557600080fd5b5061009f60043561019"
-        + "8565b3480156100ed57600080fd5b5061009f73ffffffffffffffffffffffffffffffffffffffff60043581"
-        + "1690602435166101e2565b34801561012157600080fd5b5061009f6101ff565b34801561013657600080fd5"
-        + "b5061013f610205565b005b34801561014d57600080fd5b5061009f600435610218565b6000805482908110"
-        + "61016757fe5b600091825260209091200154905081565b600080805b8381101561019157600191820191016"
-        + "1017d565b5092915050565b600080805b838110156101915760008054600181810183559180527f290decd9"
-        + "548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e56301829055918201910161019d565b600"
-        + "260209081526000928352604080842090915290825290205481565b60015481565b60038054600101905561"
-        + "0216610205565b565b60006102238261022e565b600181905592915050565b600061023c6002830361022e5"
-        + "65b6102486001840361022e565b01929150505600a165627a7a72305820bc44fd5f3a0e48cc057752b52e3a"
-        + "bf50cd7dc75b3874ea7d049893cf1a2e345f0029";
-    abi = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\""
-        + "iarray\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\""
-        + "stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{"
-        + "\"name\":\"a\",\"type\":\"uint256\"}],\"name\":\"testUseCpu\",\"outputs\":[{\"name\":"
-        + "\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\""
-        + "type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"a\",\"type\":\""
-        + "uint256\"}],\"name\":\"testUseStorage\",\"outputs\":[{\"name\":\"\",\"type\":\""
-        + "uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function"
-        + "\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\","
-        + "\"type\":\"address\"}],\"name\":\"m\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\""
-        + "}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\""
-        + ":true,\"inputs\":[],\"name\":\"calculatedFibNumber\",\"outputs\":[{\"name\":\"\",\"type"
-        + "\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},"
-        + "{\"constant\":false,\"inputs\":[],\"name\":\"test\",\"outputs\":[],\"payable\":false,"
-        + "\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs"
-        + "\":[{\"name\":\"n\",\"type\":\"uint256\"}],\"name\":\"setFibonacci\",\"outputs\":"
-        + "[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\""
-        + "nonpayable\",\"type\":\"function\"}]";
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage005Address,
         blockingStubFull);
     Account info;
@@ -148,14 +115,24 @@ public class ContractLinkage005 {
     logger.info("beforeNetLimit:" + beforeNetLimit);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String filePath = "./src/test/resources/soliditycode/contractLinkage005.sol";
+    String contractName = "timeoutTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code,
         "", maxFeeLimit, 0L, 100, null, linkage005Key,
         linkage005Address, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
+
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
     Account infoafter = PublicMethed.queryAccount(linkage005Address, blockingStubFull1);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(linkage005Address,
         blockingStubFull1);

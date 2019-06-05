@@ -5,6 +5,7 @@ import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -128,18 +129,12 @@ public class ContractTrcToken018 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String contractName = "transferTokenContract";
-    String code = "608060405260e2806100126000396000f300608060405260043610603e5763ffffffff7c01000000"
-        + "000000000000000000000000000000000000000000000000006000350416633be9ece781146043575b600080"
-        + "fd5b606873ffffffffffffffffffffffffffffffffffffffff60043516602435604435606a565b005b604051"
-        + "73ffffffffffffffffffffffffffffffffffffffff84169082156108fc029083908590600081818185878a8a"
-        + "d094505050505015801560b0573d6000803e3d6000fd5b505050505600a165627a7a723058200ba246bdb58b"
-        + "e0f221ad07e1b19de843ab541150b329ddd01558c2f1cefe1e270029";
-    String abi = "[{\"constant\":false,\"inputs\":[{\"name\":\"toAddress\",\"type\":\"address\"},"
-        + "{\"name\":\"id\",\"type\":\"trcToken\"},{\"name\":\"amount\",\"type\":\"uint256\"}],"
-        + "\"name\":\"TransferTokenTo\",\"outputs\":[],\"payable\":true,\"stateMutability\":"
-        + "\"payable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":"
-        + "\"payable\",\"type\":\"constructor\"}]";
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken023.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
 
     String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
@@ -150,6 +145,7 @@ public class ContractTrcToken018 {
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
+    logger.info("Delpoy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     if (transferTokenTxid == null || infoById.get().getResultValue() != 0) {
       Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage());
@@ -261,9 +257,12 @@ public class ContractTrcToken018 {
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     Assert.assertEquals(FAILED, infoById.get().getResult());
-    Assert.assertEquals("validateForSmartContract failure",
+    Assert.assertEquals(
+        "transfer trc10 failed: Validate InternalTransfer error, no ToAccount. "
+            + "And not allowed to create account in smart contract.",
         infoById.get().getResMessage().toStringUtf8());
 
     Long transferAssetAfter = PublicMethed.getAssetIssueValue(transferTokenContractAddress,

@@ -214,6 +214,7 @@ public class UpdateAsset2Test {
     Assert.assertEquals(ret1.getCode(), GrpcAPI.Return.response_code.CONTRACT_VALIDATE_ERROR);
     Assert.assertEquals(ret1.getMessage().toStringUtf8(), "contract validate error : Invalid url");
   }
+
   /**
    * constructor.
    */
@@ -229,6 +230,7 @@ public class UpdateAsset2Test {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
+
   /**
    * constructor.
    */
@@ -285,6 +287,7 @@ public class UpdateAsset2Test {
       return false;
     }
   }
+
   /**
    * constructor.
    */
@@ -312,6 +315,7 @@ public class UpdateAsset2Test {
   public byte[] getAddress(ECKey ecKey) {
     return ecKey.getAddress();
   }
+
   /**
    * constructor.
    */
@@ -321,6 +325,7 @@ public class UpdateAsset2Test {
     Account request = Account.newBuilder().setAddress(addressBs).build();
     return blockingStubFull.getAccount(request);
   }
+
   /**
    * constructor.
    */
@@ -340,6 +345,7 @@ public class UpdateAsset2Test {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, ecKey);
   }
+
   /**
    * constructor.
    */
@@ -379,6 +385,7 @@ public class UpdateAsset2Test {
     }
 
   }
+
   /**
    * constructor.
    */

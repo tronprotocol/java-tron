@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -128,11 +129,13 @@ public class ContractTrcToken011 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken011.sol";
     String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken011_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken011_transferTokenContract");
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     final String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
             maxFeeLimit, 0L, 0, 10000,
@@ -156,6 +159,7 @@ public class ContractTrcToken011 {
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     if (infoById.get().getResultValue() != 0) {
       Assert.fail("deploy transaction failed with message: " + infoById.get().getResMessage());
@@ -203,11 +207,12 @@ public class ContractTrcToken011 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8()
         + ", devAssetCountBefore: " + devAssetCountBefore);
 
-    String contractName = "resultContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken011_resultContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken011_resultContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken011.sol";
+    String contractName = "Result";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
     final String recieveTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, 1000, assetAccountId.toStringUtf8(),
@@ -230,7 +235,7 @@ public class ContractTrcToken011 {
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(recieveTokenTxid, blockingStubFull);
-
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     if (infoById.get().getResultValue() != 0) {
       Assert.fail("deploy receive failed with message: " + infoById.get().getResMessage());
     }
@@ -327,7 +332,7 @@ public class ContractTrcToken011 {
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
-
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     TransactionInfo transactionInfo = infoById.get();
 
     logger.info(
@@ -430,6 +435,7 @@ public class ContractTrcToken011 {
 
     Optional<TransactionInfo> infoById = PublicMethed.getTransactionInfoById(triggerTxid,
         blockingStubFull);
+    logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     if (infoById.get().getResultValue() != 0) {
       Assert.fail("transaction failed with message: " + infoById.get().getResMessage());
     }

@@ -84,6 +84,11 @@ message UpdateEnergyLimitContract {
   int64 origin_energy_limit = 3;
 }
 
+message ClearABIContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+}
+
 message WitnessCreateContract {
   bytes owner_address = 1;
   bytes url = 2;

@@ -14,7 +14,7 @@ public class PingMessage extends Message {
 
   private Discover.PingMessage pingMessage;
 
-  public PingMessage(byte[] data) throws Exception{
+  public PingMessage(byte[] data) throws Exception {
     super(DISCOVER_PING, data);
     this.pingMessage = Discover.PingMessage.parseFrom(data);
   }
@@ -40,7 +40,7 @@ public class PingMessage extends Message {
     this.data = this.pingMessage.toByteArray();
   }
 
-  public int getVersion(){
+  public int getVersion() {
     return this.pingMessage.getVersion();
   }
 
@@ -49,6 +49,11 @@ public class PingMessage extends Message {
     Node node = new Node(to.getNodeId().toByteArray(),
         ByteArray.toStr(to.getAddress().toByteArray()), to.getPort());
     return node;
+  }
+
+  @Override
+  public long getTimestamp() {
+    return this.pingMessage.getTimestamp();
   }
 
   @Override

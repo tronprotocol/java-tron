@@ -32,19 +32,16 @@ public class ByteUtil {
 
 
   /**
-   * return a cloned byte array.
-   * return null if parameter data is null
-   * @param data
-   * @return
+   * return a cloned byte array. return null if parameter data is null
    */
-  public static byte[] cloneBytes(byte[] data){
-    if (data == null){
+  public static byte[] cloneBytes(byte[] data) {
+    if (data == null) {
       return null;
     }
 
     int length = data.length;
     byte[] rc = new byte[length];
-    if (length > 0){
+    if (length > 0) {
       System.arraycopy(data, 0, rc, 0, length);
     }
     return rc;
@@ -368,6 +365,10 @@ public class ByteUtil {
 
   public static boolean equals(byte[] bytes1, byte[] bytes2) {
     return compare(bytes1, bytes2) == 0;
+  }
+
+  public static boolean isNullOrZeroArray(byte[] array){
+    return (array == null) || (array.length == 0);
   }
 
   // lexicographical order

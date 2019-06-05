@@ -66,6 +66,7 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     long bytesSize;
+
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
     } else {
@@ -91,10 +92,9 @@ public class BandwidthProcessor extends ResourceProcessor {
         continue;
       }
 
-      if (contract.getType() == TransferAssetContract) {
-        if (useAssetAccountNet(contract, accountCapsule, now, bytesSize)) {
-          continue;
-        }
+      if (contract.getType() == TransferAssetContract && useAssetAccountNet(contract,
+          accountCapsule, now, bytesSize)) {
+        continue;
       }
 
       if (useAccountNet(accountCapsule, bytesSize, now)) {
@@ -310,7 +310,8 @@ public class BandwidthProcessor extends ResourceProcessor {
       assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store().get(assetIssueCapsule.createDbV2Key());
       assetIssueCapsuleV2.setPublicFreeAssetNetUsage(newPublicFreeAssetNetUsage);
       assetIssueCapsuleV2.setPublicLatestFreeNetTime(publicLatestFreeNetTime);
-      dbManager.getAssetIssueV2Store().put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      dbManager.getAssetIssueV2Store()
+          .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
     } else {
       accountCapsule.putLatestAssetOperationTimeMapV2(tokenID,
           latestAssetOperationTime);
@@ -328,10 +329,10 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   public long calculateGlobalNetLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForBandwidth();
-    if (frozeBalance < 1000_000L) {
+    if (frozeBalance < 1_000_000L) {
       return 0;
     }
-    long netWeight = frozeBalance / 1000_000L;
+    long netWeight = frozeBalance / 1_000_000L;
     long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
     if (totalNetWeight == 0) {

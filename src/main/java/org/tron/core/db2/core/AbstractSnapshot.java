@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.tron.core.db2.common.DB;
 
 public abstract class AbstractSnapshot<K, V> implements Snapshot {
+
   @Getter
   protected DB<K, V> db;
   @Getter

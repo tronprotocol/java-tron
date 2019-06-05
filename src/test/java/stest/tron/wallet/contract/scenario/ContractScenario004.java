@@ -2,6 +2,8 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -16,6 +18,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -43,6 +46,7 @@ public class ContractScenario004 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -58,10 +62,10 @@ public class ContractScenario004 {
 
   @Test(enabled = true)
   public void deployErc20TronToken() {
-    Assert.assertTrue(PublicMethed.sendcoin(contract004Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract004Address, 200000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract004Address, 100000000L,
-        3,1,contract004Key,blockingStubFull));
+        3, 1, contract004Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract004Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -69,18 +73,29 @@ public class ContractScenario004 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "TRONTOKEN";
-    String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario004_deployErc20TronToken");
-    String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario004_deployErc20TronToken");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L,100,null,contract004Key,contract004Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+
+    String filePath = "./src/test/resources/soliditycode/contractScenario004.sol";
+    String contractName = "TronToken";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    byte[] contractAddress;
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contract004Key, contract004Address, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Txid is " + txid);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    accountResource = PublicMethed.getAccountResource(contract004Address,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract004Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
     Assert.assertTrue(energyLimit > 0);
@@ -88,6 +103,7 @@ public class ContractScenario004 {
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
   }
+
   /**
    * constructor.
    */

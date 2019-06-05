@@ -2,6 +2,7 @@ package stest.tron.wallet.dailybuild.manual;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -95,82 +96,15 @@ public class ContractLinkage001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     //Value is equal balance,this will be failed.Only use FreeNet,Other not change.
-    String payableCode = "608060405260008054600160a060020a031990811662010001179091556001805482166"
-        + "20100021790556002805482166201000317905560038054821662010004179055600480548216620100051"
-        + "790556005805482166201000617905560068054909116620100071790556104ce8061007a6000396000f30"
-        + "06080604052600436106100da5763ffffffff7c010000000000000000000000000000000000000000000000"
-        + "00000000006000350416630a90265081146100df5780630dfb51ac146100fc57806345bd20101461012d578"
-        + "0634efaaa1b1461014257806352ae1b811461016657806353c4263f1461017b5780635fd8c710146101905"
-        + "780637c369c90146101a55780637f2b7f93146101ba5780638259d5531461020f578063906fbec91461022"
-        + "7578063961a8be71461023c578063cee14bb414610251578063ec9928bd14610275578063fb4f32aa146102"
-        + "92575b600080fd5b3480156100eb57600080fd5b506100fa6004356024356102a7565b005b3480156101085"
-        + "7600080fd5b506101116102dc565b60408051600160a060020a039092168252519081900360200190f35b3"
-        + "4801561013957600080fd5b506101116102eb565b34801561014e57600080fd5b506100fa600160a060020"
-        + "a03600435166024356102fa565b34801561017257600080fd5b50610111610320565b34801561018757600"
-        + "080fd5b5061011161032f565b34801561019c57600080fd5b506100fa61033e565b3480156101b15760008"
-        + "0fd5b5061011161035d565b3480156101c657600080fd5b506040805160206004803580820135838102808"
-        + "60185019096528085526100fa9536959394602494938501929182918501908490808284375094975061036"
-        + "c9650505050505050565b34801561021b57600080fd5b506100fa6004356103c6565b34801561023357600"
-        + "080fd5b506101116103f7565b34801561024857600080fd5b50610111610406565b34801561025d5760008"
-        + "0fd5b506100fa600160a060020a0360043516602435610415565b34801561028157600080fd5b506100fa6"
-        + "00435602435151561044d565b34801561029e57600080fd5b506100fa610483565b6001546040805184815"
-        + "2602081018490528151600160a060020a0390931692818301926000928290030181855af45050505050565"
-        + "b600654600160a060020a031681565b600354600160a060020a031681565b816080528060a052600060806"
-        + "0406080620100016000f4151561031c57600080fd5b5050565b600254600160a060020a031681565b60045"
-        + "4600160a060020a031681565b600354604051600160a060020a03909116906000818181855af4505050565"
-        + "b600554600160a060020a031681565b6005546040518251600160a060020a0390921691839190819060208"
-        + "08501910280838360005b838110156103aa578181015183820152602001610392565b50505050905001915"
-        + "050600060405180830381855af450505050565b600654604080518381529051600160a060020a039092169"
-        + "160208083019260009291908290030181855af450505050565b600054600160a060020a031681565b600154"
-        + "600160a060020a031681565b6000805460408051600160a060020a038681168252602082018690528251931"
-        + "69381830193909290918290030181855af45050505050565b60045460408051848152831515602082015281"
-        + "51600160a060020a0390931692818301926000928290030181855af45050505050565b60025460405160016"
-        + "0a060020a03909116906000818181855af45050505600a165627a7a72305820bf65c4013bea4495f2cbccf6"
-        + "85ee1442e2585d226cf4bd8184c636cdd1d485dc0029";
-    String payableAbi = "[{\"constant\":false,\"inputs\":[{\"name\":\"frozen_Balance\",\"type\":"
-        + "\"uint256\"},{\"name\":\"frozen_Duration\",\"type\":\"uint256\"}],\"name\":\""
-        + "freezeBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\","
-        + "\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
-        + "\"deleteProposalAddress\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],"
-        + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":"
-        + "true,\"inputs\":[],\"name\":\"withdrawBalanceAddress\",\"outputs\":[{\"name\":\"\","
-        + "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
-        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"witnessAddr\",\"type\""
-        + ":\"address\"},{\"name\":\"voteValue\",\"type\":\"uint256\"}],\"name\":"
-        + "\"voteUsingAssembly\",\"outputs\":[],\"payable\":false,\"stateMutability\":"
-        + "\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
-        + "\"unFreezeBalanceAddress\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],"
-        + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":"
-        + "true,\"inputs\":[],\"name\":\"approveProposalAddress\",\"outputs\":[{\"name\":\"\","
-        + "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
-        + "\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"withdrawBalance\","
-        + "\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":"
-        + "\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"createProposalAddress\","
-        + "\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,"
-        + "\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":["
-        + "{\"name\":\"data\",\"type\":\"bytes32[]\"}],\"name\":\"createProposal\",\"outputs\":"
-        + "[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},"
-        + "{\"constant\":false,\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\"}],\"name\":"
-        + "\"deleteProposal\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\""
-        + ",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":"
-        + "\"voteContractAddress\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],"
-        + "\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":"
-        + "true,\"inputs\":[],\"name\":\"freezeBalanceAddress\",\"outputs\":[{\"name\":\"\","
-        + "\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":"
-        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"witnessAddr\",\"type\":"
-        + "\"address\"},{\"name\":\"voteValue\",\"type\":\"uint256\"}],\"name\":"
-        + "\"voteForSingleWitness\",\"outputs\":[],\"payable\":false,\"stateMutability\":"
-        + "\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"id"
-        + "\",\"type\":\"uint256\"},{\"name\":\"isApprove\",\"type\":\"bool\"}],\"name\":"
-        + "\"approveProposal\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable"
-        + "\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":"
-        + "\"unFreezeBalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable"
-        + "\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\""
-        + "payable\",\"type\":\"constructor\"}]";
+    String filePath = "./src/test/resources/soliditycode/contractLinkage001.sol";
+    String contractName = "divideIHaveArgsReturnStorage";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String payableCode = retMap.get("byteCode").toString();
+    String payableAbi = retMap.get("abI").toString();
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account accountGet = PublicMethed.queryAccount(linkage001Key, blockingStubFull);
     Long accountBalance = accountGet.getBalance();
-    String contractName = "tronNative";
     String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, payableAbi,
         payableCode, "", maxFeeLimit, accountBalance, 100, null,
         linkage001Key, linkage001Address, blockingStubFull);

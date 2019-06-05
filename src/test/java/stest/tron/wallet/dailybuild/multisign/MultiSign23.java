@@ -172,6 +172,7 @@ public class MultiSign23 {
     logger.info("TransactionSignWeight info : " + txWeight);
 
     Assert.assertTrue(PublicMethedForMutiSign.broadcastTransaction(transaction2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethedForMutiSign
         .recoverAccountPermission(ownerKey, ownerPermissionKeys, blockingStubFull);
@@ -191,7 +192,7 @@ public class MultiSign23 {
   public void test02MultiSignPermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] ownerAddress = ecKey1.getAddress();
-    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);

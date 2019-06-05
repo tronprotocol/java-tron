@@ -34,6 +34,7 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
 public class AccountPermissionUpdateActuatorTest {
@@ -1088,7 +1089,8 @@ public class AccountPermissionUpdateActuatorTest {
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(address, ownerPermission, witnessPermission, activeList),
+        new AccountPermissionUpdateActuator(
+            getContract(address, ownerPermission, witnessPermission, activeList),
             dbManager);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
@@ -1098,4 +1100,100 @@ public class AccountPermissionUpdateActuatorTest {
         "Witness permission needn't operations",
         "Witness permission needn't operations");
   }
+
+  @Test
+  public void checkAvailableContractTypeCorrespondingToCode() {
+    // note: The aim of this test case is to show how the current codes work.
+    // The default value is 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
+    // and it should call the addSystemContractAndSetPermission to add new contract type
+    String validContractType = "7fff1fc0037e0000000000000000000000000000000000000000000000000000";
+
+    byte[] availableContractType = new byte[32];
+    for (ContractType contractType : ContractType.values()) {
+      if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
+          || contractType == ContractType.ClearABIContract
+          //|| contractType == ContractType.CancelDeferredTransactionContract
+      ) {
+        continue;
+      }
+      int id = contractType.getNumber();
+      System.out.println("id is " + id);
+      availableContractType[id / 8] |= (1 << id % 8);
+    }
+
+    System.out.println(ByteArray.toHexString(availableContractType));
+
+    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+
+  }
+
+  @Test
+  public void checkActiveDefaultOperationsCorrespondingToCode() {
+    // note: The aim of this test case is to show how the current codes work.
+    // The default value is 7fff1fc0033e0000000000000000000000000000000000000000000000000000,
+    // and it should call the addSystemContractAndSetPermission to add new contract type
+    String validContractType = "7fff1fc0033e0000000000000000000000000000000000000000000000000000";
+
+    byte[] availableContractType = new byte[32];
+    for (ContractType contractType : ContractType.values()) {
+      if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
+          || contractType == ContractType.AccountPermissionUpdateContract
+          || contractType == ContractType.ClearABIContract
+          //|| contractType == ContractType.CancelDeferredTransactionContract
+      ) {
+        continue;
+      }
+      int id = contractType.getNumber();
+      System.out.println("id is " + id);
+      availableContractType[id / 8] |= (1 << id % 8);
+    }
+
+    System.out.println(ByteArray.toHexString(availableContractType));
+
+    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+
+  }
+
+
+  @Test
+  public void checkAvailableContractType() {
+    String validContractType = "7fff1fc0037e0100000000000000000000000000000000000000000000000000";
+
+    byte[] availableContractType = new byte[32];
+    for (ContractType contractType : ContractType.values()) {
+      if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED) {
+        continue;
+      }
+      int id = contractType.getNumber();
+      System.out.println("id is " + id);
+      availableContractType[id / 8] |= (1 << id % 8);
+    }
+
+    System.out.println(ByteArray.toHexString(availableContractType));
+
+    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+
+  }
+
+  @Test
+  public void checkActiveDefaultOperations() {
+    String validContractType = "7fff1fc0033e0100000000000000000000000000000000000000000000000000";
+
+    byte[] availableContractType = new byte[32];
+    for (ContractType contractType : ContractType.values()) {
+      if (contractType == org.tron.protos.Protocol.Transaction.Contract.ContractType.UNRECOGNIZED
+          || contractType == ContractType.AccountPermissionUpdateContract) {
+        continue;
+      }
+      int id = contractType.getNumber();
+      System.out.println("id is " + id);
+      availableContractType[id / 8] |= (1 << id % 8);
+    }
+
+    System.out.println(ByteArray.toHexString(availableContractType));
+
+    Assert.assertEquals(ByteArray.toHexString(availableContractType), validContractType);
+
+  }
+
 }

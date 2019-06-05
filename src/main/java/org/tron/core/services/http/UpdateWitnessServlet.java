@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -30,11 +31,15 @@ public class UpdateWitnessServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = Util.getVisiblePost(contract);
       WitnessUpdateContract.Builder build = WitnessUpdateContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
       Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract).getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+          .createTransactionCapsule(build.build(), ContractType.WitnessUpdateContract)
+          .getInstance();
+      JSONObject jsonObject = JSONObject.parseObject(contract);
+      tx = Util.setTransactionPermissionId(jsonObject, tx);
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

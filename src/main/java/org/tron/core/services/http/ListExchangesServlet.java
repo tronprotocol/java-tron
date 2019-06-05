@@ -19,7 +19,8 @@ public class ListExchangesServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
-      response.getWriter().println(JsonFormat.printToString(wallet.getExchangeList()));
+      boolean visible = Util.getVisible(request);
+      response.getWriter().println(JsonFormat.printToString(wallet.getExchangeList(), visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

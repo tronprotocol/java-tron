@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -112,7 +113,11 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private TriggerSmartContractServlet triggerSmartContractServlet;
   @Autowired
+  private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
   private GetContractServlet getContractServlet;
+  @Autowired
+  private ClearABIServlet clearABIServlet;
   @Autowired
   private ProposalCreateServlet proposalCreateServlet;
   @Autowired
@@ -140,6 +145,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountResourceServlet getAccountResourceServlet;
   @Autowired
+  private GetNodeInfoServlet getNodeInfoServlet;
+  @Autowired
   private AddTransactionSignServlet addTransactionSignServlet;
   @Autowired
   private GetTransactionSignWeightServlet getTransactionSignWeightServlet;
@@ -148,8 +155,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private AccountPermissionUpdateServlet accountPermissionUpdateServlet;
   @Autowired
-  private GetNodeInfoServlet getNodeInfoServlet;
-  @Autowired
   private UpdateSettingServlet updateSettingServlet;
   @Autowired
   private UpdateEnergyLimitServlet updateEnergyLimitServlet;
@@ -157,6 +162,11 @@ public class FullNodeHttpApiService implements Service {
   private GetDelegatedResourceAccountIndexServlet getDelegatedResourceAccountIndexServlet;
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
+  @Autowired
+  private SetAccountIdServlet setAccountServlet;
+  @Autowired
+  private GetAccountByIdServlet getAccountByIdServlet;
+
 
   @Override
   public void init() {
@@ -206,6 +216,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
       context.addServlet(new ServletHolder(getTransactionByIdServlet), "/gettransactionbyid");
+
       context.addServlet(
           new ServletHolder(getTransactionInfoByIdServlet), "/gettransactioninfobyid");
       context.addServlet(
@@ -226,12 +237,16 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(easyTransferServlet), "/easytransfer");
       context.addServlet(new ServletHolder(easyTransferByPrivateServlet), "/easytransferbyprivate");
       context.addServlet(new ServletHolder(easyTransferAssetServlet), "/easytransferasset");
-      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet), "/easytransferassetbyprivate");
+      context.addServlet(new ServletHolder(easyTransferAssetByPrivateServlet),
+          "/easytransferassetbyprivate");
       context.addServlet(new ServletHolder(generateAddressServlet), "/generateaddress");
       context.addServlet(new ServletHolder(validateAddressServlet), "/validateaddress");
       context.addServlet(new ServletHolder(deployContractServlet), "/deploycontract");
       context.addServlet(new ServletHolder(triggerSmartContractServlet), "/triggersmartcontract");
+      context.addServlet(new ServletHolder(triggerConstantContractServlet),
+          "/triggerconstantcontract");
       context.addServlet(new ServletHolder(getContractServlet), "/getcontract");
+      context.addServlet(new ServletHolder(clearABIServlet), "/clearabi");
       context.addServlet(new ServletHolder(proposalCreateServlet), "/proposalcreate");
       context.addServlet(new ServletHolder(proposalApproveServlet), "/proposalapprove");
       context.addServlet(new ServletHolder(proposalDeleteServlet), "/proposaldelete");
@@ -257,6 +272,13 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(
           new ServletHolder(getDelegatedResourceAccountIndexServlet),
           "/getdelegatedresourceaccountindex");
+      context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
+      context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
+
+      int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
+      if (maxHttpConnectNumber > 0) {
+        server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
+      }
 
       server.start();
     } catch (Exception e) {

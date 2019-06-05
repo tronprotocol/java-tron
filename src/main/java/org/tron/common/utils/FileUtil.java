@@ -77,7 +77,10 @@ public class FileUtil {
             .forEachOrdered(FileUtil::recursiveDelete);
       }
 
-      file.setWritable(true);
+      if (!file.setWritable(true)){
+        logger.warn("failed to setWritable: " + fileName);
+      }
+      
       return file.delete();
     }
     return false;
@@ -86,7 +89,11 @@ public class FileUtil {
   public static void saveData(String filePath, String data, boolean append) {
     File priFile = new File(filePath);
     try {
-      priFile.createNewFile();
+      if (!priFile.createNewFile()){
+        logger.warn("failed to create new file: " + filePath);
+        return;
+      }
+
       try (BufferedWriter bw = new BufferedWriter(new FileWriter(priFile, append))) {
         bw.write(data);
         bw.flush();
@@ -102,7 +109,7 @@ public class FileUtil {
     try (BufferedReader bufRead = new BufferedReader(new FileReader(file))) {
       len = bufRead.read(buf, 0, buf.length);
     } catch (IOException ex) {
-      ex.printStackTrace();
+      logger.warn(ex.getMessage());
       return 0;
     }
     return len;
@@ -123,5 +130,27 @@ public class FileUtil {
       }
     }
     return dir.delete();
+  }
+
+  public static boolean createFileIfNotExists(String filepath) {
+    File file = new File(filepath);
+    if (!file.exists()) {
+      try {
+        if (!file.createNewFile()){
+          logger.warn("failed to create new file" + filepath);
+        }
+      } catch (Exception e) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean createDirIfNotExists(String dirPath) {
+    File dir = new File(dirPath);
+    if (!dir.exists()) {
+      return dir.mkdirs();
+    }
+    return true;
   }
 }

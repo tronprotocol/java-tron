@@ -34,6 +34,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class WalletTestCommittee001 {
+
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -104,18 +105,18 @@ public class WalletTestCommittee001 {
   public void testListProposals() {
     //List proposals
     ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    Optional<ProposalList> listProposals =  Optional.ofNullable(proposalList);
+    Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
     final Integer beforeProposalCount = listProposals.get().getProposalsCount();
 
     //CreateProposal
     final long now = System.currentTimeMillis();
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
     proposalMap.put(0L, 1000000L);
-    PublicMethed.createProposal(witness001Address,witnessKey001,proposalMap,blockingStubFull);
+    PublicMethed.createProposal(witness001Address, witnessKey001, proposalMap, blockingStubFull);
 
     //List proposals
     proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-    listProposals =  Optional.ofNullable(proposalList);
+    listProposals = Optional.ofNullable(proposalList);
     Integer afterProposalCount = listProposals.get().getProposalsCount();
     Assert.assertTrue(beforeProposalCount + 1 == afterProposalCount);
     logger.info(Long.toString(listProposals.get().getProposals(0).getCreateTime()));
@@ -131,6 +132,7 @@ public class WalletTestCommittee001 {
         .getPaginatedProposalList(pageMessageBuilder.build());
     Assert.assertTrue(paginatedProposalList.getProposalsCount() >= 1);
   }
+
   /**
    * constructor.
    */

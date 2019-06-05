@@ -4,6 +4,7 @@ import java.util.Map;
 import org.tron.core.db.common.WrappedByteArray;
 
 public interface Flusher {
+
   void flush(Map<WrappedByteArray, WrappedByteArray> batch);
 
   void close();

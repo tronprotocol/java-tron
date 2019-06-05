@@ -111,13 +111,23 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public void saveCode(byte[] addr, byte[] code) {
-    deposit.saveCode(addr, code);
+  public void updateContract(byte[] address, ContractCapsule contractCapsule) {
+    deposit.updateContract(address, contractCapsule);
   }
 
   @Override
-  public byte[] getCode(byte[] addr) {
-    return deposit.getCode(addr);
+  public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
+    deposit.updateAccount(address, accountCapsule);
+  }
+
+  @Override
+  public void saveCode(byte[] address, byte[] code) {
+    deposit.saveCode(address, code);
+  }
+
+  @Override
+  public byte[] getCode(byte[] address) {
+    return deposit.getCode(address);
   }
 
   @Override
@@ -224,12 +234,12 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
-    this.deposit.putAccountValue(address,accountCapsule);
+    this.deposit.putAccountValue(address, accountCapsule);
   }
 
   @Override
   public void putVoteValue(byte[] address, VotesCapsule votesCapsule) {
-    this.deposit.putVoteValue(address,votesCapsule);
+    this.deposit.putVoteValue(address, votesCapsule);
   }
 
   @Override
@@ -249,7 +259,7 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public long getWitnessAllowanceFrozenTime() {
-    return  deposit.getWitnessAllowanceFrozenTime();
+    return deposit.getWitnessAllowanceFrozenTime();
   }
 
   @Override
@@ -264,12 +274,12 @@ public class ContractState implements Deposit, ProgramListenerAware {
 
   @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
-    return  deposit.addTokenBalance(address,tokenId,value);
+    return deposit.addTokenBalance(address, tokenId, value);
   }
 
   @Override
   public long getTokenBalance(byte[] address, byte[] tokenId) {
-    return deposit.getTokenBalance(address,tokenId);
+    return deposit.getTokenBalance(address, tokenId);
   }
 
   @Override

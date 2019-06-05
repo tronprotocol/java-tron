@@ -2,6 +2,7 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -58,6 +60,7 @@ public class ContractScenario012 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -78,8 +81,8 @@ public class ContractScenario012 {
     contract012Address = ecKey1.getAddress();
     contract012Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-    Assert.assertTrue(PublicMethed.sendcoin(contract012Address,2000000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract012Address, 2000000000L, fromAddress,
+        testKey002, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract012Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -87,20 +90,30 @@ public class ContractScenario012 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "TransactionCoin";
-    String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario012_deployTransactionCoin");
-    String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario012_deployTransactionCoin");
-    contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract012Key,contract012Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+    String filePath = "./src/test/resources/soliditycode/contractScenario012.sol";
+    String contractName = "PayTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
+            null, contract012Key, contract012Address, blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi() != null);
   }
 
 
   @Test(enabled = true)
   public void test2TriggerTransactionCoin() {
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(fromAddress)
         + "\"";
     //When the contract has no money,transaction coin failed.
@@ -110,13 +123,13 @@ public class ContractScenario012 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
     Assert.assertFalse(infoById.get().getContractAddress().isEmpty());
   }
-
 
 
   @Test(enabled = true)
@@ -126,19 +139,22 @@ public class ContractScenario012 {
     receiverKey = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
 
     //Send some trx to the contract account.
-    Assert.assertTrue(PublicMethed.sendcoin(contractAddress,1000000000L,toAddress,
-            testKey003,blockingStubFull));
-
+    Assert.assertTrue(PublicMethed.sendcoin(contractAddress, 1000000000L, toAddress,
+        testKey003, blockingStubFull));
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
     //In smart contract, you can't create account
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddressParam, false,
-            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        "sendToAddress2(address)", receiveAddressParam, false,
+        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());
@@ -147,21 +163,24 @@ public class ContractScenario012 {
   }
 
 
-
   @Test(enabled = true)
   public void test4TriggerTransactionCoin() {
     receiveAddressParam = "\"" + Base58.encode58Check(receiverAddress)
         + "\"";
+    Account account = PublicMethed.queryAccount(contractAddress, blockingStubFull);
+    logger.info("contract Balance : -- " + account.getBalance());
     //This time, trigger the methed sendToAddress2 is OK.
-    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress,10000000L,toAddress,
-        testKey003,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(receiverAddress, 10000000L, toAddress,
+        testKey003, blockingStubFull));
     txid = PublicMethed.triggerContract(contractAddress,
-            "sendToAddress2(address)", receiveAddressParam, false,
-            0, 100000000L, contract012Address, contract012Key, blockingStubFull);
+        "sendToAddress2(address)", receiveAddressParam, false,
+        0, 100000000L, contract012Address, contract012Key, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     logger.info(txid);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
     logger.info("result is " + infoById.get().getResultValue());
+    logger.info("energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(infoById.get().getReceipt().getEnergyUsageTotal() > 0);
     Assert.assertTrue(infoById.get().getFee() == infoById.get().getReceipt().getEnergyFee());

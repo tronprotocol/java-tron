@@ -3,6 +3,7 @@ package stest.tron.wallet.dailybuild.trctoken;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +81,7 @@ public class ContractTrcToken079 {
   }
 
   @Test(enabled = true, description = "Trigger transferToken with 0 tokenValue and tokenId")
-  public void TriggerTransferTokenContract() {
+  public void triggerTransferTokenContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 1100_000_000L, fromAddress,
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
@@ -121,11 +122,12 @@ public class ContractTrcToken079 {
     logger.info("before AssetId: " + assetAccountId.toStringUtf8() + ", devAssetCountBefore: "
         + devAssetCountBefore);
 
-    String contractName = "transferTokenContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_ContractTrcToken0552_transferTokenContract");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_ContractTrcToken0552_transferTokenContract");
+    String filePath = "./src/test/resources/soliditycode/contractTrcToken079.sol";
+    String contractName = "tokenTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
     String tokenId = assetAccountId.toStringUtf8();
     long tokenValue = 100;
     long callValue = 0;

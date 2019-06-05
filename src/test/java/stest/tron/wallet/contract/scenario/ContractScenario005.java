@@ -2,6 +2,8 @@ package stest.tron.wallet.contract.scenario;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -16,6 +18,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -46,6 +49,7 @@ public class ContractScenario005 {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
+
   /**
    * constructor.
    */
@@ -61,10 +65,10 @@ public class ContractScenario005 {
 
   @Test(enabled = true)
   public void deployIcoContract() {
-    Assert.assertTrue(PublicMethed.sendcoin(contract005Address,200000000L,fromAddress,
-        testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(contract005Address, 200000000L, fromAddress,
+        testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(contract005Address, 10000000L,
-        3,1,contract005Key,blockingStubFull));
+        3, 1, contract005Key, blockingStubFull));
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract005Address,
         blockingStubFull);
     Long energyLimit = accountResource.getEnergyLimit();
@@ -72,19 +76,29 @@ public class ContractScenario005 {
 
     logger.info("before energy limit is " + Long.toString(energyLimit));
     logger.info("before energy usage is " + Long.toString(energyUsage));
-    String contractName = "ICO";
-    String code = Configuration.getByPath("testng.conf")
-            .getString("code.code_ContractScenario005_deployIcoContract");
-    String abi = Configuration.getByPath("testng.conf")
-            .getString("abi.abi_ContractScenario005_deployIcoContract");
-    byte[] contractAddress = PublicMethed.deployContract(contractName,abi,code,"",maxFeeLimit,
-        0L, 100,null,contract005Key,contract005Address,blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddress,blockingStubFull);
+
+    String filePath = "./src/test/resources/soliditycode/contractScenario005.sol";
+    String contractName = "Crowdsale";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    byte[] contractAddress = null;
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contract005Key, contract005Address, blockingStubFull);
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(txid, blockingStubFull);
+    logger.info("Txid is " + txid);
+    logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    contractAddress = infoById.get().getContractAddress().toByteArray();
+    SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
 
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    accountResource = PublicMethed.getAccountResource(contract005Address,blockingStubFull);
+    accountResource = PublicMethed.getAccountResource(contract005Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();
     energyUsage = accountResource.getEnergyUsed();
     Assert.assertTrue(energyLimit > 0);
@@ -93,6 +107,7 @@ public class ContractScenario005 {
     logger.info("after energy limit is " + Long.toString(energyLimit));
     logger.info("after energy usage is " + Long.toString(energyUsage));
   }
+
   /**
    * constructor.
    */
