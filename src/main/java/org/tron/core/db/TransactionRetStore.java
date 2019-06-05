@@ -33,7 +33,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     }
     byte[] value = revokingDB.getUnchecked(ByteArray.fromLong(blockNumber));
     TransactionRetCapsule result = new TransactionRetCapsule(value);
-    if (Objects.isNull(result)) {
+    if (Objects.isNull(result) || Objects.isNull(result.getInstance())) {
       return null;
     }
     for (TransactionInfo transactionResultInfo : result.getInstance().getTransactioninfoList()) {

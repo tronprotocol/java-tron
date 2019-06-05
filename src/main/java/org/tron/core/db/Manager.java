@@ -1539,7 +1539,9 @@ public class Manager {
         accountStateCallBack.preExeTrans();
         TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
-        Optional.ofNullable(result).ifPresent(t -> transationRetCapsule.addTransactionInfo(result));
+        if (Objects.nonNull(result)) {
+          transationRetCapsule.addTransactionInfo(result);
+        }
       }
       accountStateCallBack.executePushFinish();
     } finally {

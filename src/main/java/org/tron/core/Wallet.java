@@ -1245,7 +1245,7 @@ public class Wallet {
       return null;
     }
 
-    return transactionInfoCapsule.getInstance();
+    return transactionInfoCapsule == null ? null : transactionInfoCapsule.getInstance();
   }
 
   public Proposal getProposalById(ByteString proposalId) {
