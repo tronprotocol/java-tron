@@ -666,6 +666,15 @@ public class LibrustzcashParam {
       this.zkproof = zkproof;
       valid();
     }
+  
+    public byte[] encode() {
+      byte[] data = new byte[32 + 32 + 32 + 192];
+      System.arraycopy(cv, 0, data, 0, 32);
+      System.arraycopy(cm, 0, data, 32, 32);
+      System.arraycopy(ephemeralKey, 0, data, 64, 32);
+      System.arraycopy(zkproof, 0, data, 96, 192);
+      return data;
+    }
 
     public static CheckOutputParams decode(Pointer ctx, byte[] data)
         throws ZksnarkException {
