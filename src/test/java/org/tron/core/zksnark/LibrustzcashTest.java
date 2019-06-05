@@ -15,9 +15,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 import org.apache.commons.io.FileUtils;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
@@ -26,18 +29,28 @@ import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.Libsodium;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 
 public class LibrustzcashTest {
+
+
+  @BeforeClass
+  public static void init() {
+    Args.getInstance().setAllowShieldedTransaction(true);
+  }
+
+  @AfterClass
+  public static void removeDb() {
+    Args.clearParam();
+  }
 
   @Test
   public void testLibsodium() throws ZksnarkException {
@@ -226,7 +239,7 @@ public class LibrustzcashTest {
   @Test
   public void testGenerateNote() throws Exception {
 
-    int total = 10;
+    int total = 100;
     int success = 0;
     int fail = 0;
 
@@ -237,6 +250,7 @@ public class LibrustzcashTest {
       // SpendingKey spendingKey = SpendingKey.random();
 
       DiversifierT diversifierT = new DiversifierT().random();
+      System.out.println("d is: " + ByteArray.toHexString(diversifierT.getData()));
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
 
@@ -294,7 +308,7 @@ public class LibrustzcashTest {
         } else {
           fail ++;
         }
-        System.out.println("note is " + note.cm());
+        System.out.println("note is " + ByteArray.toHexString(note.cm()));
       } catch (ZksnarkException e) {
         System.out.println("failed: " + e.getMessage());
         fail ++;
@@ -306,4 +320,33 @@ public class LibrustzcashTest {
     System.out.println("fail is: " + fail);
   }
 
+  @Test
+  public void testGenerateNoteWithConstant() throws Exception {
+
+    SpendingKey spendingKey = SpendingKey
+        .decode("044ce61616fc962c9fb3ac3a71ce8bfc6dfd42d414eb8b64c3f7306861a7db36");
+
+    DiversifierT diversifierT = new DiversifierT();
+    // a2e62b198564fce9dd2c5c ok
+    // 3072b1623134181197d82f error
+    diversifierT.setData(ByteArray.fromHexString("3072b1623134181197d82f"));
+    System.out.println("d is: " + ByteArray.toHexString(diversifierT.getData()));
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+
+    try {
+      Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
+      // PaymentAddress op = spendingKey.defaultAddress();
+
+      Note note = new Note(op.get(), 100);
+      note.rcm = ByteArray
+          .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+
+      byte[] cm = note.cm();
+      System.out.println("note is " + note.cm());
+    } catch (ZksnarkException e) {
+      System.out.println("failed: " + e.getMessage());
+    }
+
+  }
 }

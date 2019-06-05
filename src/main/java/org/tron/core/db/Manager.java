@@ -61,7 +61,6 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.core.actuator.ZenTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -557,21 +556,6 @@ public class Manager {
   }
 
   /**
-   * issue zen coin
-   */
-  public void initZen() {
-
-    // TODO: init assetIssueContract
-    AssetIssueContract assetIssueContract =  AssetIssueContract.newBuilder().build();
-
-
-    AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(assetIssueContract);
-    assetIssueCapsuleV2.setId(ZenTransferActuator.zenTokenId);
-    getAssetIssueV2Store().put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
-  }
-
-
-  /**
    * save account into database.
    */
   public void initAccount() {
@@ -747,7 +731,7 @@ public class Manager {
     if (totalShieldedPoolValue < 0) {
       throw new BalanceInsufficientException("Total shielded pool value can not below 0");
     }
-    getDynamicPropertiesStore().saveTotalStoragePool(totalShieldedPoolValue);
+    getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
