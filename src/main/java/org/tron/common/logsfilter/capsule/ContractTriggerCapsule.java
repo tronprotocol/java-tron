@@ -116,6 +116,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     event.setRawData(rawData);
 
     event.setLatestSolidifiedBlockNumber(contractTrigger.getLatestSolidifiedBlockNumber());
+    event.setRemoved(contractTrigger.isRemoved());
     event.setUniqueId(contractTrigger.getUniqueId());
     event.setTransactionId(contractTrigger.getTransactionId());
     event.setContractAddress(contractTrigger.getContractAddress());
