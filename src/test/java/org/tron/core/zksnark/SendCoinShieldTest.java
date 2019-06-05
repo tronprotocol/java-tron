@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -39,6 +40,7 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.ShieldedTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
@@ -80,6 +82,7 @@ import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract;
+import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.SpendDescription;
@@ -96,7 +99,19 @@ public class SendCoinShieldTest {
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Wallet wallet;
-
+  
+  private static final String PUBLIC_ADDRESS_ONE;
+  private static final long OWNER_BALANCE = 9999999000000L;
+  private static final long  tokenId = 1;
+  private static final String ASSET_NAME = "trx";
+  private static final int TRX_NUM = 10;
+  private static final int NUM = 1;
+  private static final long START_TIME = 1;
+  private static final long END_TIME = 2;
+  private static final int VOTE_SCORE = 2;
+  private static final String DESCRIPTION = "TRX";
+  private static final String URL = "https://tron.network";
+  
   static {
     Args.setParam(
         new String[]{
@@ -109,6 +124,8 @@ public class SendCoinShieldTest {
         "config-test-mainnet.conf"
     );
     context = new TronApplicationContext(DefaultConfig.class);
+    PUBLIC_ADDRESS_ONE =
+            Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
   }
 
   /**
@@ -130,7 +147,33 @@ public class SendCoinShieldTest {
     context.destroy();
     FileUtil.deleteDir(new File(dbPath));
   }
-
+  
+  /**
+   * create temp Capsule test need.
+   */
+  @Before
+  public void createCapsule() {
+    Args.getInstance().setZenTokenId(String.valueOf(tokenId));
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
+    
+    AssetIssueContract assetIssueContract =
+            AssetIssueContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE)))
+                    .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
+                    .setId(Long.toString(tokenId))
+                    .setTotalSupply(OWNER_BALANCE)
+                    .setTrxNum(TRX_NUM)
+                    .setNum(NUM)
+                    .setStartTime(START_TIME)
+                    .setEndTime(END_TIME)
+                    .setVoteScore(VOTE_SCORE)
+                    .setDescription(ByteString.copyFrom(ByteArray.fromString(DESCRIPTION)))
+                    .setUrl(ByteString.copyFrom(ByteArray.fromString(URL)))
+                    .build();
+    AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
+    dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+  }
 
   @Test
   public void testPathMock() throws ZksnarkException {
