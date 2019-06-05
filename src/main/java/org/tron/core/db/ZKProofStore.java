@@ -1,6 +1,16 @@
 package org.tron.core.db;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+@Component
 public class ZKProofStore extends TronDatabase<Boolean>{
+
+  @Autowired
+  public ZKProofStore(ApplicationContext ctx) {
+    super("zkProof");
+  }
 
   @Override
   public void put(byte[] key, Boolean item) {

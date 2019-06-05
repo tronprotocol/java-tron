@@ -1,6 +1,7 @@
 package org.tron.common.zksnark;
 
 import com.sun.jna.Pointer;
+import java.io.Serializable;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteUtil;
@@ -52,6 +53,10 @@ public class LibrustzcashParam {
   interface ValidParam {
 
     void valid() throws ZksnarkException;
+  }
+
+  interface ZkParamsSerializable {
+    byte[] getByte();
   }
 
   public static class InitZksnarkParams implements ValidParam {
@@ -354,7 +359,7 @@ public class LibrustzcashParam {
    * voucherPath[0]=0x20, voucherPath[1+i*33]=0x20,i=0,1,...31. cv: value commitment, 32 bytes rk:
    * spendAuthSig.randomizePublicKey 32 bytes zkproof: spend proof, 192 bytes
    */
-  public static class SpendProofParams implements ValidParam {
+  public static class SpendProofParams implements ValidParam, ZkParamsSerializable {
 
     @Setter
     @Getter
@@ -424,6 +429,11 @@ public class LibrustzcashParam {
       valid32Params(cv);
       valid32Params(rk);
       validParamLength(zkproof, 192);
+    }
+
+    @Override
+    public byte[] getByte() {
+      return new byte[0];
     }
   }
 
@@ -710,6 +720,8 @@ public class LibrustzcashParam {
       validParamLength(bindingSig, 64);
       valid32Params(sighashValue);
     }
+
+    public byte
   }
 
   /**

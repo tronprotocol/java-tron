@@ -169,6 +169,9 @@ public class Manager {
   private StorageRowStore storageRowStore;
   @Autowired
   private NullifierStore nullifierStore;
+  @Autowired
+  @Getter
+  private ZKProofStore proofStore;
 
   @Autowired
   @Getter
