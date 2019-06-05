@@ -79,8 +79,4 @@ public class ContractTrigger extends Trigger {
   @Getter
   @Setter
   private ABI abi;
-
-  @Getter
-  @Setter
-  private String abiString;
 }
