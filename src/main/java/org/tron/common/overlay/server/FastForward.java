@@ -54,8 +54,7 @@ public class FastForward {
     executorService.scheduleWithFixedDelay(() -> {
       try {
         if (witnessScheduleStore.getActiveWitnesses().contains(witnessAddress) &&
-            backupManager.getStatus().equals(BackupStatusEnum.MASTER) &&
-            !WitnessService.isNeedSyncCheck()) {
+            backupManager.getStatus().equals(BackupStatusEnum.MASTER)) {
           connect();
         } else {
           disconnect();

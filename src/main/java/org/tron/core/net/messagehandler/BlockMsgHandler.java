@@ -110,6 +110,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
       if (tronNetDelegate.validBlock(block)) {
         advService.fastForward(new BlockMessage(block));
+        tronNetDelegate.trustNode(peer);
       }
     }
 
