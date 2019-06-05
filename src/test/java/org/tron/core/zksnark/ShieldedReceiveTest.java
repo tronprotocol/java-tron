@@ -103,6 +103,7 @@ public class ShieldedReceiveTest {
     dbManager = context.getBean(Manager.class);
     //give a big value for pool, avoid for
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
+    Args.getInstance().setAllowShieldedTransaction(true);
   }
 
   /**
@@ -381,7 +382,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -423,7 +424,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -464,7 +465,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -506,7 +507,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -548,7 +549,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("Cout or CEnc size error", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -590,7 +591,7 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("Cout or CEnc size error", e.getMessage());
     }
     Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -841,7 +842,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("librustzcashSaplingCheckOutput error",e.getMessage());
     }
   }
 
@@ -870,7 +871,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("librustzcashSaplingCheckOutput error",e.getMessage());
     }
   }
 
@@ -899,7 +900,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("receive description null", e.getMessage());
+      Assert.assertEquals("param is null", e.getMessage());
     }
   }
 
@@ -957,7 +958,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertEquals("param is null", e.getMessage());
     }
   }
 
