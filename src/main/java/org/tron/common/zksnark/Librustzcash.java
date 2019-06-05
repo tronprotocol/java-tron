@@ -4,13 +4,9 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -268,22 +264,6 @@ public class Librustzcash {
   }
 
   public static boolean librustzcashSaplingFinalCheck(FinalCheckParams params) {
-    //if (dbManager.getProofStore().has(params.))
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    ObjectOutput out = null;
-    try {
-      out = new ObjectOutputStream(bos);
-      out.writeObject(yourObject);
-      out.flush();
-      byte[] yourBytes = bos.toByteArray();
-  ...
-    } finally {
-      try {
-        bos.close();
-      } catch (IOException ex) {
-        // ignore close exception
-      }
-    }
     if (!isOpenZen()) {
       return true;
     }

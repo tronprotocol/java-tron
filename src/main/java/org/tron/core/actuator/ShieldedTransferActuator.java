@@ -1,5 +1,8 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.zen.note.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
+import static org.tron.core.zen.note.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -9,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.Librustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
@@ -23,6 +27,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ZkProofValidateException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.MerkleContainer;
@@ -31,8 +36,6 @@ import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-
-import static org.tron.core.zen.note.ZenChainParams.*;
 
 
 @Slf4j(topic = "actuator")
@@ -182,14 +185,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
           " the committee");
     }
 
-    byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
 
     //transparent verification
     checkSender(shieldedTransferContract);
     checkReceiver(shieldedTransferContract);
     validateTransparent(shieldedTransferContract);
 
-    long fee = calcFee();
 
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
@@ -225,6 +226,34 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException("no Description found in transaction");
     }
 
+    //check spendProofs receiveProofs and Binding sign hash
+    try {
+      checkProof(spendDescriptions, receiveDescriptions);
+    } catch (ZkProofValidateException e) {
+      if (e.isFirstValidated()) {
+        recordProof(tx.getTransactionId(), false);
+      }
+      throw e;
+    }
+
+    return true;
+  }
+
+  private void checkProof(List<SpendDescription> spendDescriptions,
+      List<ReceiveDescription> receiveDescriptions) throws ZkProofValidateException {
+
+    if (dbManager.getProofStore().has(tx.getTransactionId().getBytes())) {
+      if (dbManager.getProofStore().get(tx.getTransactionId().getBytes())) {
+        return;
+      } else {
+        throw new ZkProofValidateException("record is fail, skip proof", false);
+      }
+    }
+
+
+    long fee = calcFee();
+    byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
+
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
       Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
@@ -240,14 +269,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
                   spendDescription.getSpendAuthoritySignature().toByteArray(),
                   signHash)
           )) {
-            throw new ContractValidateException("librustzcashSaplingCheckSpend error");
+            throw new ZkProofValidateException("librustzcashSaplingCheckSpend error", true);
           }
         }
 
         for (ReceiveDescription receiveDescription : receiveDescriptions) {
           if (receiveDescription.getCEnc().size() != ZC_ENCCIPHERTEXT_SIZE
               || receiveDescription.getCOut().size() != ZC_OUTCIPHERTEXT_SIZE) {
-            throw new ContractValidateException("Cout or CEnc size error");
+            throw new ZkProofValidateException("Cout or CEnc size error", true);
           }
           if (!Librustzcash.librustzcashSaplingCheckOutput(
               new CheckOutputParams(ctx,
@@ -256,7 +285,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
                   receiveDescription.getEpk().toByteArray(),
                   receiveDescription.getZkproof().toByteArray())
           )) {
-            throw new ContractValidateException("librustzcashSaplingCheckOutput error");
+            throw new ZkProofValidateException("librustzcashSaplingCheckOutput error", true);
           }
         }
 
@@ -269,11 +298,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
           totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
-          throw new ContractValidateException(e.getMessage());
+          throw new ZkProofValidateException(e.getMessage(), true);
         }
 
         if (totalShieldedPoolValue < 0) {
-          throw new ContractValidateException("shieldedPoolValue error");
+          throw new ZkProofValidateException("shieldedPoolValue error", true);
         }
 
         if (!Librustzcash.librustzcashSaplingFinalCheck(
@@ -282,17 +311,22 @@ public class ShieldedTransferActuator extends AbstractActuator {
                 shieldedTransferContract.getBindingSignature().toByteArray(),
                 signHash)
         )) {
-          throw new ContractValidateException("librustzcashSaplingFinalCheck error");
+          throw new ZkProofValidateException("librustzcashSaplingFinalCheck error", true);
         }
       } catch (ZksnarkException e) {
-        throw new ContractValidateException(e.getMessage());
+        throw new ZkProofValidateException(e.getMessage(), true);
       } finally {
         Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
     }
 
-    return true;
+    recordProof(tx.getTransactionId(), true);
   }
+
+  private void recordProof(Sha256Hash tid, boolean result) {
+      dbManager.getProofStore().put(tid.getBytes(), result);
+  }
+
 
   private void checkSender(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
