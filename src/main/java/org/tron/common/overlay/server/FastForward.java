@@ -26,8 +26,6 @@ public class FastForward {
   @Autowired
   private ApplicationContext ctx;
 
-  private WitnessScheduleStore witnessScheduleStore;
-
   private ChannelManager channelManager;
 
   private BackupManager backupManager;
@@ -49,9 +47,9 @@ public class FastForward {
       return;
     }
 
-    witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
     channelManager = ctx.getBean(ChannelManager.class);
     backupManager = ctx.getBean(BackupManager.class);
+    WitnessScheduleStore witnessScheduleStore = ctx.getBean(WitnessScheduleStore.class);
 
     executorService.scheduleWithFixedDelay(() -> {
       try {
