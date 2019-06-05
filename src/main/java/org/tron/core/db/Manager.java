@@ -728,7 +728,7 @@ public class Manager {
     if (totalShieldedPoolValue < 0) {
       throw new BalanceInsufficientException("Total shielded pool value can not below 0");
     }
-    getDynamicPropertiesStore().saveTotalStoragePool(totalShieldedPoolValue);
+    getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
