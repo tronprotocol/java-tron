@@ -50,8 +50,8 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     BlockMessage blockMessage = (BlockMessage) msg;
     BlockId blockId = blockMessage.getBlockId();
-    Item item = new Item(blockId, InventoryType.BLOCK);
 
+    Item item = new Item(blockId, InventoryType.BLOCK);
     if (!fastForward && !peer.isFastForwardPeer()) {
       check(peer, blockMessage);
     }
@@ -96,6 +96,11 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
+    Item item = new Item(blockId, InventoryType.BLOCK);
+    if (peer.isFastForwardPeer()) {
+      advService.addInvToCache(item);
+    }
+
     if (fastForward) {
       if (tronNetDelegate.getHeadBlockId().getNum() - block.getNum() > threshold) {
         logger.warn("Receive a low block {}, Head {}",
@@ -103,8 +108,7 @@ public class BlockMsgHandler implements TronMsgHandler {
         return;
       }
       if (tronNetDelegate.validBlock(block)) {
-        peer.getAdvInvReceive()
-            .put(new Item(blockId, InventoryType.BLOCK), System.currentTimeMillis());
+        peer.getAdvInvReceive().put(item, System.currentTimeMillis());
         advService.fastForward(new BlockMessage(block));
         tronNetDelegate.trustNode(peer);
       }
