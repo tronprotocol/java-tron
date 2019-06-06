@@ -178,7 +178,7 @@ public class TronNetDelegate {
     synchronized (blockLock) {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
-          if (block.getNum() <= getHeadBlockId().getNum() && !containBlock(block.getBlockId())) {
+          if (block.getNum() <= getHeadBlockId().getNum()) {
             logger.warn("Receive a fork block {} witness {}, head block {}",
                 Hex.toHexString(block.getWitnessAddress().toByteArray()),
                 block.getBlockId().getString(),
