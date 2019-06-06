@@ -68,6 +68,7 @@ import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
@@ -109,6 +110,7 @@ import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.TransactionInfo;
 
 
 @Slf4j(topic = "DB")
@@ -135,6 +137,9 @@ public class Manager {
   @Autowired
   @Getter
   private BlockIndexStore blockIndexStore;
+  @Autowired
+  @Getter
+  private TransactionRetStore transactionRetStore;
   @Autowired
   private AccountIdIndexStore accountIdIndexStore;
   @Autowired
@@ -848,6 +853,10 @@ public class Manager {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
+    if (block.getTransactions().size() != 0) {
+      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
+    }
+
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MAX_FLUSH_COUNT);
@@ -1194,12 +1203,12 @@ public class Manager {
   /**
    * Process transaction.
    */
-  public boolean processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
+  public TransactionInfo processTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
-      return false;
+      return null;
     }
 
     validateTapos(trxCap);
@@ -1260,8 +1269,6 @@ public class Manager {
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
 
-    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
@@ -1269,7 +1276,7 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    return true;
+    return transactionInfo.getInstance();
   }
 
 
@@ -1330,6 +1337,8 @@ public class Manager {
       logger.warn("Witness permission is wrong");
       return null;
     }
+    TransactionRetCapsule transationRetCapsule =
+        new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1375,11 +1384,12 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        processTransaction(trx, blockCapsule);
+        TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
+        transationRetCapsule.addTransactionInfo(result);
         if (fromPending) {
           iterator.remove();
         }
@@ -1431,6 +1441,7 @@ public class Manager {
 
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(privateKey);
+    blockCapsule.setResult(transationRetCapsule);
 
     if (tronNetService != null) {
       tronNetService.fastForward(new BlockMessage(blockCapsule));
@@ -1523,6 +1534,10 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
+
+    TransactionRetCapsule transationRetCapsule =
+        new TransactionRetCapsule(block);
+
     try {
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
@@ -1531,14 +1546,18 @@ public class Manager {
           transactionCapsule.setVerified(true);
         }
         accountStateCallBack.preExeTrans();
-        processTransaction(transactionCapsule, block);
+        TransactionInfo result = processTransaction(transactionCapsule, block);
         accountStateCallBack.exeTransFinish();
+        if (Objects.nonNull(result)) {
+          transationRetCapsule.addTransactionInfo(result);
+        }
       }
       accountStateCallBack.executePushFinish();
     } finally {
       accountStateCallBack.exceptionFinish();
     }
 
+    block.setResult(transationRetCapsule);
     boolean needMaint = needMaintenance(block.getTimeStamp());
     if (needMaint) {
       if (block.getNum() == 1) {
@@ -1766,6 +1785,7 @@ public class Manager {
     closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
+    closeOneStore(transactionRetStore);
     logger.info("******** end to close db ********");
   }
 
