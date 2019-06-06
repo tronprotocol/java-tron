@@ -179,9 +179,9 @@ public class TronNetDelegate {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
-            logger.warn("Receive a fork block {} witness {}, head block {}",
-                Hex.toHexString(block.getWitnessAddress().toByteArray()),
+            logger.warn("Receive a fork block {} witness {}, head {}",
                 block.getBlockId().getString(),
+                Hex.toHexString(block.getWitnessAddress().toByteArray()),
                 getHeadBlockId().getString());
           }
           dbManager.pushBlock(block);

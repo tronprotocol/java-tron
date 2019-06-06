@@ -102,7 +102,7 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     if (fastForward) {
       if (tronNetDelegate.getHeadBlockId().getNum() - block.getNum() > threshold) {
-        logger.warn("Receive a low block {}, Head {}",
+        logger.warn("Receive a low block {}, head {}",
             blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
         return;
       }
