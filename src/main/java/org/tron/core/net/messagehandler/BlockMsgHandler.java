@@ -103,8 +103,9 @@ public class BlockMsgHandler implements TronMsgHandler {
         return;
       }
       if (tronNetDelegate.validBlock(block)) {
+        peer.getAdvInvReceive()
+            .put(new Item(blockId, InventoryType.BLOCK), System.currentTimeMillis());
         advService.fastForward(new BlockMessage(block));
-        peer.getAdvInvReceive().put(new Item(blockId, InventoryType.BLOCK), System.currentTimeMillis());
         tronNetDelegate.trustNode(peer);
       }
     }
