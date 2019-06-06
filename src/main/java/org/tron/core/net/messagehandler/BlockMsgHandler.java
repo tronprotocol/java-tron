@@ -51,7 +51,6 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockMessage blockMessage = (BlockMessage) msg;
     BlockId blockId = blockMessage.getBlockId();
 
-    Item item = new Item(blockId, InventoryType.BLOCK);
     if (!fastForward && !peer.isFastForwardPeer()) {
       check(peer, blockMessage);
     }
@@ -60,7 +59,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
-      Long time = peer.getAdvInvRequest().remove(item);
+      Long time = peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
       long cost = time == null ? 0 : System.currentTimeMillis() - time;
       logger.info("Receive block {}, witness: {} from {}, fetch cost {}ms",
           blockId.getString(),
