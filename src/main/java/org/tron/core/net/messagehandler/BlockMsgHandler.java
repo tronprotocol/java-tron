@@ -52,9 +52,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = blockMessage.getBlockId();
     Item item = new Item(blockId, InventoryType.BLOCK);
 
-    if (fastForward || peer.isFastForwardPeer()) {
-      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-    } else {
+    if (!fastForward && !peer.isFastForwardPeer()) {
       check(peer, blockMessage);
     }
 
@@ -98,18 +96,15 @@ public class BlockMsgHandler implements TronMsgHandler {
       return;
     }
 
-    long headNum = tronNetDelegate.getHeadBlockId().getNum();
-    if (block.getNum() <= headNum) {
-      logger.warn("Receive block num {} <= head num {}, from peer {}",
-          block.getNum(), headNum, peer.getInetAddress());
-    }
-
     if (fastForward) {
-      if (headNum - block.getNum() > threshold) {
+      if (tronNetDelegate.getHeadBlockId().getNum() - block.getNum() > threshold) {
+        logger.warn("Receive a low block {}, Head {}",
+            blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
         return;
       }
       if (tronNetDelegate.validBlock(block)) {
         advService.fastForward(new BlockMessage(block));
+        peer.getAdvInvReceive().put(new Item(blockId, InventoryType.BLOCK), System.currentTimeMillis());
         tronNetDelegate.trustNode(peer);
       }
     }
