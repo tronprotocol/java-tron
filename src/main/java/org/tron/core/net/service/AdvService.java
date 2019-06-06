@@ -175,7 +175,8 @@ public class AdvService {
 
   public void fastForward(BlockMessage msg) {
     Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
-    invToFetch.put(item, System.currentTimeMillis());
+    invToFetchCache.put(item, System.currentTimeMillis());
+    invToFetch.remove(item);
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) == null
