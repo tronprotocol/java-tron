@@ -95,6 +95,11 @@ public class AdvService {
     fetchExecutor.shutdown();
   }
 
+  synchronized public void addInvToCache(Item item) {
+    invToFetchCache.put(item, System.currentTimeMillis());
+    invToFetch.remove(item);
+  }
+
   synchronized public boolean addInv(Item item) {
 
     if (fastForward) {

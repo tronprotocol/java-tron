@@ -6,6 +6,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
@@ -177,6 +178,12 @@ public class TronNetDelegate {
     synchronized (blockLock) {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
+          if (block.getNum() <= getHeadBlockId().getNum()) {
+            logger.warn("Receive a fork block {} witness {}, head {}",
+                block.getBlockId().getString(),
+                Hex.toHexString(block.getWitnessAddress().toByteArray()),
+                getHeadBlockId().getString());
+          }
           dbManager.pushBlock(block);
           freshBlockId.add(block.getBlockId());
           logger.info("Success process block {}.", block.getBlockId().getString());
