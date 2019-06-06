@@ -681,8 +681,6 @@ public class ShieldedReceiveTest {
     receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
     receiveDescriptionCapsule.setZkproof(zkProof);
 
-    System.out.println("right cm:" + ByteArray.toHexString(cm));
-
     OutgoingPlaintext outPlaintext =
         new OutgoingPlaintext(output.getNote().pkD, encryptor.esk);
     receiveDescriptionCapsule.setCOut(outPlaintext
@@ -739,8 +737,6 @@ public class ShieldedReceiveTest {
       default:
         break;
     }
-
-    System.out.println("wrong cm:" + ByteArray.toHexString(receiveDescriptionCapsule.getCm().toByteArray()));
 
     return receiveDescriptionCapsule;
   }
@@ -1897,7 +1893,6 @@ public class ShieldedReceiveTest {
             transactionHash,
             builder,
             ctx);
-    
     //filled with Sapling spendAuth in builder
     List<SpendDescriptionInfo> spends = builder.getSpends();
     for (int i = 0; i < spends.size(); i++) {
@@ -1939,12 +1934,12 @@ public class ShieldedReceiveTest {
           throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
     Note note = new Note(address, 100 * 1000000);
-    
+    note.rcm = ByteArray.
+            fromHexString("eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701");
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
             .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
-    
     SpendDescriptionInfo skSpend = new SpendDescriptionInfo(ak,
             nsk,
             ovk,

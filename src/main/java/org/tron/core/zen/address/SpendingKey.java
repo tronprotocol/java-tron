@@ -88,7 +88,7 @@ public class SpendingKey {
   public DiversifierT defaultDiversifier() throws BadItemException, ZksnarkException {
     byte[] res = new byte[Constant.ZC_DIVERSIFIER_SIZE];
     byte[] blob = new byte[34];
-    ZksnarkUtils.sort(this.value);
+    //ZksnarkUtils.sort(this.value);
     System.arraycopy(this.value, 0, blob, 0, 32);
     blob[32] = 3;
     blob[33] = 0;
@@ -107,7 +107,6 @@ public class SpendingKey {
       }
       blob[33] += 1;
     }
-    System.out.println("res1 = " + ByteArray.toHexString(res));
     DiversifierT diversifierT = new DiversifierT();
     diversifierT.setData(res);
     return diversifierT;

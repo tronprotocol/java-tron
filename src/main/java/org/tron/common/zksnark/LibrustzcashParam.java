@@ -3,6 +3,7 @@ package org.tron.common.zksnark;
 import com.sun.jna.Pointer;
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.exception.ZksnarkException;
 
@@ -424,6 +425,54 @@ public class LibrustzcashParam {
       valid32Params(cv);
       valid32Params(rk);
       validParamLength(zkproof, 192);
+    }
+  
+    public static SpendProofParams decode(Pointer ctx, byte[] data)
+            throws ZksnarkException {
+      byte[] ak = new byte[32];
+      byte[] nsk = new byte[32];
+      byte[] d = new byte[11];
+      byte[] r = new byte[32];
+      byte[] alpha = new byte[32];
+      byte[] valueByte = new byte[8];
+      byte[] anchor = new byte[32];
+      byte[] voucherPath = new byte[1065];
+      byte[] cv = new byte[32];
+      byte[] rk = new byte[192];
+      byte[] zkproof = new byte[64];
+    
+      System.arraycopy(data, 0, ak, 0, 32);
+      System.arraycopy(data, 32, nsk, 0, 32);
+      System.arraycopy(data, 64, d, 0, 11);
+      System.arraycopy(data, 75, r, 0, 32);
+      System.arraycopy(data, 107, alpha, 0, 32);
+      System.arraycopy(data, 139, valueByte, 0, 8);
+      System.arraycopy(data, 147, anchor, 0, 32);
+      System.arraycopy(data, 179, voucherPath, 0, 1065);
+      System.arraycopy(data, 179 + 1065, cv, 0, 32);
+      System.arraycopy(data, 211 + 1065, rk, 0, 192);
+      System.arraycopy(data, 243 + 1065, zkproof, 0, 64);
+    
+      return new SpendProofParams(ctx, ak, nsk, d, r, alpha, ByteArray.toLong(valueByte),
+              anchor,voucherPath,cv,rk,zkproof);
+    }
+  
+    public byte[] encode(){
+      byte[] data = new byte[32+32+11+32+32+8+32+1065+32+32+192];
+    
+      System.arraycopy(ak, 0, data, 0, 32);
+      System.arraycopy(nsk, 0, data, 32,  32);
+      System.arraycopy(d, 0, data, 64, 11);
+      System.arraycopy(r, 0, data, 75,  32);
+      System.arraycopy(alpha, 0,data, 107,  32);
+      System.arraycopy(ByteArray.fromLong(value), 0, data, 139,  8);
+      System.arraycopy(anchor, 0, data, 147,  32);
+      System.arraycopy(voucherPath, 0, data, 179, 1065);
+      System.arraycopy(cv, 0, data, 179 + 1065, 32);
+      System.arraycopy(rk, 0, data, 211 + 1065, 32);
+      System.arraycopy(zkproof, 0, data, 243 + 1065,  192);
+    
+      return data;
     }
   }
 
