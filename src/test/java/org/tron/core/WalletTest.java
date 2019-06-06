@@ -56,6 +56,7 @@ import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionRetStore;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.BadItemException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
@@ -172,12 +173,11 @@ public class WalletTest {
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
 
-  private static void addTransactionInfoToStore(Transaction transaction, TransactionRetCapsule transactionRetCapsule) {
+  private static void   addTransactionInfoToStore(Transaction transaction) {
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
-    transactionInfo.setId(transaction.getRawData().toByteArray());
-    transactionRetCapsule.addTransactionInfo(transactionInfo.getInstance());
-    manager.getTransactionHistoryStore()
-        .put(transactionInfo.getId(), transactionInfo);
+    byte[] trxId = transaction.getRawData().toByteArray();
+    transactionInfo.setId(trxId);
+    manager.getTransactionHistoryStore().put(trxId, transactionInfo);
   }
 
 
@@ -205,32 +205,28 @@ public class WalletTest {
 
     block1 = getBuildBlock(BLOCK_TIMESTAMP_ONE, BLOCK_NUM_ONE, BLOCK_WITNESS_ONE,
         ACCOUNT_ADDRESS_ONE, transaction1, transaction2);
-    TransactionRetCapsule transationRetCapsule =
-        new TransactionRetCapsule(new BlockCapsule(block1));
-
     addBlockToStore(block1);
-    addTransactionInfoToStore(transaction1, transationRetCapsule);
+    addTransactionInfoToStore(transaction1);
 
     block2 = getBuildBlock(BLOCK_TIMESTAMP_TWO, BLOCK_NUM_TWO, BLOCK_WITNESS_TWO,
         ACCOUNT_ADDRESS_TWO, transaction2, transaction3);
     addBlockToStore(block2);
-    addTransactionInfoToStore(transaction2, transationRetCapsule);
+    addTransactionInfoToStore(transaction2);
 
     block3 = getBuildBlock(BLOCK_TIMESTAMP_THREE, BLOCK_NUM_THREE, BLOCK_WITNESS_THREE,
         ACCOUNT_ADDRESS_THREE, transaction2, transaction4);
     addBlockToStore(block3);
-    addTransactionInfoToStore(transaction3, transationRetCapsule);
+    addTransactionInfoToStore(transaction3);
 
     block4 = getBuildBlock(BLOCK_TIMESTAMP_FOUR, BLOCK_NUM_FOUR, BLOCK_WITNESS_FOUR,
         ACCOUNT_ADDRESS_FOUR, transaction4, transaction5);
     addBlockToStore(block4);
-    addTransactionInfoToStore(transaction4, transationRetCapsule);
+    addTransactionInfoToStore(transaction4);
 
     block5 = getBuildBlock(BLOCK_TIMESTAMP_FIVE, BLOCK_NUM_FIVE, BLOCK_WITNESS_FIVE,
         ACCOUNT_ADDRESS_FIVE, transaction5, transaction3);
     addBlockToStore(block5);
-    addTransactionInfoToStore(transaction5, transationRetCapsule);
-    manager.getTransactionRetStore().put(ByteArray.fromLong(new BlockCapsule(block1).getNum()), transationRetCapsule);
+    addTransactionInfoToStore(transaction5);
   }
 
   private static void addBlockToStore(Block block) {
@@ -370,12 +366,35 @@ public class WalletTest {
 
   @Test
   public void getTransactionInfoById() {
-    TransactionInfo transactionById = wallet.getTransactionInfoById(
+    TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
-            .copyFrom(new TransactionCapsule(transaction1).getTransactionId().getBytes()));
+            .copyFrom(transaction1.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",  ByteString.copyFrom(transactionById1.getId().toByteArray()),
+        ByteString.copyFrom(transaction1.getRawData().toByteArray()));
 
-    Assert.assertEquals("gettransactioninfobyid", transactionById.getId().toByteArray(),
-        new TransactionCapsule(transaction1).getTransactionId().getBytes());
+    TransactionInfo transactionById2 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction2.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById2.getId().toByteArray()),
+        ByteString.copyFrom(transaction2.getRawData().toByteArray()));
+
+    TransactionInfo transactionById3 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction3.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById3.getId().toByteArray()),
+        ByteString.copyFrom(transaction3.getRawData().toByteArray()));
+
+    TransactionInfo transactionById4 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction4.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById4.getId().toByteArray()),
+        ByteString.copyFrom(transaction4.getRawData().toByteArray()));
+
+    TransactionInfo transactionById5 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction5.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById5.getId().toByteArray()),
+        ByteString.copyFrom(transaction5.getRawData().toByteArray()));
   }
 
   @Ignore
