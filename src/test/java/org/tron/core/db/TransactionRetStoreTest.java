@@ -70,7 +70,6 @@ public class TransactionRetStoreTest {
 
   @Test
   public void get() throws BadItemException {
-    //test get and has Method
     TransactionInfoCapsule resultCapsule = transactionRetStore.getTransactionInfo(transactionId);
     Assert.assertNotNull("get transaction ret store", resultCapsule);
   }
