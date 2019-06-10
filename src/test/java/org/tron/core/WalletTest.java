@@ -48,15 +48,11 @@ import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
-import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
-import org.tron.core.db.TransactionRetStore;
-import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.BadItemException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
@@ -369,31 +365,36 @@ public class WalletTest {
     TransactionInfo transactionById1 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction1.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid",  ByteString.copyFrom(transactionById1.getId().toByteArray()),
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById1.getId().toByteArray()),
         ByteString.copyFrom(transaction1.getRawData().toByteArray()));
 
     TransactionInfo transactionById2 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction2.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById2.getId().toByteArray()),
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById2.getId().toByteArray()),
         ByteString.copyFrom(transaction2.getRawData().toByteArray()));
 
     TransactionInfo transactionById3 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction3.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById3.getId().toByteArray()),
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById3.getId().toByteArray()),
         ByteString.copyFrom(transaction3.getRawData().toByteArray()));
 
     TransactionInfo transactionById4 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction4.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById4.getId().toByteArray()),
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById4.getId().toByteArray()),
         ByteString.copyFrom(transaction4.getRawData().toByteArray()));
 
     TransactionInfo transactionById5 = wallet.getTransactionInfoById(
         ByteString
             .copyFrom(transaction5.getRawData().toByteArray()));
-    Assert.assertEquals("gettransactioninfobyid", ByteString.copyFrom(transactionById5.getId().toByteArray()),
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById5.getId().toByteArray()),
         ByteString.copyFrom(transaction5.getRawData().toByteArray()));
   }
 

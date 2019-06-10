@@ -1,17 +1,15 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.exception.BadItemException;
-import java.util.Objects;
 import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j(topic = "DB")
