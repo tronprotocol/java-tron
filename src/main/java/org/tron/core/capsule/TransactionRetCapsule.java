@@ -16,9 +16,14 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
     if (Objects.isNull(blockCapsule)) {
       return;
     }
-    TransactionRet.Builder build = transactionRet.toBuilder().
-        setBlockNumber(blockCapsule.getNum()).setBlockTimeStamp(blockCapsule.getTimeStamp());
+    TransactionRet.Builder build = transactionRet.toBuilder()
+        .setBlockNumber(blockCapsule.getNum()).setBlockTimeStamp(blockCapsule.getTimeStamp());
     transactionRet = build.build();
+  }
+
+  // only for test
+  public  TransactionRetCapsule() {
+    transactionRet = TransactionRet.newBuilder().build();
   }
 
   public TransactionRetCapsule(byte[] data) throws BadItemException {
