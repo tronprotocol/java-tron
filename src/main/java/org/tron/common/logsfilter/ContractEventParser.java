@@ -20,6 +20,7 @@ public class ContractEventParser {
   private enum Type {
     UNKNOWN,
     INT_NUMBER,
+    UINT_NUMBER,
     BOOL,
     FLOAT_NUMBER,
     FIXED_BYTES,
@@ -34,7 +35,9 @@ public class ContractEventParser {
       Type type = basicType(typeStr);
 
       if (type == Type.INT_NUMBER) {
-        return new BigInteger(startBytes).toString();
+        return DataWord.bigIntValue(startBytes);
+      } else if (type == Type.UINT_NUMBER) {
+        return DataWord.bigUIntValue(startBytes);
       } else if (type == Type.BOOL) {
         return String.valueOf(!DataWord.isZero(startBytes));
       } else if (type == Type.FIXED_BYTES) {
@@ -61,8 +64,10 @@ public class ContractEventParser {
   protected static Type basicType(String type) {
     if (!Pattern.matches("^.*\\[\\d*\\]$", type)) {
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
-      if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
+      if (type.startsWith("int")) {
         return Type.INT_NUMBER;
+      } else if (type.startsWith("uint") || type.startsWith("trcToken")) {
+        return Type.UINT_NUMBER;
       } else if ("bool".equals(type)) {
         return Type.BOOL;
       } else if ("address".equals(type)) {
@@ -107,6 +112,8 @@ public class ContractEventParser {
     Type type = basicType(typeStr);
     if (type == Type.INT_NUMBER) {
       return DataWord.bigIntValue(bytes);
+    } else if (type == Type.UINT_NUMBER) {
+      return DataWord.bigUIntValue(bytes);
     } else if (type == Type.BOOL) {
       return String.valueOf(!DataWord.isZero(bytes));
     } else if (type == Type.ADDRESS) {
