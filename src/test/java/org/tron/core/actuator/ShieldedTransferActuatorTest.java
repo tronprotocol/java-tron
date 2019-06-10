@@ -1,9 +1,7 @@
 package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.Any.Builder;
 import com.google.protobuf.ByteString;
-import com.sun.jna.Pointer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +11,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.zksnark.Librustzcash;
@@ -25,24 +21,21 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
-import org.tron.core.capsule.ReceiveDescriptionCapsule;
-import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.ZenTransactionBuilder;
-import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
@@ -52,7 +45,6 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
-import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
@@ -1410,5 +1402,134 @@ public class ShieldedTransferActuatorTest {
     }
   }
 
+  /**
+   * from address same to to address
+   */
+  @Test
+  public void publicAddressAToShieldAddressFailure() {
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From amount
+      builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), 2 * AMOUNT + fee);
+      //TO amount
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
 
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT);
+
+      TransactionCapsule transactionCap = builder.build();
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("Can't transfer zen to yourself", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * Note has been spent
+   */
+  @Test
+  public void shieldAddressToPublicFailure() {
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From shield address
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+          voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+
+      //TO amount
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
+
+      TransactionCapsule transactionCap = builder.build();
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      //set note nullifiers
+      ShieldedTransferContract shieldContract = transactionCap.getInstance().getRawData().
+          getContract(0).getParameter().unpack(ShieldedTransferContract.class);
+      dbManager.getNullfierStore().put(
+          new BytesCapsule(shieldContract.getSpendDescription(0).getNullifier().toByteArray()));
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("note has been spend in this transaction", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * shieldedPoolValue error
+   */
+  @Test
+  public void shieldAddressToPublicNotEnoughFailure() {
+    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(0);
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From shield address
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+          voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+
+      //TO amount
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
+
+      TransactionCapsule transactionCap = builder.build();
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("shieldedPoolValue error", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
 }
