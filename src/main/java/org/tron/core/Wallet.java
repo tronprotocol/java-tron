@@ -1240,7 +1240,8 @@ public class Wallet {
       return transactionInfoCapsule.getInstance();
     }
     try {
-      transactionInfoCapsule = dbManager.getTransactionRetStore().getTransactionInfo(transactionId.toByteArray());
+      transactionInfoCapsule = dbManager.getTransactionRetStore()
+          .getTransactionInfo(transactionId.toByteArray());
     } catch (BadItemException e) {
       return null;
     }
