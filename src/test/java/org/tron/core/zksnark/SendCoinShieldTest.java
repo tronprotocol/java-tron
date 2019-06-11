@@ -1614,7 +1614,7 @@ public class SendCoinShieldTest {
           .fromHexString("0eadb4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cbd");
       spendDescriptionInfo.alpha = bytes;
 
-      byte[] dataToBeSigned = ByteArray.fromHexString("aaaaaaaaa");
+      byte[] dataToBeSigned = ByteArray.fromHexString("0eadb4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cbd");
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(spendDescriptionInfo.expsk.getAsk(),

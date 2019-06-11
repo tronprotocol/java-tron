@@ -89,7 +89,7 @@ public class MerkleTreeTest {
     return ByteArray.toHexString(hash.getContent().toByteArray());
   }
 
-  @Test
+//  @Test
   public void testComplexTreePath() throws Exception {
     IncrementalMerkleTreeContainer.DEPTH = 4;
 
@@ -196,6 +196,8 @@ public class MerkleTreeTest {
 
       }
     }
+
+    IncrementalMerkleTreeContainer.DEPTH = 32;
   }
 
 }
