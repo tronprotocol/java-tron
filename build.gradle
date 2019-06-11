@@ -190,7 +190,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
-    implementation 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
+    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
 }
 
 check.dependsOn 'lint'
