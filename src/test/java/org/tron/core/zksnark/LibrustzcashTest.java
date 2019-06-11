@@ -6,6 +6,7 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashIvkToPkd;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashNskToNk;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingBindingSig;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingProvingCtxInit;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendProof;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
@@ -16,6 +17,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.stream.LongStream;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -61,6 +68,7 @@ import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.protos.Contract.PedersenHash;
 
+@Slf4j
 public class LibrustzcashTest {
 
   private static String dbPath = "output_Librustzcash_test";
@@ -253,7 +261,7 @@ public class LibrustzcashTest {
 
   public long benchmarkCreateSpend() throws ZksnarkException {
 
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    long ctx = librustzcashSaplingProvingCtxInit();
 
       byte[] ak = HexBin.decode("2021c369f4b901cc4f37d80eac2d676aa41beb2a2d835d5120005714bc687657");
       byte[] nsk = HexBin
@@ -275,8 +283,7 @@ public class LibrustzcashTest {
 
       long start = System.currentTimeMillis();
         boolean ret;
-        ret = Librustzcash
-            .librustzcashSaplingSpendProof(new SpendProofParams(ctx, ak,
+        ret =  librustzcashSaplingSpendProof(new SpendProofParams(ctx, ak,
                 nsk,
                 d,
                 rcm,
@@ -296,7 +303,49 @@ public class LibrustzcashTest {
   }
 
   @Test
-  public void calBenchmarkVerifySpend() throws ZksnarkException {
+  public void calBenchmarkSpendConcurrent() throws Exception{
+    librustzcashInitZksnarkParams();
+    System.out.println("--- load ok ---");
+
+    int count = 100;
+
+    CountDownLatch countDownLatch = new CountDownLatch(count);
+
+    int availableProcessors = Runtime.getRuntime().availableProcessors();
+    logger.info("availableProcessors:" + availableProcessors);
+
+    ExecutorService generatePool =
+        Executors.newFixedThreadPool(
+            availableProcessors,
+            new ThreadFactory() {
+              @Override
+              public Thread newThread(Runnable r) {
+                return new Thread(r, "generate-transaction");
+              }
+            });
+
+    long startGenerate = System.currentTimeMillis();
+    LongStream.range(0L, count)
+        .forEach(
+            l -> {
+              generatePool.execute(
+                  () -> {
+                    try {
+                      benchmarkCreateSpend();
+                    } catch (Exception ex) {
+                      ex.printStackTrace();
+                      logger.error("", ex);
+                    }
+                  });
+            });
+
+    countDownLatch.await();
+
+    logger.info("generate cost time:" + (System.currentTimeMillis() - startGenerate));
+  }
+
+  @Test
+  public void calBenchmarkSpend() throws ZksnarkException {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
