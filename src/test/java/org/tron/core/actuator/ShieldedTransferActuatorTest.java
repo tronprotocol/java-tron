@@ -15,7 +15,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -56,6 +56,7 @@ import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 public class ShieldedTransferActuatorTest {
+
   private static Wallet wallet;
   private static Manager dbManager;
   private static final String dbPath = "output_shield_transfer_test";
@@ -71,7 +72,7 @@ public class ShieldedTransferActuatorTest {
   private static final String INVAILID_ADDRESS = "aaaa";
 
 
-  private static final long  tokenId = 1;
+  private static final long tokenId = 1;
   private static final String ASSET_NAME = "trx";
   private static final int TRX_NUM = 10;
   private static final int NUM = 1;
@@ -175,9 +176,8 @@ public class ShieldedTransferActuatorTest {
     String outputPath = getParamsFile("sapling-output.params");
     String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
-    Librustzcash.librustzcashInitZksnarkParams(
-        new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
-            outputPath.getBytes(), outputPath.length(), outputHash));
+    JLibrustzcash.librustzcashInitZksnarkParams(
+        new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
   }
 
   private TransactionCapsule getPublicToShieldedTransaction() throws Exception {
@@ -754,7 +754,7 @@ public class ShieldedTransferActuatorTest {
       int[] noteNumArray = {3, 7, 10};
       for (int noteNum : noteNumArray) {
         //generate one block
-        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis()-3000, privateKey,
+        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis() - 3000, privateKey,
             false, false);
 
         //Step 1, public address to shield address
@@ -1113,7 +1113,7 @@ public class ShieldedTransferActuatorTest {
     try {
       int noteNum = 5;
       //generate one block
-      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis()-3000, privateKey,
+      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis() - 3000, privateKey,
           false, false);
 
       //Step 1, public address to shield address
@@ -1130,10 +1130,12 @@ public class ShieldedTransferActuatorTest {
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
 
-      Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT, Note.generateR());
+      Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
+          Note.generateR());
       listNote.add(note);
       builderOne
-          .addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm, new byte[512]);
+          .addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
+              new byte[512]);
 
       for (int i = 0; i < noteNum - 1; i++) {
         note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
@@ -1206,7 +1208,7 @@ public class ShieldedTransferActuatorTest {
   @Test
   public void ShieldToPublicAddressWithZoreValueFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT*2);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT * 2);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     try {
@@ -1215,7 +1217,7 @@ public class ShieldedTransferActuatorTest {
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
       PaymentAddress address = sk.defaultAddress();
       {
-        Note note = new Note(address, AMOUNT*2);
+        Note note = new Note(address, AMOUNT * 2);
         IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
         byte[] anchor = voucher.root().getContent().toByteArray();
         dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,

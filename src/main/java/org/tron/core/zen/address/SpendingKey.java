@@ -5,9 +5,8 @@ import java.util.Random;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.Libsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium;
 import org.tron.common.zksnark.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
@@ -99,7 +98,7 @@ public class SpendingKey {
           state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
       Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
       Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
-      if (Librustzcash.librustzcashCheckDiversifier(res)) {
+      if (JLibrustzcash.librustzcashCheckDiversifier(res)) {
         break;
       } else if (blob[33] == 255) {
         throw new BadItemException(
@@ -118,7 +117,7 @@ public class SpendingKey {
       byte[] ask = new byte[32];
       byte t = 0x00;
       byte[] tmp = prfExpand(sk, t);
-      Librustzcash.librustzcashToScalar(tmp, ask);
+      JLibrustzcash.librustzcashToScalar(tmp, ask);
       return ask;
     }
 
@@ -126,7 +125,7 @@ public class SpendingKey {
       byte[] nsk = new byte[32];
       byte t = 0x01;
       byte[] tmp = prfExpand(sk, t);
-      Librustzcash.librustzcashToScalar(tmp, nsk);
+      JLibrustzcash.librustzcashToScalar(tmp, nsk);
       return nsk;
     }
 

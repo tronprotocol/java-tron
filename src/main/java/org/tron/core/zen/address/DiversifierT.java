@@ -3,7 +3,7 @@ package org.tron.core.zen.address;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.core.Constant;
 import org.tron.core.exception.ZksnarkException;
 
@@ -21,7 +21,7 @@ public class DiversifierT {
     byte[] d;
     while (true) {
       d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
-      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+      if (JLibrustzcash.librustzcashCheckDiversifier(d)) {
         break;
       }
     }

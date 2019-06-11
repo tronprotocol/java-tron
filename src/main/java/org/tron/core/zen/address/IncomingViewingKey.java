@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.core.exception.ZksnarkException;
 
@@ -20,8 +20,8 @@ public class IncomingViewingKey {
 
   public Optional<PaymentAddress> address(DiversifierT d) throws ZksnarkException {
     byte[] pkD = new byte[32]; // 32
-    if (Librustzcash.librustzcashCheckDiversifier(d.data)) {
-      if (!Librustzcash.librustzcashIvkToPkd(new IvkToPkdParams(value, d.data, pkD))) {
+    if (JLibrustzcash.librustzcashCheckDiversifier(d.data)) {
+      if (!JLibrustzcash.librustzcashIvkToPkd(new IvkToPkdParams(value, d.data, pkD))) {
         throw new ZksnarkException("librustzcashIvkToPkd error");
       }
       return Optional.of(new PaymentAddress(d, pkD));

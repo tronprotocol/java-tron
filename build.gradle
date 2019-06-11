@@ -2,6 +2,7 @@ buildscript {
     repositories {
         mavenCentral()
         jcenter()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
@@ -51,6 +52,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven { url 'https://maven.aliyun.com/nexus/content/repositories/central/' }
+    maven { url 'https://jitpack.io' }
 }
 def versions = [
         checkstyle: '8.7',
@@ -188,6 +190,7 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version: '2.6'
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
+    implementation 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
 }
 
 check.dependsOn 'lint'

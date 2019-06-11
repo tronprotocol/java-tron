@@ -1,16 +1,15 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.zksnark.Librustzcash.librustzcashCheckDiversifier;
-import static org.tron.common.zksnark.Librustzcash.librustzcashComputeCm;
-import static org.tron.common.zksnark.Librustzcash.librustzcashIvkToPkd;
-import static org.tron.common.zksnark.Librustzcash.librustzcashNskToNk;
-import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingBindingSig;
-import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingProvingCtxInit;
-import static org.tron.common.zksnark.Librustzcash.librustzcashSaplingSpendSig;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashCheckDiversifier;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashComputeCm;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashIvkToPkd;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashNskToNk;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingBindingSig;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingProvingCtxInit;
+import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
 import com.google.protobuf.ByteString;
-import com.sun.jna.Pointer;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +23,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
@@ -166,7 +165,7 @@ public class LibrustzcashTest {
       }
     }
 
-    Pointer ctx = librustzcashSaplingProvingCtxInit();
+    long ctx = librustzcashSaplingProvingCtxInit();
     byte[] resbindSig = new byte[64];
     boolean boolBindSig = librustzcashSaplingBindingSig(
         new BindingSigParams(ctx, value, sighash, resbindSig));
@@ -221,9 +220,8 @@ public class LibrustzcashTest {
     String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
     try {
-      Librustzcash.librustzcashInitZksnarkParams(
-          new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
-              outputPath.getBytes(), outputPath.length(), outputHash));
+      JLibrustzcash.librustzcashInitZksnarkParams(
+          new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
     } catch (ZksnarkException e) {
     }
   }
@@ -233,15 +231,15 @@ public class LibrustzcashTest {
     String dataToBeSigned = "2c596ec7f2d580471e0769fcc4a0b96b908394710cac0fd8cba7887bfe83bf2d";
 
     long startTime = System.currentTimeMillis();
-    Pointer ctx = librustzcashSaplingProvingCtxInit();
+    long ctx = librustzcashSaplingProvingCtxInit();
 
     CheckSpendParams checkSpendParams = CheckSpendParams.decode(ctx,
         ByteArray.fromHexString(spend),
         ByteArray.fromHexString(dataToBeSigned));
 
-    boolean ok = Librustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
+    boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
 
-    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
 
     long endTime = System.currentTimeMillis();
     long time = endTime - startTime;
@@ -283,14 +281,14 @@ public class LibrustzcashTest {
     String spend = "add742af18857e5ec2d71d346a7fe2ac97c137339bd5268eea86d32e0ff4f38f76213fa8cfed3347ac4e8572dd88aff395c0c10a59f8b3f49d2bc539ed6c726667e29d4763f914ddd0abf1cdfa84e44de87c233434c7e69b8b5b8f4623c8aa444163425bae5cef842972fed66046c1c6ce65c866ad894d02e6e6dcaae7a962d9f2ef95757a09c486928e61f0f7aed90ad0a542b0d3dc5fe140dfa7626b9315c77e03b055f19cbacd21a866e46f06c00e0c7792b2a590a611439b510a9aaffcf1073bad23e712a9268b36888e3727033eee2ab4d869f54a843f93b36ef489fb177bf74b41a9644e5d2a0a417c6ac1c8869bc9b83273d453f878ed6fd96b82a5939903f7b64ecaf68ea16e255a7fb7cc0b6d8b5608a1c6b0ed3024cc62c2f0f9c5cfc7b431ae6e9d40815557aa1d010523f9e1960de77b2274cb6710d229d475c87ae900183206ba90cb5bbc8ec0df98341b82726c705e0308ca5dc08db4db609993a1046dfb43dfd8c760be506c0bed799bb2205fc29dc2e654dce731034a23b0aaf6da0199248702ee0523c159f41f4cbfff6c35ace4dd9ae834e44e09c76a0cbdda1d3f6a2c75ad71212daf9575ab5f09ca148718e667f29ddf18c8a330a86ace18a86e89454653902aa393c84c6b694f27d0d42e24e7ac9fe34733de5ec15f5066081ce912c62c1a804a2bb4dedcef7cc80274f6bb9e89e2fce91dc50d6a73c8aefb9872f1cf3524a92626a0b8f39bbf7bf7d96ca2f770fc04d7f457021c536a506a187a93b2245471ddbfb254a71bc4a0d72c8d639a31c7b1920087ffca05c24214157e2e7b28184e91989ef0b14f9b34c3dc3cc0ac64226b9e337095870cb0885737992e120346e630a416a9b217679ce5a778fb15779c136bcecca5efe79012013d77d90b4e99dd22c8f35bc77121716e160d05bd30d288ee8886390ee436f85bdc9029df888a3a3326d9d4ddba5cb5318b3274928829d662e96fea1d601f7a306251ed8c6cc4e5a3a7a98c35a3650482a0eee08f3b4c2da9b22947c96138f1505c2f081f8972d429f3871f32bef4aaa51aa6945df8e9c9760531ac6f627d17c1518202818a91ca304fb4037875c666060597976144fcbbc48a776a2c61beb9515fa8f3ae6d3a041d320a38a8ac75cb47bb9c866ee497fc3cd13299970c4b369c1c2ceb4220af082fbecdd8114492a8e4d713b5a73396fd224b36c1185bd5e20d683e6c8db35346c47ae7401988255da7cfffdced5801067d4d296688ee8fe424b4a8a69309ce257eefb9345ebfda3f6de46bb11ec94133e1f72cd7ac54934d6cf17b3440800e70b80ebc7c7bfc6fb0fc2c";
 
     long startTime = System.currentTimeMillis();
-    Pointer ctx = librustzcashSaplingProvingCtxInit();
+    long ctx = librustzcashSaplingProvingCtxInit();
 
     CheckOutputParams checkOutputParams = CheckOutputParams.decodeZ(ctx,
         ByteArray.fromHexString(spend));
 
-    boolean ok = Librustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
+    boolean ok = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
 
-    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
 
     long endTime = System.currentTimeMillis();
     long time = endTime - startTime;
@@ -353,10 +351,10 @@ public class LibrustzcashTest {
 
     SpendDescriptionInfo spend = new SpendDescriptionInfo(expsk, note, anchor, voucher);
 
-    Pointer proofContext = Librustzcash.librustzcashSaplingProvingCtxInit();
+    long proofContext = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     SpendDescriptionCapsule spendDescriptionCapsule = builder
         .generateSpendProof(spend, proofContext);
-    Librustzcash.librustzcashSaplingProvingCtxFree(proofContext);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(proofContext);
 
     long endTime = System.currentTimeMillis();
     long time = endTime - startTime;
@@ -401,7 +399,7 @@ public class LibrustzcashTest {
     SpendingKey spendingKey = SpendingKey.random();
     PaymentAddress paymentAddress = spendingKey.defaultAddress();
 
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     long value = 100; // TODO random
     Note note = new Note(paymentAddress, value);
@@ -422,7 +420,7 @@ public class LibrustzcashTest {
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
-    boolean result = Librustzcash.librustzcashSaplingOutputProof(
+    boolean result = JLibrustzcash.librustzcashSaplingOutputProof(
         new OutputProofParams(ctx,
             encryptor.esk,
             note.d.data,
@@ -432,7 +430,7 @@ public class LibrustzcashTest {
             cv,
             zkProof));
 
-    Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
     Assert.assertTrue(result);
 
@@ -479,14 +477,14 @@ public class LibrustzcashTest {
     // expect fail
     String spend = "0252dff2688fc9eb4645f85a9602dd9c0459663d1e43ade8ae1fdf5d289953b49ab041943b828fea6e0002cf67fd85437e88b14bbe35b57e46e0e2d8b354fd4164fcac491a4f9cacdd5ebcac2dcb4515cd2efc128b1e656ca4a24ab0f05b469099cbc68c2c5839959f770a20ff12184e17b9f5558936b15e7d8bc8812abb668655700fc8fca1c0ee62f5c08690433745992b96a36b21809073d26fcac04ead3f807050c480e7c1103c77992382a3a5946504fc32edef2d530f937a2975b1d43c130e20340a02c1c3e74d4d6d1fce343605c76f7e8b0fe1817430469748205382bc1307a769e5b854d6669fd1a71712909993ada53f65080990ad28de1566e8c4f05b5e49a22bc1ceed376b736b25f4ff3595802d4ac4a5def46ec20d6ba21d40";
 
-    Pointer ctx = librustzcashSaplingProvingCtxInit();
+    long ctx = librustzcashSaplingProvingCtxInit();
 
     CheckOutputParams checkOutputParams = CheckOutputParams.decode(ctx,
         ByteArray.fromHexString(spend));
 
-    boolean result = Librustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
+    boolean result = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
 
-    Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
 
     Assert.assertFalse(result);
   }
@@ -614,7 +612,7 @@ public class LibrustzcashTest {
         .fromHexString("06041357de59ba64959d1b60f93de24dfe5ea1e26ed9e8a73d35b225a1845ba7");
 
     byte[] res = new byte[32];
-    Librustzcash.librustzcashMerkleHash(new MerkleHashParams(25, a, b, res));
+    JLibrustzcash.librustzcashMerkleHash(new MerkleHashParams(25, a, b, res));
 
     Assert.assertEquals("61a50a5540b4944da27cbd9b3d6ec39234ba229d2c461f4d719bc136573bf45b",
         ByteArray.toHexString(res));

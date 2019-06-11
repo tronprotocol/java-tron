@@ -9,7 +9,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
@@ -134,7 +134,7 @@ public class ZenTransactionBuilder {
 
   public TransactionCapsule build(boolean withAsk) throws ZksnarkException {
     TransactionCapsule transactionCapsule;
-    Pointer ctx = Librustzcash.librustzcashSaplingProvingCtxInit();
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     try {
       // Create SpendDescriptions
@@ -167,7 +167,7 @@ public class ZenTransactionBuilder {
       }
 
       byte[] bindingSig = new byte[64];
-      Librustzcash.librustzcashSaplingBindingSig(
+      JLibrustzcash.librustzcashSaplingBindingSig(
           new BindingSigParams(ctx,
               valueBalance,
               dataHashToBeSigned,
@@ -177,7 +177,7 @@ public class ZenTransactionBuilder {
     } catch (ZksnarkException e) {
       throw e;
     } finally {
-      Librustzcash.librustzcashSaplingProvingCtxFree(ctx);
+      JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     }
     Transaction.raw.Builder rawBuilder = transactionCapsule.getInstance().toBuilder()
         .getRawDataBuilder()
@@ -194,7 +194,7 @@ public class ZenTransactionBuilder {
   public void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
-      Librustzcash.librustzcashSaplingSpendSig(
+      JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(spends.get(i).expsk.getAsk(),
               spends.get(i).alpha,
               dataToBeSigned,
@@ -206,7 +206,7 @@ public class ZenTransactionBuilder {
 
   // Note: should call librustzcashSaplingProvingCtxFree in the caller
   public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend,
-      Pointer ctx) throws ZksnarkException {
+      long ctx) throws ZksnarkException {
 
     byte[] cm = spend.note.cm();
 
@@ -216,7 +216,7 @@ public class ZenTransactionBuilder {
     byte[] nsk;
     if (!ArrayUtils.isEmpty(spend.ak)) {
       ak = spend.ak;
-      nf = spend.note.nullifier(ak, Librustzcash.librustzcashNskToNk(spend.nsk),
+      nf = spend.note.nullifier(ak, JLibrustzcash.librustzcashNskToNk(spend.nsk),
           spend.voucher.position());
       nsk = spend.nsk;
     } else {
@@ -234,7 +234,7 @@ public class ZenTransactionBuilder {
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
-    if (!Librustzcash.librustzcashSaplingSpendProof(
+    if (!JLibrustzcash.librustzcashSaplingSpendProof(
         new SpendProofParams(ctx,
             ak,
             nsk,
@@ -259,7 +259,7 @@ public class ZenTransactionBuilder {
   }
 
   // Note: should call librustzcashSaplingProvingCtxFree in the caller
-  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, Pointer ctx)
+  public ReceiveDescriptionCapsule generateOutputProof(ReceiveDescriptionInfo output, long ctx)
       throws ZksnarkException {
     byte[] cm = output.getNote().cm();
     if (ByteArray.isEmpty(cm)) {
@@ -280,7 +280,7 @@ public class ZenTransactionBuilder {
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
-    if (!Librustzcash.librustzcashSaplingOutputProof(
+    if (!JLibrustzcash.librustzcashSaplingOutputProof(
         new OutputProofParams(ctx,
             encryptor.esk,
             output.getNote().d.data,
@@ -330,7 +330,7 @@ public class ZenTransactionBuilder {
       this.anchor = anchor;
       this.voucher = voucher;
       alpha = new byte[32];
-      Librustzcash.librustzcashSaplingGenerateR(alpha);
+      JLibrustzcash.librustzcashSaplingGenerateR(alpha);
     }
 
     public SpendDescriptionInfo(
