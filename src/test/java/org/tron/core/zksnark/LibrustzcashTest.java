@@ -298,7 +298,7 @@ public class LibrustzcashTest {
       long time =  (System.currentTimeMillis() - start);
 
 
-    System.out.println("--- time is: " + time +"ok," + ret );
+    System.out.println("--- time is: " + time +",ok," + ret );
     return time;
   }
 
