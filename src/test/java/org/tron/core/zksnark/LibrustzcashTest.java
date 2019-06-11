@@ -627,6 +627,8 @@ public class LibrustzcashTest {
     System.out.println("total is: " + total);
     System.out.println("success is: " + success);
     System.out.println("fail is: " + fail);
+
+    Assert.assertEquals(0, fail);
   }
 
   @Test
@@ -667,6 +669,8 @@ public class LibrustzcashTest {
     System.out.println("total is: " + total);
     System.out.println("success is: " + success);
     System.out.println("fail is: " + fail);
+
+    Assert.assertEquals(0, fail);
   }
 
   @Test
