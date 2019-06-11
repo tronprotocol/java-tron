@@ -95,7 +95,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
@@ -1937,7 +1937,7 @@ public class Wallet {
 //    }
 
     byte[] ivk = new byte[32]; // the incoming viewing key
-    Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
+    JLibrustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
     return IncomingViewingKeyMessage.newBuilder()
         .setIvk(ByteString.copyFrom(ivk))
         .build();
@@ -1951,7 +1951,7 @@ public class Wallet {
     while (true) {
       d = org.tron.keystore.Wallet
           .generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
-      if (Librustzcash.librustzcashCheckDiversifier(d)) {
+      if (JLibrustzcash.librustzcashCheckDiversifier(d)) {
         break;
       }
     }
@@ -1979,7 +1979,7 @@ public class Wallet {
 
     PaymentAddressMessage spa = null;
 
-    if (!Librustzcash.librustzcashCheckDiversifier(d.getData())) {
+    if (!JLibrustzcash.librustzcashCheckDiversifier(d.getData())) {
       throw new BadItemException("d is not valid");
     }
 
@@ -2049,7 +2049,7 @@ public class Wallet {
         spendAuthSigParameters.getAlpha().toByteArray(),
         spendAuthSigParameters.getTxHash().toByteArray(),
         result);
-    Librustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
+    JLibrustzcash.librustzcashSaplingSpendSig(spendSigPasrams);
 
     return BytesMessage.newBuilder()
         .setValue(ByteString.copyFrom(result))
@@ -2083,7 +2083,7 @@ public class Wallet {
         nk,
         incrementalMerkleVoucherContainer.position(),
         result);
-    if (!Librustzcash.librustzcashComputeNf(computeNfParams)) {
+    if (!JLibrustzcash.librustzcashComputeNf(computeNfParams)) {
       return null;
     }
 
@@ -2445,7 +2445,7 @@ public class Wallet {
             Note noteText = notePlaintext.get();
 
             byte[] pk_d = new byte[32];
-            if (!Librustzcash
+            if (!JLibrustzcash
                 .librustzcashIvkToPkd(
                     new IvkToPkdParams(ivk, noteText.d.getData(),
                         pk_d))) {

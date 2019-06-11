@@ -14,7 +14,7 @@ public class Libsodium {
 
   static {
     INSTANCE = (ILibsodium) Native
-        .loadLibrary(Librustzcash.getLibraryByName("libsodium"), ILibsodium.class);
+        .loadLibrary(JLibrustzcash.getLibraryByName("libsodium"), ILibsodium.class);
   }
 
   public static int cryptoGenerichashBlake2bInitSaltPersonal(

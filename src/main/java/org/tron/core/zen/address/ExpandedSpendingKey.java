@@ -5,8 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.core.exception.ZksnarkException;
 
 @Slf4j(topic = "shieldTransaction")
@@ -28,11 +27,11 @@ public class ExpandedSpendingKey {
   }
 
   public static byte[] getAkFromAsk(byte[] ask) throws ZksnarkException {
-    return Librustzcash.librustzcashAskToAk(ask); // 256
+    return JLibrustzcash.librustzcashAskToAk(ask); // 256
   }
 
   public static byte[] getNkFromNsk(byte[] nsk) throws ZksnarkException {
-    return Librustzcash.librustzcashNskToNk(nsk); // 256
+    return JLibrustzcash.librustzcashNskToNk(nsk); // 256
   }
 
   public static ExpandedSpendingKey decode(byte[] m_bytes) {
@@ -48,8 +47,8 @@ public class ExpandedSpendingKey {
   }
 
   public FullViewingKey fullViewingKey() throws ZksnarkException {
-    byte[] ak = Librustzcash.librustzcashAskToAk(ask); // 256
-    byte[] nk = Librustzcash.librustzcashNskToNk(nsk); // 256
+    byte[] ak = JLibrustzcash.librustzcashAskToAk(ask); // 256
+    byte[] nk = JLibrustzcash.librustzcashNskToNk(nsk); // 256
 
     return new FullViewingKey(ak, nk, ovk);
   }

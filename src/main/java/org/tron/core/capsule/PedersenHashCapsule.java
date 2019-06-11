@@ -4,7 +4,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
@@ -35,7 +35,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
       throws ZksnarkException {
     byte[] res = new byte[32];
 
-    Librustzcash.librustzcashMerkleHash(new MerkleHashParams(depth, a.getContent().toByteArray(),
+    JLibrustzcash.librustzcashMerkleHash(new MerkleHashParams(depth, a.getContent().toByteArray(),
         b.getContent().toByteArray(), res));
 
     PedersenHashCapsule pedersenHashCapsule = new PedersenHashCapsule();
@@ -47,7 +47,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
   public static PedersenHashCapsule uncommitted() throws ZksnarkException {
     byte[] res = new byte[32];
 
-    Librustzcash.librustzcash_tree_uncommitted(res);
+    JLibrustzcash.librustzcash_tree_uncommitted(res);
 
     PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
     compressCapsule.setContent(ByteString.copyFrom(res));
