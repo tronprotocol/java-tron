@@ -2,7 +2,7 @@ package org.tron.core.zen.note;
 
 import lombok.AllArgsConstructor;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
@@ -36,7 +36,7 @@ public class Note {
     this.d = address.getD();
     this.pkD = address.getPkD();
     rcm = new byte[32];
-    Librustzcash.librustzcashSaplingGenerateR(rcm);
+    JLibrustzcash.librustzcashSaplingGenerateR(rcm);
   }
 
   public Note(DiversifierT d, byte[] pkD, long value, byte[] r) {
@@ -67,14 +67,14 @@ public class Note {
 
   public static byte[] generateR() throws ZksnarkException {
     byte[] r = new byte[32];
-    Librustzcash.librustzcashSaplingGenerateR(r);
+    JLibrustzcash.librustzcashSaplingGenerateR(r);
     return r;
   }
 
   // Call librustzcash to compute the commitment
   public byte[] cm() throws ZksnarkException {
     byte[] result = new byte[32];
-    if (!Librustzcash.librustzcashComputeCm(
+    if (!JLibrustzcash.librustzcashComputeCm(
         new ComputeCmParams(d.getData(), pkD, value, rcm, result))) {
       return null;
     }
@@ -85,7 +85,7 @@ public class Note {
     byte[] ak = vk.getAk();
     byte[] nk = vk.getNk();
     byte[] result = new byte[32]; // 256
-    if (!Librustzcash.librustzcashComputeNf(
+    if (!JLibrustzcash.librustzcashComputeNf(
         new ComputeNfParams(d.getData(), pkD, value, rcm, ak, nk, position, result))) {
       return null;
     }
@@ -94,7 +94,7 @@ public class Note {
 
   public byte[] nullifier(byte[] ak, byte[] nk, long position) throws ZksnarkException {
     byte[] result = new byte[32]; // 256
-    if (!Librustzcash.librustzcashComputeNf(
+    if (!JLibrustzcash.librustzcashComputeNf(
         new ComputeNfParams(d.getData(), pkD, value, rcm, ak, nk, position, result))) {
       return null;
     }
@@ -218,11 +218,12 @@ public class Note {
     }
     Note ret = decode(pt.get());
     byte[] pk_d = new byte[32];
-    if (!Librustzcash.librustzcashIvkToPkd(new LibrustzcashParam.IvkToPkdParams(ivk, ret.d.getData(), pk_d))) {
+    if (!JLibrustzcash
+        .librustzcashIvkToPkd(new LibrustzcashParam.IvkToPkdParams(ivk, ret.d.getData(), pk_d))) {
       return Optional.empty();
     }
     byte[] cmu_expected = new byte[32];
-    if (!Librustzcash.librustzcashComputeCm(
+    if (!JLibrustzcash.librustzcashComputeCm(
             new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
       return Optional.empty();
     }
@@ -245,7 +246,7 @@ public class Note {
     }
     Note ret = decode(pt.get());
     byte[] cmu_expected = new byte[32];
-    if (!Librustzcash.librustzcashComputeCm(
+    if (!JLibrustzcash.librustzcashComputeCm(
             new ComputeCmParams(ret.d.getData(), pk_d, ret.value, ret.rcm, cmu_expected))) {
       return Optional.empty();
     }

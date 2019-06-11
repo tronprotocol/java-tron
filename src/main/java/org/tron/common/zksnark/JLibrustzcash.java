@@ -1,7 +1,6 @@
 package org.tron.common.zksnark;
 
 import com.sun.jna.Library;
-import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import java.io.File;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
@@ -32,51 +30,42 @@ import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
 
 @Slf4j
-public class Librustzcash {
+public class JLibrustzcash {
+
+  private static final Librustzcash INSTANCE = LibrustzcashWrapper.getInstance();
 
   private static final Map<String, String> libraries = new ConcurrentHashMap<>();
-  private static ILibrustzcash INSTANCE;
-
-  @Autowired
-  static private Manager dbManager;
-
-  static {
-    INSTANCE = (ILibrustzcash) Native
-        .loadLibrary(getLibraryByName("librustzcash"), ILibrustzcash.class);
-  }
 
   public static void librustzcashZip32XskMaster(Zip32XskMasterParams params) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_zip32_xsk_master(params.getData(), params.getSize(), params.getM_bytes());
+    INSTANCE.librustzcashZip32XskMaster(params.getData(), params.getSize(), params.getM_bytes());
   }
 
   public static void librustzcashInitZksnarkParams(InitZksnarkParams params) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_init_zksnark_params(params.getSpend_path(), params.getSpend_path_len(),
-        params.getSpend_hash(), params.getOutput_path(), params.getOutput_path_len(),
-        params.getOutput_hash());
+    INSTANCE.librustzcashInitZksnarkParams(params.getSpend_path(),
+        params.getSpend_hash(), params.getOutput_path(), params.getOutput_hash());
   }
 
   public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_zip32_xsk_derive(params.getData(), params.getSize(), params.getM_bytes());
+    INSTANCE.librustzcashZip32XskDerive(params.getData(), params.getSize(), params.getM_bytes());
   }
 
   public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_zip32_xfvk_address(params.getXfvk(), params.getJ(),
+    return INSTANCE.librustzcashZip32XfvkAddress(params.getXfvk(), params.getJ(),
         params.getJ_ret(), params.getAddr_ret());
   }
 
@@ -84,22 +73,21 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_crh_ivk(params.getAk(), params.getNk(), params.getIvk());
+    INSTANCE.librustzcashCrhIvk(params.getAk(), params.getNk(), params.getIvk());
   }
 
   public static boolean librustzcashKaAgree(KaAgreeParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE
-        .librustzcash_sapling_ka_agree(params.getP(), params.getSk(), params.getResult());
+    return INSTANCE.librustzcashSaplingKaAgree(params.getP(), params.getSk(), params.getResult());
   }
 
   public static boolean librustzcashComputeCm(ComputeCmParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_compute_cm(params.getD(), params.getPk_d(),
+    return INSTANCE.librustzcashSaplingComputeCm(params.getD(), params.getPk_d(),
         params.getValue(), params.getR(), params.getCm());
   }
 
@@ -107,7 +95,7 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    INSTANCE.librustzcash_sapling_compute_nf(params.getD(), params.getPk_d(), params.getValue(),
+    INSTANCE.librustzcashSaplingComputeNf(params.getD(), params.getPk_d(), params.getValue(),
         params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     return true;
   }
@@ -122,7 +110,7 @@ public class Librustzcash {
     }
     LibrustzcashParam.valid32Params(ask);
     byte[] ak = new byte[32];
-    INSTANCE.librustzcash_ask_to_ak(ask, ak);
+    INSTANCE.librustzcashAskToAk(ask, ak);
     return ak;
   }
 
@@ -136,7 +124,7 @@ public class Librustzcash {
     }
     LibrustzcashParam.valid32Params(nsk);
     byte[] nk = new byte[32];
-    INSTANCE.librustzcash_nsk_to_nk(nsk, nk);
+    INSTANCE.librustzcashNskToNk(nsk, nk);
     return nk;
   }
 
@@ -150,7 +138,7 @@ public class Librustzcash {
       return ByteArray.EMPTY_BYTE_ARRAY;
     }
     LibrustzcashParam.valid32Params(r);
-    INSTANCE.librustzcash_sapling_generate_r(r);
+    INSTANCE.librustzcashSaplingGenerateR(r);
     return r;
   }
 
@@ -158,15 +146,15 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_ka_derivepublic(params.getDiversifier(), params.getEsk(),
+    return INSTANCE.librustzcashSaplingKaDerivepublic(params.getDiversifier(), params.getEsk(),
         params.getResult());
   }
 
-  public static Pointer librustzcashSaplingProvingCtxInit() {
+  public static long librustzcashSaplingProvingCtxInit() {
     if (!isOpenZen()) {
-      return Pointer.createConstant(1);
+      return 0;
     }
-    return INSTANCE.librustzcash_sapling_proving_ctx_init();
+    return INSTANCE.librustzcashSaplingProvingCtxInit();
   }
 
   /**
@@ -179,14 +167,14 @@ public class Librustzcash {
       return true;
     }
     LibrustzcashParam.valid11Params(d);
-    return INSTANCE.librustzcash_check_diversifier(d);
+    return INSTANCE.librustzcashCheckDiversifier(d);
   }
 
   public static boolean librustzcashSaplingSpendProof(SpendProofParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_spend_proof(params.getCtx(), params.getAk(),
+    return INSTANCE.librustzcashSaplingSpendProof(params.getCtx(), params.getAk(),
         params.getNsk(), params.getD(), params.getR(), params.getAlpha(), params.getValue(),
         params.getAnchor(), params.getVoucherPath(), params.getCv(), params.getRk(),
         params.getZkproof());
@@ -196,7 +184,7 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_output_proof(params.getCtx(), params.getEsk(),
+    return INSTANCE.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
         params.getD(), params.getPk_d(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());
   }
@@ -205,7 +193,7 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_spend_sig(params.getAsk(), params.getAlpha(),
+    return INSTANCE.librustzcashSaplingSpendSig(params.getAsk(), params.getAlpha(),
         params.getSigHash(), params.getResult());
   }
 
@@ -213,8 +201,8 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_binding_sig(params.getCtx(), params.getValueBalance(),
-        params.getSighash(), params.getResult());
+    return INSTANCE.librustzcashSaplingBindingSig(params.getCtx(),
+        params.getValueBalance(), params.getSighash(), params.getResult());
   }
 
   /**
@@ -229,28 +217,28 @@ public class Librustzcash {
     }
     LibrustzcashParam.validParamLength(value, 64);
     LibrustzcashParam.valid32Params(data);
-    INSTANCE.librustzcash_to_scalar(value, data);
+    INSTANCE.librustzcashToScalar(value, data);
   }
 
-  public static void librustzcashSaplingProvingCtxFree(Pointer ctx) {
+  public static void librustzcashSaplingProvingCtxFree(long ctx) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_sapling_proving_ctx_free(ctx);
+    INSTANCE.librustzcashSaplingProvingCtxFree(ctx);
   }
 
-  public static Pointer librustzcashSaplingVerificationCtxInit() {
+  public static long librustzcashSaplingVerificationCtxInit() {
     if (!isOpenZen()) {
-      return Pointer.createConstant(1);
+      return 0;
     }
-    return INSTANCE.librustzcash_sapling_verification_ctx_init();
+    return INSTANCE.librustzcashSaplingVerificationCtxInit();
   }
 
   public static boolean librustzcashSaplingCheckSpend(CheckSpendParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_check_spend(params.getCtx(), params.getCv(),
+    return INSTANCE.librustzcashSaplingCheckSpend(params.getCtx(), params.getCv(),
         params.getAnchor(), params.getNullifier(), params.getRk(), params.getZkproof(),
         params.getSpendAuthSig(), params.getSighashValue());
   }
@@ -259,7 +247,7 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_check_output(params.getCtx(), params.getCv(),
+    return INSTANCE.librustzcashSaplingCheckOutput(params.getCtx(), params.getCv(),
         params.getCm(), params.getEphemeralKey(), params.getZkproof());
   }
 
@@ -267,29 +255,29 @@ public class Librustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_sapling_final_check(params.getCtx(), params.getValueBalance(),
-        params.getBindingSig(), params.getSighashValue());
+    return INSTANCE.librustzcashSaplingFinalCheck(params.getCtx(),
+        params.getValueBalance(), params.getBindingSig(), params.getSighashValue());
   }
 
-  public static void librustzcashSaplingVerificationCtxFree(Pointer ctx) {
+  public static void librustzcashSaplingVerificationCtxFree(long ctx) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_sapling_verification_ctx_free(ctx);
+    INSTANCE.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
   public static boolean librustzcashIvkToPkd(IvkToPkdParams params) {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcash_ivk_to_pkd(params.getIvk(), params.getD(), params.getPk_d());
+    return INSTANCE.librustzcashIvkToPkd(params.getIvk(), params.getD(), params.getPk_d());
   }
 
   public static void librustzcashMerkleHash(MerkleHashParams params) {
     if (!isOpenZen()) {
       return;
     }
-    INSTANCE.librustzcash_merkle_hash(params.getDepth(), params.getA(), params.getB(),
+    INSTANCE.librustzcashMerkleHash(params.getDepth(), params.getA(), params.getB(),
         params.getResult());
   }
 
@@ -301,7 +289,7 @@ public class Librustzcash {
       return;
     }
     LibrustzcashParam.valid32Params(result);
-    INSTANCE.librustzcash_tree_uncommitted(result);
+    INSTANCE.librustzcashTreeUncommitted(result);
   }
 
   private static boolean isOpenZen() {
@@ -309,7 +297,7 @@ public class Librustzcash {
   }
 
   public static String getLibraryByName(String name) {
-    return libraries.computeIfAbsent(name, Librustzcash::getLibrary);
+    return libraries.computeIfAbsent(name, JLibrustzcash::getLibrary);
   }
 
   private static String getLibrary(String name) {
@@ -327,7 +315,7 @@ public class Librustzcash {
     } else {
       throw new RuntimeException("unsupportedPlatformException");
     }
-    InputStream in = Librustzcash.class.getClassLoader().getResourceAsStream(
+    InputStream in = JLibrustzcash.class.getClassLoader().getResourceAsStream(
         "native-package" + File.separator + platform + File.separator + name + extension);
     File fileOut = new File(
         System.getProperty("java.io.tmpdir") + File.separator + name + "-" + System
@@ -429,5 +417,4 @@ public class Librustzcash {
 
     void librustzcash_to_scalar(byte[] input, byte[] result);
   }
-
 }

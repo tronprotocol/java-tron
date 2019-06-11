@@ -12,7 +12,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
@@ -380,9 +380,8 @@ public class FullNodeHttpApiService implements Service {
     String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
 
     try {
-      Librustzcash.librustzcashInitZksnarkParams(
-          new InitZksnarkParams(spendPath.getBytes(), spendPath.length(), spendHash,
-              outputPath.getBytes(), outputPath.length(), outputHash));
+      JLibrustzcash.librustzcashInitZksnarkParams(
+          new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
     } catch (ZksnarkException e) {
       logger.error("librustzcashInitZksnarkParams fail!", e);
     }

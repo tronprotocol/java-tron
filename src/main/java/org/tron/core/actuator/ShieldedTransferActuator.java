@@ -6,14 +6,13 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.sun.jna.Pointer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
@@ -185,12 +184,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
           " the committee");
     }
 
-
     //transparent verification
     checkSender(shieldedTransferContract);
     checkReceiver(shieldedTransferContract);
     validateTransparent(shieldedTransferContract);
-
 
     List<SpendDescription> spendDescriptions = shieldedTransferContract.getSpendDescriptionList();
     // check duplicate sapling nullifiers
@@ -250,16 +247,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
     }
 
-
     long fee = calcFee();
     byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
         || CollectionUtils.isNotEmpty(receiveDescriptions)) {
-      Pointer ctx = Librustzcash.librustzcashSaplingVerificationCtxInit();
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         for (SpendDescription spendDescription : spendDescriptions) {
-          if (!Librustzcash.librustzcashSaplingCheckSpend(
+          if (!JLibrustzcash.librustzcashSaplingCheckSpend(
               new CheckSpendParams(ctx,
                   spendDescription.getValueCommitment().toByteArray(),
                   spendDescription.getAnchor().toByteArray(),
@@ -278,7 +274,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
               || receiveDescription.getCOut().size() != ZC_OUTCIPHERTEXT_SIZE) {
             throw new ZkProofValidateException("Cout or CEnc size error", true);
           }
-          if (!Librustzcash.librustzcashSaplingCheckOutput(
+          if (!JLibrustzcash.librustzcashSaplingCheckOutput(
               new CheckOutputParams(ctx,
                   receiveDescription.getValueCommitment().toByteArray(),
                   receiveDescription.getNoteCommitment().toByteArray(),
@@ -305,7 +301,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ZkProofValidateException("shieldedPoolValue error", true);
         }
 
-        if (!Librustzcash.librustzcashSaplingFinalCheck(
+        if (!JLibrustzcash.librustzcashSaplingFinalCheck(
             new FinalCheckParams(ctx,
                 valueBalance,
                 shieldedTransferContract.getBindingSignature().toByteArray(),
@@ -316,7 +312,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       } catch (ZksnarkException e) {
         throw new ZkProofValidateException(e.getMessage(), true);
       } finally {
-        Librustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
     }
 
@@ -324,7 +320,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void recordProof(Sha256Hash tid, boolean result) {
-      dbManager.getProofStore().put(tid.getBytes(), result);
+    dbManager.getProofStore().put(tid.getBytes(), result);
   }
 
 

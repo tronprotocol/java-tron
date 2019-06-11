@@ -9,7 +9,7 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
 import org.tron.common.zksnark.Libsodium;
@@ -39,8 +39,8 @@ public class NoteEncryption {
   public static Optional<NoteEncryption> fromDiversifier(DiversifierT d) throws ZksnarkException {
     byte[] epk = new byte[32];
     byte[] esk = new byte[32];
-    Librustzcash.librustzcashSaplingGenerateR(esk);
-    if (!Librustzcash
+    JLibrustzcash.librustzcashSaplingGenerateR(esk);
+    if (!JLibrustzcash
         .librustzcashSaplingKaDerivepublic(new KaDerivepublicParams(d.data, esk, epk))) {
       return Optional.empty();
     }
@@ -54,7 +54,7 @@ public class NoteEncryption {
     }
 
     byte[] dhsecret = new byte[32];
-    if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
+    if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
       return Optional.empty();
     }
 
@@ -134,7 +134,7 @@ public class NoteEncryption {
     public static Optional<EncPlaintext> AttemptEncDecryption(
         byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-      if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(epk, ivk, dhsecret))) {
+      if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(epk, ivk, dhsecret))) {
         return Optional.empty();
       }
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
@@ -157,7 +157,7 @@ public class NoteEncryption {
     public static Optional<EncPlaintext> AttemptEncDecryption(
         EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) throws ZksnarkException {
       byte[] dhsecret = new byte[32];
-      if (!Librustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
+      if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
         return Optional.empty();
       }
       byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];

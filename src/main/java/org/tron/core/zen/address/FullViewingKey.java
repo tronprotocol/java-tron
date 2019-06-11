@@ -4,7 +4,7 @@ import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.zksnark.Librustzcash;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.core.exception.ZksnarkException;
 
@@ -36,13 +36,13 @@ public class FullViewingKey {
 
   public IncomingViewingKey inViewingKey() throws ZksnarkException {
     byte[] ivk = new byte[32]; // the incoming viewing key
-    Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
+    JLibrustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
     return new IncomingViewingKey(ivk);
   }
 
   public boolean isValid() throws ZksnarkException {
     byte[] ivk = new byte[32];
-    Librustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
+    JLibrustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
     return !Arrays.equals(ivk, new byte[32]);
   }
 
