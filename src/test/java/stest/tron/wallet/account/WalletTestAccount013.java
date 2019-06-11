@@ -394,6 +394,7 @@ public class WalletTestAccount013 {
     //sendcoin to Account6
     Assert.assertTrue(PublicMethed.sendcoin(accountForDeployAddress,
         10000000000L, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //deploy contract under Account6
     Integer consumeUserResourcePercent = 0;
