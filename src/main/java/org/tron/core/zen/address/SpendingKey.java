@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.Libsodium;
-import org.tron.common.zksnark.Libsodium.ILibsodium;
-import org.tron.common.zksnark.Libsodium.ILibsodium.crypto_generichash_blake2b_state;
+import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.Constant;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ZksnarkException;
@@ -51,20 +49,6 @@ public class SpendingKey {
     return result;
   }
 
-  public static byte[] ovkForShieldingFromTaddr(byte[] data) {
-    crypto_generichash_blake2b_state.ByReference state = null;
-    Libsodium.cryptoGenerichashBlake2bUpdate(state, data, data.length);
-    byte[] intermediate = new byte[64];
-    Libsodium.cryptoGenerichashBlake2bFinal(state, intermediate, 64);
-
-    // I_L = I[0..32]
-    byte[] intermediate_L = new byte[32];
-    System.arraycopy(intermediate_L, 0, intermediate, 0, 32);
-
-    // ovk = truncate_32(PRF^expand(I_L, [0x02]))
-    return PRF.prfOvk(intermediate_L);
-  }
-
   public String encode() {
     return ByteArray.toHexString(value);
   }
@@ -92,19 +76,22 @@ public class SpendingKey {
     blob[32] = 3;
     blob[33] = 0;
     while (true) {
-
-      ILibsodium.crypto_generichash_blake2b_state.ByReference state = new ILibsodium.crypto_generichash_blake2b_state.ByReference();
-      Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-          state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
-      Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
-      Libsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
-      if (JLibrustzcash.librustzcashCheckDiversifier(res)) {
-        break;
-      } else if (blob[33] == 255) {
-        throw new BadItemException(
-            "librustzcash_check_diversifier did not return valid diversifier");
+      long state = JLibsodium.initState();
+      try {
+        JLibsodium.cryptoGenerichashBlake2bInitSaltPersonal(
+            state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
+        JLibsodium.cryptoGenerichashBlake2bUpdate(state, blob, 34);
+        JLibsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
+        if (JLibrustzcash.librustzcashCheckDiversifier(res)) {
+          break;
+        } else if (blob[33] == 255) {
+          throw new BadItemException(
+              "librustzcash_check_diversifier did not return valid diversifier");
+        }
+        blob[33] += 1;
+      } finally {
+        JLibsodium.freeState(state);
       }
-      blob[33] += 1;
     }
     DiversifierT diversifierT = new DiversifierT();
     diversifierT.setData(res);
@@ -142,12 +129,15 @@ public class SpendingKey {
       byte[] blob = new byte[33];
       System.arraycopy(sk, 0, blob, 0, 32);
       blob[32] = t;
-      crypto_generichash_blake2b_state.ByReference state = new crypto_generichash_blake2b_state.ByReference();
-      Libsodium.cryptoGenerichashBlake2bInitSaltPersonal(
-          state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
-      Libsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
-      Libsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
-
+      long state = JLibsodium.initState();
+      try {
+        JLibsodium.cryptoGenerichashBlake2bInitSaltPersonal(
+            state, null, 0, 64, null, Constant.ZTRON_EXPANDSEED_PERSONALIZATION);
+        JLibsodium.cryptoGenerichashBlake2bUpdate(state, blob, 33);
+        JLibsodium.cryptoGenerichashBlake2bFinal(state, res, 64);
+      } finally {
+        JLibsodium.freeState(state);
+      }
       return res;
     }
   }

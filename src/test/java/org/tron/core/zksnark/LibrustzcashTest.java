@@ -7,7 +7,7 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashNskToNk;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingBindingSig;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingProvingCtxInit;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
-import static org.tron.common.zksnark.Libsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
+import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -33,7 +33,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
-import org.tron.common.zksnark.Libsodium;
+import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -183,7 +183,7 @@ public class LibrustzcashTest {
     byte[] personalization = new byte[32];
     byte[] aa = "Zcash_Derive_ock".getBytes();
     System.arraycopy(aa, 0, personalization, 0, aa.length);
-    Assert.assertTrue(Libsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
+    Assert.assertTrue(JLibsodium.cryptoGenerichashBlack2bSaltPersonal(K, 32,
         block, 128,
         null, 0, // No key.
         null,    // No salt.
@@ -191,7 +191,7 @@ public class LibrustzcashTest {
 
     byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
 
-    Assert.assertTrue(Libsodium.cryptoAeadChacha20poly1305IetfDecrypt(
+    Assert.assertTrue(JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
         new byte[1024], null,
         null,
         new byte[1024], 1024,

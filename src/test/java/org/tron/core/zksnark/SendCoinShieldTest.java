@@ -394,9 +394,9 @@ public class SendCoinShieldTest {
   public String byte2intstring(byte[] input) {
     StringBuilder sb = new StringBuilder();
 
-    for(int i=0;i<input.length;i++){
-      sb.append(String.valueOf((int)input[i]) + ", ");
-      if(i%16 == 15){
+    for (int i = 0; i < input.length; i++) {
+      sb.append(String.valueOf((int) input[i]) + ", ");
+      if (i % 16 == 15) {
         sb.append("\n");
       }
     }
@@ -424,7 +424,8 @@ public class SendCoinShieldTest {
 
     byte[] pkd = paymentAddress2.getPkD();
     Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
-    note.rcm = ByteArray.fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06");
+    note.rcm = ByteArray
+        .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06");
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
     note.memo = memo;
 
