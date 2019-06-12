@@ -152,16 +152,8 @@ public class ClearAbi001 {
 
   @Test(enabled = true, description = "Clear a contract with ABI created by itself")
   public void testClearAbi002() {
-//    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+
     String contractName = "testConstantContract";
-//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-//    String code = retMap.get("byteCode").toString();
-//    String abi = retMap.get("abI").toString();
-//
-//    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-//        0L, 100, null, contractExcKey,
-//        contractExcAddress, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
@@ -187,7 +179,14 @@ public class ClearAbi001 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
+
+    String txid1 = PublicMethed
+        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById1 = null;
+    infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
+    Assert.assertTrue(infoById1.get().getResultValue() == 0);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
@@ -198,16 +197,8 @@ public class ClearAbi001 {
 
   @Test(enabled = true, description = "Clear a contract without ABI")
   public void testClearAbi003() {
-//    String filePath = "src/test/resources/soliditycode/ClearAbi001.sol";
+
     String contractName = "testConstantContract";
-//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-//    String code = retMap.get("byteCode").toString();
-//    String abi = retMap.get("abI").toString();
-//
-//    contractAddress = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-//        0L, 100, null, contractExcKey,
-//        contractExcAddress, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
     Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));

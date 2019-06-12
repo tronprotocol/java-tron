@@ -103,7 +103,6 @@ public class ShiftCommand001 {
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
 
     Account info;
 
@@ -125,7 +124,6 @@ public class ShiftCommand001 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull1);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
@@ -232,11 +230,13 @@ public class ShiftCommand001 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(10,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(contractAddress,
         "shrTest(uint256,uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   /**

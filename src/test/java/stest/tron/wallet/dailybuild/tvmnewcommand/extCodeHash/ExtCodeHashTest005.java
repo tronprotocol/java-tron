@@ -84,13 +84,13 @@ public class ExtCodeHashTest005 {
 
     logger.info("realAddress: " + fakeAddress);
     byte[] fullHexAddr = new DataWord(fakeAddress).getData();
-    logger.info("fullHexAddr  ++=  "+ Hex.toHexString(fullHexAddr));
+    logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
 
     fakeAddress = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
 
     logger.info("realAddress: " + fakeAddress);
     fullHexAddr = new DataWord(fakeAddress).getData();
-    logger.info("fullHexAddr  ++=  "+Hex.toHexString(fullHexAddr));
+    logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
 
   }
 
@@ -458,7 +458,7 @@ public class ExtCodeHashTest005 {
 
     logger.info("realAddress: " + fakeAddress);
     byte[] fullHexAddr = new DataWord(fakeAddress).getData();
-    logger.info("fullHexAddr  ++=  "+ Hex.toHexString(fullHexAddr));
+    logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
 
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
@@ -549,7 +549,7 @@ public class ExtCodeHashTest005 {
 
     logger.info("realAddress: " + fakeAddress);
     byte[] fullHexAddr = new DataWord(fakeAddress).getData();
-    logger.info("fullHexAddr  ++=  "+Hex.toHexString(fullHexAddr));
+    logger.info("fullHexAddr  ++=  " + Hex.toHexString(fullHexAddr));
 
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
@@ -700,6 +700,7 @@ public class ExtCodeHashTest005 {
     PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
         user001Address, blockingStubFull);
   }
+
 
   /**
    * constructor.

@@ -2,6 +2,39 @@ contract EnergyOfTransferFailedTest {
     constructor() payable public {
 
     }
+
+    function testTransferTokenCompiledLongMax() payable public{
+            address(0x1).transferToken(1,9223372036855775827);
+    }
+
+    function testTransferTokenCompiled() payable public{
+        address(0x1).transferToken(1,1);
+    }
+
+    function testTransferTokenCompiledLongMin() payable public{
+        //address(0x1).transferToken(1,-9223372036855775828);
+    }
+
+    function testTransferTokenCompiledLongMin1() payable public returns(uint256){
+        return address(0x2).tokenBalance(trcToken(-9223372036855775828));
+    }
+
+    function testTransferTokenCompiled1() payable public returns(uint256){
+        return address(0x1).tokenBalance(trcToken(1));
+    }
+
+    function testTransferTokenCompiledLongMax1() payable public returns(uint256){
+        return address(0x2).tokenBalance(trcToken(9223372036855775827));
+    }
+
+    function testTransferTokenCompiledTokenId(uint256 tokenid) payable public returns(uint256){
+         return address(0x1).tokenBalance(trcToken(tokenid));
+    }
+
+    function testTransferTokenTest(address addr ,uint256 tokenid) payable public returns(uint256){
+          return  addr.tokenBalance(trcToken(tokenid));
+    }
+
     // InsufficientBalance
     function testTransferTrxInsufficientBalance(uint256 i) payable public{
         msg.sender.transfer(i);

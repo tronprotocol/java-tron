@@ -94,6 +94,7 @@ public class ShiftCommand003 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -178,9 +179,6 @@ public class ShiftCommand003 {
 
   @Test(enabled = true, description = "Trigger new ShiftRight with displacement number too short ")
   public void test2ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -255,9 +253,6 @@ public class ShiftCommand003 {
   @Test(enabled = true, description = "Trigger new ShiftRightSigned "
       + "with displacement number too short ")
   public void test3ShiftRightSigned() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);

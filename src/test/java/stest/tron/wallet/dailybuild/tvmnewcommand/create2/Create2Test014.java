@@ -1,5 +1,7 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
+import static org.hamcrest.core.StringContains.containsString;
+
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -253,6 +255,82 @@ public class Create2Test014 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
+  @Test(enabled = true, description = "Trigger factory contract to deploy test contract again "
+      + "with same code, salt and address")
+  public void test02TriggerCreate2ToDeployTestContractAgain() {
+    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
+            blockingStubFull), 0, 1,
+        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
+        blockingStubFull);
+    long devEnergyLimitBefore = accountResource.getEnergyLimit();
+    long devEnergyUsageBefore = accountResource.getEnergyUsed();
+    long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
+
+    logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
+    logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
+    logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
+
+    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
+    long userEnergyLimitBefore = accountResource.getEnergyLimit();
+    long userEnergyUsageBefore = accountResource.getEnergyUsed();
+    long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
+        .getBalance();
+
+    logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
+    logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
+    logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
+
+    Long callValue = Long.valueOf(0);
+
+    String filePath = "./src/test/resources/soliditycode/create2contract.sol";
+    String contractName = "TestConstract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+
+    String testContractCode = retMap.get("byteCode").toString();
+    Long salt = 1L;
+
+    String param = "\"" + testContractCode + "\"," + salt;
+
+    final String triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
+        "deploy(bytes,uint256)", param, false, callValue,
+        1000000000L, "0", 0, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
+    long devEnergyLimitAfter = accountResource.getEnergyLimit();
+    long devEnergyUsageAfter = accountResource.getEnergyUsed();
+    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
+
+    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
+    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
+    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
+
+    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
+    long userEnergyLimitAfter = accountResource.getEnergyLimit();
+    long userEnergyUsageAfter = accountResource.getEnergyUsed();
+    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
+        .getBalance();
+
+    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
+    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
+    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
+
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    TransactionInfo transactionInfo = infoById.get();
+    logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
+    logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
+
+    Assert.assertEquals(1, infoById.get().getResultValue());
+    Assert
+        .assertThat(infoById.get().getResMessage().toStringUtf8(),
+            containsString("Not enough energy for 'SWAP1' operation executing"));
+  }
 
   @Test(enabled = true, description = "Same code, salt and address,"
       + " create contract using develop account")

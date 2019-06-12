@@ -1,5 +1,8 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.transferfailed;
 
+import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
+
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -23,6 +26,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -568,6 +572,325 @@ public class TransferFailed001 {
 
 
   }
+
+  @Test(enabled = true, description = "preCompiled transfertoken with value,"
+      + " long.max < value or long.min > value")
+  public void test7TransferTockenPreCompiled() {
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    Account info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    String txid = "";
+    String num = "1";
+
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenCompiledLongMax1()", "#", false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    beforeBalance = info.getBalance();
+    beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    beforeNetUsed = resourceInfo.getNetUsed();
+    beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertTrue(energyUsageTotal < maxFeeLimit / 10);
+    Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
+
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenCompiledLongMin1()", "#", false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infobyid : --- " + infoById);
+    fee = infoById.get().getFee();
+    netUsed = infoById.get().getReceipt().getNetUsage();
+    energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    netFee = infoById.get().getReceipt().getNetFee();
+    energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    beforeBalance = info.getBalance();
+    beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    beforeNetUsed = resourceInfo.getNetUsed();
+    beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
+    Assert.assertEquals(FAILED, infoById.get().getResult());
+    Assert.assertTrue(energyUsageTotal < maxFeeLimit / 10);
+    Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
+
+  }
+
+  @Test(enabled = false, description = "tokenbalance")
+  public void test8TransferTocken() {
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    String description = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.assetDescription");
+    String url = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.assetUrl");
+
+    ByteString assetAccountId = null;
+    final long TotalSupply = 10000000L;
+    long now = System.currentTimeMillis();
+    String tokenName = "testAssetIssue_" + Long.toString(now);
+
+    //Create a new AssetIssue success.
+    Assert
+        .assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L,
+            100000L, 1L, 1L, contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
+        .getAssetIssuedID();
+
+    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String contractName = "EnergyOfTransferFailedTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
+        assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
+        blockingStubFull));
+
+    Long returnAddressBytesAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("returnAddressBytesAccountCountBefore : " + returnAddressBytesAccountCountBefore);
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    Long testNetAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+    logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
+    logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
+    String txid = "";
+    String num =
+        "\"" + Base58.encode58Check(contractAddress) + "\"," + "\"" + assetAccountId.toStringUtf8()
+            + "\"";
+    //String num = "\""+Base58.encode58Check(contractAddress) +"\","+ "\"" + -1 + "\"";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenTest(address,uint256)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    Long testNetAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
+    logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
+
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
+    Assert.assertTrue(energyUsageTotal < maxFeeLimit / 10);
+    Assert.assertEquals(100, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
+
+  }
+
+  @Test(enabled = true, description = "address(0x1) qeury tokenbalance")
+  public void test9TransferTocken() {
+    //address: 410000000000000000000000000000000000000001
+    String addressx = "T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn";
+    byte[] addressxx = WalletClient.decodeFromBase58Check(addressx);
+
+    Assert.assertTrue(PublicMethed
+        .sendcoin(addressxx, 10L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    String description = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.assetDescription");
+    String url = Configuration.getByPath("testng.conf")
+        .getString("defaultParameter.assetUrl");
+
+    ByteString assetAccountId = null;
+    final long TotalSupply = 10000000L;
+    long now = System.currentTimeMillis();
+    String tokenName = "testAssetIssue_" + Long.toString(now);
+
+    //Create a new AssetIssue success.
+    Assert
+        .assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
+            10000, start, end, 1, description, url, 100000L,
+            100000L, 1L, 1L, contractExcKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
+        .getAssetIssuedID();
+
+    /*String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
+    String contractName = "EnergyOfTransferFailedTest";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
+    Assert.assertTrue(PublicMethed.transferAsset(addressxx,
+        assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
+        blockingStubFull));
+
+    Long returnAddressBytesAccountCountBefore = PublicMethed
+        .getAssetIssueValue(addressxx, assetAccountId, blockingStubFull);
+    logger.info("returnAddressBytesAccountCountBefore : " + returnAddressBytesAccountCountBefore);
+    Account info;
+
+    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    Long testNetAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountBefore = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+    logger.info("testNetAccountCountBefore:" + testNetAccountCountBefore);
+    logger.info("contractAccountCountBefore:" + contractAccountCountBefore);
+    String txid = "";
+    //String num = "\""+Base58.encode58Check(contractAddress)
+    // +"\","+ "\"" + assetAccountId.toStringUtf8() + "\"";
+    String num = "\"" + assetAccountId.toStringUtf8() + "\"";
+    //String num = "\""+Base58.encode58Check(contractAddress) +"\","+ "\"" + -1 + "\"";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testTransferTokenCompiledTokenId(uint256)", num, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Long fee = infoById.get().getFee();
+    Long netUsed = infoById.get().getReceipt().getNetUsage();
+    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
+    Long netFee = infoById.get().getReceipt().getNetFee();
+    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
+    logger.info("fee:" + fee);
+    logger.info("netUsed:" + netUsed);
+    logger.info("energyUsed:" + energyUsed);
+    logger.info("netFee:" + netFee);
+    logger.info("energyUsageTotal:" + energyUsageTotal);
+
+    Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
+    AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(contractExcAddress,
+        blockingStubFull1);
+    Long afterBalance = infoafter.getBalance();
+    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
+    Long afterNetUsed = resourceInfoafter.getNetUsed();
+    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
+    Long testNetAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractExcAddress, assetAccountId, blockingStubFull);
+    Long contractAccountCountAfter = PublicMethed
+        .getAssetIssueValue(contractAddress, assetAccountId, blockingStubFull);
+    logger.info("afterBalance:" + afterBalance);
+    logger.info("afterEnergyUsed:" + afterEnergyUsed);
+    logger.info("afterNetUsed:" + afterNetUsed);
+    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
+    logger.info("testNetAccountCountAfter:" + testNetAccountCountAfter);
+    logger.info("contractAccountCountAfter:" + contractAccountCountAfter);
+
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertTrue(afterBalance + fee == beforeBalance);
+    Assert.assertTrue(energyUsageTotal < maxFeeLimit / 10);
+    Assert.assertEquals(100, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+  }
+
 
   /**
    * constructor.

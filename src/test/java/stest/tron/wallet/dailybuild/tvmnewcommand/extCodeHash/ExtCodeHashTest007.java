@@ -349,7 +349,8 @@ public class ExtCodeHashTest007 {
         "the value: " + retList);
 
     expectedCodeHashOld = retList.get(0);
-    Assert.assertEquals("B4AB5B9FF1A4FF7793E60EBFF0C769443AF66D0A6F9455AF145432CE8BA78175",expectedCodeHashOld);
+    Assert.assertEquals(
+        "B4AB5B9FF1A4FF7793E60EBFF0C769443AF66D0A6F9455AF145432CE8BA78175",expectedCodeHashOld);
     Assert.assertFalse(retList.isEmpty());
   }
 
@@ -432,7 +433,8 @@ public class ExtCodeHashTest007 {
 
     Assert.assertNotEquals(retList.get(0), expectedCodeHashOld);
     expectedCodeHash = retList.get(0);
-    Assert.assertEquals("34DB53BD1F7214367E8D6B2A7A6FBBF0E3B7DDB4939ECADE4CDEF6749C27A2DA",expectedCodeHash);
+    Assert.assertEquals(
+        "34DB53BD1F7214367E8D6B2A7A6FBBF0E3B7DDB4939ECADE4CDEF6749C27A2DA",expectedCodeHash);
   }
 
   @Test(enabled = true, description = "Deploy contract using new solidity again")

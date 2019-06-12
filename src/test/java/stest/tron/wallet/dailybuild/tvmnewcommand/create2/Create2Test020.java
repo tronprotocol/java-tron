@@ -87,7 +87,7 @@ public class Create2Test020 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : trcToken")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
@@ -205,22 +205,8 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : uint8")
   public void testTriggerContract1() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory1";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -236,6 +222,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -243,7 +230,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + "," + 1000001;
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,uint8)", num, false,
+            "deploy1(bytes,uint8)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -324,22 +311,8 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : address")
   public void testTriggerContract2() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory2";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -355,6 +328,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -362,7 +336,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + ",\"" + Base58.encode58Check(contractExcAddress) + "\"";
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,address)", num, false,
+            "deploy2(bytes,address)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -443,22 +417,8 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : string")
   public void testTriggerContract3() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory3";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -474,6 +434,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -481,7 +442,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + ",\"" + Base58.encode58Check(contractExcAddress) + "\"";
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);

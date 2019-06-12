@@ -240,10 +240,6 @@ public class ExtCodeHashTest001 {
 
   @Test(enabled = true, description = "Get a contract extcodehash")
   public void test03GetContactCodeHash() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -544,8 +540,8 @@ public class ExtCodeHashTest001 {
 
     Long callValue = Long.valueOf(0);
 
-    String param =
-        "\"" + Base58.encode58Check(WalletClient.decodeFromBase58Check(testContractAddress2)) + "\"";
+    String param = "\""
+        + Base58.encode58Check(WalletClient.decodeFromBase58Check(testContractAddress2)) + "\"";
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
         "getCodeHashByAddr(address)", param, false, callValue,
         1000000000L, "0", 0, user001Address, user001Key,

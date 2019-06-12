@@ -88,7 +88,7 @@ public class TriggerConstant005 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false, description = "TriggerConstantContract a payable function with ABI")
+  @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
@@ -135,8 +135,6 @@ public class TriggerConstant005 {
         containsString("CONTRACT_EXE_ERROR"));
     Assert.assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
         containsString("Attempt to call a state modifying opcode inside STATICCALL"));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
   }
 

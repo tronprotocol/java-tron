@@ -81,25 +81,15 @@ public class Create2Test001 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+    /*Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
             blockingStubFull), 0, 1,
         ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
-        0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
+        0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));*/
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    //before deploy, check account resource
-    //AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-    //    blockingStubFull);
-    //long energyLimit = accountResource.getEnergyLimit();
-    //long energyUsage = accountResource.getEnergyUsed();
-    //long balanceBefore = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-    //logger.info("before energyLimit is " + Long.toString(energyLimit));
-    //logger.info("before energyUsage is " + Long.toString(energyUsage));
-    //logger.info("before balanceBefore is " + Long.toString(balanceBefore));
+    //PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
@@ -114,15 +104,6 @@ public class Create2Test001 {
             "0", 0, null, dev001Key,
             dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    //accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    //energyLimit = accountResource.getEnergyLimit();
-    //energyUsage = accountResource.getEnergyUsed();
-    //long balanceAfter = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-
-    //logger.info("after energyLimit is " + Long.toString(energyLimit));
-    //logger.info("after energyUsage is " + Long.toString(energyUsage));
-    //logger.info("after balanceAfter is " + Long.toString(balanceAfter));
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
@@ -143,30 +124,6 @@ public class Create2Test001 {
 
   @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory")
   public void test02TriggerCreate2ToDeployTestContract() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 80000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-
-    /*AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
-    long devEnergyLimitBefore = accountResource.getEnergyLimit();
-    long devEnergyUsageBefore = accountResource.getEnergyUsed();
-    long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
-    logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
-    logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitBefore = accountResource.getEnergyLimit();
-    long userEnergyUsageBefore = accountResource.getEnergyUsed();
-    long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
-    logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
-    logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));*/
 
     Long callValue = Long.valueOf(0);
 
@@ -185,25 +142,6 @@ public class Create2Test001 {
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    /*accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    long devEnergyLimitAfter = accountResource.getEnergyLimit();
-    long devEnergyUsageAfter = accountResource.getEnergyUsed();
-    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitAfter = accountResource.getEnergyLimit();
-    long userEnergyUsageAfter = accountResource.getEnergyUsed();
-    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));*/
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -258,30 +196,6 @@ public class Create2Test001 {
 
   @Test(enabled = true, description = "Trigger create2 command with factory bytecode")
   public void test02TriggerCreate2ToDeployFactory2Contract() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 150000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-
-    /*AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
-    long devEnergyLimitBefore = accountResource.getEnergyLimit();
-    long devEnergyUsageBefore = accountResource.getEnergyUsed();
-    long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
-    logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
-    logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitBefore = accountResource.getEnergyLimit();
-    long userEnergyUsageBefore = accountResource.getEnergyUsed();
-    long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
-    logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
-    logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));*/
 
     Long callValue = Long.valueOf(0);
 
@@ -300,25 +214,6 @@ public class Create2Test001 {
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    /*accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    long devEnergyLimitAfter = accountResource.getEnergyLimit();
-    long devEnergyUsageAfter = accountResource.getEnergyUsed();
-    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitAfter = accountResource.getEnergyLimit();
-    long userEnergyUsageAfter = accountResource.getEnergyUsed();
-    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));*/
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -370,30 +265,6 @@ public class Create2Test001 {
 
   @Test(enabled = true, description = "Trigger create2 command with test bytecode using factory2")
   public void test03TriggerCreate2ToDeployTestContract2() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 80000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
-
-    /*AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-        blockingStubFull);
-    long devEnergyLimitBefore = accountResource.getEnergyLimit();
-    long devEnergyUsageBefore = accountResource.getEnergyUsed();
-    long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
-    logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
-    logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitBefore = accountResource.getEnergyLimit();
-    long userEnergyUsageBefore = accountResource.getEnergyUsed();
-    long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
-    logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
-    logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));*/
 
     Long callValue = Long.valueOf(0);
 
@@ -413,25 +284,6 @@ public class Create2Test001 {
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    /*accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    long devEnergyLimitAfter = accountResource.getEnergyLimit();
-    long devEnergyUsageAfter = accountResource.getEnergyUsed();
-    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
-
-    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
-
-    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    long userEnergyLimitAfter = accountResource.getEnergyLimit();
-    long userEnergyUsageAfter = accountResource.getEnergyUsed();
-    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-        .getBalance();
-
-    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));*/
-
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
 
@@ -443,42 +295,30 @@ public class Create2Test001 {
     Assert
         .assertThat(infoById.get().getResMessage().toStringUtf8(),
             containsString("Not enough energy for 'SWAP1' operation executing"));
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        user001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        user001Address, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Trigger create2 command without meta data hash in bytecode")
   public void test04TriggerCreate2ToDeployTestContract() {
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
-    //AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-    //    blockingStubFull);
-    //long devEnergyLimitBefore = accountResource.getEnergyLimit();
-    //long devEnergyUsageBefore = accountResource.getEnergyUsed();
-    //long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
+        blockingStubFull);
+    long devEnergyLimitBefore = accountResource.getEnergyLimit();
+    long devEnergyUsageBefore = accountResource.getEnergyUsed();
+    long devBalanceBefore = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
 
-    //logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
-    //logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
-    //logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
+    logger.info("before trigger, devEnergyLimitBefore is " + Long.toString(devEnergyLimitBefore));
+    logger.info("before trigger, devEnergyUsageBefore is " + Long.toString(devEnergyUsageBefore));
+    logger.info("before trigger, devBalanceBefore is " + Long.toString(devBalanceBefore));
 
-    //accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    //long userEnergyLimitBefore = accountResource.getEnergyLimit();
-    //long userEnergyUsageBefore = accountResource.getEnergyUsed();
-    //long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
-    //    .getBalance();
+    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
+    long userEnergyLimitBefore = accountResource.getEnergyLimit();
+    long userEnergyUsageBefore = accountResource.getEnergyUsed();
+    long userBalanceBefore = PublicMethed.queryAccount(user001Address, blockingStubFull)
+        .getBalance();
 
-    //logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
-    //logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
-    //logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
+    logger.info("before trigger, userEnergyLimitBefore is " + Long.toString(userEnergyLimitBefore));
+    logger.info("before trigger, userEnergyUsageBefore is " + Long.toString(userEnergyUsageBefore));
+    logger.info("before trigger, userBalanceBefore is " + Long.toString(userBalanceBefore));
 
     Long callValue = Long.valueOf(0);
 
@@ -499,24 +339,24 @@ public class Create2Test001 {
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    //accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    //long devEnergyLimitAfter = accountResource.getEnergyLimit();
-    //long devEnergyUsageAfter = accountResource.getEnergyUsed();
-    //long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
+    accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
+    long devEnergyLimitAfter = accountResource.getEnergyLimit();
+    long devEnergyUsageAfter = accountResource.getEnergyUsed();
+    long devBalanceAfter = PublicMethed.queryAccount(dev001Address, blockingStubFull).getBalance();
 
-    //logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
-    //logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
-    //logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
+    logger.info("after trigger, devEnergyLimitAfter is " + Long.toString(devEnergyLimitAfter));
+    logger.info("after trigger, devEnergyUsageAfter is " + Long.toString(devEnergyUsageAfter));
+    logger.info("after trigger, devBalanceAfter is " + Long.toString(devBalanceAfter));
 
-    //accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
-    //long userEnergyLimitAfter = accountResource.getEnergyLimit();
-    //long userEnergyUsageAfter = accountResource.getEnergyUsed();
-    //long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
-    //    .getBalance();
+    accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
+    long userEnergyLimitAfter = accountResource.getEnergyLimit();
+    long userEnergyUsageAfter = accountResource.getEnergyUsed();
+    long userBalanceAfter = PublicMethed.queryAccount(user001Address, blockingStubFull)
+        .getBalance();
 
-    //logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
-    //logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
-    //logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
+    logger.info("after trigger, userEnergyLimitAfter is " + Long.toString(userEnergyLimitAfter));
+    logger.info("after trigger, userEnergyUsageAfter is " + Long.toString(userEnergyUsageAfter));
+    logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -568,13 +408,78 @@ public class Create2Test001 {
     Assert.assertNotEquals(msgSender, Base58.encode58Check(user001Address));
   }
 
-  @Test(enabled = false, description = "Trigger Test contact")
-  public void test04TriggerTestContract() {
+  @Test(enabled = true,description = "Trigger create2 command with 0 extended bytecode")
+  public void test05TriggerCreate2ToDeployTestContract() {
+    Long callValue = Long.valueOf(0);
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
+    String testContractCode = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801"
+        + "561002a57600080fd5b5060c9806100396000396000f3fe6080604052348015600f57600080fd5b50d38015"
+        + "601b57600080fd5b50d28015602757600080fd5b50600436106066577c01000000000000000000000000000"
+        + "00000000000000000000000000000600035046368e5c0668114606b578063e5aa3d58146083575b600080fd"
+        + "5b60716089565b60408051918252519081900360200190f35b60716097565b6000805460010190819055905"
+        + "65b6000548156fe0000000000000000000000000000000000000000000000000000000000000000000000";
+
+    Long salt = 1L;
+
+    String param = "\"" + testContractCode + "\"," + salt;
+
+    final String triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
+        "deploy(bytes,uint256)", param, false, callValue,
+        1000000000L, "0", 0, user001Address, user001Key,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+
+    Optional<TransactionInfo> infoById = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    TransactionInfo transactionInfo = infoById.get();
+    logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
+    logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
+
+    if (infoById.get().getResultValue() != 0) {
+      Assert.fail(
+          "transaction failed with message: " + infoById.get().getResMessage().toStringUtf8());
+    }
+
+    logger.info(
+        "the value: " + PublicMethed
+            .getStrings(transactionInfo.getLogList().get(0).getData().toByteArray()));
+
+    List<String> retList = PublicMethed
+        .getStrings(transactionInfo.getLogList().get(0).getData().toByteArray());
+
+    Long actualSalt = ByteArray.toLong(ByteArray.fromHexString(retList.get(1)));
+
+    logger.info("actualSalt: " + actualSalt);
+
+    byte[] tmpAddress = new byte[20];
+    System.arraycopy(ByteArray.fromHexString(retList.get(0)), 12, tmpAddress, 0, 20);
+    String addressHex = "41" + ByteArray.toHexString(tmpAddress);
+    logger.info("address_hex: " + addressHex);
+    String addressFinal = Base58.encode58Check(ByteArray.fromHexString(addressHex));
+    logger.info("address_final: " + addressFinal);
+
+    testContractAddress = WalletClient.decodeFromBase58Check(addressFinal);
+
+    SmartContract smartContract = PublicMethed.getContract(testContractAddress, blockingStubFull);
+
+    // contract created by create2, doesn't have ABI
+    Assert.assertEquals(0, smartContract.getAbi().getEntrysCount());
+
+    // the contract owner of contract created by create2 is the factory contract
+    Assert.assertEquals(Base58.encode58Check(factoryContractAddress),
+        Base58.encode58Check(smartContract.getOriginAddress().toByteArray()));
+
+    // the contract address in transaction info,
+    // contract address of create2 contract is factory contract
+    Assert.assertEquals(Base58.encode58Check(factoryContractAddress),
+        Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
+
+  }
+
+  @Test(enabled = true, description = "Trigger Test contact")
+  public void test04TriggerTestContract() {
 
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -651,14 +556,6 @@ public class Create2Test001 {
     long consumeUserPercent = smartContract.getConsumeUserResourcePercent();
     logger.info("ConsumeURPercent: " + consumeUserPercent);
 
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        user001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        user001Address, blockingStubFull);
 
   }
 

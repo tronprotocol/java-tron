@@ -29,7 +29,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ExtCodeHashTest003 {
 
-  private final static boolean AllTest = false;
+  private final boolean AllTest = false;
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");

@@ -1,5 +1,10 @@
 contract Factory {
     event Deployed(address addr, trcToken salt, address sender);
+    event Deployed1(address addr, uint8 salt, address sender);
+    event Deployed2(address addr, address salt, address sender);
+    event Deployed3(address addr, string salt, address sender);
+
+
     function deploy(bytes memory code, trcToken salt) public returns(address){
         address addr;
         assembly {
@@ -11,53 +16,43 @@ contract Factory {
         emit Deployed(addr, salt, msg.sender);
         return addr;
     }
-}
 
-
-contract Factory1 {
-    event Deployed(address addr, uint8 salt, address sender);
-    function deploy(bytes memory code, uint8 salt) public returns(address){
-        address addr;
-        assembly {
-            addr := create2(0, add(code, 0x20), mload(code), salt)
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
+    function deploy1(bytes memory code, uint8 salt) public returns(address){
+            address addr;
+            assembly {
+                addr := create2(0, add(code, 0x20), mload(code), salt)
+                if iszero(extcodesize(addr)) {
+                    revert(0, 0)
+                }
             }
-        }
-        emit Deployed(addr, salt, msg.sender);
-        return addr;
+            emit Deployed1(addr, salt, msg.sender);
+            return addr;
     }
-}
 
-contract Factory2 {
-    event Deployed(address addr, address salt, address sender);
-    function deploy(bytes memory code, address salt) public returns(address){
-        address addr;
-        assembly {
-            addr := create2(0, add(code, 0x20), mload(code), salt)
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
+    function deploy2(bytes memory code, address salt) public returns(address){
+            address addr;
+            assembly {
+                addr := create2(0, add(code, 0x20), mload(code), salt)
+                if iszero(extcodesize(addr)) {
+                    revert(0, 0)
+                }
             }
-        }
-        emit Deployed(addr, salt, msg.sender);
-        return addr;
+            emit Deployed2(addr, salt, msg.sender);
+            return addr;
     }
-}
 
-
-contract Factory3 {
-    event Deployed(address addr, string salt, address sender);
-    function deploy(bytes memory code, string memory salt) public returns(address){
-        address addr;
-        assembly {
-            addr := create2(0, add(code, 0x20), mload(code), salt)
-            if iszero(extcodesize(addr)) {
-                revert(0, 0)
+    function deploy3(bytes memory code, string memory salt) public returns(address){
+            address addr;
+            assembly {
+                addr := create2(0, add(code, 0x20), mload(code), salt)
+                if iszero(extcodesize(addr)) {
+                    revert(0, 0)
+                }
             }
-        }
-        emit Deployed(addr, salt, msg.sender);
-        return addr;
+            emit Deployed3(addr, salt, msg.sender);
+            return addr;
     }
+
 }
 
 

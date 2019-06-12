@@ -355,6 +355,7 @@ public class ContractTrcToken014 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
@@ -407,6 +408,7 @@ public class ContractTrcToken014 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
@@ -527,7 +529,7 @@ public class ContractTrcToken014 {
         "transferTokenTest(address,uint256,trcToken)", param, false, callValue,
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);

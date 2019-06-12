@@ -95,6 +95,8 @@ public class ShiftCommand004 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -179,9 +181,7 @@ public class ShiftCommand004 {
       + "0x0000000000000000000000000000000000000000000000000000000000000001 and Displacement number"
       + "is 0x01")
   public void test2ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -261,9 +261,7 @@ public class ShiftCommand004 {
       + "0x0000000000000000000000000000000000000000000000000000000000000001 and Displacement number"
       + "is 0xff")
   public void test3ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -342,9 +340,7 @@ public class ShiftCommand004 {
       + "0x0000000000000000000000000000000000000000000000000000000000000001 and Displacement number"
       + "is 0x0100")
   public void test4ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -419,9 +415,6 @@ public class ShiftCommand004 {
       + "0x0000000000000000000000000000000000000000000000000000000000000001 and Displacement number"
       + "is 0x0101")
   public void test5ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -495,9 +488,6 @@ public class ShiftCommand004 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x00")
   public void test6ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -571,10 +561,6 @@ public class ShiftCommand004 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x01")
   public void test7ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -661,9 +647,7 @@ public class ShiftCommand004 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0xff")
   public void test8ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -739,9 +723,7 @@ public class ShiftCommand004 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x0100")
   public void test9ShiftLeft() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -817,10 +799,6 @@ public class ShiftCommand004 {
       + "0x0000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0x01")
   public void testShiftLeft10() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -895,9 +873,7 @@ public class ShiftCommand004 {
       + "0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x01")
   public void testShiftLeft11() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -972,10 +948,7 @@ public class ShiftCommand004 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x0101")
   public void testShiftLeft12() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String filePath = "src/test/resources/soliditycode/TvmNewCommand043.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);

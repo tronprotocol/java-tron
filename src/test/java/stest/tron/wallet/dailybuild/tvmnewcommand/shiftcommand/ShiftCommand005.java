@@ -95,6 +95,8 @@ public class ShiftCommand005 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -182,9 +184,7 @@ public class ShiftCommand005 {
       + "0x0000000000000000000000000000000000000000000000000000000000000001 and Displacement number"
       + "is 0x01")
   public void test2ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -259,9 +259,7 @@ public class ShiftCommand005 {
       + "0x8000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0x01")
   public void test3ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -335,9 +333,7 @@ public class ShiftCommand005 {
       + "0x8000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0xff")
   public void test4ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -416,9 +412,7 @@ public class ShiftCommand005 {
       + "0x8000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0x0100")
   public void test5ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -494,9 +488,7 @@ public class ShiftCommand005 {
       + "0x8000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0x0101")
   public void test6ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -572,9 +564,7 @@ public class ShiftCommand005 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x00")
   public void test7ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -650,9 +640,7 @@ public class ShiftCommand005 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x01")
   public void test8ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -730,10 +718,7 @@ public class ShiftCommand005 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0xff")
   public void test9ShiftRight() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -811,10 +796,7 @@ public class ShiftCommand005 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x0100")
   public void testShiftRight10() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -890,9 +872,7 @@ public class ShiftCommand005 {
       + "0x0000000000000000000000000000000000000000000000000000000000000000 and Displacement number"
       + "is 0x01")
   public void testShiftRight11() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     String filePath = "src/test/resources/soliditycode/ShiftCommand001.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -978,9 +958,7 @@ public class ShiftCommand005 {
       + "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff and Displacement number"
       + "is 0x0101")
   public void testShiftRight12() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+
     String filePath = "src/test/resources/soliditycode/TvmNewCommand043.sol";
     String contractName = "TestBitwiseShift";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);

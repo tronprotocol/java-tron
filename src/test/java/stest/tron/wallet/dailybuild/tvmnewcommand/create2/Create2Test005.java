@@ -73,7 +73,7 @@ public class Create2Test005 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Deploy factory contract")
+  @Test(enabled = false, description = "Deploy factory contract")
   public void test01DeployFactoryContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -140,7 +140,7 @@ public class Create2Test005 {
   }
 
 
-  @Test(enabled = true, description = "Trigger create2 command with 0 extended bytecode")
+  @Test(enabled = false, description = "Trigger create2 command with 0 extended bytecode")
   public void test02TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -252,7 +252,7 @@ public class Create2Test005 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "Trigger test contract")
+  @Test(enabled = false, description = "Trigger test contract")
   public void test03TriggerTestContract() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,

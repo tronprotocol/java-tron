@@ -1,5 +1,7 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
+import static org.hamcrest.core.StringContains.containsString;
+
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

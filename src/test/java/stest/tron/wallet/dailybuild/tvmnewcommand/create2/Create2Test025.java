@@ -77,15 +77,7 @@ public class Create2Test025 {
     PublicMethed.printAddress(user001Key);
   }
 
-
-  public byte[] subByte(byte[] b, int off, int length) {
-    byte[] b1 = new byte[length];
-    System.arraycopy(b, off, b1, 0, length);
-    return b1;
-
-  }
-
-  @Test(enabled = true, description = "Deploy factory contract")
+  @Test(enabled = false, description = "Deploy factory contract")
   public void test01DeployFactoryContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -145,7 +137,7 @@ public class Create2Test025 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "create2 bytecode with parm")
+  @Test(enabled = false, description = "create2 bytecode with parm")
   public void test02TriggerTestContract() {
     //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
     //    PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -182,7 +174,8 @@ public class Create2Test025 {
 
     String param = "\"" + testContractCode + "\"," + salt;
 
-    String triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
+    String triggerTxid = null;
+    triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
         "create2(bytes,uint256)", param, false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
@@ -236,13 +229,14 @@ public class Create2Test025 {
     testContractAddress = WalletClient.decodeFromBase58Check(addressFinal);
 
 
-    String Txid = PublicMethed.triggerContract(testContractAddress,
+    String txid = PublicMethed.triggerContract(testContractAddress,
         "getNum()", "#", false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
-    Optional<TransactionInfo> infoById2 = PublicMethed.getTransactionInfoById(Txid,blockingStubFull);
+    Optional<TransactionInfo> infoById2 = PublicMethed.getTransactionInfoById(txid,
+        blockingStubFull);
     TransactionInfo transactionInfo2 = infoById2.get();
-    int NUM = ByteArray.toInt(transactionInfo2.getContractResult(0).toByteArray());
+    final int Num = ByteArray.toInt(transactionInfo2.getContractResult(0).toByteArray());
 
 
     accountResource = PublicMethed.getAccountResource(user001Address, blockingStubFull);
@@ -255,10 +249,10 @@ public class Create2Test025 {
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
     logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
 
-    logger.info("NUM :" +NUM);
+    logger.info("NUM :" + Num);
     Assert.assertEquals(infoById.get().getResult().toString(),"SUCESS");
     Assert.assertEquals(infoById.get().getResultValue(),0);
-    Assert.assertEquals(5,NUM);
+    Assert.assertEquals(5,Num);
 
 
 

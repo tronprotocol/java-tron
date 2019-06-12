@@ -107,7 +107,8 @@ public class TriggerConstant001 {
           0L, 100, null, contractExcKey,
           contractExcAddress, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
+      SmartContract smartContract = PublicMethed.getContract(
+          contractAddressNoAbi, blockingStubFull);
       Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
       Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
       Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
@@ -116,7 +117,8 @@ public class TriggerConstant001 {
           0L, 100, null, contractExcKey,
           contractExcAddress, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      SmartContract smartContract2 = PublicMethed.getContract(contractAddressWithAbi, blockingStubFull);
+      SmartContract smartContract2 = PublicMethed.getContract(
+          contractAddressWithAbi, blockingStubFull);
       Assert.assertFalse(smartContract2.getAbi().toString().isEmpty());
       Assert.assertTrue(smartContract2.getName().equalsIgnoreCase(contractName));
       Assert.assertFalse(smartContract2.getBytecode().toString().isEmpty());

@@ -70,7 +70,7 @@ public class Create2Test010 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
+  @Test(enabled = false, description = "TransferToken with correct value, deploy transfer contract")
   public void test01DeployFactoryContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -137,7 +137,7 @@ public class Create2Test010 {
   }
 
 
-  @Test(enabled = true, description = "Trigger create2 with salt empty")
+  @Test(enabled = false, description = "Trigger create2 with salt empty")
   public void test02TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,

@@ -30,6 +30,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 @Slf4j
 public class ExtCodeHashTest010 {
 
+  final boolean AllTest = false;
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
@@ -76,7 +77,7 @@ public class ExtCodeHashTest010 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "Deploy extcodehash contract")
+  @Test(enabled = AllTest, description = "Deploy extcodehash contract")
   public void test01DeployExtCodeHashContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -140,7 +141,8 @@ public class ExtCodeHashTest010 {
   }
 
 
-  @Test(enabled = true, description = "The EXTCODEHASH of an account that selfdestructed in the current transaction. but later been revert")
+  @Test(enabled = AllTest, description = "The EXTCODEHASH of an account that selfdestructed in the "
+      + "current transaction. but later been revert")
   public void test02GetTestContractCodeHash() {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -172,7 +174,7 @@ public class ExtCodeHashTest010 {
 
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
-        "getCodeHashRevert()", "#", false, 0l,
+        "getCodeHashRevert()", "#", false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
 
@@ -220,7 +222,8 @@ public class ExtCodeHashTest010 {
   }
 
 
-  @Test(enabled = true, description = "The EXTCODEHASH of an account that create in the current transaction. but later been revert")
+  @Test(enabled = AllTest, description = "The EXTCODEHASH of an account that create in the current "
+      + "transaction. but later been revert")
   public void test03GetTestContractCodeHash() {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -252,7 +255,7 @@ public class ExtCodeHashTest010 {
 
 
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
-        "getCodeHashCreate()", "#", false, 0l,
+        "getCodeHashCreate()", "#", false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
 
@@ -299,7 +302,8 @@ public class ExtCodeHashTest010 {
         retList.get(0));
   }
 
-  @Test(enabled = true, description = "The EXTCODEHASH of an account that selfdestructed in the current transaction.")
+  @Test(enabled = AllTest, description = "The EXTCODEHASH of an account that selfdestructed in the"
+      + " current transaction.")
   public void test04GetTestContractCodeHash() {
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -332,7 +336,7 @@ public class ExtCodeHashTest010 {
 
     String param = "\"" + Base58.encode58Check(extCodeHashContractAddress) + "\"";
     final String triggerTxid = PublicMethed.triggerContract(extCodeHashContractAddress,
-        "getCodeHashSuicide(address)", param, false, 0l,
+        "getCodeHashSuicide(address)", param, false, 0L,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
 
@@ -378,6 +382,7 @@ public class ExtCodeHashTest010 {
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000000",
         retList.get(0));
   }
+
   /**
    * constructor.
    */

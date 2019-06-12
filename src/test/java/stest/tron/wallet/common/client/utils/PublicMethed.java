@@ -1678,16 +1678,16 @@ public class PublicMethed {
     Integer wait = 0;
     logger.info("Block num is " + Long.toString(currentBlock
         .getBlockHeader().getRawData().getNumber()));
-    while (nextNum <= currentNum + 1 && wait <= 15) {
+    while (nextNum <= currentNum + 1 && wait <= 45) {
       try {
-        Thread.sleep(3000);
+        Thread.sleep(1000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
       logger.info("Wait to produce next block");
       nextBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       nextNum = nextBlock.getBlockHeader().getRawData().getNumber();
-      if (wait == 15) {
+      if (wait == 45) {
         logger.info("These 45 second didn't produce a block,please check.");
         return false;
       }

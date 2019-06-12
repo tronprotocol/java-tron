@@ -74,7 +74,7 @@ public class Create2Test016 {
     PublicMethed.printAddress(user001Key);
   }
 
-  @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
+  @Test(enabled = false, description = "Deploy caller contract")
   public void test01DeployCallerContract() {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
@@ -140,7 +140,7 @@ public class Create2Test016 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "TransferToken with correct value, deploy transfer contract")
+  @Test(enabled = false, description = "Deploy factory contract")
   public void test02DeployFactoryContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
@@ -202,7 +202,8 @@ public class Create2Test016 {
     Assert.assertNotNull(smartContract.getAbi());
   }
 
-  @Test(enabled = true, description = "TransferToken with correct value, deploy receive contract")
+  @Test(enabled = false, description = "Trigger delegateCallCreate2 function in caller contract "
+      + "with factory contract address")
   public void test03TriggerCreate2ToDeployTestContract() {
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
         PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
@@ -314,7 +315,7 @@ public class Create2Test016 {
         Base58.encode58Check(infoById.get().getContractAddress().toByteArray()));
   }
 
-  @Test(enabled = true, description = "Trigger test contract")
+  @Test(enabled = false, description = "Trigger test contract")
   public void test04TriggerTestContract() {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,

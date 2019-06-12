@@ -241,8 +241,8 @@ public class Create2Test019 {
         .assertThat(transactionExtention.getResult().getCode().toString(),
             containsString("CONTRACT_VALIDATE_ERROR"));
     Assert
-        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8()
-            , containsString("contract validate error : No contract or not a smart contract"));
+        .assertThat(transactionExtention.getResult().getMessage().toStringUtf8(),
+            containsString("contract validate error : No contract or not a smart contract"));
 
     txid = PublicMethed
         .triggerContract(contractAddress,
@@ -259,8 +259,8 @@ public class Create2Test019 {
             "i()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
-    infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     returnnumber = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
     Assert.assertTrue(1 == returnnumber);

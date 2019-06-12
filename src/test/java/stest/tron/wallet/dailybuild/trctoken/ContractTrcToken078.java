@@ -88,9 +88,6 @@ public class ContractTrcToken078 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed
-        .freezeBalanceGetEnergy(internalTxsAddress, 10000000000L, 0L, 1, priKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName = "callerContract";
@@ -103,7 +100,6 @@ public class ContractTrcToken078 {
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -128,8 +124,6 @@ public class ContractTrcToken078 {
     contractAddress1 = infoById.get().getContractAddress().toByteArray();
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath2 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName2 = "c";
@@ -142,8 +136,6 @@ public class ContractTrcToken078 {
         .deployContractAndGetTransactionInfoById(contractName2, abi2, code2, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
@@ -158,8 +150,6 @@ public class ContractTrcToken078 {
     txid2 = PublicMethed.triggerContract(contractAddress,
         "sendToB2(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);
@@ -180,7 +170,6 @@ public class ContractTrcToken078 {
         .sendcoin(internalTxsAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName = "callerContract";
@@ -199,8 +188,6 @@ public class ContractTrcToken078 {
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath1 = "./src/test/resources/soliditycode/contractTrcToken078.sol";
     String contractName1 = "calledContract";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath1, contractName1);
@@ -211,8 +198,6 @@ public class ContractTrcToken078 {
         .deployContractAndGetTransactionInfoById(contractName1, abi1, code1, "", maxFeeLimit,
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -231,8 +216,6 @@ public class ContractTrcToken078 {
             1000000L, 100, null, testKeyForinternalTxsAddress,
             internalTxsAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById : " + infoById);
@@ -245,8 +228,6 @@ public class ContractTrcToken078 {
     txid2 = PublicMethed.triggerContract(contractAddress,
         "sendToB(address,address)", initParmes, false,
         0, maxFeeLimit, internalTxsAddress, testKeyForinternalTxsAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid2, blockingStubFull);

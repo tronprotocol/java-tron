@@ -90,8 +90,8 @@ public class TriggerConstant026 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = false, description = "TriggerConstantContract a view method without ABI,method has"
-      + "revert()")
+  @Test(enabled = false, description = "TriggerConstantContract a view method without ABI,"
+      + "method has revert()")
   public void testTriggerConstantContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
