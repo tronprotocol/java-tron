@@ -114,13 +114,8 @@ public class SendCoinShieldTest {
   static {
     Args.setParam(
         new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-            "-w",
-            "--debug"
-        },
-        "config-test-mainnet.conf"
+            "--output-directory", dbPath
+        }, "config-test-mainnet.conf"
     );
     context = new TronApplicationContext(DefaultConfig.class);
     PUBLIC_ADDRESS_ONE =
@@ -1831,7 +1826,7 @@ public class SendCoinShieldTest {
           // note value ,fake : 200_000_000,real:20_000_000
           byte[] fakeProof = ByteArray
               .fromHexString(
-                  "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e42f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d4627021d");
+                  "0ac001af7f0059cdfec9eed3900b3a4b25ace3cdeb7e962929be9432e51b222be6d7b885d5393c0d373c5b3dbc19210f94e7de831750c5d3a545bbe3732b4d87e4b4350c29519cbebdabd599db9e685f37af2440abc29b3c11cc1dc6712582f74fe06506182e9202b20467017c53fb6d744cd6e08b6428d0e0607688b67876036d2e30617fe020b1fd33ce96cda898e679f44f9715d5681ee0e42f419d7af4d438240fee7b6519e525f452d2ac56b1fb7cd12e9fb0b39caf6f84918b76fa5d46");
           System.out.println("zkproof:" + ByteArray
               .toHexString(spendDescriptionCapsule.getZkproof().toByteArray()));
 
@@ -1869,9 +1864,8 @@ public class SendCoinShieldTest {
 
           //The format is correct, but it does not belong to this
           // note value ,fake : 200_000_000,real:20_000_000
-          byte[] bytes = ByteArray
-              .fromHexString(
-                  "7b21b1bc8aba1bb8d5a3638ef8e3c741b84ca7c122053a1072a932c043a0a9500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");//256
+          byte[] bytes = ByteArray.fromHexString(
+              "7b21b1bc8aba1bb8d5a3638ef8e3c741b84ca7c122053a1072a932c043a0a95");//256
           System.out.println(
               "nf:" + ByteArray.toHexString(spendDescriptionCapsule.getNullifier().toByteArray()));
           spendDescriptionCapsule.setNullifier(bytes);
