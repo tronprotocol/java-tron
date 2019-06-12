@@ -2,9 +2,9 @@
 if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
     stest_server=""
-    docker_num_in_67=`ssh -p 22008 -t java-tron@47.93.18.60 'docker ps -a | wc -l'`
+    docker_num_in_67=`ssh -p 22008 -t java-tron@47.93.42.145 'docker ps -a | wc -l'`
     docker_num_in_67=`echo $docker_num_in_67 | tr -d "\r"`
-    docker_num_in_122=`ssh -p 22008 -t java-tron@47.93.42.145 'docker ps -a | wc -l'`
+    docker_num_in_122=`ssh -p 22008 -t java-tron@47.93.18.60 'docker ps -a | wc -l'`
     docker_num_in_122=`echo $docker_num_in_122 | tr -d "\r"`
     if [ $docker_num_in_67 -le $docker_num_in_122 ];
       then
