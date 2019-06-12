@@ -25,7 +25,7 @@ import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class checkCodeSize {
+public class CheckCodeSize {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -104,8 +104,30 @@ public class checkCodeSize {
             0L, 100, null, dev001Key,
             dev001Address, blockingStubFull);
 
-    code = "6080604052303b600055610211806100186000396000f3006080604052600436106100565763ffffffff7c0100000000000000000000000000000000000000000000000000000000600035041663a5a23074811461005b578063dce4a4471461009c578063eb4dd8f214610159575b600080fd5b34801561006757600080fd5b50d3801561007457600080fd5b50d2801561008157600080fd5b5061008a6101a1565b60408051918252519081900360200190f35b3480156100a857600080fd5b50d380156100b557600080fd5b50d280156100c257600080fd5b506100e473ffffffffffffffffffffffffffffffffffffffff600435166101a7565b6040805160208082528351818301528351919283929083019185019080838360005b8381101561011e578181015183820152602001610106565b50505050905090810190601f16801561014b5780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b34801561016557600080fd5b50d3801561017257600080fd5b50d2801561017f57600080fd5b5061008a73ffffffffffffffffffffffffffffffffffffffff600435166101ce565b60005490565b60408051603f833b908101601f191682019092528181529080600060208401853c50919050565b6000813b823b15156101df57600080fd5b929150505600a165627a7a72305820309e6f0e0ad58fd7067f04813defe26c999d00f1975d75d8685fd398ec6ccb2e0029";
-    abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"getCodeSize\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"at\",\"outputs\":[{\"name\":\"o_code\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"confirm\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"constructor\"}]";
+    code = "6080604052303b600055610211806100186000396000f3006080604052600436106100565763ffffffff7"
+        + "c0100000000000000000000000000000000000000000000000000000000600035041663a5a230748114610"
+        + "05b578063dce4a4471461009c578063eb4dd8f214610159575b600080fd5b34801561006757600080fd5b5"
+        + "0d3801561007457600080fd5b50d2801561008157600080fd5b5061008a6101a1565b60408051918252519"
+        + "081900360200190f35b3480156100a857600080fd5b50d380156100b557600080fd5b50d280156100c2576"
+        + "00080fd5b506100e473ffffffffffffffffffffffffffffffffffffffff600435166101a7565b604080516"
+        + "0208082528351818301528351919283929083019185019080838360005b8381101561011e5781810151838"
+        + "20152602001610106565b50505050905090810190601f16801561014b57808203805160018360200361010"
+        + "00a031916815260200191505b509250505060405180910390f35b34801561016557600080fd5b50d380156"
+        + "1017257600080fd5b50d2801561017f57600080fd5b5061008a73fffffffffffffffffffffffffffffffff"
+        + "fffffff600435166101ce565b60005490565b60408051603f833b908101601f19168201909252818152908"
+        + "0600060208401853c50919050565b6000813b823b15156101df57600080fd5b929150505600a165627a7a7"
+        + "2305820309e6f0e0ad58fd7067f04813defe26c999d00f1975d75d8685fd398ec6ccb2e0029";
+
+    abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"getCodeSize\",\"outputs\":[{\"name\":\"\""
+        + ",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":"
+        + "\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}"
+        + "],\"name\":\"at\",\"outputs\":[{\"name\":\"o_code\",\"type\":\"bytes\"}],\"payable\":fa"
+        + "lse,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inp"
+        + "uts\":[{\"name\":\"addr\",\"type\":\"address\"}],\"name\":\"confirm\",\"outputs\":[{\"n"
+        + "ame\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\","
+        + "\"type\":\"function\"},{\"inputs\":[],\"payable\":true,\"stateMutability\":\"payable\","
+        + "\"type\":\"constructor\"}]";
+
     contractName = "confirmTest";
     confirmContractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, dev001Key,

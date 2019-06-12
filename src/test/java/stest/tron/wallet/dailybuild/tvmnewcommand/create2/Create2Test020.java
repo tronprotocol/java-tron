@@ -652,8 +652,8 @@ public class Create2Test020 {
     Assert.assertTrue(infoById2.get().getResultValue() != 0);
     Assert
         .assertThat(ByteArray
-                .toStr(infoById2.get().getResMessage().toByteArray())
-            , containsString("Not enough energy"));
+                .toStr(infoById2.get().getResMessage().toByteArray()),
+            containsString("Not enough energy"));
   }
 
 
@@ -785,8 +785,8 @@ public class Create2Test020 {
     Assert.assertTrue(infoById2.get().getResultValue() != 0);
     Assert
         .assertThat(ByteArray
-                .toStr(infoById2.get().getResMessage().toByteArray())
-            , containsString("Not enough energy"));
+                .toStr(infoById2.get().getResMessage().toByteArray()),
+            containsString("Not enough energy"));
   }
 
 
@@ -920,8 +920,8 @@ public class Create2Test020 {
     Assert.assertTrue(infoById2.get().getResultValue() != 0);
     Assert
         .assertThat(ByteArray
-                .toStr(infoById2.get().getResMessage().toByteArray())
-            , containsString("Not enough energy"));
+                .toStr(infoById2.get().getResMessage().toByteArray()),
+            containsString("Not enough energy"));
   }
 
   /**

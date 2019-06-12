@@ -134,8 +134,8 @@ public class ExtCodeHashTest011 {
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert
         .assertThat(ByteArray
-                .toStr(infoById.get().getResMessage().toByteArray())
-            , containsString("REVERT opcode executed"));
+                .toStr(infoById.get().getResMessage().toByteArray()),
+            containsString("REVERT opcode executed"));
   }
 
 
