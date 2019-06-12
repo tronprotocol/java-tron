@@ -418,7 +418,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           if (!shieldedTransferContract.getTransparentFromAddress().isEmpty()) {
             owner = shieldedTransferContract.getTransparentFromAddress();
           } else {
-            owner = null;
+            return null;
           }
           break;
         // todo add other contract
