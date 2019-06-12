@@ -105,6 +105,10 @@ public class LibrustzcashTest {
     FileUtil.deleteDir(new File(dbPath));
   }
 
+  private static int randomInt(int minInt, int maxInt) {
+    return (int) Math.round(Math.random() * (maxInt - minInt) + minInt);
+  }
+
   @Test
   public void testLibsodium() throws ZksnarkException {
     byte[] K = new byte[32];
@@ -259,6 +263,36 @@ public class LibrustzcashTest {
     return time;
   }
 
+
+  @Test
+  public void calBenchmarkbenchmarkVerifySpend() throws ZksnarkException {
+    librustzcashInitZksnarkParams();
+    System.out.println("--- load ok ---");
+
+    int count = 10;
+    long min_time = 500;
+    long max_time = 0;
+    double total_time = 0.0;
+
+    for (int i = 0; i < count; i++) {
+      long time = benchmarkVerifySpend();
+      if (time < min_time) {
+        min_time = time;
+      }
+      if (time > max_time) {
+        max_time = time;
+      }
+      total_time += time;
+    }
+
+    System.out.println("---- result ----");
+    System.out.println("---- max_time is: " + max_time);
+    System.out.println("---- min_time is: " + min_time);
+    System.out.println("---- avg_time is: " + total_time / count);
+
+  }
+
+
   public long benchmarkCreateSpend() throws ZksnarkException {
 
     long ctx = librustzcashSaplingProvingCtxInit();
@@ -307,7 +341,7 @@ public class LibrustzcashTest {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
-    int count = 100;
+    int count = 10;
 
     CountDownLatch countDownLatch = new CountDownLatch(count);
 
@@ -349,7 +383,7 @@ public class LibrustzcashTest {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
-    int count = 100;
+    int count = 10;
     long min_time = 10000;
     long max_time = 0;
     double total_time = 0.0;
@@ -398,7 +432,7 @@ public class LibrustzcashTest {
     librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
-    int count = 100;
+    int count = 10;
     long min_time = 500;
     long max_time = 0;
     double total_time = 0.0;
@@ -588,7 +622,7 @@ public class LibrustzcashTest {
   @Test
   public void testGenerateNote() throws Exception {
 
-    int total = 100;
+    int total = 10;
     int success = 0;
     int fail = 0;
 
@@ -634,7 +668,7 @@ public class LibrustzcashTest {
   @Test
   public void testGenerateNoteWithDefault() throws Exception {
 
-    int total = 1000;
+    int total = 10;
     int success = 0;
     int fail = 0;
 
