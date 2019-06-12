@@ -284,6 +284,7 @@ public class WalletTestMutiSign001 {
 
     Assert.assertNotNull(txid);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     balanceAfter = PublicMethed.queryAccount(participateAddress, blockingStubFull)
