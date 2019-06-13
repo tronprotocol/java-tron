@@ -26,6 +26,8 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
+import org.tron.api.GrpcAPI.Node;
+import org.tron.api.GrpcAPI.NodeList;
 
 @Slf4j
 public class WalletTestZenToken001 {
@@ -115,6 +117,7 @@ public class WalletTestZenToken001 {
     //String shieldAddress = "ztron1msxu0ee6fx6l9g9kau7kawq864sx9r70ag74jpuxya6570j45e7u2rlcj64uhnna0gr9vghfdfp";
     logger.info(shieldAddress);
     List<Note> shieldOutList = new ArrayList<>();
+
 
     Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),blockingStubFull);
 
