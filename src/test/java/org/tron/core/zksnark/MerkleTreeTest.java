@@ -92,6 +92,7 @@ public class MerkleTreeTest {
   @Test
   public void testComplexTreePath() throws Exception {
     IncrementalMerkleTreeContainer.DEPTH = 4;
+    EmptyMerkleRoots.emptyMerkleRootsInstance = new EmptyMerkleRoots();
 
     JSONArray root_tests = readFile("merkle_roots_sapling.json");
     JSONArray path_tests = readFile("merkle_path_sapling.json");
@@ -101,6 +102,9 @@ public class MerkleTreeTest {
 //    merkleContainer.getCurrentMerkle();
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
+    tree.toVoucher().DEPTH = 4;
+    System.out.println("tree depth is "+ tree.toVoucher().DEPTH);
+
     // The root of the tree at this point is expected to be the root of the
     // empty tree.
     Assert.assertEquals(PedersenHash2String(tree.root()),
@@ -121,6 +125,9 @@ public class MerkleTreeTest {
     for (int i = 0; i < 16; i++) {
       // Witness here
       witnesses.add(tree.toVoucher().getVoucherCapsule());
+
+      System.out.println("i=" + i + ", depth is: " + tree.toVoucher().DEPTH);
+
       PedersenHashCapsule test_commitment = new PedersenHashCapsule();
       byte[] bytes = ByteArray.fromHexString(commitment_tests.getString(i));
       ZksnarkUtils.sort(bytes);
@@ -181,7 +188,9 @@ public class MerkleTreeTest {
 
       }
     }
+
     IncrementalMerkleTreeContainer.DEPTH = 32;
+    tree.toVoucher().DEPTH = 32;
     EmptyMerkleRoots.emptyMerkleRootsInstance = new EmptyMerkleRoots();
   }
 }
