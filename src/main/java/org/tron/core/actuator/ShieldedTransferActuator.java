@@ -179,6 +179,11 @@ public class ShieldedTransferActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
 
+    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() != 1) {
+      throw new ContractValidateException("shielded transaction is not allowed before "
+          + "ALLOW_SAME_TOKEN_NAME is opened by the committee");
+    }
+
     if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
       throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
           " the committee");
