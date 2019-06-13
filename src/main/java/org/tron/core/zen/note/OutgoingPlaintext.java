@@ -34,7 +34,16 @@ public class OutgoingPlaintext {
     System.arraycopy(data, ZC_JUBJUB_SCALAR_SIZE, ret.esk, 0, ZC_JUBJUB_POINT_SIZE);
     return ret;
   }
-
+  
+  /**
+   * encrypt plain_out with ock to c_out, use NoteEncryption.epk
+   * @param ovk
+   * @param cv
+   * @param cm
+   * @param enc
+   * @return
+   * @throws ZksnarkException
+   */
   public OutCiphertext encrypt(byte[] ovk, byte[] cv, byte[] cm, NoteEncryption enc)
       throws ZksnarkException {
     OutPlaintext pt = this.encode();
