@@ -88,16 +88,6 @@ public class Create2Test003 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-    //before deploy, check account resource
-    //AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
-    //    blockingStubFull);
-    //long energyLimit = accountResource.getEnergyLimit();
-    //long energyUsage = accountResource.getEnergyUsed();
-    //long balanceBefore = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-    //logger.info("before energyLimit is " + Long.toString(energyLimit));
-    //logger.info("before energyUsage is " + Long.toString(energyUsage));
-    //logger.info("before balanceBefore is " + Long.toString(balanceBefore));
-
     String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -111,15 +101,6 @@ public class Create2Test003 {
             "0", 0, null, dev001Key,
             dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    //accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
-    //energyLimit = accountResource.getEnergyLimit();
-    //energyUsage = accountResource.getEnergyUsed();
-    //long balanceAfter = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
-
-    //logger.info("after energyLimit is " + Long.toString(energyLimit));
-    //logger.info("after energyUsage is " + Long.toString(energyUsage));
-    //logger.info("after balanceAfter is " + Long.toString(balanceAfter));
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);

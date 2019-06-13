@@ -169,20 +169,7 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer balance enough")
   public void test2TransferEnough() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 3000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -242,19 +229,7 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer trx nonexistent target")
   public void test3TransferTrxNonexistentTarget() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -327,22 +302,7 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer trx to myself")
   public void test4TransferTrxSelf() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));*/
 
     Account info;
 
@@ -409,22 +369,6 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer trx nonexistent target and insufficient balance")
   public void test5TransferTrxNonexistentTarget() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));*/
 
     Account info;
 
@@ -493,22 +437,7 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer trx to myself and insufficient balance")
   public void test6TransferTrxSelf() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));*/
 
     Account info;
 
@@ -573,9 +502,9 @@ public class TransferFailed001 {
 
   }
 
-  @Test(enabled = true, description = "preCompiled transfertoken with value,"
+  @Test(enabled = true, description = "PreCompiled transfertoken with value,"
       + " long.max < value or long.min > value")
-  public void test7TransferTockenPreCompiled() {
+  public void test7TransferTrckenPreCompiled() {
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -665,8 +594,8 @@ public class TransferFailed001 {
 
   }
 
-  @Test(enabled = false, description = "tokenbalance")
-  public void test8TransferTocken() {
+  @Test(enabled = false, description = "PreCompiled tokenbalance")
+  public void test8TransferTrctoken() {
 
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
@@ -778,8 +707,8 @@ public class TransferFailed001 {
 
   }
 
-  @Test(enabled = true, description = "address(0x1) qeury tokenbalance")
-  public void test9TransferTocken() {
+  @Test(enabled = true, description = "PreCompiled address(0x1) query tokenbalance")
+  public void test9TransferTrctoken() {
     //address: 410000000000000000000000000000000000000001
     String addressx = "T9yD14Nj9j7xAB4dbGeiX9h8unkKLxmGkn";
     byte[] addressxx = WalletClient.decodeFromBase58Check(addressx);

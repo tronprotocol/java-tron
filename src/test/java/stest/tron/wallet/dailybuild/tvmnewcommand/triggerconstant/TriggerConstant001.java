@@ -101,7 +101,7 @@ public class TriggerConstant001 {
       String contractName = "testConstantContract";
       HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
       String code = retMap.get("byteCode").toString();
-      String abi = retMap.get("abI").toString();
+      final String abi = retMap.get("abI").toString();
 
       contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
           0L, 100, null, contractExcKey,
@@ -129,19 +129,6 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a payable function without ABI")
   public void test01TriggerConstantContract() {
 
-    /*Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
     String txid = "";
 
     TransactionExtention transactionExtention = PublicMethed
@@ -164,37 +151,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a non-payable function without ABI")
   public void test02TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant002.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
@@ -216,37 +172,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a view function without ABI")
   public void test03TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
@@ -268,37 +194,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function without ABI")
   public void test04TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
@@ -322,38 +218,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a payable function with ABI")
   public void test05TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant001.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
-    String txid = "";
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,
@@ -374,37 +238,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a non-payable function with ABI")
   public void test06TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant002.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
@@ -425,37 +259,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a view function with ABI")
   public void test07TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
@@ -479,37 +282,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerConstantContract a pure function with ABI")
   public void test08TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
@@ -533,24 +306,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a payable function without ABI")
   public void test09TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant001.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -612,24 +367,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a non-payable function without ABI")
   public void test10TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant002.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -691,24 +428,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a view function without ABI")
   public void test11TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -770,24 +490,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a pure function without ABI")
   public void test12TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -849,37 +552,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a pure function with ABI")
   public void test18TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
     TransactionExtention transactionExtention = PublicMethed
         .triggerContractForExtention(contractAddressWithAbi,
             "testPure()", "#", false,
@@ -901,24 +574,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a payable function with ABI")
   public void test19TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant001.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -978,24 +634,6 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a non-payable function with ABI")
   public void test20TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant002.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());*/
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -1055,37 +693,7 @@ public class TriggerConstant001 {
 
   @Test(enabled = true, description = "TriggerContract a view function with ABI")
   public void test21TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant003.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
     TransactionExtention transactionExtention = PublicMethed
         .triggerContractForExtention(contractAddressWithAbi,
             "testView()", "#", false,
@@ -1108,37 +716,7 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a view method with ABI ,method has "
       + "revert()")
   public void test24TriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant024.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressWithAbi,
@@ -1166,37 +744,6 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerContract a view method with ABI ,method has "
       + "revert()")
   public void test25TriggerContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant024.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertFalse(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerContractForExtention(contractAddressWithAbi,
@@ -1221,37 +768,7 @@ public class TriggerConstant001 {
   @Test(enabled = true, description = "TriggerConstantContract a view method without ABI,method has"
       + "revert()")
   public void testTriggerConstantContract() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TriggerConstant004.sol";
-    String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddressNoAbi = PublicMethed.deployContract(contractName, "[]", code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    SmartContract smartContract = PublicMethed.getContract(contractAddressNoAbi, blockingStubFull);
-    Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
-    Assert.assertTrue(smartContract.getName().equalsIgnoreCase(contractName));
-    Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
-    Account info;
-
-    AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
-        blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);*/
 
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddressNoAbi,

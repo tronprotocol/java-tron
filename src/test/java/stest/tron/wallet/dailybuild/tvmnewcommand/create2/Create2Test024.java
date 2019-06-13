@@ -2,11 +2,9 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
 import static org.hamcrest.core.StringContains.containsString;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +23,6 @@ import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -89,14 +86,6 @@ public class Create2Test024 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
-    //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-    //    PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-    //        blockingStubFull), 0, 1,
-    //    ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
-    //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
-    //    0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //before deploy, check account resource
@@ -151,10 +140,6 @@ public class Create2Test024 {
 
   @Test(enabled = true, description = "create2 not allowed create2 twice in function")
   public void test02TriggerTestContract() {
-    //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-    //    PublicMethed.getFreezeBalanceCount(user001Address, user001Key, 50000L,
-    //        blockingStubFull), 0, 1,
-    //    ByteString.copyFrom(user001Address), testKey002, blockingStubFull));
 
     AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
@@ -234,13 +219,11 @@ public class Create2Test024 {
     Assert.assertEquals(realResult, "00");
     Assert.assertNotEquals(realResult, "41");
 
-
     String addressFinal = Base58.encode58Check(ByteArray.fromHexString(exceptedResult));
     logger.info("create2 Address : " + addressFinal);
 
-    Assert.assertEquals(infoById.get().getResult().toString(),"SUCESS");
-    Assert.assertEquals(infoById.get().getResultValue(),0);
-
+    Assert.assertEquals(infoById.get().getResult().toString(), "SUCESS");
+    Assert.assertEquals(infoById.get().getResultValue(), 0);
 
     triggerTxid = PublicMethed.triggerContract(factoryContractAddress,
         "deploy2(bytes,uint256)", param, false, callValue,
@@ -272,11 +255,10 @@ public class Create2Test024 {
     logger.info("EnergyUsageTotal: " + transactionInfo.getReceipt().getEnergyUsageTotal());
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
-    Assert.assertEquals(infoById.get().getResultValue(),1);
-    Assert.assertEquals(infoById.get().getResult().toString(),"FAILED");
+    Assert.assertEquals(infoById.get().getResultValue(), 1);
+    Assert.assertEquals(infoById.get().getResult().toString(), "FAILED");
     Assert.assertThat(ByteArray.toStr(infoById.get().getResMessage().toByteArray()),
         containsString("Not enough energy for 'SWAP1' operation executing: "));
-
 
 
   }

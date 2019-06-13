@@ -365,10 +365,6 @@ public class Create2Test021 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    //PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, null, blockingStubFull);
-    //PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 1, null, blockingStubFull);
-    //PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, bytes, blockingStubFull);
-    //PublicMethed.unFreezeBalance(contractExcAddress, contractExcKey, 0, bytes, blockingStubFull);
 
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);

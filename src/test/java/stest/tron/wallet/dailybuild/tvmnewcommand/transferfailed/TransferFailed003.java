@@ -200,10 +200,6 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken insufficient tokenBalance")
   public void test2TransferTokenNotEnough() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -280,10 +276,6 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to nonexistent target")
   public void test3TransferTokenNonexistentTarget() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -367,10 +359,6 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to myself")
   public void test4TransferTokenSelf() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -449,10 +437,7 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken notexist tokenID ")
   public void test5TransferTokenNotexist() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
+
 
     Account info;
 
@@ -533,10 +518,6 @@ public class TransferFailed003 {
   @Test(enabled = true, description = "TransferToken to nonexistent target and "
       + "insufficient tokenBalance")
   public void test7TransferTokenNonexistentTarget() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
 
     Account info;
 
@@ -620,10 +601,7 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to myself and insufficient tokenBalance")
   public void test8TransferTokenSelf() {
-    /*Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
+
 
     Account info;
 

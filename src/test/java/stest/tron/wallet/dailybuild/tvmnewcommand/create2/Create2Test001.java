@@ -2,7 +2,6 @@ package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
 import static org.hamcrest.core.StringContains.containsString;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -81,16 +80,6 @@ public class Create2Test001 {
         testKey002, blockingStubFull));
     Assert.assertTrue(PublicMethed.sendcoin(user001Address, 10000_000_000L, fromAddress,
         testKey002, blockingStubFull));
-    /*Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
-        0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));*/
-
-    //PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     String filePath = "./src/test/resources/soliditycode/create2contract.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -408,7 +397,7 @@ public class Create2Test001 {
     Assert.assertNotEquals(msgSender, Base58.encode58Check(user001Address));
   }
 
-  @Test(enabled = true,description = "Trigger create2 command with 0 extended bytecode")
+  @Test(enabled = true, description = "Trigger create2 command with 0 extended bytecode")
   public void test05TriggerCreate2ToDeployTestContract() {
     Long callValue = Long.valueOf(0);
 
@@ -428,7 +417,6 @@ public class Create2Test001 {
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-
 
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
