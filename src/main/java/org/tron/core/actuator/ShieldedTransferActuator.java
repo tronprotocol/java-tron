@@ -334,9 +334,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getSpendDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no sender");
     }
-    if (shieldedTransferContract.getSpendDescriptionCount() > 10) {
+    if (shieldedTransferContract.getSpendDescriptionCount() > 1) {
       throw new ContractValidateException("ShieldedTransferContract error, number of spend notes"
-          + " should not be more than 10");
+          + " should not be more than 1");
     }
   }
 
@@ -346,9 +346,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no receiver");
     }
-    if (shieldedTransferContract.getReceiveDescriptionCount() > 10) {
+    if (shieldedTransferContract.getReceiveDescriptionCount() > 2) {
       throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
-          + " should not be more than 10");
+          + " should not be more than 2");
     }
   }
 
@@ -434,8 +434,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   @Override
   public long calcFee() {
-    long fee = 0;
-    fee += dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     return fee;
   }
 }
