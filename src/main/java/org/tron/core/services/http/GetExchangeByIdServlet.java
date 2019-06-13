@@ -28,7 +28,7 @@ public class GetExchangeByIdServlet extends HttpServlet {
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long id = Util.getJsonLongValue(jsonObject, "id");
+      long id = Util.getJsonLongValue(jsonObject, "id", true);
       response.getWriter()
           .println(JsonFormat
               .printToString(wallet.getExchangeById(ByteString.copyFrom(ByteArray.fromLong(id))),

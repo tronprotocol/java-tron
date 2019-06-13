@@ -113,7 +113,6 @@ public class ContractTrcToken077 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken077.sol";
     String contractName = "trcToken077";
@@ -131,13 +130,11 @@ public class ContractTrcToken077 {
     contractAddress = deployById.get().getContractAddress().toByteArray();
     logger.info("infoById:" + deployById);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "addressTest()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;

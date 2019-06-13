@@ -315,6 +315,9 @@ public class RuntimeImpl implements Runtime {
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue)
       throws ContractValidateException {
+    if (Objects.isNull(creator) && VMConfig.allowTvmConstantinople()) {
+      return getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
+    }
     //  according to version
     if (VMConfig.getEnergyLimitHardFork()) {
       return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
@@ -685,7 +688,7 @@ public class RuntimeImpl implements Runtime {
       runtimeError = result.getException().getMessage();
       logger.info("timeout: {}", result.getException().getMessage());
     } catch (Throwable e) {
-      if (! (e instanceof TransferException)) {
+      if (!(e instanceof TransferException)) {
         program.spendAllEnergy();
       }
       result = program.getResult();

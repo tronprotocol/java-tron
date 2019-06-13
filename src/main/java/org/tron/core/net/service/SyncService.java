@@ -230,26 +230,28 @@ public class SyncService {
 
       isProcessed[0] = false;
 
-      blockWaitToProcess.forEach((msg, peerConnection) -> {
-        if (peerConnection.isDisconnect()) {
-          blockWaitToProcess.remove(msg);
-          invalid(msg.getBlockId());
-          return;
-        }
-        final boolean[] isFound = {false};
-        tronNetDelegate.getActivePeer().stream()
-            .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
-            .forEach(peer -> {
-              peer.getSyncBlockToFetch().pop();
-              peer.getSyncBlockInProcess().add(msg.getBlockId());
-              isFound[0] = true;
-            });
-        if (isFound[0]) {
-          blockWaitToProcess.remove(msg);
-          isProcessed[0] = true;
-          processSyncBlock(msg.getBlockCapsule());
-        }
-      });
+      synchronized (tronNetDelegate.getBlockLock()) {
+        blockWaitToProcess.forEach((msg, peerConnection) -> {
+          if (peerConnection.isDisconnect()) {
+            blockWaitToProcess.remove(msg);
+            invalid(msg.getBlockId());
+            return;
+          }
+          final boolean[] isFound = {false};
+          tronNetDelegate.getActivePeer().stream()
+              .filter(peer -> msg.getBlockId().equals(peer.getSyncBlockToFetch().peek()))
+              .forEach(peer -> {
+                peer.getSyncBlockToFetch().pop();
+                peer.getSyncBlockInProcess().add(msg.getBlockId());
+                isFound[0] = true;
+              });
+          if (isFound[0]) {
+            blockWaitToProcess.remove(msg);
+            isProcessed[0] = true;
+            processSyncBlock(msg.getBlockCapsule());
+          }
+        });
+      }
     }
   }
 

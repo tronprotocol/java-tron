@@ -40,6 +40,8 @@ public interface Deposit {
 
   void updateContract(byte[] address, ContractCapsule contractCapsule);
 
+  void updateAccount(byte[] address, AccountCapsule accountCapsule);
+
   void saveCode(byte[] address, byte[] code);
 
   byte[] getCode(byte[] address);

@@ -50,7 +50,7 @@ public class GetProposalByIdServlet extends HttpServlet {
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
-      long id = Util.getJsonLongValue(jsonObject, "id");
+      long id = Util.getJsonLongValue(jsonObject, "id", true);
       Proposal reply = wallet.getProposalById(ByteString.copyFrom(ByteArray.fromLong(id)));
       if (reply != null) {
         response.getWriter().println(JsonFormat.printToString(reply, visible));

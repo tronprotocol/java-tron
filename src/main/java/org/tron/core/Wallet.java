@@ -1322,7 +1322,7 @@ public class Wallet {
     if (Objects.isNull(transactionId)) {
       return null;
     }
-    TransactionInfoCapsule transactionInfoCapsule = null;
+    TransactionInfoCapsule transactionInfoCapsule;
     try {
       transactionInfoCapsule = dbManager.getTransactionHistoryStore()
           .get(transactionId.toByteArray());
@@ -1332,7 +1332,14 @@ public class Wallet {
     if (transactionInfoCapsule != null) {
       return transactionInfoCapsule.getInstance();
     }
-    return null;
+    try {
+      transactionInfoCapsule = dbManager.getTransactionRetStore()
+          .getTransactionInfo(transactionId.toByteArray());
+    } catch (BadItemException e) {
+      return null;
+    }
+
+    return transactionInfoCapsule == null ? null : transactionInfoCapsule.getInstance();
   }
 
   public Proposal getProposalById(ByteString proposalId) {

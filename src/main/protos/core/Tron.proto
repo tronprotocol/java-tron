@@ -370,6 +370,12 @@ message TransactionInfo {
   int64 exchange_id = 21;
 }
 
+message TransactionRet {
+  int64 blockNumber = 1;
+  int64 blockTimeStamp = 2;
+  repeated TransactionInfo transactioninfo = 3;
+}
+
 message Transactions {
   repeated Transaction transactions = 1;
 }
@@ -544,6 +550,7 @@ message SmartContract {
   string name = 7;
   int64 origin_energy_limit = 8;
   bytes code_hash = 9;
+  bytes trx_hash = 10;
 }
 
 message InternalTransaction {

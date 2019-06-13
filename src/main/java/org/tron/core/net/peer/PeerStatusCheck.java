@@ -20,7 +20,7 @@ public class PeerStatusCheck {
   private ScheduledExecutorService peerStatusCheckExecutor = Executors
       .newSingleThreadScheduledExecutor();
 
-  private int blockUpdateTimeout = 20_000;
+  private int blockUpdateTimeout = 30_000;
 
   public void init() {
     peerStatusCheckExecutor.scheduleWithFixedDelay(() -> {

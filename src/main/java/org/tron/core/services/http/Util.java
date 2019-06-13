@@ -7,10 +7,12 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigDecimal;
+import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
+import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.EasyTransferResponse;
@@ -723,7 +725,7 @@ public class Util {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
     //System.out.println(methodSign + ":" + Hex.toHexString(selector));
-    if (input.length() == 0) {
+    if (StringUtils.isNullOrEmpty(input)) {
       return Hex.toHexString(selector);
     }
 
@@ -731,8 +733,14 @@ public class Util {
   }
 
   public static long getJsonLongValue(final JSONObject jsonObject, final String key) {
-    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    return bigDecimal.longValueExact();
+    return getJsonLongValue(jsonObject, key, false);
   }
 
+  public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
+    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
+    if (required && bigDecimal == null) {
+      throw new InvalidParameterException("key [" + key + "] not exist");
+    }
+    return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
+  }
 }
