@@ -115,7 +115,6 @@ public class SolidityNodeHttpApiService implements Service {
 
   @Override
   public void init(Args args) {
-    librustzcashInitZksnarkParams();
   }
 
   @Override
@@ -208,33 +207,4 @@ public class SolidityNodeHttpApiService implements Service {
     }
   }
 
-  private String getParamsFile(String fileName) {
-    InputStream in = FullNodeHttpApiService.class.getClassLoader()
-        .getResourceAsStream("params" + File.separator + fileName);
-    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
-    try {
-      FileUtils.copyToFile(in, fileOut);
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
-    }
-    return fileOut.getAbsolutePath();
-  }
-
-  private void librustzcashInitZksnarkParams() {
-    logger.info("init zk param begin");
-
-    String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
-
-    String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
-
-    try {
-      JLibrustzcash.librustzcashInitZksnarkParams(
-          new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
-    } catch (ZksnarkException e) {
-      logger.error("librustzcashInitZksnarkParams fail!", e);
-    }
-    logger.info("init zk param done");
-  }
 }
