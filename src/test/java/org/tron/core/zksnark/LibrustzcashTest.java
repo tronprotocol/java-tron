@@ -184,6 +184,7 @@ public class LibrustzcashTest {
     boolean boolBindSig = librustzcashSaplingBindingSig(
         new BindingSigParams(ctx, value, sighash, resbindSig));
     Assert.assertFalse(boolBindSig);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
   }
 
   public static void test(byte[] K, byte[] ovk, byte[] cv, byte[] cm, byte[] epk) {
@@ -253,7 +254,7 @@ public class LibrustzcashTest {
 
     boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
 
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ok);
 
     long endTime = System.currentTimeMillis();
@@ -329,7 +330,7 @@ public class LibrustzcashTest {
         rk,
         zkproof));
 
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ret);
 
     long time = (System.currentTimeMillis() - start);
@@ -420,7 +421,7 @@ public class LibrustzcashTest {
 
     boolean ok = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
 
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
     Assert.assertTrue(ok);
     long endTime = System.currentTimeMillis();
@@ -617,7 +618,7 @@ public class LibrustzcashTest {
 
     boolean result = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
 
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
 
     Assert.assertFalse(result);
   }
