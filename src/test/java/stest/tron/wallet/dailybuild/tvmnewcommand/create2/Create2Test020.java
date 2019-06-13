@@ -92,7 +92,7 @@ public class Create2Test020 {
   @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : trcToken")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/create2contract22.sol";
@@ -527,20 +527,6 @@ public class Create2Test020 {
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
   public void testTriggerContract4() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory3";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
@@ -558,6 +544,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract1";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -565,7 +552,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + ",\"" + Base58.encode58Check(contractAddress) + "\"";
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -644,7 +631,7 @@ public class Create2Test020 {
 
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -659,23 +646,10 @@ public class Create2Test020 {
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
   public void testTriggerContract5() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory3";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -690,6 +664,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract2";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -697,7 +672,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + ",\"" + Base58.encode58Check(contractAddress) + "\"";
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -777,7 +752,7 @@ public class Create2Test020 {
 
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -792,23 +767,10 @@ public class Create2Test020 {
 
   @Test(enabled = true, description = "triggerContract a constant function created by create2")
   public void testTriggerContract6() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 100000_000_000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
-    String contractName = "Factory3";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
 
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
     Assert.assertTrue(PublicMethed
-        .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(contractAddress, 1000000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
         blockingStubFull);
@@ -823,6 +785,7 @@ public class Create2Test020 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String contractName1 = "TestConstract3";
+    String filePath = "src/test/resources/soliditycode/create2contract22.sol";
     HashMap retMap1 = PublicMethed.getBycodeAbi(filePath, contractName1);
     String code1 = retMap1.get("byteCode").toString();
     String abi1 = retMap1.get("abI").toString();
@@ -830,7 +793,7 @@ public class Create2Test020 {
     String num = "\"" + code1 + "\"" + ",\"" + Base58.encode58Check(contractAddress) + "\"";
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -912,7 +875,7 @@ public class Create2Test020 {
 
     txid = PublicMethed
         .triggerContract(contractAddress,
-            "deploy(bytes,string)", num, false,
+            "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
