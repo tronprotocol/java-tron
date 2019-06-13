@@ -4455,6 +4455,7 @@ public class PublicMethed {
       builder.setFromAmount(toAmount);
     }
 
+    logger.info("From amount:" + builder.getFromAmount());
 
     if (shieldInputList.size() > 0) {
       OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
@@ -4565,6 +4566,7 @@ public class PublicMethed {
     } catch (Exception e) {
       System.out.println(e);
     }
+    logger.info("Read to broadcast transaction");
 
     return broadcastTransaction(transaction, blockingStubFull).getResult();
   }
@@ -4595,6 +4597,7 @@ public class PublicMethed {
     }
     noteBuild.setMemo(ByteString.copyFrom(menoString.getBytes()));
     shieldOutList.add(noteBuild.build());
+    logger.info(shieldOutList.toString());
     return shieldOutList;
   }
 

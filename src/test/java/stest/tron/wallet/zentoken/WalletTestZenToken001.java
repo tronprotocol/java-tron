@@ -30,8 +30,9 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 @Slf4j
 public class WalletTestZenToken001 {
 
-  private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key1");
+  //private final String testKey002 = Configuration.getByPath("testng.conf")
+  //    .getString("foundationAccount.key1");
+  private final String testKey002 = "7f7f701e94d4f1dd60ee5205e7ea8ee31121427210417b608a6b2e96433549a7";
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   Account shieldOwnerAccount;
   Account shieldReceiverAccount;
@@ -72,7 +73,7 @@ public class WalletTestZenToken001 {
     String name = "shieldToken";
     Long start = System.currentTimeMillis() + 20000;
     Long end = System.currentTimeMillis() + 10000000000L;
-    Long totalSupply = 1500000000000001L;
+    Long totalSupply = 15000000000000001L;
     String description = "This asset issue is use for exchange transaction stress";
     String url = "This asset issue is use for exchange transaction stress";
     PublicMethed.createAssetIssue(tokenOwnerAddress, name, totalSupply, 1, 1,
@@ -110,14 +111,23 @@ public class WalletTestZenToken001 {
     Optional<ShieldAddressInfo> ShieldAddressInfo = PublicMethed.generateShieldAddress();
 
     String shieldAddress = ShieldAddressInfo.get().getAddress();
+    logger.info("shieldAddress:" + shieldAddress);
+    //String shieldAddress = "ztron1msxu0ee6fx6l9g9kau7kawq864sx9r70ag74jpuxya6570j45e7u2rlcj64uhnna0gr9vghfdfp";
     logger.info(shieldAddress);
     List<Note> shieldOutList = new ArrayList<>();
+
+    Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),blockingStubFull);
 
     List<Long> shieldInputList = new ArrayList<>();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,"10000000","aaa");
 
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress,20000000L,null,shieldOutList,null,0,foundationZenTokenKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress,20000000L,shieldInputList,shieldOutList,null,0,zenTokenOwnerKey,blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),blockingStubFull);
+
+    logger.info("beforeAssetBalance:" + beforeAssetBalance);
+    logger.info("afterAssetBalance: " + afterAssetBalance);
 
 
   }
