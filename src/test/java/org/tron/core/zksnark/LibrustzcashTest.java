@@ -254,6 +254,7 @@ public class LibrustzcashTest {
     boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
 
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    Assert.assertTrue(ok);
 
     long endTime = System.currentTimeMillis();
     long time = endTime - startTime;
@@ -328,9 +329,12 @@ public class LibrustzcashTest {
         rk,
         zkproof));
 
+    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+    Assert.assertTrue(ret);
+
     long time = (System.currentTimeMillis() - start);
 
-    System.out.println("--- time is: " + time + ",ok," + ret);
+    System.out.println("--- time is: " + time + ", result is " + ret);
     return time;
   }
 
@@ -418,6 +422,7 @@ public class LibrustzcashTest {
 
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
 
+    Assert.assertTrue(ok);
     long endTime = System.currentTimeMillis();
     long time = endTime - startTime;
 
