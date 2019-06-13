@@ -1005,6 +1005,7 @@ public class SendCoinShieldTest {
   public void testTwoCMWithDiffSkInOneTx() throws Exception {
     // generate spend proof
     librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(110 * 1000000);
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //prepare two cm with different sk
@@ -1012,10 +1013,6 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
     PaymentAddress address1 = sk1.defaultAddress();
     Note note1 = new Note(address1, 110 * 1000000);
-    SpendingKey sk2 = SpendingKey.random();
-    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
-    PaymentAddress address2 = sk2.defaultAddress();
-    Note note2 = new Note(address2, 100 * 1000000);
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
@@ -1027,25 +1024,29 @@ public class SendCoinShieldTest {
     dbManager
         .getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
-
-    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
-    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
-    PedersenHash a2 = compressCapsule2.getInstance();
-    tree.append(a2);
-    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
-    byte[] anchor2 = voucher2.root().getContent().toByteArray();
-    dbManager
-        .getMerkleContainer()
-        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
-    //add spendDesc into builder
     builder.addSpend(expsk1, note1, anchor, voucher);
-    builder.addSpend(expsk2, note2, anchor2, voucher2);
+
+//    SpendingKey sk2 = SpendingKey.random();
+//    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+//    PaymentAddress address2 = sk2.defaultAddress();
+//    Note note2 = new Note(address2, 100 * 1000000);
+//    PedersenHashCapsule compressCapsule2 = new PedersenHashCapsule();
+//    compressCapsule2.setContent(ByteString.copyFrom(note2.cm()));
+//    PedersenHash a2 = compressCapsule2.getInstance();
+//    tree.append(a2);
+//    IncrementalMerkleVoucherContainer voucher2 = tree.toVoucher();
+//    byte[] anchor2 = voucher2.root().getContent().toByteArray();
+//    dbManager
+//        .getMerkleContainer()
+//        .putMerkleTreeIntoStore(anchor2, voucher2.getVoucherCapsule().getTree());
+//    builder.addSpend(expsk2, note2, anchor2, voucher2);
+
     // generate output proof
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 100 * 1000000, new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     //execute
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
