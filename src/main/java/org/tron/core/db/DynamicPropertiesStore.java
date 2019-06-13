@@ -399,7 +399,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getShieldedTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveShieldedTransactionFee(10_000_000L); // 10TRX
+      this.saveShieldedTransactionFee(10L); // 10TRX
     }
 
     try {
