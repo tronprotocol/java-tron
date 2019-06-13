@@ -480,6 +480,23 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static Protocol.Transaction signTransactionForShield(ECKey ecKey,
+      Protocol.Transaction transaction) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    if (ecKey == null || ecKey.getPrivKey() == null) {
+      //logger.warn("Warning: Can't sign,there is no private key !!");
+      return null;
+    }
+    logger.info("Txid in sign is " + ByteArray.toHexString(Sha256Hash.hash(transaction
+        .getRawData().toByteArray())));
+    return TransactionUtils.sign(transaction, ecKey);
+  }
+
+
+  /**
+   * constructor.
+   */
+
   public static boolean participateAssetIssue(byte[] to, byte[] assertName, long amount,
       byte[] from, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4938,7 +4955,7 @@ public class PublicMethed {
       Contract.ShieldedTransferContract shieldedTransferContract =
           any.unpack(Contract.ShieldedTransferContract.class);
       if (shieldedTransferContract.getFromAmount() > 0) {
-        transaction = signTransaction(ecKey, transaction);
+        transaction = signTransactionForShield(ecKey, transaction);
         System.out.println(
             "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
                 .toByteArray())));
