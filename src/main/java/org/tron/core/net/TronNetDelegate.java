@@ -2,22 +2,22 @@ package org.tron.core.net;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.db.WitnessStore;
+import org.tron.core.db.WitnessScheduleStore;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -54,10 +54,13 @@ public class TronNetDelegate {
   private SyncPool syncPool;
 
   @Autowired
+  private ChannelManager channelManager;
+
+  @Autowired
   private Manager dbManager;
 
   @Autowired
-  private WitnessStore witnessStore;
+  private WitnessScheduleStore witnessScheduleStore;
 
   @Getter
   private Object blockLock = new Object();
@@ -73,6 +76,10 @@ public class TronNetDelegate {
       return super.offer(blockId);
     }
   };
+
+  public void trustNode (PeerConnection peer) {
+    channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
+  }
 
   public Collection<PeerConnection> getActivePeer() {
     return syncPool.getActivePeers();
@@ -171,6 +178,12 @@ public class TronNetDelegate {
     synchronized (blockLock) {
       try {
         if (!freshBlockId.contains(block.getBlockId())) {
+          if (block.getNum() <= getHeadBlockId().getNum()) {
+            logger.warn("Receive a fork block {} witness {}, head {}",
+                block.getBlockId().getString(),
+                Hex.toHexString(block.getWitnessAddress().toByteArray()),
+                getHeadBlockId().getString());
+          }
           dbManager.pushBlock(block);
           freshBlockId.add(block.getBlockId());
           logger.info("Success process block {}.", block.getBlockId().getString());
@@ -218,18 +231,8 @@ public class TronNetDelegate {
 
   public boolean validBlock(BlockCapsule block) throws P2pException {
     try {
-      if (!block.validateSignature(dbManager)) {
-        return false;
-      }
-      boolean flag = false;
-      List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
-      for (WitnessCapsule witness : witnesses) {
-        if (witness.getAddress().equals(block.getWitnessAddress())) {
-          flag = true;
-          break;
-        }
-      }
-      return flag;
+      return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())
+          && block.validateSignature(dbManager);
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }

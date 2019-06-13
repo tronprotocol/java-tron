@@ -312,7 +312,7 @@ public class TransactionTrace {
       return;
     }
 
-    logger.error("uncaught exception", exception);
+    logger.info("uncaught exception", exception);
     receipt.setResult(contractResult.UNKNOWN);
   }
 

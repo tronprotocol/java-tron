@@ -50,7 +50,7 @@ public class ChannelManager {
       .maximumSize(1000).expireAfterWrite(30, TimeUnit.SECONDS).recordStats().build();
 
   @Getter
-  private Map<InetAddress, Node> trustNodes = new ConcurrentHashMap();
+  private Cache<InetAddress, Node> trustNodes = CacheBuilder.newBuilder().maximumSize(100).build();
 
   @Getter
   private Map<InetAddress, Node> activeNodes = new ConcurrentHashMap();
@@ -126,7 +126,7 @@ public class ChannelManager {
 
   public synchronized boolean processPeer(Channel peer) {
 
-    if (!trustNodes.containsKey(peer.getInetAddress())) {
+    if (trustNodes.getIfPresent(peer.getInetAddress()) == null) {
       if (recentlyDisconnected.getIfPresent(peer) != null) {
         logger.info("Peer {} recently disconnected.", peer.getInetAddress());
         return false;

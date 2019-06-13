@@ -3,7 +3,9 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
+import io.netty.util.internal.StringUtil;
 import java.io.IOException;
+import java.security.InvalidParameterException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,11 +29,28 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 @Slf4j(topic = "API")
 public class TriggerConstantContractServlet extends HttpServlet {
+  private final String functionSelector = "function_selector";
 
   @Autowired
   private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+  }
+
+  protected void validateParameter(String contract) {
+    JSONObject jsonObject = JSONObject.parseObject(contract);
+    if (!jsonObject.containsKey("owner_address")
+        || StringUtil.isNullOrEmpty(jsonObject.getString("owner_address"))) {
+      throw new InvalidParameterException("owner_address isn't set.");
+    }
+    if (!jsonObject.containsKey("contract_address")
+        || StringUtil.isNullOrEmpty(jsonObject.getString("contract_address"))) {
+      throw new InvalidParameterException("contract_address isn't set.");
+    }
+    if (!jsonObject.containsKey(functionSelector)
+        || StringUtil.isNullOrEmpty(jsonObject.getString(functionSelector))) {
+      throw new InvalidParameterException("function_selector isn't set.");
+    }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -45,13 +64,14 @@ public class TriggerConstantContractServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       visible = Util.getVisiblePost(contract);
+      validateParameter(contract);
       JsonFormat.merge(contract, build, visible);
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      String selector = jsonObject.getString("function_selector");
+      String selector = jsonObject.getString(functionSelector);
       String parameter = jsonObject.getString("parameter");
       String data = Util.parseMethod(selector, parameter);
       build.setData(ByteString.copyFrom(ByteArray.fromHexString(data)));
-      long feeLimit = Util.getJsonLongValue(jsonObject,"fee_limit");
+      long feeLimit = Util.getJsonLongValue(jsonObject, "fee_limit");
 
       TransactionCapsule trxCap = wallet
           .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
@@ -72,7 +92,10 @@ public class TriggerConstantContractServlet extends HttpServlet {
       retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
     } catch (Exception e) {
-      String errString = e.getMessage().replaceAll("\"","\'");
+      String errString = null;
+      if (e.getMessage() != null) {
+        errString = e.getMessage().replaceAll("[\"]", "\'");
+      }
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + errString));
     }

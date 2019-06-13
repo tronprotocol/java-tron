@@ -81,14 +81,15 @@ public class ContractScenario004 {
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
 
-    byte[] contractAddress;
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, contract004Key, contract004Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Txid is " + txid);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
+    byte[] contractAddress;
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);

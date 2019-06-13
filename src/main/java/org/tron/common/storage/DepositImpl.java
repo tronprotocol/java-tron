@@ -260,6 +260,13 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
+  public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
+    Key key = Key.create(address);
+    Value value = Value.create(accountCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    accountCache.put(key, value);
+  }
+
+  @Override
   public synchronized ContractCapsule getContract(byte[] address) {
     Key key = Key.create(address);
     if (contractCache.containsKey(key)) {
@@ -322,17 +329,21 @@ public class DepositImpl implements Deposit {
     if (storageCache.containsKey(key)) {
       return storageCache.get(key);
     }
-
     Storage storage;
     if (this.parent != null) {
       Storage parentStorage = parent.getStorage(address);
       if (VMConfig.getEnergyLimitHardFork()) {
+        // deep copy
         storage = new Storage(parentStorage);
       } else {
         storage = parentStorage;
       }
     } else {
       storage = new Storage(address, dbManager.getStorageRowStore());
+    }
+    ContractCapsule contract = getContract(address);
+    if (contract != null && !ByteUtil.isNullOrZeroArray(contract.getTrxHash())) {
+      storage.generateAddrHash(contract.getTrxHash());
     }
     return storage;
   }
