@@ -115,6 +115,7 @@ public class ContractScenario014 {
     txid = PublicMethed.deployContractWithConstantParame(contractName, abi1, code1,
         "constructor(address)", parame, "", maxFeeLimit, 0L, 100, null,
         contract014Key, contract014Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress2 = infoById.get().getContractAddress().toByteArray();
