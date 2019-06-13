@@ -91,7 +91,7 @@ public class ClearAbi005 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "clear a contract created by create2 (without ABI)")
+  @Test(enabled = true, description = "Clear a contract created by create2 (without ABI)")
   public void testClearAbi() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,

@@ -89,7 +89,7 @@ public class Create2Test020 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : trcToken")
+  @Test(enabled = true, description = "Deploy Factory contract, create2 with salt type : trcToken")
   public void testTriggerContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -207,7 +207,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : uint8")
+  @Test(enabled = true, description = "Deploy Factory contract, create2 with salt type : uint8")
   public void testTriggerContract1() {
     Account info;
 
@@ -313,7 +313,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : address")
+  @Test(enabled = true, description = "Deploy Factory contract, create2 with salt type : address")
   public void testTriggerContract2() {
     Account info;
 
@@ -419,7 +419,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "deploy Factory contract, create2 with salt type : string")
+  @Test(enabled = true, description = "Deploy Factory contract, create2 with salt type : string")
   public void testTriggerContract3() {
     Account info;
 
@@ -525,7 +525,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
   public void testTriggerContract4() {
     Account info;
     Assert.assertTrue(PublicMethed
@@ -644,7 +644,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
   public void testTriggerContract5() {
 
     Account info;
@@ -765,7 +765,7 @@ public class Create2Test020 {
   }
 
 
-  @Test(enabled = true, description = "triggerContract a constant function created by create2")
+  @Test(enabled = true, description = "TriggerContract a constant function created by create2")
   public void testTriggerContract6() {
 
     Account info;

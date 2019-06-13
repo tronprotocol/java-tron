@@ -228,14 +228,6 @@ public class ExtCodeHashTest001 {
     Assert.assertEquals("C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470",
         retList.get(0));
 
-    /*PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        user001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        user001Address, blockingStubFull);*/
   }
 
   @Test(enabled = true, description = "Get a contract extcodehash")
@@ -489,14 +481,6 @@ public class ExtCodeHashTest001 {
         .getContract(extCodeHashContractAddress, blockingStubFull);
     logger.info(smartContract.getBytecode().toStringUtf8());
 
-    /*PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        dev001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1,
-        user001Address, blockingStubFull);
-    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0,
-        user001Address, blockingStubFull);*/
   }
 
   @Test(enabled = true, description = "Get a not deployed create2 extcodehash")

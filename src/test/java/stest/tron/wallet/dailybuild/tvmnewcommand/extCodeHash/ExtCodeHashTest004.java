@@ -31,6 +31,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
 public class ExtCodeHashTest004 {
+
   private final boolean AllTest = false;
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
