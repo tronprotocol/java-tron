@@ -24,6 +24,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
+import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
 import org.tron.core.zen.merkle.MerklePath;
 import org.tron.protos.Contract.PedersenHash;
 
@@ -181,5 +182,6 @@ public class MerkleTreeTest {
       }
     }
     IncrementalMerkleTreeContainer.DEPTH = 32;
+    EmptyMerkleRoots.emptyMerkleRootsInstance = new EmptyMerkleRoots();
   }
 }
