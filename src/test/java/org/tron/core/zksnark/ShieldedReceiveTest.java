@@ -837,7 +837,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(address, 90 * 1000000);
+    Note note2 = new Note(paymentAddress1, 90 * 1000000);
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
 
@@ -1118,7 +1118,7 @@ public class ShieldedReceiveTest {
   /**
    * test add two same cm into spend
    */
-  @Test
+  //@Test not used
   public void testSameInputCm()
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
