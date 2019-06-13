@@ -334,15 +334,4 @@ message ShieldedTransferContract {
   bytes transparent_to_address = 6; // transparent address
   int64 to_amount = 7; // the amount to transparent to_address
 }
-
-message ZenTransferContract {
-  bytes transparent_from_address = 1; // transparent address
-  int64 from_amount = 2;
-  repeated SpendDescription spend_description = 3;
-  repeated ReceiveDescription receive_description = 4;
-  bytes binding_signature = 5;
-  bytes transparent_to_address = 6; // transparent address
-  int64 to_amount = 7; // the amount to transparent to_address
-}
 // end shielded transaction
-
