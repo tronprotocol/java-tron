@@ -8,39 +8,27 @@
 
   <test name="account,transfer">
     <packages>
-      <package name="stest.tron.wallet.transfer">
-      </package>
-      <package name="stest.tron.wallet.account">
-      </package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.clearabi"></package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.triggerconstant"></package>
     </packages>
   </test>
 
   <test name="exchangeandtoken,mutisign">
     <packages>
-      <package name="stest.tron.wallet.exchangeandtoken">
-      </package>
-      <package name="stest.tron.wallet.mutisign">
-      </package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.create2"></package>
     </packages>
   </test>
 
   <test name="Contract linkage,block,node">
     <packages>
-      <package name="stest.tron.wallet.contract.linkage">
-      </package>
-      <package name="stest.tron.wallet.block">
-      </package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.shiftcommand"></package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.transferfailed"></package>
     </packages>
   </test>
 
   <test name="contract scenario,committee,witness">
     <packages>
-      <package name="stest.tron.wallet.contract.scenario">
-      </package>
-      <package name="stest.tron.wallet.committee">
-      </package>
-      <package name="stest.tron.wallet.witness">
-      </package>
+      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.extCodeHash"></package>
     </packages>
   </test>
 

@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand;
+package stest.tron.wallet.onlinestress;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -136,7 +136,7 @@ public class CheckCodeSize {
 
   }
 
-  @Test(enabled = false, description = "trigger")
+  @Test(enabled = false, description = "Trigger contract to check codeSize")
   public void triggerConfirm() {
     long balanceBefore = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
