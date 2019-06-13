@@ -320,6 +320,7 @@ public class ContractTrcToken064 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
