@@ -227,7 +227,6 @@ public class JLibrustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    params.encode();
     return INSTANCE.librustzcashSaplingCheckSpend(params.getCtx(), params.getCv(),
         params.getAnchor(), params.getNullifier(), params.getRk(), params.getZkproof(),
         params.getSpendAuthSig(), params.getSighashValue());
@@ -237,7 +236,6 @@ public class JLibrustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    params.encodeZ();
     return INSTANCE.librustzcashSaplingCheckOutput(params.getCtx(), params.getCv(),
         params.getCm(), params.getEphemeralKey(), params.getZkproof());
   }
