@@ -605,31 +605,6 @@ service Wallet {
     };
   }
 
-  //  rpc GetMerklePath (BytesMessage) returns (MerklePath) {
-  //  }
-  //
-  //
-  //  rpc GetBestMerkleRoot (EmptyMessage) returns (BytesMessage) {
-  //  }
-  //
-  //  rpc GetNullifier (BytesMessage) returns (BytesMessage) {
-  //  }
-  //
-  //
-  //  rpc GetMerkleRoot (BytesMessage) returns (BytesMessage) {
-  //  }
-  //
-  //  rpc GenerateShieldAddress (EmptyMessage) returns (ShieldAddress) {
-  //  }
-  //
-  //  //Get zero-snark blockExtention list
-  //  rpc GetZKBlockByLimitNext (BlockLimit) returns (BlockListExtention) {
-  //  }
-  //
-  //  //Get the specified height block merkleTree
-  //  rpc GetMerkleTreeOfBlock (NumberMessage) returns (BlockIncrementalMerkleTree) {
-  //  }
-
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
     option (google.api.http) = {
       post: "/wallet/accountpermissionupdate"
@@ -639,7 +614,6 @@ service Wallet {
       }
     };
   }
-
 
   rpc AddSign (TransactionSign) returns (TransactionExtention) {
 
