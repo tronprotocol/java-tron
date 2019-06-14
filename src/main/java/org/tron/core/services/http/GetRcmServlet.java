@@ -21,9 +21,10 @@ public class GetRcmServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       BytesMessage result = wallet.getRcm();
+      boolean visible = Util.getVisible(request);
 
       if (result != null) {
-        response.getWriter().println(JsonFormat.printToString(result));
+        response.getWriter().println(JsonFormat.printToString(result, visible));
       } else {
         response.getWriter().println("{}");
       }

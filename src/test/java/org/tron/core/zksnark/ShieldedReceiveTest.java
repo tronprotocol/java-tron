@@ -347,6 +347,7 @@ public class ShieldedReceiveTest {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
+    
     Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
@@ -359,7 +360,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -837,7 +839,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(paymentAddress1, 90 * 1000000);
+    Note note2 = new Note(paymentAddress1, 100 * 1000000 - wallet.getShieldedTransactionFee());
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
 
@@ -1056,7 +1058,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     try {
@@ -1107,7 +1110,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
@@ -1148,7 +1152,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 190 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            200 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
@@ -1195,7 +1200,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(address, 45 * 1000000);
+    Note note2 = new Note(address, (100 * 1000000 - wallet.getShieldedTransactionFee())/2);
     //add two same output note
     builder.addOutput(fullViewingKey1.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
@@ -1250,7 +1255,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
@@ -1450,7 +1456,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1794,7 +1801,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1972,7 +1980,8 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1, 90 * 1000000, new byte[512]);
+    builder.addOutput(fullViewingKey1.getOvk(), paymentAddress1,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -2022,7 +2031,7 @@ public class ShieldedReceiveTest {
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -2030,7 +2039,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2043,7 +2052,8 @@ public class ShieldedReceiveTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(1024);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -2079,7 +2089,8 @@ public class ShieldedReceiveTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(4000 * 1000000, noteText.value);
+        Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
+                noteText.value);
 
         byte[] resultMemo = new byte[512];
         System.arraycopy(memo, 0, resultMemo, 0, 512);
@@ -2103,7 +2114,7 @@ public class ShieldedReceiveTest {
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -2111,7 +2122,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 100 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2124,7 +2135,8 @@ public class ShieldedReceiveTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(128);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+            100 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -2160,7 +2172,8 @@ public class ShieldedReceiveTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(4000 * 1000000, noteText.value);
+        Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
+                noteText.value);
 
         byte[] resultMemo = new byte[512];
         System.arraycopy(memo, 0, resultMemo, 0, 128);

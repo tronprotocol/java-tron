@@ -26,6 +26,7 @@ public class GetIncomingViewingKeyServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
 
       String ak = jsonObject.getString("ak");
@@ -35,7 +36,7 @@ public class GetIncomingViewingKeyServlet extends HttpServlet {
           .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(ivk));
+          .println(JsonFormat.printToString(ivk, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -49,6 +50,7 @@ public class GetIncomingViewingKeyServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       String ak = request.getParameter("ak");
       String nk = request.getParameter("nk");
 
@@ -56,7 +58,7 @@ public class GetIncomingViewingKeyServlet extends HttpServlet {
           .getIncomingViewingKey(ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(ivk));
+          .println(JsonFormat.printToString(ivk, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

@@ -29,11 +29,12 @@ public class GetMerkleTreeVoucherInfoServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
       OutputPointInfo.Builder build = OutputPointInfo.newBuilder();
       JsonFormat.merge(input, build);
       IncrementalMerkleVoucherInfo reply = wallet.getMerkleTreeVoucherInfo(build.build());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

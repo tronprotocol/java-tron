@@ -26,9 +26,10 @@ public class ScanNoteByOvkServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
+      boolean visible = Util.getVisiblePost(input);
 
-      long startNum = jsonObject.getLong("startNum");
-      long endNum = jsonObject.getLong("endNum");
+      long startNum =  Util.getJsonLongValue(jsonObject,"startNum", true);
+      long endNum =  Util.getJsonLongValue(jsonObject,"endNum", true);
 
       String ovk = jsonObject.getString("ovk");
 
@@ -36,7 +37,7 @@ public class ScanNoteByOvkServlet extends HttpServlet {
           .scanNoteByOvk(startNum, endNum, ByteArray.fromHexString(ovk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(notes));
+          .println(JsonFormat.printToString(notes, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -50,6 +51,7 @@ public class ScanNoteByOvkServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       long startNum = Long.parseLong(request.getParameter("startNum"));
       long endNum = Long.parseLong(request.getParameter("endNum"));
       String ovk = request.getParameter("ovk");
@@ -58,7 +60,7 @@ public class ScanNoteByOvkServlet extends HttpServlet {
           .scanNoteByOvk(startNum, endNum, ByteArray.fromHexString(ovk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(notes));
+          .println(JsonFormat.printToString(notes, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

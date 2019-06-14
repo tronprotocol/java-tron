@@ -26,9 +26,10 @@ public class ScanNoteByIvkServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
+      boolean visible = Util.getVisiblePost(input);
 
-      long startNum = jsonObject.getLong("startNum");
-      long endNum = jsonObject.getLong("endNum");
+      long startNum = Util.getJsonLongValue(jsonObject,"startNum", true);
+      long endNum = Util.getJsonLongValue(jsonObject,"endNum", true);
 
       String ivk = jsonObject.getString("ivk");
 
@@ -36,7 +37,7 @@ public class ScanNoteByIvkServlet extends HttpServlet {
           .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(notes));
+          .println(JsonFormat.printToString(notes, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -53,12 +54,13 @@ public class ScanNoteByIvkServlet extends HttpServlet {
       long startNum = Long.parseLong(request.getParameter("startNum"));
       long endNum = Long.parseLong(request.getParameter("endNum"));
       String ivk = request.getParameter("ivk");
+      boolean visible = Util.getVisible(request);
 
       GrpcAPI.DecryptNotes notes = wallet
           .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
 
       response.getWriter()
-          .println(JsonFormat.printToString(notes));
+          .println(JsonFormat.printToString(notes, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

@@ -31,15 +31,16 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends HttpSer
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = Util.getVisiblePost(contract);
 
       PrivateParametersWithoutAsk.Builder build = PrivateParametersWithoutAsk.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
 
       Transaction tx = wallet
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
 
-      String txString = Util.printTransaction(tx);
+      String txString = Util.printTransaction(tx, visible);
       JSONObject jsonObject = JSON.parseObject(txString);
       if (jsonObject.containsKey("txID")) {
         jsonObject.remove("txID");

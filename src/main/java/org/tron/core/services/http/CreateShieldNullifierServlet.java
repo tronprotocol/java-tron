@@ -29,12 +29,13 @@ public class CreateShieldNullifierServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
 
       NfParameters.Builder build = NfParameters.newBuilder();
       JsonFormat.merge(input, build);
 
       BytesMessage result = wallet.createShieldNullifier(build.build());
-      response.getWriter().println(JsonFormat.printToString(result));
+      response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

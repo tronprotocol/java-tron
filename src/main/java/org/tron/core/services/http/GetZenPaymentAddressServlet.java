@@ -29,6 +29,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       JSONObject jsonObject = JSONObject.parseObject(input);
+      boolean visible = Util.getVisiblePost(input);
 
       String ivk = jsonObject.getString("ivk");
       String d = jsonObject.getString("d");
@@ -38,7 +39,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
               new DiversifierT(ByteArray.fromHexString(d)));
 
       response.getWriter()
-          .println(JsonFormat.printToString(s));
+          .println(JsonFormat.printToString(s, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
@@ -52,6 +53,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       String ivk = request.getParameter("ivk");
       String d = request.getParameter("d");
 
@@ -60,7 +62,7 @@ public class GetZenPaymentAddressServlet extends HttpServlet {
               new DiversifierT(ByteArray.fromHexString(d)));
 
       response.getWriter()
-          .println(JsonFormat.printToString(s));
+          .println(JsonFormat.printToString(s, visible));
 
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
