@@ -136,6 +136,7 @@ public class ContractTrcToken077 {
         "addressTest()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);

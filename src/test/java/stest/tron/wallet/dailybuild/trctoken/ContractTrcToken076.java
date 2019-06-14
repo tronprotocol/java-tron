@@ -91,13 +91,14 @@ public class ContractTrcToken076 {
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress,
             grammarAddress, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.triggerContract(contractAddress,
         "test()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
