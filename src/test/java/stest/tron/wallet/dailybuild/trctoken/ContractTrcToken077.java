@@ -142,6 +142,7 @@ public class ContractTrcToken077 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infoById:" + infoById);
 
+    Assert.assertNotNull(infoById);
     byte[] a = infoById.get().getContractResult(0).toByteArray();
     byte[] b = subByte(a, 11, 1);
     byte[] c = subByte(a, 0, 11);
