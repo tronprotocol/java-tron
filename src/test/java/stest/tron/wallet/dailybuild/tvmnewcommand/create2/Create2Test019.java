@@ -249,6 +249,8 @@ public class Create2Test019 {
         .triggerContract(contractAddress,
             "deploy(bytes,uint256)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById3 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     byte[] returnAddressBytes1 = infoById3.get().getInternalTransactions(0).getTransferToAddress()
