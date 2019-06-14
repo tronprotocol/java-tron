@@ -4840,8 +4840,7 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress, long fromAmount,
-      List<Long> shieldInputList,List<GrpcAPI.Note> shieldOutputList,
+  public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress, long fromAmount,ShieldAddressInfo shieldAddressInfo,NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress,
       long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4864,29 +4863,23 @@ public class PublicMethed {
       builder.setToAmount(toAmount);
     }
 
-    if (shieldInputList.size() > 0) {
+    if (shieldAddressInfo != null) {
       OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
-      for (int i = 0; i < shieldInputList.size(); ++i) {
-        ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+        //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
         OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
-        outPointBuild.setHash(ByteString.copyFrom(ByteArray.fromHexString(noteInfo.getTrxId())));
-        outPointBuild.setIndex(noteInfo.getIndex());
+        outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+        outPointBuild.setIndex(noteTx.getIndex());
         request.addOutPoints(outPointBuild.build());
-      }
       IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
           .getMerkleTreeVoucherInfo(request.build());
-      if (merkleVoucherInfo.getVouchersCount() != shieldInputList.size()) {
-        System.out.println("Can't get all merkel tree, please check the notes.");
-        return false;
-      }
 
-      for (int i = 0; i < shieldInputList.size(); ++i) {
-        ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
-        if (i == 0) {
-          String shieldAddress = noteInfo.getPaymentAddress();
-          ShieldAddressInfo addressInfo =
-              shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
-          SpendingKey spendingKey = new SpendingKey(addressInfo.getSk());
+        //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+          //String shieldAddress = noteInfo.getPaymentAddress();
+          //ShieldAddressInfo addressInfo =
+          //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
+          SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
           try {
             ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
             builder.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()));
@@ -4895,20 +4888,22 @@ public class PublicMethed {
           } catch (Exception e) {
             System.out.println(e);
           }
-        }
+
 
         Note.Builder noteBuild = Note.newBuilder();
-        noteBuild.setPaymentAddress(noteInfo.getPaymentAddress());
-        noteBuild.setValue(noteInfo.getValue());
-        noteBuild.setRcm(ByteString.copyFrom(noteInfo.getR()));
-        noteBuild.setMemo(ByteString.copyFrom(noteInfo.getMemo()));
+        noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+        noteBuild.setValue(noteTx.getNote().getValue());
+        noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+        noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
 
-        System.out.println("address " + noteInfo.getPaymentAddress());
-        System.out.println("value " + noteInfo.getValue());
-        System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
-        System.out.println("trxId " + noteInfo.getTrxId());
-        System.out.println("index " + noteInfo.getIndex());
-        System.out.println("meno " + new String(noteInfo.getMemo()));
+
+
+        //System.out.println("address " + noteInfo.getPaymentAddress());
+        //System.out.println("value " + noteInfo.getValue());
+        //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
+        //System.out.println("trxId " + noteInfo.getTrxId());
+        //System.out.println("index " + noteInfo.getIndex());
+        //System.out.println("meno " + new String(noteInfo.getMemo()));
 
         SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
         spendNoteBuilder.setNote(noteBuild.build());
@@ -4918,11 +4913,11 @@ public class PublicMethed {
           System.out.println(e);
         }
 
-        spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(i));
-        spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(i));
+        spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
+        spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
 
         builder.addShieldedSpends(spendNoteBuilder.build());
-      }
+
     } else {
       byte[] ovk = ByteArray
           .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");

@@ -14,7 +14,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
-import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
@@ -56,7 +55,7 @@ public class WalletTestZenToken001 {
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 5 * zenTokenFee;
-  private Long sendTokenAmount = 2 * zenTokenFee;
+  private Long sendTokenAmount = 3 * zenTokenFee;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
@@ -108,6 +107,7 @@ public class WalletTestZenToken001 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
   @Test(enabled = true, description = "Public to shield transaction")
@@ -124,10 +124,15 @@ public class WalletTestZenToken001 {
 
     memo = "aaaaaaa";
 
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,"" +(sendTokenAmount-zenTokenFee),memo);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,
+        "" + (sendTokenAmount - zenTokenFee),memo);
 
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress,sendTokenAmount,
-        shieldInputList,shieldOutList,null,0,zenTokenOwnerKey,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        zenTokenOwnerAddress,sendTokenAmount,
+        null, null,
+        shieldOutList,
+        null,0,
+        zenTokenOwnerKey, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
@@ -135,7 +140,7 @@ public class WalletTestZenToken001 {
         blockingStubFull);
     Long afterNetUsed = PublicMethed.getAccountResource(zenTokenOwnerAddress,blockingStubFull)
         .getFreeNetUsed();
-    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
+    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount - zenTokenFee + zenTokenFee);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
     notes = PublicMethed.listShieldNote(shieldAddressInfo,blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
@@ -147,12 +152,33 @@ public class WalletTestZenToken001 {
   @Test(enabled = true, description = "Shield to public transaction")
   public void test2Shield2PublicTransaction() {
     note = notes.getNoteTxs(0).getNote();
-    SpendResult result = PublicMethed.getSpendResult(shieldAddressInfo.get(),notes.getNoteTxs(0),blockingStubFull);
+    SpendResult result = PublicMethed.getSpendResult(shieldAddressInfo.get(),
+        notes.getNoteTxs(0),blockingStubFull);
+    Assert.assertTrue(!result.getResult());
 
-    logger.info(result.getMessage());
+    shieldOutList.clear();
+    final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
 
 
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        null,0,
+        shieldAddressInfo.get(),notes.getNoteTxs(0),
+        shieldOutList,
+        zenTokenOwnerAddress,note.getValue() - zenTokenFee,
+        zenTokenOwnerKey,blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    result = PublicMethed.getSpendResult(shieldAddressInfo.get(),notes.getNoteTxs(0),
+        blockingStubFull);
+    Assert.assertTrue(result.getResult());
+    Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+    Assert.assertTrue(afterAssetBalance - beforeAssetBalance == note.getValue() - zenTokenFee);
+    logger.info("beforeAssetBalance:" + beforeAssetBalance);
+    logger.info("afterAssetBalance :" + afterAssetBalance);
   }
 
   /**
