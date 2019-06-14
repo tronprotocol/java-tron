@@ -171,12 +171,18 @@ public class ExtCodeHashTest007 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHashTestNoPayable.sol";
     String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
+    String code = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a5760"
+        + "0080fd5b5060c5806100396000396000f3fe6080604052348015600f57600080fd5b50d38015601b576000"
+        + "80fd5b50d28015602757600080fd5b50600436106066577c01000000000000000000000000000000000000"
+        + "000000000000000000006000350463c518aa0f8114606b578063e5aa3d58146083575b600080fd5b607160"
+        + "89565b60408051918252519081900360200190f35b60716093565b6001600081905590565b6000548156fe"
+        + "a165627a7a723058205c5aadfbd06ea264db7b73e7b7f3c36ac64a9d520ba46b4bc7f1dc56252f17ac0029";
+    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"testNoPayable\",\"outputs\":[{\""
+        + "name\":\"z\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable"
+        + "\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"i\",\"outputs\":"
+        + "[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\""
+        + "type\":\"function\"}]";
 
     final String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
@@ -462,12 +468,18 @@ public class ExtCodeHashTest007 {
     logger.info("before energyUsage is " + Long.toString(energyUsage));
     logger.info("before balanceBefore is " + Long.toString(balanceBefore));
 
-    String filePath = "./src/test/resources/soliditycode/extCodeHashTestNoPayable.sol";
     String contractName = "testConstantContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
+    String code = "608060405234801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a5760"
+        + "0080fd5b5060c5806100396000396000f3fe6080604052348015600f57600080fd5b50d38015601b576000"
+        + "80fd5b50d28015602757600080fd5b50600436106066577c01000000000000000000000000000000000000"
+        + "000000000000000000006000350463c518aa0f8114606b578063e5aa3d58146083575b600080fd5b607160"
+        + "89565b60408051918252519081900360200190f35b60716093565b6001600081905590565b6000548156fe"
+        + "a165627a7a723058205c5aadfbd06ea264db7b73e7b7f3c36ac64a9d520ba46b4bc7f1dc56252f17ac0029";
+    String abi = "[{\"constant\":false,\"inputs\":[],\"name\":\"testNoPayable\",\"outputs\":[{\""
+        + "name\":\"z\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable"
+        + "\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"i\",\"outputs\":"
+        + "[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\""
+        + "type\":\"function\"}]";
 
     final String transferTokenTxid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "",

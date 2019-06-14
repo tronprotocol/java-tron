@@ -124,7 +124,7 @@ public class ClearAbi008 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String txid = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -137,7 +137,7 @@ public class ClearAbi008 {
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
 
     String txid1 = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;

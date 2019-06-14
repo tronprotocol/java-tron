@@ -215,8 +215,8 @@ public class Create2Test019 {
         .triggerContract(returnAddressBytes,
             "i()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     returnnumber = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById1.get().getContractResult(0).toByteArray())));
     Assert.assertTrue(5 == returnnumber);
@@ -227,6 +227,7 @@ public class Create2Test019 {
         .triggerContract(returnAddressBytes,
             "testSuicideNonexistentTarget(address)", param1, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById2 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
 
@@ -236,7 +237,7 @@ public class Create2Test019 {
         .triggerContractForExtention(returnAddressBytes,
             "i()", "#", false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
             containsString("CONTRACT_VALIDATE_ERROR"));
@@ -248,6 +249,8 @@ public class Create2Test019 {
         .triggerContract(contractAddress,
             "deploy(bytes,uint256)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById3 = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     byte[] returnAddressBytes1 = infoById3.get().getInternalTransactions(0).getTransferToAddress()

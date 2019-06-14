@@ -173,7 +173,7 @@ public class ClearAbi005 {
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());
     Assert.assertFalse(smartContract.getBytecode().toString().isEmpty());
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(returnAddressBytes, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(returnAddressBytes, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),

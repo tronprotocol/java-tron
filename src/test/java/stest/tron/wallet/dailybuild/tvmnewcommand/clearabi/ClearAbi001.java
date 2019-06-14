@@ -132,7 +132,7 @@ public class ClearAbi001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(contractAddress, contractExcAddress1, contractExcKey1,
+        .clearContractAbiForExtention(contractAddress, contractExcAddress1, contractExcKey1,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -173,7 +173,7 @@ public class ClearAbi001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String txid = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -181,7 +181,7 @@ public class ClearAbi001 {
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
     String txid1 = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = null;
@@ -218,7 +218,7 @@ public class ClearAbi001 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String txid = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
@@ -236,7 +236,7 @@ public class ClearAbi001 {
   @Test(enabled = true, description = "Clear a account address")
   public void testClearAbi004() {
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(contractExcAddress, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(contractExcAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -255,7 +255,7 @@ public class ClearAbi001 {
     String contractExcKeyN = ByteArray.toHexString(ecKeyN.getPrivKeyBytes());
 
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(contractExcAddressN, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(contractExcAddressN, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_VALIDATE_ERROR"));
@@ -268,7 +268,7 @@ public class ClearAbi001 {
   public void testClearAbi006() {
     byte[] fakeAddress = "412B5D".getBytes();
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(fakeAddress, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(fakeAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -279,7 +279,7 @@ public class ClearAbi001 {
     byte[] fakeAddress1 = "412B5D3405B2D26767C9C09886D53DEAFF6EB718AC111".getBytes();
 
     TransactionExtention transactionExtention1 = PublicMethed
-        .clearContractABIForExtention(fakeAddress1, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(fakeAddress1, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention1.getResult().getCode().toString(),

@@ -123,7 +123,7 @@ public class ClearAbi003 {
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
 
     String txid = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey,
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
