@@ -1015,6 +1015,13 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
             .build());
 
+    // ALLOW_ZKSNARK_TRANSACTION
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowZksnarkTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowZksnarkTransaction())
+            .build());
+
     return builder.build();
   }
 
