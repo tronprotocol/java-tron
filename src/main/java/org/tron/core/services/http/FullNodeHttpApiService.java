@@ -209,6 +209,8 @@ public class FullNodeHttpApiService implements Service {
   private IsSpendServlet isSpendServlet;
   @Autowired
   private CreateShieldedTransactionWithoutSpendAuthSigServlet createShieldedTransactionWithoutSpendAuthSigServlet;
+  @Autowired
+  private BroadcastHexServlet broadcastHexServlet;
 
   @Override
   public void init() {
@@ -339,6 +341,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
       context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
           "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));
