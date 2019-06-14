@@ -382,7 +382,7 @@ public class Util {
             ShieldedTransferContract shieldedTransferContract = contractParameter
                 .unpack(ShieldedTransferContract.class);
             contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(shieldedTransferContract));
+                .parseObject(JsonFormat.printToString(shieldedTransferContract, selfType));
             break;
           // todo add other contract
           default:
@@ -630,7 +630,7 @@ public class Util {
                 .newBuilder();
             JsonFormat
                 .merge(parameter.getJSONObject("value").toJSONString(),
-                    shieldedTransferContractBuilder);
+                    shieldedTransferContractBuilder, selfType);
             any = Any.pack(shieldedTransferContractBuilder.build());
             break;
           // todo add other contract

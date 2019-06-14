@@ -32,7 +32,7 @@ public class IsSpendServlet extends HttpServlet {
       boolean visible = Util.getVisiblePost(input);
 
       NoteParameters.Builder build = NoteParameters.newBuilder();
-      JsonFormat.merge(input, build);
+      JsonFormat.merge(input, build, visible);
 
       SpendResult result = wallet.isSpend(build.build());
       response.getWriter().println(JsonFormat.printToString(result, visible));
