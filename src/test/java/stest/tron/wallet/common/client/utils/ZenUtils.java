@@ -9,6 +9,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,5 +86,18 @@ public class ZenUtils {
       e.printStackTrace();
     }
   }
+
+  public static String getMemo(byte[] meno) {
+    int index = 512;
+    for (; index>0; --index) {
+      if (meno[index-1] != 0)
+        break;
+    }
+
+    byte[] inputCheck = new byte[index];
+    System.arraycopy(meno, 0, inputCheck, 0, index);
+    return new String(inputCheck, Charset.forName("UTF-8"));
+  }
+
 
 }

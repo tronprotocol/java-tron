@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -34,13 +35,18 @@ import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.IvkDecryptParameters;
 import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
@@ -100,6 +106,8 @@ public class PublicMethed {
   private static ShieldWrapper shieldWrapper = new ShieldWrapper();
   //private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   //private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  public static Map<Long, ShieldNoteInfo>  utxoMapNote = new ConcurrentHashMap();
+  public static List<ShieldNoteInfo> spendUtxoList = new ArrayList<>();
 
   /**
    * constructor.
@@ -4852,11 +4860,9 @@ public class PublicMethed {
       builder.setFromAmount(fromAmount);
     }
     if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
-      builder.setTransparentFromAddress(ByteString.copyFrom(publicZenTokenToAddress));
-      builder.setFromAmount(toAmount);
+      builder.setTransparentToAddress(ByteString.copyFrom(publicZenTokenToAddress));
+      builder.setToAmount(toAmount);
     }
-
-    logger.info("From amount:" + builder.getFromAmount());
 
     if (shieldInputList.size() > 0) {
       OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
@@ -5002,6 +5008,9 @@ public class PublicMethed {
     return shieldOutList;
   }
 
+  /**
+   * constructor.
+   */
   public static Optional<ShieldAddressInfo> generateShieldAddress() {
     ShieldAddressInfo addressInfo = new ShieldAddressInfo();
     try {
@@ -5026,6 +5035,69 @@ public class PublicMethed {
 
     return Optional.empty();
   }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes listShieldNote(Optional<ShieldAddressInfo> shieldAddressInfo,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(currentBlockNum - 100);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * constructor.
+   */
+  public static String getMemo(Note note) {
+    return ZenUtils.getMemo(note.getMemo().toByteArray());
+  }
+
+  /**
+   * constructor.
+   */
+  public static SpendResult getSpendResult( ShieldAddressInfo shieldAddressInfo,NoteTx noteTx,WalletGrpc.WalletBlockingStub blockingStubFull) {
+
+
+    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+    OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+    outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+    outPointBuild.setIndex(noteTx.getIndex());
+    request.addOutPoints(outPointBuild.build());
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull.getMerkleTreeVoucherInfo(request.build());
+
+    if (merkleVoucherInfo.getVouchersCount() > 0) {
+      NoteParameters.Builder builder = NoteParameters.newBuilder();
+      try {
+        builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
+        builder.setNk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getNk()));
+      } catch (Exception e) {
+        Assert.assertTrue(1==1);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+      builder.setNote(noteBuild.build());
+      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+
+      SpendResult result = blockingStubFull.isSpend(builder.build());
+      return result;
+
+    }
+    return null;
+
+  }
+
 
 
 }
