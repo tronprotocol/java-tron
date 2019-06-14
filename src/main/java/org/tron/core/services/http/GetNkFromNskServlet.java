@@ -22,6 +22,7 @@ public class GetNkFromNskServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       String input = request.getParameter("value");
       BytesMessage reply = wallet
           .getNkFromNsk(ByteString.copyFrom(ByteArray.fromHexString(input)));
@@ -31,7 +32,7 @@ public class GetNkFromNskServlet extends HttpServlet {
       System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
 
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -50,12 +51,13 @@ public class GetNkFromNskServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
 
       BytesMessage reply = wallet.getNkFromNsk(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

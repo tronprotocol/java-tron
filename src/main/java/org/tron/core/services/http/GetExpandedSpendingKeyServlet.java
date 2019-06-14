@@ -23,11 +23,12 @@ public class GetExpandedSpendingKeyServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      String input = request.getParameter("value");
+      boolean visible = Util.getVisible(request);
+      String sk = request.getParameter("value");
       ExpandedSpendingKeyMessage reply = wallet
-          .getExpandedSpendingKey(ByteString.copyFrom(ByteArray.fromHexString(input)));
+          .getExpandedSpendingKey(ByteString.copyFrom(ByteArray.fromHexString(sk)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -46,12 +47,13 @@ public class GetExpandedSpendingKeyServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build);
 
       ExpandedSpendingKeyMessage reply = wallet.getExpandedSpendingKey(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply));
+        response.getWriter().println(JsonFormat.printToString(reply, visible));
       } else {
         response.getWriter().println("{}");
       }

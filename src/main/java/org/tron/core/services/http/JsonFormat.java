@@ -758,7 +758,11 @@ public class JsonFormat {
 
     //Normal String
     if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-      return new String(input.toByteArray());
+      if ( !fliedName.equals("protocol.Note.memo")) {
+        return new String(input.toByteArray());
+      } else {
+        return Util.getMemo(input.toByteArray());
+      }
     }
 
     //HEX

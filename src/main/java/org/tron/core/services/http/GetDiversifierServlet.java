@@ -20,10 +20,11 @@ public class GetDiversifierServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      boolean visible = Util.getVisible(request);
       GrpcAPI.DiversifierMessage d = wallet.getDiversifier();
 
       if (d != null) {
-        response.getWriter().println(JsonFormat.printToString(d));
+        response.getWriter().println(JsonFormat.printToString(d, visible));
       } else {
         response.getWriter().println("{}");
       }

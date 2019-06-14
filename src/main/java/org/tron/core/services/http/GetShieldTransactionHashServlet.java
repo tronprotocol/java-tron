@@ -34,7 +34,7 @@ public class GetShieldTransactionHashServlet extends HttpServlet {
       Transaction transaction = Util.packTransaction(input, visible);
 
       BytesMessage result = wallet.getShieldTransactionHash(transaction);
-      response.getWriter().println(JsonFormat.printToString(result));
+      response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

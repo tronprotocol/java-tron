@@ -29,12 +29,13 @@ public class IsSpendServlet extends HttpServlet {
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
 
       NoteParameters.Builder build = NoteParameters.newBuilder();
       JsonFormat.merge(input, build);
 
       SpendResult result = wallet.isSpend(build.build());
-      response.getWriter().println(JsonFormat.printToString(result));
+      response.getWriter().println(JsonFormat.printToString(result, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

@@ -29,14 +29,15 @@ public class CreateShieldedTransactionServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = Util.getVisiblePost(contract);
 
       PrivateParameters.Builder build = PrivateParameters.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
 
       Transaction tx = wallet
           .createShieldedTransaction(build.build())
           .getInstance();
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

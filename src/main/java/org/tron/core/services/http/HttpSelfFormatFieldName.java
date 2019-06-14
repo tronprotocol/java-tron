@@ -25,6 +25,12 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.TransactionSignWeight.approved_list", 1);
     //TransactionApprovedList
     AddressFieldNameMap.put("protocol.TransactionApprovedList.approved_list", 1);
+    //PrivateParameters
+    AddressFieldNameMap.put("protocol.PrivateParameters.transparent_from_address", 1);
+    AddressFieldNameMap.put("protocol.PrivateParameters.transparent_to_address", 1);
+    //PrivateParametersWithoutAsk
+    AddressFieldNameMap.put("protocol.PrivateParametersWithoutAsk.transparent_from_address", 1);
+    AddressFieldNameMap.put("protocol.PrivateParametersWithoutAsk.transparent_to_address", 1);
 
     //***** Contract.proto *****
     //AccountCreateContract
@@ -105,6 +111,9 @@ public class HttpSelfFormatFieldName {
     AddressFieldNameMap.put("protocol.ExchangeTransactionContract.owner_address", 1);
     //AccountPermissionUpdateContract
     AddressFieldNameMap.put("protocol.AccountPermissionUpdateContract.owner_address", 1);
+    //ShieldedTransferContract
+    AddressFieldNameMap.put("protocol.ShieldedTransferContract.transparent_from_address", 1);
+    AddressFieldNameMap.put("protocol.ShieldedTransferContract.transparent_to_address", 1);
 
     //***** Tron.proto *****
     //AccountId
@@ -155,6 +164,8 @@ public class HttpSelfFormatFieldName {
     NameFieldNameMap.put("protocol.EasyTransferMessage.passPhrase", 1);
     //EasyTransferAssetMessage
     NameFieldNameMap.put("protocol.EasyTransferAssetMessage.passPhrase", 1);
+    //Note
+    NameFieldNameMap.put("protocol.Note.memo", 1);
 
     //***** Contract.proto *****
     //AccountUpdateContract
