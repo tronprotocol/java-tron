@@ -1400,20 +1400,18 @@ public class Wallet {
 
 
   private long getBlockNumber(OutputPoint outPoint)
-      throws ItemNotFoundException, BadItemException,
-      InvalidProtocolBufferException, ZksnarkException {
+      throws BadItemException, ZksnarkException {
     if (!getAllowShieldedTransactionApi()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     ByteString txId = outPoint.getHash();
 
-    //Get blockNum from transactionInfo
-    TransactionInfoCapsule transactionInfoCapsule1 = dbManager.getTransactionHistoryStore()
-        .get(txId.toByteArray());
-    if (transactionInfoCapsule1 == null) {
+    long blockNum = dbManager.getTransactionStore().getBlockNumber(txId.toByteArray());
+    if (blockNum <= 0) {
       throw new RuntimeException("tx is not found:" + ByteArray.toHexString(txId.toByteArray()));
     }
-    return transactionInfoCapsule1.getBlockNumber();
+
+    return blockNum;
   }
 
   //in:outPoint,out:blockNumber

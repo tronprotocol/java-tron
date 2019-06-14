@@ -218,14 +218,14 @@ public class MerkleContainerTest {
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
 
-        TransactionInfoCapsule transactionInfoCapsule1 = new TransactionInfoCapsule();
-        transactionInfoCapsule1.setBlockNumber(blockNum);
+        TransactionCapsule transactionCapsule1 = new TransactionCapsule(transaction);
+        transactionCapsule1.setBlockNum(blockNum);
         System.out.println(
-            "blockNum:100,txId(1):" + ByteArray.toHexString(new TransactionCapsule(transaction)
+            "blockNum:100,txId(1):" + ByteArray.toHexString(transactionCapsule1
                 .getTransactionId().getBytes()));
-        dbManager.getTransactionHistoryStore()
-            .put(new TransactionCapsule(transaction).getTransactionId().getBytes(),
-                transactionInfoCapsule1);
+        dbManager.getTransactionStore()
+            .put(transactionCapsule1.getTransactionId().getBytes(),
+                transactionCapsule1);
 
         PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
@@ -286,15 +286,15 @@ public class MerkleContainerTest {
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
 
-        TransactionInfoCapsule transactionInfoCapsule1 = new TransactionInfoCapsule();
-        transactionInfoCapsule1.setBlockNumber(blockNum);
+        TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
+        transactionCapsule.setBlockNum(blockNum);
 
         System.out.println(
-            "blockNum:102,txId(2):" + ByteArray.toHexString(new TransactionCapsule(transaction2)
+            "blockNum:102,txId(2):" + ByteArray.toHexString(transactionCapsule
                 .getTransactionId().getBytes()));
-        dbManager.getTransactionHistoryStore()
-            .put(new TransactionCapsule(transaction2).getTransactionId().getBytes(),
-                transactionInfoCapsule1);
+        dbManager.getTransactionStore()
+            .put(transactionCapsule.getTransactionId().getBytes(),
+                transactionCapsule);
 
         PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
         compressCapsule1.setContent(ByteString.copyFrom(ByteArray.fromHexString(cm1)));
