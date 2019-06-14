@@ -5,6 +5,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.netty.util.internal.StringUtil;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -416,5 +417,37 @@ public class ShieldWrapper {
     }
     return true;
   }
+
+  /**
+   * sort by value of UTXO
+   * @return
+   */
+  public List<String> getvalidateSortUtxoList() {
+    List<Map.Entry<Long, ShieldNoteInfo>> list = new ArrayList<>(utxoMapNote.entrySet());
+    Collections.sort(list, (Entry<Long, ShieldNoteInfo> o1, Entry<Long, ShieldNoteInfo> o2) -> {
+      if (o1.getValue().getValue() < o2.getValue().getValue()) {
+        return 1;
+      } else {
+        return -1;
+      }
+    });
+
+    List<String> utxoList = new ArrayList<>();
+    for (Map.Entry<Long, ShieldNoteInfo> entry : list ) {
+      String string = entry.getKey() + " " + entry.getValue().getPaymentAddress() + " ";
+      string += entry.getValue().getValue();
+      string += " ";
+      string += entry.getValue().getTrxId();
+      string += " ";
+      string += entry.getValue().getIndex();
+      string += " ";
+      string += "UnSpend";
+      string += " ";
+      string += ZenUtils.getMemo(entry.getValue().getMemo());
+      utxoList.add(string);
+    }
+    return utxoList;
+  }
+
 
 }
