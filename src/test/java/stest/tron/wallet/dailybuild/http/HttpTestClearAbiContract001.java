@@ -17,7 +17,7 @@ import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class HttpTestClearABIContract001 {
+public class HttpTestClearAbiContract001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -100,8 +100,8 @@ public class HttpTestClearABIContract001 {
     Assert.assertEquals(responseContent.getString("origin_address"),
         ByteArray.toHexString(assetOwnerAddress));
     Assert
-        .assertThat(responseContent.getString("abi")
-            , containsString("testView"));
+        .assertThat(responseContent.getString("abi"),
+            containsString("testView"));
 
     Assert.assertEquals(responseContent.getString("origin_energy_limit"), "11111111111111");
     Assert.assertEquals(responseContent.getString("name"), contractName);
@@ -129,7 +129,7 @@ public class HttpTestClearABIContract001 {
    * constructor.
    */
   @Test(enabled = true, description = "Trigger contract by http")
-  public void test4ClearABIContract() {
+  public void test4ClearAbiContract() {
 
     HttpResponse httpResponse = HttpMethed
         .clearABiGetTxid(httpnode, assetOwnerAddress, contractAddress, assetOwnerKey);
