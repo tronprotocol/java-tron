@@ -84,7 +84,7 @@ public class SpendingKey {
         JLibsodium.cryptoGenerichashBlake2bFinal(state, res, 11);
         if (JLibrustzcash.librustzcashCheckDiversifier(res)) {
           break;
-        } else if (blob[33] == 255) {
+        } else if (blob[33] == (byte) 255) {
           throw new BadItemException(
               "librustzcash_check_diversifier did not return valid diversifier");
         }
