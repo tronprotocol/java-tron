@@ -488,7 +488,7 @@ public class SendCoinShieldTest {
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -496,7 +496,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 1000 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -509,7 +509,8 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+            1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -544,7 +545,7 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
-        Assert.assertEquals(4000 * 1000000, noteText.value);
+        Assert.assertEquals(1000 * 1000000 - wallet.getShieldedTransactionFee(), noteText.value);
         Assert.assertArrayEquals(memo, noteText.memo);
       } else {
         Assert.assertFalse(true);
@@ -572,7 +573,7 @@ public class SendCoinShieldTest {
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -580,7 +581,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 1000 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -593,7 +594,8 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, memo);
+    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+            1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -635,7 +637,7 @@ public class SendCoinShieldTest {
         if (foo.isPresent()) {
           Note bar = foo.get();
           //verify result
-          Assert.assertEquals(4000 * 1000000, bar.value);
+          Assert.assertEquals(1000 * 1000000 - wallet.getShieldedTransactionFee(), bar.value);
           Assert.assertArrayEquals(memo, bar.memo);
         } else {
           Assert.assertFalse(true);
