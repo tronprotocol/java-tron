@@ -33,7 +33,7 @@ public class BroadcastHexServlet extends HttpServlet {
     json.put("success", result.getResult());
     json.put("code", result.getCode().toString());
     json.put("message", result.getMessage().toStringUtf8());
-    json.put("transaction", "");
+    json.put("transaction", JsonFormat.printToString(transaction, true));
 
     response.getWriter().println(json.toJSONString());
   }
