@@ -130,17 +130,16 @@ public class ContractTrcToken077 {
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress,
             grammarAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> deployById = PublicMethed
         .getTransactionInfoById(deploytxid, blockingStubFull);
     contractAddress = deployById.get().getContractAddress().toByteArray();
     logger.info("infoById:" + deployById);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
         "addressTest()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById = null;
