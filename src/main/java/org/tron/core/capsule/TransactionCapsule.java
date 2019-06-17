@@ -32,6 +32,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,9 +40,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -200,10 +213,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
-  public void setResult(TransactionResultCapsule transactionResultCapsule) {
-    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
-        .build();
-  }
+//  public void setResult(TransactionResultCapsule transactionResultCapsule) {
+//    this.transaction = this.getInstance().toBuilder().addRet(transactionResultCapsule.getInstance())
+//        .build();
+//  }
 
   public void setReference(long blockNum, byte[] blockHash) {
     byte[] refBlockNum = ByteArray.fromLong(blockNum);
