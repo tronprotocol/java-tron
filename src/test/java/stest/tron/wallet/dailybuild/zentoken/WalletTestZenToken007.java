@@ -108,7 +108,7 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransaction(1);
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddressInfo:" + sendShieldAddressInfo);
