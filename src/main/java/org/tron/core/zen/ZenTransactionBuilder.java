@@ -231,6 +231,9 @@ public class ZenTransactionBuilder {
 
     byte[] voucherPath = spend.voucher.path().encode();
 
+    // System.out.println("vocouerPath is: " + ByteArray.toHexString(voucherPath));
+    // System.out.println("spend is: " + ByteArray.toHexString(spend));
+
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];

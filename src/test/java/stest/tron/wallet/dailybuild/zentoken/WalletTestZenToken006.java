@@ -81,7 +81,7 @@ public class WalletTestZenToken006 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = true, description = "Shield note memo is one char")
@@ -92,20 +92,20 @@ public class WalletTestZenToken006 {
 
     //One char.
     memo = ".";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,
-        "" + zenTokenFee,memo);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + zenTokenFee, memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,zenTokenFee * 2,
+        zenTokenOwnerAddress, zenTokenFee * 2,
         null, null,
         shieldOutList,
-        null,0,
+        null, 0,
         zenTokenOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount,zenTokenFee);
-    Assert.assertEquals(memo,PublicMethed.getMemo(note));
+    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
+    Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
   @Test(enabled = true, description = "Shield note memo is 512 char")
@@ -116,27 +116,27 @@ public class WalletTestZenToken006 {
 
     //One char.
     memo = "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-            + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-            + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-            + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-            + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-            + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-            + "7812345678";
+        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
+        + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
+        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
+        + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
+        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
+        + "7812345678";
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,
-        "" + zenTokenFee,memo);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + zenTokenFee, memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,zenTokenFee * 2,
+        zenTokenOwnerAddress, zenTokenFee * 2,
         null, null,
         shieldOutList,
-        null,0,
+        null, 0,
         zenTokenOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount,zenTokenFee);
-    Assert.assertEquals(memo,PublicMethed.getMemo(note));
+    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
+    Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
   @Test(enabled = true, description = "Shield note memo is 513 char")
@@ -147,33 +147,29 @@ public class WalletTestZenToken006 {
 
     //One char.
     memo = "-1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-            + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
-            + "5678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-            + "7812345678123456781234567812345678123456781234567812345678123456781234567812345678"
-            + "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-            + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
-            + "5678123456781234567812345678901234567890-";
+        + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
+        + "5678123456781234567812345678123456781234567812345678123456781234567812345678123456"
+        + "7812345678123456781234567812345678123456781234567812345678123456781234567812345678"
+        + "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
+        + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
+        + "5678123456781234567812345678901234567890-";
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,
-        "" + zenTokenFee,memo);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + zenTokenFee, memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,zenTokenFee * 2,
+        zenTokenOwnerAddress, zenTokenFee * 2,
         null, null,
         shieldOutList,
-        null,0,
+        null, 0,
         zenTokenOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount,zenTokenFee);
+    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
     logger.info(PublicMethed.getMemo(note));
     Assert.assertEquals(memo.substring(0,511),PublicMethed.getMemo(note));
   }
-
-
-
-
 
 
   /**

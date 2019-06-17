@@ -282,7 +282,7 @@ public class JLibrustzcash {
   }
 
   private static boolean isOpenZen() {
-    return Args.getInstance().isAllowShieldedTransaction();
+    return Args.getInstance().isFullNodeAllowShieldedTransaction();
   }
 
 }
