@@ -1022,6 +1022,13 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getAllowZksnarkTransaction())
             .build());
 
+    // SHIELDED_TRANSACTION_FEE
+    builder.addChainParameter(
+        Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getShieldedTransactionFee")
+            .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
+            .build());
+
     return builder.build();
   }
 
