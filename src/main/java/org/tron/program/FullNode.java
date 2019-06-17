@@ -1,11 +1,9 @@
 package org.tron.program;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
@@ -48,7 +46,6 @@ public class FullNode {
     Args cfgArgs = Args.getInstance();
 
     load(cfgArgs.getLogbackPath());
-
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");
       return;
