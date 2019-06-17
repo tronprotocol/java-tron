@@ -101,7 +101,7 @@ public class Parameter {
     ALLOW_ACCOUNT_STATE_ROOT, // 1, 25
     ALLOW_TVM_CONSTANTINOPLE, // 1, 26
     ALLOW_ZKSNARK_TRANSACTION, // 1, 27
-    ZKSNARK_TRANSACTION_FEE, // sun, 28
+    SHIELDED_TRANSACTION_FEE, // sun, 28
   }
 
   @Deprecated
