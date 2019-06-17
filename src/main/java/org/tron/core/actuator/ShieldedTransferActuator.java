@@ -185,7 +185,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
-      throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+      throw new ContractValidateException("Not support Shielded Transaction, need to be opened by" +
           " the committee");
     }
 

@@ -288,7 +288,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Not support ZKSnarkTransaction, need to be opened by the committee",
+      Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
@@ -334,7 +334,7 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Not support ZKSnarkTransaction, need to be opened by the committee",
+      Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
