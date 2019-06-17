@@ -354,7 +354,8 @@ public class Manager {
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
 
-  private static final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = 10;
+  private static final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
+      .getShieldedTransInPendingMaxCounts();
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
 
   // transactions popped
@@ -827,7 +828,7 @@ public class Manager {
 
       synchronized (this) {
         if (isShieldedTransaction(trx.getInstance())
-            && shieldedTransInPendingCounts.get() > SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) {
+            && shieldedTransInPendingCounts.get() >= SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) {
           return false;
         }
         if (!session.valid()) {
@@ -1057,6 +1058,12 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+      }
+
+      if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
+          .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+        throw new BadBlockException(
+            "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
       if (witnessService != null) {
@@ -1942,11 +1949,6 @@ public class Manager {
     int transSize = block.getTransactions().size();
     if (transSize <= 0) {
       return;
-    }
-    if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
-        .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
-      throw new ValidateSignatureException(
-          "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
     }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
