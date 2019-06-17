@@ -860,6 +860,61 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return toStringBuff.toString();
   }
 
+  public void setResult(Runtime runtime) {
+    RuntimeException exception = runtime.getResult().getException();
+    if (Objects.isNull(exception) && StringUtils
+        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.SUCCESS);
+      return;
+    }
+    if (runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.REVERT);
+      return;
+    }
+    if (exception instanceof IllegalOperationException) {
+      this.setResultCode(contractResult.ILLEGAL_OPERATION);
+      return;
+    }
+    if (exception instanceof OutOfEnergyException) {
+      this.setResultCode(contractResult.OUT_OF_ENERGY);
+      return;
+    }
+    if (exception instanceof BadJumpDestinationException) {
+      this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
+      return;
+    }
+    if (exception instanceof OutOfTimeException) {
+      this.setResultCode(contractResult.OUT_OF_TIME);
+      return;
+    }
+    if (exception instanceof OutOfMemoryException) {
+      this.setResultCode(contractResult.OUT_OF_MEMORY);
+      return;
+    }
+    if (exception instanceof PrecompiledContractException) {
+      this.setResultCode(contractResult.PRECOMPILED_CONTRACT);
+      return;
+    }
+    if (exception instanceof StackTooSmallException) {
+      this.setResultCode(contractResult.STACK_TOO_SMALL);
+      return;
+    }
+    if (exception instanceof StackTooLargeException) {
+      this.setResultCode(contractResult.STACK_TOO_LARGE);
+      return;
+    }
+    if (exception instanceof JVMStackOverFlowException) {
+      this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    if (exception instanceof Program.TransferException) {
+      this.setResultCode(contractResult.TRANSFER_FAILED);
+      return;
+    }
+    this.setResultCode(contractResult.UNKNOWN);
+    return;
+  }
+
   public void setResultCode(contractResult code) {
     Result ret = Result.newBuilder().setContractRet(code).build();
     if (this.transaction.getRetCount() > 0) {
