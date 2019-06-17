@@ -6,8 +6,9 @@ import com.google.common.primitives.Longs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+import io.netty.util.internal.StringUtil;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -44,8 +45,12 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.IvkDecryptParameters;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
+import org.tron.api.GrpcAPI.OvkDecryptParameters;
+import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -57,10 +62,19 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.keystore.WalletFile;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.CreateSmartContract.Builder;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
@@ -77,24 +91,6 @@ import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
-import io.netty.util.internal.StringUtil;
-//import org.tron.protos.Protocol.DeferredTransaction;
-import org.tron.api.GrpcAPI.PrivateParameters;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.core.zen.address.DiversifierT;
-import org.tron.core.zen.address.FullViewingKey;
-import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.core.zen.address.PaymentAddress;
-import org.tron.core.zen.address.SpendingKey;
-import stest.tron.wallet.common.client.utils.ShieldWrapper;
-import stest.tron.wallet.common.client.utils.ShieldNoteInfo;
-import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
-import org.tron.api.GrpcAPI.ReceiveNote;
-import org.tron.api.GrpcAPI.SpendNote;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.core.zen.address.ExpandedSpendingKey;
 
 public class PublicMethed {
 
@@ -3091,6 +3087,105 @@ public class PublicMethed {
    * constructor.
    */
 
+  public static String triggerContract(byte[] contractAddress, String method, String argsStr,
+                                       Boolean isHex, long callValue, long feeLimit,
+                                       String tokenId, long tokenValue,
+                                       byte[] ownerAddress, String priKey,
+                                       WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    if (argsStr.equalsIgnoreCase("#")) {
+      logger.info("argsstr is #");
+      argsStr = "";
+    }
+
+    byte[] owner = ownerAddress;
+    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+
+    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(input));
+    builder.setCallValue(callValue);
+    builder.setTokenId(Long.parseLong(tokenId));
+    builder.setCallTokenValue(tokenValue);
+    Contract.TriggerSmartContract triggerContract = builder.build();
+
+    TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
+    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
+      System.out.println("RPC create call trx failed!");
+      System.out.println("Code = " + transactionExtention.getResult().getCode());
+      System.out
+              .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+      return null;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction.getRetCount() != 0
+            && transactionExtention.getConstantResult(0) != null
+            && transactionExtention.getResult() != null) {
+      byte[] result = transactionExtention.getConstantResult(0).toByteArray();
+      System.out.println("message:" + transaction.getRet(0).getRet());
+      System.out.println(":" + ByteArray
+              .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+      System.out.println("Result:" + Hex.toHexString(result));
+      return null;
+    }
+
+    final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
+    Transaction.Builder transBuilder = Transaction.newBuilder();
+    Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
+            .toBuilder();
+    rawBuilder.setFeeLimit(feeLimit);
+    transBuilder.setRawData(rawBuilder);
+    for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
+      ByteString s = transactionExtention.getTransaction().getSignature(i);
+      transBuilder.setSignature(i, s);
+    }
+    for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
+      Result r = transactionExtention.getTransaction().getRet(i);
+      transBuilder.setRet(i, r);
+    }
+    texBuilder.setTransaction(transBuilder);
+    texBuilder.setResult(transactionExtention.getResult());
+    texBuilder.setTxid(transactionExtention.getTxid());
+    transactionExtention = texBuilder.build();
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return null;
+    }
+    transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+    transaction = signTransaction(ecKey, transaction);
+    System.out.println(
+            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+                    .toByteArray())));
+    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
+    if (response.getResult() == false) {
+      return null;
+    } else {
+      return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+    }
+  }
+
+  /**
+   * constructor.
+   */
+
   public static String triggerParamListContract(byte[] contractAddress, String method,
       List<Object> params,
       Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
@@ -3183,104 +3278,6 @@ public class PublicMethed {
     }
 
 
-  }
-
-  /**
-   * constructor.
-   */
-
-  public static String triggerContract(byte[] contractAddress, String method, String argsStr,
-      Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
-      byte[] ownerAddress,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
-    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    ECKey temKey = null;
-    try {
-      BigInteger priK = new BigInteger(priKey, 16);
-      temKey = ECKey.fromPrivate(priK);
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    final ECKey ecKey = temKey;
-    if (argsStr.equalsIgnoreCase("#")) {
-      logger.info("argsstr is #");
-      argsStr = "";
-    }
-
-    byte[] owner = ownerAddress;
-    byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
-
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
-    builder.setOwnerAddress(ByteString.copyFrom(owner));
-    builder.setContractAddress(ByteString.copyFrom(contractAddress));
-    builder.setData(ByteString.copyFrom(input));
-    builder.setCallValue(callValue);
-    builder.setTokenId(Long.parseLong(tokenId));
-    builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
-
-    TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
-    if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
-      System.out.println("RPC create call trx failed!");
-      System.out.println("Code = " + transactionExtention.getResult().getCode());
-      System.out
-          .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
-      return null;
-    }
-    Transaction transaction = transactionExtention.getTransaction();
-    if (transaction.getRetCount() != 0
-        && transactionExtention.getConstantResult(0) != null
-        && transactionExtention.getResult() != null) {
-      byte[] result = transactionExtention.getConstantResult(0).toByteArray();
-      System.out.println("message:" + transaction.getRet(0).getRet());
-      System.out.println(":" + ByteArray
-          .toStr(transactionExtention.getResult().getMessage().toByteArray()));
-      System.out.println("Result:" + Hex.toHexString(result));
-      return null;
-    }
-
-    final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
-    Transaction.Builder transBuilder = Transaction.newBuilder();
-    Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
-        .toBuilder();
-    rawBuilder.setFeeLimit(feeLimit);
-    transBuilder.setRawData(rawBuilder);
-    for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
-      ByteString s = transactionExtention.getTransaction().getSignature(i);
-      transBuilder.setSignature(i, s);
-    }
-    for (int i = 0; i < transactionExtention.getTransaction().getRetCount(); i++) {
-      Result r = transactionExtention.getTransaction().getRet(i);
-      transBuilder.setRet(i, r);
-    }
-    texBuilder.setTransaction(transBuilder);
-    texBuilder.setResult(transactionExtention.getResult());
-    texBuilder.setTxid(transactionExtention.getTxid());
-    transactionExtention = texBuilder.build();
-    if (transactionExtention == null) {
-      return null;
-    }
-    Return ret = transactionExtention.getResult();
-    if (!ret.getResult()) {
-      System.out.println("Code = " + ret.getCode());
-      System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return null;
-    }
-    transaction = transactionExtention.getTransaction();
-    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
-      System.out.println("Transaction is empty");
-      return null;
-    }
-    transaction = signTransaction(ecKey, transaction);
-    System.out.println(
-        "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
-            .toByteArray())));
-    GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
-    if (response.getResult() == false) {
-      return null;
-    } else {
-      return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
-    }
   }
 
   /**
@@ -4840,7 +4837,9 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress, long fromAmount,ShieldAddressInfo shieldAddressInfo,NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+  public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress,
+                                       long fromAmount,ShieldAddressInfo shieldAddressInfo,
+                                       NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress,
       long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4866,57 +4865,57 @@ public class PublicMethed {
     if (shieldAddressInfo != null) {
       OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
 
-        //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
-        OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
-        outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
-        outPointBuild.setIndex(noteTx.getIndex());
-        request.addOutPoints(outPointBuild.build());
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+      outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      outPointBuild.setIndex(noteTx.getIndex());
+      request.addOutPoints(outPointBuild.build());
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+      //String shieldAddress = noteInfo.getPaymentAddress();
+      //ShieldAddressInfo addressInfo =
+      //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
+      SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
+      try {
+        ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
+        builder.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()));
+        builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
+        builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+
+
+
+      //System.out.println("address " + noteInfo.getPaymentAddress());
+      //System.out.println("value " + noteInfo.getValue());
+      //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
+      //System.out.println("trxId " + noteInfo.getTrxId());
+      //System.out.println("index " + noteInfo.getIndex());
+      //System.out.println("meno " + new String(noteInfo.getMemo()));
+
+      SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
+      spendNoteBuilder.setNote(noteBuild.build());
+      try {
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
       IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
           .getMerkleTreeVoucherInfo(request.build());
+      spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
 
-        //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
-
-          //String shieldAddress = noteInfo.getPaymentAddress();
-          //ShieldAddressInfo addressInfo =
-          //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
-          SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
-          try {
-            ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
-            builder.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()));
-            builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
-            builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
-          } catch (Exception e) {
-            System.out.println(e);
-          }
-
-
-        Note.Builder noteBuild = Note.newBuilder();
-        noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
-        noteBuild.setValue(noteTx.getNote().getValue());
-        noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
-        noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
-
-
-
-        //System.out.println("address " + noteInfo.getPaymentAddress());
-        //System.out.println("value " + noteInfo.getValue());
-        //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
-        //System.out.println("trxId " + noteInfo.getTrxId());
-        //System.out.println("index " + noteInfo.getIndex());
-        //System.out.println("meno " + new String(noteInfo.getMemo()));
-
-        SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
-        spendNoteBuilder.setNote(noteBuild.build());
-        try {
-          spendNoteBuilder.setAlpha(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
-        } catch (Exception e) {
-          System.out.println(e);
-        }
-
-        spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
-        spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
-
-        builder.addShieldedSpends(spendNoteBuilder.build());
+      builder.addShieldedSpends(spendNoteBuilder.build());
 
     } else {
       byte[] ovk = ByteArray
@@ -5034,18 +5033,109 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static DecryptNotes listShieldNote(Optional<ShieldAddressInfo> shieldAddressInfo,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static DecryptNotes listShieldNote(Optional<ShieldAddressInfo> shieldAddressInfo,
+                                            WalletGrpc.WalletBlockingStub blockingStubFull) {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
-    builder.setStartBlockIndex(currentBlockNum - 100);
+    builder.setStartBlockIndex(startBlockNum);
     builder.setEndBlockIndex(currentBlockNum);
     builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
     DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
     logger.info(notes.toString());
     return notes;
   }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByIvk(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByIvkOnSolidity(
+      Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByOvk(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByOvkOnSolidity(
+      Optional<ShieldAddressInfo> shieldAddressInfo, WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
 
   /**
    * constructor.
@@ -5057,7 +5147,9 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static SpendResult getSpendResult( ShieldAddressInfo shieldAddressInfo,NoteTx noteTx,WalletGrpc.WalletBlockingStub blockingStubFull) {
+  public static SpendResult getSpendResult(
+          ShieldAddressInfo shieldAddressInfo, NoteTx noteTx,
+          WalletGrpc.WalletBlockingStub blockingStubFull) {
 
 
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
@@ -5065,7 +5157,8 @@ public class PublicMethed {
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
     outPointBuild.setIndex(noteTx.getIndex());
     request.addOutPoints(outPointBuild.build());
-    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull.getMerkleTreeVoucherInfo(request.build());
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
+            .getMerkleTreeVoucherInfo(request.build());
 
     if (merkleVoucherInfo.getVouchersCount() > 0) {
       NoteParameters.Builder builder = NoteParameters.newBuilder();
@@ -5073,7 +5166,7 @@ public class PublicMethed {
         builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
         builder.setNk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getNk()));
       } catch (Exception e) {
-        Assert.assertTrue(1==1);
+        Assert.assertTrue(1 == 1);
       }
 
 
@@ -5092,6 +5185,49 @@ public class PublicMethed {
     return null;
 
   }
+
+  /**
+   * constructor.
+   */
+  public static SpendResult getSpendResultOnSolidity(
+      ShieldAddressInfo shieldAddressInfo, NoteTx noteTx, WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubSolidity) {
+
+
+    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+    OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+    outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+    outPointBuild.setIndex(noteTx.getIndex());
+    request.addOutPoints(outPointBuild.build());
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubSolidity
+        .getMerkleTreeVoucherInfo(request.build());
+
+    if (merkleVoucherInfo.getVouchersCount() > 0) {
+      NoteParameters.Builder builder = NoteParameters.newBuilder();
+      try {
+        builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
+        builder.setNk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getNk()));
+      } catch (Exception e) {
+        Assert.assertTrue(1 == 1);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+      builder.setNote(noteBuild.build());
+      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+
+      SpendResult result = blockingStubSolidity.isSpend(builder.build());
+      return result;
+
+    }
+    return null;
+
+  }
+
 
 
 

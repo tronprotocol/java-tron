@@ -1,6 +1,5 @@
 package stest.tron.wallet.common.client.utils;
 
-
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -8,7 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ZksnarkException;
-//import org.tron.core.zen.address.Constant;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -44,7 +42,7 @@ public class ShieldAddressInfo {
   }
 
   /**
-   * check parameters
+   * check parameters.
    * @return
    */
   public boolean validateCheck() {
@@ -77,38 +75,38 @@ public class ShieldAddressInfo {
     return getShieldAddress(d, pkD);
   }
 
-  public static String getShieldAddress(DiversifierT d, byte[] pkD ) {
+  public static String getShieldAddress(DiversifierT d, byte[] pkD) {
     try {
       PaymentAddress paymentAddress = new PaymentAddress(d, pkD);
       return KeyIo.encodePaymentAddress(paymentAddress);
-    } catch (Exception e ) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
     return "";
   }
 
-//  public static PaymentAddress parseFromShieldAddress(final String shieldAddress) {
-//    PaymentAddress paymentAddress = null;
-//    try {
-//      byte[] byteShield = ByteArray.fromHexString(shieldAddress);
-//      int lenPkd = byteShield.length - Constant.ZC_DIVERSIFIER_SIZE;
-//      byte[] d =  new byte[Constant.ZC_DIVERSIFIER_SIZE];
-//      byte[] pkd = new byte[lenPkd];
-//
-//      System.arraycopy(byteShield, 0, d, 0, Constant.ZC_DIVERSIFIER_SIZE);
-//      System.arraycopy(byteShield, Constant.ZC_DIVERSIFIER_SIZE, pkd, 0, lenPkd);
-//
-//      paymentAddress = new PaymentAddress(new DiversifierT(d), pkd);
-//    } catch (Exception e) {
-//      System.out.println("parseFromShieldAddress " + shieldAddress + " failure.");
-//      e.printStackTrace();
-//    }
-//
-//    return paymentAddress;
-//  }
+  //  public static PaymentAddress parseFromShieldAddress(final String shieldAddress) {
+  //    PaymentAddress paymentAddress = null;
+  //    try {
+  //      byte[] byteShield = ByteArray.fromHexString(shieldAddress);
+  //      int lenPkd = byteShield.length - Constant.ZC_DIVERSIFIER_SIZE;
+  //      byte[] d =  new byte[Constant.ZC_DIVERSIFIER_SIZE];
+  //      byte[] pkd = new byte[lenPkd];
+  //
+  //      System.arraycopy(byteShield, 0, d, 0, Constant.ZC_DIVERSIFIER_SIZE);
+  //      System.arraycopy(byteShield, Constant.ZC_DIVERSIFIER_SIZE, pkd, 0, lenPkd);
+  //
+  //      paymentAddress = new PaymentAddress(new DiversifierT(d), pkd);
+  //    } catch (Exception e) {
+  //      System.out.println("parseFromShieldAddress " + shieldAddress + " failure.");
+  //      e.printStackTrace();
+  //    }
+  //
+  //    return paymentAddress;
+  //  }
 
   /**
-   * format shield address info to a string
+   * format shield address info to a string.
    * @return
    */
   public String encode() {
@@ -124,9 +122,7 @@ public class ShieldAddressInfo {
   }
 
   /**
-   * parse string to get a shield address info
-   * @param data
-   * @return
+   * constructor.
    */
   public boolean decode(final String data) {
     String[] sourceStrArray = data.split(";");

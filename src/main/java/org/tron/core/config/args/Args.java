@@ -429,9 +429,15 @@ public class Args {
   @Getter
   @Setter
   private int minEffectiveConnection;
+
   @Getter
   @Setter
-  private long allowZKSnarkTransaction; //committee parameter
+  private long allowShieldedTransaction; //committee parameter
+
+  // full node used this parameter to close shielded transaction
+  @Getter
+  @Setter
+  private boolean fullNodeAllowShieldedTransaction;
 
   @Getter
   @Setter
@@ -461,9 +467,6 @@ public class Args {
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   private boolean version;
 
-  @Getter
-  @Setter
-  private boolean allowShieldedTransaction;
 
   @Getter
   @Setter
@@ -556,11 +559,11 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
-    INSTANCE.allowZKSnarkTransaction = 0;
+    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
-    INSTANCE.allowShieldedTransaction = true;
+    INSTANCE.fullNodeAllowShieldedTransaction = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -948,11 +951,11 @@ public class Args {
             .getBoolean("vm.vmTrace") : false;
 
     INSTANCE.saveInternalTx =
-
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
-    INSTANCE.allowZKSnarkTransaction =
-        config.hasPath("committee.allowZKSnarkTransaction") ? config
-            .getInt("committee.allowZKSnarkTransaction") : 0;
+
+    INSTANCE.allowShieldedTransaction =
+        config.hasPath("committee.allowShieldedTransaction") ? config
+            .getInt("committee.allowShieldedTransaction") : 0;
 
     INSTANCE.eventPluginConfig =
         config.hasPath("event.subscribe") ?
@@ -961,8 +964,9 @@ public class Args {
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
-    INSTANCE.allowShieldedTransaction = config.hasPath("node.allowShieldedTransaction") ?
-        config.getBoolean("node.allowShieldedTransaction") : true;
+    INSTANCE.fullNodeAllowShieldedTransaction =
+        config.hasPath("node.fullNodeAllowShieldedTransaction") ?
+            config.getBoolean("node.fullNodeAllowShieldedTransaction") : true;
 
     INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
         config.getString("node.zenTokenId") : "000000";
@@ -985,7 +989,7 @@ public class Args {
             .getInt("node.shieldedTransInPendingMaxCounts") : 10;
 
     if (INSTANCE.isWitness()) {
-      INSTANCE.allowShieldedTransaction = true;
+      INSTANCE.fullNodeAllowShieldedTransaction = true;
     }
 
     initBackupProperty(config);

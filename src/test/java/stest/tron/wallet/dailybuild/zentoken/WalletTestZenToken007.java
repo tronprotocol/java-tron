@@ -1,4 +1,4 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -13,23 +13,26 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 
+
 @Slf4j
-public class WalletTestZenToken002 {
+public class WalletTestZenToken007 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -39,16 +42,24 @@ public class WalletTestZenToken002 {
   String sendShieldAddress;
   String receiverShieldAddress;
   List<Note> shieldOutList = new ArrayList<>();
-  List<Long> shieldInputList = new ArrayList<>();
   DecryptNotes notes;
   String memo;
   Note sendNote;
   Note receiverNote;
+  private static ByteString assetAccountId = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
+  private ManagedChannel channelSolidity1 = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity1 = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
+  private String soliditynode1 = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(1);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -80,14 +91,24 @@ public class WalletTestZenToken002 {
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    channelSolidity1 = ManagedChannelBuilder.forTarget(soliditynode1)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity1 = WalletSolidityGrpc.newBlockingStub(channelSolidity1);
+
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransaction(1);
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddressInfo:" + sendShieldAddressInfo);
@@ -102,7 +123,26 @@ public class WalletTestZenToken002 {
 
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction")
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get spending key")
+  public void test0GetSpendingKey() {
+    logger.info("------------------");
+    String spendingKey = ByteArray.toHexString(blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build()).toByteArray());
+    logger.info(spendingKey);
+    BytesMessage sk = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
+    ExpandedSpendingKeyMessage esk = blockingStubFull.getExpandedSpendingKey(sk);
+    logger.info("esk:{}", ByteArray.toHexString(esk.toByteArray()));
+    logger.info("ask:{}", ByteArray.toHexString(esk.getAsk().toByteArray()));
+    logger.info("nsk:{}", ByteArray.toHexString(esk.getNsk().toByteArray()));
+    logger.info("ovk:{}", ByteArray.toHexString(esk.getOvk().toByteArray()));
+
+  }
+
+
+  @Test(enabled = false, description = "Shield to shield transaction")
   public void test1Shield2ShieldTransaction() {
     receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -124,8 +164,6 @@ public class WalletTestZenToken002 {
     logger.info("Receiver note:" + receiverNote.toString());
     Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
 
-
-
   }
 
   /**
@@ -140,6 +178,12 @@ public class WalletTestZenToken002 {
             blockingStubFull), zenTokenOwnerAddress, zenTokenOwnerKey, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity1 != null) {
+      channelSolidity1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }

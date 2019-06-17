@@ -141,7 +141,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
     }
-    if (Args.getInstance().isAllowShieldedTransaction()) {
+    if (Args.getInstance().isFullNodeAllowShieldedTransaction()) {
       MerkleContainer merkleContainer = dbManager.getMerkleContainer();
       IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
       try {
@@ -184,8 +184,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
           + "ALLOW_SAME_TOKEN_NAME is opened by the committee");
     }
 
-    if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
-      throw new ContractValidateException("Not support ZKSnarkTransaction, need to be opened by" +
+    if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
+      throw new ContractValidateException("Not support Shielded Transaction, need to be opened by" +
           " the committee");
     }
 
@@ -203,7 +203,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
           throw new ContractValidateException("duplicate sapling nullifiers in this transaction");
         }
         nfSet.add(spendDescription.getNullifier());
-        if (Args.getInstance().isAllowShieldedTransaction() && !dbManager.getMerkleContainer()
+        if (Args.getInstance().isFullNodeAllowShieldedTransaction() && !dbManager
+            .getMerkleContainer()
             .merkleRootExist(spendDescription.getAnchor().toByteArray())) {
           throw new ContractValidateException("Rt is invalid.");
         }

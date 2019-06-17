@@ -15,15 +15,14 @@ import java.util.List;
 
 public class ZenUtils {
 
-  public static List<String> getListFromFile(final String fileName ) {
+  public static List<String> getListFromFile(final String fileName) {
     List<String> list = new ArrayList<>();
     try {
       FileInputStream inputStream = new FileInputStream(fileName);
       BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
       String str = null;
-      while((str = bufferedReader.readLine()) != null)
-      {
+      while ((str = bufferedReader.readLine()) != null) {
         System.out.println(str);
         list.add(str);
       }
@@ -43,7 +42,7 @@ public class ZenUtils {
     BufferedWriter out = null;
     try {
       out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true)));
-      out.write(content+"\n");
+      out.write(content + "\n");
       out.flush();
     } catch (Exception e) {
       e.printStackTrace();
@@ -89,9 +88,10 @@ public class ZenUtils {
 
   public static String getMemo(byte[] meno) {
     int index = 512;
-    for (; index>0; --index) {
-      if (meno[index-1] != 0)
+    for (; index > 0; --index) {
+      if (meno[index - 1] != 0) {
         break;
+      }
     }
 
     byte[] inputCheck = new byte[index];
