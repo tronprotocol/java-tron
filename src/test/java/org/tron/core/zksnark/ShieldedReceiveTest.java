@@ -929,7 +929,9 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      //if generate cm successful, checkout error; else param is null because of cm is null
+      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage()) ||
+              "param is null".equalsIgnoreCase(e.getMessage()));
     }
   }
 
@@ -958,7 +960,9 @@ public class ShieldedReceiveTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      //if generate cm successful, checkout error; else param is null because of cm is null
+      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage()) ||
+              "param is null".equalsIgnoreCase(e.getMessage()));
     }
   }
 
