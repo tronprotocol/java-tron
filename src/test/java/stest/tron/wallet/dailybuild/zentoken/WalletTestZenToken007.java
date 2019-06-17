@@ -15,9 +15,12 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -29,7 +32,6 @@ import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
-
 
 @Slf4j
 public class WalletTestZenToken007 {
@@ -47,6 +49,8 @@ public class WalletTestZenToken007 {
   Note sendNote;
   Note receiverNote;
   private static ByteString assetAccountId = null;
+  BytesMessage ak;
+  BytesMessage nk;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -108,7 +112,7 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(1);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddressInfo:" + sendShieldAddressInfo);
@@ -127,9 +131,10 @@ public class WalletTestZenToken007 {
    * constructor.
    */
   @Test(enabled = true, description = "Get spending key")
-  public void test0GetSpendingKey() {
+  public void test1GetSpendingKeyAndgetExpandedSpendingKey() {
     logger.info("------------------");
-    String spendingKey = ByteArray.toHexString(blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build()).toByteArray());
+    String spendingKey = ByteArray.toHexString(blockingStubFull
+        .getSpendingKey(EmptyMessage.newBuilder().build()).toByteArray());
     logger.info(spendingKey);
     BytesMessage sk = BytesMessage.newBuilder()
         .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
@@ -138,6 +143,55 @@ public class WalletTestZenToken007 {
     logger.info("ask:{}", ByteArray.toHexString(esk.getAsk().toByteArray()));
     logger.info("nsk:{}", ByteArray.toHexString(esk.getNsk().toByteArray()));
     logger.info("ovk:{}", ByteArray.toHexString(esk.getOvk().toByteArray()));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get diversifier")
+  public void test2GetDiversifier() {
+    DiversifierMessage diversifierMessage = blockingStubFull
+        .getDiversifier(EmptyMessage.newBuilder().build());
+    logger.info(ByteArray.toHexString(diversifierMessage.getD().toByteArray()));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get Ak From Ask")
+  public void test3GetAkFromAsk() {
+    String ask = System.currentTimeMillis() + "RandomAsk";
+    BytesMessage ask1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(ask))).build();
+    ak = blockingStubFull.getAkFromAsk(ask1);
+    logger.info("ak:{}", ByteArray.toHexString(ak.toByteArray()));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get Nk From Nsk")
+  public void test4GetNkFromNsk() {
+    String nsk = System.currentTimeMillis() + "RandomNsk";
+    BytesMessage nsk1 = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(nsk))).build();
+    nk = blockingStubFull.getNkFromNsk(nsk1);
+    logger.info("nk:{}", ByteArray.toHexString(nk.toByteArray()));
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get incoming viewing key")
+  public void test5GetIncomingViewingKey() {
+    ViewingKeyMessage vk = ViewingKeyMessage.newBuilder()
+        .setAk(ByteString.copyFrom(ByteArray
+            .fromHexString(ByteArray.toHexString(ak.toByteArray()))))
+        .setNk(ByteString.copyFrom(ByteArray
+            .fromHexString(ByteArray.toHexString(nk.toByteArray())))).build();
+    IncomingViewingKeyMessage ivk = blockingStubFull.getIncomingViewingKey(vk);
+    logger.info("ivk:" + ByteArray.toHexString(ivk.toByteArray()));
+
 
   }
 
