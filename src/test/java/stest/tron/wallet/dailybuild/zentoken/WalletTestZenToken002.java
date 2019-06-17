@@ -145,13 +145,13 @@ public class WalletTestZenToken002 {
 
     //Scan sender note by ovk equals scan receiver note by ivk on FullNode
     Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvk(receiverShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
+        .getShieldNotesByIvk(receiverShieldAddressInfo, blockingStubFull).getNoteTxs(0).getNote();
     Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvk(sendShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+        .getShieldNotesByOvk(sendShieldAddressInfo, blockingStubFull).getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk.getValue(), scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(), scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(), scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(), scanNoteByOvk.getPaymentAddress());
   }
 
   /**
@@ -161,17 +161,17 @@ public class WalletTestZenToken002 {
   public void test3ScanNoteByIvkAndOvkOnSolidityServer() {
 
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity)
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
         .getNoteTxs(0).getNote();
     Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity)
+        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo, blockingStubSolidity)
         .getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+    Assert.assertEquals(scanNoteByIvk.getValue(), scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(), scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(), scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(), scanNoteByOvk.getPaymentAddress());
   }
 
   /**
@@ -186,22 +186,19 @@ public class WalletTestZenToken002 {
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
 
-
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
     Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity)
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
         .getNoteTxs(0).getNote();
     Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity)
+        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo, blockingStubSolidity)
         .getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+    Assert.assertEquals(scanNoteByIvk.getValue(), scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(), scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(), scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(), scanNoteByOvk.getPaymentAddress());
   }
-
-
 
 
   /**
