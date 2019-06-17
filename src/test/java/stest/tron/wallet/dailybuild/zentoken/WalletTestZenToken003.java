@@ -1,6 +1,5 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -15,14 +14,12 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;

@@ -1,4 +1,4 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;

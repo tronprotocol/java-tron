@@ -1,6 +1,5 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -15,14 +14,12 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -155,7 +152,7 @@ public class WalletTestZenToken006 {
             + "7812345678123456781234567812345678123456781234567812345678123456781234567812345678"
             + "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
             + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
-            + "56781234567812345678";
+            + "5678123456781234567812345678901234567890-";
     shieldOutList.clear();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress,
         "" + zenTokenFee,memo);
@@ -170,6 +167,7 @@ public class WalletTestZenToken006 {
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
     Assert.assertEquals(receiverShieldTokenAmount,zenTokenFee);
+    logger.info(PublicMethed.getMemo(note));
     Assert.assertEquals(memo,PublicMethed.getMemo(note));
   }
 
