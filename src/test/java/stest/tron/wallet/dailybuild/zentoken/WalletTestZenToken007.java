@@ -13,11 +13,11 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.EmptyMessage;
-import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -32,7 +32,7 @@ import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 
 
 @Slf4j
-public class WalletTestZenToken002 {
+public class WalletTestZenToken007 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -123,7 +123,26 @@ public class WalletTestZenToken002 {
 
   }
 
-  @Test(enabled = true, description = "Shield to shield transaction")
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get spending key")
+  public void test0GetSpendingKey() {
+    logger.info("------------------");
+    String spendingKey = ByteArray.toHexString(blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build()).toByteArray());
+    logger.info(spendingKey);
+    BytesMessage sk = BytesMessage.newBuilder()
+        .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
+    ExpandedSpendingKeyMessage esk = blockingStubFull.getExpandedSpendingKey(sk);
+    logger.info("esk:{}", ByteArray.toHexString(esk.toByteArray()));
+    logger.info("ask:{}", ByteArray.toHexString(esk.getAsk().toByteArray()));
+    logger.info("nsk:{}", ByteArray.toHexString(esk.getNsk().toByteArray()));
+    logger.info("ovk:{}", ByteArray.toHexString(esk.getOvk().toByteArray()));
+
+  }
+
+
+  @Test(enabled = false, description = "Shield to shield transaction")
   public void test1Shield2ShieldTransaction() {
     receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
@@ -144,77 +163,6 @@ public class WalletTestZenToken002 {
     receiverNote = notes.getNoteTxs(0).getNote();
     logger.info("Receiver note:" + receiverNote.toString());
     Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
-
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on FullNode")
-  public void test2ScanNoteByIvkAndOvk() {
-    //Scan sender note by ovk equals scan receiver note by ivk on FullNode
-    Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvk(receiverShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
-    Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvk(sendShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
-  public void test3ScanNoteByIvkAndOvkOnSolidityServer() {
-
-    //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
-    Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity)
-        .getNoteTxs(0).getNote();
-    Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity)
-        .getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
-  public void test4ScanNoteByIvkAndOvkOnSolidityServer() {
-    //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity1);
-    Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity1)
-        .getNoteTxs(0).getNote();
-    Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity1)
-        .getNoteTxs(0).getNote();
-    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
-    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
-    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
-    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Query whether note is spend on solidity")
-  public void test5QueryNoteIsSpendOnSolidity() {
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo,blockingStubFull);
-    //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    Assert.assertTrue(PublicMethed.getSpendResult(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
-    Assert.assertTrue(PublicMethed.getSpendResultOnSolidity(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubSolidity).getResult());
-    Assert.assertTrue(PublicMethed.getSpendResultOnSolidity(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubSolidity1).getResult());
 
   }
 

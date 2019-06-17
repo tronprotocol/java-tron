@@ -168,7 +168,7 @@ public class WalletTestZenToken006 {
     Long receiverShieldTokenAmount = note.getValue();
     Assert.assertEquals(receiverShieldTokenAmount,zenTokenFee);
     logger.info(PublicMethed.getMemo(note));
-    Assert.assertEquals(memo,PublicMethed.getMemo(note));
+    Assert.assertEquals(memo.substring(0,511),PublicMethed.getMemo(note));
   }
 
 
