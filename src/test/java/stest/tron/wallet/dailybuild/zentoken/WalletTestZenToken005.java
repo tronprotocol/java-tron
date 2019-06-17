@@ -1,4 +1,4 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;

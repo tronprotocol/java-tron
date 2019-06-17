@@ -1106,6 +1106,9 @@ public class AccountPermissionUpdateActuatorTest {
     // note: The aim of this test case is to show how the current codes work.
     // The default value is 7fff1fc0037e0000000000000000000000000000000000000000000000000000,
     // and it should call the addSystemContractAndSetPermission to add new contract type
+    // When you add a new contact, you can add its to contractType, as  '|| contractType = ContractType.XXX',
+    // and you will get the value from the output, then update the value to checkAvailableContractType
+    // and checkActiveDefaultOperations
     String validContractType = "7fff1fc0037e0800000000000000000000000000000000000000000000000000";
 
     byte[] availableContractType = new byte[32];

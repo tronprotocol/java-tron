@@ -1,4 +1,4 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -44,8 +45,12 @@ public class WalletTestZenToken002 {
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private ManagedChannel channelSolidity = null;
+  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
+  private String soliditynode = Configuration.getByPath("testng.conf")
+      .getStringList("solidityNode.ip.list").get(0);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -77,10 +82,14 @@ public class WalletTestZenToken002 {
   public void beforeClass() {
     PublicMethed.printAddress(foundationZenTokenKey);
     PublicMethed.printAddress(zenTokenOwnerKey);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
+    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -122,8 +131,78 @@ public class WalletTestZenToken002 {
     logger.info("Receiver note:" + receiverNote.toString());
     Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
 
-
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Scan not by ivk and scan not by ivk on FullNode")
+  public void test2ScanNoteByIvkAndOvk() {
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+    //Scan sender note by ovk equals scan receiver note by ivk on FullNode
+    Note scanNoteByIvk = PublicMethed
+        .getShieldNotesByIvk(receiverShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
+    Note scanNoteByOvk = PublicMethed
+        .getShieldNotesByOvk(sendShieldAddressInfo,blockingStubFull).getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Scan not by ivk and scan not by ivk on solidity")
+  public void test3ScanNoteByIvkAndOvkOnSolidityServer() {
+
+    //Scan sender note by ovk equals scan receiver note by ivk in Solidity
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    Note scanNoteByIvk = PublicMethed
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity)
+        .getNoteTxs(0).getNote();
+    Note scanNoteByOvk = PublicMethed
+        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity)
+        .getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+  }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Scan not by ivk and scan not by ivk on solidity")
+  public void test4ScanNoteByIvkAndOvkOnSolidityServer() {
+    soliditynode = Configuration.getByPath("testng.conf")
+        .getStringList("solidityNode.ip.list").get(1);
+    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
+        .usePlaintext(true)
+        .build();
+    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
+
+
+    //Scan sender note by ovk equals scan receiver note by ivk in Solidity
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity);
+    Note scanNoteByIvk = PublicMethed
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity)
+        .getNoteTxs(0).getNote();
+    Note scanNoteByOvk = PublicMethed
+        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity)
+        .getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk.getValue(),scanNoteByOvk.getValue());
+    Assert.assertEquals(scanNoteByIvk.getMemo(),scanNoteByOvk.getMemo());
+    Assert.assertEquals(scanNoteByIvk.getRcm(),scanNoteByOvk.getRcm());
+    Assert.assertEquals(scanNoteByIvk.getPaymentAddress(),scanNoteByOvk.getPaymentAddress());
+  }
+
+
+
 
   /**
    * constructor.
@@ -137,6 +216,9 @@ public class WalletTestZenToken002 {
             blockingStubFull), zenTokenOwnerAddress, zenTokenOwnerKey, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (channelSolidity != null) {
+      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 }

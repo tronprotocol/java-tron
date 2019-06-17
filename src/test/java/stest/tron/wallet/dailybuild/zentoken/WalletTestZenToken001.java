@@ -1,5 +1,6 @@
-package stest.tron.wallet.zentoken;
+package stest.tron.wallet.dailybuild.zentoken;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -14,19 +15,21 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 import stest.tron.wallet.common.client.utils.ShieldAddressInfo;
 
 @Slf4j
-public class WalletTestZenToken006 {
+public class WalletTestZenToken001 {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
@@ -51,7 +54,7 @@ public class WalletTestZenToken006 {
   private byte[] tokenId = zenTokenId.getBytes();
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long costTokenAmount = 10 * zenTokenFee;
+  private Long costTokenAmount = 5 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -65,6 +68,30 @@ public class WalletTestZenToken006 {
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    channelFull = ManagedChannelBuilder.forTarget(fullnode)
+        .usePlaintext(true)
+        .build();
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    if (PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getCreateTime() == 0) {
+      PublicMethed.sendcoin(foundationZenTokenAddress, 20480000000000L, fromAddress,
+          testKey002, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      String name = "shieldToken";
+      Long start = System.currentTimeMillis() + 20000;
+      Long end = System.currentTimeMillis() + 10000000000L;
+      Long totalSupply = 15000000000000001L;
+      String description = "This asset issue is use for exchange transaction stress";
+      String url = "This asset issue is use for exchange transaction stress";
+      PublicMethed.createAssetIssue(foundationZenTokenAddress, name, totalSupply, 1, 1,
+          start, end, 1, description, url, 1000L, 1000L,
+          1L, 1L, foundationZenTokenKey, blockingStubFull);
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      Account getAssetIdFromThisAccount =
+          PublicMethed.queryAccount(foundationZenTokenAddress, blockingStubFull);
+      ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+      logger.info("AssetId:" + assetAccountId.toString());
+    }
   }
 
   /**
@@ -81,95 +108,77 @@ public class WalletTestZenToken006 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
   }
 
-  @Test(enabled = true, description = "Shield note memo is one char")
-  public void test1ShieldMemoIsOneChar() {
+  @Test(enabled = true, description = "Public to shield transaction")
+  public void test1Public2ShieldTransaction() {
+    Args.getInstance().setAllowShieldedTransaction(1);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
     shieldAddress = shieldAddressInfo.get().getAddress();
     logger.info("shieldAddress:" + shieldAddress);
+    final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+    final Long beforeNetUsed = PublicMethed
+        .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
-    //One char.
-    memo = ".";
+    memo = "aaaaaaa";
+
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
-        "" + zenTokenFee, memo);
+        "" + (sendTokenAmount - zenTokenFee), memo);
+
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress, zenTokenFee * 2,
+        zenTokenOwnerAddress, sendTokenAmount,
         null, null,
         shieldOutList,
         null, 0,
         zenTokenOwnerKey, blockingStubFull));
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+    Long afterNetUsed = PublicMethed.getAccountResource(zenTokenOwnerAddress, blockingStubFull)
+        .getFreeNetUsed();
+    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
+    Assert.assertTrue(beforeNetUsed == afterNetUsed);
     notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
+    Assert.assertTrue(receiverShieldTokenAmount == sendTokenAmount - zenTokenFee);
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
-  @Test(enabled = true, description = "Shield note memo is 512 char")
-  public void test2ShieldMemoIs512Char() {
-    shieldAddressInfo = PublicMethed.generateShieldAddress();
-    shieldAddress = shieldAddressInfo.get().getAddress();
-    logger.info("shieldAddress:" + shieldAddress);
+  @Test(enabled = true, description = "Shield to public transaction")
+  public void test2Shield2PublicTransaction() {
+    note = notes.getNoteTxs(0).getNote();
+    SpendResult result = PublicMethed.getSpendResult(shieldAddressInfo.get(),
+        notes.getNoteTxs(0), blockingStubFull);
+    Assert.assertTrue(!result.getResult());
 
-    //One char.
-    memo = "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-        + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-        + "781234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-        + "345678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-        + "7812345678";
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
-        "" + zenTokenFee, memo);
+    final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress, zenTokenFee * 2,
-        null, null,
-        shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
-    note = notes.getNoteTxs(0).getNote();
-    Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
-    Assert.assertEquals(memo, PublicMethed.getMemo(note));
-  }
-
-  @Test(enabled = true, description = "Shield note memo is 513 char")
-  public void test3ShieldMemoIs513Char() {
-    shieldAddressInfo = PublicMethed.generateShieldAddress();
-    shieldAddress = shieldAddressInfo.get().getAddress();
-    logger.info("shieldAddress:" + shieldAddress);
-
-    //One char.
-    memo = "-1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-        + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
-        + "5678123456781234567812345678123456781234567812345678123456781234567812345678123456"
-        + "7812345678123456781234567812345678123456781234567812345678123456781234567812345678"
-        + "1234567812345678123456781234567812345678123456781234567812345678123456781234567812"
-        + "3456781234567812345678123456781234567812345678123456781234567812345678123456781234"
-        + "56781234567812345678";
-    shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
-        "" + zenTokenFee, memo);
-    Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress, zenTokenFee * 2,
-        null, null,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null, 0,
+        zenTokenOwnerAddress, note.getValue() - zenTokenFee,
         zenTokenOwnerKey, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
-    note = notes.getNoteTxs(0).getNote();
-    Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
-    Assert.assertEquals(memo, PublicMethed.getMemo(note));
-  }
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    result = PublicMethed.getSpendResult(shieldAddressInfo.get(), notes.getNoteTxs(0),
+        blockingStubFull);
+    Assert.assertTrue(result.getResult());
+    Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+    Assert.assertTrue(afterAssetBalance - beforeAssetBalance == note.getValue() - zenTokenFee);
+    logger.info("beforeAssetBalance:" + beforeAssetBalance);
+    logger.info("afterAssetBalance :" + afterAssetBalance);
+  }
 
   /**
    * constructor.

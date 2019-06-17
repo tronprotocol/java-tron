@@ -45,6 +45,7 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.IvkDecryptParameters;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
+import org.tron.api.GrpcAPI.OvkDecryptParameters;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
@@ -5036,15 +5037,103 @@ public class PublicMethed {
                                             WalletGrpc.WalletBlockingStub blockingStubFull) {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
-    builder.setStartBlockIndex(currentBlockNum - 100);
+    builder.setStartBlockIndex(startBlockNum);
     builder.setEndBlockIndex(currentBlockNum);
     builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
     DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
     logger.info(notes.toString());
     return notes;
   }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByIvk(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByIvkOnSolidity(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByIvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByOvk(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotes getShieldNotesByOvkOnSolidity(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
+    DecryptNotes notes = blockingStubSolidity.scanNoteByOvk(builder.build());
+    logger.info(notes.toString());
+    return notes;
+  }
+
 
   /**
    * constructor.
