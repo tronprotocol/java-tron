@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
@@ -349,6 +350,12 @@ public class Manager {
 
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
+
+  @Getter
+  private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
+
+  private static final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = 10;
+  private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
 
   // transactions popped
   private List<TransactionCapsule> popedTransactions =
@@ -819,6 +826,10 @@ public class Manager {
       }
 
       synchronized (this) {
+        if (isShieldedTransaction(trx.getInstance())
+            && shieldedTransInPendingCounts.get() > SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) {
+          return false;
+        }
         if (!session.valid()) {
           session.setValue(revokingStore.buildSession());
         }
@@ -827,6 +838,9 @@ public class Manager {
           processTransaction(trx, null);
           pendingTransactions.add(trx);
           tmpSession.merge();
+        }
+        if (isShieldedTransaction(trx.getInstance())) {
+          shieldedTransInPendingCounts.incrementAndGet();
         }
       }
     } finally {
@@ -1398,13 +1412,14 @@ public class Manager {
         new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
+    AtomicInteger shieldeTransCounts = new AtomicInteger(0);
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
     while (iterator.hasNext() || repushTransactions.size() > 0) {
       boolean fromPending = false;
       TransactionCapsule trx;
       if (iterator.hasNext()) {
         fromPending = true;
-        trx = (TransactionCapsule) iterator.next();
+        trx = iterator.next();
       } else {
         trx = repushTransactions.poll();
       }
@@ -1423,8 +1438,12 @@ public class Manager {
         postponedTrxCount++;
         continue;
       }
-
-      //
+      //shielded transaction
+      if (isShieldedTransaction(trx.getInstance())
+          && shieldeTransCounts.incrementAndGet() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+        continue;
+      }
+      //mult sign transaction
       Contract contract = trx.getInstance().getRawData().getContract(0);
       byte[] owner = TransactionCapsule.getOwner(contract);
       String ownerAddress = ByteArray.toHexString(owner);
@@ -1548,6 +1567,17 @@ public class Manager {
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
       case AccountPermissionUpdateContract: {
+        return true;
+      }
+      default:
+    }
+    return false;
+  }
+
+  private boolean isShieldedTransaction(Transaction transaction) {
+    Contract contract = transaction.getRawData().getContract(0);
+    switch (contract.getType()) {
+      case ShieldedTransferContract: {
         return true;
       }
       default:
@@ -1912,6 +1942,11 @@ public class Manager {
     int transSize = block.getTransactions().size();
     if (transSize <= 0) {
       return;
+    }
+    if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))
+        .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
+      throw new ValidateSignatureException(
+          "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
     }
     CountDownLatch countDownLatch = new CountDownLatch(transSize);
     List<Future<Boolean>> futures = new ArrayList<>(transSize);
