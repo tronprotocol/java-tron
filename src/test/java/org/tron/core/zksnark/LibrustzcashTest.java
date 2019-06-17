@@ -94,7 +94,7 @@ public class LibrustzcashTest {
   @BeforeClass
   public static void init() {
     wallet = context.getBean(Wallet.class);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
   }
 
   @AfterClass

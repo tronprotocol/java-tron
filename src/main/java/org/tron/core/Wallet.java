@@ -1018,8 +1018,8 @@ public class Wallet {
     // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowZksnarkTransaction")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowZksnarkTransaction())
+            .setKey("getAllowShieldedTransaction")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowShieldedTransaction())
             .build());
 
     // SHIELDED_TRANSACTION_FEE
@@ -1388,8 +1388,8 @@ public class Wallet {
     return null;
   }
 
-  public boolean getAllowShieldedTransactionApi() {
-    return Args.getInstance().isAllowShieldedTransaction();
+  public boolean getFullNodeAllowShieldedTransaction() {
+    return Args.getInstance().isFullNodeAllowShieldedTransaction();
   }
 
   public BytesMessage getNullifier(ByteString id) {
@@ -1408,7 +1408,7 @@ public class Wallet {
 
   private long getBlockNumber(OutputPoint outPoint)
       throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     ByteString txId = outPoint.getHash();
@@ -1424,7 +1424,7 @@ public class Wallet {
   //in:outPoint,out:blockNumber
   private IncrementalMerkleVoucherContainer createWitness(OutputPoint outPoint, Long blockNumber)
       throws ItemNotFoundException, BadItemException, InvalidProtocolBufferException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     ByteString txId = outPoint.getHash();
@@ -1518,7 +1518,7 @@ public class Wallet {
   private void updateWitnesses(List<IncrementalMerkleVoucherContainer> witnessList, long large,
       int synBlockNum) throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     long start = large;
@@ -1595,7 +1595,7 @@ public class Wallet {
   }
 
   private void validateInput(OutputPointInfo request) throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
@@ -1623,7 +1623,7 @@ public class Wallet {
   public IncrementalMerkleVoucherInfo getMerkleTreeVoucherInfo(OutputPointInfo request)
       throws ItemNotFoundException, BadItemException,
       InvalidProtocolBufferException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     validateInput(request);
@@ -1669,7 +1669,7 @@ public class Wallet {
   }
 
   public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     if (blockNum < 0) {
@@ -1693,7 +1693,7 @@ public class Wallet {
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("createshieldedtransaction is not allowed");
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
@@ -1786,7 +1786,7 @@ public class Wallet {
   public TransactionCapsule createShieldedTransactionWithoutSpendAuthSig(
       PrivateParametersWithoutAsk request)
       throws ContractValidateException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("createshieldedtransactionwithoutspendauthsig is not allowed");
     }
 
@@ -1879,7 +1879,7 @@ public class Wallet {
   }
 
   public BytesMessage getSpendingKey() throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] sk = SpendingKey.random().getValue();
@@ -1888,7 +1888,7 @@ public class Wallet {
 
   public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey)
       throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(spendingKey)) {
@@ -1914,7 +1914,7 @@ public class Wallet {
 
   public BytesMessage getAkFromAsk(ByteString ask) throws
       BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(ask)) {
@@ -1931,7 +1931,7 @@ public class Wallet {
 
   public BytesMessage getNkFromNsk(ByteString nsk) throws
       BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     if (Objects.isNull(nsk)) {
@@ -1948,7 +1948,7 @@ public class Wallet {
 
   public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk)
       throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
 //    if (ak.length != 32 || nk.length != 32) {
@@ -1963,7 +1963,7 @@ public class Wallet {
   }
 
   public DiversifierMessage getDiversifier() throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] d;
@@ -1982,7 +1982,7 @@ public class Wallet {
   }
 
   public BytesMessage getRcm() throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] rcm = Note.generateR();
@@ -1992,7 +1992,7 @@ public class Wallet {
 
   public PaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
 
@@ -2021,7 +2021,7 @@ public class Wallet {
 
   public SpendResult isSpend(NoteParameters noteParameters) throws
       ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.Note note = noteParameters.getNote();
@@ -2059,7 +2059,7 @@ public class Wallet {
 
   public BytesMessage createSpendAuthSig(SpendAuthSigParameters spendAuthSigParameters)
       throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] result = new byte[64];
@@ -2076,7 +2076,7 @@ public class Wallet {
   }
 
   public BytesMessage createShieldNullifier(NfParameters nfParameters) throws ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     byte[] ak = nfParameters.getAk().toByteArray();
@@ -2411,7 +2411,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum,
       byte[] ivk) throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes
@@ -2498,7 +2498,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum,
       byte[] ovk) throws BadItemException, ZksnarkException {
-    if (!getAllowShieldedTransactionApi()) {
+    if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes

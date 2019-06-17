@@ -79,10 +79,10 @@ public class WalletTestZenToken005 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
-    Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress,1000000L,
-        fromAddress,testKey002,blockingStubFull));
+    Assert.assertTrue(PublicMethed.sendcoin(receiverPublicAddress, 1000000L,
+        fromAddress, testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
   }
 
   @Test(enabled = true, description = "The receiver shield address can't more then 2")
@@ -102,20 +102,20 @@ public class WalletTestZenToken005 {
     Long sendToShiledAddress3Amount = costTokenAmount - sendToShiledAddress1Amount
         - sendToShiledAddress2Amount - zenTokenFee;
     String memo1 = "Shield to  shield address1 transaction";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress1,
-        "" + sendToShiledAddress1Amount,memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
+        "" + sendToShiledAddress1Amount, memo1);
     String memo2 = "Shield to  shield address2 transaction";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress2,
-        "" + sendToShiledAddress2Amount,memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
+        "" + sendToShiledAddress2Amount, memo2);
     String memo3 = "Shield to  shield address3 transaction";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress3,
-        "" + sendToShiledAddress3Amount,memo3);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress3,
+        "" + sendToShiledAddress3Amount, memo3);
 
     Assert.assertFalse(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,costTokenAmount,
+        zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
-        null,0,
+        null, 0,
         zenTokenOwnerKey, blockingStubFull));
   }
 
@@ -127,10 +127,10 @@ public class WalletTestZenToken005 {
 
     shieldOutList.clear();
     Assert.assertFalse(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,costTokenAmount,
+        zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
-        receiverPublicAddress,costTokenAmount - zenTokenFee,
+        receiverPublicAddress, costTokenAmount - zenTokenFee,
         zenTokenOwnerKey, blockingStubFull));
   }
 
@@ -152,20 +152,20 @@ public class WalletTestZenToken005 {
 
     shieldOutList.clear();
     String memo1 = "Public to  shield address1 transaction";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress1,
-        "" + sendToShiledAddress1Amount,memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
+        "" + sendToShiledAddress1Amount, memo1);
     String memo2 = "Public to  shield address2 transaction";
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress2,
-        "" + sendToShiledAddress2Amount,memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
+        "" + sendToShiledAddress2Amount, memo2);
 
     //Public receiver amount is wrong
     Long sendToPublicAddressAmount = costTokenAmount - sendToShiledAddress1Amount
         - sendToShiledAddress2Amount - zenTokenFee;
     Assert.assertFalse(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,costTokenAmount,
+        zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
-        receiverPublicAddress,sendToPublicAddressAmount - 1,
+        receiverPublicAddress, sendToPublicAddressAmount - 1,
         zenTokenOwnerKey, blockingStubFull));
 
     //Shield receiver amount is wrong
@@ -174,15 +174,15 @@ public class WalletTestZenToken005 {
     sendToPublicAddressAmount = costTokenAmount - sendToShiledAddress1Amount
         - sendToShiledAddress2Amount - zenTokenFee;
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress1,
-        "" + (sendToShiledAddress1Amount - 1),memo1);
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress2,
-        "" + sendToShiledAddress2Amount,memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
+        "" + (sendToShiledAddress1Amount - 1), memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
+        "" + sendToShiledAddress2Amount, memo2);
     Assert.assertFalse(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,costTokenAmount,
+        zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
-        receiverPublicAddress,sendToPublicAddressAmount,
+        receiverPublicAddress, sendToPublicAddressAmount,
         zenTokenOwnerKey, blockingStubFull));
 
     sendToShiledAddress1Amount = 1 * zenTokenFee;
@@ -190,15 +190,15 @@ public class WalletTestZenToken005 {
     sendToPublicAddressAmount = costTokenAmount - sendToShiledAddress1Amount
         - sendToShiledAddress2Amount - zenTokenFee;
     shieldOutList.clear();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress1,
-        "" + sendToShiledAddress1Amount,memo1);
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,shieldAddress2,
-        "" + sendToShiledAddress2Amount,memo2);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
+        "" + sendToShiledAddress1Amount, memo1);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
+        "" + sendToShiledAddress2Amount, memo2);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        zenTokenOwnerAddress,costTokenAmount,
+        zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
-        receiverPublicAddress,sendToPublicAddressAmount,
+        receiverPublicAddress, sendToPublicAddressAmount,
         zenTokenOwnerKey, blockingStubFull));
   }
 

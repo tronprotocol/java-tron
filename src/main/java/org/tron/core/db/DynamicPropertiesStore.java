@@ -165,11 +165,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //This value is only allowed to be 0, 1, -1
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
-  // zkSnark
-  private static final byte[] ZKSNARK_TRANSACTION_FEE = "ZKSNARK_TRANSACTION_FEE".getBytes();
 
   //If the parameter is larger than 0, allow ZKsnark Transaction
-  private static final byte[] ALLOW_ZKSNARK_TRANSACTION = "ALLOW_ZKSNARK_TRANSACTION".getBytes();
+  private static final byte[] ALLOW_SHIELDED_TRANSACTION = "ALLOW_SHIELDED_TRANSACTION".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
   //Used only for protobuf data filter , once，value is 0,1
@@ -433,12 +431,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getZksnarkTransactionFee();
-    } catch (IllegalArgumentException e) {
-      this.saveZksnarkTransactionFee(1_000_000L); // 1TRX
-    }
-
-    try {
       this.getUpdateAccountPermissionFee();
     } catch (IllegalArgumentException e) {
       this.saveUpdateAccountPermissionFee(100000000L);
@@ -562,9 +554,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowZksnarkTransaction();
+      this.getAllowShieldedTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowZksnarkTransaction(Args.getInstance().getAllowZKSnarkTransaction());
+      this.saveAllowShieldedTransaction(Args.getInstance().getAllowShieldedTransaction());
     }
 
     try {
@@ -1165,21 +1157,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found MULTI_SIGN_FEE"));
   }
 
-
-  public void saveZksnarkTransactionFee(long fee) {
-    this.put(ZKSNARK_TRANSACTION_FEE,
-        new BytesCapsule(ByteArray.fromLong(fee)));
-  }
-
-  public long getZksnarkTransactionFee() {
-    return Optional.ofNullable(getUnchecked(ZKSNARK_TRANSACTION_FEE))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found ZKSNARK_TRANSACTION_FEE"));
-  }
-
-
   public void saveExchangeCreateFee(long fee) {
     this.put(EXCHANGE_CREATE_FEE,
         new BytesCapsule(ByteArray.fromLong(fee)));
@@ -1479,21 +1456,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowCreationOfContracts() == 1L;
   }
 
-  public void saveAllowZksnarkTransaction(long allowZkSnarkTransaction) {
-    this.put(DynamicPropertiesStore.ALLOW_ZKSNARK_TRANSACTION,
-        new BytesCapsule(ByteArray.fromLong(allowZkSnarkTransaction)));
+  public void saveAllowShieldedTransaction(long allowShieldedTransaction) {
+    this.put(DynamicPropertiesStore.ALLOW_SHIELDED_TRANSACTION,
+        new BytesCapsule(ByteArray.fromLong(allowShieldedTransaction)));
   }
 
-  public long getAllowZksnarkTransaction() {
-    return Optional.ofNullable(getUnchecked(ALLOW_ZKSNARK_TRANSACTION))
+  public long getAllowShieldedTransaction() {
+    return Optional.ofNullable(getUnchecked(ALLOW_SHIELDED_TRANSACTION))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_ZKSNARK_TRANSACTION"));
   }
 
-  public boolean supportZKSnarkTransaction() {
-    return getAllowZksnarkTransaction() == 1L;
+  public boolean supportShieldedTransaction() {
+    return getAllowShieldedTransaction() == 1L;
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {

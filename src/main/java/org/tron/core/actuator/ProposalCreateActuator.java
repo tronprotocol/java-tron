@@ -326,7 +326,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
-              "This value[ALLOW_ZKSNARK_TRANSACTION] is only allowed to be 1");
+              "This value[ALLOW_SHIELDED_TRANSACTION] is only allowed to be 1");
         }
         break;
       }
@@ -334,9 +334,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
-        if (!dbManager.getDynamicPropertiesStore().supportZKSnarkTransaction()) {
+        if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
           throw new ContractValidateException(
-              "ZKSnark Transaction is not activated,Can't set ZKSnark Transaction fee");
+              "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
         }
         if (entry.getValue() < 0 || entry.getValue() > 10_000_000_000L) {
           throw new ContractValidateException(

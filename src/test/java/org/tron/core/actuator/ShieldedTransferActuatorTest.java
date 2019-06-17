@@ -100,7 +100,7 @@ public class ShieldedTransferActuatorTest {
    */
   @BeforeClass
   public static void init() throws ZksnarkException {
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     wallet = context.getBean(Wallet.class);
     dbManager = context.getBean(Manager.class);
     librustzcashInitZksnarkParams();
@@ -234,7 +234,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedAddressSuccess() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
 
@@ -257,7 +257,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToPublicAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //From amount
@@ -290,7 +290,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedAddressInvalidSign() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
 
@@ -313,7 +313,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToPublicAddressNoPublicSign() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
@@ -330,7 +330,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInvalidFee() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
       //change fee to build transaction
@@ -361,7 +361,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInsufficientBalance() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     AccountCapsule accountCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
     try {
@@ -398,7 +398,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedFromAccountNotExist() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     AccountCapsule accountCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
@@ -434,7 +434,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedAddressNotConsumeBandwidth() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     try {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       //Add public address sign
@@ -469,7 +469,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInvalidFromAmount() throws ZksnarkException {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     try {
@@ -538,7 +538,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInvalidToAmount() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     try {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
       long amount = 0;
@@ -613,7 +613,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInvalidFromAddress() throws ZksnarkException {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //From amount
@@ -651,7 +651,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldedInvalidToAddress() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -694,7 +694,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void transferFromPublicAndShieldAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -738,8 +738,7 @@ public class ShieldedTransferActuatorTest {
    * output shield note and input shield note should be less than 10
    */
   public void PublicToShieldAddressAndShieldToPublicAddressSuccess() {
-    Args.getInstance().setAllowShieldedTransaction(true);
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
@@ -845,7 +844,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void ShieldAddressMore10NoteToPublicAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     try {
@@ -890,7 +889,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldMoreThan10NoteFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     try {
@@ -932,7 +931,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void shieldAddressToNoTargetAccountFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     try {
@@ -972,7 +971,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressToShieldAddressNoFromAddressFailure() throws ZksnarkException {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //From amount
@@ -1010,7 +1009,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressAndShieldAddressToShieldAddressNoFromAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1059,7 +1058,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressAToShieldAddressNoToAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1098,7 +1097,7 @@ public class ShieldedTransferActuatorTest {
    */
 //  public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
 //    Args.getInstance().setAllowShieldedTransaction(true);
-//    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+//    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 //    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 //
 //    dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
@@ -1206,47 +1205,47 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
-    Args.getInstance().setAllowShieldedTransaction(true);
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     try {
-        //public address to shield address(one value is 0)
-        long ownerAssertBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
-            .fromHexString(PUBLIC_ADDRESS_ONE)));
-        ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
-        //From amount
-        builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
-            (AMOUNT + fee));
-        //TO amount
-        SpendingKey spendingKey = SpendingKey.random();
-        FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
-        IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-        PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      //public address to shield address(one value is 0)
+      long ownerAssertBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
+          .fromHexString(PUBLIC_ADDRESS_ONE)));
+      ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
+      //From amount
+      builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
+          (AMOUNT + fee));
+      //TO amount
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
 
-        Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
-            Note.generateR());
+      Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
+          Note.generateR());
+      builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
+          new byte[512]);
+      {
+        note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
         builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
             new byte[512]);
-        {
-          note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
-          builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
-              new byte[512]);
-        }
-        TransactionCapsule transactionCapOne = builderOne.build();
+      }
+      TransactionCapsule transactionCapOne = builderOne.build();
 
-        //Add public address sign
-        TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-        transactionSignBuild.setTransaction(transactionCapOne.getInstance());
-        transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-            ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-        transactionCapOne = wallet.addSign(transactionSignBuild.build());
+      //Add public address sign
+      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
+      transactionSignBuild.setTransaction(transactionCapOne.getInstance());
+      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
+          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
+      transactionCapOne = wallet.addSign(transactionSignBuild.build());
 
-        Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
-        AccountCapsule accountCapsuleOne =
-            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
-        Assert.assertEquals(getAssertBalance(accountCapsuleOne),
-            ownerAssertBalance - AMOUNT - fee);
+      Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
+      AccountCapsule accountCapsuleOne =
+          dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
+      Assert.assertEquals(getAssertBalance(accountCapsuleOne),
+          ownerAssertBalance - AMOUNT - fee);
     } catch (Exception e) {
       System.out.println(e.getMessage());
       Assert.assertTrue(false);
@@ -1258,7 +1257,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void ShieldToPublicAddressWithZoreValueFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT * 2);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1310,7 +1309,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void PublicAddressToShieldNoteValueWithNagativeFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1349,7 +1348,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void ShieldNoteValueWithNagativeToPublicFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
@@ -1399,7 +1398,7 @@ public class ShieldedTransferActuatorTest {
 
   //@Test  useless case
   public void ShieldAddressToPublicAddressBigValueFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
     AccountCapsule accountCapsuleTwo =
@@ -1458,7 +1457,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void publicAddressAToShieldAddressFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1497,7 +1496,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void shieldAddressToPublicFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
@@ -1546,7 +1545,7 @@ public class ShieldedTransferActuatorTest {
    */
   @Test
   public void shieldAddressToPublicNotEnoughFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(0);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {

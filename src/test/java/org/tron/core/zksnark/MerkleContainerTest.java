@@ -9,27 +9,23 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
-import org.tron.core.exception.ZksnarkException;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.MerkleContainer;
-import org.tron.core.zen.merkle.MerklePath;
-import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
+import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.ZksnarkException;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
@@ -172,8 +168,10 @@ public class MerkleContainerTest {
   private Transaction createTransaction(String strCm1, String strCm2) {
     ByteString cm1 = ByteString.copyFrom(ByteArray.fromHexString(strCm1));
     ByteString cm2 = ByteString.copyFrom(ByteArray.fromHexString(strCm2));
-    ReceiveDescription receiveDescription1 = ReceiveDescription.newBuilder().setNoteCommitment(cm1).build();
-    ReceiveDescription receiveDescription2 = ReceiveDescription.newBuilder().setNoteCommitment(cm2).build();
+    ReceiveDescription receiveDescription1 = ReceiveDescription.newBuilder().setNoteCommitment(cm1)
+        .build();
+    ReceiveDescription receiveDescription2 = ReceiveDescription.newBuilder().setNoteCommitment(cm2)
+        .build();
     ShieldedTransferContract contract = ShieldedTransferContract.newBuilder().
         addReceiveDescription(receiveDescription1).
         addReceiveDescription(receiveDescription2).build();
@@ -355,7 +353,7 @@ public class MerkleContainerTest {
     int number = 0;
     OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder().addOutPoints(outputPoint1).
         addOutPoints(outputPoint2).setBlockNum(number).build();
-    Args.getInstance().setAllowShieldedTransaction(true);
+    //  Args.getInstance().setAllowShieldedTransaction(1);
     Wallet wallet = context.getBean(Wallet.class);
     IncrementalMerkleVoucherInfo merkleTreeWitnessInfo = wallet
         .getMerkleTreeVoucherInfo(outputPointInfo);

@@ -487,7 +487,7 @@ public class SendCoinShieldTest {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
@@ -510,7 +510,7 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-            1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -572,7 +572,7 @@ public class SendCoinShieldTest {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
@@ -595,7 +595,7 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-            1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -659,7 +659,7 @@ public class SendCoinShieldTest {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
@@ -776,7 +776,7 @@ public class SendCoinShieldTest {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
     // generate spend proof
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(4010 * 1000000l);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     SpendingKey sk = SpendingKey
@@ -795,7 +795,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-                4010 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        4010 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -1008,7 +1008,7 @@ public class SendCoinShieldTest {
     // generate spend proof
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(110 * 1000000);
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //prepare two cm with different sk
     SpendingKey sk1 = SpendingKey.random();
@@ -1049,7 +1049,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-            1000 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        1000 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     //execute
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
@@ -1068,7 +1068,7 @@ public class SendCoinShieldTest {
   @Test
   public void testValueBalance() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     //case 1， a public input, no input cm,  an output cm, no public output
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1311,7 +1311,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestCreateMultipleTxAtTheSameTime() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     List<TransactionCapsule> txList = Lists.newArrayList();
     //case 1， a public input, no input cm,  an output cm, no public output
     {
@@ -1446,7 +1446,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestCtxGeneratesTooMuchProof() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     //case 3， no public input, an input cm,  no output cm, a public output
     {
       //prepare two cm with different sk, cm1 is used for fake spendDesc
@@ -1526,7 +1526,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestGeneratesProofWithDiffCtx() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     //case 3， no public input, an input cm,  no output cm, a public output
     {
@@ -1589,7 +1589,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestGeneratesProofWithWrongAlpha() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     //case 3， no public input, an input cm,  no output cm, a public output
     {
       SpendingKey sk2 = SpendingKey.random();
@@ -1650,7 +1650,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestWrongAsk() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     //case 3， no public input, an input cm,  no output cm, a public output
     {
@@ -1762,7 +1762,7 @@ public class SendCoinShieldTest {
     //add to transparent
     String TO_ADDRESS = generateDefaultToAccount();
     builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),
-            1000 * 1000000 - wallet.getShieldedTransactionFee());
+        1000 * 1000000 - wallet.getShieldedTransactionFee());
 
     TransactionCapsule transactionCap = builder.build();
     return transactionCap;
@@ -1771,9 +1771,9 @@ public class SendCoinShieldTest {
   @Test
   public void TestDefaultBuilder() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
-    
+
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
     executeTx(transactionCapsule);
@@ -1782,7 +1782,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestWrongSpendRk() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
@@ -1819,7 +1819,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestWrongSpendProof() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
@@ -1858,7 +1858,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestWrongNf() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
@@ -1897,7 +1897,7 @@ public class SendCoinShieldTest {
   @Test
   public void TestWrongAnchor() throws Exception {
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveAllowZksnarkTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     {
       ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet) {
         //set wrong anchor

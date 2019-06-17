@@ -18,7 +18,7 @@ public class SaplingNoteTest {
 
   @BeforeClass
   public static void init() {
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransaction(1);
   }
 
   @AfterClass
@@ -91,7 +91,8 @@ public class SaplingNoteTest {
 
     // Test diversifier and pk_d are not the same for different spending keys
     Note note3 = new Note(SpendingKey.random().defaultAddress(), randomInt(0, 99999));
-    Assert.assertNotEquals(ByteArray.toHexString(note1.d.data), ByteArray.toHexString(note3.d.data));
+    Assert
+        .assertNotEquals(ByteArray.toHexString(note1.d.data), ByteArray.toHexString(note3.d.data));
     Assert.assertNotEquals(ByteArray.toHexString(note1.pkD), ByteArray.toHexString(note3.pkD));
 
 

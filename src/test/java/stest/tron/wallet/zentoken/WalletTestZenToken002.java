@@ -1,6 +1,5 @@
 package stest.tron.wallet.zentoken;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -15,14 +14,12 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -87,17 +84,17 @@ public class WalletTestZenToken002 {
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Args.getInstance().setAllowShieldedTransaction(true);
+    Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     sendShieldAddressInfo = PublicMethed.generateShieldAddress();
     sendShieldAddress = sendShieldAddressInfo.get().getAddress();
     logger.info("sendShieldAddressInfo:" + sendShieldAddressInfo);
     memo = "Shield memo in" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress,
-        "" + (sendTokenAmount - zenTokenFee),memo);
-    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress,sendTokenAmount,null,
-        null,shieldOutList,null,0,zenTokenOwnerKey,blockingStubFull));
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "" + (sendTokenAmount - zenTokenFee), memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress, sendTokenAmount, null,
+        null, shieldOutList, null, 0, zenTokenOwnerKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     sendNote = notes.getNoteTxs(0).getNote();
 
   }
@@ -107,23 +104,23 @@ public class WalletTestZenToken002 {
     receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
     receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
 
-    shieldOutList.clear();;
+    shieldOutList.clear();
+    ;
     memo = "Send shield to receiver shield memo in" + System.currentTimeMillis();
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress,
-        "" + (sendNote.getValue() - zenTokenFee),memo);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverShieldAddress,
+        "" + (sendNote.getValue() - zenTokenFee), memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
-        null,0,
+        null, 0,
         sendShieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
-        null,0,
-        zenTokenOwnerKey,blockingStubFull));
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(receiverShieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(receiverShieldAddressInfo, blockingStubFull);
     receiverNote = notes.getNoteTxs(0).getNote();
     logger.info("Receiver note:" + receiverNote.toString());
     Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
-
 
 
   }
