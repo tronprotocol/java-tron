@@ -837,7 +837,7 @@ public class Manager {
 
         try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
-          if (isShieldedTransaction(trx.getInstance()) && Args.getInstance()
+          if (!isShieldedTransaction(trx.getInstance()) || Args.getInstance()
               .isAllowShieldedTransaction()) {
             pendingTransactions.add(trx);
           }
