@@ -322,7 +322,8 @@ public class ProposalCreateActuator extends AbstractActuator {
       }
       case (27): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
-          throw new ContractValidateException("Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
         }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
