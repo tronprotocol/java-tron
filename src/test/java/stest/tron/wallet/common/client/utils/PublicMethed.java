@@ -5073,10 +5073,11 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static DecryptNotes getShieldNotesByIvkOnSolidity(Optional<ShieldAddressInfo> shieldAddressInfo,
-      WalletSolidityGrpc
-          .WalletSolidityBlockingStub blockingStubSolidity) {
-    Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+  public static DecryptNotes getShieldNotesByIvkOnSolidity(
+      Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Long startBlockNum = 0L;
     if (currentBlockNum > 100) {
@@ -5116,10 +5117,11 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static DecryptNotes getShieldNotesByOvkOnSolidity(Optional<ShieldAddressInfo> shieldAddressInfo,
-      WalletSolidityGrpc
+  public static DecryptNotes getShieldNotesByOvkOnSolidity(
+      Optional<ShieldAddressInfo> shieldAddressInfo, WalletSolidityGrpc
           .WalletSolidityBlockingStub blockingStubSolidity) {
-    Block currentBlock = blockingStubSolidity.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Long startBlockNum = 0L;
     if (currentBlockNum > 100) {
@@ -5183,6 +5185,49 @@ public class PublicMethed {
     return null;
 
   }
+
+  /**
+   * constructor.
+   */
+  public static SpendResult getSpendResultOnSolidity(
+      ShieldAddressInfo shieldAddressInfo, NoteTx noteTx, WalletSolidityGrpc
+          .WalletSolidityBlockingStub blockingStubSolidity) {
+
+
+    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+    OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+    outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+    outPointBuild.setIndex(noteTx.getIndex());
+    request.addOutPoints(outPointBuild.build());
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubSolidity
+        .getMerkleTreeVoucherInfo(request.build());
+
+    if (merkleVoucherInfo.getVouchersCount() > 0) {
+      NoteParameters.Builder builder = NoteParameters.newBuilder();
+      try {
+        builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
+        builder.setNk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getNk()));
+      } catch (Exception e) {
+        Assert.assertTrue(1 == 1);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+      builder.setNote(noteBuild.build());
+      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+
+      SpendResult result = blockingStubSolidity.isSpend(builder.build());
+      return result;
+
+    }
+    return null;
+
+  }
+
 
 
 
