@@ -33,11 +33,11 @@ public class ShieldNoteInfo {
   }
 
   /**
-   * format shield note to a string
+   * format shield note to a string.
    * @return
    */
   public String encode() {
-    String encodeString = noteIndex +";";
+    String encodeString = noteIndex + ";";
     encodeString += paymentAddress;
     encodeString += ";";
     encodeString += ByteArray.toHexString(r);
@@ -53,9 +53,7 @@ public class ShieldNoteInfo {
   }
 
   /**
-   * parse string to get shield note
-   * @param data
-   * @return
+   * constructor.
    */
   public boolean decode(final String data) {
     String[] sourceStrArray = data.split(";");

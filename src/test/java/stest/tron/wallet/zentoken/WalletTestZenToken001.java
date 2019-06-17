@@ -140,7 +140,7 @@ public class WalletTestZenToken001 {
         blockingStubFull);
     Long afterNetUsed = PublicMethed.getAccountResource(zenTokenOwnerAddress,blockingStubFull)
         .getFreeNetUsed();
-    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount - zenTokenFee + zenTokenFee);
+    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
     notes = PublicMethed.listShieldNote(shieldAddressInfo,blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
