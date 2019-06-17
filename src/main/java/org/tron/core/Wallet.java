@@ -1392,7 +1392,7 @@ public class Wallet {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed")).build();
     }
-    trxCap.setResult(ret);
+    trxCap.setResult(runtime);
     return trxCap.getInstance();
   }
 
