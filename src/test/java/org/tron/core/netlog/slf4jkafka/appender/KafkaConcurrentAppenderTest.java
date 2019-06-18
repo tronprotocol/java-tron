@@ -18,7 +18,46 @@ import org.tron.core.netlog.slf4jkafka.recorder.TronProducerRecord;
 public class KafkaConcurrentAppenderTest {
 
   @Test
-  public void testKafkaConcurrentAppender() throws IOException, JoranException {
+  public void testKafkaConcurrentAppenderSuccess() throws IOException, JoranException {
+
+    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+    File externalConfigFile = new File(
+        getClass().getClassLoader().getResource("logback-test-kafka.xml").getFile());
+
+    if (!externalConfigFile.exists()) {
+      throw new IOException(
+          "Logback External Config File Parameter does not reference a file that exists");
+    } else {
+      if (!externalConfigFile.isFile()) {
+        throw new IOException(
+            "Logback External Config File Parameter exists, but does not reference a file");
+      } else {
+        if (!externalConfigFile.canRead()) {
+          throw new IOException(
+              "Logback External Config File exists and is a file, but cannot be read.");
+        } else {
+          JoranConfigurator configurator = new JoranConfigurator();
+          configurator.setContext(lc);
+          lc.reset();
+          configurator.doConfigure(externalConfigFile);
+        }
+      }
+    }
+
+    Logger rootLogger = (Logger) LoggerFactory.getLogger(ROOT_LOGGER_NAME);
+
+    KafkaConcurrentAppender appender =
+        ((KafkaConcurrentAppender) rootLogger.getAppender("KAFKA-LOG"));
+
+    appender.setTopic(null);
+    appender.setBootstrapServers(null);
+    appender.start();
+    Assert.assertFalse(appender.isStarted());
+  }
+
+  @Test
+  public void testKafkaConcurrentAppenderFailure() throws IOException, JoranException {
 
     LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 
@@ -52,6 +91,8 @@ public class KafkaConcurrentAppenderTest {
 
     Assert.assertTrue("kafka-test".equals(appender.getTopic()));
     Assert.assertTrue("1.2.3.4:18888".equals(appender.getBootstrapServers()));
+    Assert.assertTrue(6000 == appender.getRetryInterval());
+    Assert.assertTrue(null == appender.getKafkaParamString());
     Assert.assertTrue(appender.isStarted());
   }
 

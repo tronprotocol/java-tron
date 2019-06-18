@@ -44,7 +44,6 @@ public class KafkaConcurrentAppender<E> extends OutputStreamAppender<E> {
   }
 
   public void setBootstrapServers(String bootstrapServers) {
-    Preconditions.checkNotNull(bootstrapServers);
     this.bootstrapServers = bootstrapServers;
   }
 
@@ -98,6 +97,7 @@ public class KafkaConcurrentAppender<E> extends OutputStreamAppender<E> {
       started = true;
       logger.info("Net Log Startup successfully.");
     } else {
+      started = false;
       StringBuilder sb = new StringBuilder();
       sb.append("Net Log Startup failure, Reason:\n");
       errorsMap.forEach((k, v) -> {
