@@ -354,7 +354,7 @@ public class Manager {
   @Getter
   private AtomicInteger shieldedTransInPendingCounts = new AtomicInteger(0);
 
-  private static final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
+  private final int SHIELDED_TRANS_IN_PENDING_MAX_COUNTS = Args.getInstance()
       .getShieldedTransInPendingMaxCounts();
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
 
