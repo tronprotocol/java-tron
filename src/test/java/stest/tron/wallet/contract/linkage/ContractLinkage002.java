@@ -1,5 +1,7 @@
 package stest.tron.wallet.contract.linkage;
 
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS_VALUE;
+
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
@@ -19,6 +21,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -80,8 +84,13 @@ public class ContractLinkage002 {
     infoById0 = PublicMethed.getTransactionInfoById(sendcoin, blockingStubFull);
     logger.info("infoById0   " + infoById0.get());
     Assert.assertEquals(ByteArray.toHexString(infoById0.get().getContractResult(0).toByteArray()),
-        "SUCCESS");
+        "");
     Assert.assertEquals(infoById0.get().getResult().getNumber(), 0);
+    Optional<Transaction> ById = PublicMethed.getTransactionById(sendcoin, blockingStubFull);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
+        SUCCESS_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), SUCCESS_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.SUCCESS);
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));

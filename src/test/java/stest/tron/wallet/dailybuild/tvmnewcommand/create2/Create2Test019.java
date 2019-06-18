@@ -1,6 +1,7 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
 import static org.hamcrest.core.StringContains.containsString;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS_VALUE;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,6 +23,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -106,9 +109,13 @@ public class Create2Test019 {
     infoById0 = PublicMethed.getTransactionInfoById(sendcoin, blockingStubFull);
     logger.info("infoById0   " + infoById0.get());
     Assert.assertEquals(ByteArray.toHexString(infoById0.get().getContractResult(0).toByteArray()),
-        "SUCCESS");
+        "");
     Assert.assertEquals(infoById0.get().getResult().getNumber(), 0);
-
+    Optional<Transaction> ById = PublicMethed.getTransactionById(sendcoin, blockingStubFull);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
+        SUCCESS_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), SUCCESS_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.SUCCESS);
     String filePath = "src/test/resources/soliditycode/create2contractn2.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
