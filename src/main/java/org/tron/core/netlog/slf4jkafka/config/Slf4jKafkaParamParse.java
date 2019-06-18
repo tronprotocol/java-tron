@@ -16,7 +16,7 @@ public enum Slf4jKafkaParamParse {
 
   INSTANCE;
 
-  public static Properties parse(String params) throws KafkaConfigException {
+  public static Properties parse(String params) {
     Properties props = KafkaProducerContext.getDefaultProperties();
 
     try {

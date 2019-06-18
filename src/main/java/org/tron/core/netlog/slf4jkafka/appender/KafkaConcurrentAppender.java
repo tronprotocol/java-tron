@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.netlog.slf4jkafka.config.Slf4jKafkaParamParse;
-import org.tron.core.netlog.slf4jkafka.exceptions.KafkaConfigException;
 import org.tron.core.netlog.slf4jkafka.exceptions.KafkaProducerCreateException;
 import org.tron.core.netlog.slf4jkafka.kafkaproducer.KafkaProducerConcurrentProcessor;
 import org.tron.core.netlog.slf4jkafka.kafkaproducer.KafkaProducerContext;
@@ -74,17 +73,12 @@ public class KafkaConcurrentAppender<E> extends OutputStreamAppender<E> {
       errorsMap.put(errorsMap.size() + 1, "topic is null.");
     }
 
+    kafkaConfig = Slf4jKafkaParamParse.INSTANCE.parse(kafkaParamString);
     try {
-      kafkaConfig = Slf4jKafkaParamParse.INSTANCE.parse(kafkaParamString);
-      try {
-        kafkaConfig.setProperty("bootstrap.servers", bootstrapServers);
-      } catch (NullPointerException npe) {
-        addStatus(new ErrorStatus("bootstrap.server is null", this));
-        errorsMap.put(errorsMap.size() + 1, "bootstrapServer is null.");
-      }
-    } catch (KafkaConfigException e) {
-      addStatus(new ErrorStatus("kafkaParamString is parsed failure.", this));
-      errorsMap.put(errorsMap.size() + 1, "kafkaParamString is parsed failure.");
+      kafkaConfig.setProperty("bootstrap.servers", bootstrapServers);
+    } catch (NullPointerException npe) {
+      addStatus(new ErrorStatus("bootstrap.server is null", this));
+      errorsMap.put(errorsMap.size() + 1, "bootstrapServer is null.");
     }
 
     if (retryInterval == null) {
