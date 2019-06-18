@@ -93,10 +93,22 @@ public class Create2Test019 {
   @Test(enabled = true, description = "seted Value of Contract that created by create2,"
       + " should not be stored after contact suicided ande create2 again")
   public void testTriggerContract() {
+    String sendcoin = PublicMethed
+        .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
+            testNetAccountKey,
+            blockingStubFull);
+
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 1000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById0 = null;
+    infoById0 = PublicMethed.getTransactionInfoById(sendcoin, blockingStubFull);
+    logger.info("infoById0   " + infoById0.get());
+    Assert.assertEquals(ByteArray.toHexString(infoById0.get().getContractResult(0).toByteArray()),
+        "SUCCESS");
+    Assert.assertEquals(infoById0.get().getResult().getNumber(), 0);
+
     String filePath = "src/test/resources/soliditycode/create2contractn2.sol";
     String contractName = "Factory";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);

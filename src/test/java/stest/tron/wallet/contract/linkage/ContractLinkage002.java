@@ -3,6 +3,7 @@ package stest.tron.wallet.contract.linkage;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -18,6 +19,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -68,10 +70,19 @@ public class ContractLinkage002 {
 
   @Test(enabled = true)
   public void updateSetting() {
-    Assert.assertTrue(PublicMethed.sendcoin(linkage002Address, 200000000000L, fromAddress,
-        testKey002, blockingStubFull));
+    String sendcoin = PublicMethed
+        .sendcoinGetTransactionId(linkage002Address, 200000000000L, fromAddress,
+            testKey002, blockingStubFull);
     Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> infoById0 = null;
+    infoById0 = PublicMethed.getTransactionInfoById(sendcoin, blockingStubFull);
+    logger.info("infoById0   " + infoById0.get());
+    Assert.assertEquals(ByteArray.toHexString(infoById0.get().getContractResult(0).toByteArray()),
+        "SUCCESS");
+    Assert.assertEquals(infoById0.get().getResult().getNumber(), 0);
+
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(linkage002Address, 50000000L,
         3, 1, linkage002Key, blockingStubFull));
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(linkage002Address,
