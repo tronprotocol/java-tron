@@ -127,7 +127,7 @@ public class ContractScenario015 {
     logger.info(":" + ByteArray
         .toStr(transactionExtention.getResult().getMessage().toByteArray()));
     logger.info("Result:" + Hex.toHexString(result));
-    logger.info("getCode"+transactionExtention.getResult().getCode().getNumber());
+    logger.info("getCode" + transactionExtention.getResult().getCode().getNumber());
     Assert.assertEquals("SUCESS",transaction.getRet(0).getRet().toString());
     Assert.assertEquals(1, ByteArray.toLong(ByteArray
         .fromHexString(Hex

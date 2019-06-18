@@ -1,5 +1,6 @@
 package stest.tron.wallet.contract.scenario;
 
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS_VALUE;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -21,6 +22,8 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -130,7 +133,14 @@ public class ContractScenario014 {
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0,infoById.get().getResultValue());
-    Assert.assertEquals("SUCCESS",(infoById.get().getResMessage()).toString());
+    Assert.assertEquals("",
+        ByteArray.toHexString(infoById.get().getResMessage().toByteArray()));
+
+    Optional<Transaction> byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertEquals(byId.get().getRet(0).getContractRet().getNumber(),
+        SUCCESS_VALUE);
+    Assert.assertEquals(byId.get().getRet(0).getContractRetValue(), SUCCESS_VALUE);
+    Assert.assertEquals(byId.get().getRet(0).getContractRet(), contractResult.SUCCESS);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString().isEmpty());

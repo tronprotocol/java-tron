@@ -56,8 +56,8 @@ public class HttpTestSendCoin001 {
     HttpMethed.printJsonContent(responseContent);
     String retString = responseContent.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet") == "SUCCESS");
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+        "contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() > 4);
   }
 
@@ -90,8 +90,8 @@ public class HttpTestSendCoin001 {
         responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString())
-        .getString("contractRet") == "SUCCESS");
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString())
+        .getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 
@@ -109,8 +109,8 @@ public class HttpTestSendCoin001 {
         JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet") == "SUCCESS");
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+        "contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 
