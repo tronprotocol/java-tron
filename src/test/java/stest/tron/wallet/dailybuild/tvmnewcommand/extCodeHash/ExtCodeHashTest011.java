@@ -128,6 +128,7 @@ public class ExtCodeHashTest011 {
         "getCodeHashByAddr()", "#", false, 0,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
 
@@ -190,6 +191,8 @@ public class ExtCodeHashTest011 {
         "getCodeHashByAddr()", "#", false, 0,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
 
@@ -266,6 +269,7 @@ public class ExtCodeHashTest011 {
         "getCodeHashByAddr(address)", num, false, 0,
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
 
@@ -335,6 +339,7 @@ public class ExtCodeHashTest011 {
         1000000000L, "0", 0, user001Address, user001Key,
         blockingStubFull);
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(transferTokenTxid, blockingStubFull);
     infoById = PublicMethed

@@ -122,6 +122,7 @@ public class ShiftCommand001 {
     txid = PublicMethed.triggerContract(contractAddress,
         "binaryMoveR(int256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -156,6 +157,8 @@ public class ShiftCommand001 {
     txid = PublicMethed.triggerContract(contractAddress,
         "binaryLiftR(int256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
 
@@ -228,12 +231,14 @@ public class ShiftCommand001 {
     txid = PublicMethed.triggerContract(contractAddress,
         "shlTest(uint256,uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(10,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     txid = PublicMethed.triggerContract(contractAddress,
         "shrTest(uint256,uint256)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));

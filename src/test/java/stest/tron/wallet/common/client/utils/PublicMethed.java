@@ -3088,10 +3088,9 @@ public class PublicMethed {
    */
 
   public static String triggerContract(byte[] contractAddress, String method, String argsStr,
-                                       Boolean isHex, long callValue, long feeLimit,
-                                       String tokenId, long tokenValue,
-                                       byte[] ownerAddress, String priKey,
-                                       WalletGrpc.WalletBlockingStub blockingStubFull) {
+      Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
+      byte[] ownerAddress,
+      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -4514,6 +4513,9 @@ public class PublicMethed {
     return retMap;
   }
 
+  /**
+   * constructor.
+   */
   public static String triggerConstantContract(byte[] contractAddress, String method,
       String argsStr,
       Boolean isHex, long callValue, long feeLimit, String tokenId, long tokenValue,
@@ -4610,7 +4612,10 @@ public class PublicMethed {
     }
   }
 
-  public static String clearContractABI(byte[] contractAddress,
+  /**
+   * constructor.
+   */
+  public static String clearContractAbi(byte[] contractAddress,
       byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4630,10 +4635,10 @@ public class PublicMethed {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    Contract.ClearABIContract clearABIContract = builder.build();
+    Contract.ClearABIContract clearAbiContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
-        .clearContractABI(clearABIContract);
+        .clearContractABI(clearAbiContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
       System.out.println("RPC create call trx failed!");
       System.out.println("Code = " + transactionExtention.getResult().getCode());
@@ -4696,8 +4701,10 @@ public class PublicMethed {
     }
   }
 
-
-  public static TransactionExtention clearContractABIForExtention(byte[] contractAddress,
+  /**
+   * constructor.
+   */
+  public static TransactionExtention clearContractAbiForExtention(byte[] contractAddress,
       byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
@@ -4717,15 +4724,17 @@ public class PublicMethed {
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    Contract.ClearABIContract clearABIContract = builder.build();
+    Contract.ClearABIContract clearAbiContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
-        .clearContractABI(clearABIContract);
+        .clearContractABI(clearAbiContract);
     return transactionExtention;
 
   }
 
-
+  /**
+   * constructor.
+   */
   public static TransactionExtention triggerConstantContractForExtention(byte[] contractAddress,
       String method,
       String argsStr,
@@ -4804,6 +4813,9 @@ public class PublicMethed {
 
   }
 
+  /**
+   * constructor.
+   */
   public static String create2(String[] parameters) {
     if (parameters == null || parameters.length != 3) {
       logger.error("create2 needs 3 parameter:\ncreate2 address code salt");

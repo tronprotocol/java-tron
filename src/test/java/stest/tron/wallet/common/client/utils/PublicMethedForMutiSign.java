@@ -4512,7 +4512,7 @@ public class PublicMethedForMutiSign {
   }
 
 
-  public static boolean clearContractABI(byte[] contractAddress,
+  public static boolean clearContractAbi(byte[] contractAddress,
       byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId,
       String[] permissionKeyString) {
