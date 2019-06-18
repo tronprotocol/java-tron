@@ -26,7 +26,7 @@ import org.tron.core.exception.ZksnarkException;
 @Slf4j
 public class JLibrustzcash {
 
-  private static final Librustzcash INSTANCE = LibrustzcashWrapper.getInstance();
+  private static Librustzcash INSTANCE;
 
   public static void librustzcashZip32XskMaster(Zip32XskMasterParams params) {
     if (!isOpenZen()) {
@@ -282,7 +282,11 @@ public class JLibrustzcash {
   }
 
   private static boolean isOpenZen() {
-    return Args.getInstance().isFullNodeAllowShieldedTransaction();
+    boolean res = Args.getInstance().isFullNodeAllowShieldedTransaction();
+    if (res) {
+      INSTANCE = LibrustzcashWrapper.getInstance();
+    }
+    return res;
   }
 
 }

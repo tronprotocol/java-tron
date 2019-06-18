@@ -484,6 +484,10 @@ public class Args {
   @Setter
   private int validContractProtoThreadNum;
 
+  @Getter
+  @Setter
+  private int shieldedTransInPendingMaxCounts;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -564,6 +568,7 @@ public class Args {
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
+    INSTANCE.shieldedTransInPendingMaxCounts = 10;
   }
 
   /**
@@ -978,6 +983,10 @@ public class Args {
         config.hasPath("node.validContractProto.threads") ? config
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
+
+    INSTANCE.shieldedTransInPendingMaxCounts =
+        config.hasPath("node.shieldedTransInPendingMaxCounts") ? config
+            .getInt("node.shieldedTransInPendingMaxCounts") : 10;
 
     if (INSTANCE.isWitness()) {
       INSTANCE.fullNodeAllowShieldedTransaction = true;
