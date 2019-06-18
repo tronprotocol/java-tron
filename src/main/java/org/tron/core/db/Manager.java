@@ -817,6 +817,11 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
+    if (isShieldedTransaction(trx.getInstance()) && !Args.getInstance()
+        .isFullNodeAllowShieldedTransaction()) {
+      return true;
+    }
+
     synchronized (pushTransactionQueue) {
       pushTransactionQueue.add(trx);
     }
@@ -837,10 +842,7 @@ public class Manager {
 
         try (ISession tmpSession = revokingStore.buildSession()) {
           processTransaction(trx, null);
-          if (!isShieldedTransaction(trx.getInstance()) || Args.getInstance()
-              .isFullNodeAllowShieldedTransaction()) {
-            pendingTransactions.add(trx);
-          }
+          pendingTransactions.add(trx);
           tmpSession.merge();
         }
         if (isShieldedTransaction(trx.getInstance())) {
