@@ -1895,14 +1895,14 @@ public class RpcApiService implements Service {
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (ContractValidateException e) {
+      } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info("exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);
@@ -1923,14 +1923,14 @@ public class RpcApiService implements Service {
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (ContractValidateException e) {
+      } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
             .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info("exception caught" + e.getMessage());
+        logger.info("exception caught: " + e.getMessage());
       }
 
       trxExtBuilder.setResult(retBuilder);

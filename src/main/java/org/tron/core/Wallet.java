@@ -1773,6 +1773,7 @@ public class Wallet {
       transactionCapsule = builder.build();
     } catch (ZksnarkException e) {
       logger.error("createShieldedTransaction except, error is " + e.toString());
+      throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
 
@@ -1868,6 +1869,7 @@ public class Wallet {
       transactionCapsule = builder.buildWithoutAsk();
     } catch (ZksnarkException e) {
       logger.error("createShieldedTransaction except, error is " + e.toString());
+      throw new ZksnarkException(e.toString());
     }
     return transactionCapsule;
 
