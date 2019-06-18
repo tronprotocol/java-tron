@@ -5,7 +5,6 @@ import java.util.Properties;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.netlog.slf4jkafka.exceptions.KafkaConfigException;
 
 @Slf4j
 public class Slf4jKafkaParamParseTest {

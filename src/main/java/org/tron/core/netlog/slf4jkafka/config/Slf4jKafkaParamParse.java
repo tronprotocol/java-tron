@@ -8,7 +8,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.core.netlog.slf4jkafka.exceptions.KafkaConfigException;
 import org.tron.core.netlog.slf4jkafka.kafkaproducer.KafkaProducerContext;
 
 @Slf4j(topic = "kafka-log")
