@@ -633,6 +633,8 @@ public class Create2Test020 {
         .triggerContract(contractAddress,
             "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
@@ -754,6 +756,8 @@ public class Create2Test020 {
         .triggerContract(contractAddress,
             "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 
@@ -877,6 +881,8 @@ public class Create2Test020 {
         .triggerContract(contractAddress,
             "deploy3(bytes,string)", num, false,
             0, maxFeeLimit, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Optional<TransactionInfo> infoById2 = null;
     infoById2 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
 

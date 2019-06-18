@@ -88,7 +88,6 @@ public class ContractTrcToken075 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -200,7 +199,6 @@ public class ContractTrcToken075 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     tokenId = Long.toString(0);
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
@@ -217,7 +215,6 @@ public class ContractTrcToken075 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     tokenId = Long.toString(-1);
 
@@ -225,24 +222,24 @@ public class ContractTrcToken075 {
         "getToken(trcToken)", tokenId, false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() != 0);
     Assert.assertEquals(FAILED, infoById.get().getResult());
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     tokenId = Long.toString(Long.MIN_VALUE);
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "getToken(trcToken)", tokenId, false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
     logger.info("Trigger energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
@@ -252,12 +249,12 @@ public class ContractTrcToken075 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "getTokenLongMin()", "#", false, 0,
         1000000000L, "0", 0, dev001Address, dev001Key,
         blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);
@@ -268,7 +265,6 @@ public class ContractTrcToken075 {
     Assert.assertEquals("REVERT opcode executed",
         infoById.get().getResMessage().toStringUtf8());
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     triggerTxid = PublicMethed.triggerContract(transferTokenContractAddress,
         "getTokenLongMax()", "#", false, 0,

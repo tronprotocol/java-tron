@@ -95,7 +95,7 @@ public class ClearAbi007 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     byte[] fakeAddress = "412B5D".getBytes();
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(fakeAddress, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(fakeAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),
@@ -106,7 +106,7 @@ public class ClearAbi007 {
     byte[] fakeAddress1 = "412B5D3405B2D26767C9C09886D53DEAFF6EB718AC111".getBytes();
 
     TransactionExtention transactionExtention1 = PublicMethed
-        .clearContractABIForExtention(fakeAddress1, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(fakeAddress1, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention1.getResult().getCode().toString(),

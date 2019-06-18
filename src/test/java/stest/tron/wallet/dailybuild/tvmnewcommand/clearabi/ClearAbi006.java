@@ -95,7 +95,7 @@ public class ClearAbi006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(contractExcAddress1, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(contractExcAddress1, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert.assertThat(transactionExtention.getResult().getCode().toString(),
         containsString("CONTRACT_VALIDATE_ERROR"));

@@ -93,7 +93,7 @@ public class ClearAbi004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     TransactionExtention transactionExtention = PublicMethed
-        .clearContractABIForExtention(contractExcAddress, contractExcAddress, contractExcKey,
+        .clearContractAbiForExtention(contractExcAddress, contractExcAddress, contractExcKey,
             blockingStubFull);
     Assert
         .assertThat(transactionExtention.getResult().getCode().toString(),

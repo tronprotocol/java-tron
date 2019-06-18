@@ -162,7 +162,7 @@ public class WalletTestMutiSign018 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString() != null);
     Assert.assertTrue(PublicMethedForMutiSign
-        .clearContractABI(contractAddress, ownerAddress, ownerKey,
+        .clearContractAbi(contractAddress, ownerAddress, ownerKey,
             blockingStubFull, 2, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -240,7 +240,7 @@ public class WalletTestMutiSign018 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString() != null);
     Assert.assertTrue(PublicMethedForMutiSign
-        .clearContractABI(contractAddress, ownerAddress, ownerKey,
+        .clearContractAbi(contractAddress, ownerAddress, ownerKey,
             blockingStubFull, 2, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -295,7 +295,7 @@ public class WalletTestMutiSign018 {
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getAbi().toString() != null);
     Assert.assertTrue(PublicMethedForMutiSign
-        .clearContractABI(contractAddress, ownerAddress, ownerKey,
+        .clearContractAbi(contractAddress, ownerAddress, ownerKey,
             blockingStubFull, 2, activeDefaultKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

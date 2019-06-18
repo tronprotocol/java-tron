@@ -137,7 +137,7 @@ public class TriggerConstant017 {
             .toHexString(result))));
     String txid = "";
     txid = PublicMethed
-        .clearContractABI(contractAddress, contractExcAddress, contractExcKey, blockingStubFull);
+        .clearContractAbi(contractAddress, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);

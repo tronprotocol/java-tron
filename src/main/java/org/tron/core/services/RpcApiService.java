@@ -1951,12 +1951,24 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getRcm(EmptyMessage request,
+        StreamObserver<BytesMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getRcm());
+      } catch (Exception e) {
+        responseObserver.onError(e);
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getExpandedSpendingKey(BytesMessage request,
         StreamObserver<ExpandedSpendingKeyMessage> responseObserver) {
       ByteString spendingKey = request.getValue();
 
       try {
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
+        responseObserver.onNext(response);
       } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(e);
       }
@@ -2020,6 +2032,8 @@ public class RpcApiService implements Service {
       }
       responseObserver.onCompleted();
     }
+
+
 
     @Override
     public void getZenPaymentAddress(IncomingViewingKeyDiversifierMessage request,
