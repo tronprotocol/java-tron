@@ -5274,7 +5274,7 @@ public class PublicMethed {
     if (currentBlockNum > 100) {
       startBlockNum = currentBlockNum - 100;
     }
-    startBlockNum = 0L;
+    //startBlockNum = 0L;
 
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum);
@@ -5655,6 +5655,7 @@ public class PublicMethed {
     } catch (Exception e) {
       System.out.println(e);
     }
+    broadcastTransaction(transaction, blockingStubFull);
     return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
         .toByteArray()));
   }

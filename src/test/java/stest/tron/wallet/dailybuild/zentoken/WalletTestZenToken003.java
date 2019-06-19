@@ -113,8 +113,6 @@ public class WalletTestZenToken003 {
     String memo2 = "Public to  shield address2 transaction";
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
         "" + sendToShiledAddress2Amount, memo2);
-
-
     txid = PublicMethed.sendShieldCoinGetTxid(
         zenTokenOwnerAddress, costTokenAmount,
         null, null,
