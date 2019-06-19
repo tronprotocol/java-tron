@@ -53,7 +53,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
   @Override
   public boolean execute(TransactionResultCapsule ret)
       throws ContractExeException {
-    long fee = calcFee();
+    long fee = 0;
+    long shieldedTransactionFee = calcFee();
+
     try {
       shieldedTransferContract = contract.unpack(ShieldedTransferContract.class);
       if (shieldedTransferContract.getTransparentFromAddress().toByteArray().length > 0) {
@@ -61,14 +63,16 @@ public class ShieldedTransferActuator extends AbstractActuator {
             shieldedTransferContract.getFromAmount(), ret);
       }
       dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(),
-          zenTokenId, fee);
+          zenTokenId, shieldedTransactionFee);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(shieldedTransactionFee);
       throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(shieldedTransactionFee);
       throw new ContractExeException(e.getMessage());
     }
 
@@ -84,18 +88,21 @@ public class ShieldedTransferActuator extends AbstractActuator {
     try {
       dbManager.adjustTotalShieldedPoolValue(
           Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-              shieldedTransferContract.getFromAmount()), fee));
+              shieldedTransferContract.getFromAmount()), shieldedTransactionFee));
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(shieldedTransactionFee);
       throw new ContractExeException(e.getMessage());
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
+      ret.setShieldedTransactionFee(shieldedTransactionFee);
       throw new ContractExeException(e.getMessage());
     }
 
     ret.setStatus(fee, code.SUCESS);
+    ret.setShieldedTransactionFee(shieldedTransactionFee);
     return true;
   }
 
@@ -105,7 +112,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     try {
       dbManager.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount);
     } catch (BalanceInsufficientException e) {
-      ret.setStatus(calcFee(), code.FAILED);
+      ret.setStatus(0, code.FAILED);
+      ret.setShieldedTransactionFee(calcFee());
       throw new ContractExeException(e.getMessage());
     }
   }
@@ -123,7 +131,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.adjustAssetBalanceV2(toAddress, zenTokenId, amount);
     } catch (BalanceInsufficientException e) {
-      ret.setStatus(calcFee(), code.FAILED);
+      ret.setStatus(0, code.FAILED);
+      ret.setShieldedTransactionFee(calcFee());
       throw new ContractExeException(e.getMessage());
     }
   }
@@ -132,11 +141,16 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void executeShielded(List<SpendDescription> spends, List<ReceiveDescription> receives,
       TransactionResultCapsule ret)
       throws ContractExeException {
+
+    long fee = 0;
+    long shieldedTransactionFee = calcFee();
+
     //handle spends
     for (SpendDescription spend : spends) {
       if (dbManager.getNullfierStore().has(
           new BytesCapsule(spend.getNullifier().toByteArray()).getData())) {
-        ret.setStatus(calcFee(), code.FAILED);
+        ret.setStatus(fee, code.FAILED);
+        ret.setShieldedTransactionFee(shieldedTransactionFee);
         throw new ContractExeException("double spend");
       }
       dbManager.getNullfierStore().put(new BytesCapsule(spend.getNullifier().toByteArray()));
@@ -147,7 +161,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
       try {
         currentMerkle.wfcheck();
       } catch (ZksnarkException e) {
-        ret.setStatus(calcFee(), code.FAILED);
+        ret.setStatus(fee, code.FAILED);
+        ret.setShieldedTransactionFee(shieldedTransactionFee);
         throw new ContractExeException(e.getMessage());
       }
       //handle receives
@@ -156,7 +171,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
           merkleContainer
               .saveCmIntoMerkleTree(currentMerkle, receive.getNoteCommitment().toByteArray());
         } catch (ZksnarkException e) {
-          ret.setStatus(calcFee(), code.FAILED);
+          ret.setStatus(fee, code.FAILED);
+          ret.setShieldedTransactionFee(shieldedTransactionFee);
           throw new ContractExeException(e.getMessage());
         }
       }
@@ -253,7 +269,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
     }
 
-    long fee = calcFee();
+    long shieldedTransactionFee = calcFee();
     byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
 
     if (CollectionUtils.isNotEmpty(spendDescriptions)
@@ -296,7 +312,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             .getTotalShieldedPoolValue();
         try {
           valueBalance = Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
-              shieldedTransferContract.getFromAmount()), fee);
+              shieldedTransferContract.getFromAmount()), shieldedTransactionFee);
           totalShieldedPoolValue = Math.subtractExact(totalShieldedPoolValue, valueBalance);
         } catch (ArithmeticException e) {
           logger.debug(e.getMessage(), e);
