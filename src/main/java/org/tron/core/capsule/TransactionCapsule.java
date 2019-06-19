@@ -32,6 +32,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -39,9 +40,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -858,6 +871,61 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
     toStringBuff.append("]");
     return toStringBuff.toString();
+  }
+
+  public void setResult(Runtime runtime) {
+    RuntimeException exception = runtime.getResult().getException();
+    if (Objects.isNull(exception) && StringUtils
+        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.SUCCESS);
+      return;
+    }
+    if (runtime.getResult().isRevert()) {
+      this.setResultCode(contractResult.REVERT);
+      return;
+    }
+    if (exception instanceof IllegalOperationException) {
+      this.setResultCode(contractResult.ILLEGAL_OPERATION);
+      return;
+    }
+    if (exception instanceof OutOfEnergyException) {
+      this.setResultCode(contractResult.OUT_OF_ENERGY);
+      return;
+    }
+    if (exception instanceof BadJumpDestinationException) {
+      this.setResultCode(contractResult.BAD_JUMP_DESTINATION);
+      return;
+    }
+    if (exception instanceof OutOfTimeException) {
+      this.setResultCode(contractResult.OUT_OF_TIME);
+      return;
+    }
+    if (exception instanceof OutOfMemoryException) {
+      this.setResultCode(contractResult.OUT_OF_MEMORY);
+      return;
+    }
+    if (exception instanceof PrecompiledContractException) {
+      this.setResultCode(contractResult.PRECOMPILED_CONTRACT);
+      return;
+    }
+    if (exception instanceof StackTooSmallException) {
+      this.setResultCode(contractResult.STACK_TOO_SMALL);
+      return;
+    }
+    if (exception instanceof StackTooLargeException) {
+      this.setResultCode(contractResult.STACK_TOO_LARGE);
+      return;
+    }
+    if (exception instanceof JVMStackOverFlowException) {
+      this.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
+      return;
+    }
+    if (exception instanceof Program.TransferException) {
+      this.setResultCode(contractResult.TRANSFER_FAILED);
+      return;
+    }
+    this.setResultCode(contractResult.UNKNOWN);
+    return;
   }
 
   public void setResultCode(contractResult code) {
