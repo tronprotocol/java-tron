@@ -151,7 +151,8 @@ public class WalletTestZenToken009 {
     final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
-    final Long beforeBalance = PublicMethed.queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
+    final Long beforeBalance = PublicMethed
+        .queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
     final Long beforeNetUsed = PublicMethed
         .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
@@ -177,8 +178,9 @@ public class WalletTestZenToken009 {
     logger.info("Before net:" + beforeNetUsed);
     logger.info("After net:" + afterNetUsed);
     Assert.assertEquals(beforeNetUsed,afterNetUsed);
-    final Long afterBalance = PublicMethed.queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
-    //Assert.assertTrue(beforeBalance - afterBalance == );
+    final Long afterBalance = PublicMethed
+        .queryAccount(zenTokenOwnerAddress,blockingStubFull).getBalance();
+    Assert.assertTrue(beforeBalance - afterBalance == multiSignFee);
     notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount = note.getValue();
@@ -192,10 +194,11 @@ public class WalletTestZenToken009 {
 
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
-    PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,
+    PublicMethedForMutiSign.transferAsset(foundationZenTokenAddress, tokenId,
         PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
             PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
-            blockingStubFull), zenTokenOwnerAddress, zenTokenOwnerKey, blockingStubFull);
+            blockingStubFull), zenTokenOwnerAddress,
+        zenTokenOwnerKey, blockingStubFull,ownerKeyString);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

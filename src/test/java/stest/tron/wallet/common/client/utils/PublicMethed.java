@@ -5256,7 +5256,7 @@ public class PublicMethed {
     logger.info(ByteArray.toHexString(shieldAddressInfo.get().ivk));
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum);
-    builder.setEndBlockIndex(currentBlockNum);
+    builder.setEndBlockIndex(currentBlockNum + 1);
     builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
     DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
     logger.info(notes.toString());
@@ -5277,8 +5277,8 @@ public class PublicMethed {
     //startBlockNum = 0L;
 
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
-    builder.setStartBlockIndex(startBlockNum);
-    builder.setEndBlockIndex(currentBlockNum);
+    builder.setStartBlockIndex(startBlockNum + 1);
+    builder.setEndBlockIndex(currentBlockNum + 1);
     builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
     DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
     logger.info(notes.toString());
@@ -5324,9 +5324,6 @@ public class PublicMethed {
 
   }
 
-
-
-
   /**
    * constructor.
    */
@@ -5363,8 +5360,8 @@ public class PublicMethed {
       startBlockNum = currentBlockNum - 100;
     }
     OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
-    builder.setStartBlockIndex(startBlockNum);
-    builder.setEndBlockIndex(currentBlockNum);
+    builder.setStartBlockIndex(startBlockNum + 1);
+    builder.setEndBlockIndex(currentBlockNum + 1);
     builder.setOvk(ByteString.copyFrom(shieldAddressInfo.get().getOvk()));
     DecryptNotes notes = blockingStubFull.scanNoteByOvk(builder.build());
     logger.info(notes.toString());
