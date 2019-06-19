@@ -133,6 +133,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
         .build();
   }
 
+  public long getShieldedTransactionFee() {
+    return transactionResult.getShieldedTransactionFee();
+  }
+
   @Override
   public byte[] getData() {
     return this.transactionResult.toByteArray();
