@@ -18,8 +18,10 @@ import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
+import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.PaymentAddressMessage;
 import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
@@ -28,6 +30,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -74,6 +77,12 @@ public class WalletTestZenToken007 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
+  BytesMessage sk;
+  ExpandedSpendingKeyMessage expandedSpendingKeyMessage;
+  DiversifierMessage diversifierMessage;
+  IncomingViewingKeyMessage ivk;
+  ShieldAddressInfo addressInfo = new ShieldAddressInfo();
+  Optional<ShieldAddressInfo> receiverAddressInfo;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
@@ -131,76 +140,91 @@ public class WalletTestZenToken007 {
    * constructor.
    */
   @Test(enabled = true, description = "Get spending key")
-  public void test1GetSpendingKeyAndgetExpandedSpendingKey() {
-    logger.info("------------------");
-    String spendingKey = ByteArray.toHexString(blockingStubFull
-        .getSpendingKey(EmptyMessage.newBuilder().build()).toByteArray());
-    logger.info(spendingKey);
-    BytesMessage sk = BytesMessage.newBuilder()
-        .setValue(ByteString.copyFrom(ByteArray.fromHexString(spendingKey))).build();
-    ExpandedSpendingKeyMessage esk = blockingStubFull.getExpandedSpendingKey(sk);
-    logger.info("esk:{}", ByteArray.toHexString(esk.toByteArray()));
-    logger.info("ask:{}", ByteArray.toHexString(esk.getAsk().toByteArray()));
-    logger.info("nsk:{}", ByteArray.toHexString(esk.getNsk().toByteArray()));
-    logger.info("ovk:{}", ByteArray.toHexString(esk.getOvk().toByteArray()));
+  public void test01GetSpendingKey() {
+    sk = blockingStubFull.getSpendingKey(EmptyMessage.newBuilder().build());
+    logger.info("sk: " + ByteArray.toHexString(sk.getValue().toByteArray()));
+
   }
 
   /**
    * constructor.
    */
   @Test(enabled = true, description = "Get diversifier")
-  public void test2GetDiversifier() {
-    DiversifierMessage diversifierMessage = blockingStubFull
-        .getDiversifier(EmptyMessage.newBuilder().build());
-    logger.info(ByteArray.toHexString(diversifierMessage.getD().toByteArray()));
+  public void test02GetDiversifier() {
+    diversifierMessage = blockingStubFull.getDiversifier(EmptyMessage.newBuilder().build());
+    logger.info("d: " + ByteArray.toHexString(diversifierMessage.getD().toByteArray()));
+
   }
 
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Ak From Ask")
-  public void test3GetAkFromAsk() {
-    String ask = System.currentTimeMillis() + "RandomAsk";
-    BytesMessage ask1 = BytesMessage.newBuilder()
-        .setValue(ByteString.copyFrom(ByteArray.fromHexString(ask))).build();
-    ak = blockingStubFull.getAkFromAsk(ask1);
-    logger.info("ak:{}", ByteArray.toHexString(ak.toByteArray()));
+  @Test(enabled = true, description = "Get expanded spending key")
+  public void test03GetExpandedSpendingKey() {
+    expandedSpendingKeyMessage = blockingStubFull.getExpandedSpendingKey(sk);
+    logger.info("ask: " + ByteArray.toHexString(expandedSpendingKeyMessage.getAsk().toByteArray()));
+    logger.info("nsk: " + ByteArray.toHexString(expandedSpendingKeyMessage.getNsk().toByteArray()));
+    logger.info("ovk: " + ByteArray.toHexString(expandedSpendingKeyMessage.getOvk().toByteArray()));
+
   }
 
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get Nk From Nsk")
-  public void test4GetNkFromNsk() {
-    String nsk = System.currentTimeMillis() + "RandomNsk";
-    BytesMessage nsk1 = BytesMessage.newBuilder()
-        .setValue(ByteString.copyFrom(ByteArray.fromHexString(nsk))).build();
-    nk = blockingStubFull.getNkFromNsk(nsk1);
-    logger.info("nk:{}", ByteArray.toHexString(nk.toByteArray()));
+  @Test(enabled = true, description = "Get AK from ASK")
+  public void test04GetAkFromAsk() {
+    BytesMessage.Builder askBuilder = BytesMessage.newBuilder();
+    askBuilder.setValue(expandedSpendingKeyMessage.getAsk());
+    ak = blockingStubFull.getAkFromAsk(askBuilder.build());
+    logger.info("ak: " + ByteArray.toHexString(ak.getValue().toByteArray()));
   }
 
   /**
    * constructor.
    */
-  @Test(enabled = true, description = "Get incoming viewing key")
-  public void test5GetIncomingViewingKey() {
-    ViewingKeyMessage vk = ViewingKeyMessage.newBuilder()
-        .setAk(ByteString.copyFrom(ByteArray
-            .fromHexString(ByteArray.toHexString(ak.toByteArray()))))
-        .setNk(ByteString.copyFrom(ByteArray
-            .fromHexString(ByteArray.toHexString(nk.toByteArray())))).build();
-    IncomingViewingKeyMessage ivk = blockingStubFull.getIncomingViewingKey(vk);
-    logger.info("ivk:" + ByteArray.toHexString(ivk.toByteArray()));
-
-
+  @Test(enabled = true, description = "Get Nk from Nsk")
+  public void test05GetNkFromNsk() {
+    BytesMessage.Builder nskBuilder = BytesMessage.newBuilder();
+    nskBuilder.setValue(expandedSpendingKeyMessage.getNsk());
+    nk = blockingStubFull.getNkFromNsk(nskBuilder.build());
+    logger.info("nk: " + ByteArray.toHexString(nk.getValue().toByteArray()));
   }
 
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get incoming viewing Key")
+  public void test06GetIncomingViewingKey() {
+    ViewingKeyMessage.Builder viewBuilder = ViewingKeyMessage.newBuilder();
+    viewBuilder.setAk(ak.getValue());
+    viewBuilder.setNk(nk.getValue());
+    ivk = blockingStubFull.getIncomingViewingKey(viewBuilder.build());
+    logger.info("ivk: " + ByteArray.toHexString(ivk.getIvk().toByteArray()));
+  }
 
-  @Test(enabled = false, description = "Shield to shield transaction")
-  public void test1Shield2ShieldTransaction() {
-    receiverShieldAddressInfo = PublicMethed.generateShieldAddress();
-    receiverShieldAddress = receiverShieldAddressInfo.get().getAddress();
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Get Zen Payment Address")
+  public void test07GetZenPaymentAddress() {
+    IncomingViewingKeyDiversifierMessage.Builder builder =
+        IncomingViewingKeyDiversifierMessage.newBuilder();
+    builder.setD(diversifierMessage);
+    builder.setIvk(ivk);
+    PaymentAddressMessage addressMessage = blockingStubFull.getZenPaymentAddress(builder.build());
+    System.out.println("pkd: " +  ByteArray.toHexString(addressMessage.getPkD().toByteArray()));
+    System.out.println("address: " + addressMessage.getPaymentAddress());
+    addressInfo.setSk(sk.getValue().toByteArray());
+    addressInfo.setD(new DiversifierT(diversifierMessage.getD().toByteArray()));
+    addressInfo.setIvk(ivk.getIvk().toByteArray());
+    addressInfo.setOvk(expandedSpendingKeyMessage.getOvk().toByteArray());
+    addressInfo.setPkD(addressMessage.getPkD().toByteArray());
+    receiverAddressInfo = Optional.of(addressInfo);
+  }
 
+  @Test(enabled = true, description = "Shield to shield transaction")
+  public void test08Shield2ShieldTransaction() {
+    receiverShieldAddress = receiverAddressInfo.get().getAddress();
     shieldOutList.clear();;
     memo = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,receiverShieldAddress,
@@ -211,19 +235,65 @@ public class WalletTestZenToken007 {
         shieldOutList,
         null,0,
         zenTokenOwnerKey,blockingStubFull));
-
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    notes = PublicMethed.listShieldNote(receiverShieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(receiverAddressInfo,blockingStubFull);
     receiverNote = notes.getNoteTxs(0).getNote();
     logger.info("Receiver note:" + receiverNote.toString());
     Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
 
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo,blockingStubFull);
+    receiverNote = notes.getNoteTxs(0).getNote();
+    logger.info("Receiver note:" + receiverNote.toString());
+    Assert.assertTrue(receiverNote.getValue() == sendNote.getValue() - zenTokenFee);
+  }
+
+  @Test(enabled = true, description = "Shield to shield transaction without ask")
+  public void test09Shield2ShieldTransactionWithoutAsk() {
+    sendShieldAddressInfo = PublicMethed.generateShieldAddress();
+    sendShieldAddress = sendShieldAddressInfo.get().getAddress();
+
+    notes = PublicMethed.listShieldNote(receiverAddressInfo,blockingStubFull);
+    receiverNote = notes.getNoteTxs(0).getNote();
+    shieldOutList.clear();;
+    memo = "Send shield without ask" + System.currentTimeMillis();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress,
+        "" + (receiverNote.getValue() - zenTokenFee),memo);
+
+    Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
+        null,0,
+        receiverAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null,0,
+        zenTokenOwnerKey,blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo,blockingStubFull);
+    sendNote = notes.getNoteTxs(0).getNote();
+    logger.info("Receiver note:" + sendNote.toString());
+    Assert.assertTrue(sendNote.getValue() == receiverNote.getValue() - zenTokenFee);
+
+    notes = PublicMethed.getShieldNotesByIvk(sendShieldAddressInfo,blockingStubFull);
+    sendNote = notes.getNoteTxs(0).getNote();
+    logger.info("Receiver note:" + sendNote.toString());
+    Assert.assertTrue(sendNote.getValue() == receiverNote.getValue() - zenTokenFee);
+  }
+
+  @Test(enabled = true, description = "Get shield Nulltifier")
+  public void test10GetShieldNulltifier() {
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo,blockingStubFull);
+    Assert.assertEquals(PublicMethed.getShieldNullifier(sendShieldAddressInfo.get(),
+        notes.getNoteTxs(0),blockingStubFull).length(),64);
+    notes = PublicMethed.listShieldNote(receiverAddressInfo,blockingStubFull);
+    Assert.assertEquals(PublicMethed.getShieldNullifier(receiverAddressInfo.get(),
+        notes.getNoteTxs(0),blockingStubFull).length(),64);
+
+    Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo.get(),
+        notes.getNoteTxs(0),blockingStubFull).getResult());
   }
 
   /**
    * constructor.
    */
-
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,

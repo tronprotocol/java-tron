@@ -43,13 +43,16 @@ import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.IvkDecryptParameters;
+import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Note;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.OvkDecryptParameters;
 import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
@@ -61,6 +64,7 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -75,6 +79,8 @@ import org.tron.protos.Contract.CreateSmartContract.Builder;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
@@ -86,6 +92,7 @@ import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -4960,7 +4967,6 @@ public class PublicMethed {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-
     Any any = transaction.getRawData().getContract(0).getParameter();
 
     try {
@@ -4979,10 +4985,204 @@ public class PublicMethed {
     } catch (Exception e) {
       System.out.println(e);
     }
-    logger.info("Read to broadcast transaction");
-
     return broadcastTransaction(transaction, blockingStubFull).getResult();
   }
+
+  /**
+   * constructor.
+   */
+  public static boolean sendShieldCoinWithoutAsk(byte[] publicZenTokenOwnerAddress,
+      long fromAmount,ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      byte[] publicZenTokenToAddress,
+      long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    PrivateParametersWithoutAsk.Builder builder = PrivateParametersWithoutAsk.newBuilder();
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+      builder.setTransparentFromAddress(ByteString.copyFrom(publicZenTokenOwnerAddress));
+      builder.setFromAmount(fromAmount);
+    }
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
+      builder.setTransparentToAddress(ByteString.copyFrom(publicZenTokenToAddress));
+      builder.setToAmount(toAmount);
+    }
+
+    byte[] ask = new byte[32];
+    if (shieldAddressInfo != null) {
+      OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+      outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      outPointBuild.setIndex(noteTx.getIndex());
+      request.addOutPoints(outPointBuild.build());
+      IncrementalMerkleVoucherInfo merkleVoucherInfo
+          = blockingStubFull.getMerkleTreeVoucherInfo(request.build());
+      if (merkleVoucherInfo.getVouchersCount() != 1) {
+        System.out.println("Can't get all merkel tree, please check the notes.");
+        return false;
+      }
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+      //String shieldAddress = noteInfo.getPaymentAddress();
+      //ShieldAddressInfo addressInfo =
+      //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
+      String shieldAddress = noteTx.getNote().getPaymentAddress();
+      SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
+      try {
+        ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
+        System.arraycopy(expandedSpendingKey.getAsk(), 0, ask, 0, 32);
+        builder.setAk(ByteString.copyFrom(
+            ExpandedSpendingKey.getAkFromAsk(expandedSpendingKey.getAsk())));
+        builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
+        builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+
+
+
+      //System.out.println("address " + noteInfo.getPaymentAddress());
+      //System.out.println("value " + noteInfo.getValue());
+      //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
+      //System.out.println("trxId " + noteInfo.getTrxId());
+      //System.out.println("index " + noteInfo.getIndex());
+      //System.out.println("meno " + new String(noteInfo.getMemo()));
+
+      SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
+      spendNoteBuilder.setNote(noteBuild.build());
+      try {
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+      spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
+
+      builder.addShieldedSpends(spendNoteBuilder.build());
+
+    } else {
+      byte[] ovk = ByteArray
+          .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+      builder.setOvk(ByteString.copyFrom(ovk));
+    }
+
+    if (shieldOutputList.size() > 0) {
+      for (int i = 0; i < shieldOutputList.size(); ++i) {
+        builder
+            .addShieldedReceives(ReceiveNote.newBuilder().setNote(shieldOutputList.get(i)).build());
+      }
+    }
+
+    TransactionExtention transactionExtention = blockingStubFull
+        .createShieldedTransactionWithoutSpendAuthSig(builder.build());
+    if (transactionExtention == null) {
+      System.out.println("sendShieldCoinWithoutAsk failure.");
+      return false;
+    }
+    BytesMessage trxHash = blockingStubFull
+        .getShieldTransactionHash(transactionExtention.getTransaction());
+    if (trxHash == null || trxHash.getValue().toByteArray().length != 32) {
+      System.out.println("sendShieldCoinWithoutAsk get transaction hash failure.");
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction.getRawData().getContract(0).getType()
+        != ContractType.ShieldedTransferContract) {
+      System.out.println("This method only for ShieldedTransferContract, please check!");
+      return false;
+    }
+    Any any = transaction.getRawData().getContract(0).getParameter();
+    Transaction transaction1 = transactionExtention.getTransaction();
+    try {
+      ShieldedTransferContract shieldContract =  any.unpack(ShieldedTransferContract.class);
+      List<SpendDescription> spendDescList = shieldContract.getSpendDescriptionList();
+      ShieldedTransferContract.Builder contractBuild
+          = shieldContract.toBuilder().clearSpendDescription();
+      for (int i = 0; i < spendDescList.size(); i++) {
+
+        SpendAuthSigParameters.Builder builder1 = SpendAuthSigParameters.newBuilder();
+        builder1.setAsk(ByteString.copyFrom(ask));
+        builder1.setTxHash(ByteString.copyFrom(trxHash.getValue().toByteArray()));
+        builder1.setAlpha(builder.getShieldedSpends(i).getAlpha());
+        SpendDescription.Builder spendDescription = spendDescList.get(i).toBuilder();
+        BytesMessage authSig = blockingStubFull.createSpendAuthSig(builder1.build());
+        spendDescription.setSpendAuthoritySignature(
+            ByteString.copyFrom(authSig.getValue().toByteArray()));
+
+        contractBuild.addSpendDescription(spendDescription.build());
+      }
+
+      Transaction.raw.Builder rawBuilder
+          = transaction.toBuilder().getRawDataBuilder().clearContract()
+          .addContract(
+              Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
+                  .setParameter(
+                      Any.pack(contractBuild.build())).build());
+
+      transaction = transaction.toBuilder().clearRawData().setRawData(rawBuilder).build();
+
+      transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
+
+
+      if (transactionExtention == null) {
+        return false;
+      }
+      Return ret = transactionExtention.getResult();
+      if (!ret.getResult()) {
+        System.out.println("Code = " + ret.getCode());
+        System.out.println("Message = " + ret.getMessage().toStringUtf8());
+        return false;
+      }
+      transaction1 = transactionExtention.getTransaction();
+      if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+        System.out.println("Transaction is empty");
+        return false;
+      }
+      System.out.println(
+          "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+
+      if (transaction1.getRawData().getContract(0).getType()
+          != ContractType.ShieldedTransferContract) {
+        transaction1 = signTransaction(ecKey,transaction1);
+      } else {
+        Any any1 = transaction1.getRawData().getContract(0).getParameter();
+        Contract.ShieldedTransferContract shieldedTransferContract =
+            any1.unpack(Contract.ShieldedTransferContract.class);
+        if (shieldedTransferContract.getFromAmount() > 0) {
+          transaction1 = signTransactionForShield(ecKey, transaction1);
+          System.out.println(
+              "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction1.getRawData()
+                  .toByteArray())));
+        }
+      }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    System.out.println(
+        "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction1.getRawData()
+            .toByteArray())));
+    return broadcastTransaction(transaction1, blockingStubFull).getResult();
+  }
+
 
   /**
    * constructor.
@@ -5053,6 +5253,7 @@ public class PublicMethed {
     if (currentBlockNum > 100) {
       startBlockNum = currentBlockNum - 100;
     }
+    logger.info(ByteArray.toHexString(shieldAddressInfo.get().ivk));
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum);
     builder.setEndBlockIndex(currentBlockNum);
@@ -5073,6 +5274,8 @@ public class PublicMethed {
     if (currentBlockNum > 100) {
       startBlockNum = currentBlockNum - 100;
     }
+    //startBlockNum = 0L;
+
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum);
     builder.setEndBlockIndex(currentBlockNum);
@@ -5081,6 +5284,48 @@ public class PublicMethed {
     logger.info(notes.toString());
     return notes;
   }
+
+  /**
+   * constructor.
+   */
+  public static Integer getShieldNotesCount(Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+
+
+    if (currentBlockNum < 100) {
+      IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+      builder.setStartBlockIndex(0);
+      builder.setEndBlockIndex(currentBlockNum);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+      logger.info(notes.toString());
+      return notes.getNoteTxsCount();
+    }
+    Integer count = 0;
+    Long startBlockNum = 0L;
+    while (startBlockNum + 100 < currentBlockNum) {
+      IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+      builder.setStartBlockIndex(startBlockNum);
+      builder.setEndBlockIndex(startBlockNum + 100);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+      count = count + notes.getNoteTxsCount();
+      startBlockNum = startBlockNum + 100;
+    }
+    IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
+    builder.setStartBlockIndex(startBlockNum);
+    builder.setEndBlockIndex(currentBlockNum);
+    builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+    DecryptNotes notes = blockingStubFull.scanNoteByIvk(builder.build());
+    count = count + notes.getNoteTxsCount();
+    return count;
+
+  }
+
+
+
 
   /**
    * constructor.
@@ -5204,8 +5449,6 @@ public class PublicMethed {
   public static SpendResult getSpendResultOnSolidity(
       ShieldAddressInfo shieldAddressInfo, NoteTx noteTx, WalletSolidityGrpc
           .WalletSolidityBlockingStub blockingStubSolidity) {
-
-
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
     OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
@@ -5222,8 +5465,6 @@ public class PublicMethed {
       } catch (Exception e) {
         Assert.assertTrue(1 == 1);
       }
-
-
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
       noteBuild.setValue(noteTx.getNote().getValue());
@@ -5234,11 +5475,191 @@ public class PublicMethed {
 
       SpendResult result = blockingStubSolidity.isSpend(builder.build());
       return result;
+    }
+    return null;
+  }
 
+  /**
+   * constructor.
+   */
+  public static String getShieldNullifier(ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+    OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+    outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+    outPointBuild.setIndex(noteTx.getIndex());
+    request.addOutPoints(outPointBuild.build());
+    IncrementalMerkleVoucherInfo merkleVoucherInfo
+        = blockingStubFull.getMerkleTreeVoucherInfo(request.build());
+    if (merkleVoucherInfo.getVouchersCount() < 1) {
+      System.out.println("get merkleVoucherInfo failure.");
+      return null;
+    }
+    Note.Builder noteBuild = Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+    noteBuild.setValue(noteTx.getNote().getValue());
+    noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+    noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+
+    String shieldAddress = noteTx.getNote().getPaymentAddress();
+    SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
+    try {
+      //TODO
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      NfParameters.Builder builder = NfParameters.newBuilder();
+      builder.setNote(noteBuild.build());
+      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      builder.setAk(ByteString.copyFrom(fullViewingKey.getAk()));
+      builder.setNk(ByteString.copyFrom(fullViewingKey.getNk()));
+
+      BytesMessage nullifier = blockingStubFull.createShieldNullifier(builder.build());
+      return ByteArray.toHexString(nullifier.getValue().toByteArray());
+
+    } catch (Exception e) {
+      e.printStackTrace();
     }
     return null;
 
   }
+
+
+  /**
+   * constructor.
+   */
+  public static String sendShieldCoinGetTxid(byte[] publicZenTokenOwnerAddress,
+      long fromAmount,ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      byte[] publicZenTokenToAddress,
+      long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    PrivateParameters.Builder builder = PrivateParameters.newBuilder();
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+      builder.setTransparentFromAddress(ByteString.copyFrom(publicZenTokenOwnerAddress));
+      builder.setFromAmount(fromAmount);
+    }
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
+      builder.setTransparentToAddress(ByteString.copyFrom(publicZenTokenToAddress));
+      builder.setToAmount(toAmount);
+    }
+
+    if (shieldAddressInfo != null) {
+      OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+      outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      outPointBuild.setIndex(noteTx.getIndex());
+      request.addOutPoints(outPointBuild.build());
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+      //String shieldAddress = noteInfo.getPaymentAddress();
+      //ShieldAddressInfo addressInfo =
+      //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
+      SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
+      try {
+        ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
+        builder.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()));
+        builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
+        builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+
+
+
+      //System.out.println("address " + noteInfo.getPaymentAddress());
+      //System.out.println("value " + noteInfo.getValue());
+      //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
+      //System.out.println("trxId " + noteInfo.getTrxId());
+      //System.out.println("index " + noteInfo.getIndex());
+      //System.out.println("meno " + new String(noteInfo.getMemo()));
+
+      SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
+      spendNoteBuilder.setNote(noteBuild.build());
+      try {
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+      IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
+          .getMerkleTreeVoucherInfo(request.build());
+      spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
+
+      builder.addShieldedSpends(spendNoteBuilder.build());
+
+    } else {
+      byte[] ovk = ByteArray
+          .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+      builder.setOvk(ByteString.copyFrom(ovk));
+    }
+
+    if (shieldOutputList.size() > 0) {
+      for (int i = 0; i < shieldOutputList.size(); ++i) {
+        builder
+            .addShieldedReceives(ReceiveNote.newBuilder().setNote(shieldOutputList.get(i)).build());
+      }
+    }
+
+    TransactionExtention transactionExtention = blockingStubFull
+        .createShieldedTransaction(builder.build());
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return null;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    Any any = transaction.getRawData().getContract(0).getParameter();
+
+    try {
+      Contract.ShieldedTransferContract shieldedTransferContract =
+          any.unpack(Contract.ShieldedTransferContract.class);
+      if (shieldedTransferContract.getFromAmount() > 0) {
+        transaction = signTransactionForShield(ecKey, transaction);
+        System.out.println(
+            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+                .toByteArray())));
+      } else {
+        System.out.println(
+            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+                .toByteArray())));
+      }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    broadcastTransaction(transaction, blockingStubFull);
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+        .toByteArray()));
+  }
+
 
 
 
