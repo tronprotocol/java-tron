@@ -20,6 +20,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -48,6 +50,9 @@ public class WalletTestZenToken003 {
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
+  private String txid;
+  private Optional<TransactionInfo> infoById;
+  private Optional<Transaction> byId;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
@@ -109,14 +114,18 @@ public class WalletTestZenToken003 {
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress2,
         "" + sendToShiledAddress2Amount, memo2);
 
-    Assert.assertTrue(PublicMethed.sendShieldCoin(
+
+    txid = PublicMethed.sendShieldCoinGetTxid(
         zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull));
-
+        zenTokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertTrue(byId.get().getSignatureCount() == 1);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
@@ -166,13 +175,19 @@ public class WalletTestZenToken003 {
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress1,
         "" + sendToShiledAddress1Amount, memo1);
 
-    Assert.assertTrue(PublicMethed.sendShieldCoin(
+    txid = PublicMethed.sendShieldCoinGetTxid(
         zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
         receiverPublicAddress, sendToPublicAddressAmount,
-        zenTokenOwnerKey, blockingStubFull));
+        zenTokenOwnerKey, blockingStubFull);
+    logger.info("txid:" + txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertTrue(byId.get().getSignatureCount() == 1);
+
 
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
@@ -234,13 +249,17 @@ public class WalletTestZenToken003 {
             PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
             blockingStubFull);
 
-    Assert.assertTrue(PublicMethed.sendShieldCoin(
+    txid = PublicMethed.sendShieldCoinGetTxid(
         zenTokenOwnerAddress, costTokenAmount,
         null, null,
         shieldOutList,
         receiverPublicAddress, sendToPublicAddressAmount,
-        zenTokenOwnerKey, blockingStubFull));
+        zenTokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    byId = PublicMethed.getTransactionById(txid, blockingStubFull);
+    Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
