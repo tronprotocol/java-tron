@@ -1,17 +1,19 @@
 #!/bin/bash
 if [[ "$TRAVIS_BRANCH" = "develop" || "$TRAVIS_BRANCH" = "master" ]];then
     stestlogname="`date +%Y%m%d%H%M%S`_stest.log"
+    timeout 10 ping -c 5  47.93.42.145 > /dev/null || exit 1
+    timeout 10 ping -c 5  47.93.18.60  > /dev/null || exit 1
     stest_server=""
-    docker_num_in_67=`ssh -p 22008 -t java-tron@47.93.42.145 'docker ps -a | wc -l'`
-    docker_num_in_67=`echo $docker_num_in_67 | tr -d "\r"`
-    docker_num_in_122=`ssh -p 22008 -t java-tron@47.93.18.60 'docker ps -a | wc -l'`
-    docker_num_in_122=`echo $docker_num_in_122 | tr -d "\r"`
-    if [ $docker_num_in_67 -le $docker_num_in_122 ];
+    docker_num_in_145=`ssh -p 22008 -t java-tron@47.93.42.145 'docker ps -a | wc -l'`
+    docker_num_in_145=`echo $docker_num_in_145 | tr -d "\r"`
+    docker_num_in_60=`ssh -p 22008 -t java-tron@47.93.18.60 'docker ps -a | wc -l'`
+    docker_num_in_60=`echo $docker_num_in_60 | tr -d "\r"`
+    if [ $docker_num_in_145 -le $docker_num_in_60 ];
       then
-      docker_num=$docker_num_in_67
+      docker_num=$docker_num_in_145
       stest_server=47.93.42.145
       else
-        docker_num=$docker_num_in_122
+        docker_num=$docker_num_in_60
         stest_server=47.93.18.60
     fi
 

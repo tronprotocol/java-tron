@@ -67,6 +67,19 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     return null;
   }
 
+  public long getBlockNumber(byte[] key) throws BadItemException {
+    byte[] value = revokingDB.getUnchecked(key);
+    if (ArrayUtils.isEmpty(value)) {
+      return -1;
+    }
+
+    if (value.length == 8) {
+      return ByteArray.toLong(value);
+    }
+    TransactionCapsule transactionCapsule = new TransactionCapsule(value);
+    return transactionCapsule.getBlockNum();
+  }
+
   @Override
   public TransactionCapsule get(byte[] key) throws BadItemException {
     byte[] value = revokingDB.getUnchecked(key);

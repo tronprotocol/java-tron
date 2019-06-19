@@ -385,7 +385,7 @@ public class WalletTestAccount013 {
   }
 
   @Test(enabled = true)
-  public void test5DelegateResourceAboutTriggerContract() {
+  public void test5CanNotDelegateResourceToContract() {
     //Create Account6
     ECKey ecKey6 = new ECKey(Utils.getRandom());
     accountForDeployAddress = ecKey6.getAddress();
@@ -394,6 +394,7 @@ public class WalletTestAccount013 {
     //sendcoin to Account6
     Assert.assertTrue(PublicMethed.sendcoin(accountForDeployAddress,
         10000000000L, fromAddress, testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //deploy contract under Account6
     Integer consumeUserResourcePercent = 0;
@@ -411,6 +412,7 @@ public class WalletTestAccount013 {
         accountForDeployAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     //Account4 DelegatedResource of Energy to Contract
+    //After 3.6 can not delegate resource to contract
     Assert.assertFalse(PublicMethed.freezeBalanceForReceiver(
         account4DelegatedResourceAddress, freezeAmount, freezeDuration, 1,
         ByteString.copyFrom(contractAddress), account4DelegatedResourceKey, blockingStubFull));
@@ -465,6 +467,7 @@ public class WalletTestAccount013 {
 //    //compare bandwidth of Account013 before and after trigger contract
 //    Assert.assertTrue(account013CurrentBandwidthUsed
 //        == account013CurrentBandwidthUsedAfterTrig - contractTriggerBandwidthUsed);
+
   }
 
   /**
