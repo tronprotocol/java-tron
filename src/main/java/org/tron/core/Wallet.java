@@ -2427,7 +2427,7 @@ public class Wallet {
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         List<Transaction.Contract> contracts = transaction.getRawData()
             .getContractList();
-        if (contracts.size() == 0) {
+        if (contracts.isEmpty()) {
           continue;
         }
         Transaction.Contract c = contracts.get(0);
@@ -2460,16 +2460,16 @@ public class Wallet {
           if (notePlaintext.isPresent()) {
             Note noteText = notePlaintext.get();
 
-            byte[] pk_d = new byte[32];
+            byte[] pkD = new byte[32];
             if (!JLibrustzcash
                 .librustzcashIvkToPkd(
                     new IvkToPkdParams(ivk, noteText.d.getData(),
-                        pk_d))) {
+                        pkD))) {
               continue;
             }
 
             String paymentAddress = KeyIo.encodePaymentAddress(
-                new PaymentAddress(noteText.d, pk_d));
+                new PaymentAddress(noteText.d, pkD));
             GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                 .setPaymentAddress(paymentAddress)
                 .setValue(noteText.value)
