@@ -862,10 +862,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction.Contract contract = this.getInstance().getRawData().getContract(0);
     if (contract.getType() != ContractType.ShieldedTransferContract) {
       validatePubSignature(manager);
-    } else {  //TODO: need more check here. must compare with shielded transaction's verification.
+    } else {  //ShieldedTransfer
       byte[] owner = getOwner(contract);
-      if (!ArrayUtils.isEmpty(owner)) {
-        validatePubSignature(manager);   //If no pub input , need not signature.
+      if (!ArrayUtils.isEmpty(owner)) { //transfer from transparent address
+        validatePubSignature(manager);
+      } else { //transfer from shielded address
+        if (this.transaction.getSignatureCount() > 0) {
+          throw new ValidateSignatureException("there should be no signatures signed by "
+              + "transparent address when transfer from shielded address");
+        }
       }
     }
 

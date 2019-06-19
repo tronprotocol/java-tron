@@ -865,8 +865,10 @@ public class Manager {
         byte[] address = TransactionCapsule.getOwner(contract);
         AccountCapsule accountCapsule = getAccountStore().get(address);
         try {
-          adjustBalance(accountCapsule, -fee);
-          adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+          if (accountCapsule != null) {
+            adjustBalance(accountCapsule, -fee);
+            adjustBalance(this.getAccountStore().getBlackhole().createDbKey(), +fee);
+          }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
               "Account Insufficient  balance[" + fee + "] to MultiSign");

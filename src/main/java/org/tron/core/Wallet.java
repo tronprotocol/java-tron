@@ -2435,23 +2435,18 @@ public class Wallet {
             != Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
-        ShieldedTransferContract stContract = null;
+        ShieldedTransferContract stContract;
         try {
-          stContract = c.getParameter()
-              .unpack(
-                  org.tron.protos.Contract.ShieldedTransferContract.class);
+          stContract = c.getParameter().unpack(ShieldedTransferContract.class);
         } catch (InvalidProtocolBufferException e) {
           throw new ZksnarkException(
               "unpack ShieldedTransferContract failed.");
         }
 
-        for (int index = 0;
-            index < stContract.getReceiveDescriptionList().size();
-            index++) {
+        for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           ReceiveDescription r = stContract.getReceiveDescription(index);
           Optional<Note> notePlaintext = Note
-              .decrypt(
-                  r.getCEnc().toByteArray(),//ciphertext
+              .decrypt(r.getCEnc().toByteArray(),//ciphertext
                   ivk,
                   r.getEpk().toByteArray(),//epk
                   r.getNoteCommitment().toByteArray() //cmu
@@ -2461,10 +2456,9 @@ public class Wallet {
             Note noteText = notePlaintext.get();
 
             byte[] pk_d = new byte[32];
-            if (!JLibrustzcash
-                .librustzcashIvkToPkd(
-                    new IvkToPkdParams(ivk, noteText.d.getData(),
-                        pk_d))) {
+            if (!JLibrustzcash.librustzcashIvkToPkd(
+                new IvkToPkdParams(ivk, noteText.d.getData(),
+                    pk_d))) {
               continue;
             }
 
