@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
 import io.grpc.Server;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
@@ -223,6 +225,14 @@ public class RpcApiService implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
+  }
+
+  private StatusRuntimeException getRunTimeException(Exception e) {
+    if (e != null ) {
+      return Status.INTERNAL.withDescription(e.getMessage()).asRuntimeException();
+    } else {
+      return Status.INTERNAL.withDescription("unknown").asRuntimeException();
+    }
   }
 
   @Override
@@ -557,7 +567,7 @@ public class RpcApiService implements Service {
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
 
@@ -575,7 +585,7 @@ public class RpcApiService implements Service {
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -585,7 +595,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.isSpend(request));
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -1779,7 +1789,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(nodeInfoService.getNodeInfo().transferToProtoEntity());
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -1839,10 +1849,7 @@ public class RpcApiService implements Service {
             .getMerkleTreeVoucherInfo(request);
         responseObserver.onNext(witnessInfo);
       } catch (Exception ex) {
-        //todo,return error message
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
+        responseObserver.onError(getRunTimeException(ex));
       }
 
       responseObserver.onCompleted();
@@ -1945,7 +1952,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.getSpendingKey());
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -1956,7 +1963,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.getRcm());
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -1970,7 +1977,7 @@ public class RpcApiService implements Service {
         ExpandedSpendingKeyMessage response = wallet.getExpandedSpendingKey(spendingKey);
         responseObserver.onNext(response);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
 
       responseObserver.onCompleted();
@@ -1982,10 +1989,8 @@ public class RpcApiService implements Service {
 
       try {
         responseObserver.onNext(wallet.getAkFromAsk(ak));
-      } catch (BadItemException e) {
-        responseObserver.onError(e);
-      } catch (ZksnarkException e) {
-        responseObserver.onError(e);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
       }
 
       responseObserver.onCompleted();
@@ -1997,10 +2002,8 @@ public class RpcApiService implements Service {
 
       try {
         responseObserver.onNext(wallet.getNkFromNsk(nk));
-      } catch (BadItemException e) {
-        responseObserver.onError(e);
-      } catch (ZksnarkException e) {
-        responseObserver.onError(e);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
       }
 
       responseObserver.onCompleted();
@@ -2015,7 +2018,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
       } catch (ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
 
       responseObserver.onCompleted();
@@ -2028,7 +2031,7 @@ public class RpcApiService implements Service {
         DiversifierMessage d = wallet.getDiversifier();
         responseObserver.onNext(d);
       } catch (ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -2048,9 +2051,8 @@ public class RpcApiService implements Service {
 
         responseObserver.onNext(saplingPaymentAddressMessage);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
-
       responseObserver.onCompleted();
 
     }
@@ -2067,7 +2069,7 @@ public class RpcApiService implements Service {
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
 
@@ -2085,7 +2087,7 @@ public class RpcApiService implements Service {
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -2095,7 +2097,7 @@ public class RpcApiService implements Service {
       try {
         responseObserver.onNext(wallet.isSpend(request));
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -2108,7 +2110,7 @@ public class RpcApiService implements Service {
             .createShieldNullifier(request);
         responseObserver.onNext(nf);
       } catch (ZksnarkException e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -2120,7 +2122,7 @@ public class RpcApiService implements Service {
         BytesMessage spendAuthSig = wallet.createSpendAuthSig(request);
         responseObserver.onNext(spendAuthSig);
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
@@ -2132,7 +2134,7 @@ public class RpcApiService implements Service {
         BytesMessage transactionHash = wallet.getShieldTransactionHash(request);
         responseObserver.onNext(transactionHash);
       } catch (Exception e) {
-        responseObserver.onError(e);
+        responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
     }
