@@ -315,6 +315,7 @@ message Transaction {
     int64 exchange_inject_another_amount = 19;
     int64 exchange_withdraw_another_amount = 20;
     int64 exchange_id = 21;
+    int64 shieldedTransactionFee = 22;
   }
 
   message raw {
@@ -368,6 +369,7 @@ message TransactionInfo {
   int64 exchange_inject_another_amount = 19;
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
+  int64 shieldedTransactionFee = 22;
 }
 
 message TransactionRet {
