@@ -19,6 +19,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -129,6 +131,22 @@ public class AssertException {
     PublicMethed.waitProduceNextBlock(blockingStubFull1);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById：" + infoById);
+    Optional<Transaction> ById = PublicMethed.getTransactionById(txid, blockingStubFull);
+    logger.info("getRet：" + ById.get().getRet(0));
+    logger.info("getNumber：" + ById.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue：" + ById.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet：" + ById.get().getRet(0).getContractRet());
+
+    Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
+        contractResult.ILLEGAL_OPERATION_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 8);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.ILLEGAL_OPERATION);
+
+    Assert
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()), "");
+    Assert.assertEquals(contractResult.ILLEGAL_OPERATION, infoById.get().getReceipt().getResult());
+
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
