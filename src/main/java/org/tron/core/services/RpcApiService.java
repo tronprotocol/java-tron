@@ -546,10 +546,7 @@ public class RpcApiService implements Service {
             .getMerkleTreeVoucherInfo(request);
         responseObserver.onNext(witnessInfo);
       } catch (Exception ex) {
-        //todo,return error message
-        responseObserver.onNext(null);
-        responseObserver.onCompleted();
-        return;
+        responseObserver.onError(getRunTimeException(ex));
       }
 
       responseObserver.onCompleted();
