@@ -370,7 +370,7 @@ message TransactionInfo {
   int64 exchange_withdraw_another_amount = 20;
   int64 exchange_id = 21;
   int64 shielded_transaction_fee = 22;
-
+}
 
 message TransactionRet {
   int64 blockNumber = 1;
