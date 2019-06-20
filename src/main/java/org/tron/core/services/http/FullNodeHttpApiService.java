@@ -361,10 +361,11 @@ public class FullNodeHttpApiService implements Service {
     }
   }
 
-  private String getParamsFile(String fileName) {
+  private static String getParamsFile(String fileName) {
     InputStream in = FullNodeHttpApiService.class.getClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
-    File fileOut = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+    File fileOut = new File(System.getProperty("java.io.tmpdir")
+        + File.separator + fileName + "." + System.currentTimeMillis());
     try {
       FileUtils.copyToFile(in, fileOut);
     } catch (IOException e) {
@@ -373,7 +374,7 @@ public class FullNodeHttpApiService implements Service {
     return fileOut.getAbsolutePath();
   }
 
-  private void librustzcashInitZksnarkParams() {
+  public static void librustzcashInitZksnarkParams() {
     logger.info("init zk param begin");
 
     String spendPath = getParamsFile("sapling-spend.params");
