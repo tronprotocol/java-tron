@@ -202,7 +202,7 @@ public class ShieldedReceiveTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
-  private void librustzcashInitZksnarkParams() throws ZksnarkException {
+  private void librustzcashInitZksnarkParams(){
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
@@ -1950,8 +1950,8 @@ public class ShieldedReceiveTest {
     actuator.get(0).validate();
     //execute
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
-    boolean execute_result = actuator.get(0).execute(resultCapsule);
-    Assert.assertTrue(execute_result);
+    boolean executeResult = actuator.get(0).execute(resultCapsule);
+    Assert.assertTrue(executeResult);
   }
 
   public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
@@ -2083,14 +2083,14 @@ public class ShieldedReceiveTest {
 
       if (ret1.isPresent()) {
         Note noteText = ret1.get();
-        byte[] pk_d = new byte[32];
+        byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pk_d))) {
+                noteText.d.getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
-        Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
+        Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
             noteText.value);
 
@@ -2166,14 +2166,14 @@ public class ShieldedReceiveTest {
 
       if (ret1.isPresent()) {
         Note noteText = ret1.get();
-        byte[] pk_d = new byte[32];
+        byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pk_d))) {
+                noteText.d.getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
-        Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
+        Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
             noteText.value);
 
