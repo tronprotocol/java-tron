@@ -39,10 +39,15 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
       return null;
     }
     byte[] value = revokingDB.getUnchecked(ByteArray.fromLong(blockNumber));
+    if (Objects.isNull(value)) {
+      return null;
+    }
+
     TransactionRetCapsule result = new TransactionRetCapsule(value);
     if (Objects.isNull(result) || Objects.isNull(result.getInstance())) {
       return null;
     }
+
     for (TransactionInfo transactionResultInfo : result.getInstance().getTransactioninfoList()) {
       if (transactionResultInfo.getId().equals(ByteString.copyFrom(key))) {
         return new TransactionInfoCapsule(transactionResultInfo);
