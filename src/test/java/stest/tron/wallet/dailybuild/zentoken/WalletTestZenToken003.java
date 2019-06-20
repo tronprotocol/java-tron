@@ -123,7 +123,7 @@ public class WalletTestZenToken003 {
         zenTokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == 10000000);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
@@ -186,7 +186,7 @@ public class WalletTestZenToken003 {
     logger.info("txid:" + txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == 10000000);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
@@ -262,7 +262,7 @@ public class WalletTestZenToken003 {
         zenTokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == 10000000);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
@@ -357,7 +357,7 @@ public class WalletTestZenToken003 {
     logger.info("txid:" + txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == 10000000);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
 
@@ -426,7 +426,7 @@ public class WalletTestZenToken003 {
         zenTokenOwnerKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getFee() == 10000000);
+    Assert.assertTrue(infoById.get().getShieldedTransactionFee() == 10000000);
     byId = PublicMethed.getTransactionById(txid, blockingStubFull);
     Assert.assertTrue(byId.get().getSignatureCount() == 1);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
