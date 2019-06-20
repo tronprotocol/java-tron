@@ -18,7 +18,7 @@ public class DiversifierT {
   public DiversifierT() {
   }
 
-  public DiversifierT random() throws ZksnarkException {
+  public static DiversifierT random() throws ZksnarkException {
     byte[] d;
     while (true) {
       d = Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);

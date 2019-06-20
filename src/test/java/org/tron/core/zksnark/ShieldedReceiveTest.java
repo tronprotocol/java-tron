@@ -715,7 +715,7 @@ public class ShieldedReceiveTest {
         receiveDescriptionCapsule.setZkproof(randomUint1536());
         break;
       case D_CM:
-        newNote.d = new DiversifierT().random();
+        newNote.d = DiversifierT.random();
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -2304,7 +2304,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fvk3 = sk3.fullViewingKey();
     IncomingViewingKey ivk3 = fvk3.inViewingKey();
   
-    DiversifierT d3 = new DiversifierT().random();
+    DiversifierT d3 = DiversifierT.random();
     PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
     byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder2.addOutput(expsk2.getOvk(), paymentAddress3,

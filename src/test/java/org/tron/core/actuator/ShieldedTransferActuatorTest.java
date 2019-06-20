@@ -178,7 +178,7 @@ public class ShieldedTransferActuatorTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
 
     return builder.build();
@@ -470,7 +470,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
@@ -500,7 +500,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
 
@@ -611,7 +611,7 @@ public class ShieldedTransferActuatorTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
     try {
       TransactionCapsule transactionCap = builder.build();
@@ -757,7 +757,7 @@ public class ShieldedTransferActuatorTest {
         SpendingKey spendingKey = SpendingKey.random();
         FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
         IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-        PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random())
+        PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
             .get();
         for (int i = 0; i < noteNum; i++) {
           Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
@@ -889,7 +889,7 @@ public class ShieldedTransferActuatorTest {
         SpendingKey spendingKey = SpendingKey.random();
         FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
         IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-        PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random())
+        PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
             .get();
         builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
       }
@@ -969,7 +969,7 @@ public class ShieldedTransferActuatorTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT - fee, new byte[512]);
     try {
       TransactionCapsule transactionCap = builder.build();
@@ -1019,7 +1019,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 2 * AMOUNT - fee, new byte[512]);
 
       TransactionCapsule transactionCap = builder.build();
@@ -1057,7 +1057,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
       builder.setTransparentOutput(ByteArray.fromHexString(null), AMOUNT);
 
@@ -1115,7 +1115,7 @@ public class ShieldedTransferActuatorTest {
 //      SpendingKey spendingKey = SpendingKey.random();
 //      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
 //      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-//      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+//      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
 //
 //      Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
 //          Note.generateR());
@@ -1210,7 +1210,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
 
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
           Note.generateR());
@@ -1309,7 +1309,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, -AMOUNT, new byte[512]);
       TransactionCapsule transactionCap = builder.build();
@@ -1456,7 +1456,7 @@ public class ShieldedTransferActuatorTest {
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-      PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
 
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT);

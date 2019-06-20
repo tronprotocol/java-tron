@@ -666,7 +666,7 @@ public class SendCoinShieldTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder
         .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
     TransactionCapsule transactionCap = builder.build();
@@ -783,7 +783,7 @@ public class SendCoinShieldTest {
     SpendingKey spendingKey = SpendingKey.random();
     FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT().random()).get();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
         4010 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();

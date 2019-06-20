@@ -615,7 +615,7 @@ public class LibrustzcashTest {
           .decode("044ce61616fc962c9fb3ac3a71ce8bfc6dfd42d414eb8b64c3f7306861a7db36");
       // SpendingKey spendingKey = SpendingKey.random();
 
-      DiversifierT diversifierT = new DiversifierT().random();
+      DiversifierT diversifierT = DiversifierT.random();
       System.out.println("d is: " + ByteArray.toHexString(diversifierT.getData()));
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();

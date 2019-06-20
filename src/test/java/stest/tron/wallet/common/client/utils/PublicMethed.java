@@ -5220,7 +5220,7 @@ public class PublicMethed {
   public static Optional<ShieldAddressInfo> generateShieldAddress() {
     ShieldAddressInfo addressInfo = new ShieldAddressInfo();
     try {
-      DiversifierT diversifier = new DiversifierT().random();
+      DiversifierT diversifier = DiversifierT.random();
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
