@@ -439,7 +439,8 @@ public class WalletTestZenToken003 {
     logger.info("afterAssetBalance:" + afterAssetBalance);
     Assert.assertTrue(beforeAssetBalance - afterAssetBalance == costTokenAmount);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
-    notes = PublicMethed.listShieldNote(shieldAddressInfo1, blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(shieldAddressInfo1, blockingStubFull);
+    Assert.assertTrue(notes.getNoteTxsCount() == 2);
     note = notes.getNoteTxs(0).getNote();
     Long receiverShieldTokenAmount1 = note.getValue();
     logger.info("receiverShieldTokenAmount1:" + receiverShieldTokenAmount1);
