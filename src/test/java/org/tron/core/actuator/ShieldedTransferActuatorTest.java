@@ -726,7 +726,7 @@ public class ShieldedTransferActuatorTest {
   /**
    * output shield note and input shield note should be less than 10
    */
-  public void PublicToShieldAddressAndShieldToPublicAddressSuccess() {
+  public void publicToShieldAddressAndShieldToPublicAddressSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
@@ -832,7 +832,7 @@ public class ShieldedTransferActuatorTest {
    * input shield note more than 1
    */
   @Test
-  public void ShieldAddressMore10NoteToPublicAddressFailure() {
+  public void shieldAddressMore10NoteToPublicAddressFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1084,7 +1084,7 @@ public class ShieldedTransferActuatorTest {
   /**
    * output shield note and input shield note value is 0,Meet the balance condition
    */
-//  public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
+//  public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
 //    Args.getInstance().setAllowShieldedTransaction(true);
 //    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
 //    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -1193,7 +1193,7 @@ public class ShieldedTransferActuatorTest {
    * output shield note and input shield note value is 0,Meet the balance condition
    */
   @Test
-  public void PublicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
+  public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
     Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -1245,7 +1245,7 @@ public class ShieldedTransferActuatorTest {
    * onput shield note value is 0,Does not meet the equilibrium condition
    */
   @Test
-  public void ShieldToPublicAddressWithZoreValueFailure() {
+  public void shieldToPublicAddressWithZoreValueFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT * 2);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -1297,7 +1297,7 @@ public class ShieldedTransferActuatorTest {
    * output shield note value is negative,meet the equilibrium condition
    */
   @Test
-  public void PublicAddressToShieldNoteValueWithNagativeFailure() {
+  public void publicAddressToShieldNoteValueWithNagativeFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
     try {
@@ -1336,7 +1336,7 @@ public class ShieldedTransferActuatorTest {
    * input shield note value is negative,meet the equilibrium condition
    */
   @Test
-  public void ShieldNoteValueWithNagativeToPublicFailure() {
+  public void shieldNoteValueWithNagativeToPublicFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -1386,7 +1386,7 @@ public class ShieldedTransferActuatorTest {
   }
 
   //@Test  useless case
-  public void ShieldAddressToPublicAddressBigValueFailure() {
+  public void shieldAddressToPublicAddressBigValueFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
 
