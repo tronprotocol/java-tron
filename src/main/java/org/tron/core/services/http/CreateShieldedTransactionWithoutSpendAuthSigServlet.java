@@ -40,7 +40,7 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends HttpSer
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
 
-      String txString = Util.printTransaction(tx, visible);
+      String txString = Util.printCreateTransaction(tx, visible);
       JSONObject jsonObject = JSON.parseObject(txString);
       if (jsonObject.containsKey("txID")) {
         jsonObject.remove("txID");

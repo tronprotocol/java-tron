@@ -37,7 +37,7 @@ public class CreateShieldedTransactionServlet extends HttpServlet {
       Transaction tx = wallet
           .createShieldedTransaction(build.build())
           .getInstance();
-      response.getWriter().println(Util.printTransaction(tx, visible));
+      response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
