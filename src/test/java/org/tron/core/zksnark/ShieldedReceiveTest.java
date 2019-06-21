@@ -2317,4 +2317,20 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
   
   }
+
+  @Test
+  public void decodePaymentAddressIgnoreCase() {
+    String addressLower = "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
+    String addressUpper = addressLower.toUpperCase();
+
+    PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
+    PaymentAddress paymentAddress2 = KeyIo.decodePaymentAddress(addressUpper);
+
+    Assert.assertEquals(ByteArray.toHexString(paymentAddress1.getD().getData()),
+        ByteArray.toHexString(paymentAddress2.getD().getData()));
+    Assert.assertEquals(ByteArray.toHexString(paymentAddress1.getPkD()),
+        ByteArray.toHexString(paymentAddress2.getPkD()));
+
+  }
+
 }
