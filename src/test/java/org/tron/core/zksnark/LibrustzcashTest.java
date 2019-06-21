@@ -271,25 +271,25 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     int count = 10;
-    long min_time = 500;
-    long max_time = 0;
+    long minTime = 500;
+    long maxTime = 0;
     double total_time = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkVerifySpend();
-      if (time < min_time) {
-        min_time = time;
+      if (time < minTime) {
+        minTime = time;
       }
-      if (time > max_time) {
-        max_time = time;
+      if (time > maxTime) {
+        maxTime = time;
       }
       total_time += time;
     }
 
     System.out.println("---- result ----");
-    System.out.println("---- max_time is: " + max_time);
-    System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time / count);
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + total_time / count);
 
   }
 
@@ -387,25 +387,25 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     int count = 2;
-    long min_time = 10000;
-    long max_time = 0;
+    long minTime = 10000;
+    long maxTime = 0;
     double total_time = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSpend();
-      if (time < min_time) {
-        min_time = time;
+      if (time < minTime) {
+        minTime = time;
       }
-      if (time > max_time) {
-        max_time = time;
+      if (time > maxTime) {
+        maxTime = time;
       }
       total_time += time;
     }
 
     System.out.println("---- result ----");
-    System.out.println("---- max_time is: " + max_time);
-    System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time / count);
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + total_time / count);
 
   }
 
@@ -437,25 +437,25 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     int count = 2;
-    long min_time = 500;
-    long max_time = 0;
+    long minTime = 500;
+    long maxTime = 0;
     double total_time = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkVerifyOut();
-      if (time < min_time) {
-        min_time = time;
+      if (time < minTime) {
+        minTime = time;
       }
-      if (time > max_time) {
-        max_time = time;
+      if (time > maxTime) {
+        maxTime = time;
       }
       total_time += time;
     }
 
     System.out.println("---- result ----");
-    System.out.println("---- max_time is: " + max_time);
-    System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time / count);
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + total_time / count);
 
   }
 
@@ -504,25 +504,25 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     int count = 2;
-    long min_time = 1000000;
-    long max_time = 0;
+    long minTime = 1000000;
+    long maxTime = 0;
     double total_time = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSaplingSpend();
-      if (time < min_time) {
-        min_time = time;
+      if (time < minTime) {
+        minTime = time;
       }
-      if (time > max_time) {
-        max_time = time;
+      if (time > maxTime) {
+        maxTime = time;
       }
       total_time += time;
     }
 
     System.out.println("---- result ----");
-    System.out.println("---- max_time is: " + max_time);
-    System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time / count);
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + total_time / count);
 
   }
 
@@ -581,25 +581,25 @@ public class LibrustzcashTest {
     System.out.println("--- load ok ---");
 
     int count = 2;
-    long min_time = 1000000;
-    long max_time = 0;
+    long minTime = 1000000;
+    long maxTime = 0;
     double total_time = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSaplingOutput();
-      if (time < min_time) {
-        min_time = time;
+      if (time < minTime) {
+        minTime = time;
       }
-      if (time > max_time) {
-        max_time = time;
+      if (time > maxTime) {
+        maxTime = time;
       }
       total_time += time;
     }
 
     System.out.println("---- result ----");
-    System.out.println("---- max_time is: " + max_time);
-    System.out.println("---- min_time is: " + min_time);
-    System.out.println("---- avg_time is: " + total_time / count);
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + total_time / count);
 
   }
 
