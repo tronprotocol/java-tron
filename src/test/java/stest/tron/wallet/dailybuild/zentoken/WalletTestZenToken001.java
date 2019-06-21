@@ -106,7 +106,8 @@ public class WalletTestZenToken001 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
-        costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
+        costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey,
+        blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 

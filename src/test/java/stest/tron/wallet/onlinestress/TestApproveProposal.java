@@ -96,7 +96,7 @@ public class TestApproveProposal {
   @Test(enabled = true)
   public void testApproveProposal() {
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(21L, 1L);
+    proposalMap.put(28L, 1L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
     try {
@@ -116,11 +116,8 @@ public class TestApproveProposal {
     logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
 
     String[] witnessKey = {
-        "0528dc17428585fc4dece68b79fa7912270a1fe8e85f244372f59eb7e8925e04",
-        "553c7b0dee17d3f5b334925f5a90fe99fb0b93d47073d69ec33eead8459d171e",
-        "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb8",
-        "ff5d867c4434ac17d264afc6696e15365832d5e8000f75733ebb336d66df148d",
-        "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68",
+        "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77",
+        "9FD8E129DE181EA44C6129F727A6871440169568ADE002943EAD0E7A16D8EDAC",
     };
     byte[] witnessAddress;
     for (String key : witnessKey) {
@@ -213,6 +210,7 @@ public class TestApproveProposal {
     Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
     logger.info(Long.toString(getChainParameters.get().getChainParameterCount()));
     for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      logger.info("Index is:" + i);
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }

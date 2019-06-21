@@ -87,7 +87,7 @@ public class ZenUtils {
   }
 
   public static String getMemo(byte[] meno) {
-    int index = 512;
+    int index = meno.length;
     for (; index > 0; --index) {
       if (meno[index - 1] != 0) {
         break;
