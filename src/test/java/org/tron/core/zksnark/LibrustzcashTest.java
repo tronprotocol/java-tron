@@ -13,8 +13,6 @@ import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IE
 import com.google.protobuf.ByteString;
 import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -22,7 +20,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.LongStream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -37,7 +34,6 @@ import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
@@ -252,7 +248,7 @@ public class LibrustzcashTest {
     int count = 10;
     long minTime = 500;
     long maxTime = 0;
-    double total_time = 0.0;
+    double totalTime = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkVerifySpend();
@@ -262,13 +258,13 @@ public class LibrustzcashTest {
       if (time > maxTime) {
         maxTime = time;
       }
-      total_time += time;
+      totalTime += time;
     }
 
     System.out.println("---- result ----");
     System.out.println("---- maxTime is: " + maxTime);
     System.out.println("---- minTime is: " + minTime);
-    System.out.println("---- avgTime is: " + total_time / count);
+    System.out.println("---- avgTime is: " + totalTime / count);
 
   }
 
@@ -368,7 +364,7 @@ public class LibrustzcashTest {
     int count = 2;
     long minTime = 10000;
     long maxTime = 0;
-    double total_time = 0.0;
+    double totalTime = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSpend();
@@ -378,13 +374,13 @@ public class LibrustzcashTest {
       if (time > maxTime) {
         maxTime = time;
       }
-      total_time += time;
+      totalTime += time;
     }
 
     System.out.println("---- result ----");
     System.out.println("---- maxTime is: " + maxTime);
     System.out.println("---- minTime is: " + minTime);
-    System.out.println("---- avgTime is: " + total_time / count);
+    System.out.println("---- avgTime is: " + totalTime / count);
 
   }
 
@@ -418,7 +414,7 @@ public class LibrustzcashTest {
     int count = 2;
     long minTime = 500;
     long maxTime = 0;
-    double total_time = 0.0;
+    double totalTime = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkVerifyOut();
@@ -428,13 +424,13 @@ public class LibrustzcashTest {
       if (time > maxTime) {
         maxTime = time;
       }
-      total_time += time;
+      totalTime += time;
     }
 
     System.out.println("---- result ----");
     System.out.println("---- maxTime is: " + maxTime);
     System.out.println("---- minTime is: " + minTime);
-    System.out.println("---- avgTime is: " + total_time / count);
+    System.out.println("---- avgTime is: " + totalTime / count);
 
   }
 
@@ -448,7 +444,7 @@ public class LibrustzcashTest {
     ExpandedSpendingKey expsk = spendingKey.expandedSpendingKey();
     PaymentAddress address = spendingKey.defaultAddress();
 
-    long value = 100; // TODO random
+    long value = randomInt(100, 100000);
     Note note = new Note(address, value);
     byte[] cm = note.cm();
 
@@ -485,7 +481,7 @@ public class LibrustzcashTest {
     int count = 2;
     long minTime = 1000000;
     long maxTime = 0;
-    double total_time = 0.0;
+    double totalTime = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSaplingSpend();
@@ -495,13 +491,13 @@ public class LibrustzcashTest {
       if (time > maxTime) {
         maxTime = time;
       }
-      total_time += time;
+      totalTime += time;
     }
 
     System.out.println("---- result ----");
     System.out.println("---- maxTime is: " + maxTime);
     System.out.println("---- minTime is: " + minTime);
-    System.out.println("---- avgTime is: " + total_time / count);
+    System.out.println("---- avgTime is: " + totalTime / count);
 
   }
 
@@ -514,7 +510,7 @@ public class LibrustzcashTest {
 
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
-    long value = 100; // TODO random
+    long value = randomInt(100, 100000);
     Note note = new Note(paymentAddress, value);
     note.setMemo(new byte[512]);
 
@@ -562,7 +558,7 @@ public class LibrustzcashTest {
     int count = 2;
     long minTime = 1000000;
     long maxTime = 0;
-    double total_time = 0.0;
+    double totalTime = 0.0;
 
     for (int i = 0; i < count; i++) {
       long time = benchmarkCreateSaplingOutput();
@@ -572,13 +568,13 @@ public class LibrustzcashTest {
       if (time > maxTime) {
         maxTime = time;
       }
-      total_time += time;
+      totalTime += time;
     }
 
     System.out.println("---- result ----");
     System.out.println("---- maxTime is: " + maxTime);
     System.out.println("---- minTime is: " + minTime);
-    System.out.println("---- avgTime is: " + total_time / count);
+    System.out.println("---- avgTime is: " + totalTime / count);
 
   }
 
@@ -666,7 +662,7 @@ public class LibrustzcashTest {
         System.out.println("d is: " + ByteArray.toHexString(address.getD().getData()));
         System.out.println("pkd is: " + ByteArray.toHexString(address.getPkD()));
 
-        Note note = new Note(address, 100);
+        Note note = new Note(address, randomInt(100, 100000));
         note.rcm = ByteArray
             .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
 
@@ -708,7 +704,7 @@ public class LibrustzcashTest {
       Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
       // PaymentAddress op = spendingKey.defaultAddress();
 
-      Note note = new Note(op.get(), 100);
+      Note note = new Note(op.get(), randomInt(100, 100000));
       note.rcm = ByteArray
           .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
 
