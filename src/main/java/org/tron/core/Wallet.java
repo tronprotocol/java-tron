@@ -30,6 +30,7 @@ import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.nio.charset.Charset;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2417,7 +2418,24 @@ public class Wallet {
     return builder.build();
 
   }
-
+  
+  /**
+   * strip right 0 from memo
+   * @param memo
+   * @return
+   */
+  public byte[] stripRightZero(byte[] memo) {
+    int index = memo.length;
+    for (; index>0; --index) {
+      if (memo[index-1] != 0)
+        break;
+    }
+    
+    byte[] memoStrip = new byte[index];
+    System.arraycopy(memo, 0, memoStrip, 0, index);
+    return memoStrip;
+  }
+  
   /*
    * try to get cm belongs to ivk
    */
@@ -2484,7 +2502,7 @@ public class Wallet {
                 .setPaymentAddress(paymentAddress)
                 .setValue(noteText.value)
                 .setRcm(ByteString.copyFrom(noteText.rcm))
-                .setMemo(ByteString.copyFrom(noteText.memo))
+                .setMemo(ByteString.copyFrom(stripRightZero(noteText.memo)))
                 .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
                 .setNote(note)
@@ -2580,7 +2598,7 @@ public class Wallet {
                   .setPaymentAddress(paymentAddress)
                   .setValue(bar.value)
                   .setRcm(ByteString.copyFrom(bar.rcm))
-                  .setMemo(ByteString.copyFrom(bar.memo))
+                  .setMemo(ByteString.copyFrom(stripRightZero(bar.memo)))
                   .build();
 
               DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx
