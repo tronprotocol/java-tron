@@ -358,6 +358,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       BlockCache.put(msg.getMessageId(), (BlockMessage) msg);
       type = InventoryType.BLOCK;
     } else if (msg instanceof TransactionMessage) {
+      logger.info("Enter this");
       TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
       type = InventoryType.TRX;
       long currentTime = System.currentTimeMillis();
@@ -372,10 +373,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
             count.get(), cost, count.get() / cost, advObjToSpread.size());
       }
     } else {
+      logger.info("Return:return");
       return;
     }
     synchronized (advObjToSpread) {
       advObjToSpread.put(msg.getMessageId(), type);
+      logger.info("advObjToSpread size " + advObjToSpread.size());
     }
   }
 
@@ -528,6 +531,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void consumerAdvObjToSpread() {
+    logger.info("SPREAD advObjToSpread ddddd :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
     TPS = Args.getInstance().getStressTps();
 
     long starTime = System.currentTimeMillis();
@@ -535,7 +539,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       return;
     }
     logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
-    if (counter1 == 0) {
+    /*if (counter1 == 0) {
       counter1 = 1;
       ManagedChannel channelFull = null;
       WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -553,7 +557,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (channelFull != null) {
         channelFull.shutdown();
       }
-    }
+    }*/
     ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
     AtomicInteger invCount = new AtomicInteger(0);
     synchronized (advObjToSpread) {
