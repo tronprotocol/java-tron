@@ -151,6 +151,7 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
+        case ISCONTRACT:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -722,6 +723,13 @@ public class VM {
           }
 
           program.stackPush(balance);
+          program.step();
+        }
+        case ISCONTRACT: {
+          DataWord address = program.stackPop();
+          DataWord isContract = program.isContract(address);
+
+          program.stackPush(isContract);
           program.step();
         }
         break;
