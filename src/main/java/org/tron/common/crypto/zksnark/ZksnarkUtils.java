@@ -15,10 +15,7 @@
 
 package org.tron.common.crypto.zksnark;
 
-
-import com.google.protobuf.ByteString;
 import java.math.BigInteger;
-import org.tron.common.crypto.blake2b.Blake2b;
 import org.tron.common.crypto.eddsa.EdDSAPublicKey;
 import org.tron.common.crypto.eddsa.spec.EdDSANamedCurveSpec;
 import org.tron.common.crypto.eddsa.spec.EdDSANamedCurveTable;

@@ -2,7 +2,9 @@ package org.tron.core.zen;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.sun.jna.Pointer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,16 +26,12 @@ import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
-import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
+import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 public class ZenTransactionBuilder {
@@ -124,12 +122,12 @@ public class ZenTransactionBuilder {
         .setToAmount(value);
   }
 
-  public TransactionCapsule build() throws ZksnarkException {
-    return build(true);
-  }
-
   public TransactionCapsule buildWithoutAsk() throws ZksnarkException {
     return build(false);
+  }
+
+  public TransactionCapsule build() throws ZksnarkException {
+    return build(true);
   }
 
   public TransactionCapsule build(boolean withAsk) throws ZksnarkException {

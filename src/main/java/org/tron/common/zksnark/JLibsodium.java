@@ -6,7 +6,8 @@ public class JLibsodium {
 
   public static final int crypto_generichash_blake2b_PERSONALBYTES = 16;
   public static final int crypto_aead_chacha20poly1305_ietf_NPUBBYTES = 12;
-  public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES = crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
+  public static final int crypto_aead_chacha20poly1305_IETF_NPUBBYTES =
+      crypto_aead_chacha20poly1305_ietf_NPUBBYTES;
   private static Libsodium INSTANCE;
 
   public static int cryptoGenerichashBlake2bInitSaltPersonal(

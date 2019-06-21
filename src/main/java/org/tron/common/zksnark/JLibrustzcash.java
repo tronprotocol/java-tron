@@ -90,8 +90,9 @@ public class JLibrustzcash {
   }
 
   /**
-   * @param ask: the spend authorizing key,to genarate ak, 32 bytes
+   * @param ask the spend authorizing key,to generate ak, 32 bytes
    * @return ak 32 bytes
+   * @throws ZksnarkException
    */
   public static byte[] librustzcashAskToAk(byte[] ask) throws ZksnarkException {
     if (!isOpenZen()) {
@@ -104,8 +105,9 @@ public class JLibrustzcash {
   }
 
   /**
-   * @param nsk: the proof authorizing key, to genarate nk, 32 bytes
+   * @param nsk the proof authorizing key, to generate nk, 32 bytes
    * @return 32 bytes
+   * @throws ZksnarkException
    */
   public static byte[] librustzcashNskToNk(byte[] nsk) throws ZksnarkException {
     if (!isOpenZen()) {
@@ -148,8 +150,9 @@ public class JLibrustzcash {
 
   /**
    * check validity of d
-   *
-   * @param d: 11 bytes
+   * @param d 11 bytes
+   * @return
+   * @throws ZksnarkException
    */
   public static boolean librustzcashCheckDiversifier(byte[] d) throws ZksnarkException {
     if (!isOpenZen()) {
@@ -196,9 +199,9 @@ public class JLibrustzcash {
 
   /**
    * convert value to 32-byte scalar
-   *
-   * @param value: 64 bytes
-   * @param data: return, 32 bytes
+   * @param value 64 bytes
+   * @param data 32 bytes
+   * @throws ZksnarkException
    */
   public static void librustzcashToScalar(byte[] value, byte[] data) throws ZksnarkException {
     if (!isOpenZen()) {
@@ -271,7 +274,8 @@ public class JLibrustzcash {
   }
 
   /**
-   * @param result: uncommitted value, 32 bytes
+   * @param result uncommitted value, 32 bytes
+   * @throws ZksnarkException
    */
   public static void librustzcash_tree_uncommitted(byte[] result) throws ZksnarkException {
     if (!isOpenZen()) {

@@ -15,7 +15,8 @@ public class ZksnarkClient {
   private TronZksnarkGrpc.TronZksnarkBlockingStub blockingStub;
 
   public ZksnarkClient() {
-    blockingStub = TronZksnarkGrpc.newBlockingStub(ManagedChannelBuilder.forTarget("127.0.0.1:60051")
+    blockingStub = TronZksnarkGrpc.newBlockingStub(ManagedChannelBuilder
+        .forTarget("127.0.0.1:60051")
         .usePlaintext()
         .build());
   }

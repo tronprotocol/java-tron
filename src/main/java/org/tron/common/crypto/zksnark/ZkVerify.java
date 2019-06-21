@@ -71,7 +71,7 @@ public class ZkVerify {
   }
 
   public int verify(VerifyingKey vk, BigInteger[] input, Proof proof) {
-    for (int i = 0 ; i < input.length; i++){
+    for (int i = 0; i < input.length; i++) {
       System.out.println(input[i].toString(10));
       System.out.println(input[i].toString(16));
     }
@@ -79,7 +79,7 @@ public class ZkVerify {
     System.out.println(proof.getK().getX().toString(16));
     System.out.println(proof.getK().getY().toString(10));
     System.out.println(proof.getK().getY().toString(16));
-    if (input.length + 1 != vk.getIC().length){
+    if (input.length + 1 != vk.getIC().length) {
       return -1;
     }
 

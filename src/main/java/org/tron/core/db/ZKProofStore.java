@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ZKProofStore extends TronDatabase<Boolean>{
+public class ZKProofStore extends TronDatabase<Boolean> {
 
   @Autowired
   public ZKProofStore(ApplicationContext ctx) {

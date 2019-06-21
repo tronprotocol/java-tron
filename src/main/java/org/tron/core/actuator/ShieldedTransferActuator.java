@@ -42,8 +42,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ShieldedTransferContract shieldedTransferContract;
-  static public String zenTokenId = Args.getInstance().getZenTokenId();
-
+  public static String zenTokenId = Args.getInstance().getZenTokenId();
 
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
@@ -201,8 +200,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
 
     if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
-      throw new ContractValidateException("Not support Shielded Transaction, need to be opened by" +
-          " the committee");
+      throw new ContractValidateException("Not support Shielded Transaction, need to be opened by"
+          + " the committee");
     }
 
     //transparent verification

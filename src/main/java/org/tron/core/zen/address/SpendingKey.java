@@ -34,7 +34,7 @@ public class SpendingKey {
   }
 
   private static byte[] randomUint256() {
-    return generatePrivateKey(0l);
+    return generatePrivateKey(0L);
   }
 
   public static byte[] generatePrivateKey(long seed) {
