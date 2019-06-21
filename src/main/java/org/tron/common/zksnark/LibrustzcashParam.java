@@ -213,7 +213,7 @@ public class LibrustzcashParam {
   }
 
   /**
-   * Compute note commitment d: diversifier, 11 bytes pk_d: 32 bytes r: rcm,  32 bytes cm: note
+   * Compute note commitment d: diversifier, 11 bytes pkD: 32 bytes r: rcm,  32 bytes cm: note
    * commitment, 32 bytes
    */
   public static class ComputeCmParams implements ValidParam {
@@ -223,7 +223,7 @@ public class LibrustzcashParam {
     private byte[] d;
     @Setter
     @Getter
-    private byte[] pk_d;
+    private byte[] pkD;
     @Setter
     @Getter
     private long value;
@@ -234,10 +234,10 @@ public class LibrustzcashParam {
     @Getter
     private byte[] cm;
 
-    public ComputeCmParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] cm)
+    public ComputeCmParams(byte[] d, byte[] pkD, long value, byte[] r, byte[] cm)
         throws ZksnarkException {
       this.d = d;
-      this.pk_d = pk_d;
+      this.pkD = pkD;
       this.value = value;
       this.r = r;
       this.cm = cm;
@@ -247,14 +247,14 @@ public class LibrustzcashParam {
     @Override
     public void valid() throws ZksnarkException {
       valid11Params(d);
-      valid32Params(pk_d);
+      valid32Params(pkD);
       valid32Params(r);
       valid32Params(cm);
     }
   }
 
   /**
-   * compute nullifier d: diversifier, 11 bytes pk_d, 32 bytes r: rcm,  32 bytes ak:
+   * compute nullifier d: diversifier, 11 bytes pkD, 32 bytes r: rcm,  32 bytes ak:
    * spendAuthSig.PulicKey, 32 bytes nk: to genarate nullifier, 32 bytes result: nullifier, 32
    * bytes
    */
@@ -265,7 +265,7 @@ public class LibrustzcashParam {
     private byte[] d;
     @Setter
     @Getter
-    private byte[] pk_d;
+    private byte[] pkD;
     @Setter
     @Getter
     private long value;
@@ -285,10 +285,10 @@ public class LibrustzcashParam {
     @Getter
     private byte[] result;
 
-    public ComputeNfParams(byte[] d, byte[] pk_d, long value, byte[] r, byte[] ak, byte[] nk,
+    public ComputeNfParams(byte[] d, byte[] pkD, long value, byte[] r, byte[] ak, byte[] nk,
         long position, byte[] result) throws ZksnarkException {
       this.d = d;
-      this.pk_d = pk_d;
+      this.pkD = pkD;
       this.value = value;
       this.r = r;
       this.ak = ak;
@@ -301,7 +301,7 @@ public class LibrustzcashParam {
     @Override
     public void valid() throws ZksnarkException {
       valid11Params(d);
-      valid32Params(pk_d);
+      valid32Params(pkD);
       valid32Params(r);
       valid32Params(ak);
       valid32Params(nk);
@@ -467,7 +467,7 @@ public class LibrustzcashParam {
   }
 
   /**
-   * esk: 32 bytes d: 11 bytes pk_d: 32 bytes r: rcm, 32 bytes cv: value commitment, 32 bytes
+   * esk: 32 bytes d: 11 bytes pkD: 32 bytes r: rcm, 32 bytes cv: value commitment, 32 bytes
    * zkproof: receive proof, 192 bytes
    */
   public static class OutputProofParams implements ValidParam {
@@ -483,7 +483,7 @@ public class LibrustzcashParam {
     private byte[] d;
     @Setter
     @Getter
-    private byte[] pk_d;
+    private byte[] pkD;
     @Setter
     @Getter
     private byte[] r;
@@ -497,12 +497,12 @@ public class LibrustzcashParam {
     @Getter
     private byte[] zkproof;
 
-    public OutputProofParams(long ctx, byte[] esk, byte[] d, byte[] pk_d, byte[] r,
+    public OutputProofParams(long ctx, byte[] esk, byte[] d, byte[] pkD, byte[] r,
         long value, byte[] cv, byte[] zkproof) throws ZksnarkException {
       this.ctx = ctx;
       this.esk = esk;
       this.d = d;
-      this.pk_d = pk_d;
+      this.pkD = pkD;
       this.r = r;
       this.value = value;
       this.cv = cv;
@@ -514,7 +514,7 @@ public class LibrustzcashParam {
     public void valid() throws ZksnarkException {
       valid32Params(esk);
       valid11Params(d);
-      valid32Params(pk_d);
+      valid32Params(pkD);
       valid32Params(r);
       valid32Params(cv);
       validParamLength(zkproof, 192);
@@ -786,7 +786,7 @@ public class LibrustzcashParam {
   }
 
   /**
-   * ivk: incoming viewing key, 32 bytes d: 11 bytes pk_d: 32 bytes
+   * ivk: incoming viewing key, 32 bytes d: 11 bytes pkD: 32 bytes
    */
   public static class IvkToPkdParams implements ValidParam {
 
@@ -798,12 +798,12 @@ public class LibrustzcashParam {
     private byte[] d;
     @Setter
     @Getter
-    private byte[] pk_d;
+    private byte[] pkD;
 
-    public IvkToPkdParams(byte[] ivk, byte[] d, byte[] pk_d) throws ZksnarkException {
+    public IvkToPkdParams(byte[] ivk, byte[] d, byte[] pkD) throws ZksnarkException {
       this.ivk = ivk;
       this.d = d;
-      this.pk_d = pk_d;
+      this.pkD = pkD;
       valid();
     }
 
@@ -811,7 +811,7 @@ public class LibrustzcashParam {
     public void valid() throws ZksnarkException {
       valid32Params(ivk);
       valid11Params(d);
-      valid32Params(pk_d);
+      valid32Params(pkD);
     }
   }
 

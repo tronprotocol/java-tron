@@ -428,7 +428,7 @@ public class SendCoinShieldTest {
         receiveDescription.getNoteCommitment().toByteArray(),
         encryptor);
 
-    // get pk_d, esk from decryption of c_out with ovk
+    // get pkD, esk from decryption of c_out with ovk
     Optional<OutgoingPlaintext> ret2 = OutgoingPlaintext.decrypt(outCiphertext,
         fullViewingKey.getOvk(),
         receiveDescription.getValueCommitment().toByteArray(),
@@ -438,7 +438,7 @@ public class SendCoinShieldTest {
 
     if (ret2.isPresent()) {
       OutgoingPlaintext decryptedOutgoingPlaintext = ret2.get();
-      Assert.assertArrayEquals(decryptedOutgoingPlaintext.pk_d, outgoingPlaintext.pk_d);
+      Assert.assertArrayEquals(decryptedOutgoingPlaintext.pkD, outgoingPlaintext.pkD);
       Assert.assertArrayEquals(decryptedOutgoingPlaintext.esk, outgoingPlaintext.esk);
 
       //decrypt c_enc with pkd、esk
@@ -448,7 +448,7 @@ public class SendCoinShieldTest {
           .decrypt(ciphertext,
                   encryptor.epk,
                   decryptedOutgoingPlaintext.esk,
-                  decryptedOutgoingPlaintext.pk_d,
+                  decryptedOutgoingPlaintext.pkD,
                   cmuOpt);
 
       if (foo.isPresent()) {
@@ -621,7 +621,7 @@ public class SendCoinShieldTest {
             .decrypt(ciphertext,
                     receiveDescription.getEpk().toByteArray(),
                     decryptedOutgoingPlaintext.esk,
-                    decryptedOutgoingPlaintext.pk_d,
+                    decryptedOutgoingPlaintext.pkD,
                     receiveDescription.getNoteCommitment().toByteArray());
 
         if (foo.isPresent()) {

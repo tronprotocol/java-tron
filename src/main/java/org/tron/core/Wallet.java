@@ -2569,13 +2569,13 @@ public class Wallet {
                 .decrypt(ciphertext,
                     r.getEpk().toByteArray(),
                     decryptedOutCtUnwrapped.esk,
-                    decryptedOutCtUnwrapped.pk_d,
+                    decryptedOutCtUnwrapped.pkD,
                     r.getNoteCommitment().toByteArray());
 
             if (foo.isPresent()) {
               Note bar = foo.get();
               String paymentAddress = KeyIo.encodePaymentAddress(
-                  new PaymentAddress(bar.d, decryptedOutCtUnwrapped.pk_d));
+                  new PaymentAddress(bar.d, decryptedOutCtUnwrapped.pkD));
               GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                   .setPaymentAddress(paymentAddress)
                   .setValue(bar.value)

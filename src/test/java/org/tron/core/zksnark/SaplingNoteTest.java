@@ -8,6 +8,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
@@ -19,6 +20,7 @@ public class SaplingNoteTest {
   @BeforeClass
   public static void init() {
     Args.getInstance().setAllowShieldedTransaction(1);
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   @AfterClass
@@ -32,7 +34,7 @@ public class SaplingNoteTest {
 
   @Test
   public void testVectors() throws ZksnarkException {
-
+    
     long v = 0;
     long position = 0;
     byte[] d = {(byte) 0xf1, (byte) 0x9d, (byte) 0x9b, 0x79, 0x7e, 0x39, (byte) 0xf3, 0x37, 0x44,
@@ -77,7 +79,7 @@ public class SaplingNoteTest {
 
   @Test
   public void testRandom() throws BadItemException, ZksnarkException {
-
+    
     SpendingKey spendingKey = SpendingKey.random();
     PaymentAddress address = spendingKey.defaultAddress();
 
@@ -89,7 +91,7 @@ public class SaplingNoteTest {
     Assert.assertNotEquals(note1.value, note2.value);
     Assert.assertNotEquals(ByteArray.toHexString(note1.rcm), ByteArray.toHexString(note2.rcm));
 
-    // Test diversifier and pk_d are not the same for different spending keys
+    // Test diversifier and pkD are not the same for different spending keys
     Note note3 = new Note(SpendingKey.random().defaultAddress(), randomInt(0, 99999));
     Assert
         .assertNotEquals(ByteArray.toHexString(note1.d.data), ByteArray.toHexString(note3.d.data));

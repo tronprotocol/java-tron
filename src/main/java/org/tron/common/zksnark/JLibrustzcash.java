@@ -76,7 +76,7 @@ public class JLibrustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcashSaplingComputeCm(params.getD(), params.getPk_d(),
+    return INSTANCE.librustzcashSaplingComputeCm(params.getD(), params.getPkD(),
         params.getValue(), params.getR(), params.getCm());
   }
 
@@ -84,7 +84,7 @@ public class JLibrustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    INSTANCE.librustzcashSaplingComputeNf(params.getD(), params.getPk_d(), params.getValue(),
+    INSTANCE.librustzcashSaplingComputeNf(params.getD(), params.getPkD(), params.getValue(),
         params.getR(), params.getAk(), params.getNk(), params.getPosition(), params.getResult());
     return true;
   }
@@ -177,7 +177,7 @@ public class JLibrustzcash {
       return true;
     }
     return INSTANCE.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
-        params.getD(), params.getPk_d(), params.getR(), params.getValue(), params.getCv(),
+        params.getD(), params.getPkD(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());
   }
 
@@ -262,7 +262,7 @@ public class JLibrustzcash {
     if (!isOpenZen()) {
       return true;
     }
-    return INSTANCE.librustzcashIvkToPkd(params.getIvk(), params.getD(), params.getPk_d());
+    return INSTANCE.librustzcashIvkToPkd(params.getIvk(), params.getD(), params.getPkD());
   }
 
   public static void librustzcashMerkleHash(MerkleHashParams params) {

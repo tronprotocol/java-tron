@@ -118,10 +118,10 @@ public class LibrustzcashTest {
   public void testZcashParam() throws ZksnarkException {
     byte[] d = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     //byte[] d ={};
-    //byte[] pk_d = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    //byte[] pkD = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
     byte[] ivk = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7, 8,
         9, 10, 11, 12, 13, 14, 15};
-    byte[] pk_d = new byte[32];
+    byte[] pkD = new byte[32];
     long value = 1;
     byte[] r = {(byte) 0xb7, 0x2c, (byte) 0xf7, (byte) 0xd6, 0x5e, 0x0e, (byte) 0x97, (byte) 0xd0,
         (byte) 0x82, 0x10, (byte) 0xc8, (byte) 0xcc, (byte) 0x93, 0x20, 0x68, (byte) 0xa6, 0x00,
@@ -132,17 +132,17 @@ public class LibrustzcashTest {
     Assert.assertTrue(check_d);
 
     ivk[31] = (byte) 0x10;
-    boolean check_pkd = librustzcashIvkToPkd(new IvkToPkdParams(ivk, d, pk_d));
-    System.out.println("pk_d is\n");
+    boolean check_pkd = librustzcashIvkToPkd(new IvkToPkdParams(ivk, d, pkD));
+    System.out.println("pkD is\n");
     for (int j = 0; j < 32; j++) {
-      System.out.printf("%x ", pk_d[j]);
+      System.out.printf("%x ", pkD[j]);
       if ((j + 1) % 16 == 0) {
         System.out.printf("\n");
       }
     }
     Assert.assertTrue(check_pkd);
 
-    boolean res = librustzcashComputeCm(new ComputeCmParams(d, pk_d, value, r, cm));
+    boolean res = librustzcashComputeCm(new ComputeCmParams(d, pkD, value, r, cm));
     Assert.assertFalse(res);
 
     //check range of alpha

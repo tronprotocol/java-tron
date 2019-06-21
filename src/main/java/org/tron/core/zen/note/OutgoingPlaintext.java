@@ -14,14 +14,14 @@ import org.tron.core.zen.note.NoteEncryption.Encryption.OutPlaintext;
 @AllArgsConstructor
 public class OutgoingPlaintext {
 
-  public byte[] pk_d;
+  public byte[] pkD;
   public byte[] esk;
 
   private OutPlaintext encode() {
     OutPlaintext ret = new OutPlaintext();
     ret.data = new byte[ZC_OUTPLAINTEXT_SIZE];
     // ZC_OUTPLAINTEXT_SIZE = (ZC_JUBJUB_POINT_SIZE + ZC_JUBJUB_SCALAR_SIZE)
-    System.arraycopy(pk_d, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
+    System.arraycopy(pkD, 0, ret.data, 0, ZC_JUBJUB_SCALAR_SIZE);
     System.arraycopy(esk, 0, ret.data, ZC_JUBJUB_SCALAR_SIZE, ZC_JUBJUB_POINT_SIZE);
     return ret;
   }
@@ -30,7 +30,7 @@ public class OutgoingPlaintext {
     byte[] data = outPlaintext.data;
     OutgoingPlaintext ret = new OutgoingPlaintext(new byte[ZC_JUBJUB_SCALAR_SIZE],
         new byte[ZC_JUBJUB_POINT_SIZE]);
-    System.arraycopy(data, 0, ret.pk_d, 0, ZC_JUBJUB_SCALAR_SIZE);
+    System.arraycopy(data, 0, ret.pkD, 0, ZC_JUBJUB_SCALAR_SIZE);
     System.arraycopy(data, ZC_JUBJUB_SCALAR_SIZE, ret.esk, 0, ZC_JUBJUB_POINT_SIZE);
     return ret;
   }

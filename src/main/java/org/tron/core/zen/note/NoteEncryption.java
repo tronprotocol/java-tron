@@ -29,8 +29,8 @@ public class NoteEncryption {
   // Ephemeral secret key
   public byte[] esk;
 
-  public boolean already_encrypted_enc;
-  public boolean already_encrypted_out;
+  public boolean alreadyEncryptedEnc;
+  public boolean alreadyEncryptedOut;
 
   public NoteEncryption(byte[] epk, byte[] esk) {
     this.epk = epk;
@@ -55,32 +55,32 @@ public class NoteEncryption {
   }
   
   /**
-   * encrypt plain_enc by k_enc to c_enc with sharedsecret and epk, use this esk,epk
-   * k_enc can use in encrypt also in decrypt，symmetric encryption.
-   * @param pk_d
+   * encrypt plain_enc by kEnc to cEnc with sharedsecret and epk, use this esk,epk
+   * kEnc can use in encrypt also in decrypt，symmetric encryption.
+   * @param pkD
    * @param message
    * @return
    * @throws ZksnarkException
    */
-  public Optional<EncCiphertext> encryptToRecipient(byte[] pk_d, EncPlaintext message)
+  public Optional<EncCiphertext> encryptToRecipient(byte[] pkD, EncPlaintext message)
       throws ZksnarkException {
-    if (already_encrypted_enc) {
+    if (alreadyEncryptedEnc) {
       throw new ZksnarkException("already encrypted to the recipient using this key");
     }
 
     byte[] dhsecret = new byte[32];
-    if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, dhsecret))) {
+    if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pkD, esk, dhsecret))) {
       return Optional.empty();
     }
 
-    byte[] k_enc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
-    //generate K_enc by sharedsecret and epk
-    Encryption.KDFSapling(k_enc, dhsecret, epk);
+    byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
+    //generate kEnc by sharedsecret and epk
+    Encryption.KDFSapling(kEnc, dhsecret, epk);
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     EncCiphertext ciphertext = new EncCiphertext();
     JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
-        ZenChainParams.ZC_ENCPLAINTEXT_SIZE, null, 0, null, cipherNonce, k_enc);
-    already_encrypted_enc = true;
+        ZenChainParams.ZC_ENCPLAINTEXT_SIZE, null, 0, null, cipherNonce, kEnc);
+    alreadyEncryptedEnc = true;
     return Optional.of(ciphertext);
   }
   
@@ -95,7 +95,7 @@ public class NoteEncryption {
    */
   public OutCiphertext encryptToOurselves(
       byte[] ovk, byte[] cv, byte[] cm, OutPlaintext message) throws ZksnarkException {
-    if (already_encrypted_out) {
+    if (alreadyEncryptedOut) {
       throw new ZksnarkException("already encrypted to the recipient using this key");
     }
 
@@ -106,7 +106,7 @@ public class NoteEncryption {
     OutCiphertext ciphertext = new OutCiphertext();
     JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
         ZenChainParams.ZC_OUTPLAINTEXT_SIZE, null, 0, null, cipherNonce, ock);
-    already_encrypted_out = true;
+    alreadyEncryptedOut = true;
     return ciphertext;
   }
 
@@ -147,20 +147,20 @@ public class NoteEncryption {
     }
   
     /**
-     * generate K_enc by sharedsecret and epk
-     * @param K_enc
+     * generate kEnc by sharedsecret and epk
+     * @param kEnc
      * @param sharedsecret
      * @param epk
      * @throws ZksnarkException
      */
-    public static void KDFSapling(byte[] K_enc, byte[] sharedsecret, byte[] epk) throws ZksnarkException {
+    public static void KDFSapling(byte[] kEnc, byte[] sharedsecret, byte[] epk) throws ZksnarkException {
       byte[] block = new byte[64];
       System.arraycopy(sharedsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
       byte[] personalization = new byte[JLibsodium.crypto_generichash_blake2b_PERSONALBYTES];
       byte[] temp = "Ztron_SaplingKDF".getBytes();
       System.arraycopy(temp, 0, personalization, 0, temp.length);
-      if (JLibsodium.cryptoGenerichashBlack2bSaltPersonal(K_enc, NOTEENCRYPTION_CIPHER_KEYSIZE,
+      if (JLibsodium.cryptoGenerichashBlack2bSaltPersonal(kEnc, NOTEENCRYPTION_CIPHER_KEYSIZE,
           block, 64,
           null, 0, // No key.
           null,    // No salt.
@@ -173,8 +173,8 @@ public class NoteEncryption {
     }
   
     /**
-     * decrypt c_enc by K_enc to plain_enc generate with epk + ivk
-     * k_enc can use in encrypt also in decrypt，symmetric encryption.
+     * decrypt cEnc by kEnc to plain_enc generate with epk + ivk
+     * kEnc can use in encrypt also in decrypt，symmetric encryption.
      * @param ciphertext
      * @param ivk
      * @param epk
@@ -188,56 +188,56 @@ public class NoteEncryption {
       if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(epk, ivk, sharedsecret))) {
         return Optional.empty();
       }
-      byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
-      //generate K_enc by sharedsecret and epk
-      KDFSapling(K, sharedsecret, epk);
+      byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
+      //generate kEnc by sharedsecret and epk
+      KDFSapling(kEnc, sharedsecret, epk);
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
-      //decrypt c_enc by K_enc
+      //decrypt cEnc by kEnc
       if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
           plaintext.data, null,
           null,
           ciphertext, ZC_ENCCIPHERTEXT_SIZE,
           null,
           0,
-          cipher_nonce, K) != 0) {
+          cipher_nonce, kEnc) != 0) {
         return Optional.empty();
       }
       return Optional.of(plaintext);
     }
   
     /**
-     * decrypt c_enc by K_enc to plain_enc generate with esk + pk_d
-     * k_enc can use in encrypt also in decrypt，symmetric encryption.
+     * decrypt cEnc by kEnc to plain_enc generate with esk + pkD
+     * kEnc can use in encrypt also in decrypt，symmetric encryption.
      * @param ciphertext
      * @param epk
      * @param esk
-     * @param pk_d
+     * @param pkD
      * @return
      * @throws ZksnarkException
      */
     public static Optional<EncPlaintext> AttemptEncDecryption(
-        EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pk_d) throws ZksnarkException {
+        EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pkD) throws ZksnarkException {
       byte[] sharedsecret = new byte[32];
-      //generate sharedsecret by esk and pk_d. esk + pk_d = sharedsecret = epk + ivk
-      if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pk_d, esk, sharedsecret))) {
+      //generate sharedsecret by esk and pkD. esk + pkD = sharedsecret = epk + ivk
+      if (!JLibrustzcash.librustzcashKaAgree(new KaAgreeParams(pkD, esk, sharedsecret))) {
         return Optional.empty();
       }
-      byte[] K = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
-      //generate K_enc by sharedsecret and epk
-      KDFSapling(K, sharedsecret, epk);
-      byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+      byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
+      //generate kEnc by sharedsecret and epk
+      KDFSapling(kEnc, sharedsecret, epk);
+      byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
-      //decrypt c_enc by K_enc.
+      //decrypt cEnc by kEnc.
       if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(
           plaintext.data, null,
           null,
           ciphertext.data, ZC_ENCCIPHERTEXT_SIZE,
           null,
           0,
-          cipher_nonce, K) != 0) {
+          cipherNonce, kEnc) != 0) {
         return Optional.empty();
       }
 
@@ -260,16 +260,16 @@ public class NoteEncryption {
       byte[] ock = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       //generate ock by ovk, cv, cm, epk
       PRFOck(ock, ovk, cv, cm, epk);
-      byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
+      byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       OutPlaintext plaintext = new OutPlaintext();
       plaintext.data = new byte[ZC_OUTPLAINTEXT_SIZE];
-      //decrypt out by ock, get esk, pk_d
+      //decrypt out by ock, get esk, pkD
       if (JLibsodium.cryptoAeadChacha20poly1305IetfDecrypt(plaintext.data, null,
           null,
           ciphertext.data, ZC_OUTCIPHERTEXT_SIZE,
           null,
           0,
-          cipher_nonce, ock) != 0) {
+          cipherNonce, ock) != 0) {
         return Optional.empty();
       }
       return Optional.of(plaintext);

@@ -133,12 +133,12 @@ public class NoteEncDecryTest {
         .decrypt(outCiphertext, ovk, cv, cm, epk);
     OutgoingPlaintext result = ret.get();
 
-    byte[] pk_d = {-115, 5, -71, -104, -116, -55, -12, 33, 108, -64, -122, -21, 126, 79, -20, 3,
+    byte[] pkD = {-115, 5, -71, -104, -116, -55, -12, 33, 108, -64, -122, -21, 126, 79, -20, 3,
         58, -81, -63, 8, -11, -122, 107, 119, 11, -1, -70, 90, 103, 91, -69, -103};
     byte[] esk = {-108, -3, 17, -93, 49, 22, -101, -67, 45, -22, 114, 108, -19, 89, -108, 124,
         113, 99, 88, -6, 77, 75, 53, -20, -12, 45, 29, 90, -31, -113, 100, 2};
 
-    Assert.assertArrayEquals(result.pk_d, pk_d);
+    Assert.assertArrayEquals(result.pkD, pkD);
     Assert.assertArrayEquals(result.esk, esk);
   }
 
@@ -195,18 +195,18 @@ public class NoteEncDecryTest {
         51, 58, 31, -13, -28, 94, 24, -104, 92, -107, 78, -74, 17, -89, 30, 71};
 
     //output of last case
-    byte[] pk_d = new byte[]{-115, 5, -71, -104, -116, -55, -12, 33, 108, -64, -122, -21, 126, 79,
+    byte[] pkD = new byte[]{-115, 5, -71, -104, -116, -55, -12, 33, 108, -64, -122, -21, 126, 79,
         -20, 3,
         58, -81, -63, 8, -11, -122, 107, 119, 11, -1, -70, 90, 103, 91, -69, -103};
     byte[] esk = new byte[]{-108, -3, 17, -93, 49, 22, -101, -67, 45, -22, 114, 108, -19, 89, -108,
         124,
         113, 99, 88, -6, 77, 75, 53, -20, -12, 45, 29, 90, -31, -113, 100, 2};
 
-    OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(pk_d, esk);
+    OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(pkD, esk);
 
     //output
     Optional<Note> ret2 = Note.decrypt(
-        enc, epk, outgoingPlaintext.esk, outgoingPlaintext.pk_d, cmu_opt);
+        enc, epk, outgoingPlaintext.esk, outgoingPlaintext.pkD, cmu_opt);
     Note result2 = ret2.get();
 
     byte[] rcm = new byte[]{-125, -45, 111, -44, -56, -18, -66, -59, 22, -61, -88, -50, 47, -28,
