@@ -531,14 +531,14 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   }
 
   private void consumerAdvObjToSpread() {
-    logger.info("SPREAD advObjToSpread ddddd :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
+    //logger.info("SPREAD advObjToSpread ddddd :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
     TPS = Args.getInstance().getStressTps();
 
     long starTime = System.currentTimeMillis();
     if (advObjToSpread.isEmpty()) {
       return;
     }
-    logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
+    //logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
     /*if (counter1 == 0) {
       counter1 = 1;
       ManagedChannel channelFull = null;
