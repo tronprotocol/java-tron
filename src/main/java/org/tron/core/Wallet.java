@@ -2416,7 +2416,7 @@ public class Wallet {
     if (!(startNum >= 0 && endNum > startNum
         && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
+              "request require start_block_index >= 0 && end_block_index > start_block_index && end_block_index - start_block_index <= 1000");
     }
     BlockList blockList = this
         .getBlocksByLimitNext(startNum, endNum - startNum);
@@ -2498,7 +2498,7 @@ public class Wallet {
     if (!(startNum >= 0 && endNum > startNum
         && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request require startNum >= 0 && endNum > startNum && endNum - startNum <= 1000");
+          "request require start_block_index >= 0 && end_block_index > start_block_index && end_block_index - start_block_index <= 1000");
     }
     BlockList blockList = this
         .getBlocksByLimitNext(startNum, endNum - startNum);
@@ -2534,10 +2534,10 @@ public class Wallet {
             index++) {
           ReceiveDescription r = stContract
               .getReceiveDescription(index);
-          Encryption.OutCiphertext c_out = new Encryption.OutCiphertext();
-          c_out.data = r.getCOut().toByteArray();
+          Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
+          cOut.data = r.getCOut().toByteArray();
           Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext
-              .decrypt(c_out,//ciphertext
+              .decrypt(cOut,//ciphertext
                   ovk,
                   r.getValueCommitment().toByteArray(), //cv
                   r.getNoteCommitment().toByteArray(), //cmu
@@ -2545,7 +2545,7 @@ public class Wallet {
               );
 
           if (notePlaintext.isPresent()) {
-            OutgoingPlaintext decrypted_out_ct_unwrapped = notePlaintext
+            OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext
                 .get();
             //decode c_enc with pkd、esk
             Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
@@ -2553,14 +2553,14 @@ public class Wallet {
             Optional<Note> foo = Note
                 .decrypt(ciphertext,
                     r.getEpk().toByteArray(),
-                    decrypted_out_ct_unwrapped.esk,
-                    decrypted_out_ct_unwrapped.pk_d,
+                    decryptedOutCtUnwrapped.esk,
+                    decryptedOutCtUnwrapped.pk_d,
                     r.getNoteCommitment().toByteArray());
 
             if (foo.isPresent()) {
               Note bar = foo.get();
               String paymentAddress = KeyIo.encodePaymentAddress(
-                  new PaymentAddress(bar.d, decrypted_out_ct_unwrapped.pk_d));
+                  new PaymentAddress(bar.d, decryptedOutCtUnwrapped.pk_d));
               GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                   .setPaymentAddress(paymentAddress)
                   .setValue(bar.value)

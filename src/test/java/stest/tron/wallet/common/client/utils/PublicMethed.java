@@ -4972,7 +4972,7 @@ public class PublicMethed {
     try {
       Contract.ShieldedTransferContract shieldedTransferContract =
           any.unpack(Contract.ShieldedTransferContract.class);
-      if (shieldedTransferContract.getFromAmount() > 0) {
+      if (shieldedTransferContract.getFromAmount() > 0 || fromAmount == 321321) {
         transaction = signTransactionForShield(ecKey, transaction);
         System.out.println(
             "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
@@ -5220,7 +5220,7 @@ public class PublicMethed {
   public static Optional<ShieldAddressInfo> generateShieldAddress() {
     ShieldAddressInfo addressInfo = new ShieldAddressInfo();
     try {
-      DiversifierT diversifier = new DiversifierT().random();
+      DiversifierT diversifier = DiversifierT.random();
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
@@ -5275,7 +5275,7 @@ public class PublicMethed {
       startBlockNum = currentBlockNum - 100;
     }
     //startBlockNum = 0L;
-
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
     IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum + 1);
     builder.setEndBlockIndex(currentBlockNum + 1);
@@ -5359,6 +5359,7 @@ public class PublicMethed {
     if (currentBlockNum > 100) {
       startBlockNum = currentBlockNum - 100;
     }
+    logger.info("ovk:" + ByteArray.toHexString(shieldAddressInfo.get().ovk));
     OvkDecryptParameters.Builder builder = OvkDecryptParameters.newBuilder();
     builder.setStartBlockIndex(startBlockNum + 1);
     builder.setEndBlockIndex(currentBlockNum + 1);
@@ -5419,6 +5420,8 @@ public class PublicMethed {
       try {
         builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
         builder.setNk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getNk()));
+        logger.info("AK:" + ByteArray.toHexString(shieldAddressInfo.getFullViewingKey().getAk()));
+        logger.info("NK:" + ByteArray.toHexString(shieldAddressInfo.getFullViewingKey().getNk()));
       } catch (Exception e) {
         Assert.assertTrue(1 == 1);
       }

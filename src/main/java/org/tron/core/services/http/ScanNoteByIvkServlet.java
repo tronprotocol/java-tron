@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.IvkDecryptParameters;
+import org.tron.api.GrpcAPI.OvkDecryptParameters;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
@@ -23,22 +25,19 @@ public class ScanNoteByIvkServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
-          .collect(Collectors.joining(System.lineSeparator()));
+              .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
-      JSONObject jsonObject = JSONObject.parseObject(input);
       boolean visible = Util.getVisiblePost(input);
-
-      long startNum = Util.getJsonLongValue(jsonObject,"startNum", true);
-      long endNum = Util.getJsonLongValue(jsonObject,"endNum", true);
-
-      String ivk = jsonObject.getString("ivk");
-
+      IvkDecryptParameters.Builder ivkDecryptParameters = IvkDecryptParameters.newBuilder();
+      JsonFormat.merge(input, ivkDecryptParameters);
+      
       GrpcAPI.DecryptNotes notes = wallet
-          .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
+          .scanNoteByIvk(ivkDecryptParameters.getStartBlockIndex(),
+                  ivkDecryptParameters.getEndBlockIndex(),
+                  ivkDecryptParameters.getIvk().toByteArray());
 
       response.getWriter()
           .println(JsonFormat.printToString(notes, visible));
-
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -51,17 +50,15 @@ public class ScanNoteByIvkServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
-      long startNum = Long.parseLong(request.getParameter("startNum"));
-      long endNum = Long.parseLong(request.getParameter("endNum"));
+      long startNum = Long.parseLong(request.getParameter("start_block_index"));
+      long endNum = Long.parseLong(request.getParameter("end_block_index"));
       String ivk = request.getParameter("ivk");
       boolean visible = Util.getVisible(request);
 
       GrpcAPI.DecryptNotes notes = wallet
           .scanNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk));
-
       response.getWriter()
           .println(JsonFormat.printToString(notes, visible));
-
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

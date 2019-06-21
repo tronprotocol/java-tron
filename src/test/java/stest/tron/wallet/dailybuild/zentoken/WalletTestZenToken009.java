@@ -37,6 +37,8 @@ public class WalletTestZenToken009 {
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   Optional<ShieldAddressInfo> shieldAddressInfo;
   String shieldAddress;
+  Optional<ShieldAddressInfo> receiverAddressInfo;
+  String receiverAddress;
   List<Note> shieldOutList = new ArrayList<>();
   List<Long> shieldInputList = new ArrayList<>();
   DecryptNotes notes;
@@ -78,6 +80,7 @@ public class WalletTestZenToken009 {
   ECKey ecKey4 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey4.getAddress();
   String zenTokenOwnerKey = ByteArray.toHexString(ecKey4.getPrivKeyBytes());
+
 
 
   private long multiSignFee = Configuration.getByPath("testng.conf")
@@ -186,6 +189,34 @@ public class WalletTestZenToken009 {
     Long receiverShieldTokenAmount = note.getValue();
     Assert.assertTrue(receiverShieldTokenAmount == sendTokenAmount - zenTokenFee);
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
+  }
+
+  @Test(enabled = true, description = "When from is shield,sign this transaction is forbidden")
+  public void test2ShieldFromShouldNotSign() {
+    receiverAddressInfo = PublicMethed.generateShieldAddress();
+    receiverAddress = shieldAddressInfo.get().getAddress();
+    logger.info("receiver address:" + shieldAddress);
+
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
+    note = notes.getNoteTxs(0).getNote();
+
+
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverAddress,
+        "" + (note.getValue() - zenTokenFee), memo);
+
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        null, 321321,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+
+    Assert.assertFalse(PublicMethed.getSpendResult(shieldAddressInfo.get(),
+        notes.getNoteTxs(0),blockingStubFull).getResult());
+
+
+
   }
 
   /**

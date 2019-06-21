@@ -17,16 +17,17 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
@@ -35,11 +36,13 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
+import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -48,6 +51,7 @@ import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.SignatureFormatException;
@@ -55,9 +59,12 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -65,6 +72,7 @@ import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.FullViewingKey;
 import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
@@ -75,6 +83,9 @@ import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.PedersenHash;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
@@ -191,21 +202,8 @@ public class ShieldedReceiveTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
-  private String getParamsFile(String fileName) {
-    return ShieldedReceiveTest.class.getClassLoader()
-        .getResource("params" + File.separator + fileName).getFile();
-  }
-
-  private void librustzcashInitZksnarkParams() throws ZksnarkException {
-
-    String spendPath = getParamsFile("sapling-spend.params");
-    String spendHash = "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c";
-
-    String outputPath = getParamsFile("sapling-output.params");
-    String outputHash = "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028";
-
-    JLibrustzcash.librustzcashInitZksnarkParams(
-        new InitZksnarkParams(spendPath, spendHash, outputPath, outputHash));
+  private void librustzcashInitZksnarkParams(){
+    FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
   private static byte[] randomUint256() {
@@ -717,7 +715,7 @@ public class ShieldedReceiveTest {
         receiveDescriptionCapsule.setZkproof(randomUint1536());
         break;
       case D_CM:
-        newNote.d = new DiversifierT().random();
+        newNote.d = DiversifierT.random();
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -1952,8 +1950,8 @@ public class ShieldedReceiveTest {
     actuator.get(0).validate();
     //execute
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
-    boolean execute_result = actuator.get(0).execute(resultCapsule);
-    Assert.assertTrue(execute_result);
+    boolean executeResult = actuator.get(0).execute(resultCapsule);
+    Assert.assertTrue(executeResult);
   }
 
   public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
@@ -2085,14 +2083,14 @@ public class ShieldedReceiveTest {
 
       if (ret1.isPresent()) {
         Note noteText = ret1.get();
-        byte[] pk_d = new byte[32];
+        byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pk_d))) {
+                noteText.d.getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
-        Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
+        Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
             noteText.value);
 
@@ -2168,14 +2166,14 @@ public class ShieldedReceiveTest {
 
       if (ret1.isPresent()) {
         Note noteText = ret1.get();
-        byte[] pk_d = new byte[32];
+        byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pk_d))) {
+                noteText.d.getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
-        Assert.assertArrayEquals(paymentAddress.getPkD(), pk_d);
+        Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
             noteText.value);
 
@@ -2189,5 +2187,134 @@ public class ShieldedReceiveTest {
     // end here
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ok);
+  }
+  
+  /*
+  send coin to 2 different address generated by same sk, scan note by ivk; spend this note again
+   */
+  @Test
+  public void pushSameSkAndScanAndSpend()
+          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
+          TaposException, TransactionExpirationException, ReceiptCheckErrException,
+          DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
+          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException, UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException {
+    //set witness
+//    dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
+    byte[] privateKey = ByteArray.fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] witnessAddress = ecKey.getAddress();
+    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
+    dbManager.addWitness(ByteString.copyFrom(witnessAddress));
+    
+    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+            false, false);
+    
+    //create transactions
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+    
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    
+    // generate spend proof
+    SpendingKey sk = SpendingKey
+            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    byte[] senderOvk = expsk.getOvk();
+    PaymentAddress address = sk.defaultAddress();
+    Note note = new Note(address, 1000 * 1000000);
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager.getMerkleContainer()
+            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+    builder.addSpend(expsk, note, anchor, voucher);
+    
+    // generate output proof
+    SpendingKey sk2 = SpendingKey.random();
+    FullViewingKey fullViewingKey = sk2.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    
+    DiversifierT diversifierT = new DiversifierT();
+    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    
+    //send coin to 2 different address generated by same sk
+    DiversifierT d1 = diversifierT.random();
+    PaymentAddress paymentAddress1 = incomingViewingKey.address(d1).get();
+    builder.addOutput(senderOvk, paymentAddress1,
+            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2, memo);
+    
+    DiversifierT d2 = diversifierT.random();
+    PaymentAddress paymentAddress2 = incomingViewingKey.address(d2).get();
+    builder.addOutput(senderOvk, paymentAddress2,
+            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2, memo);
+    
+    TransactionCapsule transactionCap = builder.build();
+    
+    byte[] trxId = transactionCap.getTransactionId().getBytes();
+    boolean ok = dbManager.pushTransaction(transactionCap);
+    Assert.assertTrue(ok);
+  
+    //package transaction to block
+    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+            false, false);
+    
+    // scan note by ivk
+    byte[] receiverIvk = incomingViewingKey.getValue();
+    DecryptNotes notes1 = wallet.scanNoteByIvk(0,100,receiverIvk);
+    Assert.assertEquals(2,notes1.getNoteTxsCount());
+    
+    // scan note by ovk
+    DecryptNotes notes2 = wallet.scanNoteByOvk(0,100,senderOvk);
+    Assert.assertEquals(2,notes2.getNoteTxsCount());
+    
+    // to spend received note above.
+    ZenTransactionBuilder builder2 = new ZenTransactionBuilder(wallet);
+    
+    //query merkleinfo
+    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+    for (int i = 0; i < notes1.getNoteTxsCount(); i++) {
+      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+      outPointBuild.setHash(ByteString.copyFrom(trxId));
+      outPointBuild.setIndex(i);
+      request.addOutPoints(outPointBuild.build());
+    }
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet.getMerkleTreeVoucherInfo(request.build());
+    
+    //build spend proof. allow only one note in spend
+    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+    for (int i = 0; i < 1; i++) {
+      org.tron.api.GrpcAPI.Note grpcNote = notes1.getNoteTxs(i).getNote();
+      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(grpcNote.getPaymentAddress());
+      Note note2 = new Note(paymentAddress.getD(),
+              paymentAddress.getPkD(),
+              grpcNote.getValue(),
+              grpcNote.getRcm().toByteArray()
+              );
+      
+      IncrementalMerkleVoucherContainer voucher2 =
+              new IncrementalMerkleVoucherContainer(
+                      new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
+      byte[] anchor2 = voucher2.root().getContent().toByteArray();
+      builder2.addSpend(expsk2, note2, anchor2, voucher2);
+    }
+  
+    //build output proof
+    SpendingKey sk3 = SpendingKey.random();
+    FullViewingKey fvk3 = sk3.fullViewingKey();
+    IncomingViewingKey ivk3 = fvk3.inViewingKey();
+  
+    DiversifierT d3 = DiversifierT.random();
+    PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
+    byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
+    builder2.addOutput(expsk2.getOvk(), paymentAddress3,
+            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2 - wallet.getShieldedTransactionFee(), memo3);
+  
+    TransactionCapsule transactionCap2 = builder2.build();
+    boolean ok2 = dbManager.pushTransaction(transactionCap2);
+    Assert.assertTrue(ok2);
+  
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
+  
   }
 }
