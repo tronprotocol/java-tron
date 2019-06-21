@@ -33,10 +33,8 @@ import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
-import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import sun.reflect.generics.tree.ByteSignature;
 
 
 @Slf4j(topic = "actuator")
