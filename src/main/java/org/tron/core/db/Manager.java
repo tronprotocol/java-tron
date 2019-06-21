@@ -1342,7 +1342,7 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResultCode(trace.getReceipt().getResult());
+      trxCap.setResult(trace.getRuntime());
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1479,7 +1479,10 @@ public class Manager {
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
-        transationRetCapsule.addTransactionInfo(result);
+
+        if (Objects.nonNull(result)) {
+          transationRetCapsule.addTransactionInfo(result);
+        }
         if (fromPending) {
           iterator.remove();
         }

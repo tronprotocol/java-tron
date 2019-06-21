@@ -135,11 +135,11 @@ public class Args {
   private String storageDbEngine = "";
 
   @Parameter(names = {
-      "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or flase)")
+      "--storage-db-synchronous"}, description = "Storage db is synchronous or not.(true or false)")
   private String storageDbSynchronous = "";
 
   @Parameter(names = {
-      "--contract-parse-enable"}, description = "enable contract parses in java-tron or not.(true or flase)")
+      "--contract-parse-enable"}, description = "enable contract parses in java-tron or not.(true or false)")
   private String contractParseEnable = "";
 
   @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")

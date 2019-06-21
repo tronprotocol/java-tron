@@ -309,6 +309,9 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (26): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_TVM_CONSTANTINOPLE] is only allowed to be 1");

@@ -154,6 +154,7 @@ public class TransferFailed003 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testTransferTokenInsufficientBalance(uint256,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);

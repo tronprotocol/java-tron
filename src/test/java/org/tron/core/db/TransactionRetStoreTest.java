@@ -73,4 +73,19 @@ public class TransactionRetStoreTest {
     TransactionInfoCapsule resultCapsule = transactionRetStore.getTransactionInfo(transactionId);
     Assert.assertNotNull("get transaction ret store", resultCapsule);
   }
+
+  @Test
+  public void put() {
+    TransactionInfoCapsule transactionInfoCapsule = new TransactionInfoCapsule();
+    transactionInfoCapsule.setId(transactionId);
+    transactionInfoCapsule.setFee(1000L);
+    transactionInfoCapsule.setBlockNumber(100L);
+    transactionInfoCapsule.setBlockTimeStamp(200L);
+
+    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule();
+    transactionRetCapsule.addTransactionInfo(transactionInfoCapsule.getInstance());
+    Assert.assertNull("put transaction info error", transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+    transactionRetStore.put(transactionInfoCapsule.getId(), transactionRetCapsule);
+    Assert.assertNotNull("get transaction info error", transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+  }
 }

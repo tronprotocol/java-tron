@@ -60,13 +60,20 @@ public class BlockMsgHandler implements TronMsgHandler {
       syncService.processBlock(peer, blockMessage);
     } else {
       Long time = peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
-      long cost = time == null ? 0 : System.currentTimeMillis() - time;
-      logger.info("Receive block {}, witness: {} from {}, fetch cost {}ms",
-          blockId.getString(),
-          Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()),
-          peer.getInetAddress(),
-          cost);
+      long now = System.currentTimeMillis();
+      long delay = now - tronNetDelegate.getHeadBlockTimeStamp() - BLOCK_PRODUCED_INTERVAL;
+      long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
+      logger.info(
+          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
+          blockId.getNum(),
+          interval,
+          peer.getInetAddress(),
+          time == null ? 0 : now - time,
+          delay,
+          ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),
+          System.currentTimeMillis() - now,
+          Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()));
     }
   }
 
