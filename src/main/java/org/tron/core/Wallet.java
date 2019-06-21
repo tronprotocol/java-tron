@@ -1392,11 +1392,11 @@ public class Wallet {
     if (Objects.isNull(id)) {
       return null;
     }
-    BytesCapsule trxId = null;
-    trxId = dbManager.getNullfierStore().get(id.toByteArray());
+    BytesCapsule nullifier = null;
+    nullifier = dbManager.getNullfierStore().get(id.toByteArray());
 
-    if (trxId != null) {
-      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(trxId.getData())).build();
+    if (nullifier != null) {
+      return BytesMessage.newBuilder().setValue(ByteString.copyFrom(nullifier.getData())).build();
     }
     return null;
   }
