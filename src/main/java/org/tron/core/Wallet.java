@@ -1686,10 +1686,21 @@ public class Wallet {
     return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
+  public void checkCmNumber(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
+      throws ContractValidateException {
+    if (!shieldedSpends.isEmpty() && shieldedSpends.size() > 1) {
+      throw new ContractValidateException("The number of spend note must <=1");
+    }
+
+    if (!shieldedReceives.isEmpty() && shieldedReceives.size() > 2) {
+      throw new ContractValidateException("The number of receive note must <=2");
+    }
+  }
+
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException("createshieldedtransaction is not allowed");
+      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -1724,6 +1735,8 @@ public class Wallet {
     if (!ArrayUtils.isEmpty(transparentToAddress) && toAmount <= 0) {
       throw new ContractValidateException("Output amount must > 0");
     }
+
+    checkCmNumber(shieldedSpends, shieldedReceives);
 
     // add
     if (!ArrayUtils.isEmpty(transparentFromAddress)) {
@@ -1783,7 +1796,7 @@ public class Wallet {
       PrivateParametersWithoutAsk request)
       throws ContractValidateException, ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException("createshieldedtransactionwithoutspendauthsig is not allowed");
+      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
@@ -1819,6 +1832,8 @@ public class Wallet {
     if (!ArrayUtils.isEmpty(transparentToAddress) && toAmount <= 0) {
       throw new ContractValidateException("Output amount must > 0");
     }
+
+    checkCmNumber(shieldedSpends, shieldedReceives);
 
     // add
     if (!ArrayUtils.isEmpty(transparentFromAddress)) {

@@ -489,10 +489,6 @@ public class TransferFailed005 {
 
   }
 
-  @Test(enabled = true, description = "TransferFailed for precompiled")
-  public void triggerContract05() {
-
-  }
 
   /**
    * constructor.

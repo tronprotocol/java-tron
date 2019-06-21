@@ -17,6 +17,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -119,7 +121,29 @@ public class ContractGrammar001 {
         "select(bool,uint256)", num2, false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info("infoById：" + infoById);
+    Optional<Transaction> ById = PublicMethed.getTransactionById(txid, blockingStubFull);
+    logger.info("getRet：" + ById.get().getRet(0));
+    logger.info("getNumber：" + ById.get().getRet(0).getContractRet().getNumber());
+    logger.info("getContractRetValue：" + ById.get().getRet(0).getContractRetValue());
+    logger.info("getContractRet：" + ById.get().getRet(0).getContractRet());
+
+    Assert.assertEquals(ById.get().getRet(0).getContractRet().getNumber(),
+        contractResult.SUCCESS_VALUE);
+    Assert.assertEquals(ById.get().getRet(0).getContractRetValue(), 1);
+    Assert.assertEquals(ById.get().getRet(0).getContractRet(), contractResult.SUCCESS);
+
+    Assert
+        .assertEquals(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()),
+            "0000000000000000000000000000000000000000000000000000000000000064");
+    Assert.assertEquals(contractResult.SUCCESS, infoById.get().getReceipt().getResult());
+
+    logger.info("ById：" + ById);
+    Assert.assertEquals(ById.get().getRet(0).getRet().getNumber(), 0);
+    Assert.assertEquals(ById.get().getRet(0).getRetValue(), 0);
+
     Long returnnumber2 = ByteArray.toLong(ByteArray.fromHexString(
         ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray())));
 

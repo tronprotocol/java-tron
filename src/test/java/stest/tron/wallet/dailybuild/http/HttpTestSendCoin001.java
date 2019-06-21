@@ -4,16 +4,12 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
-
 import org.junit.Assert;
-
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
-
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.HttpMethed;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -60,8 +56,8 @@ public class HttpTestSendCoin001 {
     HttpMethed.printJsonContent(responseContent);
     String retString = responseContent.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet") == null);
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+        "contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() > 4);
   }
 
@@ -94,8 +90,8 @@ public class HttpTestSendCoin001 {
         responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString())
-        .getString("contractRet") == null);
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString())
+        .getString("contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 
@@ -113,8 +109,8 @@ public class HttpTestSendCoin001 {
         JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
     String retString = transactionObject.getString("ret");
     JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertTrue(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet") == null);
+    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+        "contractRet"), "SUCCESS");
     Assert.assertTrue(responseContent.size() == 1);
   }
 
