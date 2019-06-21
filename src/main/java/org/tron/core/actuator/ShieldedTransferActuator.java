@@ -33,8 +33,10 @@ import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import sun.reflect.generics.tree.ByteSignature;
 
 
 @Slf4j(topic = "actuator")
@@ -450,7 +452,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return null;
+    ByteString owner = contract.unpack(ShieldedTransferContract.class).getTransparentFromAddress();
+    if (Wallet.addressValid(owner.toByteArray())) {
+      return owner;
+    } else {
+      return null;
+    }
   }
 
   @Override
