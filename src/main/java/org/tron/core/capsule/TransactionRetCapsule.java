@@ -40,6 +40,9 @@ public class TransactionRetCapsule implements ProtoCapsule<TransactionRet> {
 
   @Override
   public byte[] getData() {
+    if (Objects.isNull(transactionRet)) {
+      return null;
+    }
     return transactionRet.toByteArray();
   }
 

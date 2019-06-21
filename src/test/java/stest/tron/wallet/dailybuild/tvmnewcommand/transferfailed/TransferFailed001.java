@@ -173,6 +173,7 @@ public class TransferFailed001 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 3000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -218,6 +219,7 @@ public class TransferFailed001 {
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
 
+    logger.info("infoById" + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     Assert.assertTrue(afterBalance + fee - 1 == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
@@ -715,7 +717,7 @@ public class TransferFailed001 {
     byte[] addressxx = WalletClient.decodeFromBase58Check(addressx);
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(addressxx, 10L, testNetAccountAddress, testNetAccountKey,
+        .sendcoin(addressxx, 1000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
 
     long start = System.currentTimeMillis() + 2000;
@@ -739,16 +741,6 @@ public class TransferFailed001 {
     assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
         .getAssetIssuedID();
 
-    /*String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
-    String contractName = "EnergyOfTransferFailedTest";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);*/
     Assert.assertTrue(PublicMethed.transferAsset(addressxx,
         assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
         blockingStubFull));
