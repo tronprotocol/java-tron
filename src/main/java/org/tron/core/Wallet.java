@@ -2125,7 +2125,10 @@ public class Wallet {
   }
 
   public BytesMessage getShieldTransactionHash(Transaction transaction)
-      throws ContractValidateException {
+          throws ContractValidateException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
+    }
     List<Contract> contract = transaction.getRawData().getContractList();
     if (contract == null || contract.size() == 0) {
       throw new ContractValidateException("contract is null");
