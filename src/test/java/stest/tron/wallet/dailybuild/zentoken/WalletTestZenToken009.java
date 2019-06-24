@@ -94,10 +94,6 @@ public class WalletTestZenToken009 {
   public void beforeSuite() {
     Wallet wallet = new Wallet();
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
-    channelFull = ManagedChannelBuilder.forTarget(fullnode)
-        .usePlaintext(true)
-        .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**

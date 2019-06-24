@@ -137,6 +137,15 @@ public class WalletTestZenToken006 {
     Long receiverShieldTokenAmount = note.getValue();
     Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
     Assert.assertEquals(memo, PublicMethed.getMemo(note));
+
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        zenTokenOwnerAddress, zenTokenFee * 2,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+
+
   }
 
   @Test(enabled = true, description = "Shield note memo is 514 char")

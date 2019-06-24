@@ -96,7 +96,9 @@ public class TestApproveProposal {
   @Test(enabled = true)
   public void testApproveProposal() {
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    proposalMap.put(28L, 1L);
+    //proposalMap.put(25L, 1L);
+    proposalMap.put(27L, 0L);
+    //proposalMap.put(28L, 1L);
     Assert.assertTrue(PublicMethed.createProposal(witness001Address, witnessKey001,
         proposalMap, blockingStubFull));
     try {
@@ -116,8 +118,10 @@ public class TestApproveProposal {
     logger.info(Integer.toString(listProposals.get().getProposals(0).getApprovalsCount()));
 
     String[] witnessKey = {
+
         "369F095838EB6EED45D4F6312AF962D5B9DE52927DA9F04174EE49F9AF54BC77",
         "9FD8E129DE181EA44C6129F727A6871440169568ADE002943EAD0E7A16D8EDAC",
+
     };
     byte[] witnessAddress;
     for (String key : witnessKey) {

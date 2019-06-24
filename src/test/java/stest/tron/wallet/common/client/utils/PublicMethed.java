@@ -64,7 +64,6 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -4914,6 +4913,7 @@ public class PublicMethed {
 
 
 
+
       //System.out.println("address " + noteInfo.getPaymentAddress());
       //System.out.println("value " + noteInfo.getValue());
       //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
@@ -4992,10 +4992,10 @@ public class PublicMethed {
    * constructor.
    */
   public static boolean sendShieldCoinWithoutAsk(byte[] publicZenTokenOwnerAddress,
-      long fromAmount,ShieldAddressInfo shieldAddressInfo,
-      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx, List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress,
-      long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long toAmount, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -5050,14 +5050,11 @@ public class PublicMethed {
         System.out.println(e);
       }
 
-
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
       noteBuild.setValue(noteTx.getNote().getValue());
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
-
-
 
       //System.out.println("address " + noteInfo.getPaymentAddress());
       //System.out.println("value " + noteInfo.getValue());
@@ -5113,7 +5110,7 @@ public class PublicMethed {
     Any any = transaction.getRawData().getContract(0).getParameter();
     Transaction transaction1 = transactionExtention.getTransaction();
     try {
-      ShieldedTransferContract shieldContract =  any.unpack(ShieldedTransferContract.class);
+      ShieldedTransferContract shieldContract = any.unpack(ShieldedTransferContract.class);
       List<SpendDescription> spendDescList = shieldContract.getSpendDescriptionList();
       ShieldedTransferContract.Builder contractBuild
           = shieldContract.toBuilder().clearSpendDescription();
@@ -5142,7 +5139,6 @@ public class PublicMethed {
 
       transactionExtention = transactionExtention.toBuilder().setTransaction(transaction).build();
 
-
       if (transactionExtention == null) {
         return false;
       }
@@ -5162,7 +5158,7 @@ public class PublicMethed {
 
       if (transaction1.getRawData().getContract(0).getType()
           != ContractType.ShieldedTransferContract) {
-        transaction1 = signTransaction(ecKey,transaction1);
+        transaction1 = signTransaction(ecKey, transaction1);
       } else {
         Any any1 = transaction1.getRawData().getContract(0).getParameter();
         Contract.ShieldedTransferContract shieldedTransferContract =

@@ -22,6 +22,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -67,6 +69,10 @@ public class WalletTestZenToken010 {
       .getLong("defaultParameter.zenTokenFee");
   private Long costTokenAmount = 10 * zenTokenFee;
   private Long sendTokenAmount = 8 * zenTokenFee;
+
+  private String txid;
+  private Optional<TransactionInfo> infoById;
+  private Optional<Transaction> byId;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] zenTokenOwnerAddress = ecKey1.getAddress();
@@ -153,7 +159,90 @@ public class WalletTestZenToken010 {
     Assert.assertTrue(notes.getNoteTxsCount() == 2);
   }
 
+  @Test(enabled = true, description = "From shield only have one zenToken fee")
+  public void test2Shield2ShieldTransaction() {
+    sendShieldAddressInfo = PublicMethed.generateShieldAddress();
+    sendShieldAddress = sendShieldAddressInfo.get().getAddress();
+    logger.info("sendShieldAddressInfo:" + sendShieldAddressInfo);
+    memo = "Shield memo in" + System.currentTimeMillis();
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "" + zenTokenFee, memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress, 2 * zenTokenFee, null,
+        null, shieldOutList, null, 0, zenTokenOwnerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
+    sendNote = notes.getNoteTxs(0).getNote();
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    shieldOutList.clear();
+    memo = "Send shield to itself memo1 in " + System.currentTimeMillis();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "0", memo);
+
+    memo = "Send shield to itself memo2 in " + System.currentTimeMillis();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "0", memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        null, 0,
+        sendShieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    notes = PublicMethed.getShieldNotesByIvk(sendShieldAddressInfo, blockingStubFull);
+    Assert.assertTrue(notes.getNoteTxsCount() == 3);
+    logger.info("index 0:" + notes.getNoteTxs(0).getNote().getValue());
+    logger.info("index 1:" + notes.getNoteTxs(1).getNote().getValue());
+    logger.info("index 2:" + notes.getNoteTxs(2).getNote().getValue());
+    Assert.assertTrue(notes.getNoteTxs(1).getNote().getValue() == 0);
+    Assert.assertTrue(notes.getNoteTxs(2).getNote().getValue() == 0);
+    Assert.assertEquals(notes.getNoteTxs(1).getNote().getPaymentAddress(),
+        notes.getNoteTxs(2).getNote().getPaymentAddress());
+    Assert.assertEquals(notes.getNoteTxs(1).getTxid(), notes.getNoteTxs(2).getTxid());
+  }
+
+  @Test(enabled = true, description = "From public and to public is same one")
+  public void test3Public2ShieldAndPublicItselfTransaction() {
+    sendShieldAddressInfo = PublicMethed.generateShieldAddress();
+    sendShieldAddress = sendShieldAddressInfo.get().getAddress();
+
+    ecKey1 = new ECKey(Utils.getRandom());
+    zenTokenOwnerAddress = ecKey1.getAddress();
+    zenTokenOwnerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
+        costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
+    final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenAddress, blockingStubFull).getAccountId(),
+        blockingStubFull);
+    final Long beforeBalance = PublicMethed.queryAccount(zenTokenOwnerAddress, blockingStubFull)
+        .getBalance();
+    shieldOutList.clear();
+    memo = "From public and to public is same one memo in " + System.currentTimeMillis();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "" + 2 * zenTokenFee, memo);
+
+    Assert.assertFalse(PublicMethed
+        .sendShieldCoin(zenTokenOwnerAddress, costTokenAmount, null, null, shieldOutList,
+            zenTokenOwnerAddress, 7 * zenTokenFee, zenTokenOwnerKey, blockingStubFull));
+
+    Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenAddress, blockingStubFull).getAccountId(),
+        blockingStubFull);
+    Long afterBalance = PublicMethed.queryAccount(zenTokenOwnerAddress, blockingStubFull)
+        .getBalance();
+
+    Assert.assertEquals(beforeAssetBalance, afterAssetBalance);
+    Assert.assertEquals(beforeBalance, afterBalance);
+
+    notes = PublicMethed.getShieldNotesByIvk(sendShieldAddressInfo, blockingStubFull);
+    Assert.assertTrue(notes.getNoteTxsCount() == 0);
+
+
+  }
 
   /**
    * constructor.

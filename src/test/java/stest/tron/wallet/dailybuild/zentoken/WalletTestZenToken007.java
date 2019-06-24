@@ -399,6 +399,7 @@ public class WalletTestZenToken007 {
     memo1 = "Send shield address 1 without ask" + System.currentTimeMillis();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress1,
         "" + (receiverNote1.getValue() - zenTokenFee),memo1);
+
     Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
         null,0,
         receiverAddressInfo1.get(), notes.getNoteTxs(0),
