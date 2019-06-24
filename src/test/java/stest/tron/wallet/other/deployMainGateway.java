@@ -65,18 +65,6 @@ public class deployMainGateway {
   byte[] depositAddress = ecKey1.getAddress();
   String testKeyFordeposit = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
-  ECKey ecKey2 = new ECKey(Utils.getRandom());
-  byte[] depositAddress2 = ecKey2.getAddress();
-  String testKeyFordeposit2 = ByteArray.toHexString(ecKey2.getPrivKeyBytes());
-
-  String mainChainAddress = Configuration.getByPath("testng.conf")
-      .getString("gateway_address.key1");
-  final byte[] mainChainAddressKey = WalletClient.decodeFromBase58Check(mainChainAddress);
-
-  String sideChainAddress = Configuration.getByPath("testng.conf")
-      .getString("gateway_address.key2");
-  final byte[] sideChainAddressKey = WalletClient.decodeFromBase58Check(sideChainAddress);
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -106,7 +94,7 @@ public class deployMainGateway {
     PublicMethed.printAddress(testKeyFordeposit);
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(depositAddress, 11000_000_000L, testDepositAddress, testDepositTrx,
+        .sendcoin(depositAddress, 1000_000_000L, testDepositAddress, testDepositTrx,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
