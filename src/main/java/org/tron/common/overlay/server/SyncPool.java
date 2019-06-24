@@ -221,10 +221,6 @@ public class SyncPool {
         return false;
       }
 
-      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED) {
-        return true;
-      }
-
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();
       if (channelManager.getRecentlyDisconnected().getIfPresent(inetAddress) != null) {
         return false;
