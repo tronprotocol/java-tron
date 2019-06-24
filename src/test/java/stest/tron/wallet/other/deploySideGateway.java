@@ -19,7 +19,6 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
@@ -76,15 +75,6 @@ public class deploySideGateway {
   public void test1DepositTrc20001() {
 
     PublicMethed.printAddress(testKeyFordeposit);
-
-    Assert.assertTrue(PublicMethed
-        .sendcoin(depositAddress, 11000_000_000L, testDepositAddress, testDepositTrx,
-            blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Account accountOralce = PublicMethed.queryAccount(depositAddress, blockingStubFull);
-    long OralceBalance = accountOralce.getBalance();
-    logger.info("OralceBalance: " + OralceBalance);
 
     String contractName = "gateWaysidechainContract";
     String code = Configuration.getByPath("testng.conf")
