@@ -485,6 +485,7 @@ public class SendCoinShieldTest {
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
     Note note = new Note(address, 1000 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
@@ -499,7 +500,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+    builder.addOutput(senderOvk, paymentAddress,
         1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
@@ -508,7 +509,7 @@ public class SendCoinShieldTest {
     Assert.assertTrue(ok);
 
     // add here
-    byte[] ivk = fullViewingKey.inViewingKey().getValue();
+    byte[] ivk = incomingViewingKey.getValue();
     Protocol.Transaction t = transactionCap.getInstance();
 
     for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
@@ -570,6 +571,7 @@ public class SendCoinShieldTest {
     SpendingKey sk = SpendingKey
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
     Note note = new Note(address, 1000 * 1000000);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
@@ -584,7 +586,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
+    builder.addOutput(senderOvk, paymentAddress,
         1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
@@ -592,7 +594,6 @@ public class SendCoinShieldTest {
     Assert.assertTrue(ok);
 
     // add here
-    byte[] ivk = fullViewingKey.inViewingKey().getValue();
     Protocol.Transaction t = transactionCap.getInstance();
     for (org.tron.protos.Protocol.Transaction.Contract c : t.getRawData().getContractList()) {
       if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
@@ -601,20 +602,22 @@ public class SendCoinShieldTest {
       Contract.ShieldedTransferContract stContract = c.getParameter()
           .unpack(Contract.ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
-
+      
+      //first try to decrypt cOut with ovk, get pkd、esk
       Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
       cOut.data = receiveDescription.getCOut().toByteArray();
       Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(
               cOut,//ciphertext
-          fullViewingKey.getOvk(),
-          receiveDescription.getValueCommitment().toByteArray(), //cv
-          receiveDescription.getNoteCommitment().toByteArray(), //cmu
-          receiveDescription.getEpk().toByteArray() //epk
+              senderOvk,
+              receiveDescription.getValueCommitment().toByteArray(), //cv
+              receiveDescription.getNoteCommitment().toByteArray(), //cmu
+              receiveDescription.getEpk().toByteArray() //epk
       );
-
+  
+      //then decrypt c_enc with pkd、esk, get decoded note == ciphertext
       if (notePlaintext.isPresent()) {
         OutgoingPlaintext decryptedOutgoingPlaintext = notePlaintext.get();
-        //decode c_enc with pkd、esk
+        
         Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
         ciphertext.data = receiveDescription.getCEnc().toByteArray();
         Optional<Note> foo = Note
