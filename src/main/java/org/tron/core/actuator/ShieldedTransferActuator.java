@@ -363,6 +363,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private void checkReceiver(ShieldedTransferContract shieldedTransferContract)
       throws ContractValidateException {
+    if (shieldedTransferContract.getReceiveDescriptionCount() == 0) {
+      throw new ContractValidateException("ShieldedTransferContract error, no output cm");
+    }
     if (shieldedTransferContract.getTransparentToAddress().isEmpty()
         && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no receiver");
