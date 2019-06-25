@@ -71,6 +71,7 @@ public class ShieldedTransferActuatorTest {
   private static final long OWNER_BALANCE = 9999999000000L;
   private static final long TO_BALANCE = 100001000000L;
   private static final String INVAILID_ADDRESS = "aaaa";
+  private static final byte[] DEFAULT_OVK;
 
 
   private static final long tokenId = 1;
@@ -94,6 +95,8 @@ public class ShieldedTransferActuatorTest {
     ADDRESS_TWO_PRIVATE_KEY = "e4e0edd6bff7b353dfc69a590721e902e6915c5e3e87d36dcb567a9716304720";
     PUBLIC_ADDRESS_OFF_LINE =
         Wallet.getAddressPreFixString() + "7bcb781f4743afaacf9f9528f3ea903b3782339f";
+    DEFAULT_OVK = ByteArray.fromHexString(
+        "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
   }
 
   /**
@@ -218,6 +221,14 @@ public class ShieldedTransferActuatorTest {
     }
   }
 
+  private void addZeroValueOutputNote(ZenTransactionBuilder builder) throws Exception {
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+    builder.addOutput(DEFAULT_OVK, paymentAddress, 0, "just for decode for ovk".getBytes());
+  }
+
   /**
    * From public address to shielded Address success
    */
@@ -241,35 +252,33 @@ public class ShieldedTransferActuatorTest {
     }
   }
 
+
   /**
-   * only public address to public address
+   *  public address to public address + zero value shieldAddress
    */
   @Test
-  public void publicAddressToPublicAddressFailure() {
+  public void publicAddressToPublicAddressAndZereValueOutputSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    //From amount
-    builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT);
-    //TO amount
-    builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
-
     try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From amount
+      builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), AMOUNT);
+      //TO amount
+      addZeroValueOutputNote(builder);
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
-          transactionCap);
-      TransactionResultCapsule ret = new TransactionResultCapsule();
 
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("no Description found in transaction", e.getMessage());
+      //Add public address sign
+      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
+      transactionSignBuild.setTransaction(transactionCap.getInstance());
+      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
+          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
+      transactionCap = wallet.addSign(transactionSignBuild.build());
+
+      Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
+      System.out.println(e.getMessage());
       Assert.assertTrue(false);
     }
   }
@@ -523,6 +532,48 @@ public class ShieldedTransferActuatorTest {
   }
 
   /**
+   * ShieldAddress to public address must has a cm
+   */
+  @Test
+  public void shieldAddressOnlyToPublicAddressFailure() {
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      long amount = 0;
+      //From amount
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT+fee);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
+          voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+      //TO amount
+      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
+      TransactionCapsule transactionCap = builder.build();
+
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("ShieldedTransferContract error, no output cm", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
    * to amount equals 0 or negative number
    */
   @Test
@@ -542,6 +593,7 @@ public class ShieldedTransferActuatorTest {
           voucher.getVoucherCapsule().getTree());
       builder.addSpend(expsk, note, anchor, voucher);
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
       TransactionCapsule transactionCap = builder.build();
 
@@ -576,6 +628,7 @@ public class ShieldedTransferActuatorTest {
           voucher.getVoucherCapsule().getTree());
       builder.addSpend(expsk, note, anchor, voucher);
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), amount);
       TransactionCapsule transactionCap = builder.build();
 
@@ -656,6 +709,7 @@ public class ShieldedTransferActuatorTest {
           voucher.getVoucherCapsule().getTree());
       builder.addSpend(expsk, note, anchor, voucher);
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(INVAILID_ADDRESS), AMOUNT - fee);
       TransactionCapsule transactionCap = builder.build();
 
@@ -719,111 +773,6 @@ public class ShieldedTransferActuatorTest {
       Assert.assertEquals(
           "ShieldedTransferContract error, more than 1 senders", e.getMessage());
     } catch (Exception e) {
-      Assert.assertTrue(false);
-    }
-  }
-
-  /**
-   * output shield note and input shield note should be less than 10
-   */
-  public void publicToShieldAddressAndShieldToPublicAddressSuccess() {
-    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
-
-    dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
-    byte[] privateKey = ByteArray.fromHexString(key);
-    final ECKey ecKey = ECKey.fromPrivate(privateKey);
-    byte[] address = ecKey.getAddress();
-    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-    dbManager.addWitness(ByteString.copyFrom(address));
-
-    try {
-      int[] noteNumArray = {3, 7, 10};
-      for (int noteNum : noteNumArray) {
-        //generate one block
-        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis() - 3000, privateKey,
-            false, false);
-
-        //Step 1, public address to shield address
-        List<Note> listNote = new ArrayList<>();
-        long ownerBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
-            .fromHexString(PUBLIC_ADDRESS_ONE)));
-        ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
-        //From amount
-        builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
-            (noteNum * AMOUNT + fee));
-        //TO amount
-        SpendingKey spendingKey = SpendingKey.random();
-        FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
-        IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-        PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random())
-            .get();
-        for (int i = 0; i < noteNum; i++) {
-          Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
-              Note.generateR());
-          listNote.add(note);
-          builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
-              new byte[512]);
-        }
-        TransactionCapsule transactionCapOne = builderOne.build();
-
-        //Add public address sign
-        TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-        transactionSignBuild.setTransaction(transactionCapOne.getInstance());
-        transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-            ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-        transactionCapOne = wallet.addSign(transactionSignBuild.build());
-
-        Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
-        AccountCapsule accountCapsuleOne =
-            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
-        Assert.assertEquals(getAssertBalance(accountCapsuleOne),
-            ownerBalance - (noteNum * AMOUNT + fee));
-
-        //package transaction to block
-        dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-            false, false);
-
-        //Step 2,shield address to public address
-        long toBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
-            .fromHexString(PUBLIC_ADDRESS_TWO)));
-        String trxId = transactionCapOne.getTransactionId().toString();
-        OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
-        for (int i = 0; i < noteNum; i++) {
-          OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
-          outPointBuild.setHash(ByteString.copyFrom(ByteArray.fromHexString(trxId)));
-          outPointBuild.setIndex(i);
-          request.addOutPoints(outPointBuild.build());
-        }
-        IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
-            .getMerkleTreeVoucherInfo(request.build());
-
-        ZenTransactionBuilder builderTwo = new ZenTransactionBuilder(wallet);
-        //From shield address
-        ExpandedSpendingKey expsk = spendingKey.expandedSpendingKey();
-        for (int i = 0; i < noteNum; i++) {
-          Note note = listNote.get(i);
-          IncrementalMerkleVoucherContainer voucher =
-              new IncrementalMerkleVoucherContainer(
-                  new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
-          byte[] anchor = voucher.root().getContent().toByteArray();
-          builderTwo.addSpend(expsk, note, anchor, voucher);
-        }
-        //TO amount
-        builderTwo.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO),
-            (noteNum * AMOUNT - fee));
-        TransactionCapsule transactionCapTwo = builderTwo.build();
-
-        Assert.assertTrue(dbManager.pushTransaction(transactionCapTwo));
-        AccountCapsule accountCapsuleTwo =
-            dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO));
-        Assert.assertEquals(getAssertBalance(accountCapsuleTwo),
-            toBalance + (noteNum * AMOUNT - fee));
-      }
-
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
       Assert.assertTrue(false);
     }
   }
@@ -910,46 +859,6 @@ public class ShieldedTransferActuatorTest {
       Assert.assertEquals(
           "ShieldedTransferContract error, number of receivers should not be more than 2",
           e.getMessage());
-    } catch (Exception e) {
-      Assert.assertTrue(false);
-    }
-  }
-
-  /**
-   * No target account
-   */
-  @Test
-  public void shieldAddressToNoTargetAccountFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    try {
-      //From shield address
-      SpendingKey sk = SpendingKey.random();
-      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-      PaymentAddress address = sk.defaultAddress();
-      Note note = new Note(address, AMOUNT);
-      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-      byte[] anchor = voucher.root().getContent().toByteArray();
-      dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-          voucher.getVoucherCapsule().getTree());
-      builder.addSpend(expsk, note, anchor, voucher);
-      TransactionCapsule transactionCap = builder.build();
-
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
-          transactionCap);
-      TransactionResultCapsule ret = new TransactionResultCapsule();
-
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "ShieldedTransferContract error, no receiver", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
@@ -1084,114 +993,6 @@ public class ShieldedTransferActuatorTest {
   /**
    * output shield note and input shield note value is 0,Meet the balance condition
    */
-//  public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
-//    Args.getInstance().setAllowShieldedTransaction(true);
-//    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-//    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
-//
-//    dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
-//    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
-//    byte[] privateKey = ByteArray.fromHexString(key);
-//    final ECKey ecKey = ECKey.fromPrivate(privateKey);
-//    byte[] address = ecKey.getAddress();
-//    WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
-//    dbManager.addWitness(ByteString.copyFrom(address));
-//
-//    try {
-//      int noteNum = 2;
-//      //generate one block
-//      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis() - 3000, privateKey,
-//          false, false);
-//
-//      //Step 1, public address to shield address
-//      List<Note> listNote = new ArrayList<>();
-//      long ownerAssertBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
-//          .fromHexString(PUBLIC_ADDRESS_ONE)));
-//      ZenTransactionBuilder builderOne = new ZenTransactionBuilder(wallet);
-//      //From amount
-//      builderOne.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE),
-//          (AMOUNT + fee));
-//      //TO amount
-//      SpendingKey spendingKey = SpendingKey.random();
-//      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
-//      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-//      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
-//
-//      Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
-//          Note.generateR());
-//      listNote.add(note);
-//      builderOne
-//          .addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
-//              new byte[512]);
-//
-//      for (int i = 0; i < noteNum - 1; i++) {
-//        note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
-//        listNote.add(note);
-//        builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
-//            new byte[512]);
-//      }
-//      TransactionCapsule transactionCapOne = builderOne.build();
-//
-//      //Add public address sign
-//      TransactionSign.Builder transactionSignBuild = TransactionSign.newBuilder();
-//      transactionSignBuild.setTransaction(transactionCapOne.getInstance());
-//      transactionSignBuild.setPrivateKey(ByteString.copyFrom(
-//          ByteArray.fromHexString(ADDRESS_ONE_PRIVATE_KEY)));
-//      transactionCapOne = wallet.addSign(transactionSignBuild.build());
-//
-//      Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
-//      AccountCapsule accountCapsuleOne =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
-//      Assert.assertEquals(getAssertBalance(accountCapsuleOne),
-//          ownerAssertBalance - AMOUNT - fee);
-//      //package transaction to block
-//      dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-//          false, false);
-//
-//      //Step 2,shield address to public address
-//      long toBalance = getAssertBalance(dbManager.getAccountStore().get(ByteArray
-//          .fromHexString(PUBLIC_ADDRESS_TWO)));
-//      String trxId = transactionCapOne.getTransactionId().toString();
-//      OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
-//      for (int i = 0; i < noteNum; i++) {
-//        OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
-//        outPointBuild.setHash(ByteString.copyFrom(ByteArray.fromHexString(trxId)));
-//        outPointBuild.setIndex(i);
-//        request.addOutPoints(outPointBuild.build());
-//      }
-//      IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
-//          .getMerkleTreeVoucherInfo(request.build());
-//
-//      ZenTransactionBuilder builderTwo = new ZenTransactionBuilder(wallet);
-//      //From shield address
-//      ExpandedSpendingKey expsk = spendingKey.expandedSpendingKey();
-//      for (int i = 0; i < noteNum-1; i++) {
-//        note = listNote.get(i);
-//        IncrementalMerkleVoucherContainer voucher =
-//            new IncrementalMerkleVoucherContainer(
-//                new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
-//        byte[] anchor = voucher.root().getContent().toByteArray();
-//        builderTwo.addSpend(expsk, note, anchor, voucher);
-//      }
-//      //TO amount
-//      builderTwo.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO),
-//          (AMOUNT - fee));
-//      TransactionCapsule transactionCapTwo = builderTwo.build();
-//
-//      Assert.assertTrue(dbManager.pushTransaction(transactionCapTwo));
-//      AccountCapsule accountCapsuleTwo =
-//          dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO));
-//      Assert.assertEquals(getAssertBalance(accountCapsuleTwo), toBalance + AMOUNT - fee);
-//
-//    } catch (Exception e) {
-//      System.out.println(e.getMessage());
-//      Assert.assertTrue(false);
-//    }
-//  }
-
-  /**
-   * output shield note and input shield note value is 0,Meet the balance condition
-   */
   @Test
   public void publicToShieldAddressAndShieldToPublicAddressWithZoreValueSuccess() {
     Args.getInstance().setFullNodeAllowShieldedTransaction(true);
@@ -1263,15 +1064,8 @@ public class ShieldedTransferActuatorTest {
             voucher.getVoucherCapsule().getTree());
         builder.addSpend(expsk, note, anchor, voucher);
       }
-//      for (int i = 0; i < 4; i++) {
-//        Note note = new Note(address, 0);
-//        IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-//        byte[] anchor = voucher.root().getContent().toByteArray();
-//        dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-//            voucher.getVoucherCapsule().getTree());
-//        builder.addSpend(expsk, note, anchor, voucher);
-//      }
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT);
       TransactionCapsule transactionCap = builder.build();
 
@@ -1346,14 +1140,6 @@ public class ShieldedTransferActuatorTest {
       SpendingKey sk = SpendingKey.random();
       ExpandedSpendingKey expsk = sk.expandedSpendingKey();
       PaymentAddress address = sk.defaultAddress();
-//      for (int i = 0; i < 2; i++) {
-//        Note note = new Note(address, AMOUNT);
-//        IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-//        byte[] anchor = voucher.root().getContent().toByteArray();
-//        dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-//            voucher.getVoucherCapsule().getTree());
-//        builder.addSpend(expsk, note, anchor, voucher);
-//      }
       {
         Note note = new Note(address, -1);
         IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
@@ -1363,6 +1149,7 @@ public class ShieldedTransferActuatorTest {
         builder.addSpend(expsk, note, anchor, voucher);
       }
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), -1 + fee);
 
       TransactionCapsule transactionCap = builder.build();
@@ -1380,62 +1167,6 @@ public class ShieldedTransferActuatorTest {
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
-    } catch (Exception e) {
-      Assert.assertTrue(false);
-    }
-  }
-
-  //@Test  useless case
-  public void shieldAddressToPublicAddressBigValueFailure() {
-    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
-
-    AccountCapsule accountCapsuleTwo =
-        dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO));
-    accountCapsuleTwo.setBalance(0);
-    dbManager.getAccountStore()
-        .put(accountCapsuleTwo.getAddress().toByteArray(), accountCapsuleTwo);
-
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    try {
-      //From shield address
-      SpendingKey sk = SpendingKey.random();
-      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-      PaymentAddress address = sk.defaultAddress();
-      {
-        Note note = new Note(address, Long.MAX_VALUE - fee - 1);
-        IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-        byte[] anchor = voucher.root().getContent().toByteArray();
-        dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-            voucher.getVoucherCapsule().getTree());
-        builder.addSpend(expsk, note, anchor, voucher);
-      }
-      {
-        Note note = new Note(address, fee);
-        IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-        byte[] anchor = voucher.root().getContent().toByteArray();
-        dbManager.getMerkleContainer().putMerkleTreeIntoStore(anchor,
-            voucher.getVoucherCapsule().getTree());
-        builder.addSpend(expsk, note, anchor, voucher);
-      }
-      //TO amount
-      builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), Long.MAX_VALUE - 1);
-      TransactionCapsule transactionCap = builder.build();
-
-      Any contract =
-          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
-              .getParameter();
-      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
-          transactionCap);
-      TransactionResultCapsule ret = new TransactionResultCapsule();
-
-      actuator.validate();
-      actuator.execute(ret);
-      Assert.assertTrue(false);
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "long overflow", e.getMessage());
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
@@ -1502,6 +1233,7 @@ public class ShieldedTransferActuatorTest {
       builder.addSpend(expsk, note, anchor, voucher);
 
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
 
       TransactionCapsule transactionCap = builder.build();
@@ -1551,6 +1283,7 @@ public class ShieldedTransferActuatorTest {
       builder.addSpend(expsk, note, anchor, voucher);
 
       //TO amount
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(PUBLIC_ADDRESS_TWO), AMOUNT - fee);
 
       TransactionCapsule transactionCap = builder.build();
