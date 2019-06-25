@@ -161,9 +161,8 @@ public class WalletTestZenToken001 {
     final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
-
-    //Can't send shiled coin when output only one public
-    Assert.assertFalse(PublicMethed.sendShieldCoin(
+    
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
         shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
@@ -171,14 +170,14 @@ public class WalletTestZenToken001 {
         zenTokenOwnerKey, blockingStubFull));
 
     //When you want to send shield coin to public account,you should add one zero output amount cm
-    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+    /*    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
         "0", memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
         shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
         zenTokenOwnerAddress, note.getValue() - zenTokenFee,
-        zenTokenOwnerKey, blockingStubFull));
+        zenTokenOwnerKey, blockingStubFull));*/
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     result = PublicMethed.getSpendResult(shieldAddressInfo.get(), notes.getNoteTxs(0),

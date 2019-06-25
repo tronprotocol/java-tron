@@ -578,6 +578,38 @@ public class WalletTestZenToken007 {
         notes.getNoteTxs(3),blockingStubFull).getResult());
     Assert.assertFalse(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
         notes.getNoteTxs(4),blockingStubFull).getResult());
+
+    //Send shield coin without ask when there is no output shield address
+    shieldOutList.clear();
+    memo2 = "Send receiver a note and spend it" + System.currentTimeMillis();
+
+    Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
+        null, 0,
+        sendShieldAddressInfo2.get(), notes.getNoteTxs(1),
+        shieldOutList,
+        zenTokenOwnerAddress1, notes.getNoteTxs(1).getNote().getValue() - zenTokenFee,
+        zenTokenOwnerKey2, blockingStubFull));
+
+    shieldOutList.clear();
+    memo2 = "Send receiver a note and spend it" + System.currentTimeMillis();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress2,
+        "0", memo2);
+    Assert.assertTrue(PublicMethed.sendShieldCoinWithoutAsk(
+        null, 0,
+        sendShieldAddressInfo3.get(), notes.getNoteTxs(2),
+        shieldOutList,
+        zenTokenOwnerAddress1, notes.getNoteTxs(2).getNote().getValue() - zenTokenFee,
+        zenTokenOwnerKey2, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2, blockingStubFull);
+    Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo2.get(),
+        notes.getNoteTxs(1), blockingStubFull).getResult());
+    Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo3.get(),
+        notes.getNoteTxs(2), blockingStubFull).getResult());
+
+
+
+
   }
 
 
