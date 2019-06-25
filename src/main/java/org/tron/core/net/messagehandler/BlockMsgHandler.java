@@ -102,6 +102,7 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     Item item = new Item(blockId, InventoryType.BLOCK);
     if (fastForward || peer.isFastForwardPeer()) {
+      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
       advService.addInvToCache(item);
     }
 
@@ -112,7 +113,6 @@ public class BlockMsgHandler implements TronMsgHandler {
         return;
       }
       if (tronNetDelegate.validBlock(block)) {
-        peer.getAdvInvReceive().put(item, System.currentTimeMillis());
         advService.fastForward(new BlockMessage(block));
         tronNetDelegate.trustNode(peer);
       }
