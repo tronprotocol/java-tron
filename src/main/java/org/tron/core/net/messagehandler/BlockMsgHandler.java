@@ -41,8 +41,6 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
 
-  private int threshold = 3;
-
   private boolean fastForward = Args.getInstance().isFastForward();
 
   @Override
@@ -103,12 +101,12 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
 
     Item item = new Item(blockId, InventoryType.BLOCK);
-    if (peer.isFastForwardPeer()) {
+    if (fastForward || peer.isFastForwardPeer()) {
       advService.addInvToCache(item);
     }
 
     if (fastForward) {
-      if (tronNetDelegate.getHeadBlockId().getNum() - block.getNum() > threshold) {
+      if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
         logger.warn("Receive a low block {}, head {}",
             blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
         return;
