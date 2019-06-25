@@ -38,6 +38,7 @@ import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
 import org.tron.core.services.http.IsSpendServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
+import org.tron.core.services.http.ScanAndMarkNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByIvkServlet;
 import org.tron.core.services.http.ScanNoteByOvkServlet;
 
@@ -98,7 +99,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetBlockByLimitNextServlet getBlockByLimitNextServlet;
   @Autowired
   private GetBlockByLatestNumServlet getBlockByLatestNumServlet;
-
+  @Autowired
+  private ScanAndMarkNoteByIvkServlet scanAndMarkNoteByIvkServlet;
   @Autowired
   private ScanNoteByIvkServlet scanNoteByIvkServlet;
   @Autowired
@@ -162,9 +164,14 @@ public class SolidityNodeHttpApiService implements Service {
           "/walletsolidity/getblockbylatestnum");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),
           "/walletsolidity/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/walletsolidity/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/walletsolidity/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendServlet), "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet),
+              "/walletsolidity/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByIvkServlet),
+              "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkServlet),
+              "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendServlet),
+              "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdServlet),

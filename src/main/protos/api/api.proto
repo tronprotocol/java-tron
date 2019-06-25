@@ -640,6 +640,9 @@ service Wallet {
   rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
   };
 
+  rpc ScanAndMarkNoteByIvk (IvkDecryptAndMarkParameters) returns (DecryptNotesMarked) {
+  };
+
   rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
   };
 
@@ -1119,6 +1122,14 @@ message IvkDecryptParameters {
   bytes ivk = 3;
 }
 
+message IvkDecryptAndMarkParameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ivk = 5;
+  bytes ak = 3;
+  bytes nk = 4;
+}
+
 message OvkDecryptParameters {
   int64 start_block_index = 1;
   int64 end_block_index = 2;
@@ -1130,6 +1141,16 @@ message DecryptNotes {
     Note note = 1;
     bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
     int32 index = 3; //the index of note in receive
+  }
+  repeated NoteTx noteTxs = 1;
+}
+
+message DecryptNotesMarked {
+  message NoteTx {
+    Note note = 1;
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    int32 index = 3; //the index of note in receive
+    bool is_spend = 4;
   }
   repeated NoteTx noteTxs = 1;
 }
@@ -1223,7 +1244,8 @@ message NoteParameters {
   bytes ak = 1;
   bytes nk = 2;
   Note note = 3;
-  IncrementalMerkleVoucher voucher = 4;
+  bytes txid = 4;
+  int32 index = 5;
 }
 
 message SpendResult {

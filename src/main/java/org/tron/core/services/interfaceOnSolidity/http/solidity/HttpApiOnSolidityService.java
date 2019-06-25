@@ -29,6 +29,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBloc
 import org.tron.core.services.interfaceOnSolidity.http.IsSpendOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListExchangesOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ListWitnessesOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.ScanAndMarkNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByIvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.ScanNoteByOvkOnSolidityServlet;
 
@@ -91,6 +92,8 @@ public class HttpApiOnSolidityService implements Service {
   @Autowired
   private ScanNoteByIvkOnSolidityServlet scanNoteByIvkOnSolidityServlet;
   @Autowired
+  private ScanAndMarkNoteByIvkOnSolidityServlet scanAndMarkNoteByIvkOnSolidityServlet;
+  @Autowired
   private ScanNoteByOvkOnSolidityServlet scanNoteByOvkOnSolidityServlet;
   @Autowired
   private IsSpendOnSolidityServlet isSpendOnSolidityServlet;
@@ -149,9 +152,14 @@ public class HttpApiOnSolidityService implements Service {
           "/walletsolidity/getblockbylatestnum");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoOnSolidityServlet),
           "/walletsolidity/getmerkletreevoucherinfo");
-      context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet), "/walletsolidity/scannotebyivk");
-      context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet), "/walletsolidity/scannotebyovk");
-      context.addServlet(new ServletHolder(isSpendOnSolidityServlet), "/walletsolidity/isspend");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkOnSolidityServlet),
+              "/walletsolidity/scanandmarknotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByIvkOnSolidityServlet),
+              "/walletsolidity/scannotebyivk");
+      context.addServlet(new ServletHolder(scanNoteByOvkOnSolidityServlet),
+              "/walletsolidity/scannotebyovk");
+      context.addServlet(new ServletHolder(isSpendOnSolidityServlet),
+              "/walletsolidity/isspend");
 
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),

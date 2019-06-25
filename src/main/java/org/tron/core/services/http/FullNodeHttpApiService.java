@@ -194,6 +194,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private ScanNoteByIvkServlet scanNoteByIvkServlet;
   @Autowired
+  private ScanAndMarkNoteByIvkServlet scanAndMarkNoteByIvkServlet;
+  @Autowired
   private ScanNoteByOvkServlet scanNoteByOvkServlet;
   @Autowired
   private GetRcmServlet getRcmServlet;
@@ -332,6 +334,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createShieldedTransactionWithoutSpendAuthSigServlet),
           "/createshieldedtransactionwithoutspendauthsig");
       context.addServlet(new ServletHolder(scanNoteByIvkServlet), "/scannotebyivk");
+      context.addServlet(new ServletHolder(scanAndMarkNoteByIvkServlet), "/scanandmarknotebyivk");
       context.addServlet(new ServletHolder(scanNoteByOvkServlet), "/scannotebyovk");
       context.addServlet(new ServletHolder(getRcmServlet), "/getrcm");
       context.addServlet(new ServletHolder(getMerkleTreeVoucherInfoServlet),

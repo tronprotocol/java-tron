@@ -54,6 +54,7 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DiversifierMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
@@ -2063,7 +2064,7 @@ public class Wallet {
   }
 
   public SpendResult isSpend(NoteParameters noteParameters) throws
-      ZksnarkException {
+          ZksnarkException, InvalidProtocolBufferException, BadItemException, ItemNotFoundException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
@@ -2075,16 +2076,38 @@ public class Wallet {
     if (paymentAddress == null) {
       throw new ZksnarkException("paymentAddress format is wrong");
     }
-    Note baseNote = new Note(paymentAddress.getD(),
-        paymentAddress.getPkD(), note.getValue(),
-        note.getRcm().toByteArray());
-
-    IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
-        noteParameters.getVoucher()).toMerkleVoucherContainer();
-
-    byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
-
+    
+    //only one OutPoint
+    OutputPoint outputPoint = OutputPoint.newBuilder()
+            .setHash(noteParameters.getTxid())
+            .setIndex(noteParameters.getIndex())
+            .build();
+    OutputPointInfo outputPointInfo = OutputPointInfo.newBuilder()
+            .addOutPoints(outputPoint)
+            .setBlockNum(1) //constants
+            .build();
+    //most one voucher
+    IncrementalMerkleVoucherInfo incrementalMerkleVoucherInfo =
+            getMerkleTreeVoucherInfo(outputPointInfo);
+  
     SpendResult result;
+    
+    if(incrementalMerkleVoucherInfo.getVouchersCount() == 0){
+      result = SpendResult.newBuilder()
+              .setResult(false)
+              .setMessage("input note not exists")
+              .build();
+      return  result;
+    }
+    
+    IncrementalMerkleVoucherContainer voucherContainer = new IncrementalMerkleVoucherCapsule(
+            incrementalMerkleVoucherInfo.getVouchers(0)).toMerkleVoucherContainer();
+  
+    Note baseNote = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(), note.getValue(),
+            note.getRcm().toByteArray());
+    byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
+    
     if (dbManager.getNullfierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
@@ -2469,36 +2492,39 @@ public class Wallet {
     return memoStrip;
   }
   
-  /*
-   * try to get cm belongs to ivk
+  /**
+   * query note by ivk
+   * @param startNum
+   * @param endNum
+   * @param ivk
+   * @return
+   * @throws BadItemException
+   * @throws ZksnarkException
    */
-  public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum,
-      byte[] ivk) throws BadItemException, ZksnarkException {
-    if (!getFullNodeAllowShieldedTransaction()) {
-      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
-    }
+  private GrpcAPI.DecryptNotes queryNoteByIvk(long startNum, long endNum, byte[] ivk)
+          throws BadItemException, ZksnarkException {
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes
-        .newBuilder();
+            .newBuilder();
     if (!(startNum >= 0 && endNum > startNum
-        && endNum - startNum <= 1000)) {
+            && endNum - startNum <= 1000)) {
       throw new BadItemException(
               "request require start_block_index >= 0 && end_block_index > start_block_index && end_block_index - start_block_index <= 1000");
     }
     BlockList blockList = this
-        .getBlocksByLimitNext(startNum, endNum - startNum);
+            .getBlocksByLimitNext(startNum, endNum - startNum);
     for (Block block : blockList.getBlockList()) {
       for (Transaction transaction : block.getTransactionsList()) {
         TransactionCapsule transactionCapsule = new TransactionCapsule(
-            transaction);
+                transaction);
         byte[] txid = transactionCapsule.getTransactionId().getBytes();
         List<Transaction.Contract> contracts = transaction.getRawData()
-            .getContractList();
+                .getContractList();
         if (contracts.isEmpty()) {
           continue;
         }
         Transaction.Contract c = contracts.get(0);
         if (c.getType()
-            != Contract.ContractType.ShieldedTransferContract) {
+                != Contract.ContractType.ShieldedTransferContract) {
           continue;
         }
         ShieldedTransferContract stContract;
@@ -2506,43 +2532,43 @@ public class Wallet {
           stContract = c.getParameter().unpack(ShieldedTransferContract.class);
         } catch (InvalidProtocolBufferException e) {
           throw new ZksnarkException(
-              "unpack ShieldedTransferContract failed.");
+                  "unpack ShieldedTransferContract failed.");
         }
-
+      
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           ReceiveDescription r = stContract.getReceiveDescription(index);
           Optional<Note> notePlaintext = Note
-              .decrypt(r.getCEnc().toByteArray(),//ciphertext
-                  ivk,
-                  r.getEpk().toByteArray(),//epk
-                  r.getNoteCommitment().toByteArray() //cmu
-              );
-
+                  .decrypt(r.getCEnc().toByteArray(),//ciphertext
+                          ivk,
+                          r.getEpk().toByteArray(),//epk
+                          r.getNoteCommitment().toByteArray() //cmu
+                  );
+        
           if (notePlaintext.isPresent()) {
             Note noteText = notePlaintext.get();
-
+          
             byte[] pkD = new byte[32];
             if (!JLibrustzcash
-                .librustzcashIvkToPkd(
-                    new IvkToPkdParams(ivk, noteText.d.getData(),
-                        pkD))) {
+                    .librustzcashIvkToPkd(
+                            new IvkToPkdParams(ivk, noteText.d.getData(),
+                                    pkD))) {
               continue;
             }
-
+          
             String paymentAddress = KeyIo.encodePaymentAddress(
-                new PaymentAddress(noteText.d, pkD));
+                    new PaymentAddress(noteText.d, pkD));
             GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
-                .setPaymentAddress(paymentAddress)
-                .setValue(noteText.value)
-                .setRcm(ByteString.copyFrom(noteText.rcm))
-                .setMemo(ByteString.copyFrom(stripRightZero(noteText.memo)))
-                .build();
+                    .setPaymentAddress(paymentAddress)
+                    .setValue(noteText.value)
+                    .setRcm(ByteString.copyFrom(noteText.rcm))
+                    .setMemo(ByteString.copyFrom(stripRightZero(noteText.memo)))
+                    .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder()
-                .setNote(note)
-                .setTxid(ByteString.copyFrom(txid))
-                .setIndex(index)
-                .build();
-
+                    .setNote(note)
+                    .setTxid(ByteString.copyFrom(txid))
+                    .setIndex(index)
+                    .build();
+          
             builder.addNoteTxs(noteTx);
           }
         } // end of ReceiveDescriptionList
@@ -2550,7 +2576,56 @@ public class Wallet {
     } //end of blocklist
     return builder.build();
   }
-
+  
+  /*
+   * try to get all note belongs to ivk
+   */
+  public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum,
+      byte[] ivk) throws BadItemException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
+    }
+  
+    GrpcAPI.DecryptNotes notes = queryNoteByIvk(startNum,endNum,ivk);
+    return notes;
+  }
+  
+  /*
+  try to get unspent note belongs to ivk
+   */
+  public GrpcAPI.DecryptNotesMarked scanAndMarkNoteByIvk(long startNum, long endNum,
+          byte[] ivk, byte[] ak, byte[] nk) throws BadItemException, ZksnarkException,
+          InvalidProtocolBufferException, ItemNotFoundException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException("ShieldedTransactionApi is not allowed");
+    }
+    
+    GrpcAPI.DecryptNotes srcNotes = queryNoteByIvk(startNum,endNum,ivk);
+    GrpcAPI.DecryptNotesMarked.Builder builder = GrpcAPI.DecryptNotesMarked.newBuilder();
+    for(NoteTx noteTx : srcNotes.getNoteTxsList()){
+      //query if note is already spent
+      NoteParameters noteParameters = NoteParameters.newBuilder()
+              .setNote(noteTx.getNote())
+              .setAk(ByteString.copyFrom(ak))
+              .setNk(ByteString.copyFrom(nk))
+              .setTxid(noteTx.getTxid())
+              .setIndex(noteTx.getIndex())
+              .build();
+      SpendResult spendResult = isSpend(noteParameters);
+      
+      //construct DecryptNotesMarked
+      GrpcAPI.DecryptNotesMarked.NoteTx.Builder markedNoteTx
+              = GrpcAPI.DecryptNotesMarked.NoteTx.newBuilder();
+      markedNoteTx.setNote(noteTx.getNote());
+      markedNoteTx.setTxid(noteTx.getTxid());
+      markedNoteTx.setIndex(noteTx.getIndex());
+      markedNoteTx.setIsSpend(spendResult.getResult());
+  
+      builder.addNoteTxs(markedNoteTx);
+    }
+    return builder.build();
+  }
+  
   /*
    * try to get cm belongs to ovk
    */
