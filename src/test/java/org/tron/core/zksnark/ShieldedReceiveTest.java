@@ -18,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.common.application.TronApplicationContext;
@@ -2333,6 +2334,15 @@ public class ShieldedReceiveTest {
     Assert.assertEquals(ByteArray.toHexString(paymentAddress1.getPkD()),
         ByteArray.toHexString(paymentAddress2.getPkD()));
 
+  }
+
+  @Test
+  public void testCreateReceiveNoteRandom() throws ZksnarkException, BadItemException{
+    ReceiveNote receiveNote1 = wallet.createReceiveNoteRandom(0);
+    Assert.assertEquals(0, receiveNote1.getNote().getValue());
+
+    ReceiveNote receiveNote2 = wallet.createReceiveNoteRandom(0);
+    Assert.assertNotEquals(receiveNote1.getNote().getPaymentAddress(), receiveNote2.getNote().getPaymentAddress());
   }
 
 }
