@@ -99,6 +99,7 @@ public class SendCoinShieldTest {
   private static AnnotationConfigApplicationContext context;
   private static Manager dbManager;
   private static Wallet wallet;
+  private static final byte[] DEFAULT_OVK;
 
   private static final String PUBLIC_ADDRESS_ONE;
   private static final long OWNER_BALANCE = 9999999000000L;
@@ -121,6 +122,8 @@ public class SendCoinShieldTest {
     context = new TronApplicationContext(DefaultConfig.class);
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
+    DEFAULT_OVK = ByteArray.fromHexString(
+        "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
   }
 
   /**
@@ -168,6 +171,14 @@ public class SendCoinShieldTest {
             .build();
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
+  }
+
+  private void addZeroValueOutputNote(ZenTransactionBuilder builder) throws ZksnarkException {
+    SpendingKey spendingKey = SpendingKey.random();
+    FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+    PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+    builder.addOutput(DEFAULT_OVK, paymentAddress, 0, "just for decode for ovk".getBytes());
   }
 
   @Test
@@ -1184,6 +1195,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap = builder.build();
@@ -1499,6 +1511,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap1 = builder.build();
@@ -1563,6 +1576,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap1 = builder.build();
@@ -1696,6 +1710,8 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
+
+      addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
 
       TransactionCapsule transactionCap1 = builder.build();
@@ -1753,6 +1769,7 @@ public class SendCoinShieldTest {
     builder.addSpend(spendDescriptionInfo);
 
     //add to transparent
+    addZeroValueOutputNote(builder);
     String TO_ADDRESS = generateDefaultToAccount();
     builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),
         1000 * 1000000 - wallet.getShieldedTransactionFee());

@@ -366,10 +366,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
     if (shieldedTransferContract.getReceiveDescriptionCount() == 0) {
       throw new ContractValidateException("ShieldedTransferContract error, no output cm");
     }
-    if (shieldedTransferContract.getTransparentToAddress().isEmpty()
-        && shieldedTransferContract.getReceiveDescriptionCount() == 0) {
-      throw new ContractValidateException("ShieldedTransferContract error, no receiver");
-    }
     if (shieldedTransferContract.getReceiveDescriptionCount() > 2) {
       throw new ContractValidateException("ShieldedTransferContract error, number of receivers"
           + " should not be more than 2");

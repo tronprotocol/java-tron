@@ -1698,8 +1698,20 @@ public class Wallet {
     }
   }
 
+  public ReceiveNote createReceiveNoteRandom(long value) throws ZksnarkException, BadItemException {
+    SpendingKey spendingKey = SpendingKey.random();
+    PaymentAddress paymentAddress = spendingKey.defaultAddress();
+
+    GrpcAPI.Note note = GrpcAPI.Note.newBuilder().setValue(value)
+        .setPaymentAddress(KeyIo.encodePaymentAddress(paymentAddress))
+        .setRcm(ByteString.copyFrom(Note.generateR()))
+        .setMemo(ByteString.copyFrom(new byte[512])).build();
+
+    return ReceiveNote.newBuilder().setNote(note).build();
+  }
+
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
-      throws ContractValidateException, RuntimeException, ZksnarkException {
+      throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
@@ -1746,6 +1758,15 @@ public class Wallet {
 
     if (!ArrayUtils.isEmpty(transparentToAddress)) {
       builder.setTransparentOutput(transparentToAddress, toAmount);
+    }
+
+    // from shielded to public, without shielded receive, will create a random shielded address
+    if (!shieldedSpends.isEmpty()
+        && !ArrayUtils.isEmpty(transparentToAddress)
+        && shieldedReceives.isEmpty()) {
+      shieldedReceives = new ArrayList<>();
+      ReceiveNote receiveNote = createReceiveNoteRandom(0);
+      shieldedReceives.add(receiveNote);
     }
 
     // input
@@ -1795,7 +1816,7 @@ public class Wallet {
 
   public TransactionCapsule createShieldedTransactionWithoutSpendAuthSig(
       PrivateParametersWithoutAsk request)
-      throws ContractValidateException, ZksnarkException {
+      throws ContractValidateException, ZksnarkException, BadItemException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException("ShieldedTransactionApi is not allowed");
     }
@@ -1843,6 +1864,15 @@ public class Wallet {
 
     if (!ArrayUtils.isEmpty(transparentToAddress)) {
       builder.setTransparentOutput(transparentToAddress, toAmount);
+    }
+
+    // from shielded to public, without shielded receive, will create a random shielded address
+    if (!shieldedSpends.isEmpty()
+        && !ArrayUtils.isEmpty(transparentToAddress)
+        && shieldedReceives.isEmpty()) {
+      shieldedReceives = new ArrayList<>();
+      ReceiveNote receiveNote = createReceiveNoteRandom(0);
+      shieldedReceives.add(receiveNote);
     }
 
     // input
