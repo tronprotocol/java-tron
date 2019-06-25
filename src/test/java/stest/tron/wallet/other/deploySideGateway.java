@@ -31,8 +31,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class deploySideGateway {
 
 
-  private final String testDepositTrx = Configuration.getByPath("testng.conf")
-      .getString("foundationAccount.key2");
+  private final String testDepositTrx = "324a2052e491e99026442d81df4d2777292840c1b3949e20696c49096c6bacb7";
   private final byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
