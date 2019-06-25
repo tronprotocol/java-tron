@@ -144,8 +144,6 @@ public class WalletTestZenToken006 {
         shieldOutList,
         null, 0,
         zenTokenOwnerKey, blockingStubFull));
-
-
   }
 
   @Test(enabled = true, description = "Shield note memo is 514 char")
@@ -181,11 +179,87 @@ public class WalletTestZenToken006 {
     Assert.assertEquals(PublicMethed.getMemo(note),memo.substring(0,512));
   }
 
+  @Test(enabled = true, description = "Shield note memo is empty")
+  public void test4ShieldMemoIsEmpty() {
+    shieldAddressInfo = PublicMethed.generateShieldAddress();
+    shieldAddress = shieldAddressInfo.get().getAddress();
+    logger.info("shieldAddress:" + shieldAddress);
+
+    //Empty memo
+    memo = "";
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + zenTokenFee, memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        zenTokenOwnerAddress, 2 * zenTokenFee,
+        null, null,
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
+    note = notes.getNoteTxs(0).getNote();
+    Long receiverShieldTokenAmount = note.getValue();
+    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
+    Assert.assertEquals(memo, PublicMethed.getMemo(note));
+
+    //Shield send to it self
+    memo = "";
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "0", memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        null, 0,
+        shieldAddressInfo.get(),
+        PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull).getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+  }
+
+
+  @Test(enabled = true, description = "Shield note memo is empty")
+  public void test5ShieldMemoIsEmpty() {
+    shieldAddressInfo = PublicMethed.generateShieldAddress();
+    shieldAddress = shieldAddressInfo.get().getAddress();
+    logger.info("shieldAddress:" + shieldAddress);
+
+    memo = "{\n"
+        + "  note {\n"
+        + "    value: 49957\n"
+        + "    payment_address: \"ztron1f42n7h0l3p8mlaq0d0rxdkhq"
+        + "n6xuq49xhvj593wfduy24kn3xrmxfpqt8lnmh9ysnu5nzt3zgzx\"\n"
+        + "    rcm: \"\\210x\\256\\211\\256v\\0344\\267\\240\\375\\377xs\\3"
+        + "50\\3558^Y\\200i0$S\\312KK\\326l\\234J\\b\"\n"
+        + "    memo: \"System.exit(1);\"\n"
+        + "  }\n"
+        + "  txid: \"\\215\\332\\304\\241\\362\\vbt\\250\\364\\353\\30"
+        + "7\\'o\\275\\313ya*)\\320>\\001\\262B%\\371\\'\\005w\\354\\200\"\n"
+        + "}";
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + zenTokenFee, memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        zenTokenOwnerAddress, 2 * zenTokenFee,
+        null, null,
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
+    note = notes.getNoteTxs(0).getNote();
+    Long receiverShieldTokenAmount = note.getValue();
+    Assert.assertEquals(receiverShieldTokenAmount, zenTokenFee);
+    Assert.assertEquals(memo, PublicMethed.getMemo(note));
+
+
+  }
+
+
 
   /**
    * constructor.
    */
-
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
     PublicMethed.transferAsset(foundationZenTokenAddress, tokenId,

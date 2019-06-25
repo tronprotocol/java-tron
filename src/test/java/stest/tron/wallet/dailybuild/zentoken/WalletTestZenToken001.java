@@ -54,7 +54,7 @@ public class WalletTestZenToken001 {
   private byte[] tokenId = zenTokenId.getBytes();
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long costTokenAmount = 5 * zenTokenFee;
+  private Long costTokenAmount = 8 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -162,6 +162,17 @@ public class WalletTestZenToken001 {
         PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
         blockingStubFull);
 
+    //Can't send shiled coin when output only one public
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        null, 0,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        zenTokenOwnerAddress, note.getValue() - zenTokenFee,
+        zenTokenOwnerKey, blockingStubFull));
+
+    //When you want to send shield coin to public account,you should add one zero output amount cm
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "0", memo);
     Assert.assertTrue(PublicMethed.sendShieldCoin(
         null, 0,
         shieldAddressInfo.get(), notes.getNoteTxs(0),
@@ -179,6 +190,61 @@ public class WalletTestZenToken001 {
     Assert.assertTrue(afterAssetBalance - beforeAssetBalance == note.getValue() - zenTokenFee);
     logger.info("beforeAssetBalance:" + beforeAssetBalance);
     logger.info("afterAssetBalance :" + afterAssetBalance);
+  }
+
+
+  @Test(enabled = true, description = "Output amount can't be zero or below zero")
+  public void test3Shield2PublicAmountIsZero() {
+    shieldAddressInfo = PublicMethed.generateShieldAddress();
+    shieldAddress = shieldAddressInfo.get().getAddress();
+    memo = "Shield to public amount is zero";
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + (sendTokenAmount - zenTokenFee), memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        zenTokenOwnerAddress, sendTokenAmount,
+        null, null,
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
+    notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
+    note = notes.getNoteTxs(0).getNote();
+
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + (note.getValue() - zenTokenFee - (zenTokenFee - note.getValue())), memo);
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        null, 0,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        zenTokenOwnerAddress, zenTokenFee - note.getValue(),
+        zenTokenOwnerKey, blockingStubFull));
+
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + (note.getValue() - zenTokenFee), memo);
+
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        null, 0,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        zenTokenOwnerAddress, 0,
+        zenTokenOwnerKey, blockingStubFull));
+
+    shieldOutList.clear();
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + (-zenTokenFee), memo);
+    Assert.assertFalse(PublicMethed.sendShieldCoin(
+        null, 0,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        zenTokenOwnerAddress, note.getValue(),
+        zenTokenOwnerKey, blockingStubFull));
+
+
   }
 
   /**
