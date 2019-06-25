@@ -1841,7 +1841,7 @@ public class ShieldedReceiveTest {
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
-              Note.generateR(), //builder.getSpends().get(i).alpha,
+              Note.generateR(), //replace builder.getSpends().get(i).alpha with random alpha, should fail
               hashOfTransaction,
               result));
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
