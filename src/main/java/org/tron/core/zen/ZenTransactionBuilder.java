@@ -229,9 +229,6 @@ public class ZenTransactionBuilder {
 
     byte[] voucherPath = spend.voucher.path().encode();
 
-    // System.out.println("vocouerPath is: " + ByteArray.toHexString(voucherPath));
-    // System.out.println("spend is: " + ByteArray.toHexString(spend));
-
     byte[] cv = new byte[32];
     byte[] rk = new byte[32];
     byte[] zkproof = new byte[192];
@@ -267,10 +264,6 @@ public class ZenTransactionBuilder {
       throw new ZksnarkException("Output is invalid");
     }
 
-//    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
-//
-//    Optional<NotePlaintextEncryptionResult> res = notePlaintext
-//        .encrypt(output.getNote().pkD);
     Optional<NotePlaintextEncryptionResult> res = output.getNote().encrypt(output.getNote().pkD);
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
@@ -372,8 +365,6 @@ public class ZenTransactionBuilder {
     private byte[] ovk;
     @Getter
     private Note note;
-//    @Getter
-//    private byte[] memo; // 256
   }
 
 }
