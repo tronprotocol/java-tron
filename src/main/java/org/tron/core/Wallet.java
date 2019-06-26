@@ -30,7 +30,6 @@ import com.google.common.collect.Range;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.nio.charset.Charset;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
