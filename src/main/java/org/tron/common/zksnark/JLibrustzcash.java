@@ -285,7 +285,7 @@ public class JLibrustzcash {
     INSTANCE.librustzcashTreeUncommitted(result);
   }
 
-  private static boolean isOpenZen() {
+  public static boolean isOpenZen() {
     boolean res = Args.getInstance().isFullNodeAllowShieldedTransaction();
     if (res) {
       INSTANCE = LibrustzcashWrapper.getInstance();
