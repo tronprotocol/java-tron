@@ -14,10 +14,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.DecryptNotes;
-import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.Note;
-import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -218,6 +215,57 @@ public class WalletTestZenToken002 {
     Assert.assertTrue(PublicMethed.getSpendResultOnSolidity(sendShieldAddressInfo.get(),
         notes.getNoteTxs(0),blockingStubSolidity1).getResult());
   }
+
+  /**
+   * constructor.
+   */
+  @Test(enabled = true, description = "Query note and spend status on fullnode and solidity")
+  public void test6QueryNoteAndSpendStatusOnFullnode() {
+    Assert.assertFalse(
+        PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
+            .getNoteTxs(0).getIsSpend());
+    Note scanNoteByIvk = PublicMethed
+        .getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
+        .getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk,
+        PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
+            .getNoteTxs(0).getNote());
+
+    Assert.assertFalse(PublicMethed
+        .getShieldNotesAndMarkByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
+        .getNoteTxs(0).getIsSpend());
+    scanNoteByIvk = PublicMethed
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
+        .getNoteTxs(0).getNote();
+    Assert.assertEquals(scanNoteByIvk, PublicMethed
+        .getShieldNotesAndMarkByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
+        .getNoteTxs(0).getNote());
+
+    shieldOutList.clear();
+    memo = "Query note and spend status on fullnode " + System.currentTimeMillis();
+    notes = PublicMethed.listShieldNote(receiverShieldAddressInfo, blockingStubFull);
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, sendShieldAddress,
+        "" + (notes.getNoteTxs(0).getNote().getValue() - zenTokenFee), memo);
+    Assert.assertTrue(PublicMethed.sendShieldCoin(
+        null, 0,
+        receiverShieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity);
+
+    Assert.assertTrue(
+        PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
+            .getNoteTxs(0).getIsSpend());
+
+    Assert.assertTrue(PublicMethed
+        .getShieldNotesAndMarkByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity)
+        .getNoteTxs(0).getIsSpend());
+
+
+  }
+
 
   /**
    * constructor.

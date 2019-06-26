@@ -38,10 +38,12 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.api.GrpcAPI.IvkDecryptParameters;
 import org.tron.api.GrpcAPI.NfParameters;
 import org.tron.api.GrpcAPI.Note;
@@ -5284,6 +5286,67 @@ public class PublicMethed {
   /**
    * constructor.
    */
+  public static DecryptNotesMarked getShieldNotesAndMarkByIvk(
+      Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    //startBlockNum = 0L;
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
+    try {
+      IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
+      builder.setStartBlockIndex(startBlockNum + 1);
+      builder.setEndBlockIndex(currentBlockNum + 1);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
+      builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
+      DecryptNotesMarked decryptNotes = blockingStubFull.scanAndMarkNoteByIvk(builder.build());
+      logger.info(decryptNotes.toString());
+      return decryptNotes;
+    } catch (Exception e) {
+      logger.info(e.toString());
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static DecryptNotesMarked getShieldNotesAndMarkByIvkOnSolidity(
+      Optional<ShieldAddressInfo> shieldAddressInfo,
+      WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity) {
+    Block currentBlock = blockingStubSolidity
+        .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
+    Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
+    Long startBlockNum = 0L;
+    if (currentBlockNum > 100) {
+      startBlockNum = currentBlockNum - 100;
+    }
+    //startBlockNum = 0L;
+    logger.info("ivk:" + ByteArray.toHexString(shieldAddressInfo.get().ivk));
+    try {
+      IvkDecryptAndMarkParameters.Builder builder = IvkDecryptAndMarkParameters.newBuilder();
+      builder.setStartBlockIndex(startBlockNum + 1);
+      builder.setEndBlockIndex(currentBlockNum + 1);
+      builder.setIvk(ByteString.copyFrom(shieldAddressInfo.get().getIvk()));
+      builder.setAk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getAk()));
+      builder.setNk(ByteString.copyFrom(shieldAddressInfo.get().getFullViewingKey().getNk()));
+      DecryptNotesMarked decryptNotes = blockingStubSolidity.scanAndMarkNoteByIvk(builder.build());
+      logger.info(decryptNotes.toString());
+      return decryptNotes;
+    } catch (Exception e) {
+      logger.info(e.toString());
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
   public static Integer getShieldNotesCount(Optional<ShieldAddressInfo> shieldAddressInfo,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
@@ -5429,6 +5492,8 @@ public class PublicMethed {
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
       builder.setNote(noteBuild.build());
+      builder.setTxid(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      builder.setIndex(noteTx.getIndex());
       //builder.setVoucher(merkleVoucherInfo.getVouchers(0));
 
       SpendResult result = blockingStubFull.isSpend(builder.build());
@@ -5450,10 +5515,10 @@ public class PublicMethed {
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
     outPointBuild.setIndex(noteTx.getIndex());
     request.addOutPoints(outPointBuild.build());
-    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubSolidity
-        .getMerkleTreeVoucherInfo(request.build());
+    Optional<IncrementalMerkleVoucherInfo> merkleVoucherInfo = Optional.of(blockingStubSolidity
+        .getMerkleTreeVoucherInfo(request.build()));
 
-    if (merkleVoucherInfo.getVouchersCount() > 0) {
+    if (merkleVoucherInfo.isPresent() && merkleVoucherInfo.get().getVouchersCount() > 0) {
       NoteParameters.Builder builder = NoteParameters.newBuilder();
       try {
         builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
@@ -5467,6 +5532,8 @@ public class PublicMethed {
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
       builder.setNote(noteBuild.build());
+      builder.setTxid(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      builder.setIndex(noteTx.getIndex());
       //builder.setVoucher(merkleVoucherInfo.getVouchers(0));
 
       SpendResult result = blockingStubSolidity.isSpend(builder.build());
