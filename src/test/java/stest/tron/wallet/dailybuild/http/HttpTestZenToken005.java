@@ -93,7 +93,7 @@ public class HttpTestZenToken005 {
     shieldOutList.clear();
     memo2 = "Send shield to receiver shield memo in" + System.currentTimeMillis();
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress,
-        "" + (sendNote.getValue - zenTokenFee), memo2);
+        "" + (sendNote.getValue() - zenTokenFee), memo2);
 
     response = HttpMethed
         .sendShieldCoinWithoutAsk(httpnode, null, 0, sendShieldAddressInfo.get(), sendNote,
