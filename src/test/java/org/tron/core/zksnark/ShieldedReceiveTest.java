@@ -119,14 +119,14 @@ public class ShieldedReceiveTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
 
-  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
+  public enum TestColumn { CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM }
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
+  public enum TestReceiveMissingColumn { CV, CM, EPK, C_ENC, C_OUT, ZKPROOF }
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -203,7 +203,7 @@ public class ShieldedReceiveTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
-  private void librustzcashInitZksnarkParams(){
+  private void librustzcashInitZksnarkParams() {
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
@@ -241,7 +241,7 @@ public class ShieldedReceiveTest {
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
-  /**
+  /*
    * test of change ShieldedTransactionFee proposal
    */
   @Test
@@ -254,7 +254,7 @@ public class ShieldedReceiveTest {
     dbManager.getDynamicPropertiesStore().saveShieldedTransactionFee(fee);
   }
 
-  /**
+  /*
    * test of creating shielded transaction before turn on the switch
    */
   @Test
@@ -263,7 +263,6 @@ public class ShieldedReceiveTest {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);
     createCapsule();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
@@ -291,10 +290,9 @@ public class ShieldedReceiveTest {
       Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of broadcasting shielded transaction before allow shielded transaction
    */
   @Test
@@ -304,12 +302,11 @@ public class ShieldedReceiveTest {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);// or 1
     createCapsule();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     //generate input
     builder.setTransparentInput(ByteArray.fromHexString(FROM_ADDRESS), OWNER_BALANCE); //success
     byte[] senderOvk = randomUint256();
-    
+
     //generate output
     SpendingKey sk = SpendingKey.random();
     FullViewingKey fullViewingKey12 = sk.fullViewingKey();
@@ -338,7 +335,6 @@ public class ShieldedReceiveTest {
       Assert.assertEquals("Not support Shielded Transaction, need to be opened by the committee",
           e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
   private ZenTransactionBuilder generateBuilderWithoutColumnInDescription(
@@ -402,15 +398,15 @@ public class ShieldedReceiveTest {
     return builder;
   }
 
-  /**
+  /*
    * test of empty CV in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyCV()
+  public void testReceiveDescriptionWithEmptyCv()
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -446,15 +442,15 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of empty cm in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyCM()
+  public void testReceiveDescriptionWithEmptyCm()
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -488,15 +484,15 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of empty epk in receive description
    */
   @Test
-  public void testReceiveDescriptionWithEmptyEPK()
+  public void testReceiveDescriptionWithEmptyEpk()
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -529,7 +525,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of empty zkproof in receive description
    */
   @Test
@@ -537,7 +533,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -571,7 +567,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of empty c_enc in receive description
    */
   @Test
@@ -579,7 +575,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -613,7 +609,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test of empty c_out in receive description
    */
   @Test
@@ -621,7 +617,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -655,7 +651,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test some column in ReceiveDescription is wrong
    */
   private ReceiveDescriptionCapsule changeGenerateOutputProof(ReceiveDescriptionInfo output,
@@ -666,8 +662,6 @@ public class ShieldedReceiveTest {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Output is invalid");
     }
-
-//    NotePlaintext notePlaintext = new NotePlaintext(output.getNote(), output.getMemo());
 
     Optional<NotePlaintextEncryptionResult> res = output.getNote()
         .encrypt(output.getNote().pkD);
@@ -821,7 +815,7 @@ public class ShieldedReceiveTest {
 
   private ZenTransactionBuilder generateBuilder(ZenTransactionBuilder builder, long ctx)
       throws ZksnarkException, BadItemException {
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
 
     // generate input
     SpendingKey sk = SpendingKey.random();
@@ -847,7 +841,7 @@ public class ShieldedReceiveTest {
     return builder;
   }
 
-  /**
+  /*
    * test wrong value_commitment in ReceiveDescription
    */
   @Test
@@ -855,7 +849,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -876,7 +870,7 @@ public class ShieldedReceiveTest {
     }
   }
 
-  /**
+  /*
    * test wrong zkproof in ReceiveDescription
    */
   @Test
@@ -884,7 +878,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -905,7 +899,7 @@ public class ShieldedReceiveTest {
     }
   }
 
-  /**
+  /*
    * test note_commitment in ReceiveDescription generated by wrong d
    */
   @Test
@@ -913,7 +907,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -931,12 +925,12 @@ public class ShieldedReceiveTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage()) ||
-          "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
+          || "param is null".equalsIgnoreCase(e.getMessage()));
     }
   }
 
-  /**
+  /*
    * test note_commitment in ReceiveDescription generated by wrong pkd
    */
   @Test
@@ -944,7 +938,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -962,12 +956,12 @@ public class ShieldedReceiveTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage()) ||
-          "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
+          || "param is null".equalsIgnoreCase(e.getMessage()));
     }
   }
 
-  /**
+  /*
    * test note_commitment in ReceiveDescription generated by wrong value
    */
   @Test
@@ -975,7 +969,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -996,7 +990,7 @@ public class ShieldedReceiveTest {
     }
   }
 
-  /**
+  /*
    * test note_commitment in ReceiveDescription generated by wrong r
    */
   @Test
@@ -1004,7 +998,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1033,9 +1027,8 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     // generate sk
     SpendingKey sk = SpendingKey
@@ -1075,7 +1068,6 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(e instanceof ZksnarkException);
       Assert.assertEquals("Spend proof failed", e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
   /**
@@ -1086,9 +1078,8 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     // generate sk
     SpendingKey sk = SpendingKey
@@ -1121,10 +1112,9 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
     Assert.assertTrue(true);
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test add two same cm into spend
    */
   //@Test not used
@@ -1132,9 +1122,8 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     // generate input
     SpendingKey sk = SpendingKey
@@ -1172,10 +1161,9 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("duplicate sapling nullifiers in this transaction", e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test add two same cm into output
    */
   @Test
@@ -1183,9 +1171,8 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     // generate input
     SpendingKey sk = SpendingKey
@@ -1224,7 +1211,6 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("duplicate cm in receive_description", e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
   /**
@@ -1235,9 +1221,8 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     // generate input
     SpendingKey sk = SpendingKey
@@ -1272,8 +1257,6 @@ public class ShieldedReceiveTest {
       Assert.assertTrue(e instanceof ZksnarkException);
       Assert.assertEquals("Spend proof failed", e.getMessage());
     }
-    JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
-
   }
 
   /**
@@ -1522,7 +1505,7 @@ public class ShieldedReceiveTest {
     return transactionCap;
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1531,7 +1514,7 @@ public class ShieldedReceiveTest {
       ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1562,7 +1545,7 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(true);
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1571,7 +1554,7 @@ public class ShieldedReceiveTest {
       ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1602,7 +1585,7 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(true);
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1610,7 +1593,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1648,7 +1631,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1656,7 +1639,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1694,7 +1677,7 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1703,7 +1686,7 @@ public class ShieldedReceiveTest {
       ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1734,7 +1717,7 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(true);
   }
 
-  /**
+  /*
    * test signature for shield to shield transaction with some column missing
    */
   @Test
@@ -1743,7 +1726,7 @@ public class ShieldedReceiveTest {
       ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1774,7 +1757,7 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(true);
   }
 
-  /**
+  /*
    * test spend authorize signature with some wrong column
    */
   @Test
@@ -1782,7 +1765,7 @@ public class ShieldedReceiveTest {
       throws BadItemException, RuntimeException, ZksnarkException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1842,7 +1825,8 @@ public class ShieldedReceiveTest {
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
-              Note.generateR(), //replace builder.getSpends().get(i).alpha with random alpha, should fail
+              Note.generateR(),
+              //replace builder.getSpends().get(i).alpha with random alpha, should fail
               hashOfTransaction,
               result));
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
@@ -1897,7 +1881,7 @@ public class ShieldedReceiveTest {
     byte[] hash;
   }
 
-  /**
+  /*
    * test use isolate method to build the signature
    */
   @Test
@@ -1905,7 +1889,7 @@ public class ShieldedReceiveTest {
       throws ZksnarkException, BadItemException, ContractValidateException, ContractExeException {
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
@@ -1958,6 +1942,9 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(executeResult);
   }
 
+  /*
+   * build ShieldedTransaction Without SpendAuthSig
+   */
   public TransactionCapsule buildShieldedTransactionWithoutSpendAuthSig(PaymentAddress address,
       byte[] ak,
       byte[] nsk, byte[] ovk, TransactionHash dataHashToBeSigned, ZenTransactionBuilder builder,
@@ -1965,8 +1952,8 @@ public class ShieldedReceiveTest {
       throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
     Note note = new Note(address, 100 * 1000000);
-    note.rcm = ByteArray.
-        fromHexString("eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701");
+    note.rcm = ByteArray.fromHexString(
+        "eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701");
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2028,16 +2015,16 @@ public class ShieldedReceiveTest {
   }
 
   @Test
-  public void testMemoTooLong()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-      TaposException, TransactionExpirationException, ReceiptCheckErrException,
-      DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+  public void testMemoTooLong() throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -2111,16 +2098,16 @@ public class ShieldedReceiveTest {
   }
 
   @Test
-  public void testMemoNotEnough()
-      throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-      TaposException, TransactionExpirationException, ReceiptCheckErrException,
-      DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-      ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
+  public void testMemoNotEnough() throws ContractValidateException, TooBigTransactionException,
+      TooBigTransactionResultException, TaposException, TransactionExpirationException,
+      ReceiptCheckErrException, DupTransactionException, VMIllegalException,
+      ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
     // generate spend proof
@@ -2192,38 +2179,37 @@ public class ShieldedReceiveTest {
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     Assert.assertTrue(ok);
   }
-  
+
   /*
   send coin to 2 different address generated by same sk, scan note by ivk; spend this note again
    */
   @Test
-  public void pushSameSkAndScanAndSpend()
-          throws ContractValidateException, TooBigTransactionException, TooBigTransactionResultException,
-          TaposException, TransactionExpirationException, ReceiptCheckErrException,
-          DupTransactionException, VMIllegalException, ValidateSignatureException, BadItemException,
-          ContractExeException, AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException, UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException {
-    //set witness
-//    dbManager.getWitnessController().setActiveWitnesses(new ArrayList<>());
-    byte[] privateKey = ByteArray.fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
+  public void pushSameSkAndScanAndSpend() throws ContractValidateException,
+      TooBigTransactionException, TooBigTransactionResultException, TaposException,
+      TransactionExpirationException, ReceiptCheckErrException, DupTransactionException,
+      VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException,
+      AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException,
+      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException {
+
+    byte[] privateKey = ByteArray
+        .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] witnessAddress = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     dbManager.addWitness(ByteString.copyFrom(witnessAddress));
-    
+
     dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-            false, false);
-    
+        false, false);
+
     //create transactions
-    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
-    
     librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000l);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
-    
+
     // generate spend proof
     SpendingKey sk = SpendingKey
-            .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
@@ -2231,49 +2217,49 @@ public class ShieldedReceiveTest {
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
-            .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
     builder.addSpend(expsk, note, anchor, voucher);
-    
+
     // generate output proof
     SpendingKey sk2 = SpendingKey.random();
     FullViewingKey fullViewingKey = sk2.fullViewingKey();
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
-    
+
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    
+
     //send coin to 2 different address generated by same sk
     DiversifierT d1 = DiversifierT.random();
     PaymentAddress paymentAddress1 = incomingViewingKey.address(d1).get();
     builder.addOutput(senderOvk, paymentAddress1,
-            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2, memo);
-    
+        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2, memo);
+
     DiversifierT d2 = DiversifierT.random();
     PaymentAddress paymentAddress2 = incomingViewingKey.address(d2).get();
     builder.addOutput(senderOvk, paymentAddress2,
-            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2, memo);
-    
+        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2, memo);
+
     TransactionCapsule transactionCap = builder.build();
-    
+
     byte[] trxId = transactionCap.getTransactionId().getBytes();
     boolean ok = dbManager.pushTransaction(transactionCap);
     Assert.assertTrue(ok);
-  
+
     //package transaction to block
     dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-            false, false);
-    
+        false, false);
+
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
-    DecryptNotes notes1 = wallet.scanNoteByIvk(0,100,receiverIvk);
-    Assert.assertEquals(2,notes1.getNoteTxsCount());
-    
+    DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
+    Assert.assertEquals(2, notes1.getNoteTxsCount());
+
     // scan note by ovk
-    DecryptNotes notes2 = wallet.scanNoteByOvk(0,100,senderOvk);
-    Assert.assertEquals(2,notes2.getNoteTxsCount());
-    
+    DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
+    Assert.assertEquals(2, notes2.getNoteTxsCount());
+
     // to spend received note above.
     ZenTransactionBuilder builder2 = new ZenTransactionBuilder(wallet);
-    
+
     //query merkleinfo
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
     for (int i = 0; i < notes1.getNoteTxsCount(); i++) {
@@ -2282,48 +2268,48 @@ public class ShieldedReceiveTest {
       outPointBuild.setIndex(i);
       request.addOutPoints(outPointBuild.build());
     }
-    IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet.getMerkleTreeVoucherInfo(request.build());
-    
+    IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
+        .getMerkleTreeVoucherInfo(request.build());
+
     //build spend proof. allow only one note in spend
     ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
     for (int i = 0; i < 1; i++) {
       org.tron.api.GrpcAPI.Note grpcNote = notes1.getNoteTxs(i).getNote();
       PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(grpcNote.getPaymentAddress());
       Note note2 = new Note(paymentAddress.getD(),
-              paymentAddress.getPkD(),
-              grpcNote.getValue(),
-              grpcNote.getRcm().toByteArray()
-              );
-      
+          paymentAddress.getPkD(),
+          grpcNote.getValue(),
+          grpcNote.getRcm().toByteArray()
+      );
+
       IncrementalMerkleVoucherContainer voucher2 =
-              new IncrementalMerkleVoucherContainer(
-                      new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
+          new IncrementalMerkleVoucherContainer(
+              new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
       byte[] anchor2 = voucher2.root().getContent().toByteArray();
       builder2.addSpend(expsk2, note2, anchor2, voucher2);
     }
-  
+
     //build output proof
     SpendingKey sk3 = SpendingKey.random();
     FullViewingKey fvk3 = sk3.fullViewingKey();
     IncomingViewingKey ivk3 = fvk3.inViewingKey();
-  
+
     DiversifierT d3 = DiversifierT.random();
     PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
     byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder2.addOutput(expsk2.getOvk(), paymentAddress3,
-            (1000 * 1000000 - wallet.getShieldedTransactionFee())/2 - wallet.getShieldedTransactionFee(), memo3);
-  
+        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2 - wallet
+            .getShieldedTransactionFee(), memo3);
+
     TransactionCapsule transactionCap2 = builder2.build();
     boolean ok2 = dbManager.pushTransaction(transactionCap2);
     Assert.assertTrue(ok2);
-  
-    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
-  
   }
 
   @Test
   public void decodePaymentAddressIgnoreCase() {
-    String addressLower = "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
+    String addressLower =
+        "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
     String addressUpper = addressLower.toUpperCase();
 
     PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
@@ -2337,12 +2323,13 @@ public class ShieldedReceiveTest {
   }
 
   @Test
-  public void testCreateReceiveNoteRandom() throws ZksnarkException, BadItemException{
+  public void testCreateReceiveNoteRandom() throws ZksnarkException, BadItemException {
     ReceiveNote receiveNote1 = wallet.createReceiveNoteRandom(0);
     Assert.assertEquals(0, receiveNote1.getNote().getValue());
 
     ReceiveNote receiveNote2 = wallet.createReceiveNoteRandom(0);
-    Assert.assertNotEquals(receiveNote1.getNote().getPaymentAddress(), receiveNote2.getNote().getPaymentAddress());
+    Assert.assertNotEquals(receiveNote1.getNote().getPaymentAddress(),
+        receiveNote2.getNote().getPaymentAddress());
   }
 
 }
