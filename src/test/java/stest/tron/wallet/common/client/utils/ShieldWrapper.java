@@ -22,14 +22,13 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Wallet;
-import org.tron.core.zen.address.DiversifierT;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Protocol.Block;
-//import org.tron.walletserver.WalletApi;
 import stest.tron.wallet.common.client.Configuration;
+
+//import org.tron.walletserver.WalletApi;
 //import stest.tron.wallet.common.client.Parameter.CommonConstant;
 
 public class ShieldWrapper {
@@ -193,7 +192,7 @@ public class ShieldWrapper {
           noteBuild.setRcm(ByteString.copyFrom(noteInfo.getR()));
           noteBuild.setMemo(ByteString.copyFrom(noteInfo.getMemo()));
           builder.setNote(noteBuild.build());
-          builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+          //builder.setVoucher(merkleVoucherInfo.getVouchers(0));
 
           SpendResult result = blockingStubFull.isSpend(builder.build());
 

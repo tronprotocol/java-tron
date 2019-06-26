@@ -5408,10 +5408,10 @@ public class PublicMethed {
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
     outPointBuild.setIndex(noteTx.getIndex());
     request.addOutPoints(outPointBuild.build());
-    IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
-            .getMerkleTreeVoucherInfo(request.build());
+    Optional<IncrementalMerkleVoucherInfo> merkleVoucherInfo = Optional.of(blockingStubFull
+        .getMerkleTreeVoucherInfo(request.build()));
 
-    if (merkleVoucherInfo.getVouchersCount() > 0) {
+    if (merkleVoucherInfo.isPresent() && merkleVoucherInfo.get().getVouchersCount() > 0) {
       NoteParameters.Builder builder = NoteParameters.newBuilder();
       try {
         builder.setAk(ByteString.copyFrom(shieldAddressInfo.getFullViewingKey().getAk()));
@@ -5429,7 +5429,7 @@ public class PublicMethed {
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
       builder.setNote(noteBuild.build());
-      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      //builder.setVoucher(merkleVoucherInfo.getVouchers(0));
 
       SpendResult result = blockingStubFull.isSpend(builder.build());
       return result;
@@ -5467,7 +5467,7 @@ public class PublicMethed {
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
       builder.setNote(noteBuild.build());
-      builder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      //builder.setVoucher(merkleVoucherInfo.getVouchers(0));
 
       SpendResult result = blockingStubSolidity.isSpend(builder.build());
       return result;
