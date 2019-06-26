@@ -2,6 +2,7 @@ package org.tron.core.services;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import io.grpc.Server;
 import io.grpc.Status;
@@ -35,6 +36,7 @@ import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.DiversifierMessage;
@@ -48,6 +50,7 @@ import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
+import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -89,6 +92,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
@@ -555,10 +559,8 @@ public class RpcApiService implements Service {
     @Override
     public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
-
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
         DecryptNotes decryptNotes = wallet
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
@@ -567,16 +569,31 @@ public class RpcApiService implements Service {
         responseObserver.onError(getRunTimeException(e));
       }
       responseObserver.onCompleted();
-
+    }
+  
+    @Override
+    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
+        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+      try {
+        DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
+                request.getIvk().toByteArray(),
+                request.getAk().toByteArray(),
+                request.getNk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
+              | ItemNotFoundException e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
     }
 
     @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
-
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());
@@ -2057,10 +2074,8 @@ public class RpcApiService implements Service {
     @Override
     public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
-
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
         DecryptNotes decryptNotes = wallet
             .scanNoteByIvk(startNum, endNum, request.getIvk().toByteArray());
@@ -2071,14 +2086,30 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
 
     }
+    
+    @Override
+    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
+            StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+      long startNum = request.getStartBlockIndex();
+      long endNum = request.getEndBlockIndex();
+      try {
+        DecryptNotesMarked decryptNotes = wallet.scanAndMarkNoteByIvk(startNum, endNum,
+                request.getIvk().toByteArray(),
+                request.getAk().toByteArray(),
+                request.getNk().toByteArray());
+        responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException | InvalidProtocolBufferException
+              | ItemNotFoundException e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
 
     @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
-
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
-
       try {
         DecryptNotes decryptNotes = wallet
             .scanNoteByOvk(startNum, endNum, request.getOvk().toByteArray());

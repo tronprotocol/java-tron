@@ -823,6 +823,9 @@ service WalletSolidity {
   rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
   }
 
+  rpc ScanAndMarkNoteByIvk (IvkDecryptAndMarkParameters) returns (DecryptNotesMarked) {
+  }
+
   rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
   }
 
