@@ -1,6 +1,11 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -12,64 +17,84 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
 public class ScanAndMarkNoteByIvkServlet extends HttpServlet {
-	
-	@Autowired
-	private Wallet wallet;
-	
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-		try {
-			String input = request.getReader().lines()
-					.collect(Collectors.joining(System.lineSeparator()));
-			Util.checkBodySize(input);
-			boolean visible = Util.getVisiblePost(input);
-			IvkDecryptAndMarkParameters.Builder ivkDecryptParameters =
-					IvkDecryptAndMarkParameters.newBuilder();
-			JsonFormat.merge(input, ivkDecryptParameters);
-			
-			GrpcAPI.DecryptNotesMarked notes = wallet
-					.scanAndMarkNoteByIvk(ivkDecryptParameters.getStartBlockIndex(),
-							ivkDecryptParameters.getEndBlockIndex(),
-							ivkDecryptParameters.getIvk().toByteArray(),
-							ivkDecryptParameters.getAk().toByteArray(),
-							ivkDecryptParameters.getNk().toByteArray());
-			
-			response.getWriter()
-					.println(JsonFormat.printToString(notes, visible));
-		} catch (Exception e) {
-			logger.debug("Exception: {}", e.getMessage());
-			try {
-				response.getWriter().println(Util.printErrorMsg(e));
-			} catch (IOException ioe) {
-				logger.debug("IOException: {}", ioe.getMessage());
-			}
-		}
-	}
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) {
-		try {
-			long startNum = Long.parseLong(request.getParameter("start_block_index"));
-			long endNum = Long.parseLong(request.getParameter("end_block_index"));
-			String ivk = request.getParameter("ivk");
-			String ak = request.getParameter("ak");
-			String nk = request.getParameter("nk");
-			boolean visible = Util.getVisible(request);
-			
-			GrpcAPI.DecryptNotesMarked notes = wallet
-					.scanAndMarkNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk),
-							ByteArray.fromHexString(ak),ByteArray.fromHexString(nk));
-			response.getWriter()
-					.println(JsonFormat.printToString(notes, visible));
-		} catch (Exception e) {
-			logger.debug("Exception: {}", e.getMessage());
-			try {
-				response.getWriter().println(Util.printErrorMsg(e));
-			} catch (IOException ioe) {
-				logger.debug("IOException: {}", ioe.getMessage());
-			}
-		}
-	}
+
+  @Autowired
+  private Wallet wallet;
+
+  /*
+  add some column of default value
+   */
+  private String convertOutput(GrpcAPI.DecryptNotesMarked notes, boolean visible) {
+    String resultString = JsonFormat.printToString(notes, visible);
+    if (notes.getNoteTxsCount() == 0) {
+      return resultString;
+    } else {
+      JSONObject markedNotes = JSONObject.parseObject(resultString);
+      JSONArray array = markedNotes.getJSONArray("noteTxs");
+      for (int index = 0; index < array.size(); index++) {
+        JSONObject item = array.getJSONObject(index);
+        item.put("is_spend",notes.getNoteTxs(index).getIsSpend());
+      }
+      return markedNotes.toJSONString();
+    }
+  }
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      Util.checkBodySize(input);
+      boolean visible = Util.getVisiblePost(input);
+      IvkDecryptAndMarkParameters.Builder ivkDecryptParameters =
+          IvkDecryptAndMarkParameters.newBuilder();
+      JsonFormat.merge(input, ivkDecryptParameters);
+
+      GrpcAPI.DecryptNotesMarked notes = wallet
+          .scanAndMarkNoteByIvk(ivkDecryptParameters.getStartBlockIndex(),
+              ivkDecryptParameters.getEndBlockIndex(),
+              ivkDecryptParameters.getIvk().toByteArray(),
+              ivkDecryptParameters.getAk().toByteArray(),
+              ivkDecryptParameters.getNk().toByteArray());
+
+      response.getWriter()
+          .println(convertOutput(notes, visible));
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
+  }
+
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      long startNum = Long.parseLong(request.getParameter("start_block_index"));
+      long endNum = Long.parseLong(request.getParameter("end_block_index"));
+      String ivk = request.getParameter("ivk");
+      String ak = request.getParameter("ak");
+      String nk = request.getParameter("nk");
+      boolean visible = Util.getVisible(request);
+
+      GrpcAPI.DecryptNotesMarked notes = wallet
+          .scanAndMarkNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk),
+              ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
+
+      response.getWriter()
+          .println(convertOutput(notes, visible));
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
+  }
 }
