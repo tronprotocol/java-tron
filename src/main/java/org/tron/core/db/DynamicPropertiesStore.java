@@ -145,7 +145,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_UPDATE_ACCOUNT_NAME = "ALLOW_UPDATE_ACCOUNT_NAME".getBytes();
 
   //This value is only allowed to be 0, 1, -1
-  private static final byte[] ALLOW_SAME_TOKEN_NAME = "ALLOW_SAME_TOKEN_NAME".getBytes();
+  //Note: there is a space in this key name. This space must not be deleted.
+  private static final byte[] ALLOW_SAME_TOKEN_NAME = " ALLOW_SAME_TOKEN_NAME".getBytes();
 
   //If the parameter is larger than 0, the contract is allowed to be created.
   private static final byte[] ALLOW_CREATION_OF_CONTRACTS = "ALLOW_CREATION_OF_CONTRACTS"
