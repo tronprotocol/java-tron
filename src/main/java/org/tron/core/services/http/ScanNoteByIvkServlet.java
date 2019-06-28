@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.IvkDecryptParameters;
-import org.tron.api.GrpcAPI.OvkDecryptParameters;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 
@@ -23,34 +22,34 @@ public class ScanNoteByIvkServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  private String convertOutput(GrpcAPI.DecryptNotes notes, boolean visible) {
+  public static String convertOutput(GrpcAPI.DecryptNotes notes, boolean visible) {
     String resultString = JsonFormat.printToString(notes, visible);
     if (notes.getNoteTxsCount() == 0) {
       return resultString;
     } else {
-      JSONObject note2 = JSONObject.parseObject(resultString);
-      JSONArray array = note2.getJSONArray("noteTxs");
+      JSONObject jsonNotes = JSONObject.parseObject(resultString);
+      JSONArray array = jsonNotes.getJSONArray("noteTxs");
       for (int index = 0; index < array.size(); index++) {
         JSONObject item = array.getJSONObject(index);
-        item.put("index",notes.getNoteTxs(index).getIndex());
+        item.put("index", notes.getNoteTxs(index).getIndex());
       }
-      return note2.toJSONString();
+      return jsonNotes.toJSONString();
     }
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
-              .collect(Collectors.joining(System.lineSeparator()));
+          .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
       IvkDecryptParameters.Builder ivkDecryptParameters = IvkDecryptParameters.newBuilder();
       JsonFormat.merge(input, ivkDecryptParameters);
-      
+
       GrpcAPI.DecryptNotes notes = wallet
           .scanNoteByIvk(ivkDecryptParameters.getStartBlockIndex(),
-                  ivkDecryptParameters.getEndBlockIndex(),
-                  ivkDecryptParameters.getIvk().toByteArray());
+              ivkDecryptParameters.getEndBlockIndex(),
+              ivkDecryptParameters.getIvk().toByteArray());
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

@@ -2,10 +2,7 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonArray;
-import com.google.protobuf.ByteString;
 import java.io.IOException;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -17,7 +14,6 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.IvkDecryptAndMarkParameters;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
@@ -38,8 +34,8 @@ public class ScanAndMarkNoteByIvkServlet extends HttpServlet {
       JSONArray array = markedNotes.getJSONArray("noteTxs");
       for (int index = 0; index < array.size(); index++) {
         JSONObject item = array.getJSONObject(index);
-        item.put("is_spend",notes.getNoteTxs(index).getIsSpend());
-        item.put("index",notes.getNoteTxs(index).getIndex());
+        item.put("is_spend", notes.getNoteTxs(index).getIsSpend());
+        item.put("index", notes.getNoteTxs(index).getIndex());
       }
       return markedNotes.toJSONString();
     }
