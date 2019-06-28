@@ -1050,6 +1050,25 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long getAccountForResponse(String httpNode, byte[] queryAddress, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getaccount";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("address", ByteArray.toHexString(queryAddress));
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getAccountFromSolidity(String httpSolidityNode, byte[] queryAddress) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getaccount";
@@ -1416,6 +1435,25 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long getTransactionByIdForResponse(String httpNode, String txid, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactionbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", txid);
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getTransactionByIdFromSolidity(String httpSolidityNode, String txid) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/gettransactionbyid";
@@ -1726,6 +1764,24 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long getBlockByNumForResponse(String httpNode, Integer blockNUm, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getblockbynum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blockNUm);
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getBlockByNumFromSolidity(String httpSolidityNode, Integer blockNum) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getblockbynum";
@@ -1956,6 +2012,47 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static Long createConnectForResponse(String url, JsonObject requestBody, Integer times) {
+    try {
+
+      Long start = 0L;
+      Long end = 0L;
+      Long duration = 0L;
+      while (times-- > 0) {
+        httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+            connectionTimeout);
+        httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+        httppost = new HttpPost(url);
+        httppost.setHeader("Content-type", "application/json; charset=utf-8");
+        httppost.setHeader("Connection", "Close");
+        if (requestBody != null) {
+          StringEntity entity = new StringEntity(requestBody.toString(), Charset.forName("UTF-8"));
+          entity.setContentEncoding("UTF-8");
+          entity.setContentType("application/json");
+          httppost.setEntity(entity);
+        }
+
+        start = System.currentTimeMillis();
+        response = httpClient.execute(httppost);
+        /*        responseContent = HttpMethed.parseResponseContent(response);
+        logger.info(responseContent.toString());*/
+        end = System.currentTimeMillis();
+        duration = duration + end - start;
+        httppost.releaseConnection();
+      }
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
 
   /**
    * constructor.
