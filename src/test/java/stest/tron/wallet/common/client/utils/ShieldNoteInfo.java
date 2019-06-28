@@ -7,6 +7,7 @@ import org.tron.common.utils.ByteArray;
 
 @AllArgsConstructor
 public class ShieldNoteInfo {
+
   @Setter
   @Getter
   public long value = 0;
@@ -27,14 +28,16 @@ public class ShieldNoteInfo {
   public long noteIndex;
   @Setter
   @Getter
-  public  byte[] memo;
+  public byte[] memo;
+  @Setter
+  @Getter
+  public Boolean isSpend;
 
-  public ShieldNoteInfo(){
+  public ShieldNoteInfo() {
   }
 
   /**
    * format shield note to a string.
-   * @return
    */
   public String encode() {
     String encodeString = noteIndex + ";";
@@ -49,6 +52,8 @@ public class ShieldNoteInfo {
     encodeString += String.valueOf(index);
     encodeString += ";";
     encodeString += ByteArray.toHexString(memo);
+    encodeString += ";";
+    encodeString += Boolean.valueOf(isSpend);
     return encodeString;
   }
 
@@ -57,7 +62,7 @@ public class ShieldNoteInfo {
    */
   public boolean decode(final String data) {
     String[] sourceStrArray = data.split(";");
-    if (sourceStrArray.length != 7) {
+    if (sourceStrArray.length != 8) {
       System.out.println("len is not right.");
       return false;
     }
@@ -68,6 +73,7 @@ public class ShieldNoteInfo {
     value = Long.valueOf(sourceStrArray[4]);
     index = Integer.valueOf(sourceStrArray[5]);
     memo = ByteArray.fromHexString(sourceStrArray[6]);
+    isSpend = Boolean.valueOf(sourceStrArray[7]);
     return true;
   }
 

@@ -82,7 +82,7 @@ public class HttpTestZenToken005 {
 
     shieldOutList.clear();
     HttpMethed.waitToProduceOneBlock(httpnode);
-    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get());
+    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
   }
 
   @Test(enabled = true, description = "Shield to shield transaction without ask by http")
@@ -113,17 +113,13 @@ public class HttpTestZenToken005 {
     Long afterAssetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);
 
-    receiveNote = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo.get());
+    receiveNote = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo.get()).get(0);
 
     Assert.assertTrue(receiveNote.getValue() == sendNote.getValue() - zenTokenFee);
     Assert.assertEquals(ByteArray.toHexString(memo2.getBytes()),
         ByteArray.toHexString(receiveNote.getMemo()));
 
-    response = HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-    Assert.assertEquals(responseContent.getString("message"), "input note already spent");
+    Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
   /**

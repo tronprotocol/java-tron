@@ -130,8 +130,8 @@ public class HttpTestZenToken003 {
     Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
 
-    receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get());
-    receiverNote2 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo2.get());
+    receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get()).get(0);
+    receiverNote2 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo2.get()).get(0);
     Assert.assertTrue(receiverNote1.getValue() == sendToShiledAddress1Amount);
     Assert.assertTrue(receiverNote2.getValue() == sendToShiledAddress2Amount);
     Assert.assertEquals(memo1.getBytes(), receiverNote1.getMemo());
@@ -205,7 +205,7 @@ public class HttpTestZenToken003 {
             == sendToPublicAddressAmount);
     Assert.assertTrue(beforeNetUsedReceiverAddress == afterNetUsedReceiverAddress);
 
-    receiverNote3 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo3.get());
+    receiverNote3 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo3.get()).get(0);
 
     Assert.assertTrue(receiverNote3.getValue() == sendToShiledAddressAmount);
     Assert.assertEquals(memo3.getBytes(), receiverNote3.getMemo());
@@ -285,11 +285,11 @@ public class HttpTestZenToken003 {
             == sendToPublicAddressAmount);
     Assert.assertTrue(beforeNetUsedReceiverAddress == afterNetUsedReceiverAddress);
 
-    receiverNote4 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo4.get());
+    receiverNote4 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo4.get()).get(0);
     Assert.assertTrue(receiverNote4.getValue() == sendToShiledAddress1Amount);
     Assert.assertEquals(memo4.getBytes(), receiverNote4.getMemo());
 
-    receiverNote5 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo5.get());
+    receiverNote5 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo5.get()).get(0);
     Assert.assertTrue(receiverNote5.getValue() == sendToShiledAddress2Amount);
     Assert.assertEquals(memo5.getBytes(), receiverNote5.getMemo());
   }

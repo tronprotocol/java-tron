@@ -93,7 +93,7 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get());
+    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo1 = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddressInfo2 = HttpMethed.generateShieldAddress(httpnode);
@@ -121,18 +121,14 @@ public class HttpTestZenToken004 {
 
     HttpMethed.waitToProduceOneBlock(httpnode);
 
-    receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get());
-    receiverNote2 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo2.get());
+    receiverNote1 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo1.get()).get(0);
+    receiverNote2 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo2.get()).get(0);
     Assert.assertTrue(receiverNote1.getValue() == sendToShiledAddress1Amount);
     Assert.assertTrue(receiverNote2.getValue() == sendToShiledAddress2Amount);
     Assert.assertEquals(memo1.getBytes(), receiverNote1.getMemo());
     Assert.assertEquals(memo2.getBytes(), receiverNote2.getMemo());
 
-    response = HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-    Assert.assertEquals(responseContent.getString("message"), "input note already spent");
+    Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
   @Test(enabled = true, description = "Shield to one public and one shield transaction by http")
@@ -152,7 +148,7 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get());
+    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo3 = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddress3 = receiverShieldAddressInfo3.get().getAddress();
@@ -193,23 +189,26 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(afterAssetBalance - beforeAssetBalance == sendToPublicAddressAmount);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
 
-    receiverNote3 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo3.get());
+    receiverNote3 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo3.get()).get(0);
     Assert.assertTrue(receiverNote3.getValue() == sendToShiledAddressAmount);
     Assert.assertEquals(memo3.getBytes(), receiverNote3.getMemo());
 
-    response = HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-    Assert.assertEquals(responseContent.getString("message"), "input note already spent");
+    Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
 
-    response = HttpMethed
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
+    Assert.assertTrue(HttpMethed
         .getSpendResultFromSolidity(httpnode, httpSolidityNode, sendShieldAddressInfo.get(),
-            sendNote);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-    Assert.assertEquals(responseContent.getString("message"), "input note already spent");
+            sendNote));
+    Assert.assertFalse(HttpMethed
+        .getSpendResultFromSolidity(httpnode, httpSolidityNode, receiverShieldAddressInfo3.get(),
+            receiverNote3));
+
+    Assert.assertTrue(HttpMethed
+        .scanAndMarkNoteByIvk(httpnode, sendShieldAddressInfo.get())
+        .get(0).getIsSpend());
+    Assert.assertFalse(HttpMethed
+        .scanAndMarkNoteByIvk(httpnode, receiverShieldAddressInfo3.get())
+        .get(0).getIsSpend());
   }
 
   @Test(enabled = true, description = "Shield to one public and two shield transaction by http")
@@ -229,7 +228,7 @@ public class HttpTestZenToken004 {
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get());
+    sendNote = HttpMethed.scanNoteByIvk(httpnode, sendShieldAddressInfo.get()).get(0);
 
     receiverShieldAddressInfo4 = HttpMethed.generateShieldAddress(httpnode);
     receiverShieldAddress4 = receiverShieldAddressInfo4.get().getAddress();
@@ -272,19 +271,15 @@ public class HttpTestZenToken004 {
     Assert.assertTrue(afterAssetBalance - beforeAssetBalance == sendToPublicAddressAmount);
     Assert.assertTrue(beforeNetUsed == afterNetUsed);
 
-    receiverNote4 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo4.get());
+    receiverNote4 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo4.get()).get(0);
     Assert.assertTrue(receiverNote4.getValue() == sendToShiledAddress1Amount);
     Assert.assertEquals(memo4.getBytes(), receiverNote4.getMemo());
 
-    receiverNote5 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo5.get());
+    receiverNote5 = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo5.get()).get(0);
     Assert.assertTrue(receiverNote5.getValue() == sendToShiledAddress2Amount);
     Assert.assertEquals(memo5.getBytes(), receiverNote5.getMemo());
 
-    response = HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    Assert.assertEquals(responseContent.getString("result"), "true");
-    Assert.assertEquals(responseContent.getString("message"), "input note already spent");
+    Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
   /**

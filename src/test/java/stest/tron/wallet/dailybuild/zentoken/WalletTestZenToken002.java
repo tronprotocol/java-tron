@@ -187,12 +187,12 @@ public class WalletTestZenToken002 {
   @Test(enabled = true, description = "Scan note by ivk and scan not by ivk on solidity")
   public void test4ScanNoteByIvkAndOvkOnSolidityServer() {
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
-    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull,blockingStubSolidity1);
+    PublicMethed.waitSolidityNodeSynFullNodeData(blockingStubFull, blockingStubSolidity1);
     Note scanNoteByIvk = PublicMethed
-        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo,blockingStubSolidity1)
+        .getShieldNotesByIvkOnSolidity(receiverShieldAddressInfo, blockingStubSolidity1)
         .getNoteTxs(0).getNote();
     Note scanNoteByOvk = PublicMethed
-        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo,blockingStubSolidity1)
+        .getShieldNotesByOvkOnSolidity(sendShieldAddressInfo, blockingStubSolidity1)
 
         .getNoteTxs(0).getNote();
     Assert.assertEquals(scanNoteByIvk.getValue(), scanNoteByOvk.getValue());
@@ -206,14 +206,14 @@ public class WalletTestZenToken002 {
    */
   @Test(enabled = true, description = "Query whether note is spend on solidity")
   public void test5QueryNoteIsSpendOnSolidity() {
-    notes = PublicMethed.listShieldNote(sendShieldAddressInfo,blockingStubFull);
+    notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
     //Scan sender note by ovk equals scan receiver note by ivk in Solidity
     Assert.assertTrue(PublicMethed.getSpendResult(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubFull).getResult());
+        notes.getNoteTxs(0), blockingStubFull).getResult());
     Assert.assertTrue(PublicMethed.getSpendResultOnSolidity(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubSolidity).getResult());
+        notes.getNoteTxs(0), blockingStubSolidity).getResult());
     Assert.assertTrue(PublicMethed.getSpendResultOnSolidity(sendShieldAddressInfo.get(),
-        notes.getNoteTxs(0),blockingStubSolidity1).getResult());
+        notes.getNoteTxs(0), blockingStubSolidity1).getResult());
   }
 
   /**
@@ -225,7 +225,7 @@ public class WalletTestZenToken002 {
         PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
             .getNoteTxs(0).getIsSpend());
     Note scanNoteByIvk = PublicMethed
-        .getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
+        .getShieldNotesByIvk(receiverShieldAddressInfo, blockingStubFull)
         .getNoteTxs(0).getNote();
     Assert.assertEquals(scanNoteByIvk,
         PublicMethed.getShieldNotesAndMarkByIvk(receiverShieldAddressInfo, blockingStubFull)
