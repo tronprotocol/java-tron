@@ -39,6 +39,7 @@ public class ScanAndMarkNoteByIvkServlet extends HttpServlet {
       for (int index = 0; index < array.size(); index++) {
         JSONObject item = array.getJSONObject(index);
         item.put("is_spend",notes.getNoteTxs(index).getIsSpend());
+        item.put("index",notes.getNoteTxs(index).getIndex());
       }
       return markedNotes.toJSONString();
     }
@@ -61,8 +62,7 @@ public class ScanAndMarkNoteByIvkServlet extends HttpServlet {
               ivkDecryptParameters.getAk().toByteArray(),
               ivkDecryptParameters.getNk().toByteArray());
 
-      response.getWriter()
-          .println(convertOutput(notes, visible));
+      response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -86,8 +86,7 @@ public class ScanAndMarkNoteByIvkServlet extends HttpServlet {
           .scanAndMarkNoteByIvk(startNum, endNum, ByteArray.fromHexString(ivk),
               ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
 
-      response.getWriter()
-          .println(convertOutput(notes, visible));
+      response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

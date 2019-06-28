@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -22,6 +23,21 @@ public class ScanNoteByOvkServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
+  private String convertOutput(GrpcAPI.DecryptNotes notes, boolean visible) {
+    String resultString = JsonFormat.printToString(notes, visible);
+    if (notes.getNoteTxsCount() == 0) {
+      return resultString;
+    } else {
+      JSONObject note2 = JSONObject.parseObject(resultString);
+      JSONArray array = note2.getJSONArray("noteTxs");
+      for (int index = 0; index < array.size(); index++) {
+        JSONObject item = array.getJSONObject(index);
+        item.put("index",notes.getNoteTxs(index).getIndex());
+      }
+      return note2.toJSONString();
+    }
+  }
+
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String input = request.getReader().lines()
@@ -36,10 +52,7 @@ public class ScanNoteByOvkServlet extends HttpServlet {
           .scanNoteByOvk(ovkDecryptParameters.getStartBlockIndex(),
                   ovkDecryptParameters.getEndBlockIndex(),
                   ovkDecryptParameters.getOvk().toByteArray());
-
-      response.getWriter()
-          .println(JsonFormat.printToString(notes, visible));
-
+      response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
@@ -58,9 +71,7 @@ public class ScanNoteByOvkServlet extends HttpServlet {
       String ovk = request.getParameter("ovk");
       GrpcAPI.DecryptNotes notes = wallet
           .scanNoteByOvk(startBlockIndex, endBlockIndex, ByteArray.fromHexString(ovk));
-      response.getWriter()
-          .println(JsonFormat.printToString(notes, visible));
-      
+      response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
