@@ -23,13 +23,13 @@
     <property name="end" value="99"/>
     <property name="source">
   <list>
-<ref bean="niceTransferTransaction"/>
+<ref bean="PubliceToShield"/>
       </list>
     </property>
   </bean>
 
-<bean id="niceTransferTransaction" class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
-<property name="name" value="niceTransferTransaction"/>
+<bean id="PubliceToShield" class="org.tron.stresstest.dispatch.creator.asset.ShieldTransactionCreator">
+<property name="name" value="PubliceToShield"/>
 <property name="begin" value="0"/>
 <property name="end" value="99"/>
 </bean>

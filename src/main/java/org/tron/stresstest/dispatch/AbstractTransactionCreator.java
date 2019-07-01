@@ -2,14 +2,20 @@ package org.tron.stresstest.dispatch;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import io.netty.util.internal.StringUtil;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.ReceiveNote;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
@@ -18,13 +24,22 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Configuration;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.TransactionUtils;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.core.Wallet;
+import org.tron.core.exception.ZksnarkException;
+import org.tron.core.zen.address.DiversifierT;
+import org.tron.core.zen.address.FullViewingKey;
+import org.tron.core.zen.address.IncomingViewingKey;
+import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
+import org.tron.common.utils.ShieldAddressInfo;
 
 
 @Getter
@@ -92,6 +107,36 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     return transaction;
 
   }
+
+  public Transaction createTransactionForShield(com.google.protobuf.Message message,
+      ContractType contractType) {
+
+    Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            Any.pack(message)).build());
+
+    Transaction transaction = Transaction.newBuilder().setRawData(transactionBuilder.build())
+        .build();
+
+/*
+    Any any = transaction.getRawData().getContract(0).getParameter();
+    try {
+      org.tron.protos.Contract.ShieldedTransferContract shieldedTransferContract =
+          any.unpack(org.tron.protos.Contract.ShieldedTransferContract.class);
+
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+
+*/
+
+
+
+    return transaction;
+
+  }
+
+
 
   public Transaction createTransactionForMuti(com.google.protobuf.Message message,
       ContractType contractType) {
@@ -561,4 +606,92 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     builder.setOriginEnergyLimit(originEnergyLimit);
     return builder.build();
   }
+
+  public Transaction publicToShieldedTransferContract(byte[] publicFromaddress,long fromAmount,
+      List<GrpcAPI.Note> shieldOutputList,WalletGrpc.WalletBlockingStub blockingStubFull) {
+    PrivateParameters.Builder builder = PrivateParameters.newBuilder();
+    builder.setTransparentFromAddress(ByteString.copyFrom(publicFromaddress));
+    builder.setFromAmount(fromAmount);
+    byte[] ovk = ByteArray
+        .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+    builder.setOvk(ByteString.copyFrom(ovk));
+
+    if (shieldOutputList.size() > 0) {
+      for (int i = 0; i < shieldOutputList.size(); ++i) {
+        builder
+            .addShieldedReceives(ReceiveNote.newBuilder().setNote(shieldOutputList.get(i)).build());
+      }
+    }
+    TransactionExtention transactionExtention = blockingStubFull
+        .createShieldedTransaction(builder.build());
+
+    Transaction transaction = transactionExtention.getTransaction();
+    return transaction;
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<Note> addShieldOutputList(List<Note> shieldOutList,String shieldToAddress,
+      String toAmountString,String menoString) {
+    String shieldAddress = shieldToAddress;
+    String amountString = toAmountString;
+    if (menoString.equals("null")) {
+      menoString = "";
+    }
+    long shieldAmount = 0;
+    if (!StringUtil.isNullOrEmpty(amountString)) {
+      shieldAmount = Long.valueOf(amountString);
+    }
+
+    Note.Builder noteBuild = Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddress);
+    noteBuild.setPaymentAddress(shieldAddress);
+    noteBuild.setValue(shieldAmount);
+    try {
+      noteBuild.setRcm(ByteString.copyFrom(generateR()));
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    noteBuild.setMemo(ByteString.copyFrom(menoString.getBytes()));
+    shieldOutList.add(noteBuild.build());
+    //logger.info(shieldOutList.toString());
+    return shieldOutList;
+  }
+
+  public static byte[] generateR() throws ZksnarkException {
+    byte[] r = new byte[32];
+    JLibrustzcash.librustzcashSaplingGenerateR(r);
+    return r;
+  }
+
+  public static Optional<ShieldAddressInfo> generateShieldAddress() {
+    ShieldAddressInfo addressInfo = new ShieldAddressInfo();
+    try {
+      DiversifierT diversifier = DiversifierT.random();
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(diversifier).get();
+
+      addressInfo.setSk(spendingKey.getValue());
+      addressInfo.setD(diversifier);
+      addressInfo.setIvk(incomingViewingKey.getValue());
+      addressInfo.setOvk(fullViewingKey.getOvk());
+      addressInfo.setPkD(paymentAddress.getPkD());
+
+      if (addressInfo.validateCheck()) {
+        return Optional.of(addressInfo);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return Optional.empty();
+  }
+
+
+
+
+
 }

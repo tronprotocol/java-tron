@@ -142,6 +142,7 @@ service Wallet {
   //Use this function instead of CreateAccount.
   rpc CreateAccount2 (AccountCreateContract) returns (TransactionExtention) {
   }
+
   //Please use CreateWitness2 instead of this function.
   rpc CreateWitness (WitnessCreateContract) returns (Transaction) {
     option (google.api.http) = {
@@ -614,7 +615,6 @@ service Wallet {
     };
   }
 
-
   rpc AddSign (TransactionSign) returns (TransactionExtention) {
 
   }
@@ -623,14 +623,69 @@ service Wallet {
 
   }
 
-  rpc GetTransactionApprovedList(Transaction) returns (TransactionApprovedList) {
+  rpc GetTransactionApprovedList (Transaction) returns (TransactionApprovedList) {
 
   }
 
   rpc GetNodeInfo (EmptyMessage) returns (NodeInfo) {
   };
-};
 
+  // for shiededTransaction
+  rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
+  };
+
+  rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
+  }
+
+  rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
+  };
+
+  rpc ScanAndMarkNoteByIvk (IvkDecryptAndMarkParameters) returns (DecryptNotesMarked) {
+  };
+
+  rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
+  };
+
+  rpc GetSpendingKey (EmptyMessage) returns (BytesMessage) {
+  }
+
+  rpc GetExpandedSpendingKey (BytesMessage) returns (ExpandedSpendingKeyMessage) {
+  }
+
+  rpc GetAkFromAsk (BytesMessage) returns (BytesMessage) {
+  }
+
+  rpc GetNkFromNsk (BytesMessage) returns (BytesMessage) {
+  }
+
+  rpc GetIncomingViewingKey (ViewingKeyMessage) returns (IncomingViewingKeyMessage) {
+  }
+
+  rpc GetDiversifier (EmptyMessage) returns (DiversifierMessage) {
+  }
+
+  rpc GetZenPaymentAddress (IncomingViewingKeyDiversifierMessage) returns (PaymentAddressMessage) {
+  }
+
+  rpc GetRcm (EmptyMessage) returns (BytesMessage) {
+  }
+
+  rpc IsSpend (NoteParameters) returns (SpendResult) {
+  }
+
+  rpc CreateShieldedTransactionWithoutSpendAuthSig (PrivateParametersWithoutAsk) returns (TransactionExtention) {
+  };
+
+  rpc GetShieldTransactionHash (Transaction) returns (BytesMessage) {
+  };
+
+  rpc CreateSpendAuthSig (SpendAuthSigParameters) returns (BytesMessage) {
+  };
+
+  rpc CreateShieldNullifier (NfParameters) returns (BytesMessage) {
+  };
+  // end for shiededTransaction
+};
 
 service WalletSolidity {
 
@@ -760,6 +815,21 @@ service WalletSolidity {
         get: "/walletsolidity/generateaddress"
       }
     };
+  }
+
+  rpc GetMerkleTreeVoucherInfo (OutputPointInfo) returns (IncrementalMerkleVoucherInfo) {
+  }
+
+  rpc ScanNoteByIvk (IvkDecryptParameters) returns (DecryptNotes) {
+  }
+
+  rpc ScanAndMarkNoteByIvk (IvkDecryptAndMarkParameters) returns (DecryptNotesMarked) {
+  }
+
+  rpc ScanNoteByOvk (OvkDecryptParameters) returns (DecryptNotes) {
+  }
+
+  rpc IsSpend (NoteParameters) returns (SpendResult) {
   }
 };
 
@@ -1006,6 +1076,11 @@ message TransactionListExtention {
   repeated TransactionExtention transaction = 1;
 }
 
+message BlockIncrementalMerkleTree {
+  int64 number = 1;
+  IncrementalMerkleTree merkleTree = 2;
+}
+
 message TransactionSignWeight {
   message Result {
     enum response_code {
@@ -1042,4 +1117,141 @@ message TransactionApprovedList {
   repeated bytes approved_list = 2;
   Result result = 4;
   TransactionExtention transaction = 5;
+}
+
+message IvkDecryptParameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ivk = 3;
+}
+
+message IvkDecryptAndMarkParameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ivk = 5;
+  bytes ak = 3;
+  bytes nk = 4;
+}
+
+message OvkDecryptParameters {
+  int64 start_block_index = 1;
+  int64 end_block_index = 2;
+  bytes ovk = 3;
+}
+
+message DecryptNotes {
+  message NoteTx {
+    Note note = 1;
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    int32 index = 3; //the index of note in receive
+  }
+  repeated NoteTx noteTxs = 1;
+}
+
+message DecryptNotesMarked {
+  message NoteTx {
+    Note note = 1;
+    bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
+    int32 index = 3; //the index of note in receive
+    bool is_spend = 4;
+  }
+  repeated NoteTx noteTxs = 1;
+}
+
+message Note {
+  int64 value = 1;
+  string payment_address = 2;
+  bytes rcm = 3; // random 32
+  bytes memo = 4;
+}
+
+message SpendNote {
+  Note note = 3;
+  bytes alpha = 4; // random number for spend authority signature
+  IncrementalMerkleVoucher voucher = 5;
+  bytes path = 6; // path for cm from leaf to root in merkle tree
+}
+
+message ReceiveNote {
+  Note note = 1;
+}
+
+message PrivateParameters {
+  bytes transparent_from_address = 1;
+  bytes ask = 2;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  int64 from_amount = 5;
+  repeated SpendNote shielded_spends = 6;
+  repeated ReceiveNote shielded_receives = 7;
+  bytes transparent_to_address = 8;
+  int64 to_amount = 9;
+}
+
+message PrivateParametersWithoutAsk {
+  bytes transparent_from_address = 1;
+  bytes ak = 2;
+  bytes nsk = 3;
+  bytes ovk = 4;
+  int64 from_amount = 5;
+  repeated SpendNote shielded_spends = 6;
+  repeated ReceiveNote shielded_receives = 7;
+  bytes transparent_to_address = 8;
+  int64 to_amount = 9;
+}
+
+message SpendAuthSigParameters {
+  bytes ask = 1;
+  bytes tx_hash = 2;
+  bytes alpha = 3;
+}
+
+message NfParameters {
+  Note note = 1;
+  IncrementalMerkleVoucher voucher = 2;
+  bytes ak = 3;
+  bytes nk = 4;
+}
+
+message ExpandedSpendingKeyMessage {
+  bytes ask = 1;
+  bytes nsk = 2;
+  bytes ovk = 3;
+}
+
+message ViewingKeyMessage {
+  bytes ak = 1;
+  bytes nk = 2;
+}
+
+message IncomingViewingKeyMessage {
+  bytes ivk = 1;
+}
+
+message DiversifierMessage {
+  bytes d = 1;
+}
+
+message IncomingViewingKeyDiversifierMessage {
+  IncomingViewingKeyMessage ivk = 1;
+  DiversifierMessage d = 2;
+}
+
+message PaymentAddressMessage {
+  DiversifierMessage d = 1;
+  bytes pkD = 2;
+  string payment_address = 3;
+}
+
+message NoteParameters {
+  bytes ak = 1;
+  bytes nk = 2;
+  Note note = 3;
+  bytes txid = 4;
+  int32 index = 5;
+}
+
+message SpendResult {
+  bool result = 1;
+  string message = 2;
 }

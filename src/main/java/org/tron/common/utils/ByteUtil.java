@@ -22,7 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
@@ -32,26 +34,23 @@ public class ByteUtil {
 
 
   /**
-   * return a cloned byte array.
-   * return null if parameter data is null
-   * @param data
-   * @return
+   * return a cloned byte array. return null if parameter data is null
    */
-  public static byte[] cloneBytes(byte[] data){
-    if (data == null){
+  public static byte[] cloneBytes(byte[] data) {
+    if (data == null) {
       return null;
     }
 
     int length = data.length;
     byte[] rc = new byte[length];
-    if (length > 0){
+    if (length > 0) {
       System.arraycopy(data, 0, rc, 0, length);
     }
     return rc;
   }
 
   /**
-   * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
+   * The regular {@link BigInteger#toByteArray()} method isn't quite what we often need:
    * it appends a leading zero to indicate that the number is positive and may need padding.
    *
    * @param b the integer to format into a byte array
@@ -370,6 +369,10 @@ public class ByteUtil {
     return compare(bytes1, bytes2) == 0;
   }
 
+  public static boolean isNullOrZeroArray(byte[] array){
+    return (array == null) || (array.length == 0);
+  }
+
   // lexicographical order
   public static int compare(byte[] bytes1, byte[] bytes2) {
     Preconditions.checkNotNull(bytes1);
@@ -384,6 +387,31 @@ public class ByteUtil {
     }
 
     return 0;
+  }
+
+  public static byte[] hexToBytes(String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+          + Character.digit(s.charAt(i + 1), 16));
+    }
+    return data;
+  }
+
+
+  public static List<Boolean> convertBytesVectorToVector(final byte[] bytes) {
+    List<Boolean> ret = new ArrayList<>();
+
+    byte c;
+    for (int i = 0; i < bytes.length; i++) {
+      c = bytes[i];
+      for (int j = 0; j < 8; j++) {
+        ret.add(((c >> (7 - j)) & 1) == 1);
+      }
+    }
+
+    return ret;
   }
 
 }

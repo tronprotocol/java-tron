@@ -43,7 +43,8 @@ public class CreateStressTransactionXml {
       "triggerTimeoutContractCreatorMulti",
       "SendCoin(Delay)",
       "transferTRC20",
-      "ExtCodeHash"
+      "ExtCodeHash",
+      "ShieldSendToken(P2S)"
   };
 
   @BeforeClass

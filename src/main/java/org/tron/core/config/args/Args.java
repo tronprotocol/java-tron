@@ -86,6 +86,11 @@ public class Args {
   @Parameter(names = {"--log-config"})
   private String logbackPath = "";
 
+  // full node used this parameter to close shielded transaction
+  @Getter
+  @Setter
+  private boolean fullNodeAllowShieldedTransaction;
+
 
   @Getter
   @Parameter(names = {"-h", "--help"}, help = true, description = "HELP message")
@@ -499,6 +504,7 @@ public class Args {
     INSTANCE.nodeMaxActiveNodesWithSameIp = 2;
     INSTANCE.minParticipationRate = 0;
     INSTANCE.nodeListenPort = 0;
+    INSTANCE.fullNodeAllowShieldedTransaction = true;
     INSTANCE.nodeDiscoveryBindIp = "";
     INSTANCE.nodeExternalIp = "";
     INSTANCE.nodeDiscoveryPublicHomeNode = false;
@@ -882,6 +888,10 @@ public class Args {
     INSTANCE.trxReferenceBlock = config.hasPath("trx.reference.block") ?
         config.getString("trx.reference.block") : "head";
 
+    INSTANCE.fullNodeAllowShieldedTransaction =
+        config.hasPath("node.fullNodeAllowShieldedTransaction") ?
+            config.getBoolean("node.fullNodeAllowShieldedTransaction") : true;
+
     INSTANCE.trxExpirationTimeInMilliseconds =
         config.hasPath("trx.expiration.timeInMilliseconds")
             && config.getLong("trx.expiration.timeInMilliseconds") > 0 ?
@@ -907,6 +917,10 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    if (INSTANCE.isWitness()) {
+      INSTANCE.fullNodeAllowShieldedTransaction = true;
+    }
 
     initBackupProperty(config);
     if (Args.getInstance().getStorage().getDbEngine().toUpperCase().equals("ROCKSDB")) {
@@ -964,6 +978,7 @@ public class Args {
     }
     return getOutputDirectory();
   }
+
 
   /**
    * get output directory.
