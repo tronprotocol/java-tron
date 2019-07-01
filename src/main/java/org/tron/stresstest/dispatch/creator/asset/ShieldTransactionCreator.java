@@ -65,9 +65,9 @@ public class ShieldTransactionCreator extends AbstractTransactionCreator impleme
         "" + zenTokenFee, memo1);
 
 
-    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
+/*    channelFull = ManagedChannelBuilder.forTarget(fullnode).usePlaintext(true)
         .build();
-    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+    blockingStubFull = WalletGrpc.newBlockingStub(channelFull);*/
 
 
 
