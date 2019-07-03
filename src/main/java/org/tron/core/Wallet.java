@@ -1687,6 +1687,12 @@ public class Wallet {
     return dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
   }
 
+  public void checkCmValid(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
+      throws ContractValidateException {
+    checkCmNumber(shieldedSpends, shieldedReceives);
+    checkCmValue(shieldedSpends, shieldedReceives);
+  }
+
   public void checkCmNumber(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
       throws ContractValidateException {
     if (!shieldedSpends.isEmpty() && shieldedSpends.size() > 1) {
@@ -1695,6 +1701,21 @@ public class Wallet {
 
     if (!shieldedReceives.isEmpty() && shieldedReceives.size() > 2) {
       throw new ContractValidateException("The number of receive note must <=2");
+    }
+  }
+
+  public void checkCmValue(List<SpendNote> shieldedSpends, List<ReceiveNote> shieldedReceives)
+      throws ContractValidateException {
+    for (SpendNote spendNote : shieldedSpends) {
+      if (spendNote.getNote().getValue() < 0) {
+        throw new ContractValidateException("The value in SpendNote must >= 0");
+      }
+    }
+
+    for (ReceiveNote receiveNote : shieldedReceives) {
+      if (receiveNote.getNote().getValue() < 0) {
+        throw new ContractValidateException("The value in ReceiveNote must >= 0");
+      }
     }
   }
 
@@ -1749,7 +1770,7 @@ public class Wallet {
       throw new ContractValidateException("Output amount must > 0");
     }
 
-    checkCmNumber(shieldedSpends, shieldedReceives);
+    checkCmValid(shieldedSpends, shieldedReceives);
 
     // add
     if (!ArrayUtils.isEmpty(transparentFromAddress)) {
@@ -1855,7 +1876,7 @@ public class Wallet {
       throw new ContractValidateException("Output amount must > 0");
     }
 
-    checkCmNumber(shieldedSpends, shieldedReceives);
+    checkCmValid(shieldedSpends, shieldedReceives);
 
     // add
     if (!ArrayUtils.isEmpty(transparentFromAddress)) {
