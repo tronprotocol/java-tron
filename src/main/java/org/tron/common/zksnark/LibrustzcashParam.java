@@ -49,6 +49,18 @@ public class LibrustzcashParam {
     }
   }
 
+  public static void validValueParams(long value) throws ZksnarkException {
+    if(value < 0){
+      throw new ZksnarkException("Value shoud be non-negative.");
+    }
+  }
+
+  public static void validPositionParams(long value) throws ZksnarkException {
+    if(value < 0){
+      throw new ZksnarkException("Position shoud be non-negative.");
+    }
+  }
+
   interface ValidParam {
 
     void valid() throws ZksnarkException;
@@ -214,7 +226,7 @@ public class LibrustzcashParam {
 
   /**
    * Compute note commitment d: diversifier, 11 bytes pkD: 32 bytes r: rcm,  32 bytes cm: note
-   * commitment, 32 bytes
+   * commitment, 32 bytes, value >= 0
    */
   public static class ComputeCmParams implements ValidParam {
 
@@ -246,6 +258,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      validValueParams(value);
       valid11Params(d);
       valid32Params(pkD);
       valid32Params(r);
@@ -256,7 +269,7 @@ public class LibrustzcashParam {
   /**
    * compute nullifier d: diversifier, 11 bytes pkD, 32 bytes r: rcm,  32 bytes ak:
    * spendAuthSig.PulicKey, 32 bytes nk: to genarate nullifier, 32 bytes result: nullifier, 32
-   * bytes
+   * bytes, value >= 0, position >= 0
    */
   public static class ComputeNfParams implements ValidParam {
 
@@ -300,6 +313,8 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      validValueParams(value);
+      validPositionParams(position);
       valid11Params(d);
       valid32Params(pkD);
       valid32Params(r);
@@ -344,7 +359,7 @@ public class LibrustzcashParam {
    * calculate spend proof ak: 32 bytes nsk: the proof authorizing key, 32 bytes d: 11 bytes r: rcm,
    * 32 bytes alpha: random number, 32 bytes anchor: 32 bytes voucherPath: (1 + 33 * 32 + 8) bytes,
    * voucherPath[0]=0x20, voucherPath[1+i*33]=0x20,i=0,1,...31. cv: value commitment, 32 bytes rk:
-   * spendAuthSig.randomizePublicKey 32 bytes zkproof: spend proof, 192 bytes
+   * spendAuthSig.randomizePublicKey 32 bytes zkproof: spend proof, 192 bytes value >= 0
    */
   public static class SpendProofParams implements ValidParam {
 
@@ -405,6 +420,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      validValueParams(value);
       valid32Params(ak);
       valid32Params(nsk);
       valid11Params(d);
@@ -468,7 +484,7 @@ public class LibrustzcashParam {
 
   /**
    * esk: 32 bytes d: 11 bytes pkD: 32 bytes r: rcm, 32 bytes cv: value commitment, 32 bytes
-   * zkproof: receive proof, 192 bytes
+   * zkproof: receive proof, 192 bytes, value >= 0
    */
   public static class OutputProofParams implements ValidParam {
 
@@ -512,6 +528,7 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      validValueParams(value);
       valid32Params(esk);
       valid11Params(d);
       valid32Params(pkD);
@@ -786,7 +803,7 @@ public class LibrustzcashParam {
   }
 
   /**
-   * ivk: incoming viewing key, 32 bytes d: 11 bytes pkD: 32 bytes
+   * ivk: incoming viewing key, 32 bytes, should be 251bits , not checked; d: 11 bytes pkD: 32 bytes
    */
   public static class IvkToPkdParams implements ValidParam {
 
@@ -812,11 +829,14 @@ public class LibrustzcashParam {
       valid32Params(ivk);
       valid11Params(d);
       valid32Params(pkD);
+      if(!((ivk[31] >> 3) == 0)){
+        throw new ZksnarkException("Most significant five bits of ivk shoud be 0.");
+      }
     }
   }
 
   /**
-   * a: 32 bytes b: 32 bytes result: 32 bytes
+   * 0 <= depth < 63 a: 32 bytes b: 32 bytes result: 32 bytes
    */
   public static class MerkleHashParams implements ValidParam {
 
@@ -843,6 +863,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      if (!((depth < 63) && (depth >=0))) {
+        throw new ZksnarkException("Merkle tree depth must be smaller than 63");
+      }
       valid32Params(a);
       valid32Params(b);
       valid32Params(result);

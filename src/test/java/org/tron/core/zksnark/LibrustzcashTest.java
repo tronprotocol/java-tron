@@ -131,7 +131,8 @@ public class LibrustzcashTest {
     boolean check_d = librustzcashCheckDiversifier(d);
     Assert.assertTrue(check_d);
 
-    ivk[31] = (byte) 0x10;
+    //Most significant five bits of ivk must be 0.
+    ivk[31] = (byte) 0x07;
     boolean check_pkd = librustzcashIvkToPkd(new IvkToPkdParams(ivk, d, pkD));
     System.out.println("pkD is\n");
     for (int j = 0; j < 32; j++) {
