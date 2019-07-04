@@ -198,6 +198,14 @@ public class WalletTestZenToken009 {
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, receiverAddress,
         "" + (note.getValue() - zenTokenFee), memo);
 
+    Assert.assertFalse(PublicMethedForMutiSign.sendShieldCoin(
+        null, 321321,
+        shieldAddressInfo.get(), notes.getNoteTxs(0),
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull, ownerKeyString));
+
+
     Assert.assertFalse(PublicMethed.sendShieldCoin(
         null, 321321,
         shieldAddressInfo.get(), notes.getNoteTxs(0),

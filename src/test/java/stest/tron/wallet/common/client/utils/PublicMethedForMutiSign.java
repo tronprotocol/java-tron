@@ -4731,7 +4731,8 @@ public class PublicMethedForMutiSign {
     try {
       Contract.ShieldedTransferContract shieldedTransferContract =
           any.unpack(Contract.ShieldedTransferContract.class);
-      if (shieldedTransferContract.getFromAmount() > 0) {
+      if (shieldedTransferContract.getFromAmount() > 0
+          || fromAmount == 321321) {
         transaction = signTransactionForShield(transaction,blockingStubFull,permissionKeyString);
         System.out.println(
             "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
@@ -4787,6 +4788,7 @@ public class PublicMethedForMutiSign {
         continue;
       }
     }
+    logger.info("Sign transaction:" + transaction.toString());
     return transaction;
   }
 
