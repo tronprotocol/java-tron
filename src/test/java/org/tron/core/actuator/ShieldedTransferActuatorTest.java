@@ -1173,6 +1173,47 @@ public class ShieldedTransferActuatorTest {
   }
 
   /**
+   * fromAmount = (Long.MAX_VALUE + shieldAmount2 + fee) & Long.MAX_VALUE
+   */
+  @Test
+  public void publicAddressToShieldNoteValueFailure() {
+    long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //From amount
+      long fromAmount = Long.MAX_VALUE + AMOUNT + fee;
+      fromAmount &= Long.MAX_VALUE;
+      builder.setTransparentInput(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE), fromAmount);
+      //TO amount
+      SpendingKey spendingKey = SpendingKey.random();
+      FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, AMOUNT, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, Long.MAX_VALUE, new byte[512]);
+      TransactionCapsule transactionCap = builder.build();
+
+      Any contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0)
+              .getParameter();
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator(contract, dbManager,
+          transactionCap);
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertTrue(false);
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+      Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  /**
    * from address same to to address
    */
   @Test
