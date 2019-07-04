@@ -306,7 +306,6 @@ public class TransferFailed001 {
   @Test(enabled = true, description = "Transfer trx to myself")
   public void test4TransferTrxSelf() {
 
-
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -440,7 +439,6 @@ public class TransferFailed001 {
 
   @Test(enabled = true, description = "Transfer trx to myself and insufficient balance")
   public void test6TransferTrxSelf() {
-
 
     Account info;
 
@@ -744,7 +742,7 @@ public class TransferFailed001 {
     Assert.assertTrue(PublicMethed.transferAsset(addressxx,
         assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
         blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long returnAddressBytesAccountCountBefore = PublicMethed
         .getAssetIssueValue(addressxx, assetAccountId, blockingStubFull);
     logger.info("returnAddressBytesAccountCountBefore : " + returnAddressBytesAccountCountBefore);

@@ -164,6 +164,7 @@ public class TransferFailed002 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 3000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
