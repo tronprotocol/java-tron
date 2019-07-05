@@ -1090,7 +1090,6 @@ public class ShieldedTransferActuatorTest {
   /**
    * output shield note value is negative,meet the equilibrium condition
    */
-  @Test
   public void publicAddressToShieldNoteValueWithNagativeFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -1129,7 +1128,6 @@ public class ShieldedTransferActuatorTest {
   /**
    * input shield note value is negative,meet the equilibrium condition
    */
-  @Test
   public void shieldNoteValueWithNagativeToPublicFailure() {
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);

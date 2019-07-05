@@ -345,7 +345,7 @@ public class ShieldedReceiveTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
 
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -821,7 +821,7 @@ public class ShieldedReceiveTest {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
@@ -834,7 +834,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(paymentAddress1, 100 * 1000000 - wallet.getShieldedTransactionFee());
+    Note note2 = new Note(paymentAddress1, 100 * 1000000L - wallet.getShieldedTransactionFee());
     builder.addOutput(expsk.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
 
@@ -1037,7 +1037,7 @@ public class ShieldedReceiveTest {
     PaymentAddress address = sk.defaultAddress();
 
     //generate a note belongs to this sk
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
@@ -1057,7 +1057,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     try {
@@ -1088,7 +1088,7 @@ public class ShieldedReceiveTest {
     PaymentAddress address = sk.defaultAddress();
 
     //generate a note belongs to this sk
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
@@ -1107,7 +1107,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
@@ -1130,7 +1130,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
@@ -1147,7 +1147,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        200 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        200 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
@@ -1179,7 +1179,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     //put the voucher and anchor into db
@@ -1192,7 +1192,7 @@ public class ShieldedReceiveTest {
     FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
-    Note note2 = new Note(address, (100 * 1000000 - wallet.getShieldedTransactionFee()) / 2);
+    Note note2 = new Note(address, (100 * 1000000L - wallet.getShieldedTransactionFee()) / 2);
     //add two same output note
     builder.addOutput(expsk.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
         new byte[512]);
@@ -1229,14 +1229,14 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     //set value that's bigger than own
-    note.value += 10 * 1000000; //test case of insufficient money
+    note.value += 10 * 1000000L; //test case of insufficient money
 
     builder.addSpend(expsk, note, anchor, voucher);
 
@@ -1246,7 +1246,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
@@ -1433,7 +1433,7 @@ public class ShieldedReceiveTest {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -1446,7 +1446,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1774,7 +1774,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -1791,7 +1791,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(expsk.getOvk(), paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -1951,7 +1951,7 @@ public class ShieldedReceiveTest {
       long ctx)
       throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     note.rcm = ByteArray.fromHexString(
         "eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701");
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
@@ -1974,7 +1974,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     builder.addOutput(ovk, paymentAddress1,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
 
     // Create Sapling SpendDescriptions
     for (SpendDescriptionInfo spend : builder.getSpends()) {
@@ -2032,7 +2032,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2046,7 +2046,7 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(1024);
     builder.addOutput(expsk.getOvk(), paymentAddress,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -2082,7 +2082,7 @@ public class ShieldedReceiveTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
+        Assert.assertEquals(100 * 1000000L - wallet.getShieldedTransactionFee(),
             noteText.value);
 
         byte[] resultMemo = new byte[512];
@@ -2115,7 +2115,7 @@ public class ShieldedReceiveTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 100 * 1000000);
+    Note note = new Note(address, 100 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2129,7 +2129,7 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(128);
     builder.addOutput(expsk.getOvk(), paymentAddress,
-        100 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        100 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -2165,7 +2165,7 @@ public class ShieldedReceiveTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(100 * 1000000 - wallet.getShieldedTransactionFee(),
+        Assert.assertEquals(100 * 1000000L - wallet.getShieldedTransactionFee(),
             noteText.value);
 
         byte[] resultMemo = new byte[512];
@@ -2213,7 +2213,7 @@ public class ShieldedReceiveTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 1000 * 1000000);
+    Note note = new Note(address, 1000 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2231,12 +2231,12 @@ public class ShieldedReceiveTest {
     DiversifierT d1 = DiversifierT.random();
     PaymentAddress paymentAddress1 = incomingViewingKey.address(d1).get();
     builder.addOutput(senderOvk, paymentAddress1,
-        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2, memo);
+        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
 
     DiversifierT d2 = DiversifierT.random();
     PaymentAddress paymentAddress2 = incomingViewingKey.address(d2).get();
     builder.addOutput(senderOvk, paymentAddress2,
-        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2, memo);
+        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -2298,7 +2298,7 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
     byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder2.addOutput(expsk2.getOvk(), paymentAddress3,
-        (1000 * 1000000 - wallet.getShieldedTransactionFee()) / 2 - wallet
+        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2 - wallet
             .getShieldedTransactionFee(), memo3);
 
     TransactionCapsule transactionCap2 = builder2.build();

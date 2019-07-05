@@ -498,7 +498,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 1000 * 1000000);
+    Note note = new Note(address, 1000 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -512,7 +512,7 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder.addOutput(senderOvk, paymentAddress,
-        1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
 
@@ -547,7 +547,7 @@ public class SendCoinShieldTest {
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(1000 * 1000000 - wallet.getShieldedTransactionFee(), noteText.value);
+        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), noteText.value);
         Assert.assertArrayEquals(memo, noteText.memo);
       } else {
         Assert.assertFalse(true);
@@ -584,7 +584,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     byte[] senderOvk = expsk.getOvk();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 1000 * 1000000);
+    Note note = new Note(address, 1000 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -598,7 +598,7 @@ public class SendCoinShieldTest {
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
     builder.addOutput(senderOvk, paymentAddress,
-        1000 * 1000000 - wallet.getShieldedTransactionFee(), memo);
+        1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
@@ -641,7 +641,7 @@ public class SendCoinShieldTest {
         if (foo.isPresent()) {
           Note bar = foo.get();
           //verify result
-          Assert.assertEquals(1000 * 1000000 - wallet.getShieldedTransactionFee(), bar.value);
+          Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), bar.value);
           Assert.assertArrayEquals(memo, bar.memo);
         } else {
           Assert.assertFalse(true);
@@ -670,7 +670,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 4010 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -682,7 +682,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().CheckZksnarkProof(transactionCap.getInstance(),
@@ -745,7 +745,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 4010 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSpend(expsk, note, anchor, voucher);
@@ -756,7 +756,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     builder.generateOutputProof(builder.getReceives().get(0), ctx);
 
     // test create binding sig
@@ -787,7 +787,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 4010 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -799,7 +799,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(DiversifierT.random()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-        4010 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        4010 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     boolean ok = dbManager.pushTransaction(transactionCap);
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -816,7 +816,7 @@ public class SendCoinShieldTest {
         .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 4010 * 1000000L);
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     builder.addSpend(expsk, note, anchor, voucher);
@@ -828,7 +828,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder
-        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000, new byte[512]);
+        .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
         .generateOutputProof(builder.getReceives().get(0), ctx);
 
@@ -1011,14 +1011,14 @@ public class SendCoinShieldTest {
   public void testTwoCMWithDiffSkInOneTx() throws Exception {
     // generate spend proof
     librustzcashInitZksnarkParams();
-    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(110 * 1000000);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(110 * 1000000L);
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     //prepare two cm with different sk
     SpendingKey sk1 = SpendingKey.random();
     ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
     PaymentAddress address1 = sk1.defaultAddress();
-    Note note1 = new Note(address1, 1000 * 1000000);
+    Note note1 = new Note(address1, 1000 * 1000000L);
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
     PedersenHashCapsule compressCapsule1 = new PedersenHashCapsule();
@@ -1053,7 +1053,7 @@ public class SendCoinShieldTest {
     IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
     PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
     builder.addOutput(fullViewingKey.getOvk(), paymentAddress,
-        1000 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+        1000 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     //execute
     List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
@@ -1089,14 +1089,14 @@ public class SendCoinShieldTest {
           .build());
 
       dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
-      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000);
+      builder.setTransparentInput(ByteArray.fromHexString(OWNER_ADDRESS), 100_000_000L);
 
       // generate output proof
       SpendingKey spendingKey = SpendingKey.random();
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       TransactionCapsule transactionCap = builder.build();
 
@@ -1135,7 +1135,7 @@ public class SendCoinShieldTest {
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
@@ -1146,7 +1146,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap = builder.build();
 
@@ -1169,7 +1169,7 @@ public class SendCoinShieldTest {
       SpendingKey sk1 = SpendingKey.random();
       ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
       PaymentAddress address1 = sk1.defaultAddress();
-      Note note1 = new Note(address1, 110 * 1000000);
+      Note note1 = new Note(address1, 110 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1196,7 +1196,7 @@ public class SendCoinShieldTest {
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap = builder.build();
 
@@ -1219,7 +1219,7 @@ public class SendCoinShieldTest {
       SpendingKey sk1 = SpendingKey.random();
       ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
       PaymentAddress address1 = sk1.defaultAddress();
-      Note note1 = new Note(address1, 110 * 1000000);
+      Note note1 = new Note(address1, 110 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1241,7 +1241,7 @@ public class SendCoinShieldTest {
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       TransactionCapsule transactionCap = builder.build();
 
@@ -1264,7 +1264,7 @@ public class SendCoinShieldTest {
       SpendingKey sk1 = SpendingKey.random();
       ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
       PaymentAddress address1 = sk1.defaultAddress();
-      Note note1 = new Note(address1, 110 * 1000000);
+      Note note1 = new Note(address1, 110 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1286,7 +1286,7 @@ public class SendCoinShieldTest {
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
@@ -1297,7 +1297,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap = builder.build();
 
@@ -1341,7 +1341,7 @@ public class SendCoinShieldTest {
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       TransactionCapsule transactionCap1 = builder.build();
       transactionCap1.setBlockNum(1);
@@ -1373,7 +1373,7 @@ public class SendCoinShieldTest {
       FullViewingKey fullViewingKey = spendingKey.fullViewingKey();
       IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
       PaymentAddress paymentAddress = incomingViewingKey.address(new DiversifierT()).get();
-      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000, new byte[512]);
+      builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 200 * 1000000L, new byte[512]);
 
       String TO_ADDRESS =
           Wallet.getAddressPreFixString() + "b48794500882809695a8a687866e76d4271a1abc";
@@ -1384,7 +1384,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap1 = builder.build();
       transactionCap1.setBlockNum(2);
@@ -1402,7 +1402,7 @@ public class SendCoinShieldTest {
       SpendingKey sk1 = SpendingKey.random();
       ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
       PaymentAddress address1 = sk1.defaultAddress();
-      Note note1 = new Note(address1, 20 * 1000000);
+      Note note1 = new Note(address1, 20 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1428,7 +1428,7 @@ public class SendCoinShieldTest {
               AccountType.Normal,
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap1 = builder.build();
       transactionCap1.setBlockNum(3);
@@ -1458,12 +1458,12 @@ public class SendCoinShieldTest {
       SpendingKey sk1 = SpendingKey.random();
       ExpandedSpendingKey expsk1 = sk1.expandedSpendingKey();
       PaymentAddress address1 = sk1.defaultAddress();
-      Note note1 = new Note(address1, 110 * 1000000);
+      Note note1 = new Note(address1, 110 * 1000000L);
 
       SpendingKey sk2 = SpendingKey.random();
       ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
       PaymentAddress address2 = sk2.defaultAddress();
-      Note note2 = new Note(address2, 20 * 1000000);
+      Note note2 = new Note(address2, 20 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1512,7 +1512,7 @@ public class SendCoinShieldTest {
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap1 = builder.build();
       try {
@@ -1540,7 +1540,7 @@ public class SendCoinShieldTest {
       SpendingKey sk2 = SpendingKey.random();
       ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
       PaymentAddress address2 = sk2.defaultAddress();
-      Note note2 = new Note(address2, 20 * 1000000);
+      Note note2 = new Note(address2, 20 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1577,7 +1577,7 @@ public class SendCoinShieldTest {
               0L);
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
       addZeroValueOutputNote(builder);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap1 = builder.build();
       try {
@@ -1602,7 +1602,7 @@ public class SendCoinShieldTest {
       SpendingKey sk2 = SpendingKey.random();
       ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
       PaymentAddress address2 = sk2.defaultAddress();
-      Note note2 = new Note(address2, 20 * 1000000);
+      Note note2 = new Note(address2, 20 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1642,7 +1642,7 @@ public class SendCoinShieldTest {
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
 
-    Note note = new Note(address, 4010 * 1000000);
+    Note note = new Note(address, 4010 * 1000000L);
 //    note.r =  ByteArray
 //        .fromHexString("0xe7db4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cb6");
 
@@ -1664,7 +1664,7 @@ public class SendCoinShieldTest {
       SpendingKey sk2 = SpendingKey.random();
       ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
       PaymentAddress address2 = sk2.defaultAddress();
-      Note note2 = new Note(address2, 20 * 1000000);
+      Note note2 = new Note(address2, 20 * 1000000L);
 
       IncrementalMerkleTreeContainer tree =
           new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1712,7 +1712,7 @@ public class SendCoinShieldTest {
       dbManager.getAccountStore().put(toCapsule.getAddress().toByteArray(), toCapsule);
 
       addZeroValueOutputNote(builder);
-      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000);
+      builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
       TransactionCapsule transactionCap1 = builder.build();
       try {
@@ -1731,7 +1731,7 @@ public class SendCoinShieldTest {
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 1000 * 1000000);
+    Note note = new Note(address, 1000 * 1000000L);
 
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -1772,7 +1772,7 @@ public class SendCoinShieldTest {
     addZeroValueOutputNote(builder);
     String TO_ADDRESS = generateDefaultToAccount();
     builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS),
-        1000 * 1000000 - wallet.getShieldedTransactionFee());
+        1000 * 1000000L - wallet.getShieldedTransactionFee());
 
     TransactionCapsule transactionCap = builder.build();
     return transactionCap;
