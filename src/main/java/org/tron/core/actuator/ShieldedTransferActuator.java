@@ -421,6 +421,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
         throw new ContractValidateException(
             "Validate ShieldedTransferContract error, balance is not sufficient");
       }
+      if (fromAmount <= calcFee()) {
+        throw new ContractValidateException(
+            "Validate ShieldedTransferContract error, fromAmount should be great than fee");
+      }
     }
 
     if (hasTransparentTo) {
