@@ -634,6 +634,7 @@ public class Program {
     }
 
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
+    System.out.println("calltoaddress:" + Hex.toHexString(data));
 
     // FETCH THE SAVED STORAGE
     byte[] codeAddress = convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1414,6 +1415,8 @@ public class Program {
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
+
+    System.out.println("pre:"+ Hex.toHexString(data));
 
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
