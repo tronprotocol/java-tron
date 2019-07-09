@@ -90,8 +90,8 @@ public class deployMainGateway {
     String parame = "\"" + Base58.encode58Check(testDepositAddress) + "\"";
 
     String deployTxid = PublicMethed
-        .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
-            parame, "",
+        .deployContractWithConstantParame(contractName, abi, code, "#",
+            "#", "",
             maxFeeLimit,
             0L, 100, null, testKeyFordeposit, depositAddress
             , blockingStubFull);
@@ -109,6 +109,15 @@ public class deployMainGateway {
     SmartContract smartContract = PublicMethed.getContract(mainChainGateway,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
+
+    String triggerTxid = PublicMethed
+        .triggerContract(mainChainGateway, "addOracle(address)", parame, false, 0, maxFeeLimit,
+            depositAddress, testKeyFordeposit, blockingStubFull);
+    Optional<TransactionInfo> infoById1 = PublicMethed
+        .getTransactionInfoById(triggerTxid, blockingStubFull);
+
+    Assert.assertEquals(0, infoById1.get().getResultValue());
+    Assert.assertEquals("SUCESS", infoById1.get().getResult().toString());
 
     String outputPath = "./src/test/resources/mainChainGatewayAddress";
     try {
