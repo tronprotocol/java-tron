@@ -40,7 +40,6 @@ public class deployMainGateway {
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
 
 
-
   private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
 
   private String fullnode = Configuration.getByPath("testng.conf")
@@ -102,6 +101,8 @@ public class deployMainGateway {
         .getTransactionInfoById(deployTxid, blockingStubFull);
     byte[] mainChainGateway = infoById.get().getContractAddress().toByteArray();
     String mainChainGatewayAddress = WalletClient.encode58Check(mainChainGateway);
+    String Address_41 = ByteArray.toHexString(mainChainGateway);
+
     Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertNotNull(mainChainGateway);
 
@@ -109,17 +110,18 @@ public class deployMainGateway {
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
 
-    String outputPath = "./src/test/resources/mainChainGatewayAddress" ;
+    String outputPath = "./src/test/resources/mainChainGatewayAddress";
     try {
       File mainChainFile = new File(outputPath);
       Boolean cun = mainChainFile.createNewFile();
       FileWriter writer = new FileWriter(mainChainFile);
       BufferedWriter out = new BufferedWriter(writer);
       out.write(mainChainGatewayAddress);
+      out.write(Address_41);
 
       out.close();
       writer.close();
-    }catch (Exception e){
+    } catch (Exception e) {
       e.printStackTrace();
     }
 
