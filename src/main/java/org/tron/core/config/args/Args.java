@@ -763,12 +763,6 @@ public class Args {
         config.hasPath("node.connection.timeout") ? config.getInt("node.connection.timeout") * 1000
             : 0;
 
-    INSTANCE.activeNodes = getNodes(config, "node.active");
-
-    INSTANCE.passiveNodes = getNodes(config, "node.passive");
-
-    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
-
     INSTANCE.nodeChannelReadTimeout =
         config.hasPath("node.channel.read.timeout") ? config.getInt("node.channel.read.timeout")
             : 0;
@@ -984,6 +978,11 @@ public class Args {
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
 
+    INSTANCE.activeNodes = getNodes(config, "node.active");
+
+    INSTANCE.passiveNodes = getNodes(config, "node.passive");
+
+    INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
     INSTANCE.shieldedTransInPendingMaxCounts =
         config.hasPath("node.shieldedTransInPendingMaxCounts") ? config
             .getInt("node.shieldedTransInPendingMaxCounts") : 10;
@@ -1067,7 +1066,12 @@ public class Args {
     List<String> list = config.getStringList(path);
     for (String configString : list) {
       Node n = Node.instanceOf(configString);
-      ret.add(n);
+      if (!(INSTANCE.nodeDiscoveryBindIp.equals(n.getHost()) ||
+          INSTANCE.nodeExternalIp.equals(n.getHost()) ||
+          "127.0.0.1".equals(n.getHost())) ||
+          INSTANCE.nodeListenPort != n.getPort()) {
+        ret.add(n);
+      }
     }
     return ret;
   }
@@ -1362,6 +1366,7 @@ public class Args {
     logger.info("Discover enable: {}", args.isNodeDiscoveryEnable());
     logger.info("Active node size: {}", args.getActiveNodes().size());
     logger.info("Passive node size: {}", args.getPassiveNodes().size());
+    logger.info("FastForward node size: {}", args.getFastForwardNodes().size());
     logger.info("Seed node size: {}", args.getSeedNode().getIpList().size());
     logger.info("Max connection: {}", args.getNodeMaxActiveNodes());
     logger.info("Max connection with same IP: {}", args.getNodeMaxActiveNodesWithSameIp());
