@@ -3,7 +3,9 @@ package org.tron.core.net.messagehandler;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BlockCapsule;
@@ -45,19 +47,30 @@ public class BlockMsgHandler implements TronMsgHandler {
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
 
     BlockMessage blockMessage = (BlockMessage) msg;
-
-    check(peer, blockMessage);
-
     BlockId blockId = blockMessage.getBlockId();
-    Item item = new Item(blockId, InventoryType.BLOCK);
+
+    if (!fastForward && !peer.isFastForwardPeer()) {
+      check(peer, blockMessage);
+    }
+
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
       peer.getSyncBlockRequested().remove(blockId);
       syncService.processBlock(peer, blockMessage);
     } else {
-      logger.info("Receive block {} from {}, cost {}ms", blockId.getString(), peer.getInetAddress(),
-          System.currentTimeMillis() - peer.getAdvInvRequest().get(item));
-      peer.getAdvInvRequest().remove(item);
+      Long time = peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
+      long now = System.currentTimeMillis();
+      long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
       processBlock(peer, blockMessage.getBlockCapsule());
+      logger.info(
+          "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
+          blockId.getNum(),
+          interval,
+          peer.getInetAddress(),
+          time == null ? 0 : now - time,
+          now - blockMessage.getBlockCapsule().getTimeStamp(),
+          ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),
+          System.currentTimeMillis() - now,
+          Hex.toHexString(blockMessage.getBlockCapsule().getWitnessAddress().toByteArray()));
     }
   }
 
@@ -81,14 +94,27 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
-          peer.getInetAddress(), tronNetDelegate
-              .getHeadBlockId().getString());
+          peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
       syncService.startSync(peer);
       return;
     }
 
-    if (fastForward && tronNetDelegate.validBlock(block)) {
-      advService.broadcast(new BlockMessage(block));
+    Item item = new Item(blockId, InventoryType.BLOCK);
+    if (fastForward || peer.isFastForwardPeer()) {
+      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
+      advService.addInvToCache(item);
+    }
+
+    if (fastForward) {
+      if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
+        logger.warn("Receive a low block {}, head {}",
+            blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
+        return;
+      }
+      if (tronNetDelegate.validBlock(block)) {
+        advService.fastForward(new BlockMessage(block));
+        tronNetDelegate.trustNode(peer);
+      }
     }
 
     tronNetDelegate.processBlock(block);

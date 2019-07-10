@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
@@ -55,7 +57,11 @@ public class TronNetService {
   @Autowired
   private TransactionsMsgHandler transactionsMsgHandler;
 
+  @Autowired
+  private Manager manager;
+
   public void start() {
+    manager.setTronNetService(this);
     channelManager.init();
     advService.init();
     syncService.init();
@@ -75,6 +81,10 @@ public class TronNetService {
 
   public void broadcast(Message msg) {
     advService.broadcast(msg);
+  }
+
+  public void fastForward(BlockMessage msg) {
+    advService.fastForward(msg);
   }
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {
@@ -107,7 +117,7 @@ public class TronNetService {
   }
 
   private void processException(PeerConnection peer, TronMessage msg, Exception ex) {
-    ReasonCode code = null;
+    ReasonCode code;
 
     if (ex instanceof P2pException) {
       TypeEnum type = ((P2pException) ex).getType();

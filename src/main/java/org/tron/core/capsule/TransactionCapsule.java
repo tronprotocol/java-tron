@@ -925,7 +925,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return;
     }
     this.setResultCode(contractResult.UNKNOWN);
-    return;
   }
 
   public void setResultCode(contractResult code) {

@@ -95,7 +95,7 @@ public class NodeHandler {
     this.node = node;
     this.nodeManager = nodeManager;
     this.inetSocketAddress = new InetSocketAddress(node.getHost(), node.getPort());
-    this.nodeStatistics = new NodeStatistics(node);
+    this.nodeStatistics = new NodeStatistics();
     changeState(State.Discovered);
   }
 
@@ -201,8 +201,7 @@ public class NodeHandler {
   public void handlePong(PongMessage msg) {
     if (waitForPong) {
       waitForPong = false;
-      getNodeStatistics().discoverMessageLatency
-          .add((double) System.currentTimeMillis() - pingSent);
+      getNodeStatistics().discoverMessageLatency.add(System.currentTimeMillis() - pingSent);
       getNodeStatistics().lastPongReplyTime.set(System.currentTimeMillis());
       node.setId(msg.getFrom().getId());
       if (msg.getVersion() != Args.getInstance().getNodeP2pVersion()) {

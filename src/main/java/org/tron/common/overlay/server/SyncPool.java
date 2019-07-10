@@ -133,32 +133,13 @@ public class SyncPool {
   }
 
   synchronized void logActivePeers() {
-
-    logger.info("-------- active connect channel {}", activePeersCount.get());
-    logger.info("-------- passive connect channel {}", passivePeersCount.get());
-    logger.info("-------- all connect channel {}", channelManager.getActivePeers().size());
-    for (Channel channel : channelManager.getActivePeers()) {
-      logger.info(channel.toString());
+    String str = String.format("\n\n============ Peer stats: all %d, active %d, passive %d\n\n",
+        channelManager.getActivePeers().size(), activePeersCount.get(), passivePeersCount.get());
+    StringBuilder sb = new StringBuilder(str);
+    for (PeerConnection peer : new ArrayList<>(activePeers)) {
+      sb.append(peer.log()).append('\n');
     }
-
-    if (logger.isInfoEnabled()) {
-      StringBuilder sb = new StringBuilder("Peer stats:\n");
-      sb.append("Active peers\n");
-      sb.append("============\n");
-      Set<Node> activeSet = new HashSet<>();
-      for (PeerConnection peer : new ArrayList<>(activePeers)) {
-        sb.append(peer.log()).append('\n');
-        activeSet.add(peer.getNode());
-      }
-      sb.append("Other connected peers\n");
-      sb.append("============\n");
-      for (Channel peer : new ArrayList<>(channelManager.getActivePeers())) {
-        if (!activeSet.contains(peer.getNode())) {
-          sb.append(peer.getNode()).append('\n');
-        }
-      }
-      logger.info(sb.toString());
-    }
+    logger.info(sb.toString());
   }
 
   public List<PeerConnection> getActivePeers() {
@@ -180,7 +161,8 @@ public class SyncPool {
         activePeersCount.incrementAndGet();
       }
       activePeers.add(peerConnection);
-      activePeers.sort(Comparator.comparingDouble(c -> c.getPeerStats().getAvgLatency()));
+      activePeers.
+          sort(Comparator.comparingDouble(c -> c.getNodeStatistics().pingMessageLatency.getAvrg()));
       peerConnection.onConnect();
     }
   }
@@ -237,10 +219,6 @@ public class SyncPool {
 
       if (nodesInUse != null && nodesInUse.contains(handler.getNode().getHexId())) {
         return false;
-      }
-
-      if (handler.getNodeStatistics().getReputation() >= NodeStatistics.REPUTATION_PREDEFINED) {
-        return true;
       }
 
       InetAddress inetAddress = handler.getInetSocketAddress().getAddress();

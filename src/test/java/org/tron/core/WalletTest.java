@@ -47,6 +47,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
@@ -64,6 +65,7 @@ import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j
 public class WalletTest {
@@ -134,22 +136,27 @@ public class WalletTest {
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_TWO),
         TRANSACTION_TIMESTAMP_ONE, BLOCK_NUM_ONE);
     addTransactionToStore(transaction1);
+
     transaction2 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_TWO, ACCOUNT_ADDRESS_THREE),
         TRANSACTION_TIMESTAMP_TWO, BLOCK_NUM_TWO);
     addTransactionToStore(transaction2);
+
     transaction3 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_THREE, ACCOUNT_ADDRESS_FOUR),
         TRANSACTION_TIMESTAMP_THREE, BLOCK_NUM_THREE);
     addTransactionToStore(transaction3);
+
     transaction4 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_FOUR, ACCOUNT_ADDRESS_FIVE),
         TRANSACTION_TIMESTAMP_FOUR, BLOCK_NUM_FOUR);
     addTransactionToStore(transaction4);
+
     transaction5 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_FIVE, ACCOUNT_ADDRESS_ONE),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
     addTransactionToStore(transaction5);
+
     transaction6 = getBuildTransaction(
         getBuildTransferContract(ACCOUNT_ADDRESS_ONE, ACCOUNT_ADDRESS_SIX),
         TRANSACTION_TIMESTAMP_FIVE, BLOCK_NUM_FIVE);
@@ -161,6 +168,14 @@ public class WalletTest {
     manager.getTransactionStore()
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
+
+  private static void   addTransactionInfoToStore(Transaction transaction) {
+    TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
+    byte[] trxId = transaction.getRawData().toByteArray();
+    transactionInfo.setId(trxId);
+    manager.getTransactionHistoryStore().put(trxId, transactionInfo);
+  }
+
 
   private static Transaction getBuildTransaction(
       TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
@@ -187,18 +202,27 @@ public class WalletTest {
     block1 = getBuildBlock(BLOCK_TIMESTAMP_ONE, BLOCK_NUM_ONE, BLOCK_WITNESS_ONE,
         ACCOUNT_ADDRESS_ONE, transaction1, transaction2);
     addBlockToStore(block1);
+    addTransactionInfoToStore(transaction1);
+
     block2 = getBuildBlock(BLOCK_TIMESTAMP_TWO, BLOCK_NUM_TWO, BLOCK_WITNESS_TWO,
         ACCOUNT_ADDRESS_TWO, transaction2, transaction3);
     addBlockToStore(block2);
+    addTransactionInfoToStore(transaction2);
+
     block3 = getBuildBlock(BLOCK_TIMESTAMP_THREE, BLOCK_NUM_THREE, BLOCK_WITNESS_THREE,
         ACCOUNT_ADDRESS_THREE, transaction2, transaction4);
     addBlockToStore(block3);
+    addTransactionInfoToStore(transaction3);
+
     block4 = getBuildBlock(BLOCK_TIMESTAMP_FOUR, BLOCK_NUM_FOUR, BLOCK_WITNESS_FOUR,
         ACCOUNT_ADDRESS_FOUR, transaction4, transaction5);
     addBlockToStore(block4);
+    addTransactionInfoToStore(transaction4);
+
     block5 = getBuildBlock(BLOCK_TIMESTAMP_FIVE, BLOCK_NUM_FIVE, BLOCK_WITNESS_FIVE,
         ACCOUNT_ADDRESS_FIVE, transaction5, transaction3);
     addBlockToStore(block5);
+    addTransactionInfoToStore(transaction5);
   }
 
   private static void addBlockToStore(Block block) {
@@ -334,6 +358,44 @@ public class WalletTest {
     Assert.assertTrue("getBlocksByLimit6", blocksByLimit.getBlockList().contains(block3));
     Assert.assertTrue("getBlocksByLimit7", blocksByLimit.getBlockList().contains(block4));
     Assert.assertFalse("getBlocksByLimit8", blocksByLimit.getBlockList().contains(block5));
+  }
+
+  @Test
+  public void getTransactionInfoById() {
+    TransactionInfo transactionById1 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction1.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById1.getId().toByteArray()),
+        ByteString.copyFrom(transaction1.getRawData().toByteArray()));
+
+    TransactionInfo transactionById2 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction2.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById2.getId().toByteArray()),
+        ByteString.copyFrom(transaction2.getRawData().toByteArray()));
+
+    TransactionInfo transactionById3 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction3.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById3.getId().toByteArray()),
+        ByteString.copyFrom(transaction3.getRawData().toByteArray()));
+
+    TransactionInfo transactionById4 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction4.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById4.getId().toByteArray()),
+        ByteString.copyFrom(transaction4.getRawData().toByteArray()));
+
+    TransactionInfo transactionById5 = wallet.getTransactionInfoById(
+        ByteString
+            .copyFrom(transaction5.getRawData().toByteArray()));
+    Assert.assertEquals("gettransactioninfobyid",
+        ByteString.copyFrom(transactionById5.getId().toByteArray()),
+        ByteString.copyFrom(transaction5.getRawData().toByteArray()));
   }
 
   @Ignore
