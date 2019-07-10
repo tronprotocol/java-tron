@@ -102,7 +102,7 @@ public class AdvService {
 
   synchronized public boolean addInv(Item item) {
 
-    if (fastForward) {
+    if (fastForward && item.getType().equals(InventoryType.TRX)) {
       return false;
     }
 
@@ -252,7 +252,6 @@ public class AdvService {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .filter(peer -> !peer.isFastForwardPeer())
         .collect(Collectors.toList());
 
     if (invToSpread.isEmpty() || peers.isEmpty()) {
@@ -310,6 +309,9 @@ public class AdvService {
 
     public void sendInv() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
+        if (peer.isFastForwardPeer() && key.equals(InventoryType.TRX)) {
+          return;
+        }
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));
         }
