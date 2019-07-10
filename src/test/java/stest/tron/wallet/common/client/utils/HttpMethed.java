@@ -995,6 +995,24 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse broadcasthex(String httpNode, String transactionHex) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/broadcasthex";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("transaction", transactionHex);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getAccountById(String httpNode, String accountId, Boolean visable) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getaccountbyid";
