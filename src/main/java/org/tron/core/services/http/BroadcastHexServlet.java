@@ -22,23 +22,31 @@ public class BroadcastHexServlet extends HttpServlet {
   @Autowired
   private Wallet wallet;
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws IOException {
-    String input = request.getReader().lines()
-        .collect(Collectors.joining(System.lineSeparator()));
-    String trx = JSONObject.parseObject(input).getString("transaction");
-    Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trx));
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    String transactionID = ByteArray
-        .toHexString(transactionCapsule.getTransactionId().getBytes());
-    GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
-    JSONObject json = new JSONObject();
-    json.put("result", result.getResult());
-    json.put("code", result.getCode().toString());
-    json.put("message", result.getMessage().toStringUtf8());
-    json.put("transaction", JsonFormat.printToString(transaction, true));
-    json.put("txid", transactionID);
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      String input = request.getReader().lines()
+          .collect(Collectors.joining(System.lineSeparator()));
+      String trx = JSONObject.parseObject(input).getString("transaction");
+      Transaction transaction = Transaction.parseFrom(ByteArray.fromHexString(trx));
+      TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+      String transactionID = ByteArray
+          .toHexString(transactionCapsule.getTransactionId().getBytes());
+      GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
+      JSONObject json = new JSONObject();
+      json.put("result", result.getResult());
+      json.put("code", result.getCode().toString());
+      json.put("message", result.getMessage().toStringUtf8());
+      json.put("transaction", JsonFormat.printToString(transaction, true));
+      json.put("txid", transactionID);
 
-    response.getWriter().println(json.toJSONString());
+      response.getWriter().println(json.toJSONString());
+    } catch (Exception e) {
+      logger.debug("Exception: {}", e.getMessage());
+      try {
+        response.getWriter().println(Util.printErrorMsg(e));
+      } catch (IOException ioe) {
+        logger.debug("IOException: {}", ioe.getMessage());
+      }
+    }
   }
 }
