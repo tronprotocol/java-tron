@@ -29,6 +29,8 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
@@ -88,6 +90,7 @@ import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.Contract.ReceiveDescription;
 import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol;
@@ -119,14 +122,14 @@ public class ShieldedReceiveTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
 
-  public enum TestColumn { CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM }
+  public enum TestColumn {CV, ZKPOOF, D_CM, PKD_CM, VALUE_CM, R_CM}
 
   public enum TestSignMissingColumn {
     FROM_ADDRESS, FROM_AMOUNT, SPEND_DESCRITPION,
     RECEIVE_DESCRIPTION, TO_ADDRESS, TO_AMOUNT
   }
 
-  public enum TestReceiveMissingColumn { CV, CM, EPK, C_ENC, C_OUT, ZKPROOF }
+  public enum TestReceiveMissingColumn {CV, CM, EPK, C_ENC, C_OUT, ZKPROOF}
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath}, "config-localtest.conf");
@@ -203,7 +206,7 @@ public class ShieldedReceiveTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
   }
 
-  private void librustzcashInitZksnarkParams() {
+  private static void librustzcashInitZksnarkParams() {
     FullNodeHttpApiService.librustzcashInitZksnarkParams();
   }
 
@@ -223,7 +226,7 @@ public class ShieldedReceiveTest {
     return org.tron.keystore.Wallet.generateRandomBytes(580);
   }
 
-  private IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
+  public IncrementalMerkleVoucherContainer createSimpleMerkleVoucherContainer(byte[] cm)
       throws ZksnarkException {
     IncrementalMerkleTreeContainer tree =
         new IncrementalMerkleTreeContainer(new IncrementalMerkleTreeCapsule());
@@ -337,10 +340,203 @@ public class ShieldedReceiveTest {
     }
   }
 
+  /*
+   * generate spendproof, dataToBeSigned, outputproof example dynamicly according to the params file
+   */
+  public String[] generateSpendAndOutputParams() throws ZksnarkException, BadItemException {
+    librustzcashInitZksnarkParams();
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
+    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+
+    //generate input
+    SpendingKey sk = SpendingKey.random();
+    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+    PaymentAddress address = sk.defaultAddress();
+
+    Note note = new Note(address, 100 * 1000000L);
+    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    dbManager.getMerkleContainer()
+        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+    builder.addSpend(expsk, note, anchor, voucher);
+
+    // generate output
+    SpendingKey sk1 = SpendingKey.random();
+    FullViewingKey fullViewingKey1 = sk1.fullViewingKey();
+    IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
+    PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
+    builder.addOutput(expsk.getOvk(), paymentAddress1,
+        100 * 1000000 - wallet.getShieldedTransactionFee(), new byte[512]);
+
+    // Create Sapling SpendDescriptions
+    for (SpendDescriptionInfo spend2 : builder.getSpends()) {
+      SpendDescriptionCapsule spendDescriptionCapsule = builder.generateSpendProof(spend2, ctx);
+      builder.getContractBuilder().addSpendDescription(spendDescriptionCapsule.getInstance());
+    }
+
+    // Create Sapling OutputDescriptions
+    for (ReceiveDescriptionInfo receive : builder.getReceives()) {
+      ReceiveDescriptionCapsule receiveDescriptionCapsule = builder
+          .generateOutputProof(receive, ctx);
+      builder.getContractBuilder().addReceiveDescription(receiveDescriptionCapsule.getInstance());
+    }
+
+    // begin to generate dataToBeSigned
+    TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
+        builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
+    byte[] dataToBeSigned = TransactionCapsule
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+    TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, dataToBeSigned,
+        transactionCapsule);
+
+    // generate checkSpendParams
+    SpendDescription spendDescription = builder.getContractBuilder().getSpendDescription(0);
+    CheckSpendParams checkSpendParams = new CheckSpendParams(ctx,
+        spendDescription.getValueCommitment().toByteArray(),
+        spendDescription.getAnchor().toByteArray(),
+        spendDescription.getNullifier().toByteArray(),
+        spendDescription.getRk().toByteArray(),
+        spendDescription.getZkproof().toByteArray(),
+        spendDescription.getSpendAuthoritySignature().toByteArray(),
+        dataToBeSigned);
+
+    boolean ok1 = JLibrustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
+    Assert.assertTrue(ok1);
+
+    byte[] checkSpendParamsData = new byte[385];
+    System.arraycopy(checkSpendParams.getCv(), 0, checkSpendParamsData, 0, 32);
+    System.arraycopy(checkSpendParams.getAnchor(), 0, checkSpendParamsData, 32, 32);
+    System.arraycopy(checkSpendParams.getNullifier(), 0, checkSpendParamsData, 64, 32);
+    System.arraycopy(checkSpendParams.getRk(), 0, checkSpendParamsData, 96, 32);
+    System.arraycopy(checkSpendParams.getZkproof(), 0, checkSpendParamsData, 128, 192);
+    System.arraycopy(checkSpendParams.getSpendAuthSig(), 0, checkSpendParamsData, 320, 64);
+
+    // generate CheckOutputParams
+    ReceiveDescription receiveDescription = builder.getContractBuilder().getReceiveDescription(0);
+    CheckOutputParams checkOutputParams = new CheckOutputParams(ctx,
+        receiveDescription.getValueCommitment().toByteArray(),
+        receiveDescription.getNoteCommitment().toByteArray(),
+        receiveDescription.getEpk().toByteArray(),
+        receiveDescription.getZkproof().toByteArray()
+    );
+
+    boolean ok2 = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
+    Assert.assertTrue(ok2);
+
+    return new String[]{ByteArray.toHexString(checkSpendParamsData),
+        ByteArray.toHexString(dataToBeSigned),
+        ByteArray.toHexString(checkOutputParams.encode())};
+  }
+
+  private long benchmarkVerifySpend(String spend, String dataToBeSigned) throws ZksnarkException {
+    long startTime = System.currentTimeMillis();
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+
+    CheckSpendParams checkSpendParams = CheckSpendParams.decode(ctx,
+        ByteArray.fromHexString(spend),
+        ByteArray.fromHexString(dataToBeSigned));
+
+    boolean ok = JLibrustzcash.librustzcashSaplingCheckSpend(checkSpendParams);
+
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
+
+    long endTime = System.currentTimeMillis();
+    long time = endTime - startTime;
+
+    System.out.println("--- time is: " + time + ", result is " + ok);
+    return time;
+  }
+
+  private long benchmarkVerifyOutput(String outputParams) throws ZksnarkException {
+    // expect true
+    long startTime = System.currentTimeMillis();
+    long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
+
+    CheckOutputParams checkOutputParams = CheckOutputParams.decode(ctx,
+        ByteArray.fromHexString(outputParams));
+
+    boolean ok = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
+
+    JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
+    Assert.assertTrue(ok);
+
+    long endTime = System.currentTimeMillis();
+    long time = endTime - startTime;
+
+    System.out.println("--- time is: " + time + ", result is " + ok);
+    return time;
+  }
+
+  @Test
+  public void calBenchmarkVerifySpend() throws ZksnarkException, BadItemException {
+    librustzcashInitZksnarkParams();
+    System.out.println("--- load ok ---");
+
+    int count = 10;
+    long minTime = 500;
+    long maxTime = 0;
+    double totalTime = 0.0;
+
+    String result[] = generateSpendAndOutputParams();
+    String spend = result[0];
+    String dataToBeSigned = result[1];
+
+    for (int i = 0; i < count; i++) {
+      long time = benchmarkVerifySpend(spend, dataToBeSigned);
+      if (time < minTime) {
+        minTime = time;
+      }
+      if (time > maxTime) {
+        maxTime = time;
+      }
+      totalTime += time;
+    }
+
+    System.out.println("---- result ----");
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + totalTime / count);
+
+  }
+
+  @Test
+  public void calBenchmarkVerifyOutput() throws ZksnarkException, BadItemException {
+    librustzcashInitZksnarkParams();
+    System.out.println("--- load ok ---");
+
+    int count = 2;
+    long minTime = 500;
+    long maxTime = 0;
+    double totalTime = 0.0;
+
+    String result[] = generateSpendAndOutputParams();
+    String outputParams = result[2];
+
+    for (int i = 0; i < count; i++) {
+      long time = benchmarkVerifyOutput(outputParams);
+      if (time < minTime) {
+        minTime = time;
+      }
+      if (time > maxTime) {
+        maxTime = time;
+      }
+      totalTime += time;
+    }
+
+    System.out.println("---- result ----");
+    System.out.println("---- maxTime is: " + maxTime);
+    System.out.println("---- minTime is: " + minTime);
+    System.out.println("---- avgTime is: " + totalTime / count);
+
+  }
+
   private ZenTransactionBuilder generateBuilderWithoutColumnInDescription(
       ZenTransactionBuilder builder, long ctx, TestReceiveMissingColumn column)
       throws ZksnarkException, BadItemException {
-    //transparent input
+    //generate input
     SpendingKey sk = SpendingKey.random();
     ExpandedSpendingKey expsk = sk.expandedSpendingKey();
     PaymentAddress address = sk.defaultAddress();
@@ -1464,8 +1660,9 @@ public class ShieldedReceiveTest {
     return builder;
   }
 
-  private TransactionCapsule generateTransactionCapsule(ZenTransactionBuilder builder, long ctx,
-      byte[] hashOfTransaction, TransactionCapsule transactionCapsule) throws ZksnarkException {
+  public TransactionCapsule generateTransactionCapsule(ZenTransactionBuilder builder,
+      long ctx, byte[] hashOfTransaction, TransactionCapsule transactionCapsule)
+      throws ZksnarkException {
     // Create Sapling spendAuth
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
