@@ -922,6 +922,11 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowMultiValidateSign")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiValidateSign())
+            .build());
+
     return builder.build();
   }
 
