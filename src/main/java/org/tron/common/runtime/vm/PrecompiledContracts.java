@@ -1378,9 +1378,7 @@ public class PrecompiledContracts {
     public static final ExecutorService workers;
 
     static {
-      int core = Runtime.getRuntime().availableProcessors();
-      System.out.println("core:" + core);
-      workers = Executors.newFixedThreadPool(1);
+      workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
     }
 
     @Data
@@ -1404,7 +1402,9 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      return 0;
+      int cnt = (data.length / 32 - 5) / 6;
+      // one sign 1500, half of ecrecover
+      return (long) (cnt * 3000 * 0.5);
     }
 
     @Override
@@ -1462,15 +1462,7 @@ public class PrecompiledContracts {
       return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(), out.getLast20Bytes());
     }
 
-    private int[] getOffsets(DataWord[] words) {
-      int[] offsets = new int[3];
-      for (int i = 0; i < 3; i++) {
-        offsets[i] = words[i].intValueSafe() / 32;
-      }
-      return offsets;
-    }
-
-    private byte[][] extractBytes32Array(DataWord[] words, int offset) {
+    private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
       int len = words[offset].intValueSafe();
       byte[][] bytes32Array = new byte[len][];
       for (int i = 0; i < len; i++) {
@@ -1479,7 +1471,7 @@ public class PrecompiledContracts {
       return bytes32Array;
     }
 
-    private byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+    private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
       int len = words[offset].intValueSafe();
       byte[][] bytesArray = new byte[len][];
       for (int i = 0; i < len; i++) {
@@ -1490,7 +1482,7 @@ public class PrecompiledContracts {
       return bytesArray;
     }
 
-    private byte[] extractBytes(byte[] data, int offset, int len) {
+    private static byte[] extractBytes(byte[] data, int offset, int len) {
       return Arrays.copyOfRange(data, offset, offset + len);
     }
   }
