@@ -164,6 +164,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
+  private static final byte[] ALLOW_MULTI_VALIDATESIGN = "ALLOW_MULTI_VALIDATESIGN".getBytes();
+
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
       .getBytes();
@@ -500,6 +502,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
     }
+
+    try {
+      this.getAllowMultiValidateSign();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowMultiValidateSign(Args.getInstance().getAllowMultiValidateSign());
+    }
+
     try {
       this.getAvailableContractType();
     } catch (IllegalArgumentException e) {
@@ -1289,6 +1298,22 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found ALLOW_TVM_CONSTANTINOPLE"));
   }
+
+
+  public void saveAllowMultiValidateSign(long value) {
+    this.put(ALLOW_MULTI_VALIDATESIGN,
+            new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowMultiValidateSign() {
+    return Optional.ofNullable(getUnchecked(ALLOW_MULTI_VALIDATESIGN))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ALLOW_MULTI_VALIDATESIGN"));
+  }
+
+
 
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,

@@ -48,6 +48,7 @@ import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
+import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
@@ -209,6 +210,11 @@ public class PrecompiledContracts {
     if (address.equals(altBN128PairingAddr)) {
       return altBN128Pairing;
     }
+    //TODO:Add Proposal Control Here
+//    if (address.equals(multiValidateSignAddr) && VMConfig.allowMultiValidateSign()) {
+//      return multiValidateSign;
+//    }
+
     return null;
   }
 

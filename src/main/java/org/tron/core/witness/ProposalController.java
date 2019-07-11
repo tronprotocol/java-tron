@@ -218,6 +218,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
           break;
         }
+        case (27): {
+          manager.getDynamicPropertiesStore().saveAllowMultiValidateSign(entry.getValue());
+          break;
+        }
         default:
           break;
       }
