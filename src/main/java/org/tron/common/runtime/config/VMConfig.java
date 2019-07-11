@@ -51,6 +51,10 @@ public class VMConfig {
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
 
+  @Setter
+  private static boolean ALLOW_MULTI_VALIDATE_SIGN = false;
+
+
   private VMConfig() {
   }
 
@@ -88,6 +92,8 @@ public class VMConfig {
     ALLOW_TVM_CONSTANTINOPLE = allow == 1;
   }
 
+  public static void initAllowMultiValidateSign(long allow) { ALLOW_MULTI_VALIDATE_SIGN = allow ==1; }
+
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;
   }
@@ -103,5 +109,7 @@ public class VMConfig {
   public static boolean allowMultiSign() {
     return ALLOW_MULTI_SIGN;
   }
+
+  public static boolean allowMultiValidateSign() { return ALLOW_MULTI_VALIDATE_SIGN; }
 
 }
