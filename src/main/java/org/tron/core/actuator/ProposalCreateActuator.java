@@ -323,6 +323,21 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (29): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+          throw new ContractValidateException("Bad chain parameter id");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+                  "This value[ALLOW_MULTI_VALIDATESIGN] is only allowed to be 1");
+        }
+        if (dbManager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
+          throw new ContractValidateException(
+                  "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                          + "before [ALLOW_MULTI_VALIDATESIGN] can be proposed");
+        }
+        break;
+      }
       default:
         break;
     }
