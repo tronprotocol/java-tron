@@ -32,9 +32,10 @@ public class AbiUtil {
   public static String[] getTypes(String methodSign) {
     int start = methodSign.indexOf('(') + 1;
     int end = methodSign.indexOf(')');
-
+    if (start == end) {
+      return new String[0];
+    }
     String typeString = methodSign.subSequence(start, end).toString();
-
     return typeString.split(",");
   }
 
