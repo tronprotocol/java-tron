@@ -27,6 +27,8 @@ public class HttpTestZenToken001 {
 
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -240,11 +242,10 @@ public class HttpTestZenToken001 {
     shieldOutList = HttpMethed
         .addShieldOutputList(httpnode, shieldOutList, shieldAddressOptionalInfo2.get().getAddress(),
             "" + sendSheldAddressAmount2, memo2);
-
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, zenTokenOwnerAddress, sendAmount, null, null,
-            shieldOutList,
-            null, 0, zenTokenOwnerKey);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress, sendAmount,
+            null, null, shieldOutList, null, 0, zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
 
@@ -265,12 +266,11 @@ public class HttpTestZenToken001 {
     shieldOutList = HttpMethed
         .addShieldOutputList(httpnode, shieldOutList, shieldAddressOptionalInfo3.get().getAddress(),
             "" + sendSheldAddressAmount3, memo3);
-
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, zenTokenOwnerAddress,
-            sendSheldAddressAmount3 + zenTokenFee, null, null,
-            shieldOutList,
-            null, 0, zenTokenOwnerKey);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, zenTokenOwnerAddress,
+            sendSheldAddressAmount3 + zenTokenFee, null, null, shieldOutList, null, 0,
+            zenTokenOwnerKey);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
@@ -316,10 +316,10 @@ public class HttpTestZenToken001 {
     shieldOutList = HttpMethed
         .addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress1,
             "" + (shieldNote1.getValue() - zenTokenFee), receiverMemo1);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, null, 0, shieldAddressOptionalInfo1.get(), shieldNote1,
-            shieldOutList,
-            null, 0, null);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0,
+            shieldAddressOptionalInfo1.get(), shieldNote1, shieldOutList, null, 0, null);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     /*shieldOutList.clear();
@@ -338,10 +338,10 @@ public class HttpTestZenToken001 {
     shieldOutList = HttpMethed
         .addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress3,
             "" + (shieldNote3.getValue() - zenTokenFee), receiverMemo3);
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, null, 0, shieldAddressOptionalInfo3.get(), shieldNote3,
-            shieldOutList,
-            null, 0, null);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0,
+            shieldAddressOptionalInfo3.get(), shieldNote3, shieldOutList, null, 0, null);
     responseContent = HttpMethed.parseResponseContent(response);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);

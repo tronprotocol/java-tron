@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -30,6 +29,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
+import org.apache.http.client.HttpClient;
 
 @Slf4j
 public class HttpMethed {
@@ -388,6 +388,21 @@ public class HttpMethed {
     return response;
   }
 
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getChainParameters(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
   /**
    * constructor.
@@ -2756,7 +2771,8 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getMerkleTreeVoucherInfo(String httpNode, String hash, Integer index) {
+  public static HttpResponse getMerkleTreeVoucherInfo(String httpNode, String hash, Integer index,
+      int blockNum) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getmerkletreevoucherinfo";
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
@@ -2764,7 +2780,7 @@ public class HttpMethed {
           .put("out_points", Lists.newArrayList(new JSONObjectWarp()
               .put("hash", hash)
               .put("index", index)))
-          .put("block_num", 1);
+          .put("block_num", blockNum);
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
       logger.info("jsonObj:" + jsonObj.toString());
@@ -2781,8 +2797,7 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse getMerkleTreeVoucherInfoFromSolidity(String httpSolidityNode,
-      String hash,
-      Integer index) {
+      String hash, Integer index, int blockNum) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmerkletreevoucherinfo";
       JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
@@ -2790,7 +2805,7 @@ public class HttpMethed {
           .put("out_points", Lists.newArrayList(new JSONObjectWarp()
               .put("hash", hash)
               .put("index", index)))
-          .put("block_num", 1);
+          .put("block_num", blockNum);
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
       logger.info("jsonObj:" + jsonObj.toString());
@@ -2829,7 +2844,8 @@ public class HttpMethed {
         map.put("nsk", responseContent.getString("nsk"));
         map.put("ovk", ovk);
 
-        response = HttpMethed.getMerkleTreeVoucherInfo(httpNode, noteTx.getTrxId(), 0);
+        response = HttpMethed
+            .getMerkleTreeVoucherInfo(httpNode, noteTx.getTrxId(), noteTx.getIndex(), 1);
         responseContent = HttpMethed.parseResponseContent(response);
         JSONArray vouchers = responseContent.getJSONArray("vouchers");
         JSONArray paths = responseContent.getJSONArray("paths");
@@ -2921,11 +2937,6 @@ public class HttpMethed {
           .put("rcm", ByteArray.toHexString(noteTx.getR()))
           .put("memo", ByteArray.toHexString(noteTx.getMemo())))
           .put("txid", noteTx.getTrxId());
-//      noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
-      /*response = HttpMethed.getMerkleTreeVoucherInfo(httpNode, noteTx.getTrxId(), 0);
-      responseContent = HttpMethed.parseResponseContent(response);
-      JSONArray vouchers = responseContent.getJSONArray("vouchers");
-      jsonObjectWarp.put("voucher", Lists.newArrayList(vouchers));*/
 
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -2976,12 +2987,6 @@ public class HttpMethed {
           .put("rcm", ByteArray.toHexString(noteTx.getR()))
           .put("memo", ByteArray.toHexString(noteTx.getMemo())))
           .put("txid", noteTx.getTrxId());
-
-      /*response = HttpMethed
-          .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(), 0);
-      responseContent = HttpMethed.parseResponseContent(response);
-      JSONArray vouchers = responseContent.getJSONArray("vouchers");
-      jsonObjectWarp.put("voucher", Lists.newArrayList(vouchers));*/
 
       String jsonStr = jsonObjectWarp.toJSONString();
       JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
@@ -3050,6 +3055,7 @@ public class HttpMethed {
           noteTx.setMemo(
               ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
           noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+          noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
           shieldNoteInfoList.add(noteTx);
         }
       }
@@ -3106,6 +3112,7 @@ public class HttpMethed {
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
         shieldNoteInfoList.add(noteTx);
       }
       return shieldNoteInfoList;
@@ -3178,6 +3185,7 @@ public class HttpMethed {
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
         noteTx.setIsSpend(HttpMethed.parseStringContent(noteTxs).getBoolean("is_spend"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
         shieldNoteInfoList.add(noteTx);
       }
       return shieldNoteInfoList;
@@ -3250,6 +3258,7 @@ public class HttpMethed {
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
         noteTx.setIsSpend(HttpMethed.parseStringContent(noteTxs).getBoolean("is_spend"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
         shieldNoteInfoList.add(noteTx);
       }
       return shieldNoteInfoList;
@@ -3305,6 +3314,7 @@ public class HttpMethed {
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
         shieldNoteInfoList.add(noteTx);
       }
       return shieldNoteInfoList;
@@ -3360,6 +3370,7 @@ public class HttpMethed {
         noteTx.setMemo(
             ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
         noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
         shieldNoteInfoList.add(noteTx);
       }
       return shieldNoteInfoList;
@@ -3373,7 +3384,7 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse sendShieldCoinWithoutAsk(String httpNode,
+  public static HttpResponse sendShieldCoinWithoutAsk(String httpNode, String httpSolidityNode,
       byte[] publicZenTokenOwnerAddress,
       long fromAmount, ShieldAddressInfo shieldAddressInfo,
       ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList,
@@ -3404,7 +3415,11 @@ public class HttpMethed {
         map.put("ak", responseContent.getString("value"));
 
         logger.info("noteTx.getTrxId():" + noteTx.getTrxId());
-        HttpMethed.response = HttpMethed.getMerkleTreeVoucherInfo(httpNode, noteTx.getTrxId(), 0);
+        HttpMethed.response = HttpMethed
+            .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(),
+                noteTx.getIndex(), 3);
+        logger.info("response1:" + response.getStatusLine());
+        logger.info("response2:" + response.getEntity().toString());
         HttpMethed.responseContent = HttpMethed.parseResponseContent(HttpMethed.response);
         HttpMethed.printJsonContent(responseContent);
         JSONArray vouchers = HttpMethed.responseContent.getJSONArray("vouchers");

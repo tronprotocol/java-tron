@@ -26,6 +26,8 @@ public class HttpTestZenToken005 {
 
   private String httpnode = Configuration.getByPath("testng.conf")
       .getStringList("httpnode.ip.list").get(0);
+  private String httpSolidityNode = Configuration.getByPath("testng.conf")
+      .getStringList("httpnode.ip.list").get(2);
   private String foundationZenTokenKey = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.zenTokenOwnerKey");
   byte[] foundationZenTokenAddress = PublicMethed.getFinalAddress(foundationZenTokenKey);
@@ -95,23 +97,16 @@ public class HttpTestZenToken005 {
     shieldOutList = HttpMethed.addShieldOutputList(httpnode, shieldOutList, receiverShieldAddress,
         "" + (sendNote.getValue() - zenTokenFee), memo2);
 
+    HttpMethed.waitToProduceOneBlockFromSolidity(httpnode, httpSolidityNode);
     response = HttpMethed
-        .sendShieldCoinWithoutAsk(httpnode, null, 0, sendShieldAddressInfo.get(), sendNote,
-            shieldOutList,
-            null, 0, null);
+        .sendShieldCoinWithoutAsk(httpnode, httpSolidityNode, null, 0, sendShieldAddressInfo.get(),
+            sendNote, shieldOutList, null, 0, null);
     org.junit.Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
     logger.info("response:" + response);
     responseContent = HttpMethed.parseResponseContent(response);
     logger.info("responseContent:" + responseContent);
     HttpMethed.printJsonContent(responseContent);
     HttpMethed.waitToProduceOneBlock(httpnode);
-
-    response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    assetIssueId = responseContent.getString("asset_issued_ID");
-    Long afterAssetBalance = HttpMethed
-        .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);
 
     receiveNote = HttpMethed.scanNoteByIvk(httpnode, receiverShieldAddressInfo.get()).get(0);
 
@@ -122,11 +117,56 @@ public class HttpTestZenToken005 {
     Assert.assertTrue(HttpMethed.getSpendResult(httpnode, sendShieldAddressInfo.get(), sendNote));
   }
 
+  @Test(enabled = true, description = "Get merkle tree voucher info by http")
+  public void test02GetMerkleTreeVoucherInfo() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed
+        .getMerkleTreeVoucherInfo(httpnode, sendNote.getTrxId(), sendNote.getIndex(), 1);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.toJSONString().contains("tree"));
+    Assert.assertTrue(responseContent.toJSONString().contains("rt"));
+    Assert.assertTrue(responseContent.toJSONString().contains("paths"));
+
+    response = HttpMethed
+        .getMerkleTreeVoucherInfo(httpnode, receiveNote.getTrxId(), receiveNote.getIndex(), 1000);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.toJSONString().contains(
+        "synBlockNum is too large, cmBlockNum plus synBlockNum must be <= latestBlockNumber"));
+  }
+
+  @Test(enabled = true, description = "Get merkle tree voucher info by http from solidity")
+  public void test03GetMerkleTreeVoucherInfoFromSolidity() {
+    HttpMethed.waitToProduceOneBlock(httpnode);
+    response = HttpMethed
+        .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, sendNote.getTrxId(),
+            sendNote.getIndex(),
+            1);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.toJSONString().contains("tree"));
+    Assert.assertTrue(responseContent.toJSONString().contains("rt"));
+    Assert.assertTrue(responseContent.toJSONString().contains("paths"));
+
+    response = HttpMethed
+        .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, receiveNote.getTrxId(),
+            receiveNote.getIndex(), 1000);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    Assert.assertTrue(responseContent.toJSONString().contains(
+        "synBlockNum is too large, cmBlockNum plus synBlockNum must be <= latestBlockNumber"));
+  }
+
   /**
    * constructor.
    */
   @AfterClass(enabled = true)
   public void shutdown() throws InterruptedException {
+    response = HttpMethed.getAccount(httpnode, foundationZenTokenAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    HttpMethed.printJsonContent(responseContent);
+    assetIssueId = responseContent.getString("asset_issued_ID");
     final Long assetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);
     HttpMethed
