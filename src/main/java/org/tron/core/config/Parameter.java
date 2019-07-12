@@ -95,7 +95,7 @@ public class Parameter {
     ALLOW_PROTO_FILTER_NUM, // 1, 24
     ALLOW_ACCOUNT_STATE_ROOT, // 1, 25
     ALLOW_TVM_CONSTANTINOPLE, // 1, 26
-    ALLOW_MULTI_VALIDATESIGN, // 1, 29
+    ALLOW_TVM_SOLIDITY_0_5_10, // 1, 29
   }
 
   @Deprecated

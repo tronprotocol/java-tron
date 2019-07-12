@@ -923,8 +923,8 @@ public class Wallet {
             .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowMultiValidateSign")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowMultiValidateSign())
+            .setKey("getAllowTvmSolidity0_5_10")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10())
             .build());
 
     return builder.build();
