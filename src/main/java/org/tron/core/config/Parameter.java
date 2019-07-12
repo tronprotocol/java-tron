@@ -95,6 +95,7 @@ public class Parameter {
     ALLOW_PROTO_FILTER_NUM, // 1, 24
     ALLOW_ACCOUNT_STATE_ROOT, // 1, 25
     ALLOW_TVM_CONSTANTINOPLE, // 1, 26
+    ALLOW_MULTI_VALIDATESIGN, // 1, 29
   }
 
   @Deprecated
@@ -107,7 +108,9 @@ public class Parameter {
     ENERGY_LIMIT(5),
     VERSION_3_2_2(6),
     VERSION_3_5(7),
-    VERSION_3_6(8);
+    VERSION_3_6(8),
+    VERSION_4_0(9);
+
 
     @Getter
     private int value;
