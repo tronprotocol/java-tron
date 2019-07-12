@@ -219,7 +219,7 @@ public class ProposalController {
           break;
         }
         case (29): {
-          manager.getDynamicPropertiesStore().saveAllowMultiValidateSign(entry.getValue());
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity0_5_10(entry.getValue());
           break;
         }
         default:
