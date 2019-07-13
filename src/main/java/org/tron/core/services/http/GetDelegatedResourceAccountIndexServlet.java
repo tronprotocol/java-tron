@@ -20,7 +20,7 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 
 @Component
 @Slf4j(topic = "API")
-public class GetDelegatedResourceAccountIndexServlet extends HttpServlet {
+public class GetDelegatedResourceAccountIndexServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

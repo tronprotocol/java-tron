@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Block;
 
 @Component
 @Slf4j(topic = "API")
-public class GetBlockByNumServlet extends HttpServlet {
+public class GetBlockByNumServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

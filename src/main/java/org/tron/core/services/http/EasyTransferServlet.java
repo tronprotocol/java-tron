@@ -26,7 +26,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class EasyTransferServlet extends HttpServlet {
+public class EasyTransferServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

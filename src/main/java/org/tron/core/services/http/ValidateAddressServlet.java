@@ -19,7 +19,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class ValidateAddressServlet extends HttpServlet {
+public class ValidateAddressServlet extends RateLimiterServlet {
 
   private String validAddress(String input) {
     byte[] address = null;

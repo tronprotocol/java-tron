@@ -14,7 +14,7 @@ import org.tron.protos.Protocol.Block;
 
 @Component
 @Slf4j(topic = "API")
-public class GetNowBlockServlet extends HttpServlet {
+public class GetNowBlockServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -23,6 +23,7 @@ public class GetNowBlockServlet extends HttpServlet {
     try {
       boolean visible = Util.getVisible(request);
       Block reply = wallet.getNowBlock();
+      Thread.sleep(3000);
       if (reply != null) {
         response.getWriter().println(Util.printBlock(reply, visible));
       } else {

@@ -28,7 +28,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class TriggerConstantContractServlet extends HttpServlet {
+public class TriggerConstantContractServlet extends RateLimiterServlet {
   private final String functionSelector = "function_selector";
 
   @Autowired

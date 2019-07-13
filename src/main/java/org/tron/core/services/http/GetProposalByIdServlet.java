@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.Proposal;
 
 @Component
 @Slf4j(topic = "API")
-public class GetProposalByIdServlet extends HttpServlet {
+public class GetProposalByIdServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

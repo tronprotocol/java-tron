@@ -19,7 +19,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionInfoByIdServlet extends HttpServlet {
+public class GetTransactionInfoByIdServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

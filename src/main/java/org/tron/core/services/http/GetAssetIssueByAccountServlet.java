@@ -19,7 +19,7 @@ import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
-public class GetAssetIssueByAccountServlet extends HttpServlet {
+public class GetAssetIssueByAccountServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

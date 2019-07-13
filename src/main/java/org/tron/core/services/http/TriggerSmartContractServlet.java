@@ -30,7 +30,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class TriggerSmartContractServlet extends HttpServlet {
+public class TriggerSmartContractServlet extends RateLimiterServlet {
 
   private final String functionSelector = "function_selector";
 

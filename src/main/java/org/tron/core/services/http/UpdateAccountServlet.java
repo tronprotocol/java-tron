@@ -19,7 +19,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class UpdateAccountServlet extends HttpServlet {
+public class UpdateAccountServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

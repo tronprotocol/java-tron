@@ -18,7 +18,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class CreateAddressServlet extends HttpServlet {
+public class CreateAddressServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
-public class BroadcastServlet extends HttpServlet {
+public class BroadcastServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

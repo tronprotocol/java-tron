@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.TransactionSign;
 
 @Component
 @Slf4j(topic = "API")
-public class AddTransactionSignServlet extends HttpServlet {
+public class AddTransactionSignServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

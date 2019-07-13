@@ -16,7 +16,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionApprovedListServlet extends HttpServlet {
+public class GetTransactionApprovedListServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

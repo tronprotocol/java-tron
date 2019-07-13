@@ -18,7 +18,7 @@ import org.tron.protos.Protocol.SmartContract;
 
 @Component
 @Slf4j(topic = "API")
-public class GetContractServlet extends HttpServlet {
+public class GetContractServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

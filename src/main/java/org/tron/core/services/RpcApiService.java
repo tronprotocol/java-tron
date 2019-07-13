@@ -77,6 +77,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountCreateContract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
@@ -121,6 +122,9 @@ public class RpcApiService implements Service {
   @Autowired
   private NodeInfoService nodeInfoService;
 
+  @Autowired
+  private RateLimiterInterceptor rateLimiterInterceptor;
+
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -132,6 +136,7 @@ public class RpcApiService implements Service {
 
   @Override
   public void init() {
+
   }
 
   @Override
@@ -141,9 +146,7 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(databaseApi);
-
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
       Args args = Args.getInstance();
 
       if (args.getRpcThreadNum() > 0) {
@@ -169,7 +172,13 @@ public class RpcApiService implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      apiServer = serverBuilder.build().start();
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+
+      apiServer.start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
     }

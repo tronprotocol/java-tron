@@ -17,7 +17,7 @@ import org.tron.protos.Contract.AssetIssueContract;
 
 @Component
 @Slf4j(topic = "API")
-public class GetAssetIssueByIdServlet extends HttpServlet {
+public class GetAssetIssueByIdServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

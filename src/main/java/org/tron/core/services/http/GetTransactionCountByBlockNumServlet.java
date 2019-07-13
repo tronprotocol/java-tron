@@ -15,7 +15,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionCountByBlockNumServlet extends HttpServlet {
+public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

@@ -470,6 +470,10 @@ public class Args {
   @Setter
   private int validContractProtoThreadNum;
 
+  @Getter
+  @Setter
+  private RateLimiterInitialization rateLimiterInitialization;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -951,6 +955,10 @@ public class Args {
 
     INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
 
+    INSTANCE.rateLimiterInitialization =
+        config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
+            : new RateLimiterInitialization();
+
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
@@ -958,6 +966,7 @@ public class Args {
     }
 
     logConfig();
+
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -988,6 +997,25 @@ public class Args {
     account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
+  }
+
+  private static RateLimiterInitialization getRateLimiterFromConfig(
+      final com.typesafe.config.Config config) {
+
+    RateLimiterInitialization initialization = new RateLimiterInitialization();
+    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+        .getObjectList("rate.limiter.http").stream()
+        .map(RateLimiterInitialization::createHttpItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+    initialization.setHttpMap(list1);
+
+    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+        .getObjectList("rate.limiter.rpc").stream()
+        .map(RateLimiterInitialization::createRpcItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    initialization.setRpcMap(list2);
+    return initialization;
   }
 
   public static Args getInstance() {

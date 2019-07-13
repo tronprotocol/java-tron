@@ -14,7 +14,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetNextMaintenanceTimeServlet extends HttpServlet {
+public class GetNextMaintenanceTimeServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

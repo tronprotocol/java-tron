@@ -13,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetChainParametersServlet extends HttpServlet {
+public class GetChainParametersServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
