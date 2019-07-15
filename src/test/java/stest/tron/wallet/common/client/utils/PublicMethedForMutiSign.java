@@ -23,9 +23,14 @@ import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.Note;
+import org.tron.api.GrpcAPI.PrivateParameters;
+import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.WalletGrpc;
@@ -35,11 +40,17 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
+import org.tron.core.zen.address.ExpandedSpendingKey;
+import org.tron.core.zen.address.SpendingKey;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.CreateSmartContract;
 import org.tron.protos.Contract.CreateSmartContract.Builder;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPoint;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Contract.UpdateSettingContract;
 import org.tron.protos.Protocol;
@@ -664,6 +675,48 @@ public class PublicMethedForMutiSign {
     return broadcastTransaction(transaction, blockingStubFull);
 
   }
+
+  /**
+   * constructor.
+   */
+
+  public static String sendcoinGetTransactionHex(byte[] to, long amount, byte[] owner,
+      String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    //String priKey = testKey002;
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+    //Protocol.Account search = queryAccount(priKey, blockingStubFull);
+
+    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    ByteString bsTo = ByteString.copyFrom(to);
+    ByteString bsOwner = ByteString.copyFrom(owner);
+    builder.setToAddress(bsTo);
+    builder.setOwnerAddress(bsOwner);
+    builder.setAmount(amount);
+
+    Contract.TransferContract contract = builder.build();
+    Transaction transaction = blockingStubFull.createTransaction(contract);
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      logger.info("transaction ==null");
+      return null;
+    }
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    logger.info("HEX transaction is : " + "transaction hex string is " + ByteArray
+        .toHexString(transaction.toByteArray()));
+    return ByteArray.toHexString(transaction.toByteArray());
+
+  }
+
+
 
   /**
    * constructor.
@@ -4511,7 +4564,9 @@ public class PublicMethedForMutiSign {
     return broadcastTransaction(transaction, blockingStubFull);
   }
 
-
+  /**
+   * constructor.
+   */
   public static boolean clearContractAbi(byte[] contractAddress,
       byte[] ownerAddress,
       String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId,
@@ -4597,7 +4652,187 @@ public class PublicMethedForMutiSign {
         "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
             .toByteArray())));
     return broadcastTransaction(transaction, blockingStubFull);
-
   }
+
+  /**
+   * constructor.
+   */
+  public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress,
+      long fromAmount,ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      byte[] publicZenTokenToAddress, long toAmount, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    PrivateParameters.Builder builder = PrivateParameters.newBuilder();
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+      builder.setTransparentFromAddress(ByteString.copyFrom(publicZenTokenOwnerAddress));
+      builder.setFromAmount(fromAmount);
+    }
+    if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
+      builder.setTransparentToAddress(ByteString.copyFrom(publicZenTokenToAddress));
+      builder.setToAmount(toAmount);
+    }
+
+    if (shieldAddressInfo != null) {
+      OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+      outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
+      outPointBuild.setIndex(noteTx.getIndex());
+      request.addOutPoints(outPointBuild.build());
+
+      //ShieldNoteInfo noteInfo = shieldWrapper.getUtxoMapNote().get(shieldInputList.get(i));
+
+      //String shieldAddress = noteInfo.getPaymentAddress();
+      //ShieldAddressInfo addressInfo =
+      //    shieldWrapper.getShieldAddressInfoMap().get(shieldAddress);
+      SpendingKey spendingKey = new SpendingKey(shieldAddressInfo.getSk());
+      try {
+        ExpandedSpendingKey expandedSpendingKey = spendingKey.expandedSpendingKey();
+        builder.setAsk(ByteString.copyFrom(expandedSpendingKey.getAsk()));
+        builder.setNsk(ByteString.copyFrom(expandedSpendingKey.getNsk()));
+        builder.setOvk(ByteString.copyFrom(expandedSpendingKey.getOvk()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+
+      Note.Builder noteBuild = Note.newBuilder();
+      noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
+      noteBuild.setValue(noteTx.getNote().getValue());
+      noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
+      noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
+
+
+
+      //System.out.println("address " + noteInfo.getPaymentAddress());
+      //System.out.println("value " + noteInfo.getValue());
+      //System.out.println("rcm " + ByteArray.toHexString(noteInfo.getR()));
+      //System.out.println("trxId " + noteInfo.getTrxId());
+      //System.out.println("index " + noteInfo.getIndex());
+      //System.out.println("meno " + new String(noteInfo.getMemo()));
+
+      SpendNote.Builder spendNoteBuilder = SpendNote.newBuilder();
+      spendNoteBuilder.setNote(noteBuild.build());
+      try {
+        spendNoteBuilder.setAlpha(ByteString.copyFrom(org.tron.core.zen.note.Note.generateR()));
+      } catch (Exception e) {
+        System.out.println(e);
+      }
+
+      IncrementalMerkleVoucherInfo merkleVoucherInfo = blockingStubFull
+          .getMerkleTreeVoucherInfo(request.build());
+      spendNoteBuilder.setVoucher(merkleVoucherInfo.getVouchers(0));
+      spendNoteBuilder.setPath(merkleVoucherInfo.getPaths(0));
+
+      builder.addShieldedSpends(spendNoteBuilder.build());
+
+    } else {
+      byte[] ovk = ByteArray
+          .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+      builder.setOvk(ByteString.copyFrom(ovk));
+    }
+
+    if (shieldOutputList.size() > 0) {
+      for (int i = 0; i < shieldOutputList.size(); ++i) {
+        builder
+            .addShieldedReceives(ReceiveNote.newBuilder().setNote(shieldOutputList.get(i)).build());
+      }
+    }
+
+    TransactionExtention transactionExtention = blockingStubFull
+        .createShieldedTransaction(builder.build());
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
+    Any any = transaction.getRawData().getContract(0).getParameter();
+
+    try {
+      Contract.ShieldedTransferContract shieldedTransferContract =
+          any.unpack(Contract.ShieldedTransferContract.class);
+      if (shieldedTransferContract.getFromAmount() > 0
+          || fromAmount == 321321) {
+        transaction = signTransactionForShield(transaction,blockingStubFull,permissionKeyString);
+        System.out.println(
+            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+                .toByteArray())));
+      } else {
+        System.out.println(
+            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+                .toByteArray())));
+      }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    return broadcastTransaction(transaction, blockingStubFull);
+  }
+
+
+  /**
+   * constructor.
+   */
+  private static Transaction signTransactionForShield(Transaction transaction,
+      WalletGrpc.WalletBlockingStub blockingStubFull, String[] priKeys) {
+    /*    if (transaction.getRawData().getTimestamp() == 0) {
+      transaction = TransactionUtils.setTimestamp(transaction);
+    }
+
+    long currentTime = System.currentTimeMillis();//*1000000 + System.nanoTime()%1000000;
+   Transaction.Builder builder = transaction.toBuilder();
+    org.tron.protos.Protocol.Transaction.raw.Builder rowBuilder = transaction.getRawData()
+        .toBuilder();
+    rowBuilder.setTimestamp(currentTime);
+    builder.setRawData(rowBuilder.build());
+    transaction = builder.build();*/
+
+    for (int i = 0; i < priKeys.length; i += 1) {
+      String priKey = priKeys[i];
+      ECKey temKey = null;
+      try {
+        BigInteger priK = new BigInteger(priKey, 16);
+        temKey = ECKey.fromPrivate(priK);
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+      ECKey ecKey = temKey;
+
+      transaction = TransactionUtils.sign(transaction, ecKey);
+      TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
+        break;
+      }
+      if (weight.getResult().getCode()
+          == TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION) {
+        continue;
+      }
+    }
+    logger.info("Sign transaction:" + transaction.toString());
+    return transaction;
+  }
+
 
 }

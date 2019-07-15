@@ -439,7 +439,7 @@ public class ContractGrammar004 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress, 1000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
-
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(grammarAddress,

@@ -31,7 +31,6 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j
 public class TransferActuatorTest {
-
   private static Manager dbManager;
   private static final String dbPath = "output_transfer_test";
   private static TronApplicationContext context;
@@ -116,7 +115,6 @@ public class TransferActuatorTest {
   }
 
   private Any getContract(long count, String owneraddress, String toaddress) {
-    long nowTime = new Date().getTime();
     return Any.pack(
         Contract.TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
@@ -441,5 +439,4 @@ public class TransferActuatorTest {
       dbManager.getAccountStore().delete(ByteArray.fromHexString(To_ACCOUNT_INVALID));
     }
   }
-
 }

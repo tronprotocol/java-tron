@@ -6,12 +6,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
-
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
@@ -45,6 +44,7 @@ import org.tron.protos.Contract.ParticipateAssetIssueContract;
 import org.tron.protos.Contract.ProposalApproveContract;
 import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Contract.TriggerSmartContract;
@@ -132,6 +132,10 @@ public class Util {
 
   public static String printTransaction(Transaction transaction, boolean selfType) {
     return printTransactionToJSON(transaction, selfType).toJSONString();
+  }
+
+  public static String printTransaction(Transaction transaction) {
+    return printTransactionToJSON(transaction, true).toJSONString();
   }
 
   public static String printCreateTransaction(Transaction transaction, boolean selfType) {
@@ -374,6 +378,12 @@ public class Util {
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(clearABIContract, selfType));
             break;
+          case ShieldedTransferContract:
+            ShieldedTransferContract shieldedTransferContract = contractParameter
+                .unpack(ShieldedTransferContract.class);
+            contractJson = JSONObject
+                .parseObject(JsonFormat.printToString(shieldedTransferContract, selfType));
+            break;
           // todo add other contract
           default:
         }
@@ -615,6 +625,14 @@ public class Util {
                 selfType);
             any = Any.pack(clearABIContract.build());
             break;
+          case "ShieldedTransferContract":
+            ShieldedTransferContract.Builder shieldedTransferContractBuilder = ShieldedTransferContract
+                .newBuilder();
+            JsonFormat
+                .merge(parameter.getJSONObject("value").toJSONString(),
+                    shieldedTransferContractBuilder, selfType);
+            any = Any.pack(shieldedTransferContractBuilder.build());
+            break;
           // todo add other contract
           default:
         }
@@ -725,5 +743,17 @@ public class Util {
       throw new InvalidParameterException("key [" + key + "] not exist");
     }
     return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
+  }
+
+  public static String getMemo(byte[] meno) {
+    int index = meno.length;
+    for (; index>0; --index) {
+      if (meno[index-1] != 0)
+        break;
+    }
+
+    byte[] inputCheck = new byte[index];
+    System.arraycopy(meno, 0, inputCheck, 0, index);
+    return new String(inputCheck, Charset.forName("UTF-8"));
   }
 }

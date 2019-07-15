@@ -38,7 +38,6 @@ import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
@@ -50,7 +49,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -121,6 +119,35 @@ public class JsonFormat {
     try {
       StringBuilder text = new StringBuilder();
       print(message, text, selfType);
+      return text.toString();
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Writing to a StringBuilder threw an IOException (should never happen).",
+          e);
+    }
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(Readable input, Message.Builder builder) throws IOException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
+  }
+
+  /**
+   * Parse a text-format message from {@code input} and merge the contents into {@code builder}.
+   */
+  public static void merge(CharSequence input, Message.Builder builder) throws ParseException {
+    merge(input, ExtensionRegistry.getEmptyRegistry(), builder, true);
+  }
+
+  /**
+   * Like {@code print()}, but writes directly to a {@code String} and returns it.
+   */
+  public static String printToString(Message message) {
+    try {
+      StringBuilder text = new StringBuilder();
+      print(message, text, true);
       return text.toString();
     } catch (IOException e) {
       throw new RuntimeException(
@@ -1177,6 +1204,120 @@ public class JsonFormat {
       nextToken();
     }
 
+    static ByteString unescapeBytes(CharSequence input) throws InvalidEscapeSequence {
+//    byte[] result = new byte[input.length()];
+//    int pos = 0;
+//    for (int i = 0; i < input.length(); i++) {
+//      char c = input.charAt(i);
+//      if (c == '\\') {
+//        if (i + 1 < input.length()) {
+//          ++i;
+//          c = input.charAt(i);
+//          if (isOctal(c)) {
+//            // Octal escape.
+//            int code = digitValue(c);
+//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
+//              ++i;
+//              code = code * 8 + digitValue(input.charAt(i));
+//            }
+//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
+//              ++i;
+//              code = code * 8 + digitValue(input.charAt(i));
+//            }
+//            result[pos++] = (byte) code;
+//          } else {
+//            switch (c) {
+//              case 'a':
+//                result[pos++] = 0x07;
+//                break;
+//              case 'b':
+//                result[pos++] = '\b';
+//                break;
+//              case 'f':
+//                result[pos++] = '\f';
+//                break;
+//              case 'n':
+//                result[pos++] = '\n';
+//                break;
+//              case 'r':
+//                result[pos++] = '\r';
+//                break;
+//              case 't':
+//                result[pos++] = '\t';
+//                break;
+//              case 'v':
+//                result[pos++] = 0x0b;
+//                break;
+//              case '\\':
+//                result[pos++] = '\\';
+//                break;
+//              case '\'':
+//                result[pos++] = '\'';
+//                break;
+//              case '"':
+//                result[pos++] = '\"';
+//                break;
+//
+//              case 'x':
+//                // hex escape
+//                int code = 0;
+//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
+//                  ++i;
+//                  code = digitValue(input.charAt(i));
+//                } else {
+//                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
+//                }
+//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
+//                  ++i;
+//                  code = code * 16 + digitValue(input.charAt(i));
+//                }
+//                result[pos++] = (byte) code;
+//                break;
+//              case 'u':
+//                // UTF8 escape
+//                code = (16 * 3 * digitValue(input.charAt(i+1))) +
+//                    (16 * 2 * digitValue(input.charAt(i+2))) +
+//                    (16 * digitValue(input.charAt(i+3))) +
+//                    digitValue(input.charAt(i+4));
+//                i = i+4;
+//                result[pos++] = (byte) code;
+//                break;
+//
+//              default:
+//                throw new InvalidEscapeSequence("Invalid escape sequence: '\\" + c
+//                    + "'");
+//            }
+//          }
+//        } else {
+//          throw new InvalidEscapeSequence("Invalid escape sequence: '\\' at end of string.");
+//        }
+//      } else {
+//        result[pos++] = (byte) c;
+//      }
+//    }
+//    return ByteString.copyFrom(result, 0, pos);
+      try {
+        return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
+      } catch (Exception e) {
+        throw new InvalidEscapeSequence("INVALID hex String");
+      }
+    }
+
+    static ByteString unescapeBytesSelfType(String input, final String fliedName)
+        throws InvalidEscapeSequence {
+      //Address base58 -> ByteString
+      if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
+        return ByteString.copyFrom(Wallet.decodeFromBase58Check(input));
+      }
+
+      //Normal String -> ByteString
+      if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
+        return ByteString.copyFromUtf8(input);
+      }
+
+      return unescapeBytes(input);
+    }
+
     /**
      * Are we at the end of the input.
      */
@@ -1275,105 +1416,6 @@ public class JsonFormat {
       }
 
       return ("true".equals(currentToken) || "false".equals(currentToken));
-    }
-
-    static ByteString unescapeBytes(CharSequence input) throws InvalidEscapeSequence {
-//    byte[] result = new byte[input.length()];
-//    int pos = 0;
-//    for (int i = 0; i < input.length(); i++) {
-//      char c = input.charAt(i);
-//      if (c == '\\') {
-//        if (i + 1 < input.length()) {
-//          ++i;
-//          c = input.charAt(i);
-//          if (isOctal(c)) {
-//            // Octal escape.
-//            int code = digitValue(c);
-//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
-//              ++i;
-//              code = code * 8 + digitValue(input.charAt(i));
-//            }
-//            if ((i + 1 < input.length()) && isOctal(input.charAt(i + 1))) {
-//              ++i;
-//              code = code * 8 + digitValue(input.charAt(i));
-//            }
-//            result[pos++] = (byte) code;
-//          } else {
-//            switch (c) {
-//              case 'a':
-//                result[pos++] = 0x07;
-//                break;
-//              case 'b':
-//                result[pos++] = '\b';
-//                break;
-//              case 'f':
-//                result[pos++] = '\f';
-//                break;
-//              case 'n':
-//                result[pos++] = '\n';
-//                break;
-//              case 'r':
-//                result[pos++] = '\r';
-//                break;
-//              case 't':
-//                result[pos++] = '\t';
-//                break;
-//              case 'v':
-//                result[pos++] = 0x0b;
-//                break;
-//              case '\\':
-//                result[pos++] = '\\';
-//                break;
-//              case '\'':
-//                result[pos++] = '\'';
-//                break;
-//              case '"':
-//                result[pos++] = '\"';
-//                break;
-//
-//              case 'x':
-//                // hex escape
-//                int code = 0;
-//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
-//                  ++i;
-//                  code = digitValue(input.charAt(i));
-//                } else {
-//                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\x' with no digits");
-//                }
-//                if ((i + 1 < input.length()) && isHex(input.charAt(i + 1))) {
-//                  ++i;
-//                  code = code * 16 + digitValue(input.charAt(i));
-//                }
-//                result[pos++] = (byte) code;
-//                break;
-//              case 'u':
-//                // UTF8 escape
-//                code = (16 * 3 * digitValue(input.charAt(i+1))) +
-//                    (16 * 2 * digitValue(input.charAt(i+2))) +
-//                    (16 * digitValue(input.charAt(i+3))) +
-//                    digitValue(input.charAt(i+4));
-//                i = i+4;
-//                result[pos++] = (byte) code;
-//                break;
-//
-//              default:
-//                throw new InvalidEscapeSequence("Invalid escape sequence: '\\" + c
-//                    + "'");
-//            }
-//          }
-//        } else {
-//          throw new InvalidEscapeSequence("Invalid escape sequence: '\\' at end of string.");
-//        }
-//      } else {
-//        result[pos++] = (byte) c;
-//      }
-//    }
-//    return ByteString.copyFrom(result, 0, pos);
-      try {
-        return ByteString.copyFrom(ByteArray.fromHexString(input.toString()));
-      } catch (Exception e) {
-        throw new InvalidEscapeSequence("INVALID hex String");
-      }
     }
 
     /**
@@ -1552,7 +1594,6 @@ public class JsonFormat {
       }
     }
 
-
     public ByteString consumeByteString() throws ParseException {
       char quote = currentToken.length() > 0 ? currentToken.charAt(0) : '\0';
       if ((quote != '\"') && (quote != '\'')) {
@@ -1599,21 +1640,6 @@ public class JsonFormat {
       } catch (InvalidEscapeSequence e) {
         throw parseException(e.getMessage());
       }
-    }
-
-    static ByteString unescapeBytesSelfType(String input, final String fliedName)
-        throws InvalidEscapeSequence {
-      //Address base58 -> ByteString
-      if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-        return ByteString.copyFrom(Wallet.decodeFromBase58Check(input));
-      }
-
-      //Normal String -> ByteString
-      if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-        return ByteString.copyFromUtf8(input);
-      }
-
-      return unescapeBytes(input);
     }
 
     /**

@@ -432,6 +432,15 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowShieldedTransaction; //committee parameter
+
+  // full node used this parameter to close shielded transaction
+  @Getter
+  @Setter
+  private boolean fullNodeAllowShieldedTransaction;
+
+  @Getter
+  @Setter
   private long blockNumForEneryLimit;
 
   @Getter
@@ -458,6 +467,11 @@ public class Args {
   @Parameter(names = {"-v", "--version"}, description = "output code version", help = true)
   private boolean version;
 
+
+  @Getter
+  @Setter
+  private String zenTokenId;
+
   @Getter
   @Setter
   private long allowProtoFilterNum;
@@ -469,6 +483,10 @@ public class Args {
   @Getter
   @Setter
   private int validContractProtoThreadNum;
+
+  @Getter
+  @Setter
+  private int shieldedTransInPendingMaxCounts;
 
   @Getter
   @Setter
@@ -545,12 +563,16 @@ public class Args {
     INSTANCE.minTimeRatio = 0.0;
     INSTANCE.maxTimeRatio = 5.0;
     INSTANCE.longRunningTime = 10;
+    INSTANCE.allowShieldedTransaction = 0;
     INSTANCE.maxHttpConnectNumber = 50;
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
+    INSTANCE.fullNodeAllowShieldedTransaction = true;
+    INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
+    INSTANCE.shieldedTransInPendingMaxCounts = 10;
   }
 
   /**
@@ -929,12 +951,23 @@ public class Args {
     INSTANCE.saveInternalTx =
         config.hasPath("vm.saveInternalTx") && config.getBoolean("vm.saveInternalTx");
 
+    INSTANCE.allowShieldedTransaction =
+        config.hasPath("committee.allowShieldedTransaction") ? config
+            .getInt("committee.allowShieldedTransaction") : 0;
+
     INSTANCE.eventPluginConfig =
         config.hasPath("event.subscribe") ?
             getEventPluginConfig(config) : null;
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.fullNodeAllowShieldedTransaction =
+        config.hasPath("node.fullNodeAllowShieldedTransaction") ?
+            config.getBoolean("node.fullNodeAllowShieldedTransaction") : true;
+
+    INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
+        config.getString("node.zenTokenId") : "000000";
 
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config
@@ -954,6 +987,13 @@ public class Args {
     INSTANCE.passiveNodes = getNodes(config, "node.passive");
 
     INSTANCE.fastForwardNodes = getNodes(config, "node.fastForward");
+    INSTANCE.shieldedTransInPendingMaxCounts =
+        config.hasPath("node.shieldedTransInPendingMaxCounts") ? config
+            .getInt("node.shieldedTransInPendingMaxCounts") : 10;
+
+    if (INSTANCE.isWitness()) {
+      INSTANCE.fullNodeAllowShieldedTransaction = true;
+    }
 
     INSTANCE.rateLimiterInitialization =
         config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)

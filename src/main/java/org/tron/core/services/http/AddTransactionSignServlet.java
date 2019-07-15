@@ -15,7 +15,6 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
 
 
-
 @Component
 @Slf4j(topic = "API")
 public class AddTransactionSignServlet extends RateLimiterServlet {
@@ -33,7 +32,7 @@ public class AddTransactionSignServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       JSONObject input = JSONObject.parseObject(contract);
-      boolean visible =  Util.getVisibleOnlyForSign(input);
+      boolean visible = Util.getVisibleOnlyForSign(input);
       String strTransaction = input.getJSONObject("transaction").toJSONString();
       Transaction transaction = Util.packTransaction(strTransaction, visible);
       JSONObject jsonTransaction = JSONObject.parseObject(JsonFormat.printToString(transaction,

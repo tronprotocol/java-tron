@@ -51,7 +51,6 @@ public class DeployContractServlet extends RateLimiterServlet {
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build.setCallTokenValue(Util.getJsonLongValue(jsonObject, "call_token_value"))
           .setTokenId(Util.getJsonLongValue(jsonObject, "token_id"));
-
       ABI.Builder abiBuilder = ABI.newBuilder();
       if (jsonObject.containsKey("abi")) {
         String abi = jsonObject.getString("abi");
@@ -61,7 +60,6 @@ public class DeployContractServlet extends RateLimiterServlet {
         abiSB.append("}");
         JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
       }
-
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)

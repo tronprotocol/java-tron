@@ -1,19 +1,5 @@
 package org.tron.keystore;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.UUID;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
@@ -21,6 +7,21 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.UUID;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * <p>Ethereum wallet file management. For reference, refer to <a href="https://github.com/ethereum/wiki/wiki/Web3-Secret-Storage-Definition">
@@ -231,7 +232,7 @@ public class Wallet {
     }
   }
 
-  static byte[] generateRandomBytes(int size) {
+  public static byte[] generateRandomBytes(int size) {
     byte[] bytes = new byte[size];
     new SecureRandom().nextBytes(bytes);
     return bytes;
