@@ -5,8 +5,7 @@
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
-
-<!--  <test name="account,transfer">
+  <test name="account,transfer">
     <packages>
       <package name="stest.tron.wallet.transfer">
       </package>
@@ -42,10 +41,5 @@
       <package name="stest.tron.wallet.witness">
       </package>
     </packages>
-  </test>-->
-  <test name="contract scenario,committee,witness">
-  <classes>
-  <class name="stest.tron.wallet.zentoken.WalletTestZenToken001" />
-  </classes>
   </test>
 </suite>
