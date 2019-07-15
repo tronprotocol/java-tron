@@ -154,27 +154,17 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-/*    if (getChainParameters.get().getChainParameter(15).getValue() == 0) {
-      proposalMap.put(15L, 1L);
-    }
-   if (getChainParameters.get().getChainParameter(16).getValue() == 0) {
-      proposalMap.put(16L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(18).getValue() == 0) {
-      proposalMap.put(18L, 1L);
-    }*/
-  /*if (getChainParameters.get().getChainParameter(22).getValue() == 0L) {
-      logger.info("24 value is " + getChainParameters.get().getChainParameter(24).getValue());
-      proposalMap.put(24L, 1L);
-    }*/
-    if (getChainParameters.get().getChainParameter(28).getValue() == 0L) {
-      proposalMap.put(24L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(27).getValue() == 0L) {
+    if (getChainParameters.get().getChainParameter(26).getValue() == 0L) {
       proposalMap.put(25L, 1L);
     }
-    if (getChainParameters.get().getChainParameter(29).getValue() == 0L) {
+    if (getChainParameters.get().getChainParameter(27).getValue() == 0L) {
+      proposalMap.put(24L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(28).getValue() == 0L) {
       proposalMap.put(26L, 1L);
+    }
+    if (getChainParameters.get().getChainParameter(29).getValue() == 0L) {
+      proposalMap.put(27L, 1L);
     }
 
     if (proposalMap.size() >= 1) {
@@ -204,7 +194,7 @@ public class StressPrecondition {
     }
   }
 
-  @Test(enabled = false)
+  @Test(enabled = true)
   public void test02CreateShieldProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -215,17 +205,23 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    if (getChainParameters.get().getChainParameter(29).getValue() == 0L) {
-      proposalMap.put(27L, 1L);
+    if (getChainParameters.get().getChainParameter(30).getValue() == 10000000L) {
+      proposalMap.clear();
+      proposalMap.put(28L, 1L);
     }
     if (proposalMap.size() >= 1) {
+
+
+      ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
+      Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
+
 
       PublicMethed.createProposal(witness001Address, witnessKey001,
           proposalMap, blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.waitProduceNextBlock(blockingStubFull);
-      ProposalList proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-      Optional<ProposalList> listProposals = Optional.ofNullable(proposalList);
+      proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
+      listProposals = Optional.ofNullable(proposalList);
       Integer proposalId = listProposals.get().getProposalsCount();
       PublicMethed.approveProposal(witness001Address, witnessKey001, proposalId,
           true, blockingStubFull);
@@ -241,34 +237,7 @@ public class StressPrecondition {
       PublicMethed.waitProduceNextBlock(blockingStubFull);
       PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
           true, blockingStubFull);
-      waitProposalApprove(29, blockingStubFull);
-
-      //Change zen token fee
-      proposalMap.clear();
-      proposalMap.put(28L, 3L);
-
-      PublicMethed.createProposal(witness001Address, witnessKey001,
-          proposalMap, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      proposalList = blockingStubFull.listProposals(EmptyMessage.newBuilder().build());
-      listProposals = Optional.ofNullable(proposalList);
-      proposalId = listProposals.get().getProposalsCount();
-      PublicMethed.approveProposal(witness001Address, witnessKey001, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness002Address, witnessKey002, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness003Address, witnessKey003, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness004Address, witnessKey004, proposalId,
-          true, blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.approveProposal(witness005Address, witnessKey005, proposalId,
-          true, blockingStubFull);
-      waitZenTokenFeeProposalApprove(30, blockingStubFull);
+      //waitZenTokenFeeProposalApprove(30, blockingStubFull);
 
 
 
