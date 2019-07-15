@@ -27,6 +27,7 @@ public class IPQpsStrategy extends Strategy {
       limiter = newRateLimiter();
       ipLimiter.put(ip, limiter);
     }
+    limiter.acquire();
     return true;
   }
 

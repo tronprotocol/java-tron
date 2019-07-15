@@ -13,12 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.RateLimiterInitialization;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
+import org.tron.core.services.ratelimiter.RuntimeData;
+import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPreemptibleRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
-import org.tron.core.services.ratelimiter.RuntimeData;
 
 @Slf4j
 public abstract class RateLimiterServlet extends HttpServlet {
@@ -35,38 +36,51 @@ public abstract class RateLimiterServlet extends HttpServlet {
     RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
         .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
 
-    if (item == null) {
-      return;
-    }
+    boolean success = false;
 
-    String cName = item.getStrategy();
-    String params = item.getParams();
+    if (item != null) {
+      String cName = "";
+      String params = "";
+      Object obj;
+      try {
+        cName = item.getStrategy();
+        params = item.getParams();
 
-    if ("".equals(cName)) {
-      return;
-    }
+        // add the specific rate limiter strategy of servlet.
+        Class<?> c = Class.forName(ADAPTER_PREFIX + cName);
+        Constructor constructor;
+        if (c == GlobalPreemptibleAdapter.class || c == QpsRateLimiterAdapter.class
+            || c == IPQPSRateLimiterAdapter.class) {
+          constructor = c.getConstructor(String.class);
+          obj = constructor.newInstance(params);
+          container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
 
-    Object obj;
-
-    // init the http api rate limiter.
-    try {
-      Class<?> c = Class.forName(ADAPTER_PREFIX + cName);
-      Constructor constructor;
-      if (c == GlobalPreemptibleAdapter.class || c == QpsRateLimiterAdapter.class
-          || c == IPQPSRateLimiterAdapter.class) {
-        constructor = c.getConstructor(String.class);
-        obj = constructor.newInstance(params);
-        container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
-
-      } else {
-        constructor = c.getConstructor();
-        obj = constructor.newInstance();
-        container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
+        } else {
+          constructor = c.getConstructor();
+          obj = constructor.newInstance();
+          container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), (IRateLimiter) obj);
+        }
+        success = true;
+      } catch (Exception e) {
+        logger.warn(
+            "failure to add the rate limiter strategy. servlet = {}, strategy name = {}, params = \"{}\".",
+            getClass().getSimpleName(), cName, params);
       }
-
-    } catch (Exception e) {
-      logger.warn("the ratelimiter adaptor {} is undefined.", cName);
     }
+
+    if (!success) {
+      // if the specific rate limiter strategy of servlet is not defined or fail to add,
+      // then add a default Strategy.
+      try {
+        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter("qps=1000");
+        container.add(KEY_PREFIX_HTTP, getClass().getSimpleName(), rateLimiter);
+      } catch (Exception e) {
+        logger.warn(
+            "failure to add the default rate limiter strategy. servlet = {}.",
+            getClass().getSimpleName());
+      }
+    }
+
   }
 
   @Override
