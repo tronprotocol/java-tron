@@ -12,7 +12,7 @@ import org.tron.core.services.ratelimiter.strategy.Strategy;
 public class IPQpsStrategy extends Strategy {
 
   public static final String STRATEGY_PARAM_IPQPS = "qps";
-  public static final int DEFAULT_IPQPS = 2;
+  public static final Double DEFAULT_IPQPS = 2D;
 
   private Cache<String, RateLimiter> ipLimiter = CacheBuilder.newBuilder().maximumSize(10000)
       .expireAfterWrite(600, TimeUnit.SECONDS).recordStats().build();
@@ -32,14 +32,14 @@ public class IPQpsStrategy extends Strategy {
   }
 
   private RateLimiter newRateLimiter() {
-    return RateLimiter.create((Integer) mapParams.get(STRATEGY_PARAM_IPQPS).value);
+    return RateLimiter.create((Double) mapParams.get(STRATEGY_PARAM_IPQPS).value);
   }
 
   // define the default strategy params.
   @Override
   protected Map<String, ParamItem> defaultParam() {
     Map<String, ParamItem> map = new HashMap<>();
-    map.put(STRATEGY_PARAM_IPQPS, new ParamItem(Integer.class, DEFAULT_IPQPS));
+    map.put(STRATEGY_PARAM_IPQPS, new ParamItem(Double.class, DEFAULT_IPQPS));
     return map;
   }
 }
