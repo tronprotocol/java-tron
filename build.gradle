@@ -287,6 +287,10 @@ test {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
+    if (isWindows()) {
+        exclude '**/ShieldedTransferActuatorTest.class'
+        exclude 'org/tron/core/zksnark/**'
+    }
 }
 
 task stest(type: Test) {
