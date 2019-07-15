@@ -114,8 +114,10 @@ public class RevokingDbWithCacheOldValueTest {
     Assert.assertEquals(1, revokingDatabase.getStack().size());
 
     System.out.println("1---------stack:" + revokingDatabase.getStack().size());
+    logger.error("1---------stack:" + revokingDatabase.getStack().size());
     dialog.reset();
     System.out.println("2---------stack:" + revokingDatabase.getStack().size());
+    logger.error("2---------stack:" + revokingDatabase.getStack().size());
     Assert.assertTrue(revokingDatabase.getStack().isEmpty());
     Assert.assertEquals(0, revokingDatabase.getActiveDialog());
 
