@@ -68,8 +68,6 @@ public class TransactionStoreTest {
         },
         Constant.TEST_CONF
     );
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
   }
 
   /**
@@ -77,6 +75,8 @@ public class TransactionStoreTest {
    */
   @BeforeClass
   public static void init() {
+    context = new TronApplicationContext(DefaultConfig.class);
+    AppT = ApplicationFactory.create(context);
     dbManager = context.getBean(Manager.class);
     transactionStore = dbManager.getTransactionStore();
 
