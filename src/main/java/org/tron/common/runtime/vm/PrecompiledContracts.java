@@ -136,7 +136,6 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000007");
   private static final DataWord altBN128PairingAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000008");
-
   private static final DataWord multiValidateSignAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000009");
 //  private static final DataWord voteContractAddr = new DataWord(
