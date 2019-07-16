@@ -107,6 +107,7 @@ import org.tron.protos.Protocol.TransactionSign;
 public class RpcApiService implements Service {
 
   private int port = Args.getInstance().getRpcPort();
+  private boolean isOneWitness = Args.getInstance().isOneWitness();
   private Server apiServer;
 
   @Autowired
@@ -958,13 +959,17 @@ public class RpcApiService implements Service {
     @Override
     public void createWitness(WitnessCreateContract request,
         StreamObserver<Transaction> responseObserver) {
-      try {
-        responseObserver.onNext(
-            createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
-      } catch (ContractValidateException e) {
-        responseObserver
-            .onNext(null);
-        logger.debug("ContractValidateException: {}", e.getMessage());
+      if (!isOneWitness) {
+        try {
+          responseObserver.onNext(
+                  createTransactionCapsule(request, ContractType.WitnessCreateContract).getInstance());
+        } catch (ContractValidateException e) {
+          responseObserver
+                  .onNext(null);
+          logger.debug("ContractValidateException: {}", e.getMessage());
+        }
+      } else {
+        responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
     }
@@ -972,7 +977,9 @@ public class RpcApiService implements Service {
     @Override
     public void createWitness2(WitnessCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
-      createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
+      if (!isOneWitness) {
+        createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
+      }
     }
 
     @Override

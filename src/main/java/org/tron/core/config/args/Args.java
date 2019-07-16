@@ -470,6 +470,10 @@ public class Args {
   @Setter
   private int validContractProtoThreadNum;
 
+  @Getter
+  @Setter
+  private boolean isOneWitness;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -950,6 +954,11 @@ public class Args {
         config.hasPath("node.validContractProto.threads") ? config
             .getInt("node.validContractProto.threads")
             : Runtime.getRuntime().availableProcessors();
+
+    INSTANCE.isOneWitness =
+            config.hasPath("node.isOneWitness") ? config
+                    .getBoolean("node.isOneWitness")
+                    : false;
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

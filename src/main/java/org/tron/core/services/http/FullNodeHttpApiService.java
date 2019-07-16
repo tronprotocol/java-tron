@@ -185,6 +185,9 @@ public class FullNodeHttpApiService implements Service {
       context.setContextPath("/wallet/");
       server.setHandler(context);
 
+      boolean isOneWitness = Args.getInstance().isOneWitness();
+      logger.info("useOneWitness", isOneWitness);
+
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
@@ -194,7 +197,6 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(createAssetIssueServlet), "/createassetissue");
       context.addServlet(new ServletHolder(updateWitnessServlet), "/updatewitness");
       context.addServlet(new ServletHolder(createAccountServlet), "/createaccount");
-      context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
       context.addServlet(new ServletHolder(transferAssetServlet), "/transferasset");
       context.addServlet(new ServletHolder(participateAssetIssueServlet), "/participateassetissue");
       context.addServlet(new ServletHolder(freezeBalanceServlet), "/freezebalance");
@@ -274,6 +276,11 @@ public class FullNodeHttpApiService implements Service {
           "/getdelegatedresourceaccountindex");
       context.addServlet(new ServletHolder(setAccountServlet), "/setaccountid");
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
+
+      if (!isOneWitness) {
+        logger.info("here is witness", isOneWitness);
+        context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
+      }
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
