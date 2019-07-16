@@ -40,8 +40,8 @@ public abstract class Strategy {
             continue;
           }
 
-          if (item.type == Integer.class) {
-            item.setValue(Integer.valueOf(value));
+          if (item.type == Double.class) {
+            item.setValue(Double.valueOf(value));
           } else if (item.type == String.class) {
             item.setValue(value);
           }
@@ -71,5 +71,4 @@ public abstract class Strategy {
       this.value = value;
     }
   }
-
 }

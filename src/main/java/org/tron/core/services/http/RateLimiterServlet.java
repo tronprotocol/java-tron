@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
-
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -89,22 +88,28 @@ public abstract class RateLimiterServlet extends HttpServlet {
       throws ServletException, IOException {
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
-    boolean acquireResource = true;
-    //todo: add default ratelimiter
+    boolean acquireResource = false;
+
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(new RuntimeData(req));
     }
 
-    if (acquireResource) {
-      super.service(req, resp);
-    } else {
-      resp.getWriter()
-          .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
-    }
-
-    if (rateLimiter != null) {
-      if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
-        ((IPreemptibleRateLimiter) rateLimiter).release();
+    try {
+      if (acquireResource) {
+        super.service(req, resp);
+      } else {
+        resp.getWriter()
+            .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
+      }
+    } catch (ServletException | IOException e) {
+      throw e;
+    } catch (Exception unexpected) {
+      logger.error("Http Api Error: {}", unexpected.getMessage());
+    } finally {
+      if (rateLimiter != null) {
+        if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
+          ((IPreemptibleRateLimiter) rateLimiter).release();
+        }
       }
     }
   }
