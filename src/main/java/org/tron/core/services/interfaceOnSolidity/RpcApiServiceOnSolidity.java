@@ -1,6 +1,7 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -11,19 +12,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -34,8 +39,13 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -127,6 +137,13 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
+  }
+
+  @Override
+  public void stop() {
+    if (apiServer != null) {
+      apiServer.shutdown();
+    }
   }
 
   /**
@@ -340,12 +357,45 @@ public class RpcApiServiceOnSolidity implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
-  }
 
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
+    @Override
+    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getMerkleTreeVoucherInfo(request, responseObserver)
+      );
     }
+
+    @Override
+    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByIvk(request, responseObserver)
+      );
+    }
+  
+    @Override
+    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
+        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanAndMarkNoteByIvk(request, responseObserver)
+      );
+    }
+    
+    @Override
+    public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver)
+      );
+    }
+
   }
 }

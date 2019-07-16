@@ -323,18 +323,43 @@ public class ProposalCreateActuator extends AbstractActuator {
         }
         break;
       }
+      case (27): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_SHIELDED_TRANSACTION]");
+        }
+        if (entry.getValue() != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_SHIELDED_TRANSACTION] is only allowed to be 1");
+        }
+        break;
+      }
+      case (28): {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
+          throw new ContractValidateException("Bad chain parameter id [SHIELD_TRANSACTION_FEE]");
+        }
+        if (!dbManager.getDynamicPropertiesStore().supportShieldedTransaction()) {
+          throw new ContractValidateException(
+              "Shielded Transaction is not activated,Can't set Shielded Transaction fee");
+        }
+        if (entry.getValue() < 0 || entry.getValue() > 10_000_000_000L) {
+          throw new ContractValidateException(
+              "Bad SHIELD_TRANSACTION_FEE parameter value,valid range is [0,10_000_000_000L]");
+        }
+        break;
+      }
       case (29): {
         if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_4_0)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() != 1) {
           throw new ContractValidateException(
-                  "This value[ALLOW_TVM_SOLIDITY_0_5_10] is only allowed to be 1");
+              "This value[ALLOW_TVM_SOLIDITY_0_5_10] is only allowed to be 1");
         }
         if (dbManager.getDynamicPropertiesStore().getAllowCreationOfContracts() == 0) {
           throw new ContractValidateException(
-                  "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
-                          + "before [ALLOW_TVM_SOLIDITY_0_5_10] can be proposed");
+              "[ALLOW_CREATION_OF_CONTRACTS] proposal must be approved "
+                  + "before [ALLOW_TVM_SOLIDITY_0_5_10] can be proposed");
         }
         break;
       }

@@ -5,7 +5,6 @@
   <listeners>
     <listener class-name="stest.tron.wallet.common.client.utils.RetryListener"/>
   </listeners>
-
   <test name="account,transfer">
     <packages>
       <package name="stest.tron.wallet.transfer">
@@ -43,5 +42,4 @@
       </package>
     </packages>
   </test>
-
 </suite>
