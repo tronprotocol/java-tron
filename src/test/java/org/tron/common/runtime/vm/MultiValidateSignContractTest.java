@@ -17,7 +17,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class MultiValidateSignContractTest {
 
-  private static final String METHODSIGN = "multivalidate(bytes32,bytes[],address[])";
+  private static final String METHODSIGN = "multivalidatesign(bytes32,bytes[],address[])";
   PrecompiledContracts.MultiValidateSign contract = new MultiValidateSign();
 
   private static final byte[] smellData;
