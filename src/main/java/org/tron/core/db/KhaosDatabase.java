@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javafx.util.Pair;
 import lombok.Getter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +28,10 @@ import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
+@Slf4j(topic = "DB")
 public class KhaosDatabase extends TronDatabase {
 
+  @ToString
   public static class KhaosBlock {
 
     public Sha256Hash getParentHash() {
@@ -74,6 +78,7 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
+  @ToString
   public class KhaosStore {
 
     private HashMap<BlockId, KhaosBlock> hashKblkMap = new HashMap<>();
@@ -233,6 +238,7 @@ public class KhaosDatabase extends TronDatabase {
         }
         block.setParent(kblock);
       } else {
+        logger.error("debug khaos head:{}, block:{}, miniStore:{}", head, blk, miniStore);
         miniUnlinkedStore.insert(block);
         throw new UnLinkedBlockException();
       }

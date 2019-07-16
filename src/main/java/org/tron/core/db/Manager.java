@@ -981,7 +981,20 @@ public class Manager {
         witnessService.checkDupWitness(block);
       }
 
-      BlockCapsule newBlock = this.khaosDb.push(block);
+      BlockCapsule newBlock = null;
+      try {
+        newBlock = this.khaosDb.push(block);
+      } catch (UnLinkedBlockException e) {
+        logger.error("debug khaos block:{}, dy head num:{}, dy head hash:{}, dy head ts:{}, khaosdb head:{}, khaosdb ministore size:{}",
+                block,
+                dynamicPropertiesStore.getLatestBlockHeaderNumber(),
+                dynamicPropertiesStore.getLatestBlockHeaderHash(),
+                dynamicPropertiesStore.getLatestBlockHeaderTimestamp(),
+                khaosDb.getHead(),
+                khaosDb.getMiniStore().size()
+        );
+        throw e;
+      }
 
       // DB don't need lower block
       if (getDynamicPropertiesStore().getLatestBlockHeaderHash() == null) {
