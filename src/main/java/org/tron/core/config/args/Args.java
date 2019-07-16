@@ -359,6 +359,10 @@ public class Args {
 
   @Getter
   @Setter
+  private long allowTvmSolidity0_5_10; //committee parameter
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -524,6 +528,7 @@ public class Args {
     INSTANCE.allowTvmConstantinople = 0;
     INSTANCE.allowDelegateResource = 0;
     INSTANCE.allowSameTokenName = 0;
+    INSTANCE.allowTvmSolidity0_5_10 = 0;
     INSTANCE.tcpNettyWorkThreadNum = 0;
     INSTANCE.udpNettyWorkThreadNum = 0;
     INSTANCE.p2pNodeId = "";
@@ -867,6 +872,10 @@ public class Args {
     INSTANCE.allowTvmConstantinople =
         config.hasPath("committee.allowTvmConstantinople") ? config
             .getInt("committee.allowTvmConstantinople") : 0;
+
+    INSTANCE.allowTvmSolidity0_5_10 =
+            config.hasPath("committee.allowTvmSolidity0_5_10") ? config
+                    .getInt("committee.allowTvmSolidity0_5_10") : 0;
 
     INSTANCE.tcpNettyWorkThreadNum = config.hasPath("node.tcpNettyWorkThreadNum") ? config
         .getInt("node.tcpNettyWorkThreadNum") : 0;

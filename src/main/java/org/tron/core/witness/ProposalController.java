@@ -218,6 +218,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
           break;
         }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity0_5_10(entry.getValue());
+          break;
+        }
         default:
           break;
       }
