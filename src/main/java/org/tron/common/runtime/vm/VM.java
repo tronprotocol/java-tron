@@ -732,6 +732,7 @@ public class VM {
           program.stackPush(balance);
           program.step();
         }
+        break;
         case ISCONTRACT: {
           DataWord address = program.stackPop();
           DataWord isContract = program.isContract(address);
