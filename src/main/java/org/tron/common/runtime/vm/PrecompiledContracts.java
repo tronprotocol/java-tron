@@ -182,39 +182,6 @@ public class PrecompiledContracts {
     if (address.equals(multiValidateSignAddr)) {
       return multiValidateSign;
     }
-//    if (address.equals(voteContractAddr)) {
-//      return voteContract;
-//    }
-//    if (address.equals(freezeBalanceAddr)) {
-//      return freezeBalance;
-//    }
-//    if (address.equals(unFreezeBalanceAddr)) {
-//      return unFreezeBalance;
-//    }
-//    if (address.equals(withdrawBalanceAddr)) {
-//      return withdrawBalance;
-//    }
-//    if (address.equals(proposalApproveAddr)) {
-//      return proposalApprove;
-//    }
-//    if (address.equals(proposalCreateAddr)) {
-//      return proposalCreate;
-//    }
-//    if (address.equals(proposalDeleteAddr)) {
-//      return proposalDelete;
-//    }
-//    if (address.equals(convertFromTronBytesAddressAddr)) {
-//      return convertFromTronBytesAddress;
-//    }
-//    if (address.equals(convertFromTronBase58AddressAddr)) {
-//      return convertFromTronBase58Address;
-//    }
-//    if (address.equals(transferAssetAddr)) {
-//      return transferAsset;
-//    }
-//    if (address.equals(getTransferAssetAmountAddr)) {
-//      return getTransferAssetAmount;
-//    }
 
     // Byzantium precompiles
     if (address.equals(modExpAddr)) {
@@ -233,6 +200,10 @@ public class PrecompiledContracts {
     //    if (address.equals(multiValidateSignAddr) && VMConfig.allowTvmSolidity059()) {
     //      return multiValidateSign;
     //    }
+
+    if (VMConfig.allowTvmSolidity0_5_10() && address.equals(multiValidateSignAddr)) {
+      return multiValidateSign;
+    }
 
     return null;
   }
