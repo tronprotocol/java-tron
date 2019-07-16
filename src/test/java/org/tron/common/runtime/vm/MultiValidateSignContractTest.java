@@ -17,7 +17,7 @@ import stest.tron.wallet.common.client.utils.AbiUtil;
 @Slf4j
 public class MultiValidateSignContractTest {
 
-  private static final String METHODSIGN = "multivalidatesign(bytes32,bytes[],address[])";
+  private static final String METHOD_SIGN = "multivalidatesign(bytes32,bytes[],address[])";
   PrecompiledContracts.MultiValidateSign contract = new MultiValidateSign();
 
   private static final byte[] smellData;
@@ -70,10 +70,12 @@ public class MultiValidateSignContractTest {
   }
 
   // just test timecosts
-//  @Test
+  //  @Test
   @Test(enabled = false)
   void timeCostTest() {
-//    timecost(1);
+    // for warming up
+    // timecost(1);
+
     int cnt = 27;
     for (;cnt <= 32; cnt++) {
       timecost(cnt);
@@ -110,7 +112,7 @@ public class MultiValidateSignContractTest {
 
   Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures, List<Object> addresses) {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    byte[] input = Hex.decode(AbiUtil.parseParameters(METHODSIGN, parameters));
+    byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);
     return contract.execute(input);
   }
