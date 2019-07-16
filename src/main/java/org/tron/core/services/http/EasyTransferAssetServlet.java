@@ -3,7 +3,7 @@ package org.tron.core.services.http;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
