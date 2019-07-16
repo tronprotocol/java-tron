@@ -164,7 +164,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_TVM_TRANSFER_TRC10 = "ALLOW_TVM_TRANSFER_TRC10".getBytes();
   private static final byte[] ALLOW_TVM_CONSTANTINOPLE = "ALLOW_TVM_CONSTANTINOPLE".getBytes();
 
-  private static final byte[] ALLOW_TVM_SOLIDITY_0_5_10 = "ALLOW_TVM_SOLIDITY_0_5_10".getBytes();
+  private static final byte[] ALLOW_TVM_SOLIDITY_059 = "ALLOW_TVM_SOLIDITY_059".getBytes();
 
   //Used only for protobuf data filter , once，value is 0,1
   private static final byte[] ALLOW_PROTO_FILTER_NUM = "ALLOW_PROTO_FILTER_NUM"
@@ -504,9 +504,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowTvmSolidity0_5_10();
+      this.getAllowTvmSolidity059();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTvmSolidity0_5_10(Args.getInstance().getAllowTvmSolidity0_5_10());
+      this.saveAllowTvmSolidity059(Args.getInstance().getAllowTvmSolidity059());
     }
 
     try {
@@ -1300,17 +1300,16 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void saveAllowTvmSolidity0_5_10(long value) {
-    this.put(ALLOW_TVM_SOLIDITY_0_5_10,
+  public void saveAllowTvmSolidity059(long value) {
+    this.put(ALLOW_TVM_SOLIDITY_059,
             new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public long getAllowTvmSolidity0_5_10() {
-    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SOLIDITY_0_5_10))
+  public long getAllowTvmSolidity059() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SOLIDITY_059))
             .map(BytesCapsule::getData)
             .map(ByteArray::toLong)
-            .orElseThrow(
-                    () -> new IllegalArgumentException("not found ALLOW_MULTI_VALIDATESIGN"));
+            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_TVM_SOLIDITY_059"));
   }
 
 

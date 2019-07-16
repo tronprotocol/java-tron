@@ -219,7 +219,7 @@ public class ProposalController {
           break;
         }
         case (29): {
-          manager.getDynamicPropertiesStore().saveAllowTvmSolidity0_5_10(entry.getValue());
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
         default:
