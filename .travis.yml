@@ -1,6 +1,7 @@
 sudo: required
 dist: trusty
 language: java
+dist: trusty
 jdk: oraclejdk8
 addons:
   ssh_known_hosts:
@@ -19,25 +20,25 @@ cache:
     - '$HOME/.sonar/cache'
 matrix:
   include:
-  - name: build
-    script:
-    - sh tron.sh
-    -  "./gradlew build"
-    - "./gradlew jacocoTestReport"
+    - name: build
+      script:
+        - sh tron.sh
+        - "./gradlew build"
+        - "./gradlew jacocoTestReport"
 
 
-  - name: stest
-    script:
-    - sh tron.sh
-    - bash deploy.sh
+    - name: stest
+      script:
+        - sh tron.sh
+        - bash deploy.sh
 
 
 after_success:
-- "bash <(curl -s https://codecov.io/bash) -t 060bb400-c6fe-4d5f-a6c8-427105c746ac -s build/reports/jacoco/"
+  - "bash <(curl -s https://codecov.io/bash) -t 060bb400-c6fe-4d5f-a6c8-427105c746ac -s build/reports/jacoco/"
 
 skip_build:
-- README.md：
-- LICENSE
+  - README.md：
+  - LICENSE
 
 
 
