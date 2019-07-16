@@ -513,10 +513,10 @@ public class DataWord implements Comparable<DataWord> {
   }
 
   public static DataWord[] parseArray(byte[] data) {
-    int len = data.length / 32;
+    int len = data.length / WORD_SIZE;
     DataWord[] words = new DataWord[len];
     for (int i = 0; i < len; i++) {
-      byte[] bytes = Arrays.copyOfRange(data, i * 32, (i + 1) * 32);
+      byte[] bytes = Arrays.copyOfRange(data, i * WORD_SIZE, (i + 1) * WORD_SIZE);
       words[i] = new DataWord(bytes);
     }
     return words;
