@@ -1341,7 +1341,8 @@ public class PrecompiledContracts {
   }
 
   public static class MultiValidateSign extends PrecompiledContract {
-    public static final ExecutorService workers;
+    private static final ExecutorService workers;
+    static final int ENGERYPERSIGN = 1500;
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
@@ -1370,7 +1371,7 @@ public class PrecompiledContracts {
     public long getEnergyForData(byte[] data) {
       int cnt = (data.length / 32 - 5) / 6;
       // one sign 1500, half of ecrecover
-      return (long) (cnt * 3000 * 0.5);
+      return (long) (cnt * ENGERYPERSIGN);
     }
 
     @Override
