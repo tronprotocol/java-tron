@@ -128,6 +128,15 @@ public class TransactionResultCapsule implements ProtoCapsule<Transaction.Result
     this.transactionResult = this.transactionResult.toBuilder().setRet(code).build();
   }
 
+  public void setShieldedTransactionFee(long fee) {
+    this.transactionResult = this.transactionResult.toBuilder().setShieldedTransactionFee(fee)
+        .build();
+  }
+
+  public long getShieldedTransactionFee() {
+    return transactionResult.getShieldedTransactionFee();
+  }
+
   @Override
   public byte[] getData() {
     return this.transactionResult.toByteArray();

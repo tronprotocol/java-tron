@@ -20,6 +20,7 @@ public class PendingManager implements AutoCloseable {
     tmpTransactions.addAll(db.getPendingTransactions());
     db.getPendingTransactions().clear();
     db.getSession().reset();
+    db.getShieldedTransInPendingCounts().set(0);
   }
 
   @Override

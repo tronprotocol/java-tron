@@ -1,5 +1,6 @@
 package stest.tron.wallet.onlinestress;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Optional;
@@ -17,6 +18,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Exchange;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -27,7 +29,7 @@ import stest.tron.wallet.common.client.utils.PublicMethed;
 public class TestExchangeTransaction {
 
   private final String testKey002 = Configuration.getByPath("testng.conf")
-      .getString("mainWitness.key17");
+      .getString("foundationAccount.key1");
   private final byte[] fromAddress = PublicMethed.getFinalAddress(testKey002);
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -67,6 +69,33 @@ public class TestExchangeTransaction {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+  }
+
+  @Test(enabled = true)
+  public void testCreateShieldToken() {
+    String tokenOwnerKey = "2925e186bb1e88988855f11ebf20ea3a6e19ed92328b0ffb576122e769d45b68";
+    byte[] tokenOwnerAddress = PublicMethed.getFinalAddress(tokenOwnerKey);
+    PublicMethed.printAddress(tokenOwnerKey);
+    Assert.assertTrue(PublicMethed.sendcoin(tokenOwnerAddress, 20480000000L, fromAddress,
+        testKey002, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String name = "shieldToken";
+    Long start = System.currentTimeMillis() + 20000;
+    Long end = System.currentTimeMillis() + 10000000000L;
+    Long totalSupply = 1500000000000001L;
+    String description = "This asset issue is use for exchange transaction stress";
+    String url = "This asset issue is use for exchange transaction stress";
+    Assert.assertTrue(PublicMethed.createAssetIssue(tokenOwnerAddress, name, totalSupply, 1, 1,
+        start, end, 1, description, url, 1000L, 1000L,
+        1L, 1L, tokenOwnerKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Account getAssetIdFromThisAccount =
+        PublicMethed.queryAccount(tokenOwnerAddress, blockingStubFull);
+    ByteString assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
+    logger.info("AssetId:" + assetAccountId.toString());
+
+
 
   }
 

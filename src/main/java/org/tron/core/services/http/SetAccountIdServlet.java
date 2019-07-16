@@ -17,6 +17,7 @@ import org.tron.protos.Protocol;
 @Component
 @Slf4j(topic = "API")
 public class SetAccountIdServlet extends HttpServlet {
+
   @Autowired
   private Wallet wallet;
 
