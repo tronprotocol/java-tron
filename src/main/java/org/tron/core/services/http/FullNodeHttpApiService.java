@@ -186,7 +186,6 @@ public class FullNodeHttpApiService implements Service {
       server.setHandler(context);
 
       boolean isOneWitness = Args.getInstance().isOneWitness();
-      logger.info("useOneWitness", isOneWitness);
 
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
@@ -278,7 +277,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
 
       if (!isOneWitness) {
-        logger.info("here is witness", isOneWitness);
+        logger.info("Allow to create witness: ", isOneWitness);
         context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
       }
 
