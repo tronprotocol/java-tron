@@ -96,6 +96,8 @@ public class RevokingDbWithCacheOldValueTest {
 
   @Test
   public synchronized void testUndo() throws RevokingStoreIllegalStateException {
+    revokingDatabase = new TestRevokingTronDatabase();
+    revokingDatabase.enable();
     revokingDatabase.getStack().clear();
     TestRevokingTronStore tronDatabase = new TestRevokingTronStore(
         "testrevokingtronstore-testUndo", revokingDatabase);
