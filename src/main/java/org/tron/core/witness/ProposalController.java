@@ -226,6 +226,10 @@ public class ProposalController {
           manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
           break;
         }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity0_5_10(entry.getValue());
+          break;
+        }
         default:
           break;
       }
