@@ -1,8 +1,10 @@
-
-PassFlag=`curl -s 'https://sonarcloud.io/api/project_badges/measure?project=java-tron&metric=alert_status'|grep -A4 "quality gate"|grep "pass"|wc -l`
-echo "Please visit https://sonarcloud.io/dashboard?id=java-tron for more details"
-if [ $PassFlag -eq 0 ]; then
+echo "current branch is : "$BUILDKITE_PIPELINE_DEFAULT_BRANCH
+SonarStatus_Url="https://sonarcloud.io/api/qualitygates/project_status?projectKey=java-tron&branch="$BUILDKITE_PIPELINE_DEFAULT_BRANCH
+Status=`curl -s $SonarStatus_Url | jq '.projectStatus.status'`
+echo "current branch sonarcloud status is : "$Status
+if [ "$Status"x = "ERROR"x ]; then
     echo "Sonar Check Failed"
+    echo "Please visit https://sonarcloud.io/dashboard?branch="$BUILDKITE_PIPELINE_DEFAULT_BRANCH"&id=java-tron for more details"
     exit 1
 else
     echo "Sonar Check Pass"
