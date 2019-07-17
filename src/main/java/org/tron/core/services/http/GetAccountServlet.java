@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,7 @@ import org.tron.protos.Protocol.Account;
 
 @Component
 @Slf4j(topic = "API")
-public class GetAccountServlet extends HttpServlet {
+public class GetAccountServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -48,6 +47,8 @@ public class GetAccountServlet extends HttpServlet {
       jsonObject.put("address", address);
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
 
+      Thread.sleep(10000);
+      System.out.println("invoke servlet");
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
         if (visible) {
