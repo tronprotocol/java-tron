@@ -42,7 +42,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private TransactionCapsule tx;
   private ShieldedTransferContract shieldedTransferContract;
-  public static String zenTokenId = Args.getInstance().getZenTokenId();
+  public static final String zenTokenId = Args.getInstance().getZenTokenId();
 
   ShieldedTransferActuator(Any contract, Manager dbManager, TransactionCapsule tx) {
     super(contract, dbManager);
@@ -63,12 +63,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
       dbManager.adjustAssetBalanceV2(dbManager.getAccountStore().getBlackhole().createDbKey(),
           zenTokenId, shieldedTransactionFee);
-    } catch (BalanceInsufficientException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      ret.setShieldedTransactionFee(shieldedTransactionFee);
-      throw new ContractExeException(e.getMessage());
-    } catch (InvalidProtocolBufferException e) {
+    } catch (BalanceInsufficientException|InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       ret.setShieldedTransactionFee(shieldedTransactionFee);
@@ -88,12 +83,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
       dbManager.adjustTotalShieldedPoolValue(
           Math.addExact(Math.subtractExact(shieldedTransferContract.getToAmount(),
               shieldedTransferContract.getFromAmount()), shieldedTransactionFee));
-    } catch (ArithmeticException e) {
-      logger.debug(e.getMessage(), e);
-      ret.setStatus(fee, code.FAILED);
-      ret.setShieldedTransactionFee(shieldedTransactionFee);
-      throw new ContractExeException(e.getMessage());
-    } catch (BalanceInsufficientException e) {
+    } catch (ArithmeticException|BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       ret.setShieldedTransactionFee(shieldedTransactionFee);

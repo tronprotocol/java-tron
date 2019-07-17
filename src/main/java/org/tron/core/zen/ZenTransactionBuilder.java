@@ -63,7 +63,7 @@ public class ZenTransactionBuilder {
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
     spends.add(spendDescriptionInfo);
-    valueBalance += spendDescriptionInfo.note.value;
+    valueBalance += spendDescriptionInfo.note.getValue();
   }
 
   public void addSpend(
@@ -72,7 +72,7 @@ public class ZenTransactionBuilder {
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) throws ZksnarkException {
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
-    valueBalance += note.value;
+    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -82,7 +82,7 @@ public class ZenTransactionBuilder {
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(expsk, note, alpha, anchor, voucher));
-    valueBalance += note.value;
+    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -94,7 +94,7 @@ public class ZenTransactionBuilder {
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
     spends.add(new SpendDescriptionInfo(ak, nsk, ovk, note, alpha, anchor, voucher));
-    valueBalance += note.value;
+    valueBalance += note.getValue();
   }
 
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
@@ -236,10 +236,10 @@ public class ZenTransactionBuilder {
         new SpendProofParams(ctx,
             ak,
             nsk,
-            spend.note.d.getData(),
-            spend.note.rcm,
+            spend.note.getD().getData(),
+            spend.note.getRcm(),
             spend.alpha,
-            spend.note.value,
+            spend.note.getValue(),
             spend.anchor,
             voucherPath,
             cv,
@@ -264,23 +264,23 @@ public class ZenTransactionBuilder {
       throw new ZksnarkException("Output is invalid");
     }
 
-    Optional<NotePlaintextEncryptionResult> res = output.getNote().encrypt(output.getNote().pkD);
+    Optional<NotePlaintextEncryptionResult> res = output.getNote().encrypt(output.getNote().getPkD());
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
 
     NotePlaintextEncryptionResult enc = res.get();
-    NoteEncryption encryptor = enc.noteEncryption;
+    NoteEncryption encryptor = enc.getNoteEncryption();
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     if (!JLibrustzcash.librustzcashSaplingOutputProof(
         new OutputProofParams(ctx,
-            encryptor.esk,
-            output.getNote().d.data,
-            output.getNote().pkD,
-            output.getNote().rcm,
-            output.getNote().value,
+            encryptor.getEsk(),
+            output.getNote().getD().getData(),
+            output.getNote().getPkD(),
+            output.getNote().getRcm(),
+            output.getNote().getValue(),
             cv,
             zkProof))) {
       throw new ZksnarkException("Output proof failed");
@@ -289,30 +289,45 @@ public class ZenTransactionBuilder {
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
     receiveDescriptionCapsule.setNoteCommitment(cm);
-    receiveDescriptionCapsule.setEpk(encryptor.epk);
-    receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
+    receiveDescriptionCapsule.setEpk(encryptor.getEpk());
+    receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
 
     OutgoingPlaintext outPlaintext =
-        new OutgoingPlaintext(output.getNote().pkD, encryptor.esk);
+        new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
     receiveDescriptionCapsule.setCOut(outPlaintext
         .encrypt(output.ovk, receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),
-            encryptor).data);
+            encryptor).getData());
     return receiveDescriptionCapsule;
   }
 
   public static class SpendDescriptionInfo {
 
-    public ExpandedSpendingKey expsk;
-    public Note note;
-    public byte[] alpha;
-    public byte[] anchor;
-    public IncrementalMerkleVoucherContainer voucher;
-
-    public byte[] ak;
-    public byte[] nsk;
-    public byte[] ovk;
+    @Getter
+    @Setter
+    private ExpandedSpendingKey expsk;
+    @Getter
+    @Setter
+    private Note note;
+    @Getter
+    @Setter
+    private byte[] alpha;
+    @Getter
+    @Setter
+    private byte[] anchor;
+    @Getter
+    @Setter
+    private IncrementalMerkleVoucherContainer voucher;
+    @Getter
+    @Setter
+    private byte[] ak;
+    @Getter
+    @Setter
+    private byte[] nsk;
+    @Getter
+    @Setter
+    private byte[] ovk;
 
     public SpendDescriptionInfo(
         ExpandedSpendingKey expsk,

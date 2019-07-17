@@ -5,6 +5,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
@@ -15,7 +18,9 @@ import org.tron.protos.Contract.PedersenHash;
 @Slf4j
 public class IncrementalMerkleTreeContainer {
 
-  public static Integer DEPTH = 32;
+  @Getter
+  @Setter
+  private static Integer DEPTH = 32;
 
   private IncrementalMerkleTreeCapsule treeCapsule;
 
@@ -310,15 +315,18 @@ public class IncrementalMerkleTreeContainer {
 
   public static class EmptyMerkleRoots {
 
-    public static EmptyMerkleRoots emptyMerkleRootsInstance = new EmptyMerkleRoots();
+    @Setter
+    @Getter
+    private static EmptyMerkleRoots emptyMerkleRootsInstance = new EmptyMerkleRoots();
     private List<PedersenHashCapsule> emptyRoots = new ArrayList<>();
 
     public EmptyMerkleRoots() {
       try {
         emptyRoots.add(PedersenHashCapsule.uncommitted());
         for (int d = 1; d <= DEPTH; d++) {
-          emptyRoots.add(PedersenHashCapsule.combine(
-              emptyRoots.get(d - 1).getInstance(), emptyRoots.get(d - 1).getInstance(), d - 1));
+          PedersenHash a = emptyRoots.get(d - 1).getInstance();
+          PedersenHash b = emptyRoots.get(d - 1).getInstance();
+          emptyRoots.add(PedersenHashCapsule.combine(a, b, d - 1));
         }
       } catch (ZksnarkException e) {
         logger.error("generate EmptyMerkleRoots error!", e);

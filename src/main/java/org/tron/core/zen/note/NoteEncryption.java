@@ -9,7 +9,8 @@ import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
-import org.tron.common.utils.ByteArray;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
@@ -25,12 +26,14 @@ import org.tron.core.zen.note.NoteEncryption.Encryption.OutPlaintext;
 public class NoteEncryption {
 
   // Ephemeral public key
-  public byte[] epk;
+  @Getter
+  private byte[] epk;
   // Ephemeral secret key
-  public byte[] esk;
+  @Getter
+  private byte[] esk;
 
-  public boolean alreadyEncryptedEnc;
-  public boolean alreadyEncryptedOut;
+  private boolean alreadyEncryptedEnc;
+  private boolean alreadyEncryptedOut;
 
   public NoteEncryption(byte[] epk, byte[] esk) {
     this.epk = epk;
@@ -48,7 +51,7 @@ public class NoteEncryption {
     byte[] esk = new byte[32];
     JLibrustzcash.librustzcashSaplingGenerateR(esk);
     if (!JLibrustzcash
-        .librustzcashSaplingKaDerivepublic(new KaDerivepublicParams(d.data, esk, epk))) {
+        .librustzcashSaplingKaDerivepublic(new KaDerivepublicParams(d.getData(), esk, epk))) {
       return Optional.empty();
     }
     return Optional.of(new NoteEncryption(epk, esk));
@@ -75,7 +78,7 @@ public class NoteEncryption {
 
     byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
     //generate kEnc by sharedsecret and epk
-    Encryption.KDFSapling(kEnc, dhsecret, epk);
+    Encryption.kdfSapling(kEnc, dhsecret, epk);
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     EncCiphertext ciphertext = new EncCiphertext();
     JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
@@ -100,7 +103,7 @@ public class NoteEncryption {
     }
 
     byte[] ock = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
-    Encryption.PRFOck(ock, ovk, cv, cm, epk);
+    Encryption.prfOck(ock, ovk, cv, cm, epk);
 
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     OutCiphertext ciphertext = new OutCiphertext();
@@ -123,7 +126,7 @@ public class NoteEncryption {
      * @param epk
      * @throws ZksnarkException
      */
-    public static void PRFOck(byte[] ock, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
+    public static void prfOck(byte[] ock, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
         throws ZksnarkException {
       byte[] block = new byte[128];
       System.arraycopy(ovk, 0, block, 0, 32);
@@ -142,8 +145,6 @@ public class NoteEncryption {
       ) != 0) {
         throw new ZksnarkException("hash function failure");
       }
-
-      return;
     }
   
     /**
@@ -153,7 +154,7 @@ public class NoteEncryption {
      * @param epk
      * @throws ZksnarkException
      */
-    public static void KDFSapling(byte[] kEnc, byte[] sharedsecret, byte[] epk) throws ZksnarkException {
+    public static void kdfSapling(byte[] kEnc, byte[] sharedsecret, byte[] epk) throws ZksnarkException {
       byte[] block = new byte[64];
       System.arraycopy(sharedsecret, 0, block, 0, 32);
       System.arraycopy(epk, 0, block, 32, 32);
@@ -168,8 +169,6 @@ public class NoteEncryption {
       ) != 0) {
         throw new ZksnarkException(("hash function failure"));
       }
-
-      return;
     }
   
     /**
@@ -181,7 +180,7 @@ public class NoteEncryption {
      * @return
      * @throws ZksnarkException
      */
-    public static Optional<EncPlaintext> AttemptEncDecryption(
+    public static Optional<EncPlaintext> attemptEncDecryption(
         byte[] ciphertext, byte[] ivk, byte[] epk) throws ZksnarkException {
       byte[] sharedsecret = new byte[32];
       //generate sharedsecret by epk and ivk
@@ -190,7 +189,7 @@ public class NoteEncryption {
       }
       byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       //generate kEnc by sharedsecret and epk
-      KDFSapling(kEnc, sharedsecret, epk);
+      kdfSapling(kEnc, sharedsecret, epk);
       byte[] cipher_nonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
@@ -217,7 +216,7 @@ public class NoteEncryption {
      * @return
      * @throws ZksnarkException
      */
-    public static Optional<EncPlaintext> AttemptEncDecryption(
+    public static Optional<EncPlaintext> attemptEncDecryption(
         EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pkD) throws ZksnarkException {
       byte[] sharedsecret = new byte[32];
       //generate sharedsecret by esk and pkD. esk + pkD = sharedsecret = epk + ivk
@@ -226,7 +225,7 @@ public class NoteEncryption {
       }
       byte[] kEnc = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       //generate kEnc by sharedsecret and epk
-      KDFSapling(kEnc, sharedsecret, epk);
+      kdfSapling(kEnc, sharedsecret, epk);
       byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       EncPlaintext plaintext = new EncPlaintext();
       plaintext.data = new byte[ZC_ENCPLAINTEXT_SIZE];
@@ -254,12 +253,12 @@ public class NoteEncryption {
      * @return
      * @throws ZksnarkException
      */
-    public static Optional<OutPlaintext> AttemptOutDecryption(
+    public static Optional<OutPlaintext> attemptOutDecryption(
         OutCiphertext ciphertext, byte[] ovk, byte[] cv, byte[] cm, byte[] epk)
         throws ZksnarkException {
       byte[] ock = new byte[NOTEENCRYPTION_CIPHER_KEYSIZE];
       //generate ock by ovk, cv, cm, epk
-      PRFOck(ock, ovk, cv, cm, epk);
+      prfOck(ock, ovk, cv, cm, epk);
       byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
       OutPlaintext plaintext = new OutPlaintext();
       plaintext.data = new byte[ZC_OUTPLAINTEXT_SIZE];
@@ -276,23 +275,27 @@ public class NoteEncryption {
     }
 
     public static class EncCiphertext {
-
-      public byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
+      @Getter
+      @Setter
+      private byte[] data = new byte[ZC_ENCCIPHERTEXT_SIZE]; // ZC_ENCCIPHERTEXT_SIZE
     }
 
     public static class EncPlaintext {
-
-      public byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
+      @Getter
+      @Setter
+      private byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE]; // ZC_ENCPLAINTEXT_SIZE
     }
 
     public static class OutCiphertext {
-
-      public byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
+      @Getter
+      @Setter
+      private byte[] data = new byte[ZC_OUTCIPHERTEXT_SIZE]; // ZC_OUTCIPHERTEXT_SIZE
     }
 
     public static class OutPlaintext {
-
-      public byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
+      @Getter
+      @Setter
+      private byte[] data = new byte[ZC_OUTPLAINTEXT_SIZE]; // ZC_OUTPLAINTEXT_SIZE
     }
   }
 }

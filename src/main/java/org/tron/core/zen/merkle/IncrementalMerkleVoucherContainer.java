@@ -2,14 +2,18 @@ package org.tron.core.zen.merkle;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
-
-  public static Integer DEPTH = IncrementalMerkleTreeContainer.DEPTH;
+  @Getter
+  @Setter
+  private static Integer DEPTH = IncrementalMerkleTreeContainer.getDEPTH();
 
   private IncrementalMerkleVoucherCapsule voucherCapsule;
 
@@ -75,7 +79,7 @@ public class IncrementalMerkleVoucherContainer {
   }
 
   public long position() {
-    return voucherCapsule.getTree().toMerkleTreeContainer().size() - 1;
+    return (long)(voucherCapsule.getTree().toMerkleTreeContainer().size() - 1);
   }
 
   public PedersenHash root() throws ZksnarkException {

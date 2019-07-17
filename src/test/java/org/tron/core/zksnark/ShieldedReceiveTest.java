@@ -860,24 +860,24 @@ public class ShieldedReceiveTest {
     }
 
     Optional<NotePlaintextEncryptionResult> res = output.getNote()
-        .encrypt(output.getNote().pkD);
+        .encrypt(output.getNote().getPkD());
     if (!res.isPresent()) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Failed to encrypt note");
     }
 
     NotePlaintextEncryptionResult enc = res.get();
-    NoteEncryption encryptor = enc.noteEncryption;
+    NoteEncryption encryptor = enc.getNoteEncryption();
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     if (!JLibrustzcash.librustzcashSaplingOutputProof(
         new OutputProofParams(ctx,
-            encryptor.esk,
-            output.getNote().d.data,
-            output.getNote().pkD,
-            output.getNote().rcm,
-            output.getNote().value,
+            encryptor.getEsk(),
+            output.getNote().getD().getData(),
+            output.getNote().getPkD(),
+            output.getNote().getRcm(),
+            output.getNote().getValue(),
             cv,
             zkProof))) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -887,16 +887,16 @@ public class ShieldedReceiveTest {
     ReceiveDescriptionCapsule receiveDescriptionCapsule = new ReceiveDescriptionCapsule();
     receiveDescriptionCapsule.setValueCommitment(cv);
     receiveDescriptionCapsule.setNoteCommitment(cm);
-    receiveDescriptionCapsule.setEpk(encryptor.epk);
-    receiveDescriptionCapsule.setCEnc(enc.encCiphertext);
+    receiveDescriptionCapsule.setEpk(encryptor.getEpk());
+    receiveDescriptionCapsule.setCEnc(enc.getEncCiphertext());
     receiveDescriptionCapsule.setZkproof(zkProof);
 
     OutgoingPlaintext outPlaintext =
-        new OutgoingPlaintext(output.getNote().pkD, encryptor.esk);
+        new OutgoingPlaintext(output.getNote().getPkD(), encryptor.getEsk());
     receiveDescriptionCapsule.setCOut(outPlaintext
         .encrypt(output.getOvk(), receiveDescriptionCapsule.getValueCommitment().toByteArray(),
             receiveDescriptionCapsule.getCm().toByteArray(),
-            encryptor).data);
+            encryptor).getData());
 
     Note newNote = output.getNote();
     byte[] newCm;
@@ -908,7 +908,7 @@ public class ShieldedReceiveTest {
         receiveDescriptionCapsule.setZkproof(randomUint1536());
         break;
       case D_CM:
-        newNote.d = DiversifierT.random();
+        newNote.setD(DiversifierT.random());
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -917,7 +917,7 @@ public class ShieldedReceiveTest {
         }
         break;
       case PKD_CM:
-        newNote.pkD = randomUint256();
+        newNote.setPkD(randomUint256());
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -926,7 +926,7 @@ public class ShieldedReceiveTest {
         }
         break;
       case VALUE_CM:
-        newNote.value += 10000;
+        newNote.setValue(newNote.getValue() + 10000);
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -935,7 +935,7 @@ public class ShieldedReceiveTest {
         }
         break;
       case R_CM:
-        newNote.rcm = Note.generateR();
+        newNote.setRcm(Note.generateR());
         newCm = newNote.cm();
         if (newCm == null) {
           receiveDescriptionCapsule.setNoteCommitment(ByteString.EMPTY);
@@ -1031,7 +1031,7 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(paymentAddress1, 100 * 1000000L - wallet.getShieldedTransactionFee());
-    builder.addOutput(expsk.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
+    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
         new byte[512]);
 
     return builder;
@@ -1390,9 +1390,9 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(address, (100 * 1000000L - wallet.getShieldedTransactionFee()) / 2);
     //add two same output note
-    builder.addOutput(expsk.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
+    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
         new byte[512]);
-    builder.addOutput(expsk.getOvk(), note2.d, note2.pkD, note2.value, note2.rcm,
+    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
         new byte[512]);//same output cm
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
@@ -1432,7 +1432,7 @@ public class ShieldedReceiveTest {
         .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
 
     //set value that's bigger than own
-    note.value += 10 * 1000000L; //test case of insufficient money
+    note.setValue(note.getValue() + 10 * 1000000L); //test case of insufficient money
 
     builder.addSpend(expsk, note, anchor, voucher);
 
@@ -1667,8 +1667,8 @@ public class ShieldedReceiveTest {
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
-          new SpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
-              builder.getSpends().get(i).alpha,
+          new SpendSigParams(builder.getSpends().get(i).getExpsk().getAsk(),
+              builder.getSpends().get(i).getAlpha(),
               hashOfTransaction,
               result));
       builder.getContractBuilder().getSpendDescriptionBuilder(i)
@@ -2021,7 +2021,7 @@ public class ShieldedReceiveTest {
     for (int i = 0; i < builder.getSpends().size(); i++) {
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
-          new SpendSigParams(builder.getSpends().get(i).expsk.getAsk(),
+          new SpendSigParams(builder.getSpends().get(i).getExpsk().getAsk(),
               Note.generateR(),
               //replace builder.getSpends().get(i).alpha with random alpha, should fail
               hashOfTransaction,
@@ -2111,7 +2111,7 @@ public class ShieldedReceiveTest {
       //replace with interface
       SpendAuthSigParameters spendAuthSigParameters = SpendAuthSigParameters.newBuilder()
           .setAsk(ByteString.copyFrom(expsk.getAsk())) //ask => ak
-          .setAlpha(ByteString.copyFrom(spends.get(i).alpha))
+          .setAlpha(ByteString.copyFrom(spends.get(i).getAlpha()))
           .setTxHash(ByteString.copyFrom(transactionHash.getHash()))
           .build();
       BytesMessage spendAuthSig = wallet.createSpendAuthSig(spendAuthSigParameters);
@@ -2149,8 +2149,8 @@ public class ShieldedReceiveTest {
       throws ZksnarkException, BadItemException, ContractValidateException {
     // generate input
     Note note = new Note(address, 100 * 1000000L);
-    note.rcm = ByteArray.fromHexString(
-        "eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701");
+    note.setRcm(ByteArray.fromHexString(
+        "eb1aa5dd257b9da4e4064a853dec94651be38078e29fe441a9a8075016cfa701"));
     IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
     byte[] anchor = voucher.root().getContent().toByteArray();
     dbManager.getMerkleContainer()
@@ -2274,17 +2274,17 @@ public class ShieldedReceiveTest {
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pkD))) {
+                noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000L - wallet.getShieldedTransactionFee(),
-            noteText.value);
+            noteText.getValue());
 
         byte[] resultMemo = new byte[512];
         System.arraycopy(memo, 0, resultMemo, 0, 512);
-        Assert.assertArrayEquals(resultMemo, noteText.memo);
+        Assert.assertArrayEquals(resultMemo, noteText.getMemo());
       } else {
         Assert.assertFalse(true);
       }
@@ -2357,17 +2357,17 @@ public class ShieldedReceiveTest {
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
             new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
-                noteText.d.getData(), pkD))) {
+                noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
         Assert.assertEquals(100 * 1000000L - wallet.getShieldedTransactionFee(),
-            noteText.value);
+            noteText.getValue());
 
         byte[] resultMemo = new byte[512];
         System.arraycopy(memo, 0, resultMemo, 0, 128);
-        Assert.assertArrayEquals(resultMemo, noteText.memo);
+        Assert.assertArrayEquals(resultMemo, noteText.getMemo());
       } else {
         Assert.assertFalse(true);
       }

@@ -13,7 +13,7 @@ public class DiversifierT {
 
   @Setter
   @Getter
-  public byte[] data = new byte[Constant.ZC_DIVERSIFIER_SIZE];
+  private byte[] data = new byte[Constant.ZC_DIVERSIFIER_SIZE];
 
   public DiversifierT() {
   }
