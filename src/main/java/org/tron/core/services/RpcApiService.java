@@ -969,6 +969,7 @@ public class RpcApiService implements Service {
           logger.debug("ContractValidateException: {}", e.getMessage());
         }
       } else {
+        logger.info("Not Allow to create witness (Grpc): " + isOneWitness);
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
@@ -979,6 +980,10 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
       if (!isOneWitness) {
         createTransactionExtention(request, ContractType.WitnessCreateContract, responseObserver);
+      } else {
+        logger.info("Not Allow to create witness2 (Grpc): " + isOneWitness);
+        responseObserver.onNext(null);
+        responseObserver.onCompleted();
       }
     }
 

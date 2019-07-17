@@ -956,9 +956,8 @@ public class Args {
             : Runtime.getRuntime().availableProcessors();
 
     INSTANCE.isOneWitness =
-            config.hasPath("node.isOneWitness") ? config
-                    .getBoolean("node.isOneWitness")
-                    : false;
+            config.hasPath("node.isOneWitness") && config
+                    .getBoolean("node.isOneWitness");
 
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {

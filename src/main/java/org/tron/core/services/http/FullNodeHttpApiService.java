@@ -277,8 +277,9 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAccountByIdServlet), "/getaccountbyid");
 
       if (!isOneWitness) {
-        logger.info("Allow to create witness: ", isOneWitness);
         context.addServlet(new ServletHolder(createWitnessServlet), "/createwitness");
+      } else {
+        logger.info("Not Allow to create witness (Http): " + isOneWitness);
       }
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
