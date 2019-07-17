@@ -134,7 +134,11 @@ public class HttpTestProposal001 {
             .get("key"));
     Assert.assertEquals(300000, responseContent.getJSONArray("chainParameter").getJSONObject(0)
         .get("value"));
-    Assert.assertTrue(responseContent.getJSONArray("chainParameter").size() == 31);
+    Assert.assertEquals("getCreateAccountFee",
+        responseContent.getJSONArray("chainParameter").getJSONObject(2)
+            .get("key"));
+    Assert.assertEquals(100000, responseContent.getJSONArray("chainParameter").getJSONObject(2)
+        .get("value"));
   }
 
   /**
