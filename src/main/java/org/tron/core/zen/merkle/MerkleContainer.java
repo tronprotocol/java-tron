@@ -12,8 +12,8 @@ import org.tron.core.exception.ZksnarkException;
 @Slf4j
 public class MerkleContainer {
 
-  protected static final byte[] lastTreeKey = "LAST_TREE".getBytes();
-  protected static final byte[] currentTreeKey = "CURRENT_TREE".getBytes();
+  private static final byte[] lastTreeKey = "LAST_TREE".getBytes();
+  private static final byte[] currentTreeKey = "CURRENT_TREE".getBytes();
   @Setter
   @Getter
   private Manager manager;

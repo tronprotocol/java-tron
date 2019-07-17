@@ -11,15 +11,8 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.protos.Contract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
-
-  public static Integer getDEPTH() {
-    return DEPTH;
-  }
-
-  public static void setDEPTH(Integer DEPTH) {
-    IncrementalMerkleVoucherContainer.DEPTH = DEPTH;
-  }
-
+  @Getter
+  @Setter
   private static Integer DEPTH = IncrementalMerkleTreeContainer.getDEPTH();
 
   private IncrementalMerkleVoucherCapsule voucherCapsule;
