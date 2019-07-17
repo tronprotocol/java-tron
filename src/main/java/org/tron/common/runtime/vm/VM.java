@@ -105,10 +105,8 @@ public class VM {
         }
       }
 
-      if (!VMConfig.allowTvmSolidity0_5_10()) {
-        if (op == ISCONTRACT) {
-          throw Program.Exception.invalidOpCode(program.getCurrentOp());
-        }
+      if (!VMConfig.allowTvmSolidity0_5_10() && op == ISCONTRACT) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
