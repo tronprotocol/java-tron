@@ -16,24 +16,10 @@
 package org.tron.common.crypto.zksnark;
 
 import java.math.BigInteger;
-import org.tron.common.crypto.eddsa.EdDSAPublicKey;
-import org.tron.common.crypto.eddsa.spec.EdDSANamedCurveSpec;
-import org.tron.common.crypto.eddsa.spec.EdDSANamedCurveTable;
-import org.tron.common.crypto.eddsa.spec.EdDSAPublicKeySpec;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 
 public class ZksnarkUtils {
-
-
-  public static EdDSAPublicKey byte2PublicKey(byte[] pk) {
-    EdDSANamedCurveSpec curveSpec = EdDSANamedCurveTable.getByName(EdDSANamedCurveTable.ED_25519);
-    EdDSAPublicKeySpec spec = new EdDSAPublicKeySpec(pk, curveSpec);
-    EdDSAPublicKey publicKey = new EdDSAPublicKey(spec);
-    return publicKey;
-  }
-
-
   public static void sort(byte[] bytes) {
     int len = bytes.length / 2;
     for (int i = 0; i < len; i++) {
