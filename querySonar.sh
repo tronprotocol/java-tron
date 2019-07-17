@@ -1,8 +1,10 @@
-
-PassFlag=`curl -s 'https://sonarcloud.io/api/project_badges/measure?project=java-tron&metric=alert_status'|grep -A4 "quality gate"|grep "pass"|wc -l`
-echo "Please visit https://sonarcloud.io/dashboard?id=java-tron for more details"
-if [ $PassFlag -eq 0 ]; then
+echo $BUILDKITE_PULL_REQUEST
+SonarStatus_Url="https://sonarcloud.io/api/qualitygates/project_status?projectKey=java-tron&pullRequest="$BUILDKITE_PULL_REQUEST
+Status=`curl -s $SonarStatus_Url | jq '.projectStatus.status'`
+echo $Status
+if [ "$Status"=="ERROR" ]; then
     echo "Sonar Check Failed"
+    echo "Please visit https://sonarcloud.io/dashboard?id=java-tron&pullRequest="$BUILDKITE_PULL_REQUEST" for more details"
     exit 1
 else
     echo "Sonar Check Pass"
