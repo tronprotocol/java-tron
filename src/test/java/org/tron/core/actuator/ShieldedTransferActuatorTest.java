@@ -1015,11 +1015,11 @@ public class ShieldedTransferActuatorTest {
 
       Note note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), AMOUNT,
           Note.generateR());
-      builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
+      builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(), note.getRcm(),
           new byte[512]);
       {
         note = new Note(paymentAddress.getD(), paymentAddress.getPkD(), 0, Note.generateR());
-        builderOne.addOutput(fullViewingKey.getOvk(), note.d, note.pkD, note.value, note.rcm,
+        builderOne.addOutput(fullViewingKey.getOvk(), note.getD(), note.getPkD(), note.getValue(), note.getRcm(),
             new byte[512]);
       }
       TransactionCapsule transactionCapOne = builderOne.build();

@@ -112,12 +112,12 @@ public class NoteEncDecryTest {
   public void testDecryptWithOvk() throws ZksnarkException {
     //input
     OutCiphertext outCiphertext = new OutCiphertext();
-    outCiphertext.data = new byte[]{41, -103, -114, -122, -5, 19, 19, -98, 68, 30, -102, 44, -24,
+    outCiphertext.setData(new byte[]{41, -103, -114, -122, -5, 19, 19, -98, 68, 30, -102, 44, -24,
         -23, 19, 26,
         -82, 83, -19, 49, -30, 107, -82, -41, -66, 115, -94, -89, -29, -80, 7, -64,
         25, -27, 108, -75, 91, 120, 82, -95, -121, 34, 14, -87, 33, 97, 113, 45,
         30, 47, -120, -6, 51, 55, -35, 54, -100, -60, 72, 1, 22, -97, -51, -70,
-        -72, -83, -128, 3, -15, 77, -4, 101, 104, 80, -75, 4, 24, -32, 104, 57};
+        -72, -83, -128, 3, -15, 77, -4, 101, 104, 80, -75, 4, 24, -32, 104, 57});
 
     byte[] ovk = {-91, -41, -115, 8, -94, 69, 15, -49, -44, 69, -65, 38, 15, -115, 53, -47,
         48, 54, 106, -123, 126, -12, 3, -104, 18, 20, 57, -39, -114, -72, 74, -118};
@@ -138,16 +138,16 @@ public class NoteEncDecryTest {
     byte[] esk = {-108, -3, 17, -93, 49, 22, -101, -67, 45, -22, 114, 108, -19, 89, -108, 124,
         113, 99, 88, -6, 77, 75, 53, -20, -12, 45, 29, 90, -31, -113, 100, 2};
 
-    Assert.assertArrayEquals(result.pkD, pkD);
-    Assert.assertArrayEquals(result.esk, esk);
+    Assert.assertArrayEquals(result.getPkD(), pkD);
+    Assert.assertArrayEquals(result.getEsk(), esk);
   }
 
   @Test
   public void testDecryptEncWithEpk() throws ZksnarkException {
     //input
     Encryption.EncCiphertext enc = new Encryption.EncCiphertext();
-    enc.data = new byte[]{-113, 13, -92, 109, 3, -75, -15, -79, -102, -125, -17, 25, 68, -57, 13,
-        -70,
+    enc.setData(new byte[]{
+         -113, 13, -92, 109, 3, -75, -15, -79, -102, -125, -17, 25, 68, -57, 13, -70,
         60, -3, -93, -37, 35, 31, 38, -52, -24, -125, -46, -40, 45, 37, 120, -45,
         -50, 99, -114, -22, -89, 94, 11, 119, -62, -19, -60, -90, 17, -99, 3, -5,
         77, 48, -81, -30, -1, -89, 9, -38, 94, 40, -82, -43, -55, 59, 62, -111,
@@ -183,7 +183,7 @@ public class NoteEncDecryTest {
         61, 73, -61, 39, -65, -125, -86, 64, 26, 114, -43, 74, 96, -46, -1, 30,
         105, -17, 120, -16, 18, -120, 35, 85, -5, 67, 47, -62, -49, -127, -11, -58,
         -97, -86, -23, -102, 120, -59, 26, -8, -3, 80, 23, 40, 111, -62, 85, -118,
-        -92, 84, -72, 37};
+        -92, 84, -72, 37});
 
     byte[] cmu_opt = new byte[]{-105, 84, 5, 15, -9, -62, -76, -32, -67, -117, -66, 9, 2, -85, -104,
         91,
@@ -206,15 +206,15 @@ public class NoteEncDecryTest {
 
     //output
     Optional<Note> ret2 = Note.decrypt(
-        enc, epk, outgoingPlaintext.esk, outgoingPlaintext.pkD, cmu_opt);
+        enc, epk, outgoingPlaintext.getEsk(), outgoingPlaintext.getPkD(), cmu_opt);
     Note result2 = ret2.get();
 
     byte[] rcm = new byte[]{-125, -45, 111, -44, -56, -18, -66, -59, 22, -61, -88, -50, 47, -28,
         -125, 46,
         1, -21, 87, -67, 127, -97, -100, -98, 11, -42, -116, -58, -102, 91, 15, 6};
     byte[] d = new byte[]{90, -81, -67, -95, 91, 121, 13, 56, 99, 112, 23};
-    Assert.assertArrayEquals(d, result2.d.getData());
-    Assert.assertArrayEquals(rcm, result2.rcm);
-    Assert.assertEquals(4000, result2.value);
+    Assert.assertArrayEquals(d, result2.getD().getData());
+    Assert.assertArrayEquals(rcm, result2.getRcm());
+    Assert.assertEquals(4000, result2.getValue());
   }
 }

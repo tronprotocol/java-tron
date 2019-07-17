@@ -1,6 +1,8 @@
 package org.tron.core.zen.note;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
@@ -20,11 +22,20 @@ import static org.tron.core.zen.note.ZenChainParams.*;
 
 public class Note {
 
-  public DiversifierT d;
-  public byte[] pkD; // 256
-  public long value = 0;
-  public byte[] rcm; // 256
-  public byte[] memo = new byte[ZC_MEMO_SIZE];
+  @Getter
+  @Setter
+  private DiversifierT d;
+  @Getter
+  @Setter
+  private byte[] pkD; // 256
+  @Getter
+  @Setter
+  private long value = 0;
+  @Getter
+  @Setter
+  private byte[] rcm; // 256
+  @Getter
+  private byte[] memo = new byte[ZC_MEMO_SIZE];
 
   public Note() {
     d = new DiversifierT();
@@ -137,7 +148,7 @@ public class Note {
     if (!encciphertext.isPresent()) {
       return Optional.empty();
     }
-    return Optional.of(new NotePlaintextEncryptionResult(encciphertext.get().data, enc));
+    return Optional.of(new NotePlaintextEncryptionResult(encciphertext.get().getData(), enc));
   }
 
   /**
@@ -147,10 +158,10 @@ public class Note {
    * @throws ZksnarkException
    */
   public static Note decode(NoteEncryption.Encryption.EncPlaintext encPlaintext) throws ZksnarkException {
-    byte[] data = encPlaintext.data;
+    byte[] data = encPlaintext.getData();
 
     ByteBuffer buffer = ByteBuffer.allocate(ZC_V_SIZE);
-    if (encPlaintext.data[0] != 0x01) {
+    if (encPlaintext.getData()[0] != 0x01) {
       throw new ZksnarkException("lead byte of NotePlaintext is not recognized");
     }
 
@@ -203,7 +214,7 @@ public class Note {
 
     byte[] data = new byte[ZC_ENCPLAINTEXT_SIZE];
     data[0] = 0x01;
-    System.arraycopy(d.data, 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
+    System.arraycopy(d.getData(), 0, data, ZC_NOTEPLAINTEXT_LEADING, ZC_DIVERSIFIER_SIZE);
     System.arraycopy(valueLong, 0, data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE, ZC_V_SIZE);
     System.arraycopy(rcm, 0, data, ZC_NOTEPLAINTEXT_LEADING + ZC_DIVERSIFIER_SIZE + ZC_V_SIZE, ZC_R_SIZE);
     System.arraycopy(
@@ -214,7 +225,7 @@ public class Note {
             ZC_MEMO_SIZE);
 
     NoteEncryption.Encryption.EncPlaintext ret = new NoteEncryption.Encryption.EncPlaintext();
-    ret.data = data;
+    ret.setData(data);
     return ret;
   }
 
@@ -224,7 +235,7 @@ public class Note {
   public static Optional<Note> decrypt(
           byte[] ciphertext, byte[] ivk, byte[] epk, byte[] cmu) throws ZksnarkException {
     Optional<NoteEncryption.Encryption.EncPlaintext> pt =
-            NoteEncryption.Encryption.AttemptEncDecryption(ciphertext, ivk, epk);
+            NoteEncryption.Encryption.attemptEncDecryption(ciphertext, ivk, epk);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
@@ -252,7 +263,7 @@ public class Note {
           NoteEncryption.Encryption.EncCiphertext ciphertext, byte[] epk, byte[] esk, byte[] pkD, byte[] cmu)
           throws ZksnarkException {
     Optional<NoteEncryption.Encryption.EncPlaintext> pt =
-            NoteEncryption.Encryption.AttemptEncDecryption(ciphertext, epk, esk, pkD);
+            NoteEncryption.Encryption.attemptEncDecryption(ciphertext, epk, esk, pkD);
     if (!pt.isPresent()) {
       return Optional.empty();
     }
@@ -270,8 +281,11 @@ public class Note {
 
   @AllArgsConstructor
   public class NotePlaintextEncryptionResult {
-
-    public byte[] encCiphertext;
-    public NoteEncryption noteEncryption;
+    @Getter
+    @Setter
+    private byte[] encCiphertext;
+    @Getter
+    @Setter
+    private NoteEncryption noteEncryption;
   }
 }

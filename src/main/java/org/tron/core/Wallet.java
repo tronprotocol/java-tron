@@ -2541,17 +2541,17 @@ public class Wallet {
           if (notePlaintext.isPresent()) {
             Note noteText = notePlaintext.get();
             byte[] pkD = new byte[32];
-            if (!JLibrustzcash.librustzcashIvkToPkd(new IvkToPkdParams(ivk, noteText.d.getData(),
+            if (!JLibrustzcash.librustzcashIvkToPkd(new IvkToPkdParams(ivk, noteText.getD().getData(),
                 pkD))) {
               continue;
             }
 
-            String paymentAddress = KeyIo.encodePaymentAddress(new PaymentAddress(noteText.d, pkD));
+            String paymentAddress = KeyIo.encodePaymentAddress(new PaymentAddress(noteText.getD(), pkD));
             GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                 .setPaymentAddress(paymentAddress)
-                .setValue(noteText.value)
-                .setRcm(ByteString.copyFrom(noteText.rcm))
-                .setMemo(ByteString.copyFrom(stripRightZero(noteText.memo)))
+                .setValue(noteText.getValue())
+                .setRcm(ByteString.copyFrom(noteText.getRcm()))
+                .setMemo(ByteString.copyFrom(stripRightZero(noteText.getMemo())))
                 .build();
             DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx.newBuilder().setNote(note)
                 .setTxid(ByteString.copyFrom(txid)).setIndex(index).build();
@@ -2651,7 +2651,7 @@ public class Wallet {
         for (int index = 0; index < stContract.getReceiveDescriptionList().size(); index++) {
           ReceiveDescription r = stContract.getReceiveDescription(index);
           Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
-          cOut.data = r.getCOut().toByteArray();
+          cOut.setData(r.getCOut().toByteArray());
           Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cOut,//ciphertext
               ovk,
               r.getValueCommitment().toByteArray(), //cv
@@ -2663,22 +2663,22 @@ public class Wallet {
             OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
             //decode c_enc with pkd、esk
             Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-            ciphertext.data = r.getCEnc().toByteArray();
+            ciphertext.setData(r.getCEnc().toByteArray());
             Optional<Note> foo = Note.decrypt(ciphertext,
                 r.getEpk().toByteArray(),
-                decryptedOutCtUnwrapped.esk,
-                decryptedOutCtUnwrapped.pkD,
+                decryptedOutCtUnwrapped.getEsk(),
+                decryptedOutCtUnwrapped.getPkD(),
                 r.getNoteCommitment().toByteArray());
 
             if (foo.isPresent()) {
               Note bar = foo.get();
               String paymentAddress = KeyIo.encodePaymentAddress(
-                  new PaymentAddress(bar.d, decryptedOutCtUnwrapped.pkD));
+                  new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
               GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                   .setPaymentAddress(paymentAddress)
-                  .setValue(bar.value)
-                  .setRcm(ByteString.copyFrom(bar.rcm))
-                  .setMemo(ByteString.copyFrom(stripRightZero(bar.memo)))
+                  .setValue(bar.getValue())
+                  .setRcm(ByteString.copyFrom(bar.getRcm()))
+                  .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
                   .build();
 
               DecryptNotes.NoteTx noteTx = DecryptNotes.NoteTx

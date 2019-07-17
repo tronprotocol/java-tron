@@ -55,7 +55,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
     return compressCapsule;
   }
 
-  public static void main(String[] args) throws ZksnarkException {
+  public static void main(String[] args) {
     byte[] a =
         ByteArray.fromHexString("05655316a07e6ec8c9769af54ef98b30667bfb6302b32987d552227dae86a087");
     byte[] b =
@@ -63,7 +63,12 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
 
     PedersenHash sa = PedersenHash.newBuilder().setContent(ByteString.copyFrom(a)).build();
     PedersenHash sb = PedersenHash.newBuilder().setContent(ByteString.copyFrom(b)).build();
-    PedersenHash result = combine(sa, sb, 25).getInstance();
+    PedersenHash result = null;
+    try {
+      result = combine(sa, sb, 25).getInstance();
+    } catch (ZksnarkException e) {
+      e.printStackTrace();
+    }
     // 61a50a5540b4944da27cbd9b3d6ec39234ba229d2c461f4d719bc136573bf45b
     System.out.println(ByteArray.toHexString(result.getContent().toByteArray()));
   }
