@@ -3418,8 +3418,6 @@ public class HttpMethed {
         HttpMethed.response = HttpMethed
             .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(),
                 noteTx.getIndex(), 3);
-        logger.info("response1:" + response.getStatusLine());
-        logger.info("response2:" + response.getEntity().toString());
         HttpMethed.responseContent = HttpMethed.parseResponseContent(HttpMethed.response);
         HttpMethed.printJsonContent(responseContent);
         JSONArray vouchers = HttpMethed.responseContent.getJSONArray("vouchers");
