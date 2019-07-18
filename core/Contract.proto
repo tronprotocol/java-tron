@@ -1,0 +1,256 @@
+/*
+ * java-tron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * java-tron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
+option java_outer_classname = "Contract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+import "core/Tron.proto";
+
+message AccountCreateContract {
+  bytes owner_address = 1;
+  bytes account_address = 2;
+  AccountType type = 3;
+}
+
+// Update account name. Account name is not unique now.
+message AccountUpdateContract {
+  bytes account_name = 1;
+  bytes owner_address = 2;
+}
+
+// Set account id if the account has no id. Account id is unique and case insensitive.
+message SetAccountIdContract {
+  bytes account_id = 1;
+  bytes owner_address = 2;
+}
+
+message TransferContract {
+  bytes owner_address = 1;
+  bytes to_address = 2;
+  int64 amount = 3;
+}
+
+message TransferAssetContract {
+  bytes asset_name = 1; // this field is token name before the proposal ALLOW_SAME_TOKEN_NAME is active, otherwise it is token id and token is should be in string format.
+  bytes owner_address = 2;
+  bytes to_address = 3;
+  int64 amount = 4;
+}
+
+
+message VoteAssetContract {
+  bytes owner_address = 1;
+  repeated bytes vote_address = 2;
+  bool support = 3;
+  int32 count = 5;
+}
+
+message VoteWitnessContract {
+  message Vote {
+    bytes vote_address = 1;
+    int64 vote_count = 2;
+  }
+  bytes owner_address = 1;
+  repeated Vote votes = 2;
+  bool support = 3;
+}
+
+message UpdateSettingContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+  int64 consume_user_resource_percent = 3;
+}
+
+message UpdateEnergyLimitContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+  int64 origin_energy_limit = 3;
+}
+
+message ClearABIContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+}
+
+message WitnessCreateContract {
+  bytes owner_address = 1;
+  bytes url = 2;
+}
+
+message WitnessUpdateContract {
+  bytes owner_address = 1;
+  bytes update_url = 12;
+}
+
+message AssetIssueContract {
+  string id = 41;
+
+  message FrozenSupply {
+    int64 frozen_amount = 1;
+    int64 frozen_days = 2;
+  }
+  bytes owner_address = 1;
+  bytes name = 2;
+  bytes abbr = 3;
+  int64 total_supply = 4;
+  repeated FrozenSupply frozen_supply = 5;
+  int32 trx_num = 6;
+  int32 precision = 7;
+  int32 num = 8;
+  int64 start_time = 9;
+  int64 end_time = 10;
+  int64 order = 11; // useless
+  int32 vote_score = 16;
+  bytes description = 20;
+  bytes url = 21;
+  int64 free_asset_net_limit = 22;
+  int64 public_free_asset_net_limit = 23;
+  int64 public_free_asset_net_usage = 24;
+  int64 public_latest_free_net_time = 25;
+}
+
+message ParticipateAssetIssueContract {
+  bytes owner_address = 1;
+  bytes to_address = 2;
+  bytes asset_name = 3; // this field is token name before the proposal ALLOW_SAME_TOKEN_NAME is active, otherwise it is token id and token is should be in string format.
+  int64 amount = 4; // the amount of drops
+}
+
+
+enum ResourceCode {
+  BANDWIDTH = 0x00;
+  ENERGY = 0x01;
+}
+
+message FreezeBalanceContract {
+  bytes owner_address = 1;
+  int64 frozen_balance = 2;
+  int64 frozen_duration = 3;
+
+  ResourceCode resource = 10;
+  bytes receiver_address = 15;
+}
+
+message UnfreezeBalanceContract {
+  bytes owner_address = 1;
+
+  ResourceCode resource = 10;
+  bytes receiver_address = 15;
+}
+
+message UnfreezeAssetContract {
+  bytes owner_address = 1;
+}
+
+message WithdrawBalanceContract {
+  bytes owner_address = 1;
+}
+
+message UpdateAssetContract {
+  bytes owner_address = 1;
+  bytes description = 2;
+  bytes url = 3;
+  int64 new_limit = 4;
+  int64 new_public_limit = 5;
+}
+
+message ProposalCreateContract {
+  bytes owner_address = 1;
+  map<int64, int64> parameters = 2;
+}
+
+message ProposalApproveContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+  bool is_add_approval = 3; // add or remove approval
+}
+
+message ProposalDeleteContract {
+  bytes owner_address = 1;
+  int64 proposal_id = 2;
+}
+
+message CreateSmartContract {
+  bytes owner_address = 1;
+  SmartContract new_contract = 2;
+  int64 call_token_value = 3;
+  int64 token_id = 4;
+}
+
+message TriggerSmartContract {
+  bytes owner_address = 1;
+  bytes contract_address = 2;
+  int64 call_value = 3;
+  bytes data = 4;
+  int64 call_token_value = 5;
+  int64 token_id = 6;
+}
+
+message BuyStorageContract {
+  bytes owner_address = 1;
+  int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message BuyStorageBytesContract {
+  bytes owner_address = 1;
+  int64 bytes = 2; // storage bytes for buy
+}
+
+message SellStorageContract {
+  bytes owner_address = 1;
+  int64 storage_bytes = 2;
+}
+
+message ExchangeCreateContract {
+  bytes owner_address = 1;
+  bytes first_token_id = 2;
+  int64 first_token_balance = 3;
+  bytes second_token_id = 4;
+  int64 second_token_balance = 5;
+}
+
+message ExchangeInjectContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+}
+
+message ExchangeWithdrawContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+}
+
+message ExchangeTransactionContract {
+  bytes owner_address = 1;
+  int64 exchange_id = 2;
+  bytes token_id = 3;
+  int64 quant = 4;
+  int64 expected = 5;
+}
+
+message AccountPermissionUpdateContract {
+  bytes owner_address = 1;
+  Permission owner = 2;  //Empty is invalidate
+  Permission witness = 3;//Can be empty
+  repeated Permission actives = 4;//Empty is invalidate
+}
