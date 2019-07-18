@@ -150,6 +150,8 @@ public class RpcApiService implements Service {
   @Getter
   private WalletSolidityApi walletSolidityApi = new WalletSolidityApi();
 
+  private static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+
   @Override
   public void init() {
   }
@@ -768,7 +770,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1675,7 +1677,7 @@ public class RpcApiService implements Service {
         trxExtBuilder.setResult(retBuilder);
       } catch (ContractValidateException | VMIllegalException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
         logger.warn("ContractValidateException: {}", e.getMessage());
       } catch (RuntimeException e) {
@@ -1918,7 +1920,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
@@ -1946,7 +1948,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(true).setCode(response_code.SUCCESS);
       } catch (ContractValidateException | ZksnarkException e) {
         retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()));
+            .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
         logger.debug("ContractValidateException: {}", e.getMessage());
       } catch (Exception e) {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)

@@ -116,7 +116,7 @@ public class KeyIo {
 
     if (pad && (bits > 0)) {
       ret.add((byte) ((acc << (toBits - bits)) & maxv));
-    } else if (bits >= fromBits || (byte) (((acc << (toBits - bits)) & maxv)) != 0) {
+    } else if (bits >= fromBits || (byte) ((acc << (toBits - bits)) & maxv) != 0) {
       return null;
     }
 

@@ -829,7 +829,7 @@ public class LibrustzcashParam {
       valid32Params(ivk);
       valid11Params(d);
       valid32Params(pkD);
-      if(!((ivk[31] >> 3) == 0)){
+      if((ivk[31] >> 3) != 0){
         throw new ZksnarkException("Most significant five bits of ivk shoud be 0.");
       }
     }

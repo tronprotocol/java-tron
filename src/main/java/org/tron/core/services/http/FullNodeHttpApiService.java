@@ -362,7 +362,7 @@ public class FullNodeHttpApiService implements Service {
   }
 
   private static String getParamsFile(String fileName) {
-    InputStream in = FullNodeHttpApiService.class.getClassLoader()
+    InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
     File fileOut = new File(System.getProperty("java.io.tmpdir")
         + File.separator + fileName + "." + System.currentTimeMillis());
