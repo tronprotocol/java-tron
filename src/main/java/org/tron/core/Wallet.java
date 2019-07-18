@@ -1006,12 +1006,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
         .build());
 
-    // ALLOW_TVM_CONSTANTINOPLE, // 1, 30
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmConstantinople")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
-            .build());
+    // ALLOW_TVM_CONSTANTINOPLE
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmConstantinople")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
             .setKey("getAllowTvmSolidity059")
@@ -2317,6 +2316,10 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
     VMConfig.initAllowMultiSign(
         dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    VMConfig.initAllowTvmConstantinople(
+        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
+    VMConfig.initAllowTvmSolidity0_5_10(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10());
     runtime.execute();
     runtime.go();
     runtime.finalization();
