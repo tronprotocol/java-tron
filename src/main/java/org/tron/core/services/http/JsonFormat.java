@@ -71,7 +71,8 @@ public class JsonFormat {
   private static final Pattern DIGITS = Pattern.compile(
       "[0-9]",
       Pattern.CASE_INSENSITIVE);
-
+  private static final String WRITING_STRING_BUILDER_EXCEPTION
+          = "Writing to a StringBuilder threw an IOException (should never happen).";
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
    * (This representation is the new version of the classic "ProtocolPrinter" output from the
@@ -121,9 +122,7 @@ public class JsonFormat {
       print(message, text, selfType);
       return text.toString();
     } catch (IOException e) {
-      throw new RuntimeException(
-          "Writing to a StringBuilder threw an IOException (should never happen).",
-          e);
+      throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
     }
   }
 
@@ -150,9 +149,7 @@ public class JsonFormat {
       print(message, text, true);
       return text.toString();
     } catch (IOException e) {
-      throw new RuntimeException(
-          "Writing to a StringBuilder threw an IOException (should never happen).",
-          e);
+      throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
     }
   }
 
@@ -165,9 +162,7 @@ public class JsonFormat {
       print(fields, text, selfType);
       return text.toString();
     } catch (IOException e) {
-      throw new RuntimeException(
-          "Writing to a StringBuilder threw an IOException (should never happen).",
-          e);
+      throw new RuntimeException(WRITING_STRING_BUILDER_EXCEPTION, e);
     }
   }
 

@@ -164,18 +164,19 @@ public class Bech32 {
     }
     for (int i = 0; i < str.length(); ++i) {
       char c = str.charAt(i);
+      String exceptionMsg = "InvalidCharacter(" + c + ", " + i + ")";
       if (c < 33 || c > 126) {
-        throw new IllegalArgumentException("InvalidCharacter(" + c + ", " + i + ")");
+        throw new IllegalArgumentException(exceptionMsg);
       }
       if (c >= 'a' && c <= 'z') {
         if (upper) {
-          throw new IllegalArgumentException("InvalidCharacter(" + c + ", " + i + ")");
+          throw new IllegalArgumentException(exceptionMsg);
         }
         lower = true;
       }
       if (c >= 'A' && c <= 'Z') {
         if (lower) {
-          throw new IllegalArgumentException("InvalidCharacter(" + c + ", " + i + ")");
+          throw new IllegalArgumentException(exceptionMsg);
         }
         upper = true;
       }

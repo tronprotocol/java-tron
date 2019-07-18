@@ -274,9 +274,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
     try {
       return hashShieldTransaction(tx);
-    } catch (ContractValidateException e) {
-      logger.debug(e.getMessage(), e);
-    } catch (InvalidProtocolBufferException e) {
+    } catch (ContractValidateException|InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }
     return null;
@@ -821,17 +819,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  private boolean isShieldedTransferTransaction() {
-    Any contractParameter = this.getInstance().getRawData().getContract(0).getParameter();
-    return contractParameter.is(ShieldedTransferContract.class);
-  }
-
   /**
    * validate signature
    */
   public boolean validatePubSignature(Manager manager)
       throws ValidateSignatureException {
-    if (isVerified == true) {
+    if (isVerified) {
       return true;
     }
     if (this.transaction.getSignatureCount() <= 0

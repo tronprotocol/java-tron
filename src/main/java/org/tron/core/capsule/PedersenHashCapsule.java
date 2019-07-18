@@ -47,7 +47,7 @@ public class PedersenHashCapsule implements ProtoCapsule<PedersenHash> {
   public static PedersenHashCapsule uncommitted() throws ZksnarkException {
     byte[] res = new byte[32];
 
-    JLibrustzcash.librustzcash_tree_uncommitted(res);
+    JLibrustzcash.librustzcashTreeUncommitted(res);
 
     PedersenHashCapsule compressCapsule = new PedersenHashCapsule();
     compressCapsule.setContent(ByteString.copyFrom(res));
