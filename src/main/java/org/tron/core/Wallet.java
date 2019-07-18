@@ -403,7 +403,7 @@ public class Wallet {
 
     try {
       BlockId blockId = dbManager.getHeadBlockId();
-      if (Args.getInstance().getTrxReferenceBlock().equals("solid")) {
+      if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
         blockId = dbManager.getSolidBlockId();
       }
       trx.setReference(blockId.getNum(), blockId.getBytes());
@@ -901,11 +901,6 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getUpdateAccountPermissionFee")
-        .setValue(dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee())
-        .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowAccountStateRoot")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowAccountStateRoot())
         .build());
@@ -1300,10 +1295,12 @@ public class Wallet {
 
     nodeHandlerMap.entrySet().stream()
         .forEach(v -> {
-          org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
+          org.tron.common.overlay.discover.node.Node node = v.getValue()
+              .getNode();
           nodeListBuilder.addNodes(Node.newBuilder().setAddress(
               Address.newBuilder()
-                  .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
+                  .setHost(ByteString
+                      .copyFrom(ByteArray.fromString(node.getHost())))
                   .setPort(node.getPort())));
         });
     return nodeListBuilder.build();
@@ -1317,19 +1314,23 @@ public class Wallet {
     return trxCap.getInstance();
   }
 
-  public Transaction triggerContract(TriggerSmartContract triggerSmartContract,
+  public Transaction triggerContract(TriggerSmartContract
+      triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     ContractStore contractStore = dbManager.getContractStore();
-    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
+    byte[] contractAddress = triggerSmartContract.getContractAddress()
+        .toByteArray();
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
-      throw new ContractValidateException("No contract or not a smart contract");
+      throw new ContractValidateException(
+          "No contract or not a smart contract");
     }
 
-    byte[] selector = getSelector(triggerSmartContract.getData().toByteArray());
+    byte[] selector = getSelector(
+        triggerSmartContract.getData().toByteArray());
 
     if (isConstant(abi, selector)) {
       return callConstantContract(trxCap, builder, retBuilder);
@@ -1338,17 +1339,21 @@ public class Wallet {
     }
   }
 
-  public Transaction triggerConstantContract(TriggerSmartContract triggerSmartContract,
+  public Transaction triggerConstantContract(TriggerSmartContract
+      triggerSmartContract,
       TransactionCapsule trxCap, Builder builder,
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     ContractStore contractStore = dbManager.getContractStore();
-    byte[] contractAddress = triggerSmartContract.getContractAddress().toByteArray();
-    byte[] isContractExiste = contractStore.findContractByHash(contractAddress);
+    byte[] contractAddress = triggerSmartContract.getContractAddress()
+        .toByteArray();
+    byte[] isContractExiste = contractStore
+        .findContractByHash(contractAddress);
 
     if (ArrayUtils.isEmpty(isContractExiste)) {
-      throw new ContractValidateException("No contract or not a smart contract");
+      throw new ContractValidateException(
+          "No contract or not a smart contract");
     }
 
     if (!Args.getInstance().isSupportConstant()) {
@@ -1358,7 +1363,8 @@ public class Wallet {
     return callConstantContract(trxCap, builder, retBuilder);
   }
 
-  public Transaction callConstantContract(TransactionCapsule trxCap, Builder builder,
+  public Transaction callConstantContract(TransactionCapsule trxCap, Builder
+      builder,
       Return.Builder retBuilder)
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
@@ -1368,19 +1374,26 @@ public class Wallet {
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
     Block headBlock;
-    List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore().getBlockByLatestNum(1);
+    List<BlockCapsule> blockCapsuleList = dbManager.getBlockStore()
+        .getBlockByLatestNum(1);
     if (CollectionUtils.isEmpty(blockCapsuleList)) {
       throw new HeaderNotFound("latest block not found");
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(), new BlockCapsule(headBlock), deposit,
+    Runtime runtime = new RuntimeImpl(trxCap.getInstance(),
+        new BlockCapsule(headBlock), deposit,
         new ProgramInvokeFactoryImpl(), true);
     VMConfig.initVmHardFork();
     VMConfig.initAllowTvmTransferTrc10(
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowMultiSign(dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    VMConfig.initAllowMultiSign(
+        dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    VMConfig.initAllowTvmConstantinople(
+        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
+    VMConfig.initAllowTvmSolidity0_5_10(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10());
     runtime.execute();
     runtime.go();
     runtime.finalization();
@@ -1398,11 +1411,14 @@ public class Wallet {
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
-      retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
+      retBuilder
+          .setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()))
+          .build();
     }
     if (runtime.getResult().isRevert()) {
       ret.setStatus(0, code.FAILED);
-      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed")).build();
+      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
+          .build();
     }
     trxCap.setResult(ret);
     return trxCap.getInstance();
@@ -1425,7 +1441,6 @@ public class Wallet {
     return null;
   }
 
-
   private static byte[] getSelector(byte[] data) {
     if (data == null ||
         data.length < 4) {
@@ -1439,7 +1454,8 @@ public class Wallet {
 
   private static boolean isConstant(SmartContract.ABI abi, byte[] selector) {
 
-    if (selector == null || selector.length != 4 || abi.getEntrysList().size() == 0) {
+    if (selector == null || selector.length != 4
+        || abi.getEntrysList().size() == 0) {
       return false;
     }
 
@@ -1463,7 +1479,9 @@ public class Wallet {
       sb.append(")");
 
       byte[] funcSelector = new byte[4];
-      System.arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0, 4);
+      System
+          .arraycopy(Hash.sha3(sb.toString().getBytes()), 0, funcSelector, 0,
+              4);
       if (Arrays.equals(funcSelector, selector)) {
         if (entry.getConstant() == true || entry.getStateMutability()
             .equals(StateMutabilityType.View)) {
@@ -1489,17 +1507,20 @@ public class Wallet {
       return null;
     }
 
-    long latestProposalNum = dbManager.getDynamicPropertiesStore().getLatestProposalNum();
+    long latestProposalNum = dbManager.getDynamicPropertiesStore()
+        .getLatestProposalNum();
     if (latestProposalNum <= offset) {
       return null;
     }
-    limit = limit > PROPOSAL_COUNT_LIMIT_MAX ? PROPOSAL_COUNT_LIMIT_MAX : limit;
+    limit =
+        limit > PROPOSAL_COUNT_LIMIT_MAX ? PROPOSAL_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
     end = end > latestProposalNum ? latestProposalNum : end;
     ProposalList.Builder builder = ProposalList.newBuilder();
 
     ImmutableList<Long> rangeList = ContiguousSet
-        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs())
+        .asList();
     rangeList.stream().map(ProposalCapsule::calculateDbKey).map(key -> {
       try {
         return dbManager.getProposalStore().get(key);
@@ -1507,27 +1528,30 @@ public class Wallet {
         return null;
       }
     }).filter(Objects::nonNull)
-        .forEach(proposalCapsule -> builder.addProposals(proposalCapsule.getInstance()));
+        .forEach(proposalCapsule -> builder
+            .addProposals(proposalCapsule.getInstance()));
     return builder.build();
   }
 
   public ExchangeList getPaginatedExchangeList(long offset, long limit) {
-
     if (limit < 0 || offset < 0) {
       return null;
     }
 
-    long latestExchangeNum = dbManager.getDynamicPropertiesStore().getLatestExchangeNum();
+    long latestExchangeNum = dbManager.getDynamicPropertiesStore()
+        .getLatestExchangeNum();
     if (latestExchangeNum <= offset) {
       return null;
     }
-    limit = limit > EXCHANGE_COUNT_LIMIT_MAX ? EXCHANGE_COUNT_LIMIT_MAX : limit;
+    limit =
+        limit > EXCHANGE_COUNT_LIMIT_MAX ? EXCHANGE_COUNT_LIMIT_MAX : limit;
     long end = offset + limit;
     end = end > latestExchangeNum ? latestExchangeNum : end;
 
     ExchangeList.Builder builder = ExchangeList.newBuilder();
     ImmutableList<Long> rangeList = ContiguousSet
-        .create(Range.openClosed(offset, end), DiscreteDomain.longs()).asList();
+        .create(Range.openClosed(offset, end), DiscreteDomain.longs())
+        .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
         return dbManager.getExchangeStoreFinal().get(key);
@@ -1537,6 +1561,6 @@ public class Wallet {
     }).filter(Objects::nonNull)
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
-
   }
 }
+
