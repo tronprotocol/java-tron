@@ -277,7 +277,7 @@ public class JLibrustzcash {
    * @param result uncommitted value, 32 bytes
    * @throws ZksnarkException
    */
-  public static void librustzcash_tree_uncommitted(byte[] result) throws ZksnarkException {
+  public static void librustzcashTreeUncommitted(byte[] result) throws ZksnarkException {
     if (!isOpenZen()) {
       return;
     }

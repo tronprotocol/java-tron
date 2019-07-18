@@ -14,14 +14,14 @@ public class ExpandedSpendingKey {
 
   @Setter
   @Getter
-  byte[] ask; // the spend authorizing key,256
+  private byte[] ask; // the spend authorizing key,256
   @Setter
   @Getter
-  byte[] nsk; // the proof authorizing key (ak, nsk),256
+  private byte[] nsk; // the proof authorizing key (ak, nsk),256
   // Let ovk be an outgoing viewing key that is intended to be able to decrypt this payment
   @Setter
   @Getter
-  byte[] ovk; // the outgoing viewing key,256
+  private byte[] ovk; // the outgoing viewing key,256
 
   public ExpandedSpendingKey() {
   }
