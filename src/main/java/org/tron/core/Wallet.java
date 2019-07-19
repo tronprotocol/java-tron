@@ -210,6 +210,7 @@ public class Wallet {
 
   private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+
   /**
    * Creates a new Wallet with a random ECKey.
    */
@@ -1006,18 +1007,17 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowProtoFilterNum())
         .build());
 
-    // ALLOW_TVM_CONSTANTINOPLE, // 1, 30
-    builder.addChainParameter(
-        Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmConstantinople")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
-            .build());
+    // ALLOW_TVM_CONSTANTINOPLE
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmConstantinople")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
+        .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmSolidity059")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
-            .build());
-    
+        .setKey("getAllowTvmSolidity059")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
+        .build());
+
     // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -1441,7 +1441,8 @@ public class Wallet {
     IncrementalMerkleTreeCapsule treeCapsule = dbManager.getMerkleTreeStore()
         .get(treeRoot);
     if (treeCapsule == null) {
-      if ("fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e".equals(ByteArray.toHexString(treeRoot))) {
+      if ("fbc2f4300c01f0b7820d00e3347c8da4ee614674376cbc45359daa54f9b5493e"
+          .equals(ByteArray.toHexString(treeRoot))) {
         treeCapsule = new IncrementalMerkleTreeCapsule();
       } else {
         throw new RuntimeException("tree is null,treeRoot:" + ByteArray.toHexString(treeRoot));
@@ -1486,7 +1487,7 @@ public class Wallet {
               witness = tree.getTreeCapsule().deepCopy()
                   .toMerkleTreeContainer().toVoucher();
             } else {
-              if (witness != null){
+              if (witness != null) {
                 witness.append(cm);
               } else {
                 throw new ZksnarkException("witness is null!");
@@ -2317,6 +2318,10 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
     VMConfig.initAllowMultiSign(
         dbManager.getDynamicPropertiesStore().getAllowMultiSign());
+    VMConfig.initAllowTvmConstantinople(
+        dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
+    VMConfig.initAllowTvmSolidity059(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
     runtime.execute();
     runtime.go();
     runtime.finalization();
@@ -2546,12 +2551,14 @@ public class Wallet {
           if (notePlaintext.isPresent()) {
             Note noteText = notePlaintext.get();
             byte[] pkD = new byte[32];
-            if (!JLibrustzcash.librustzcashIvkToPkd(new IvkToPkdParams(ivk, noteText.getD().getData(),
-                pkD))) {
+            if (!JLibrustzcash
+                .librustzcashIvkToPkd(new IvkToPkdParams(ivk, noteText.getD().getData(),
+                    pkD))) {
               continue;
             }
 
-            String paymentAddress = KeyIo.encodePaymentAddress(new PaymentAddress(noteText.getD(), pkD));
+            String paymentAddress = KeyIo
+                .encodePaymentAddress(new PaymentAddress(noteText.getD(), pkD));
             GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
                 .setPaymentAddress(paymentAddress)
                 .setValue(noteText.getValue())

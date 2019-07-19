@@ -658,7 +658,7 @@ public class Program {
         refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
         throw new TransferException("endowment out of long range");
       } else {
-      throw e;
+        throw e;
       }
     }
     // transfer trx validation
@@ -938,6 +938,12 @@ public class Program {
   public DataWord getBalance(DataWord address) {
     long balance = getContractState().getBalance(convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(balance);
+  }
+
+  public DataWord isContract(DataWord address) {
+    ContractCapsule contract = getContractState()
+        .getContract(convertToTronAddress(address.getLast20Bytes()));
+    return contract != null ? new DataWord(1) : new DataWord(0);
   }
 
   public DataWord getOriginAddress() {
