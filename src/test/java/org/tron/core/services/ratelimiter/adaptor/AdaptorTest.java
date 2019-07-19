@@ -24,16 +24,16 @@ public class AdaptorTest {
     IPQpsStrategy strategy1 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter1, "strategy");
 
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy1.mapParams.get("qps"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy1.getMapParams().get("qps"), "value").toString())
         == 5.0d);
-    Assert.assertTrue(strategy1.mapParams.get("notExist") == null);
+    Assert.assertTrue(strategy1.getMapParams().get("notExist") == null);
 
     String paramString2 = "qps=5xyz";
     IPQPSRateLimiterAdapter adapter2 = new IPQPSRateLimiterAdapter(paramString2);
     IPQpsStrategy strategy2 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter2, "strategy");
 
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy2.mapParams.get("qps"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy2.getMapParams().get("qps"), "value").toString())
         .equals(IPQpsStrategy.DEFAULT_IPQPS));
   }
 
@@ -44,7 +44,7 @@ public class AdaptorTest {
 
     IPQpsStrategy strategy = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy.mapParams.get("qps"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"), "value").toString())
         == 5.0d);
 
     long t0 = System.currentTimeMillis();
@@ -76,7 +76,7 @@ public class AdaptorTest {
     GlobalPreemptibleStrategy strategy1 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter1, "strategy");
     Assert.assertTrue(Integer
-        .valueOf(ReflectUtils.getFieldValue(strategy1.mapParams.get("permit"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"), "value").toString())
         == 1);
     boolean first = strategy1.acquire();
     Assert.assertTrue(first);
@@ -93,7 +93,7 @@ public class AdaptorTest {
     GlobalPreemptibleStrategy strategy2 = (GlobalPreemptibleStrategy) ReflectUtils
         .getFieldObject(adapter2, "strategy");
     Assert.assertTrue(Integer
-        .valueOf(ReflectUtils.getFieldValue(strategy2.mapParams.get("permit"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"), "value").toString())
         == 3);
 
     first = strategy2.acquire();
@@ -127,7 +127,7 @@ public class AdaptorTest {
     QpsStrategy strategy = (QpsStrategy) ReflectUtils
         .getFieldObject(adapter, "strategy");
     Assert.assertTrue(Double
-        .valueOf(ReflectUtils.getFieldValue(strategy.mapParams.get("qps"), "value").toString())
+        .valueOf(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"), "value").toString())
         == 5);
     strategy.acquire();
 

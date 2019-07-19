@@ -9,8 +9,11 @@ import lombok.Getter;
 
 public class RateLimiterInitialization {
 
-  public boolean httpFlag;
-  public boolean rpcFlag;
+  @Getter
+  private boolean httpFlag;
+
+  @Getter
+  private boolean rpcFlag;
 
 
   @Getter

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public abstract class Strategy {
 
-  public Map<String, ParamItem> mapParams = new HashMap<>();
+  @Getter
+  protected Map<String, ParamItem> mapParams = new HashMap<>();
 
   protected Strategy(String paramString) {
     parseStrategyParams(paramString);
