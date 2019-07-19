@@ -32,10 +32,20 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +100,7 @@ public class PrecompiledContracts {
   private static final BN128Addition altBN128Add = new BN128Addition();
   private static final BN128Multiplication altBN128Mul = new BN128Multiplication();
   private static final BN128Pairing altBN128Pairing = new BN128Pairing();
+  private static final MultiValidateSign multiValidateSign = new MultiValidateSign();
 //  private static final VoteWitnessNative voteContract = new VoteWitnessNative();
 //  private static final FreezeBalanceNative freezeBalance = new FreezeBalanceNative();
 //  private static final UnfreezeBalanceNative unFreezeBalance = new UnfreezeBalanceNative();
@@ -123,28 +134,8 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000000007");
   private static final DataWord altBN128PairingAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000008");
-//  private static final DataWord voteContractAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010001");
-  //  private static final DataWord freezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010002");
-//  private static final DataWord unFreezeBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010003");
-//  private static final DataWord withdrawBalanceAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010004");
-//  private static final DataWord proposalApproveAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010005");
-//  private static final DataWord proposalCreateAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010006");
-//  private static final DataWord proposalDeleteAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010007");
-//  private static final DataWord convertFromTronBytesAddressAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010008");
-//  private static final DataWord convertFromTronBase58AddressAddr = new DataWord(
-//      "0000000000000000000000000000000000000000000000000000000000010009");
-//  private static final DataWord transferAssetAddr = new DataWord(
-//      "000000000000000000000000000000000000000000000000000000000001000a");
-//  private static final DataWord getTransferAssetAmountAddr = new DataWord(
-//      "000000000000000000000000000000000000000000000000000000000001000b");
+  private static final DataWord multiValidateSignAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000000009");
 
   public static PrecompiledContract getContractForAddress(DataWord address) {
 
@@ -163,39 +154,9 @@ public class PrecompiledContracts {
     if (address.equals(identityAddr)) {
       return identity;
     }
-//    if (address.equals(voteContractAddr)) {
-//      return voteContract;
-//    }
-//    if (address.equals(freezeBalanceAddr)) {
-//      return freezeBalance;
-//    }
-//    if (address.equals(unFreezeBalanceAddr)) {
-//      return unFreezeBalance;
-//    }
-//    if (address.equals(withdrawBalanceAddr)) {
-//      return withdrawBalance;
-//    }
-//    if (address.equals(proposalApproveAddr)) {
-//      return proposalApprove;
-//    }
-//    if (address.equals(proposalCreateAddr)) {
-//      return proposalCreate;
-//    }
-//    if (address.equals(proposalDeleteAddr)) {
-//      return proposalDelete;
-//    }
-//    if (address.equals(convertFromTronBytesAddressAddr)) {
-//      return convertFromTronBytesAddress;
-//    }
-//    if (address.equals(convertFromTronBase58AddressAddr)) {
-//      return convertFromTronBase58Address;
-//    }
-//    if (address.equals(transferAssetAddr)) {
-//      return transferAsset;
-//    }
-//    if (address.equals(getTransferAssetAmountAddr)) {
-//      return getTransferAssetAmount;
-//    }
+    if (address.equals(multiValidateSignAddr)) {
+      return multiValidateSign;
+    }
 
     // Byzantium precompiles
     if (address.equals(modExpAddr)) {
@@ -210,10 +171,9 @@ public class PrecompiledContracts {
     if (address.equals(altBN128PairingAddr)) {
       return altBN128Pairing;
     }
-    //TODO:Add Proposal Control Here
-    //    if (address.equals(multiValidateSignAddr) && VMConfig.allowTvmSolidity059()) {
-    //      return multiValidateSign;
-    //    }
+    if (VMConfig.allowTvmSolidity059() && address.equals(multiValidateSignAddr)) {
+      return multiValidateSign;
+    }
 
     return null;
   }
@@ -1352,6 +1312,123 @@ public class PrecompiledContracts {
           getAssetMap().get(ByteArray.toStr(name));
 
       return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
+    }
+  }
+
+  public static class MultiValidateSign extends PrecompiledContract {
+    private static final ExecutorService workers;
+    private static final int ENGERYPERSIGN = 1500;
+
+    static {
+      workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ValidateSignTask implements Callable<Boolean> {
+
+      private CountDownLatch countDownLatch;
+      private byte[] hash;
+      private byte[] signature;
+      private byte[] address;
+
+      @Override
+      public Boolean call() {
+        try {
+          return validSign(this.signature, this.hash, this.address);
+        } finally {
+          countDownLatch.countDown();
+        }
+      }
+    }
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 6;
+      // one sign 1500, half of ecrecover
+      return (long) (cnt * ENGERYPERSIGN);
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      try {
+        return doExecute(data);
+      } catch (Throwable t) {
+        return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
+      }
+    }
+
+    private Pair<Boolean, byte[]> doExecute(byte[] data)
+        throws InterruptedException, ExecutionException {
+      DataWord[] words = DataWord.parseArray(data);
+      byte[] hash = words[0].getData();
+      byte[][] signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
+      byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE);
+      int cnt = signatures.length;
+      // add check
+      CountDownLatch countDownLatch = new CountDownLatch(cnt);
+      List<Future<Boolean>> futures = new ArrayList<>(cnt);
+
+      for (int i = 0; i < cnt; i++) {
+        Future<Boolean> future = workers
+            .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i]));
+        futures.add(future);
+      }
+      countDownLatch.await();
+      for (Future<Boolean> future : futures) {
+          if (!future.get()) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+      }
+      // all signatures have been validated successfully
+      return Pair.of(true, DataWord.ONE().getData());
+    }
+
+    private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
+      byte v;
+      byte[] r;
+      byte[] s;
+      DataWord out = null;
+      try {
+        r = Arrays.copyOfRange(sign, 0, 32);
+        s = Arrays.copyOfRange(sign, 32, 64);
+        v = sign[64];
+        if (v < 27) {
+          v += 27;
+        }
+        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+        if (v != 0 && signature.validateComponents()) {
+          out = new DataWord(ECKey.signatureToAddress(hash, signature));
+        }
+      } catch (Throwable any) {
+      }
+      return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
+          out.getLast20Bytes());
+    }
+
+    private static byte[][] extractBytes32Array(DataWord[] words, int offset) {
+      int len = words[offset].intValueSafe();
+      byte[][] bytes32Array = new byte[len][];
+      for (int i = 0; i < len; i++) {
+        bytes32Array[i] = words[offset + i + 1].getData();
+      }
+      return bytes32Array;
+    }
+
+    private static byte[][] extractBytesArray(DataWord[] words, int offset, byte[] data) {
+      int len = words[offset].intValueSafe();
+      byte[][] bytesArray = new byte[len][];
+      for (int i = 0; i < len; i++) {
+        int bytesOffset = words[offset + i + 1].intValueSafe() / DataWord.WORD_SIZE;
+        int bytesLen = words[offset + bytesOffset + 1].intValueSafe();
+        bytesArray[i] = extractBytes(data,  (bytesOffset + offset + 2) * DataWord.WORD_SIZE,
+            bytesLen);
+      }
+      return bytesArray;
+    }
+
+    private static byte[] extractBytes(byte[] data, int offset, int len) {
+      return Arrays.copyOfRange(data, offset, offset + len);
     }
   }
 }
