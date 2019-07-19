@@ -211,9 +211,9 @@ public class PrecompiledContracts {
       return altBN128Pairing;
     }
     //TODO:Add Proposal Control Here
-//    if (address.equals(multiValidateSignAddr) && VMConfig.allowTvmSolidity0_5_10()) {
-//      return multiValidateSign;
-//    }
+    //    if (address.equals(multiValidateSignAddr) && VMConfig.allowTvmSolidity059()) {
+    //      return multiValidateSign;
+    //    }
 
     return null;
   }

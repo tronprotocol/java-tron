@@ -10,15 +10,15 @@ public class PaymentAddress {
   // diversified payment address addrd = (d, pkd)
   @Setter
   @Getter
-  DiversifierT d;
+  private DiversifierT d;
   @Setter
   @Getter
-  byte[] pkD; // 256
+  private byte[] pkD; // 256
 
   public static PaymentAddress decode(byte[] data) {
     DiversifierT d = new DiversifierT();
     byte[] pkD = new byte[32];
-    System.arraycopy(data, 0, d.data, 0, 11);
+    System.arraycopy(data, 0, d.getData(), 0, 11);
     System.arraycopy(data, 11, pkD, 0, 32);
     return new PaymentAddress(d, pkD);
   }

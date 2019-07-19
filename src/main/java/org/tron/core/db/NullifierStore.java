@@ -30,9 +30,7 @@ public class NullifierStore extends TronStoreWithRevoking<BytesCapsule> {
   @Override
   public boolean has(byte[] key) {
     byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return false;
-    }
-    return true;
+
+    return !ArrayUtils.isEmpty(value);
   }
 }

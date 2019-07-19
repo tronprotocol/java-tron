@@ -629,7 +629,7 @@ public class Util {
             ShieldedTransferContract.Builder shieldedTransferContractBuilder = ShieldedTransferContract
                 .newBuilder();
             JsonFormat
-                .merge(parameter.getJSONObject("value").toJSONString(),
+                .merge(parameter.getJSONObject(VALUE).toJSONString(),
                     shieldedTransferContractBuilder, selfType);
             any = Any.pack(shieldedTransferContractBuilder.build());
             break;

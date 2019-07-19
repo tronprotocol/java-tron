@@ -31,11 +31,7 @@ public class GetAkFromAskServlet extends RateLimiterServlet {
       String hexString = ByteArray.toHexString(reply.toByteArray());
       System.out.println("b58 is: " + base58check + ", hex is: " + hexString);
 
-      if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
-      } else {
-        response.getWriter().println("{}");
-      }
+      response.getWriter().println(JsonFormat.printToString(reply, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

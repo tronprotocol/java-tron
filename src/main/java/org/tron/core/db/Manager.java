@@ -716,10 +716,9 @@ public class Manager {
       if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this)) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
-    } else if (amount > 0) {
-      if (!account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
+    } else if (amount > 0 &&
+            !account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
         throw new BalanceInsufficientException("addAssetAmount failed !");
-      }
     }
     accountStore.put(account.getAddress().toByteArray(), account);
   }
@@ -1319,7 +1318,8 @@ public class Manager {
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity0_5_10(dynamicPropertiesStore.getAllowTvmSolidity0_5_10());
+    VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
+
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();

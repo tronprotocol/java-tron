@@ -24,7 +24,6 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.SymmEncoder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -236,24 +235,6 @@ public class WalletClient {
   }
 
   /**
-   * Get a Wallet from storage.
-   */
-
-  public static WalletClient getWalletByStorage(String password) {
-    String priKeyEnced = loadPriKey();
-    if (priKeyEnced == null) {
-      return null;
-    }
-    //dec priKey
-    byte[] priKeyAscEnced = priKeyEnced.getBytes();
-    byte[] priKeyHexEnced = Hex.decode(priKeyAscEnced);
-    byte[] aesKey = getEncKey(password);
-    byte[] priKeyHexPlain = SymmEncoder.AES128EcbDec(priKeyHexEnced, aesKey);
-    String priKeyPlain = Hex.toHexString(priKeyHexPlain);
-    return new WalletClient(priKeyPlain);
-  }
-
-  /**
    * Creates a Wallet with an existing ECKey.
    */
 
@@ -267,33 +248,6 @@ public class WalletClient {
 
   public byte[] getAddress() {
     return ecKey.getAddress();
-  }
-
-  /**
-   * constructor.
-   */
-
-  public void store(String password) {
-    if (ecKey == null || ecKey.getPrivKey() == null) {
-      logger.warn("Warning: Store wallet failed, PrivKey is null !!");
-      return;
-    }
-    byte[] pwd = getPassWord(password);
-    String pwdAsc = ByteArray.toHexString(pwd);
-    byte[] privKeyPlain = ecKey.getPrivKeyBytes();
-    System.out.println("privKey:" + ByteArray.toHexString(privKeyPlain));
-    //encrypted by password
-    byte[] aseKey = getEncKey(password);
-    byte[] privKeyEnced = SymmEncoder.AES128EcbEnc(privKeyPlain, aseKey);
-    String privKeyStr = ByteArray.toHexString(privKeyEnced);
-    byte[] pubKeyBytes = ecKey.getPubKey();
-    String pubKeyStr = ByteArray.toHexString(pubKeyBytes);
-    // SAVE PASSWORD
-    FileUtil.saveData(FilePath, pwdAsc, false);//ofset:0 len:32
-    // SAVE PUBKEY
-    FileUtil.saveData(FilePath, pubKeyStr, true);//ofset:32 len:130
-    // SAVE PRIKEY
-    FileUtil.saveData(FilePath, privKeyStr, true);
   }
 
   /**

@@ -29,7 +29,6 @@ import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.ZksnarkClient;
@@ -277,8 +276,8 @@ public class SendCoinShieldTest {
     Optional<PaymentAddress> op = incomingViewingKey.address(diversifierT);
 
     Note note = new Note(op.get(), 100);
-    note.rcm = ByteArray
-        .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+    note.setRcm(ByteArray
+        .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
     IncrementalMerkleVoucherContainer voucher = createComplexMerkleVoucherContainer(note.cm());
 
@@ -365,23 +364,23 @@ public class SendCoinShieldTest {
     Note noteText = ret1.get();
     byte[] pkD = new byte[32];
     if (!JLibrustzcash.librustzcashIvkToPkd(
-        new IvkToPkdParams(incomingViewingKey.getValue(), noteText.d.getData(), pkD))) {
+        new IvkToPkdParams(incomingViewingKey.getValue(), noteText.getD().getData(), pkD))) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       return;
     }
 
     Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-    Assert.assertEquals(noteText.value, 4000);
-    Assert.assertArrayEquals(noteText.memo, memo);
+    Assert.assertEquals(noteText.getValue(), 4000);
+    Assert.assertArrayEquals(noteText.getMemo(), memo);
 
     String paymentAddressStr = KeyIo.encodePaymentAddress(
-        new PaymentAddress(noteText.d, pkD));
+        new PaymentAddress(noteText.getD(), pkD));
 
     GrpcAPI.Note grpcAPINote = GrpcAPI.Note.newBuilder()
         .setPaymentAddress(paymentAddressStr)
-        .setValue(noteText.value)
-        .setRcm(ByteString.copyFrom(noteText.rcm))
-        .setMemo(ByteString.copyFrom(noteText.memo))
+        .setValue(noteText.getValue())
+        .setRcm(ByteString.copyFrom(noteText.getRcm()))
+        .setMemo(ByteString.copyFrom(noteText.getMemo()))
         .build();
     
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -420,17 +419,17 @@ public class SendCoinShieldTest {
 
     byte[] pkd = paymentAddress2.getPkD();
     Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
-    note.rcm = ByteArray
-        .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06");
+    note.setRcm(ByteArray
+        .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06"));
     byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
-    note.memo = memo;
+    note.setMemo(memo);
 
     byte[] cmuOpt = note.cm();
     Assert.assertNotNull(cmuOpt);
 
     NotePlaintextEncryptionResult enc = note.encrypt(pkd).get();
-    NoteEncryption encryptor = enc.noteEncryption;
-    OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(note.pkD, encryptor.esk);
+    NoteEncryption encryptor = enc.getNoteEncryption();
+    OutgoingPlaintext outgoingPlaintext = new OutgoingPlaintext(note.getPkD(), encryptor.getEsk());
 
     // encrypt with ovk
     Encryption.OutCiphertext outCiphertext = outgoingPlaintext.encrypt(
@@ -444,29 +443,29 @@ public class SendCoinShieldTest {
         fullViewingKey.getOvk(),
         receiveDescription.getValueCommitment().toByteArray(),
         receiveDescription.getNoteCommitment().toByteArray(),
-        encryptor.epk
+        encryptor.getEpk()
     );
 
     if (ret2.isPresent()) {
       OutgoingPlaintext decryptedOutgoingPlaintext = ret2.get();
-      Assert.assertArrayEquals(decryptedOutgoingPlaintext.pkD, outgoingPlaintext.pkD);
-      Assert.assertArrayEquals(decryptedOutgoingPlaintext.esk, outgoingPlaintext.esk);
+      Assert.assertArrayEquals(decryptedOutgoingPlaintext.getPkD(), outgoingPlaintext.getPkD());
+      Assert.assertArrayEquals(decryptedOutgoingPlaintext.getEsk(), outgoingPlaintext.getEsk());
 
       //decrypt c_enc with pkd、esk
       Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-      ciphertext.data = enc.encCiphertext;
+      ciphertext.setData(enc.getEncCiphertext());
       Optional<Note> foo = Note
           .decrypt(ciphertext,
-                  encryptor.epk,
-                  decryptedOutgoingPlaintext.esk,
-                  decryptedOutgoingPlaintext.pkD,
+                  encryptor.getEpk(),
+                  decryptedOutgoingPlaintext.getEsk(),
+                  decryptedOutgoingPlaintext.getPkD(),
                   cmuOpt);
 
       if (foo.isPresent()) {
         Note bar = foo.get();
         //verify result
-        Assert.assertEquals(4000, bar.value);
-        Assert.assertArrayEquals(memo, bar.memo);
+        Assert.assertEquals(4000, bar.getValue());
+        Assert.assertArrayEquals(memo, bar.getMemo());
       } else {
         JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
         Assert.assertFalse(true);
@@ -542,13 +541,13 @@ public class SendCoinShieldTest {
         Note noteText = ret1.get();
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
-            new IvkToPkdParams(incomingViewingKey.getValue(), noteText.d.getData(), pkD))) {
+            new IvkToPkdParams(incomingViewingKey.getValue(), noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
         }
         Assert.assertArrayEquals(paymentAddress.getPkD(), pkD);
-        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), noteText.value);
-        Assert.assertArrayEquals(memo, noteText.memo);
+        Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), noteText.getValue());
+        Assert.assertArrayEquals(memo, noteText.getMemo());
       } else {
         Assert.assertFalse(true);
       }
@@ -616,7 +615,7 @@ public class SendCoinShieldTest {
       
       //first try to decrypt cOut with ovk, get pkd、esk
       Encryption.OutCiphertext cOut = new Encryption.OutCiphertext();
-      cOut.data = receiveDescription.getCOut().toByteArray();
+      cOut.setData(receiveDescription.getCOut().toByteArray());
       Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(
               cOut,//ciphertext
               senderOvk,
@@ -630,19 +629,19 @@ public class SendCoinShieldTest {
         OutgoingPlaintext decryptedOutgoingPlaintext = notePlaintext.get();
         
         Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-        ciphertext.data = receiveDescription.getCEnc().toByteArray();
+        ciphertext.setData(receiveDescription.getCEnc().toByteArray());
         Optional<Note> foo = Note
             .decrypt(ciphertext,
                     receiveDescription.getEpk().toByteArray(),
-                    decryptedOutgoingPlaintext.esk,
-                    decryptedOutgoingPlaintext.pkD,
+                    decryptedOutgoingPlaintext.getEsk(),
+                    decryptedOutgoingPlaintext.getPkD(),
                     receiveDescription.getNoteCommitment().toByteArray());
 
         if (foo.isPresent()) {
           Note bar = foo.get();
           //verify result
-          Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), bar.value);
-          Assert.assertArrayEquals(memo, bar.memo);
+          Assert.assertEquals(1000 * 1000000L - wallet.getShieldedTransactionFee(), bar.getValue());
+          Assert.assertArrayEquals(memo, bar.getMemo());
         } else {
           Assert.assertFalse(true);
         }
@@ -685,7 +684,7 @@ public class SendCoinShieldTest {
         .addOutput(fullViewingKey.getOvk(), paymentAddress, 4000 * 1000000L, new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
-    boolean ret = ZksnarkClient.getInstance().CheckZksnarkProof(transactionCap.getInstance(),
+    boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
         TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
         10 * 1000000
     );
@@ -716,7 +715,7 @@ public class SendCoinShieldTest {
     byte[] result = new byte[64];
     JLibrustzcash.librustzcashSaplingSpendSig(
         new SpendSigParams(expsk.getAsk(),
-            spend.alpha,
+            spend.getAlpha(),
             getHash(),
             result));
 
@@ -847,7 +846,7 @@ public class SendCoinShieldTest {
     byte[] result = new byte[64];
     JLibrustzcash.librustzcashSaplingSpendSig(
         new SpendSigParams(expsk.getAsk(),
-            builder.getSpends().get(0).alpha,
+            builder.getSpends().get(0).getAlpha(),
             getHash(),
             result));
 
@@ -899,7 +898,7 @@ public class SendCoinShieldTest {
     JSONArray array = readFile("merkle_roots_empty_sapling.json");
     for (int i = 0; i < 32; i++) {
       String string = array.getString(i);
-      EmptyMerkleRoots emptyMerkleRootsInstance = EmptyMerkleRoots.emptyMerkleRootsInstance;
+      EmptyMerkleRoots emptyMerkleRootsInstance = EmptyMerkleRoots.getEmptyMerkleRootsInstance();
       byte[] bytes = emptyMerkleRootsInstance.emptyRoot(i).getContent().toByteArray();
       Assert.assertEquals(string, ByteArray.toHexString(bytes));
     }
@@ -1618,14 +1617,14 @@ public class SendCoinShieldTest {
           voucher2);
       byte[] bytes = ByteArray
           .fromHexString("0eadb4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cbd");
-      spendDescriptionInfo.alpha = bytes;
+      spendDescriptionInfo.setAlpha(bytes);
 
       byte[] dataToBeSigned = ByteArray
           .fromHexString("0eadb4ea6533afa906673b0101343b00a6682093ccc81082d0970e5ed6f72cbd");
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
-          new SpendSigParams(spendDescriptionInfo.expsk.getAsk(),
-              spendDescriptionInfo.alpha,
+          new SpendSigParams(spendDescriptionInfo.getExpsk().getAsk(),
+              spendDescriptionInfo.getAlpha(),
               dataToBeSigned,
               result));
     }
@@ -1689,7 +1688,7 @@ public class SendCoinShieldTest {
             byte[] result = new byte[64];
             JLibrustzcash.librustzcashSaplingSpendSig(
                 new SpendSigParams(fakeAsk,
-                    this.getSpends().get(i).alpha,
+                    this.getSpends().get(i).getAlpha(),
                     dataToBeSigned,
                     result));
             this.getContractBuilder().getSpendDescriptionBuilder(i)

@@ -25,6 +25,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
+import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.merkle.MerklePath;
 import org.tron.protos.Contract.PedersenHash;
 
@@ -91,8 +92,8 @@ public class MerkleTreeTest {
 
   @Test
   public void testComplexTreePath() throws Exception {
-    IncrementalMerkleTreeContainer.DEPTH = 4;
-    EmptyMerkleRoots.emptyMerkleRootsInstance = new EmptyMerkleRoots();
+    IncrementalMerkleTreeContainer.setDEPTH(4);
+    EmptyMerkleRoots.setEmptyMerkleRootsInstance(new EmptyMerkleRoots());
 
     JSONArray root_tests = readFile("merkle_roots_sapling.json");
     JSONArray path_tests = readFile("merkle_path_sapling.json");
@@ -102,8 +103,8 @@ public class MerkleTreeTest {
 //    merkleContainer.getCurrentMerkle();
     IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeCapsule()
         .toMerkleTreeContainer();
-    tree.toVoucher().DEPTH = 4;
-    System.out.println("tree depth is "+ tree.toVoucher().DEPTH);
+    tree.toVoucher().setDEPTH(4);
+    System.out.println("tree depth is "+ IncrementalMerkleVoucherContainer.getDEPTH());
 
     // The root of the tree at this point is expected to be the root of the
     // empty tree.
@@ -126,7 +127,7 @@ public class MerkleTreeTest {
       // Witness here
       witnesses.add(tree.toVoucher().getVoucherCapsule());
 
-      System.out.println("i=" + i + ", depth is: " + tree.toVoucher().DEPTH);
+      System.out.println("i=" + i + ", depth is: " + IncrementalMerkleVoucherContainer.getDEPTH());
 
       PedersenHashCapsule test_commitment = new PedersenHashCapsule();
       byte[] bytes = ByteArray.fromHexString(commitment_tests.getString(i));
@@ -189,8 +190,8 @@ public class MerkleTreeTest {
       }
     }
 
-    IncrementalMerkleTreeContainer.DEPTH = 32;
-    tree.toVoucher().DEPTH = 32;
-    EmptyMerkleRoots.emptyMerkleRootsInstance = new EmptyMerkleRoots();
+    IncrementalMerkleTreeContainer.setDEPTH(32);
+    IncrementalMerkleVoucherContainer.setDEPTH(32);
+    EmptyMerkleRoots.setEmptyMerkleRootsInstance(new EmptyMerkleRoots());
   }
 }
