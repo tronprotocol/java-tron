@@ -1014,10 +1014,10 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-            .setKey("getAllowTvmSolidity059")
-            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
-            .build());
-    
+        .setKey("getAllowTvmSolidity059")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
+        .build());
+
     // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -2320,8 +2320,8 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmConstantinople(
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity0510(
-        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10());
+    VMConfig.initAllowTvmSolidity059(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
     runtime.execute();
     runtime.go();
     runtime.finalization();
