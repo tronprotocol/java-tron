@@ -39,6 +39,7 @@ public class GlobalPreemptibleStrategy extends Strategy {
 
     } catch (InterruptedException e) {
       logger.error("acquire permit with error: {}", e.getMessage());
+      Thread.currentThread().interrupt();
     } catch (RuntimeException e1) {
       return false;
     }

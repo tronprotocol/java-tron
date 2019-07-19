@@ -24,7 +24,7 @@ public class RateLimiterInitialization {
     for (HttpRateLimiterItem item : list) {
       httpMap.put(item.servlet, item);
     }
-    httpFlag = httpMap.size() > 0 ? true : false;
+    httpFlag = httpMap.size() > 0;
   }
 
 
@@ -32,7 +32,7 @@ public class RateLimiterInitialization {
     for (RpcRateLimiterItem item : list) {
       rpcMap.put(item.servlet, item);
     }
-    rpcFlag = rpcMap.size() > 0 ? true : false;
+    rpcFlag = rpcMap.size() > 0;
   }
 
 

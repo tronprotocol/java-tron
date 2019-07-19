@@ -111,10 +111,9 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     } catch (Exception e) {
       logger.error("Rpc Api Error: {}", e.getMessage());
     } finally {
-      if (rateLimiter != null) {
-        if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
-          ((IPreemptibleRateLimiter) rateLimiter).release();
-        }
+      if (rateLimiter != null && rateLimiter instanceof IPreemptibleRateLimiter
+          && acquireResource) {
+        ((IPreemptibleRateLimiter) rateLimiter).release();
       }
     }
 
