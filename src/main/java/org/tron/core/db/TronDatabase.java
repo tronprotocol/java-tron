@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
-import org.tron.common.storage.leveldb.RocksDbDataSourceImpl;
+import org.tron.common.storage.RocksDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.IndexHelper;
 import org.tron.core.db.common.DbSourceInter;
@@ -38,8 +38,9 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
               new WriteOptions().sync(Args.getInstance().getStorage().isDbSync()));
     } else if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       String parentName = Paths.get(Args.getInstance().getOutputDirectoryByDbName(dbName), Args.getInstance().getStorage().getDbDirectory()).toString();
+
       dbSource =
-          new RocksDbDataSourceImpl(parentName, dbName);
+          new RocksDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
     }
 
     dbSource.initDB();

@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.storage.RocksDbDataSourceImpl;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.config.args.Args;
@@ -58,7 +59,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         this.revokingDB = new Chainbase(
             new SnapshotRoot(
-                new RocksDB(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName)));
+                new RocksDB(
+                    new RocksDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName))));
       }
     } else {
       throw new RuntimeException("db version is error.");

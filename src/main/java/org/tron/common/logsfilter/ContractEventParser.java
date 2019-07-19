@@ -6,17 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.sun.org.apache.xpath.internal.operations.Mult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract.ABI;
 
