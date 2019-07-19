@@ -1391,8 +1391,8 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowMultiSign());
     VMConfig.initAllowTvmConstantinople(
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity0510(
-        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10());
+    VMConfig.initAllowTvmSolidity059(
+        dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
     runtime.execute();
     runtime.go();
     runtime.finalization();
