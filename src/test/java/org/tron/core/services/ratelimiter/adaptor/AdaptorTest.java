@@ -18,14 +18,34 @@ import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 public class AdaptorTest {
 
   @Test
+  public void testStrategy() {
+    String paramString1 = "qps=5 notExist=6";
+    IPQPSRateLimiterAdapter adapter1 = new IPQPSRateLimiterAdapter(paramString1);
+    IPQpsStrategy strategy1 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter1, "strategy");
+
+    Assert.assertTrue(Double
+        .valueOf(ReflectUtils.getFieldValue(strategy1.mapParams.get("qps"), "value").toString())
+        == 5.0d);
+    Assert.assertTrue(strategy1.mapParams.get("notExist") == null);
+
+    String paramString2 = "qps=5xyz";
+    IPQPSRateLimiterAdapter adapter2 = new IPQPSRateLimiterAdapter(paramString2);
+    IPQpsStrategy strategy2 = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter2, "strategy");
+
+    Assert.assertTrue(Double
+        .valueOf(ReflectUtils.getFieldValue(strategy2.mapParams.get("qps"), "value").toString())
+        .equals(IPQpsStrategy.DEFAULT_IPQPS));
+  }
+
+  @Test
   public void testIPQPSRateLimiterAdapter() {
     String paramString = "qps=5";
     IPQPSRateLimiterAdapter adapter = new IPQPSRateLimiterAdapter(paramString);
 
     IPQpsStrategy strategy = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
-    Assert.assertTrue(Integer
+    Assert.assertTrue(Double
         .valueOf(ReflectUtils.getFieldValue(strategy.mapParams.get("qps"), "value").toString())
-        == 5);
+        == 5.0d);
 
     long t0 = System.currentTimeMillis();
     for (int i = 0; i < 20; i++) {
@@ -106,7 +126,7 @@ public class AdaptorTest {
 
     QpsStrategy strategy = (QpsStrategy) ReflectUtils
         .getFieldObject(adapter, "strategy");
-    Assert.assertTrue(Integer
+    Assert.assertTrue(Double
         .valueOf(ReflectUtils.getFieldValue(strategy.mapParams.get("qps"), "value").toString())
         == 5);
     strategy.acquire();

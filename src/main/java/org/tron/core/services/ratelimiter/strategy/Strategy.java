@@ -14,10 +14,6 @@ public abstract class Strategy {
 
   public Map<String, ParamItem> mapParams = new HashMap<>();
 
-  public Strategy() {
-
-  }
-
   protected Strategy(String paramString) {
     parseStrategyParams(paramString);
   }
@@ -44,6 +40,8 @@ public abstract class Strategy {
             item.setValue(Double.valueOf(value));
           } else if (item.type == String.class) {
             item.setValue(value);
+          } else if (item.type == Integer.class) {
+            item.setValue(Integer.valueOf(value));
           }
         }
       }
