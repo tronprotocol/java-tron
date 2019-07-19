@@ -20,11 +20,11 @@ public class MerklePath {
     this.index = index;
   }
 
-  private static byte[] ListList2Bytes(List<List<Byte>> v) {
+  private static byte[] listList2Bytes(List<List<Byte>> v) {
     List<byte[]> resultList = Lists.newArrayList();
-    resultList.add(WriteCompactSize(v.size()));
+    resultList.add(writeCompactSize(v.size()));
     for (List<Byte> list : v) {
-      resultList.add(WriteCompactSize(list.size()));
+      resultList.add(writeCompactSize(list.size()));
       for (Byte b : list) {
         byte[] bytes = {b};
         resultList.add(bytes);
@@ -41,7 +41,7 @@ public class MerklePath {
     return resultBytes;
   }
 
-  private static byte[] WriteCompactSize(long nSize) {
+  private static byte[] writeCompactSize(long nSize) {
     byte[] result;
     if (nSize < 253) {
       result = new byte[1];
@@ -97,7 +97,7 @@ public class MerklePath {
     indexLong = convertVectorToLong(index);
     byte[] indexBytes = ByteArray.fromLong(indexLong);
     ZksnarkUtils.sort(indexBytes);
-    byte[] pathByteArray = ListList2Bytes(pathByteList);
+    byte[] pathByteArray = listList2Bytes(pathByteList);
     byte[] result = new byte[pathByteArray.length + 8];
     System.arraycopy(pathByteArray, 0, result, 0, pathByteArray.length);
     System.arraycopy(indexBytes, 0, result,

@@ -28,8 +28,6 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetAccountServlet getAccountServlet;
   @Autowired
-  private GenerateShieldAddressServlet generateShieldAddressServlet;
-  @Autowired
   private TransferServlet transferServlet;
   @Autowired
   private BroadcastServlet broadcastServlet;
@@ -232,7 +230,6 @@ public class FullNodeHttpApiService implements Service {
       server.setHandler(context);
 
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
-      context.addServlet(new ServletHolder(generateShieldAddressServlet), "/generateshieldaddress");
       context.addServlet(new ServletHolder(transferServlet), "/createtransaction");
       context.addServlet(new ServletHolder(broadcastServlet), "/broadcasttransaction");
       context.addServlet(new ServletHolder(transactionSignServlet), "/gettransactionsign");
@@ -365,7 +362,7 @@ public class FullNodeHttpApiService implements Service {
   }
 
   private static String getParamsFile(String fileName) {
-    InputStream in = FullNodeHttpApiService.class.getClassLoader()
+    InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream("params" + File.separator + fileName);
     File fileOut = new File(System.getProperty("java.io.tmpdir")
         + File.separator + fileName + "." + System.currentTimeMillis());

@@ -968,8 +968,8 @@ public class Args {
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
 
     INSTANCE.fullNodeAllowShieldedTransaction =
-        config.hasPath("node.fullNodeAllowShieldedTransaction") ?
-            config.getBoolean("node.fullNodeAllowShieldedTransaction") : true;
+            !config.hasPath("node.fullNodeAllowShieldedTransaction")
+             || config.getBoolean("node.fullNodeAllowShieldedTransaction");
 
     INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
         config.getString("node.zenTokenId") : "000000";

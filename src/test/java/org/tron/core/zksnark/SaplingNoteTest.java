@@ -87,16 +87,16 @@ public class SaplingNoteTest {
     Note note1 = new Note(address, randomInt(0, 99999));
     Note note2 = new Note(address, randomInt(0, 99999));
 
-    Assert.assertEquals(ByteArray.toHexString(note1.d.data), ByteArray.toHexString(note2.d.data));
-    Assert.assertEquals(ByteArray.toHexString(note1.pkD), ByteArray.toHexString(note2.pkD));
-    Assert.assertNotEquals(note1.value, note2.value);
-    Assert.assertNotEquals(ByteArray.toHexString(note1.rcm), ByteArray.toHexString(note2.rcm));
+    Assert.assertEquals(ByteArray.toHexString(note1.getD().getData()), ByteArray.toHexString(note2.getD().getData()));
+    Assert.assertEquals(ByteArray.toHexString(note1.getPkD()), ByteArray.toHexString(note2.getPkD()));
+    Assert.assertNotEquals(note1.getValue(), note2.getValue());
+    Assert.assertNotEquals(ByteArray.toHexString(note1.getRcm()), ByteArray.toHexString(note2.getRcm()));
 
     // Test diversifier and pkD are not the same for different spending keys
     Note note3 = new Note(SpendingKey.random().defaultAddress(), randomInt(0, 99999));
     Assert
-        .assertNotEquals(ByteArray.toHexString(note1.d.data), ByteArray.toHexString(note3.d.data));
-    Assert.assertNotEquals(ByteArray.toHexString(note1.pkD), ByteArray.toHexString(note3.pkD));
+        .assertNotEquals(ByteArray.toHexString(note1.getD().getData()), ByteArray.toHexString(note3.getD().getData()));
+    Assert.assertNotEquals(ByteArray.toHexString(note1.getPkD()), ByteArray.toHexString(note3.getPkD()));
 
 
   }

@@ -21,7 +21,7 @@ public class ZksnarkClient {
         .build());
   }
 
-  public boolean CheckZksnarkProof(Transaction transaction, byte[] sighash, long valueBalance) {
+  public boolean checkZksnarkProof(Transaction transaction, byte[] sighash, long valueBalance) {
     String txId = new TransactionCapsule(transaction).getTransactionId().toString();
     ZksnarkRequest request = ZksnarkRequest.newBuilder()
         .setTransaction(transaction)

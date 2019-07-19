@@ -417,23 +417,23 @@ public class LibrustzcashTest {
       throw new ZksnarkException("Output is invalid");
     }
 
-    Optional<NotePlaintextEncryptionResult> res = note.encrypt(note.pkD);
+    Optional<NotePlaintextEncryptionResult> res = note.encrypt(note.getPkD());
     if (!res.isPresent()) {
       throw new ZksnarkException("Failed to encrypt note");
     }
 
     NotePlaintextEncryptionResult enc = res.get();
-    NoteEncryption encryptor = enc.noteEncryption;
+    NoteEncryption encryptor = enc.getNoteEncryption();
 
     byte[] cv = new byte[32];
     byte[] zkProof = new byte[192];
     boolean result = JLibrustzcash.librustzcashSaplingOutputProof(
         new OutputProofParams(ctx,
-            encryptor.esk,
-            note.d.data,
-            note.pkD,
-            note.rcm,
-            note.value,
+            encryptor.getEsk(),
+            note.getD().getData(),
+            note.getPkD(),
+            note.getRcm(),
+            note.getValue(),
             cv,
             zkProof));
 
@@ -519,8 +519,8 @@ public class LibrustzcashTest {
         // PaymentAddress op = spendingKey.defaultAddress();
 
         Note note = new Note(op.get(), 100);
-        note.rcm = ByteArray
-            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+        note.setRcm(ByteArray
+            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
         byte[] cm = note.cm();
         if (cm != null) {
@@ -561,8 +561,8 @@ public class LibrustzcashTest {
         System.out.println("pkd is: " + ByteArray.toHexString(address.getPkD()));
 
         Note note = new Note(address, randomInt(100, 100000));
-        note.rcm = ByteArray
-            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+        note.setRcm(ByteArray
+            .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
         byte[] cm = note.cm();
         if (cm != null) {
@@ -603,8 +603,8 @@ public class LibrustzcashTest {
       // PaymentAddress op = spendingKey.defaultAddress();
 
       Note note = new Note(op.get(), randomInt(100, 100000));
-      note.rcm = ByteArray
-          .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02");
+      note.setRcm(ByteArray
+          .fromHexString("bf4b2042e3e8c4a0b390e407a79a0b46e36eff4f7bb54b2349dbb0046ee21e02"));
 
       byte[] cm = note.cm();
       System.out.println("note is " + note.cm());

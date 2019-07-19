@@ -154,8 +154,8 @@ public class TransferFailed003 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testTransferTokenInsufficientBalance(uint256,trcToken)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Long fee = infoById.get().getFee();
@@ -439,7 +439,6 @@ public class TransferFailed003 {
   @Test(enabled = true, description = "TransferToken notexist tokenID ")
   public void test5TransferTokenNotexist() {
 
-
     Account info;
 
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(contractExcAddress,
@@ -602,7 +601,6 @@ public class TransferFailed003 {
 
   @Test(enabled = true, description = "TransferToken to myself and insufficient tokenBalance")
   public void test8TransferTokenSelf() {
-
 
     Account info;
 
