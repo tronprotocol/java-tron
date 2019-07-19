@@ -1013,6 +1013,11 @@ public class Wallet {
             .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople())
             .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+            .setKey("getAllowTvmSolidity059")
+            .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059())
+            .build());
+    
     // ALLOW_ZKSNARK_TRANSACTION
     builder.addChainParameter(
         Protocol.ChainParameters.ChainParameter.newBuilder()
@@ -1026,11 +1031,6 @@ public class Wallet {
             .setKey("getShieldedTransactionFee")
             .setValue(dbManager.getDynamicPropertiesStore().getShieldedTransactionFee())
             .build());
-
-    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowTvmSolidity0_5_10")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity0_5_10())
-        .build());
 
     return builder.build();
   }
