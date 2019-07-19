@@ -47,13 +47,13 @@ public class RateLimiterInitialization {
   public static class HttpRateLimiterItem {
 
     @Getter
-    String servlet;
+    private String servlet;
 
     @Getter
-    String strategy;
+    private String strategy;
 
     @Getter
-    String params;
+    private String params;
 
     public HttpRateLimiterItem(ConfigObject asset) {
       servlet = asset.get("servlet").unwrapped().toString();
@@ -66,13 +66,13 @@ public class RateLimiterInitialization {
   public static class RpcRateLimiterItem {
 
     @Getter
-    String servlet;
+    private String servlet;
 
     @Getter
-    String strategy;
+    private String strategy;
 
     @Getter
-    String params;
+    private String params;
 
     public RpcRateLimiterItem(ConfigObject asset) {
       servlet = asset.get("servlet").unwrapped().toString();

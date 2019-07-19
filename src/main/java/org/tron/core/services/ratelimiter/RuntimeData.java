@@ -18,7 +18,7 @@ public class RuntimeData {
     } else if (o instanceof ServerCall) {
       try {
         address = ((ServerCall) o).getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR).toString();
-      } catch (NullPointerException npe) {
+      } catch (Exception npe) {
         logger.warn("the address get from the runtime data is a null value unexpected.");
       }
     }
