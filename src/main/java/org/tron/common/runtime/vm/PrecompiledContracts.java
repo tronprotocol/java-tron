@@ -1361,7 +1361,7 @@ public class PrecompiledContracts {
       byte[][] signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
       byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE);
       int cnt = signatures.length;
-      if (signatures.length != addresses.length) {
+      if (cnt == 0 || signatures.length != addresses.length) {
         return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
       }
       // add check
