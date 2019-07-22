@@ -53,7 +53,7 @@ public class RateLimiterInterceptor implements ServerInterceptor {
       RpcRateLimiterItem item = entry.getValue();
 
       String cName = item.getStrategy();
-      String port = item.getServlet();
+      String component = item.getComponent();
 
       if ("".equals(cName)) {
         continue;
@@ -71,12 +71,12 @@ public class RateLimiterInterceptor implements ServerInterceptor {
             || c == IPQPSRateLimiterAdapter.class) {
           constructor = c.getConstructor(String.class);
           obj = constructor.newInstance(params);
-          container.add(KEY_PREFIX_RPC, port, (IRateLimiter) obj);
+          container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
 
         } else {
           constructor = c.getConstructor();
           obj = constructor.newInstance();
-          container.add(KEY_PREFIX_RPC, port, (IRateLimiter) obj);
+          container.add(KEY_PREFIX_RPC, component, (IRateLimiter) obj);
         }
 
       } catch (Exception e) {

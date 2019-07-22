@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import lombok.Getter;
 
 
@@ -15,7 +16,6 @@ public class RateLimiterInitialization {
   @Getter
   private boolean rpcFlag;
 
-
   @Getter
   private Map<String, HttpRateLimiterItem> httpMap = new HashMap();
 
@@ -25,7 +25,9 @@ public class RateLimiterInitialization {
 
   public void setHttpMap(List<HttpRateLimiterItem> list) {
     for (HttpRateLimiterItem item : list) {
-      httpMap.put(item.servlet, item);
+      if (item != null) {
+        httpMap.put(item.component, item);
+      }
     }
     httpFlag = httpMap.size() > 0;
   }
@@ -33,24 +35,36 @@ public class RateLimiterInitialization {
 
   public void setRpcMap(List<RpcRateLimiterItem> list) {
     for (RpcRateLimiterItem item : list) {
-      rpcMap.put(item.servlet, item);
+      if (item != null) {
+        rpcMap.put(item.component, item);
+      }
     }
     rpcFlag = rpcMap.size() > 0;
   }
 
 
+  @Nullable
   public static HttpRateLimiterItem createHttpItem(final ConfigObject asset) {
-    return new HttpRateLimiterItem(asset);
+    try {
+      return new HttpRateLimiterItem(asset);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
+  @Nullable
   public static RpcRateLimiterItem createRpcItem(final ConfigObject asset) {
-    return new RpcRateLimiterItem(asset);
+    try {
+      return new RpcRateLimiterItem(asset);
+    } catch (Exception e) {
+      return null;
+    }
   }
 
   public static class HttpRateLimiterItem {
 
     @Getter
-    private String servlet;
+    private String component;
 
     @Getter
     private String strategy;
@@ -59,7 +73,7 @@ public class RateLimiterInitialization {
     private String params;
 
     public HttpRateLimiterItem(ConfigObject asset) {
-      servlet = asset.get("servlet").unwrapped().toString();
+      component = asset.get("component").unwrapped().toString();
       strategy = asset.get("strategy").unwrapped().toString();
       params = asset.get("paramString").unwrapped().toString();
     }
@@ -69,7 +83,7 @@ public class RateLimiterInitialization {
   public static class RpcRateLimiterItem {
 
     @Getter
-    private String servlet;
+    private String component;
 
     @Getter
     private String strategy;
@@ -78,7 +92,7 @@ public class RateLimiterInitialization {
     private String params;
 
     public RpcRateLimiterItem(ConfigObject asset) {
-      servlet = asset.get("servlet").unwrapped().toString();
+      component = asset.get("component").unwrapped().toString();
       strategy = asset.get("strategy").unwrapped().toString();
       params = asset.get("paramString").unwrapped().toString();
     }
