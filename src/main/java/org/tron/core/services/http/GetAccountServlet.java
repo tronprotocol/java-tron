@@ -47,8 +47,6 @@ public class GetAccountServlet extends RateLimiterServlet {
       jsonObject.put("address", address);
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
 
-      Thread.sleep(10000);
-      System.out.println("invoke servlet");
       Account reply = wallet.getAccount(build.build());
       if (reply != null) {
         if (visible) {
