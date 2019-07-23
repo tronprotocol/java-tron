@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 
-@Component
+//@Component
 public class CheckTmpStore extends TronDatabase<byte[]> {
 
   @Autowired

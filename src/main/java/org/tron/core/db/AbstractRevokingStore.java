@@ -101,11 +101,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
         byte[] realValue = value.length == 1 ? null : Arrays.copyOfRange(value, 1, value.length);
         if (realValue != null) {
-          dbMap.get(db).putData(realKey, realValue, WriteOptionsWrapper.getInstance()
-              .sync(Args.getInstance().getStorage().isDbSync()));
+          dbMap.get(db).putData(realKey, realValue);
         } else {
-          dbMap.get(db).deleteData(realKey, WriteOptionsWrapper.getInstance()
-              .sync(Args.getInstance().getStorage().isDbSync()));
+          dbMap.get(db).deleteData(realKey);
         }
       }
     }
