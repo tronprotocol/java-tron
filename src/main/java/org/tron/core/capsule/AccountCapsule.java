@@ -342,6 +342,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy();
   }
 
+  public void setAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setAcquiredDelegatedFrozenBalanceForEnergy(balance).build();
+
+    this.account = this.account.toBuilder()
+            .setAccountResource(newAccountResource)
+            .build();
+  }
+
   public long getDelegatedFrozenBalanceForEnergy() {
     return getAccountResource().getDelegatedFrozenBalanceForEnergy();
   }
