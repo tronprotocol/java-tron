@@ -102,7 +102,7 @@ public class Parameter {
     ALLOW_TVM_CONSTANTINOPLE, // 1, 26
     ALLOW_SHIELDED_TRANSACTION, // 1, 27
     SHIELDED_TRANSACTION_FEE, // 28
-    ALLOW_TVM_SOLIDITY_0_5_10, // 1, 29
+    ALLOW_TVM_SOLIDITY_059, // 1, 29
   }
 
   @Deprecated
