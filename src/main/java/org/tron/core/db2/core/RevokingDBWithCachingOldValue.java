@@ -8,12 +8,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
+import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.AbstractRevokingStore;
 import org.tron.core.db.RevokingStore;
-import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.IRevokingDB;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
 
 public class RevokingDBWithCachingOldValue implements IRevokingDB {
@@ -29,7 +30,9 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   // only for unit test
   public RevokingDBWithCachingOldValue(String dbName, AbstractRevokingStore revokingDatabase) {
     dbSource = new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName(dbName),
-        dbName);
+        dbName,
+        Args.getInstance().getStorage().getOptionsByDbName(dbName),
+        new WriteOptions().sync(Args.getInstance().getStorage().isDbSync()));
     dbSource.initDB();
     this.revokingDatabase = revokingDatabase;
   }
@@ -132,19 +135,5 @@ public class RevokingDBWithCachingOldValue implements IRevokingDB {
   @Override
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
     return dbSource.getValuesNext(key, limit);
-  }
-
-  @Override
-  public Set<byte[]> getValuesPrevious(byte[] key, long limit) {
-    return dbSource.getPrevious(key, limit, Long.SIZE / Byte.SIZE).values().stream()
-        .collect(Collectors.toSet());
-  }
-
-  public Map<WrappedByteArray, WrappedByteArray> getAllValues() {
-    Map<WrappedByteArray, WrappedByteArray> result = new HashMap<>();
-    dbSource.getAll().forEach((key, value) -> {
-      result.put(WrappedByteArray.of(key), WrappedByteArray.of(value));
-    });
-    return result;
   }
 }

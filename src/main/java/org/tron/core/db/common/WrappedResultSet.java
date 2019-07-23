@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import com.googlecode.cqengine.query.Query;
 import com.googlecode.cqengine.query.option.QueryOptions;
 import com.googlecode.cqengine.resultset.ResultSet;
+import org.tron.core.db2.common.WrappedByteArray;
 
 public abstract class WrappedResultSet<T> extends ResultSet<T> {
 

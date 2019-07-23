@@ -56,7 +56,7 @@ public class DefaultConfig {
       if (dbVersion == 1) {
         revokingDatabase = RevokingStore.getInstance();
       } else if (dbVersion == 2) {
-        revokingDatabase = new SnapshotManager();
+        revokingDatabase = new SnapshotManager(Args.getInstance().getOutputDirectoryByDbName("block"));
       } else {
         throw new RuntimeException("db version is error.");
       }

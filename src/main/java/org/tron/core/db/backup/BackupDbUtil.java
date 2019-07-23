@@ -11,7 +11,7 @@ import org.tron.common.utils.PropUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 
@@ -146,8 +146,8 @@ public class BackupDbUtil {
     } else {
       throw new RuntimeException("Error backup with undefined index");
     }
-    List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
-    for (RevokingDBWithCachingNewValue store : stores) {
+    List<Chainbase> stores = ((SnapshotManager) db).getDbs();
+    for (Chainbase store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
           == org.tron.core.db2.common.RocksDB.class) {
         ((org.tron.core.db2.common.RocksDB) ((SnapshotRoot) (store.getHead().getRoot())).getDb())
@@ -165,8 +165,8 @@ public class BackupDbUtil {
     } else {
       throw new RuntimeException("Error deleteBackup with undefined index");
     }
-    List<RevokingDBWithCachingNewValue> stores = ((SnapshotManager) db).getDbs();
-    for (RevokingDBWithCachingNewValue store : stores) {
+    List<Chainbase> stores = ((SnapshotManager) db).getDbs();
+    for (Chainbase store : stores) {
       if (((SnapshotRoot) (store.getHead().getRoot())).getDb().getClass()
           == org.tron.core.db2.common.RocksDB.class) {
         ((org.tron.core.db2.common.RocksDB) (((SnapshotRoot) (store.getHead().getRoot())).getDb()))

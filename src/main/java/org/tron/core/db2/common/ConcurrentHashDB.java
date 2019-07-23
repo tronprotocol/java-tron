@@ -37,7 +37,17 @@ public class ConcurrentHashDB implements DB<byte[], BytesCapsule> {
   }
 
   @Override
+  public String getDbName() {
+    return null;
+  }
+
+  @Override
   public Iterator<Entry<byte[], BytesCapsule>> iterator() {
+    return null;
+  }
+
+  @Override
+  public DB<byte[], BytesCapsule> newInstance() {
     return null;
   }
 }

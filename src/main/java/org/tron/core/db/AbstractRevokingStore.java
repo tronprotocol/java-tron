@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.iq80.leveldb.Options;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +22,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.iq80.leveldb.WriteOptions;
-import org.tron.common.storage.SourceInter;
+import org.tron.core.db.common.SourceInter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
@@ -81,7 +82,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
-        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp");
+        new LevelDbDataSourceImpl(Args.getInstance().getOutputDirectoryByDbName("tmp"), "tmp", new Options(), new WriteOptions());
     check.initDB();
 
     if (!check.allKeys().isEmpty()) {

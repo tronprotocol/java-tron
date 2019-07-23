@@ -65,4 +65,9 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
   public void put(byte[] key, BytesCapsule item) {
     super.put(key, item);
   }
+
+  @Override
+  public DB<byte[], BytesCapsule> newInstance() {
+    return null;
+  }
 }
