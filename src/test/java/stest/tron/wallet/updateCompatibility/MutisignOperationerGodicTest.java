@@ -92,7 +92,7 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test01MutiSignGodicAccountTypeTransaction() {
-  //1.转账，冻结，账户相关类交易
+    //1.转账，冻结，账户相关类交易
 
   }
 
@@ -112,11 +112,8 @@ public class MutisignOperationerGodicTest {
   public void tes04MutiSignGodicProposalTypeTransaction() {
     //4.提案类型交易
 
-
     //剩下都wintess相关，智能合约相关，陆续自己建吧
   }
-
-
 
 
   /**
