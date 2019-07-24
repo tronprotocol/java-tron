@@ -88,7 +88,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
       throws ServletException, IOException {
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
-    boolean acquireResource = false;
+    boolean acquireResource = true;
 
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(new RuntimeData(req));

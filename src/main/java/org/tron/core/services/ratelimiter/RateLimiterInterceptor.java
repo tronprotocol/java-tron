@@ -1,5 +1,6 @@
 package org.tron.core.services.ratelimiter;
 
+import io.grpc.ForwardingServerCallListener.SimpleForwardingServerCallListener;
 import io.grpc.Metadata;
 import io.grpc.Server;
 import io.grpc.ServerCall;
@@ -92,7 +93,7 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
-    boolean acquireResource = false;
+    boolean acquireResource = true;
 
     if (rateLimiter != null) {
       acquireResource = rateLimiter.acquire(new RuntimeData(call));
@@ -104,16 +105,30 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     try {
       if (acquireResource) {
         call.setMessageCompression(true);
-        listener = next.startCall(call, headers);
+        ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
+
+        listener = new SimpleForwardingServerCallListener<ReqT>(delegate) {
+          @Override
+          public void onComplete() {
+            // must release the permit to avoid the leak of permit.
+            if (rateLimiter instanceof IPreemptibleRateLimiter) {
+              ((IPreemptibleRateLimiter) rateLimiter).release();
+            }
+          }
+
+          @Override
+          public void onCancel() {
+            // must release the permit to avoid the leak of permit.
+            if (rateLimiter instanceof IPreemptibleRateLimiter) {
+              ((IPreemptibleRateLimiter) rateLimiter).release();
+            }
+          }
+        };
       } else {
         call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
       }
     } catch (Exception e) {
       logger.error("Rpc Api Error: {}", e.getMessage());
-    } finally {
-      if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
-        ((IPreemptibleRateLimiter) rateLimiter).release();
-      }
     }
 
     return listener;
