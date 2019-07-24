@@ -4661,7 +4661,8 @@ public class PublicMethedForMutiSign {
       long fromAmount,ShieldAddressInfo shieldAddressInfo,
       NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress, long toAmount, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull, String[] permissionKeyString) {
+      WalletGrpc.WalletBlockingStub blockingStubFull, Integer permission_id,
+      String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -4775,6 +4776,13 @@ public class PublicMethedForMutiSign {
           any.unpack(Contract.ShieldedTransferContract.class);
       if (shieldedTransferContract.getFromAmount() > 0
           || fromAmount == 321321) {
+        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
+        Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
+            .setPermissionId(permission_id);
+        raw.clearContract();
+        raw.addContract(contract);
+        transaction = transaction.toBuilder().setRawData(raw).build();
+
         transaction = signTransactionForShield(transaction,blockingStubFull,permissionKeyString);
         System.out.println(
             "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
