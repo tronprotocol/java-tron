@@ -7,6 +7,7 @@ import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -48,6 +49,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -144,6 +146,8 @@ public class ShieldedReceiveTest {
    */
   @BeforeClass
   public static void init() {
+    FileUtil.deleteDir(new File(dbPath));
+
     wallet = context.getBean(Wallet.class);
     dbManager = context.getBean(Manager.class);
     //give a big value for pool, avoid for
@@ -2390,7 +2394,8 @@ public class ShieldedReceiveTest {
       TransactionExpirationException, ReceiptCheckErrException, DupTransactionException,
       VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException,
-      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException {
+      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException,
+      InterruptedException {
 
     byte[] privateKey = ByteArray
         .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
@@ -2400,13 +2405,14 @@ public class ShieldedReceiveTest {
     dbManager.addWitness(ByteString.copyFrom(witnessAddress));
 
     //sometimes generate block failed, try several times.
-    for (int times = 0; times < 10; times += 1) {
+    for (int times = 0; times < 5; times += 1) {
       BlockCapsule capsule1 = dbManager
           .generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
               false, false);
       if (capsule1 != null) {
         break;
       }
+      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
     }
 
     //create transactions
@@ -2453,13 +2459,14 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(ok);
 
     //package transaction to block
-    for (int times = 0; times < 10; times += 1) {
+    for (int times = 0; times < 5; times += 1) {
       BlockCapsule capsule2 = dbManager
           .generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
               false, false);
       if (capsule2 != null) {
         break;
       }
+      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
     }
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
