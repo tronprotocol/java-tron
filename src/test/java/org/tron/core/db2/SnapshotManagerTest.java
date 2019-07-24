@@ -33,15 +33,14 @@ public class SnapshotManagerTest {
 
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", "output_revokingStore_test"},
+    Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
-    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
     tronDatabase = new TestRevokingTronStore("testSnapshotManager-test");
     revokingDatabase.add(tronDatabase.getRevokingDB());
-    revokingDatabase.setCheckTmpStore(context.getBean(CheckTmpStore.class));
   }
 
   @After
@@ -52,7 +51,7 @@ public class SnapshotManagerTest {
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_revokingStore_test"));
-    revokingDatabase.getCheckTmpStore().getDbSource().closeDB();
+    revokingDatabase.getCheckpoint().closeDB();
     tronDatabase.close();
   }
 

@@ -65,7 +65,7 @@ public class SnapshotRootTest {
   @Test
   public synchronized void testMerge() {
     tronDatabase = new TestRevokingTronStore("testSnapshotRoot-testMerge");
-    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
     revokingDatabase.add(tronDatabase.getRevokingDB());
 
@@ -82,7 +82,7 @@ public class SnapshotRootTest {
   @Test
   public synchronized void testMergeList() {
     tronDatabase = new TestRevokingTronStore("testSnapshotRoot-testMergeList");
-    revokingDatabase = new TestSnapshotManager();
+    revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
     revokingDatabase.add(tronDatabase.getRevokingDB());
 

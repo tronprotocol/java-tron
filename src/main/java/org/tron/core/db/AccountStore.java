@@ -28,7 +28,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
-    super(dbName);
+      super(dbName);
   }
 
   @Override

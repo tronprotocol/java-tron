@@ -30,6 +30,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.iq80.leveldb.Options;
+import org.iq80.leveldb.WriteOptions;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -271,24 +273,6 @@ public class LevelDbDataSourceImplTest {
     });
     seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
     Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
-    dataSource.resetDb();
-    dataSource.closeDB();
-  }
-
-  @Test
-  public void getPrevious() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getPrevious_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-    putSomeKeyValue(dataSource);
-    dataSource.putData(key7, value7);
-
-    Map<byte[], byte[]> seekKeyLimitNext = dataSource.getPrevious(key3, Long.MAX_VALUE, Long.SIZE / Byte.SIZE);
-    Assert.assertEquals("getPrevious1",  4, seekKeyLimitNext.size());
-
-    seekKeyLimitNext = dataSource.getPrevious(key3, Long.MAX_VALUE, 10);
-    Assert.assertEquals("getPrevious2",  3, seekKeyLimitNext.size());
     dataSource.resetDb();
     dataSource.closeDB();
   }

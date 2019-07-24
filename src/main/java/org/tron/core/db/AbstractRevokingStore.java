@@ -278,9 +278,9 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
     try {
       RevokingState state = stack.peekLast();
-      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
-      state.newIds.forEach(e -> e.database.deleteData(e.key, optionsWrapper));
-      state.removed.forEach((k, v) -> k.database.putData(k.key, v, optionsWrapper));
+      state.oldValues.forEach((k, v) -> k.database.putData(k.key, v));
+      state.newIds.forEach(e -> e.database.deleteData(e.key));
+      state.removed.forEach((k, v) -> k.database.putData(k.key, v));
       stack.pollLast();
     } finally {
       disabled = false;

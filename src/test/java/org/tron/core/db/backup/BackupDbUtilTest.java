@@ -17,7 +17,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ManagerForTest;
-import org.tron.core.db2.core.RevokingDBWithCachingNewValue;
+import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 
 @Slf4j
@@ -84,7 +84,7 @@ public class BackupDbUtilTest {
     PropUtil.writeProperty(propPath, BackupDbUtil.getDB_BACKUP_STATE(),
         String.valueOf("11"));
     mngForTest.pushNTestBlock(50);
-    List<RevokingDBWithCachingNewValue> alist = ((SnapshotManager) dbBackupUtil.getDb()).getDbs();
+    List<Chainbase> alist = ((SnapshotManager) dbBackupUtil.getDb()).getDbs();
 
     Assert.assertTrue(dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 50);
     Assert.assertTrue("22".equals(
