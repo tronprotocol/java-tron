@@ -39,7 +39,11 @@ public abstract class Strategy {
           }
 
           if (item.type == Double.class) {
-            item.setValue(Double.valueOf(value));
+            double doubleValue = Double.valueOf(value);
+            if (doubleValue <= 0) {
+              throw new IllegalArgumentException();
+            }
+            item.setValue(doubleValue);
           } else if (item.type == String.class) {
             item.setValue(value);
           } else if (item.type == Integer.class) {
