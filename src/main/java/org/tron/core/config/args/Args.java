@@ -670,6 +670,17 @@ public class Args {
         }
       }
       INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from keystore");
     }
 
