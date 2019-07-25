@@ -2,6 +2,8 @@ package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,9 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.Protocol.TransactionInfo.Log;
 
 
 @Component
@@ -29,7 +33,7 @@ public class GetTransactionInfoByIdServlet extends RateLimiterServlet {
       TransactionInfo reply = wallet
           .getTransactionInfoById(ByteString.copyFrom(ByteArray.fromHexString(input)));
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(convertLogAddressToTronAddress(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -53,7 +57,7 @@ public class GetTransactionInfoByIdServlet extends RateLimiterServlet {
       JsonFormat.merge(input, build, visible);
       TransactionInfo reply = wallet.getTransactionInfoById(build.getValue());
       if (reply != null) {
-        response.getWriter().println(JsonFormat.printToString(reply, visible));
+        response.getWriter().println(convertLogAddressToTronAddress(reply, visible));
       } else {
         response.getWriter().println("{}");
       }
@@ -65,5 +69,31 @@ public class GetTransactionInfoByIdServlet extends RateLimiterServlet {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     }
+  }
+
+  private static String convertLogAddressToTronAddress(TransactionInfo transactionInfo,
+      boolean visible) {
+    if (visible) {
+      List<Log> newLogList = new ArrayList<>();
+      for (Log log : transactionInfo.getLogList()) {
+        Log.Builder logBuilder = Log.newBuilder();
+        logBuilder.setData(log.getData());
+        logBuilder.addAllTopics(log.getTopicsList());
+
+        byte[] oldAddress = log.getAddress().toByteArray();
+        if (oldAddress.length == 0 || oldAddress.length > 20) {
+          logBuilder.setAddress(log.getAddress());
+        } else {
+          byte[] newAddress = new byte[20];
+
+          int start = 20 - oldAddress.length;
+          System.arraycopy(oldAddress, 0, newAddress, start, oldAddress.length);
+          logBuilder.setAddress(ByteString.copyFrom(MUtil.convertToTronAddress(newAddress)));
+        }
+        newLogList.add(logBuilder.build());
+      }
+      transactionInfo = transactionInfo.toBuilder().clearLog().addAllLog(newLogList).build();
+    }
+    return JsonFormat.printToString(transactionInfo, visible);
   }
 }
