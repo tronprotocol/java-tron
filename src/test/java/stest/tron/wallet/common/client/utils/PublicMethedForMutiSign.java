@@ -984,9 +984,6 @@ public class PublicMethedForMutiSign {
 
     Contract.TransferAssetContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.transferAsset2(contract);
-    if (transactionExtention == null) {
-      return false;
-    }
     Return ret = transactionExtention.getResult();
     if (!ret.getResult()) {
       System.out.println("Code = " + ret.getCode());
@@ -1005,7 +1002,6 @@ public class PublicMethedForMutiSign {
     }
     System.out.println(
         "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
-    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     return broadcastTransaction(transaction, blockingStubFull);
@@ -1154,6 +1150,55 @@ public class PublicMethedForMutiSign {
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
     }
+    transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
+
+    return broadcastTransaction(transaction, blockingStubFull);
+
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static boolean createAccountWhtiPermissionId(byte[] ownerAddress, byte[] newAddress, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId,String[] permissionKeyString) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    final ECKey ecKey = temKey;
+
+    byte[] owner = ownerAddress;
+    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner));
+    builder.setAccountAddress(ByteString.copyFrom(newAddress));
+    Contract.AccountCreateContract contract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.createAccount2(contract);
+    if (transactionExtention == null) {
+      return false;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return false;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return false;
+    }
+    try {
+      transaction = setPermissionId(transaction, permissionId);
+    } catch (CancelException e) {
+      e.printStackTrace();
+    }
+    System.out.println(
+        "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
     return broadcastTransaction(transaction, blockingStubFull);

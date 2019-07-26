@@ -64,6 +64,8 @@ public class MutisignOperationerGodicTest {
       .getLong("defaultParameter.zenTokenFee");
   private long multiSignFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.multiSignFee");
+  private final String operations = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.operations");
   private Long costTokenAmount = 8 * zenTokenFee;
   private Long sendTokenAmount = 3 * zenTokenFee;
   Optional<ShieldAddressInfo> shieldAddressInfo;
@@ -155,7 +157,7 @@ public class MutisignOperationerGodicTest {
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
-            + "\"operations\":\"7fff1fc0033e0900000000000000000000000000000000000000000000000000\","
+            + "\"operations\":\"" + operations + "\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
@@ -170,12 +172,11 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test001MutiSignGodicAccountTypeTransaction() {
-    //1.转账，冻结，账户相关类交易
     Assert.assertTrue(
-        PublicMethedForMutiSign.setAccountId1("112112310".getBytes(),
+        PublicMethedForMutiSign.setAccountId1((""+System.currentTimeMillis()).getBytes(),
             mutisignAccountAddress, mutisignAccountKey, 2, blockingStubFull, permissionKeyString));
-    Assert.assertTrue(PublicMethedForMutiSign.createAccount(
-        mutisignAccountAddress, newAddress, mutisignAccountKey, blockingStubFull, ownerKeyString));
+    Assert.assertTrue(PublicMethedForMutiSign.createAccountWhtiPermissionId(
+        mutisignAccountAddress, newAddress, mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
         newAddress, 100L, mutisignAccountAddress, 2, mutisignAccountKey, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
@@ -195,7 +196,6 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test002MutiSignGodicContractTypeTransaction() {
-    //2.contract 类型交易
     Long maxFeeLimit = 1000000000L;
     //String contractName = "StorageAndCpu" + Integer.toString(randNum);
     String filePath = "./src/test/resources/soliditycode/walletTestMutiSign004.sol";
@@ -226,11 +226,15 @@ public class MutisignOperationerGodicTest {
             mutisignAccountAddress, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
+    Assert.assertTrue(PublicMethedForMutiSign
+        .clearContractAbi(contractAddress, mutisignAccountAddress, mutisignAccountKey,
+            blockingStubFull, 2, permissionKeyString));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+
   }
 
   @Test(enabled = true)
   public void test003MutiSignGodicTokenTypeTransaction() {
-    //3.token类型交易
 
     long now = System.currentTimeMillis();
     String name = "MutiSign001_" + Long.toString(now);
@@ -242,7 +246,7 @@ public class MutisignOperationerGodicTest {
     Assert.assertTrue(PublicMethedForMutiSign
         .createAssetIssueWithpermissionId(mutisignAccountAddress, name, totalSupply, 1,
             1, start, end, 1, description, url, 2000L, 2000L,
-            1L, 1L, mutisignAccountKey, blockingStubFull, 2,ownerKeyString));
+            1L, 1L, mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 //    Assert.assertTrue(PublicMethedForMutiSign.unFreezeAsset(mutisignAccountAddress,
@@ -267,7 +271,6 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test004MutiSignGodicExchangeTypeTransaction() {
-    //4.交易对类型交易
 
     ECKey ecKey22 = new ECKey(Utils.getRandom());
     byte[] secondExchange001Address = ecKey22.getAddress();
@@ -400,7 +403,6 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test006MutiSignGodicWitnessTransaction() {
-    //4.witness
     permissionKeyString[0] = manager1Key;
     permissionKeyString[1] = manager2Key;
     ownerKeyString[0] = manager1Key;
@@ -412,7 +414,7 @@ public class MutisignOperationerGodicTest {
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
-            + "\"operations\":\"7fff1fc0033e0900000000000000000000000000000000000000000000000000\","
+            + "\"operations\":\"" + operations + "\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
@@ -447,7 +449,6 @@ public class MutisignOperationerGodicTest {
 
   @Test(enabled = true)
   public void test007MutiSignGodicProposalTypeTransaction() {
-    //5.提案类型交易
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
