@@ -173,25 +173,34 @@ public class MutisignOperationerGodicTest {
   @Test(enabled = true)
   public void test001MutiSignGodicAccountTypeTransaction() {
     Assert.assertTrue(
-        PublicMethedForMutiSign.setAccountId1((""+System.currentTimeMillis()).getBytes(),
-            mutisignAccountAddress, mutisignAccountKey, 2, blockingStubFull, permissionKeyString));
+        PublicMethedForMutiSign.setAccountId1(("" + System.currentTimeMillis()).getBytes(),
+            mutisignAccountAddress, mutisignAccountKey, 2, blockingStubFull,
+            permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.createAccountWhtiPermissionId(
-        mutisignAccountAddress, newAddress, mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
+        mutisignAccountAddress, newAddress, mutisignAccountKey, blockingStubFull,
+        2,permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.sendcoinWithPermissionId(
-        newAddress, 100L, mutisignAccountAddress, 2, mutisignAccountKey, blockingStubFull, permissionKeyString));
+        newAddress, 100L, mutisignAccountAddress, 2,
+        mutisignAccountKey, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceWithPermissionId(
-        mutisignAccountAddress, 1000000L, 0, 2, mutisignAccountKey, blockingStubFull, permissionKeyString));
+        mutisignAccountAddress, 1000000L, 0, 2,
+        mutisignAccountKey, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceGetEnergyWithPermissionId(
-        mutisignAccountAddress, 1000000L, 0, 1, mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
+        mutisignAccountAddress, 1000000L, 0, 1,
+        mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.freezeBalanceForReceiverWithPermissionId(
-        mutisignAccountAddress, 1000000L, 0, 0, ByteString.copyFrom(newAddress),
+        mutisignAccountAddress, 1000000L, 0, 0,
+        ByteString.copyFrom(newAddress),
         mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
-        mutisignAccountAddress, mutisignAccountKey, 0, null, 2,blockingStubFull, permissionKeyString));
+        mutisignAccountAddress, mutisignAccountKey, 0, null,
+        2,blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.unFreezeBalanceWithPermissionId(
-        mutisignAccountAddress, mutisignAccountKey, 0, newAddress, 2, blockingStubFull, permissionKeyString));
+        mutisignAccountAddress, mutisignAccountKey, 0, newAddress,
+        2, blockingStubFull, permissionKeyString));
     Assert.assertTrue(PublicMethedForMutiSign.updateAccountWithPermissionId(
-        mutisignAccountAddress, updateName.getBytes(), mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
+        mutisignAccountAddress, updateName.getBytes(), mutisignAccountKey, blockingStubFull,
+        2,permissionKeyString));
   }
 
   @Test(enabled = true)
@@ -204,9 +213,10 @@ public class MutisignOperationerGodicTest {
 
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    byte[] contractAddress = PublicMethedForMutiSign.deployContractWithPermissionId(contractName, abi, code,
-        "", maxFeeLimit,
-        0L, 100, maxFeeLimit,"0",0L,null, mutisignAccountKey, mutisignAccountAddress, blockingStubFull, permissionKeyString,2);
+    byte[] contractAddress = PublicMethedForMutiSign.deployContractWithPermissionId(
+        contractName, abi, code, "", maxFeeLimit,
+        0L, 100, maxFeeLimit,"0",0L,null,
+        mutisignAccountKey, mutisignAccountAddress, blockingStubFull, permissionKeyString,2);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     SmartContract smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
@@ -215,14 +225,17 @@ public class MutisignOperationerGodicTest {
     String initParmes = "\"" + "930" + "\"";
     txid = PublicMethedForMutiSign.triggerContractWithPermissionId(contractAddress,
         "testUseCpu(uint256)", initParmes, false,
-        0, maxFeeLimit,"0",0L, mutisignAccountAddress, mutisignAccountKey, blockingStubFull, permissionKeyString,2);
+        0, maxFeeLimit,"0",0L, mutisignAccountAddress,
+        mutisignAccountKey, blockingStubFull, permissionKeyString,2);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(
-        PublicMethedForMutiSign.updateSettingWithPermissionId(contractAddress, 50, mutisignAccountKey,
+        PublicMethedForMutiSign.updateSettingWithPermissionId(
+            contractAddress, 50, mutisignAccountKey,
             mutisignAccountAddress, 2, blockingStubFull, permissionKeyString));
     Assert.assertTrue(
-        PublicMethedForMutiSign.updateEnergyLimitWithPermissionId(contractAddress, 50, mutisignAccountKey,
+        PublicMethedForMutiSign.updateEnergyLimitWithPermissionId(
+            contractAddress, 50, mutisignAccountKey,
             mutisignAccountAddress, 2, blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -249,11 +262,12 @@ public class MutisignOperationerGodicTest {
             1L, 1L, mutisignAccountKey, blockingStubFull, 2,permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
-//    Assert.assertTrue(PublicMethedForMutiSign.unFreezeAsset(mutisignAccountAddress,
-//        mutisignAccountKey,2,ownerKeyString,blockingStubFull));
+    //Assert.assertTrue(PublicMethedForMutiSign.unFreezeAsset(mutisignAccountAddress,
+    //    mutisignAccountKey,2,ownerKeyString,blockingStubFull));
 
     Account getAssetIdFromOwnerAccount;
-    getAssetIdFromOwnerAccount = PublicMethed.queryAccount(mutisignAccountAddress, blockingStubFull);
+    getAssetIdFromOwnerAccount = PublicMethed.queryAccount(
+        mutisignAccountAddress, blockingStubFull);
     assetAccountId1 = getAssetIdFromOwnerAccount.getAssetIssuedID();
 
     Assert.assertTrue(PublicMethedForMutiSign.transferAssetWithpermissionId(manager1Address,
@@ -262,8 +276,9 @@ public class MutisignOperationerGodicTest {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert.assertTrue(PublicMethedForMutiSign
-        .updateAssetWithPermissionId(mutisignAccountAddress, description.getBytes(), url.getBytes(), 100L,
-            100L, mutisignAccountKey,  2,blockingStubFull, permissionKeyString));
+        .updateAssetWithPermissionId(mutisignAccountAddress, description.getBytes(), url.getBytes(),
+            100L, 100L, mutisignAccountKey,
+            2,blockingStubFull, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
 
@@ -311,7 +326,8 @@ public class MutisignOperationerGodicTest {
     assetAccountId2 = getAssetIdFromThisAccount.getAssetIssuedID();
 
     firstAccount = PublicMethed.queryAccount(mutisignAccountAddress, blockingStubFull);
-    org.junit.Assert.assertTrue(PublicMethed.transferAsset(mutisignAccountAddress, assetAccountId2.toByteArray(),
+    org.junit.Assert.assertTrue(PublicMethed.transferAsset(
+        mutisignAccountAddress, assetAccountId2.toByteArray(),
         secondTransferAssetToFirstAccountNum, secondExchange001Address,
         secondExchange001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -341,19 +357,21 @@ public class MutisignOperationerGodicTest {
     org.junit.Assert.assertTrue(
         PublicMethedForMutiSign
             .exchangeTransaction1(exchangeId, assetAccountId1.toByteArray(), 50, 1,
-                mutisignAccountAddress, mutisignAccountKey, blockingStubFull, 2, permissionKeyString));
+                mutisignAccountAddress, mutisignAccountKey, blockingStubFull,
+                2, permissionKeyString));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     firstAccount = PublicMethed.queryAccount(mutisignAccountAddress, blockingStubFull);
 
 
-    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssueWithPermissionId(secondExchange001Address,
+    Assert.assertTrue(PublicMethedForMutiSign.participateAssetIssueWithPermissionId(
+        secondExchange001Address,
         assetAccountId2.toByteArray(), 1, mutisignAccountAddress, mutisignAccountKey,2,
         blockingStubFull, ownerKeyString));
 
   }
 
   @Test(enabled = true)
-  public void test005MutiSignGodicShieldTransaction(){
+  public void test005MutiSignGodicShieldTransaction() {
 
     Assert.assertTrue(PublicMethed.transferAsset(mutisignAccountAddress, tokenId,
         costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
@@ -382,23 +400,6 @@ public class MutisignOperationerGodicTest {
         mutisignAccountKey, blockingStubFull, 2, permissionKeyString));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterAssetBalance = PublicMethed.getAssetIssueValue(mutisignAccountAddress,
-        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
-        blockingStubFull);
-    Long afterNetUsed = PublicMethed.getAccountResource(mutisignAccountAddress, blockingStubFull)
-        .getFreeNetUsed();
-    Assert.assertTrue(beforeAssetBalance - afterAssetBalance == sendTokenAmount);
-    logger.info("Before net:" + beforeNetUsed);
-    logger.info("After net:" + afterNetUsed);
-    Assert.assertEquals(beforeNetUsed,afterNetUsed);
-    final Long afterBalance = PublicMethed
-        .queryAccount(mutisignAccountAddress,blockingStubFull).getBalance();
-    Assert.assertTrue(beforeBalance - afterBalance == multiSignFee);
-    DecryptNotes notes = PublicMethed.listShieldNote(shieldAddressInfo, blockingStubFull);
-    Note note = notes.getNoteTxs(0).getNote();
-    Long receiverShieldTokenAmount = note.getValue();
-    Assert.assertTrue(receiverShieldTokenAmount == sendTokenAmount - zenTokenFee);
-    Assert.assertEquals(memo, PublicMethed.getMemo(note));
   }
 
   @Test(enabled = true)
@@ -442,7 +443,8 @@ public class MutisignOperationerGodicTest {
     HashMap<String, String> smallVoteMap = new HashMap<String, String>();
     smallVoteMap.put(voteStr, "1");
     Assert.assertTrue(PublicMethedForMutiSign.voteWitnessWithPermissionId(
-        smallVoteMap, mutisignAccountAddress, mutisignAccountKey, blockingStubFull, 2, permissionKeyString));
+        smallVoteMap, mutisignAccountAddress, mutisignAccountKey, blockingStubFull,
+        2, permissionKeyString));
 
 
   }
@@ -473,7 +475,7 @@ public class MutisignOperationerGodicTest {
   }
 
   @Test(enabled = true)
-  public void test008MutiSignGodicWithdrawBanlanceTransaction(){
+  public void test008MutiSignGodicWithdrawBanlanceTransaction() {
     long MaintenanceTimeInterval = -1L;
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
@@ -483,7 +485,8 @@ public class MutisignOperationerGodicTest {
       logger.info("Index is:" + i);
       logger.info(getChainParameters.get().getChainParameter(i).getKey());
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
-      if(getChainParameters.get().getChainParameter(i).getKey().equals("getMaintenanceTimeInterval")){
+      if (getChainParameters.get().getChainParameter(i).getKey()
+          .equals("getMaintenanceTimeInterval")) {
         MaintenanceTimeInterval = getChainParameters.get().getChainParameter(i).getValue();
         break;
       }

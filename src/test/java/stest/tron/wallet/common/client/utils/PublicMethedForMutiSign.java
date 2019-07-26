@@ -111,7 +111,8 @@ public class PublicMethedForMutiSign {
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
 
-      TransactionExtention transactionExtention = blockingStubFull.createAssetIssue2(builder.build());
+      TransactionExtention transactionExtention =
+          blockingStubFull.createAssetIssue2(builder.build());
       Return ret = transactionExtention.getResult();
       if (!ret.getResult()) {
         System.out.println("Code = " + ret.getCode());
@@ -138,11 +139,12 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
-  public static Boolean createAssetIssueWithpermissionId(byte[] address, String name, Long totalSupply,
-      Integer trxNum, Integer icoNum, Long startTime, Long endTime, Integer voteScore,
-      String description, String url, Long freeAssetNetLimit, Long publicFreeAssetNetLimit,
-      Long fronzenAmount, Long frozenDay, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull,int permissionId, String[] permissionKeyString) {
+  public static Boolean createAssetIssueWithpermissionId(byte[] address,
+      String name, Long totalSupply, Integer trxNum, Integer icoNum, Long startTime, Long endTime,
+      Integer voteScore, String description, String url, Long freeAssetNetLimit,
+      Long publicFreeAssetNetLimit, Long fronzenAmount, Long frozenDay, String priKey,
+      WalletGrpc.WalletBlockingStub blockingStubFull,
+      int permissionId, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -172,19 +174,29 @@ public class PublicMethedForMutiSign {
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
 
-      TransactionExtention transactionExtention = blockingStubFull.createAssetIssue2(builder.build());
+      TransactionExtention transactionExtention =
+          blockingStubFull.createAssetIssue2(builder.build());
       Return ret = transactionExtention.getResult();
+      if (transactionExtention == null) {
+        return false;
+      }
       if (!ret.getResult()) {
         System.out.println("Code = " + ret.getCode());
         System.out.println("Message = " + ret.getMessage().toStringUtf8());
         return false;
       }
-
       Transaction transaction = transactionExtention.getTransaction();
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
         System.out.println("Transaction is empty");
         return false;
       }
+      try {
+        transaction = setPermissionId(transaction, permissionId);
+      } catch (CancelException e) {
+        e.printStackTrace();
+      }
+      System.out.println(
+          "Receive txid = " + ByteArray.toHexString(transactionExtention.getTxid().toByteArray()));
       transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
       return broadcastTransaction(transaction, blockingStubFull);
@@ -961,8 +973,9 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
-  public static boolean transferAssetWithpermissionId(byte[] to, byte[] assertName, long amount, byte[] address,
-      String priKey, WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId ,String[] permissionKeyString) {
+  public static boolean transferAssetWithpermissionId(byte[] to, byte[] assertName,
+      long amount, byte[] address, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull,
+      int permissionId, String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -1160,8 +1173,9 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
 
-  public static boolean createAccountWhtiPermissionId(byte[] ownerAddress, byte[] newAddress, String priKey,
-      WalletGrpc.WalletBlockingStub blockingStubFull, int permissionId,String[] permissionKeyString) {
+  public static boolean createAccountWhtiPermissionId(byte[] ownerAddress,
+      byte[] newAddress, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull,
+      int permissionId,String[] permissionKeyString) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -5024,7 +5038,7 @@ public class PublicMethedForMutiSign {
    * constructor.
    */
   public static boolean createWitness(String url, byte[] owner, String priKey,int permissionId,
-      String[] permissionKeyString, WalletGrpc.WalletBlockingStub blockingStubFull){
+      String[] permissionKeyString, WalletGrpc.WalletBlockingStub blockingStubFull) {
     ECKey temKey = null;
     try {
       BigInteger priK = new BigInteger(priKey, 16);
