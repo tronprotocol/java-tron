@@ -154,17 +154,33 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    if (getChainParameters.get().getChainParameter(26).getValue() == 0L) {
-      proposalMap.put(25L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(27).getValue() == 0L) {
-      proposalMap.put(24L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(28).getValue() == 0L) {
-      proposalMap.put(26L, 1L);
-    }
-    if (getChainParameters.get().getChainParameter(29).getValue() == 0L) {
-      proposalMap.put(27L, 1L);
+
+    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowProtoFilterNum") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(24L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowAccountStateRoot") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(25L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmConstantinople") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(26L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowShieldedTransaction") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(27L, 1L);
+      }
+      if(getChainParameters.get().getChainParameter(i).getKey().equals("getAllowTvmSolidity059") && getChainParameters.get().getChainParameter(i).getValue() == 0) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(29L, 1L);
+      }
     }
 
     if (proposalMap.size() >= 1) {
@@ -205,9 +221,14 @@ public class StressPrecondition {
       logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
     }
     HashMap<Long, Long> proposalMap = new HashMap<Long, Long>();
-    if (getChainParameters.get().getChainParameter(30).getValue() == 10000000L) {
-      proposalMap.clear();
-      proposalMap.put(28L, 1L);
+
+    for (Integer i = 0; i < getChainParameters.get().getChainParameterCount(); i++) {
+      if (getChainParameters.get().getChainParameter(i).getKey().equals("getShieldedTransactionFee")
+          && getChainParameters.get().getChainParameter(i).getValue() == 10000000) {
+        logger.info(getChainParameters.get().getChainParameter(i).getKey());
+        logger.info(Long.toString(getChainParameters.get().getChainParameter(i).getValue()));
+        proposalMap.put(28L, 1L);
+      }
     }
     if (proposalMap.size() >= 1) {
 
@@ -606,10 +627,10 @@ public class StressPrecondition {
       ChainParameters chainParameters = blockingStubFull
           .getChainParameters(EmptyMessage.newBuilder().build());
       Optional<ChainParameters> getChainParameters = Optional.ofNullable(chainParameters);
-      if (getChainParameters.get().getChainParameter(proposalIndex).getValue() == 1L) {
+/*      if (getChainParameters.get().getChainParameter(proposalIndex).getValue() == 1L) {
         logger.info("Proposal has been approval");
         return;
-      }
+      }*/
       PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
