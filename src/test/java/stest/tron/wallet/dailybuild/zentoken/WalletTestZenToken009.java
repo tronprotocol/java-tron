@@ -123,7 +123,7 @@ public class WalletTestZenToken009 {
             + "{\"address\":\"" + PublicMethed.getAddressString(zenTokenOwnerKey)
             + "\",\"weight\":1}]},"
             + "\"active_permissions\":[{\"type\":2,\"permission_name\":\"active0\",\"threshold\":2,"
-            + "\"operations\":\"7fff1fc0033e0000000000000000000000000000000000000000000000000000\","
+            + "\"operations\":\"7fff1fc0033e0900000000000000000000000000000000000000000000000000\","
             + "\"keys\":["
             + "{\"address\":\"" + PublicMethed.getAddressString(manager1Key) + "\",\"weight\":1},"
             + "{\"address\":\"" + PublicMethed.getAddressString(manager2Key) + "\",\"weight\":1}"
@@ -138,7 +138,7 @@ public class WalletTestZenToken009 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Public to shield transaction with mutisign")
+  @Test(enabled = false, description = "Public to shield transaction with mutisign")
   public void test1Public2ShieldTransaction() {
     Args.getInstance().setFullNodeAllowShieldedTransaction(true);
     shieldAddressInfo = PublicMethed.generateShieldAddress();
@@ -162,7 +162,7 @@ public class WalletTestZenToken009 {
         null, null,
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull,ownerKeyString));
+        zenTokenOwnerKey, blockingStubFull, 0, ownerKeyString));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
@@ -203,7 +203,7 @@ public class WalletTestZenToken009 {
         shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull, ownerKeyString));
+        zenTokenOwnerKey, blockingStubFull, 0, ownerKeyString));
 
 
     Assert.assertFalse(PublicMethed.sendShieldCoin(
@@ -215,9 +215,43 @@ public class WalletTestZenToken009 {
 
     Assert.assertFalse(PublicMethed.getSpendResult(shieldAddressInfo.get(),
         notes.getNoteTxs(0),blockingStubFull).getResult());
+  }
 
+  @Test(enabled = true, description = "Public to shield transaction with active permission mutisign")
+  public void test3Public2ShieldTransaction() {
+    Assert.assertTrue(PublicMethed.transferAsset(zenTokenOwnerAddress, tokenId,
+        costTokenAmount, foundationZenTokenAddress, foundationZenTokenKey, blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    shieldAddressInfo = PublicMethed.generateShieldAddress();
+    shieldAddress = shieldAddressInfo.get().getAddress();
+    logger.info("shieldAddress:" + shieldAddress);
+    final Long beforeAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
+        PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getAssetIssuedID(),
+        blockingStubFull);
+    final Long beforeBalance = PublicMethed
+        .queryAccount(zenTokenOwnerAddress, blockingStubFull).getBalance();
+    final Long beforeNetUsed = PublicMethed
+        .getAccountResource(zenTokenOwnerAddress, blockingStubFull).getFreeNetUsed();
 
+    memo = "aaaaaaa";
+    logger.info("beforeAssetBalance: " + beforeAssetBalance);
 
+    shieldOutList = PublicMethed.addShieldOutputList(shieldOutList, shieldAddress,
+        "" + (beforeAssetBalance - 2 * zenTokenFee), memo);
+
+    Assert.assertTrue(PublicMethedForMutiSign.sendShieldCoin(
+        zenTokenOwnerAddress, beforeAssetBalance - zenTokenFee,
+        null, null,
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull, 0, ownerKeyString));
+
+    Assert.assertTrue(PublicMethedForMutiSign.sendShieldCoin(
+        zenTokenOwnerAddress, beforeAssetBalance - zenTokenFee,
+        null, null,
+        shieldOutList,
+        null, 0,
+        zenTokenOwnerKey, blockingStubFull, 2, permissionKeyString));
   }
 
   /**
