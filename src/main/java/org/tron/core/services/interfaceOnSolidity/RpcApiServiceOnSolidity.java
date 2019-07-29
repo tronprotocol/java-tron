@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
@@ -20,10 +21,12 @@ import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
@@ -35,7 +38,10 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.Contract.OutputPointInfo;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -54,6 +60,9 @@ public class RpcApiServiceOnSolidity implements Service {
 
   @Autowired
   private RpcApiService rpcApiService;
+
+  @Autowired
+  private RateLimiterInterceptor rateLimiterInterceptor;
 
   @Override
   public void init() {
@@ -87,7 +96,14 @@ public class RpcApiServiceOnSolidity implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      apiServer = serverBuilder.build().start();
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+
+      apiServer.start();
+
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -127,6 +143,13 @@ public class RpcApiServiceOnSolidity implements Service {
       builder.addTransactions(transaction2Extention(transaction));
     }
     return builder.build();
+  }
+
+  @Override
+  public void stop() {
+    if (apiServer != null) {
+      apiServer.shutdown();
+    }
   }
 
   /**
@@ -340,12 +363,46 @@ public class RpcApiServiceOnSolidity implements Service {
       responseObserver.onNext(builder.build());
       responseObserver.onCompleted();
     }
-  }
 
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
+    @Override
+    public void getMerkleTreeVoucherInfo(OutputPointInfo request,
+        StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMerkleTreeVoucherInfo(request, responseObserver)
+      );
     }
+
+    @Override
+    public void scanNoteByIvk(GrpcAPI.IvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
+        StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanAndMarkNoteByIvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
+        StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().scanNoteByOvk(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void isSpend(NoteParameters request, StreamObserver<SpendResult> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().isSpend(request, responseObserver)
+      );
+    }
+
   }
 }

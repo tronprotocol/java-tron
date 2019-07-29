@@ -1,14 +1,11 @@
 package org.tron.core.witness;
 
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
@@ -216,6 +213,21 @@ public class ProposalController {
         case (26): {
           manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(entry.getValue());
           manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(48);
+          break;
+        }
+        case (27): {
+          if (manager.getDynamicPropertiesStore().getAllowShieldedTransaction() == 0) {
+            manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(entry.getValue());
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(51);
+          }
+          break;
+        }
+        case (28): {
+          manager.getDynamicPropertiesStore().saveShieldedTransactionFee(entry.getValue());
+          break;
+        }
+        case (29): {
+          manager.getDynamicPropertiesStore().saveAllowTvmSolidity059(entry.getValue());
           break;
         }
         default:

@@ -1,16 +1,21 @@
 package stest.tron.wallet.common.client.utils;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.protobuf.ByteString;
+import io.netty.util.internal.StringUtil;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -18,8 +23,13 @@ import org.apache.http.impl.conn.PoolingClientConnectionManager;
 import org.apache.http.params.CoreConnectionPNames;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.testng.collections.Lists;
+import org.tron.api.GrpcAPI;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
+import org.apache.http.client.HttpClient;
 
 @Slf4j
 public class HttpMethed {
@@ -80,7 +90,7 @@ public class HttpMethed {
       userBaseObj2.addProperty("account_id", accountId);
       userBaseObj2.addProperty("owner_address",
           Base58.encode58Check(PublicMethed.getFinalAddress(fromKey)));
-      userBaseObj2.addProperty("visible",visable);
+      userBaseObj2.addProperty("visible", visable);
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
@@ -94,7 +104,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -240,14 +249,14 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse sendCoin(String httpNode, byte[] fromAddress, byte[] toAddress,
-      Long amount, Integer permissionId,String[] managerKeys) {
+      Long amount, Integer permissionId, String[] managerKeys) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/createtransaction";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("to_address", ByteArray.toHexString(toAddress));
       userBaseObj2.addProperty("owner_address", ByteArray.toHexString(fromAddress));
       userBaseObj2.addProperty("amount", amount);
-      userBaseObj2.addProperty("Permission_id",permissionId);
+      userBaseObj2.addProperty("Permission_id", permissionId);
       response = createConnect(requestUrl, userBaseObj2);
       transactionSignString = EntityUtils.toString(response.getEntity());
       HttpResponse getSignWeightResponse;
@@ -379,6 +388,21 @@ public class HttpMethed {
     return response;
   }
 
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getChainParameters(String httpNode) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/getchainparameters";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
 
   /**
    * constructor.
@@ -630,7 +654,6 @@ public class HttpMethed {
       userBaseObj2.addProperty("call_token_value", tokenValue);
       userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
 
-
       logger.info(userBaseObj2.toString());
       response = createConnect(requestUrl, userBaseObj2);
       transactionString = EntityUtils.toString(response.getEntity());
@@ -672,7 +695,7 @@ public class HttpMethed {
       jsonObject.put("owner_address", ByteArray.toHexString(ownerAddress));
 
       logger.info(jsonObject.toString());
-      response = createConnect1(requestUrl,jsonObject);
+      response = createConnect1(requestUrl, jsonObject);
       /*      transactionString = EntityUtils.toString(response.getEntity());
       logger.info(transactionString);
       transactionSignString = gettransactionsign(httpNode, transactionString, fromKey);
@@ -685,7 +708,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -726,8 +748,8 @@ public class HttpMethed {
    * constructor.
    */
   public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
-       String contractAddress,String functionSelector, String parameter, Long feeLimit,
-                                                     String fromKey) {
+      String contractAddress, String functionSelector, String parameter, Long feeLimit,
+      String fromKey) {
     try {
       final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
       JsonObject userBaseObj2 = new JsonObject();
@@ -745,6 +767,28 @@ public class HttpMethed {
       return null;
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
+      String contractAddress,
+      String functionSelector, String parameter) {
+    try {
+      final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
+      userBaseObj2.addProperty("contract_address", contractAddress);
+      userBaseObj2.addProperty("function_selector", functionSelector);
+      userBaseObj2.addProperty("parameter", parameter);
+      response = createConnect(requestUrl, userBaseObj2);
+      return response;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
   }
 
   /**
@@ -966,12 +1010,30 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static HttpResponse broadcasthex(String httpNode, String transactionHex) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/broadcasthex";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("transaction", transactionHex);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getAccountById(String httpNode, String accountId, Boolean visable) {
     try {
       String requestUrl = "http://" + httpNode + "/wallet/getaccountbyid";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("account_id", accountId);
-      userBaseObj2.addProperty("visible",visable);
+      userBaseObj2.addProperty("visible", visable);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -990,7 +1052,7 @@ public class HttpMethed {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getaccountbyid";
       JsonObject userBaseObj2 = new JsonObject();
       userBaseObj2.addProperty("account_id", accountId);
-      userBaseObj2.addProperty("visible",visable);
+      userBaseObj2.addProperty("visible", visable);
       response = createConnect(requestUrl, userBaseObj2);
     } catch (Exception e) {
       e.printStackTrace();
@@ -1017,6 +1079,25 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static Long getAccountForResponse(String httpNode, byte[] queryAddress, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getaccount";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("address", ByteArray.toHexString(queryAddress));
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
 
   /**
    * constructor.
@@ -1387,6 +1468,25 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long getTransactionByIdForResponse(String httpNode, String txid, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/gettransactionbyid";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", txid);
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getTransactionByIdFromSolidity(String httpSolidityNode, String txid) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/gettransactionbyid";
@@ -1697,6 +1797,24 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long getBlockByNumForResponse(String httpNode, Integer blockNUm, Integer times) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getblockbynum";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", blockNUm);
+      Long duration = createConnectForResponse(requestUrl, userBaseObj2, times);
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse getBlockByNumFromSolidity(String httpSolidityNode, Integer blockNum) {
     try {
       String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getblockbynum";
@@ -1750,7 +1868,6 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1786,7 +1903,6 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1820,7 +1936,6 @@ public class HttpMethed {
     }
     return response;
   }
-
 
 
   /**
@@ -1934,6 +2049,47 @@ public class HttpMethed {
   /**
    * constructor.
    */
+  public static Long createConnectForResponse(String url, JsonObject requestBody, Integer times) {
+    try {
+
+      Long start = 0L;
+      Long end = 0L;
+      Long duration = 0L;
+      while (times-- > 0) {
+        httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
+            connectionTimeout);
+        httpClient.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, soTimeout);
+        httppost = new HttpPost(url);
+        httppost.setHeader("Content-type", "application/json; charset=utf-8");
+        httppost.setHeader("Connection", "Close");
+        if (requestBody != null) {
+          StringEntity entity = new StringEntity(requestBody.toString(), Charset.forName("UTF-8"));
+          entity.setContentEncoding("UTF-8");
+          entity.setContentType("application/json");
+          httppost.setEntity(entity);
+        }
+
+        start = System.currentTimeMillis();
+        response = httpClient.execute(httppost);
+        /*        responseContent = HttpMethed.parseResponseContent(response);
+        logger.info(responseContent.toString());*/
+        end = System.currentTimeMillis();
+        duration = duration + end - start;
+        httppost.releaseConnection();
+      }
+      return duration;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return -1L;
+    }
+  }
+
+
+
+  /**
+   * constructor.
+   */
   public static HttpResponse createConnect1(String url, JSONObject requestBody) {
     try {
       httpClient.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT,
@@ -1961,7 +2117,6 @@ public class HttpMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -1975,6 +2130,27 @@ public class HttpMethed {
       return null;
     }
     return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static Long getAssetIssueValue(String httpNode, byte[] accountAddress,
+      String assetIssueId) {
+    response = HttpMethed.getAccount(httpNode, accountAddress);
+    responseContent = HttpMethed.parseResponseContent(response);
+    JSONArray assetV2 = responseContent.getJSONArray("assetV2");
+    if (assetV2 != null && assetV2.size() > 0) {
+      for (int i = 0; i < assetV2.size(); i++) {
+        String assetString = assetV2.get(i).toString();
+        logger.info("assetString:" + assetString);
+        String assetKey = HttpMethed.parseStringContent(assetString).getString("key");
+        if (assetKey.equals(assetIssueId)) {
+          return HttpMethed.parseStringContent(assetString).getLong("value");
+        }
+      }
+    }
+    return 0L;
   }
 
   /**
@@ -2342,28 +2518,6 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse triggerConstantContract(String httpNode, byte[] ownerAddress,
-      String contractAddress, String functionSelector, String parameter) {
-    try {
-      final String requestUrl = "http://" + httpNode + "/wallet/triggerconstantcontract";
-      JsonObject userBaseObj2 = new JsonObject();
-      userBaseObj2.addProperty("owner_address", ByteArray.toHexString(ownerAddress));
-      userBaseObj2.addProperty("contract_address", contractAddress);
-      userBaseObj2.addProperty("function_selector", functionSelector);
-      userBaseObj2.addProperty("parameter", parameter);
-      response = createConnect(requestUrl, userBaseObj2);
-      return response;
-    } catch (Exception e) {
-      e.printStackTrace();
-      httppost.releaseConnection();
-      return null;
-    }
-  }
-
-
-  /**
-   * constructor.
-   */
   public static HttpResponse clearABiGetTxid(String httpNode, byte[] ownerAddress,
       String contractAddress, String fromKey) {
     try {
@@ -2381,6 +2535,978 @@ public class HttpMethed {
       response = broadcastTransaction(httpNode, transactionSignString);
 
 
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static Optional<ShieldAddressInfo> generateShieldAddress(String httpnode) {
+    ShieldAddressInfo addressInfo = new ShieldAddressInfo();
+    String sk;
+    String d;
+    String ask;
+    String nsk;
+    String ovk;
+    String ak;
+    String nk;
+    String ivk;
+    String pkD;
+    try {
+      response = HttpMethed.getSpendingKey(httpnode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      sk = responseContent.getString("value");
+
+      response = HttpMethed.getDiversifier(httpnode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      d = responseContent.getString("d");
+
+      response = HttpMethed.getExpandedSpendingKey(httpnode, sk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      ask = responseContent.getString("ask");
+      nsk = responseContent.getString("nsk");
+      ovk = responseContent.getString("ovk");
+
+      response = HttpMethed.getAkFromAsk(httpnode, ask);
+      responseContent = HttpMethed.parseResponseContent(response);
+      ak = responseContent.getString("value");
+
+      response = HttpMethed.getNkFromNsk(httpnode, nsk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      nk = responseContent.getString("value");
+
+      response = HttpMethed.getIncomingViewingKey(httpnode, ak, nk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      ivk = responseContent.getString("ivk");
+
+      response = HttpMethed.getZenPaymentAddress(httpnode, ivk, d);
+      responseContent = HttpMethed.parseResponseContent(response);
+      pkD = responseContent.getString("pkD");
+
+      addressInfo.setSk(ByteArray.fromHexString(sk));
+      addressInfo.setD(new DiversifierT(ByteArray.fromHexString(d)));
+      addressInfo.setIvk(ByteArray.fromHexString(ivk));
+      addressInfo.setOvk(ByteArray.fromHexString(ovk));
+      addressInfo.setPkD(ByteArray.fromHexString(pkD));
+      logger.info("sk:" + sk);
+
+      if (addressInfo.validateCheck()) {
+        return Optional.of(addressInfo);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<GrpcAPI.Note> addShieldOutputList(String httpNode,
+      List<GrpcAPI.Note> shieldOutList, String shieldToAddress,
+      String toAmountString, String menoString) {
+    String shieldAddress = shieldToAddress;
+    String amountString = toAmountString;
+    if (menoString.equals("null")) {
+      menoString = "";
+    }
+    long shieldAmount = 0;
+    if (!StringUtil.isNullOrEmpty(amountString)) {
+      shieldAmount = Long.valueOf(amountString);
+    }
+
+    GrpcAPI.Note.Builder noteBuild = GrpcAPI.Note.newBuilder();
+    noteBuild.setPaymentAddress(shieldAddress);
+    noteBuild.setPaymentAddress(shieldAddress);
+    noteBuild.setValue(shieldAmount);
+
+    response = HttpMethed.getRcm(httpNode);
+    responseContent = HttpMethed.parseResponseContent(response);
+    String rcm = responseContent.getString("value");
+
+    noteBuild.setRcm(ByteString.copyFrom(rcm.getBytes()));
+    noteBuild.setMemo(ByteString.copyFrom(menoString.getBytes()));
+    shieldOutList.add(noteBuild.build());
+    return shieldOutList;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getSpendingKey(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getspendingkey";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getDiversifier(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getdiversifier";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getRcm(String httpNode) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getrcm";
+      response = createConnect(requestUrl);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getExpandedSpendingKey(String httpNode, String spendingKey) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getexpandedspendingkey";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", spendingKey);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getAkFromAsk(String httpNode, String ask) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getakfromask";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", ask);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getNkFromNsk(String httpNode, String nsk) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getnkfromnsk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("value", nsk);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getIncomingViewingKey(String httpNode, String ak, String nk) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getincomingviewingkey";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("ak", ak);
+      userBaseObj2.addProperty("nk", nk);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getZenPaymentAddress(String httpNode, String ivk, String d) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getzenpaymentaddress";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("ivk", ivk);
+      userBaseObj2.addProperty("d", d);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getMerkleTreeVoucherInfo(String httpNode, String hash, Integer index,
+      int blockNum) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/getmerkletreevoucherinfo";
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+      jsonObjectWarp
+          .put("out_points", Lists.newArrayList(new JSONObjectWarp()
+              .put("hash", hash)
+              .put("index", index)))
+          .put("block_num", blockNum);
+      String jsonStr = jsonObjectWarp.toJSONString();
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      response = createConnect(requestUrl, jsonObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getMerkleTreeVoucherInfoFromSolidity(String httpSolidityNode,
+      String hash, Integer index, int blockNum) {
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/getmerkletreevoucherinfo";
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+      jsonObjectWarp
+          .put("out_points", Lists.newArrayList(new JSONObjectWarp()
+              .put("hash", hash)
+              .put("index", index)))
+          .put("block_num", blockNum);
+      String jsonStr = jsonObjectWarp.toJSONString();
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      response = createConnect(requestUrl, jsonObj);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse sendShieldCoin(String httpNode, byte[] publicZenTokenOwnerAddress,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList,
+      byte[] publicZenTokenToAddress,
+      long toAmount, String zenTokenOwnerKey) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/createshieldedtransaction";
+
+      Map<String, Object> map = new HashMap<String, Object>();
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+        map.put("transparent_from_address", ByteArray.toHexString(publicZenTokenOwnerAddress));
+        map.put("from_amount", fromAmount);
+      }
+      if (shieldAddressInfo != null) {
+        HttpResponse expandedSpendingKey = HttpMethed
+            .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.getSk()));
+        responseContent = HttpMethed.parseResponseContent(expandedSpendingKey);
+        HttpMethed.printJsonContent(responseContent);
+        String ovk = responseContent.getString("ovk");
+        map.put("ask", responseContent.getString("ask"));
+        map.put("nsk", responseContent.getString("nsk"));
+        map.put("ovk", ovk);
+
+        response = HttpMethed
+            .getMerkleTreeVoucherInfo(httpNode, noteTx.getTrxId(), noteTx.getIndex(), 1);
+        responseContent = HttpMethed.parseResponseContent(response);
+        JSONArray vouchers = responseContent.getJSONArray("vouchers");
+        JSONArray paths = responseContent.getJSONArray("paths");
+
+        List shieldedSpends = Lists.newArrayList(
+            new JSONObjectWarp()
+                .put("note", new JSONObjectWarp()
+                    .put("value", noteTx.getValue())
+                    .put("payment_address", noteTx.getPaymentAddress())
+                    .put("rcm", ByteArray.toHexString(noteTx.getR()))
+                    .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+                .put("alpha", ByteArray.toHexString(org.tron.core.zen.note.Note.generateR()))
+                .put("voucher", Lists.newArrayList(vouchers))
+                .put("path", Lists.newArrayList(paths))
+        );
+
+        map.put("shielded_spends", shieldedSpends);
+      } else {
+        map.put("ovk", "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+      }
+
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
+        map.put("transparent_to_address", ByteArray.toHexString(publicZenTokenToAddress));
+        map.put("to_amount", toAmount);
+      }
+
+      if (shieldOutputList.size() > 0) {
+        ArrayList<Object> noteList = new ArrayList<>();
+        for (int i = 0; i < shieldOutputList.size(); ++i) {
+          Map<String, Object> note = new HashMap<String, Object>();
+          Map<String, Object> noteInfo = new HashMap<String, Object>();
+          noteInfo.put("value", shieldOutputList.get(i).getValue());
+          noteInfo.put("payment_address", shieldOutputList.get(i).getPaymentAddress());
+          noteInfo.put("rcm", shieldOutputList.get(i).getRcm().toStringUtf8());
+          noteInfo.put("memo",
+              ByteArray.toHexString(shieldOutputList.get(i).getMemo().toStringUtf8().getBytes()));
+          note.put("note", noteInfo);
+          noteList.add(note);
+        }
+        map.put("shielded_receives", noteList);
+      }
+
+      String jsonStr = new Gson().toJson(map);
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      response = createConnect(requestUrl, jsonObj);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info(transactionString);
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+        transactionSignString = gettransactionsign(httpNode, transactionString, zenTokenOwnerKey);
+        logger.info(transactionSignString);
+        response = broadcastTransaction(httpNode, transactionSignString);
+      } else {
+        response = broadcastTransaction(httpNode, transactionString);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
+  /**
+   * constructor.
+   */
+  public static Boolean getSpendResult(String httpNode, ShieldAddressInfo shieldAddressInfo,
+      ShieldNoteInfo noteTx) {
+    try {
+      String requestUrl = "http://" + httpNode + "/wallet/isspend";
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ask = responseContent.getString("ask");
+      String nsk = responseContent.getString("nsk");
+      response = HttpMethed.getAkFromAsk(httpNode, ask);
+      responseContent = HttpMethed.parseResponseContent(response);
+      jsonObjectWarp.put("ak", responseContent.getString("value"));
+
+      response = HttpMethed.getNkFromNsk(httpNode, nsk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      jsonObjectWarp.put("nk", responseContent.getString("value"));
+
+      jsonObjectWarp.put("note", new JSONObjectWarp()
+          .put("value", noteTx.getValue())
+          .put("payment_address", noteTx.getPaymentAddress())
+          .put("rcm", ByteArray.toHexString(noteTx.getR()))
+          .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+          .put("txid", noteTx.getTrxId());
+
+      String jsonStr = jsonObjectWarp.toJSONString();
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      HttpMethed.response = createConnect(requestUrl, jsonObj);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String jsonString = responseContent.toJSONString();
+      if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
+          && responseContent.getString("message").equals("input note already spent"))) {
+        return Boolean.TRUE;
+      } else {
+        return Boolean.FALSE;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static Boolean getSpendResultFromSolidity(String httpNode, String httpSolidityNode,
+      ShieldAddressInfo shieldAddressInfo, ShieldNoteInfo noteTx) {
+    try {
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/isspend";
+      JSONObjectWarp jsonObjectWarp = new JSONObjectWarp();
+
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ask = responseContent.getString("ask");
+      String nsk = responseContent.getString("nsk");
+      response = HttpMethed.getAkFromAsk(httpNode, ask);
+      responseContent = HttpMethed.parseResponseContent(response);
+      jsonObjectWarp.put("ak", responseContent.getString("value"));
+
+      response = HttpMethed.getNkFromNsk(httpNode, nsk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      jsonObjectWarp.put("nk", responseContent.getString("value"));
+
+      jsonObjectWarp.put("note", new JSONObjectWarp()
+          .put("value", noteTx.getValue())
+          .put("payment_address", noteTx.getPaymentAddress())
+          .put("rcm", ByteArray.toHexString(noteTx.getR()))
+          .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+          .put("txid", noteTx.getTrxId());
+
+      String jsonStr = jsonObjectWarp.toJSONString();
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      HttpMethed.response = createConnect(requestUrl, jsonObj);
+      responseContent = HttpMethed.parseResponseContent(response);
+
+      HttpMethed.printJsonContent(responseContent);
+      String jsonString = responseContent.toJSONString();
+      if (jsonString.contains("result") && (responseContent.getString("result").equals("true")
+          && responseContent.getString("message").equals("input note already spent"))) {
+        return Boolean.TRUE;
+      } else {
+        return Boolean.FALSE;
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanNoteByIvk(String httpNode,
+      ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed.getNowBlock(httpNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpNode + "/wallet/scannotebyivk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ivk", ByteArray.toHexString(shieldAddressInfo.ivk));
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      if (jsonArray != null) {
+        for (int i = 0; i < jsonArray.size(); i++) {
+          ShieldNoteInfo noteTx = new ShieldNoteInfo();
+          String noteTxs = jsonArray.get(i).toString();
+          String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+          noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+          noteTx
+              .setPaymentAddress(
+                  HttpMethed.parseStringContent(noteString).getString("payment_address"));
+          noteTx
+              .setR(
+                  ByteArray
+                      .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+          noteTx.setMemo(
+              ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+          noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+          noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+          shieldNoteInfoList.add(noteTx);
+        }
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanNoteByIvkFromSolidity(String httpSolidityNode,
+      ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyivk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ivk", ByteArray.toHexString(shieldAddressInfo.ivk));
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      for (int i = 0; i < jsonArray.size(); i++) {
+        ShieldNoteInfo noteTx = new ShieldNoteInfo();
+        String noteTxs = jsonArray.get(i).toString();
+        String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+        noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+        noteTx
+            .setPaymentAddress(
+                HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx
+            .setR(
+                ByteArray
+                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setMemo(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+        noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+        shieldNoteInfoList.add(noteTx);
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanAndMarkNoteByIvk(String httpNode,
+      ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ask = responseContent.getString("ask");
+      String nsk = responseContent.getString("nsk");
+      response = HttpMethed.getAkFromAsk(httpNode, ask);
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ak = responseContent.getString("value");
+
+      response = HttpMethed.getNkFromNsk(httpNode, nsk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      String nk = responseContent.getString("value");
+
+      response = HttpMethed.getNowBlock(httpNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpNode + "/wallet/scanandmarknotebyivk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ivk", ByteArray.toHexString(shieldAddressInfo.ivk));
+      userBaseObj2.addProperty("ak", ak);
+      userBaseObj2.addProperty("nk", nk);
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      logger.info("jsonArray:" + jsonArray.toJSONString());
+      for (int i = 0; i < jsonArray.size(); i++) {
+        ShieldNoteInfo noteTx = new ShieldNoteInfo();
+        String noteTxs = jsonArray.get(i).toString();
+        String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+        noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+        noteTx
+            .setPaymentAddress(
+                HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx
+            .setR(
+                ByteArray
+                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setMemo(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+        noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIsSpend(HttpMethed.parseStringContent(noteTxs).getBoolean("is_spend"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+        shieldNoteInfoList.add(noteTx);
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanAndMarkNoteByIvkFromSolidity(String httpNode,
+      String httpSolidityNode, ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed
+          .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.sk));
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ask = responseContent.getString("ask");
+      String nsk = responseContent.getString("nsk");
+      response = HttpMethed.getAkFromAsk(httpNode, ask);
+      responseContent = HttpMethed.parseResponseContent(response);
+      String ak = responseContent.getString("value");
+
+      response = HttpMethed.getNkFromNsk(httpNode, nsk);
+      responseContent = HttpMethed.parseResponseContent(response);
+      String nk = responseContent.getString("value");
+
+      response = HttpMethed.getNowBlock(httpNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scanandmarknotebyivk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ivk", ByteArray.toHexString(shieldAddressInfo.ivk));
+      userBaseObj2.addProperty("ak", ak);
+      userBaseObj2.addProperty("nk", nk);
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      logger.info("jsonArray:" + jsonArray.toJSONString());
+      for (int i = 0; i < jsonArray.size(); i++) {
+        ShieldNoteInfo noteTx = new ShieldNoteInfo();
+        String noteTxs = jsonArray.get(i).toString();
+        String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+        noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+        noteTx
+            .setPaymentAddress(
+                HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx
+            .setR(
+                ByteArray
+                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setMemo(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+        noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIsSpend(HttpMethed.parseStringContent(noteTxs).getBoolean("is_spend"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+        shieldNoteInfoList.add(noteTx);
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanNoteByOvk(String httpNode,
+      ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed.getNowBlock(httpNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpNode + "/wallet/scannotebyovk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ovk", ByteArray.toHexString(shieldAddressInfo.getOvk()));
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      for (int i = 0; i < jsonArray.size(); i++) {
+        ShieldNoteInfo noteTx = new ShieldNoteInfo();
+        String noteTxs = jsonArray.get(i).toString();
+        String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+        noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+        noteTx
+            .setPaymentAddress(
+                HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx
+            .setR(
+                ByteArray
+                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setMemo(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+        noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+        shieldNoteInfoList.add(noteTx);
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static List<ShieldNoteInfo> scanNoteByOvkFromSolidity(String httpSolidityNode,
+      ShieldAddressInfo shieldAddressInfo) {
+    try {
+      response = HttpMethed.getNowBlockFromSolidity(httpSolidityNode);
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      String blockHeaderString = responseContent.getString("block_header");
+      String rawDataString = HttpMethed.parseStringContent(blockHeaderString).get("raw_data")
+          .toString();
+      Integer currentBlockNum = HttpMethed.parseStringContent(rawDataString).getInteger("number");
+      Integer startBlockNum = 0;
+      if (currentBlockNum > 100) {
+        startBlockNum = currentBlockNum - 100;
+      }
+
+      String requestUrl = "http://" + httpSolidityNode + "/walletsolidity/scannotebyovk";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("start_block_index", startBlockNum);
+      userBaseObj2.addProperty("end_block_index", currentBlockNum);
+      userBaseObj2.addProperty("ovk", ByteArray.toHexString(shieldAddressInfo.getOvk()));
+      logger.info("userBaseObj2:" + userBaseObj2.toString());
+      response = createConnect(requestUrl, userBaseObj2);
+
+      responseContent = HttpMethed.parseResponseContent(response);
+      HttpMethed.printJsonContent(responseContent);
+      List<ShieldNoteInfo> shieldNoteInfoList = new ArrayList<>();
+      JSONArray jsonArray = responseContent.getJSONArray("noteTxs");
+      for (int i = 0; i < jsonArray.size(); i++) {
+        ShieldNoteInfo noteTx = new ShieldNoteInfo();
+        String noteTxs = jsonArray.get(0).toString();
+        String noteString = HttpMethed.parseStringContent(noteTxs).getString("note");
+        noteTx.setValue(HttpMethed.parseStringContent(noteString).getLong("value"));
+        noteTx
+            .setPaymentAddress(
+                HttpMethed.parseStringContent(noteString).getString("payment_address"));
+        noteTx
+            .setR(
+                ByteArray
+                    .fromHexString(HttpMethed.parseStringContent(noteString).getString("rcm")));
+        noteTx.setMemo(
+            ByteArray.fromHexString(HttpMethed.parseStringContent(noteString).getString("memo")));
+        noteTx.setTrxId(HttpMethed.parseStringContent(noteTxs).getString("txid"));
+        noteTx.setIndex(HttpMethed.parseStringContent(noteTxs).getIntValue("index"));
+        shieldNoteInfoList.add(noteTx);
+      }
+      return shieldNoteInfoList;
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+  }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse sendShieldCoinWithoutAsk(String httpNode, String httpSolidityNode,
+      byte[] publicZenTokenOwnerAddress,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      ShieldNoteInfo noteTx, List<GrpcAPI.Note> shieldOutputList,
+      byte[] publicZenTokenToAddress,
+      long toAmount, String zenTokenOwnerKey) {
+    try {
+      String requestUrl =
+          "http://" + httpNode + "/wallet/createshieldedtransactionwithoutspendauthsig";
+
+      Map<String, Object> map = new HashMap<String, Object>();
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+        map.put("transparent_from_address", ByteArray.toHexString(publicZenTokenOwnerAddress));
+        map.put("from_amount", fromAmount);
+      }
+      String ask = "";
+      byte[] alpha = null;
+      if (shieldAddressInfo != null) {
+        HttpResponse expandedSpendingKey = HttpMethed
+            .getExpandedSpendingKey(httpNode, ByteArray.toHexString(shieldAddressInfo.getSk()));
+        responseContent = HttpMethed.parseResponseContent(expandedSpendingKey);
+        HttpMethed.printJsonContent(responseContent);
+        map.put("nsk", responseContent.getString("nsk"));
+        map.put("ovk", responseContent.getString("ovk"));
+        ask = responseContent.getString("ask");
+        response = HttpMethed.getAkFromAsk(httpNode, ask);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        map.put("ak", responseContent.getString("value"));
+
+        logger.info("noteTx.getTrxId():" + noteTx.getTrxId());
+        HttpMethed.response = HttpMethed
+            .getMerkleTreeVoucherInfoFromSolidity(httpSolidityNode, noteTx.getTrxId(),
+                noteTx.getIndex(), 3);
+        HttpMethed.responseContent = HttpMethed.parseResponseContent(HttpMethed.response);
+        HttpMethed.printJsonContent(responseContent);
+        JSONArray vouchers = HttpMethed.responseContent.getJSONArray("vouchers");
+        JSONArray paths = HttpMethed.responseContent.getJSONArray("paths");
+        alpha = org.tron.core.zen.note.Note.generateR();
+
+        List shieldedSpends = Lists.newArrayList(
+            new JSONObjectWarp()
+                .put("note", new JSONObjectWarp()
+                    .put("value", noteTx.getValue())
+                    .put("payment_address", noteTx.getPaymentAddress())
+                    .put("rcm", ByteArray.toHexString(noteTx.getR()))
+                    .put("memo", ByteArray.toHexString(noteTx.getMemo())))
+                .put("alpha", ByteArray.toHexString(alpha))
+                .put("voucher", Lists.newArrayList(vouchers))
+                .put("path", Lists.newArrayList(paths))
+        );
+
+        map.put("shielded_spends", shieldedSpends);
+      } else {
+        map.put("ovk", "030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
+      }
+
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenToAddress)) {
+        map.put("transparent_to_address", ByteArray.toHexString(publicZenTokenToAddress));
+        map.put("to_amount", toAmount);
+      }
+
+      if (shieldOutputList.size() > 0) {
+        ArrayList<Object> noteList = new ArrayList<>();
+        for (int i = 0; i < shieldOutputList.size(); ++i) {
+          Map<String, Object> note = new HashMap<String, Object>();
+          Map<String, Object> noteInfo = new HashMap<String, Object>();
+          noteInfo.put("value", shieldOutputList.get(i).getValue());
+          noteInfo.put("payment_address", shieldOutputList.get(i).getPaymentAddress());
+          noteInfo.put("rcm", shieldOutputList.get(i).getRcm().toStringUtf8());
+          noteInfo.put("memo",
+              ByteArray.toHexString(shieldOutputList.get(i).getMemo().toStringUtf8().getBytes()));
+          note.put("note", noteInfo);
+          noteList.add(note);
+        }
+        map.put("shielded_receives", noteList);
+      }
+
+      String jsonStr = new Gson().toJson(map);
+      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
+      logger.info("jsonObj:" + jsonObj.toString());
+      response = createConnect(requestUrl, jsonObj);
+      transactionString = EntityUtils.toString(response.getEntity());
+      logger.info("transactionString1:" + transactionString);
+
+      if (shieldAddressInfo != null) {
+        String getHashUrl = "http://" + httpNode + "/wallet/getshieldtransactionhash";
+        JsonObject gethashObject = new JsonParser().parse(transactionString).getAsJsonObject();
+        logger.info("gethashObject:" + gethashObject);
+        response = createConnect(getHashUrl, gethashObject);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        String hash = responseContent.getString("value");
+
+        String spendauthsigUrl = "http://" + httpNode + "/wallet/createspendauthsig";
+        JSONObjectWarp spendauthsigJson = new JSONObjectWarp()
+            .put("ask", ask)
+            .put("alpha", ByteArray.toHexString(alpha))
+            .put("tx_hash", hash);
+        String spendauthsigStr = spendauthsigJson.toJSONString();
+        JsonObject spendauthsigObj = new JsonParser().parse(spendauthsigStr).getAsJsonObject();
+        logger.info("spendauthsigObj:" + spendauthsigObj.toString());
+        response = createConnect(spendauthsigUrl, spendauthsigObj);
+        responseContent = HttpMethed.parseResponseContent(response);
+        HttpMethed.printJsonContent(responseContent);
+        String spendauthsig = responseContent.getString("value");
+
+        JSONObject jsonObject = HttpMethed.parseStringContent(transactionString);
+        jsonObject.getJSONObject("raw_data").getJSONArray("contract")
+            .getJSONObject(0).getJSONObject("parameter").getJSONObject("value")
+            .getJSONArray("spend_description").getJSONObject(0)
+            .put("spend_authority_signature", spendauthsig);
+        transactionString = jsonObject.toString();
+        logger.info("transactionString2:" + transactionString);
+      }
+
+      if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
+        transactionSignString = gettransactionsign(httpNode, transactionString, zenTokenOwnerKey);
+        logger.info(transactionSignString);
+        response = broadcastTransaction(httpNode, transactionSignString);
+      } else {
+        response = broadcastTransaction(httpNode, transactionString);
+      }
     } catch (Exception e) {
       e.printStackTrace();
       httppost.releaseConnection();

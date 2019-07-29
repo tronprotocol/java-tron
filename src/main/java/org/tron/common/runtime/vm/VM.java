@@ -8,6 +8,7 @@ import static org.tron.common.runtime.vm.OpCode.CALLTOKENID;
 import static org.tron.common.runtime.vm.OpCode.CALLTOKENVALUE;
 import static org.tron.common.runtime.vm.OpCode.CREATE2;
 import static org.tron.common.runtime.vm.OpCode.EXTCODEHASH;
+import static org.tron.common.runtime.vm.OpCode.ISCONTRACT;
 import static org.tron.common.runtime.vm.OpCode.PUSH1;
 import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.runtime.vm.OpCode.SAR;
@@ -103,6 +104,10 @@ public class VM {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }
       }
+
+      if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
       program.verifyStackOverflow(op.require(), op.ret()); //Check not exceeding stack limits
@@ -151,6 +156,7 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
+        case ISCONTRACT:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -722,6 +728,14 @@ public class VM {
           }
 
           program.stackPush(balance);
+          program.step();
+        }
+        break;
+        case ISCONTRACT: {
+          DataWord address = program.stackPop();
+          DataWord isContract = program.isContract(address);
+
+          program.stackPush(isContract);
           program.step();
         }
         break;

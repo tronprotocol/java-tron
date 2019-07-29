@@ -2,10 +2,9 @@ package org.tron.core.services.http;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,11 +15,11 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetBlockByLatestNumServlet extends HttpServlet {
+public class GetBlockByLatestNumServlet extends RateLimiterServlet {
 
+  private static final long BLOCK_LIMIT_NUM = 100;
   @Autowired
   private Wallet wallet;
-  private static final long BLOCK_LIMIT_NUM = 100;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {

@@ -9,7 +9,7 @@ import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class DeployContractServlet extends HttpServlet {
+public class DeployContractServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
@@ -51,7 +51,6 @@ public class DeployContractServlet extends HttpServlet {
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress));
       build.setCallTokenValue(Util.getJsonLongValue(jsonObject, "call_token_value"))
           .setTokenId(Util.getJsonLongValue(jsonObject, "token_id"));
-
       ABI.Builder abiBuilder = ABI.newBuilder();
       if (jsonObject.containsKey("abi")) {
         String abi = jsonObject.getString("abi");
@@ -61,7 +60,6 @@ public class DeployContractServlet extends HttpServlet {
         abiSB.append("}");
         JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
       }
-
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
       smartBuilder
           .setAbi(abiBuilder)

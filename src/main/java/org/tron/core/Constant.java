@@ -57,11 +57,16 @@ public class Constant {
   public static final int ONE_HUNDRED = 100;
   public static final int ONE_THOUSAND = 1000;
 
+  public static final byte[] ZTRON_EXPANDSEED_PERSONALIZATION = {'Z', 't', 'r', 'o', 'n', '_', 'E', 'x',
+          'p', 'a', 'n', 'd', 'S', 'e', 'e', 'd'};
+  public static final int ZC_DIVERSIFIER_SIZE = 11;
+  public static final int ZC_OUTPUT_DESC_MAX_SIZE = 10;
+
 
   /**
-   * normal transaction is 0 representing normal transaction
-   * unexecuted deferred transaction is 1 representing unexecuted deferred transaction
-   * executing deferred transaction is 2 representing executing deferred transaction
+   * normal transaction is 0 representing normal transaction unexecuted deferred transaction is 1
+   * representing unexecuted deferred transaction executing deferred transaction is 2 representing
+   * executing deferred transaction
    */
   public static final int NORMALTRANSACTION = 0;
   public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;

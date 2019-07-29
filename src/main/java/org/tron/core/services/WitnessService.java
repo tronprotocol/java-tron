@@ -51,11 +51,10 @@ public class WitnessService implements Service {
   private static final int PRODUCE_TIME_OUT = 500; // ms
   @Getter
   private static volatile boolean needSyncCheck = Args.getInstance().isNeedSyncCheck();
-
-  private Application tronApp;
   @Getter
   protected Map<ByteString, WitnessCapsule> localWitnessStateMap = Maps
       .newHashMap(); //  <witnessAccountAddress,WitnessCapsule>
+  private Application tronApp;
   private Thread generateThread;
 
   @Getter
