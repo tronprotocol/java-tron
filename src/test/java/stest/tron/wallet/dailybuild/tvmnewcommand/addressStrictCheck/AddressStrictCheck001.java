@@ -85,7 +85,7 @@ public class AddressStrictCheck001 {
 
 
   @Test(enabled = true, description = "open experimental check address ")
-  public void testCheckAddressNew() {
+  public void test01CheckAddressNew() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));

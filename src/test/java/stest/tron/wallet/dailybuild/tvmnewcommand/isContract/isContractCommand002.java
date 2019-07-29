@@ -132,7 +132,7 @@ public class isContractCommand002 {
     Optional<Protocol.TransactionInfo> infoById1 = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     System.out.println(infoById1);
     String txid1 = "";
     txid1 = PublicMethed.triggerContract(contractAddress,
@@ -140,13 +140,13 @@ public class isContractCommand002 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
-    Assert.assertEquals(0, infoById1.get().getResultValue());
+    System.out.println(infoById1);
     txid1 = PublicMethed.triggerContract(selfdestructContractAddress,
         "testIsContractCommand(address)", num, false,
         0, maxFeeLimit, selfdestructContractExcAddress, selfdestructContractKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
-    Assert.assertEquals(1, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(0, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
     System.out.println(infoById);
   }
 

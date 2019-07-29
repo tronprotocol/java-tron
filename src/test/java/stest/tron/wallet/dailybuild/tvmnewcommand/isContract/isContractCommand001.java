@@ -90,7 +90,7 @@ public class isContractCommand001 {
 
 
   @Test(enabled = true, description = "correct contract address test")
-  public void testCorrectContract() {
+  public void test01CorrectContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -164,8 +164,8 @@ public class isContractCommand001 {
     Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "correct Account Address test")
-  public void testAccountAddress() {
+  @Test(enabled = true, description = " account Address test")
+  public void test02AccountAddress() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -242,7 +242,7 @@ public class isContractCommand001 {
   }
 
   @Test(enabled = true, description = "nonexistent Account Address test")
-  public void testNonexistentAddress() {
+  public void test03NonexistentAddress() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -318,8 +318,8 @@ public class isContractCommand001 {
     Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "Constructor return test")
-  public void testConstructorReturn() {
+  @Test(enabled = true, description = "constructor return test")
+  public void test04ConstructorReturn() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
