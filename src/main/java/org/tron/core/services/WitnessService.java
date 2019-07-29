@@ -9,7 +9,6 @@ import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
@@ -39,7 +38,6 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
-import org.tron.core.net.peer.Item;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
 
@@ -83,30 +81,6 @@ public class WitnessService implements Service {
   private Cache<ByteString, Long> blocks = CacheBuilder.newBuilder().maximumSize(10).build();
 
   /**
-   * Construction method.
-   */
-  public WitnessService(Application tronApp, TronApplicationContext context) {
-    this.tronApp = tronApp;
-    this.context = context;
-    backupManager = context.getBean(BackupManager.class);
-    backupServer = context.getBean(BackupServer.class);
-    tronNetService = context.getBean(TronNetService.class);
-    generateThread = new Thread(scheduleProductionLoop);
-    manager = tronApp.getDbManager();
-    manager.setWitnessService(this);
-    controller = manager.getWitnessController();
-    new Thread(() -> {
-      while (needSyncCheck) {
-        try {
-          Thread.sleep(100);
-        } catch (Exception e) {
-        }
-      }
-      backupServer.initServer();
-    }).start();
-  }
-
-  /**
    * Cycle thread to generate blocks
    */
   private Runnable scheduleProductionLoop =
@@ -139,6 +113,30 @@ public class WitnessService implements Service {
           }
         }
       };
+
+  /**
+   * Construction method.
+   */
+  public WitnessService(Application tronApp, TronApplicationContext context) {
+    this.tronApp = tronApp;
+    this.context = context;
+    backupManager = context.getBean(BackupManager.class);
+    backupServer = context.getBean(BackupServer.class);
+    tronNetService = context.getBean(TronNetService.class);
+    generateThread = new Thread(scheduleProductionLoop);
+    manager = tronApp.getDbManager();
+    manager.setWitnessService(this);
+    controller = manager.getWitnessController();
+    new Thread(() -> {
+      while (needSyncCheck) {
+        try {
+          Thread.sleep(100);
+        } catch (Exception e) {
+        }
+      }
+      backupServer.initServer();
+    }).start();
+  }
 
   /**
    * Loop to generate blocks
