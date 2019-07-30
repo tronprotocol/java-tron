@@ -1,54 +1,34 @@
 package org.tron.core.db;
 
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
-
-import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.RuntimeImpl;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
-import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
-import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
-import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
-import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
-import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
-import org.tron.common.runtime.vm.program.Program.TransferException;
+import org.tron.common.runtime.vm.program.Program.*;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.runtime2.TxRunner;
+import org.tron.common.runtime2.TxRunnerRouter;
+import org.tron.common.runtime2.config.VMConfig;
+import org.tron.common.runtime2.config.VMConfigLoader;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.capsule.ReceiptCapsule;
-import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.BalanceInsufficientException;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.*;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol.SmartContract.ABI;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
+
+import java.util.Objects;
+
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.*;
 
 @Slf4j(topic = "TransactionTrace")
 public class TransactionTrace {
@@ -59,7 +39,9 @@ public class TransactionTrace {
 
   private Manager dbManager;
 
-  private Runtime runtime;
+//  private Runtime runtime;
+
+  private TxRunner runner;
 
   private EnergyProcessor energyProcessor;
 
@@ -114,12 +96,15 @@ public class TransactionTrace {
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
     txStartTimeInMs = System.currentTimeMillis();
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    runtime = new RuntimeImpl(this, blockCap, deposit, new ProgramInvokeFactoryImpl());
-    runtime.setEnableEventLinstener(eventPluginLoaded);
+    //load config
+    VMConfig config = VMConfigLoader.getInstance().loadCached();
+    config.setEventPluginLoaded(eventPluginLoaded);
+    //load runner
+    runner = TxRunnerRouter.getInstance().route(this, blockCap, deposit, config);
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-    if (VMConfig.allowTvmConstantinople()) {
+    if (org.tron.common.runtime.config.VMConfig.allowTvmConstantinople()) {
       return;
     }
 
@@ -163,11 +148,10 @@ public class TransactionTrace {
 
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
-    /*  VM execute  */
-    runtime.execute();
-    runtime.go();
+    /*  TXRunner execute  */
+    runner.execute(false);
 
-    if (TRX_PRECOMPILED_TYPE != runtime.getTrxType()) {
+    if (TRX_PRECOMPILED_TYPE != trxType) {
       if (contractResult.OUT_OF_TIME
           .equals(receipt.getResult())) {
         setTimeResultType(TimeResultType.OUT_OF_TIME);
@@ -184,7 +168,7 @@ public class TransactionTrace {
     } catch (BalanceInsufficientException e) {
       throw new ContractExeException(e.getMessage());
     }
-    runtime.finalization();
+//    runtime.finalization();
   }
 
   /**
@@ -261,13 +245,13 @@ public class TransactionTrace {
     if (!needVM()) {
       return;
     }
-    RuntimeException exception = runtime.getResult().getException();
+    RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-        .isEmpty(runtime.getRuntimeError()) && !runtime.getResult().isRevert()) {
+            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
       receipt.setResult(contractResult.SUCCESS);
       return;
     }
-    if (runtime.getResult().isRevert()) {
+    if (runner.getResult().isRevert()) {
       receipt.setResult(contractResult.REVERT);
       return;
     }
@@ -317,14 +301,18 @@ public class TransactionTrace {
   }
 
   public String getRuntimeError() {
-    return runtime.getRuntimeError();
+    return runner.getResult().getRuntimeError();
   }
 
   public ProgramResult getRuntimeResult() {
-    return runtime.getResult();
+    return runner.getResult();
   }
 
-  public Runtime getRuntime() {
+/*  public Runtime getRuntime() {
     return runtime;
+  }*/
+
+  public TxRunner getRunner() {
+    return runner;
   }
 }
