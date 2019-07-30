@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -29,7 +30,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.zen.address.DiversifierT;
 import stest.tron.wallet.common.client.Configuration;
-import org.apache.http.client.HttpClient;
 
 @Slf4j
 public class HttpMethed {
@@ -49,7 +49,7 @@ public class HttpMethed {
 
   static {
     PoolingClientConnectionManager pccm = new PoolingClientConnectionManager();
-    pccm.setDefaultMaxPerRoute(20);
+    pccm.setDefaultMaxPerRoute(80);
     pccm.setMaxTotal(100);
 
     httpClient = new DefaultHttpClient(pccm);
@@ -1884,6 +1884,24 @@ public class HttpMethed {
     }
     return response;
   }
+
+  /**
+   * constructor.
+   */
+  public static HttpResponse getBlockByLastNum2(String httpNode, Integer num) {
+    try {
+      String requestUrl = "http://" + httpNode + "/walletsolidity/getblockbylatestnum2";
+      JsonObject userBaseObj2 = new JsonObject();
+      userBaseObj2.addProperty("num", num);
+      response = createConnect(requestUrl, userBaseObj2);
+    } catch (Exception e) {
+      e.printStackTrace();
+      httppost.releaseConnection();
+      return null;
+    }
+    return response;
+  }
+
 
   /**
    * constructor.
