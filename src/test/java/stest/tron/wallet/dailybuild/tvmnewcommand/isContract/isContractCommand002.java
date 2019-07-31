@@ -18,8 +18,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
+import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -92,13 +95,13 @@ public class isContractCommand002 {
   }
 
 
-  @Test(enabled = true, description = "selfdestruct Contract test isContract Command")
+  @Test(enabled = true, description = "selfdestruct vontract test isContract Command")
   public void testselfdestructContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract.sol";
+    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -149,6 +152,27 @@ public class isContractCommand002 {
     Assert.assertEquals(0, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
     System.out.println(infoById);
   }
+
+  @Test(enabled = true, description = "no constructor test isContract Command")
+  public void testNoConstructorContract() {
+    Assert.assertTrue(PublicMethed
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/TvmIsContract002.sol";
+    String contractName = "testIsContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    System.out.println(info.get());
+    Assert.assertEquals(0,info.get().getResultValue());
+  }
+
 
 
   /**
