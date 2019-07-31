@@ -1,5 +1,5 @@
-contract selfdestructCon{
-function selfdestructContract(address a) public {
-    selfdestruct(a);
+contract testIsContract{
+function testIsContractCommand(address a) public returns (bool) {
+return (a.isContract);
 }
 }
