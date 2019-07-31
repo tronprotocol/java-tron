@@ -37,10 +37,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     } else {
       revokingDB.put(key, ByteArray.fromLong(item.getBlockNum()));
     }
-
-    if (Objects.nonNull(indexHelper)) {
-      indexHelper.update(item.getInstance());
-    }
   }
 
   private TransactionCapsule getTransactionFromBlockStore(byte[] key, long blockNum) {
@@ -117,21 +113,6 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
 
   @Override
   public void delete(byte[] key) {
-    deleteIndex(key);
     super.delete(key);
-  }
-
-  private void deleteIndex(byte[] key) {
-    if (Objects.nonNull(indexHelper)) {
-      TransactionCapsule item;
-      try {
-        item = get(key);
-        if (Objects.nonNull(item)) {
-          indexHelper.remove(item.getInstance());
-        }
-      } catch (StoreException e) {
-        logger.error("deleteIndex: ", e);
-      }
-    }
   }
 }

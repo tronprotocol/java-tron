@@ -41,8 +41,6 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Autowired
   private RevokingDatabase revokingDatabase;
-  @Autowired(required = false)
-  protected IndexHelper indexHelper;
 
   protected TronStoreWithRevoking(String dbName) {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
