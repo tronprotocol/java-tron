@@ -107,6 +107,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.WitnessService;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.core.zen.merkle.MerkleContainer;

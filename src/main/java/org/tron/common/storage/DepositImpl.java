@@ -29,7 +29,6 @@ import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
 import org.tron.core.db.ContractStore;
 import org.tron.core.db.DelegatedResourceStore;
-import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ProposalStore;
 import org.tron.core.db.TransactionStore;
@@ -37,6 +36,7 @@ import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 

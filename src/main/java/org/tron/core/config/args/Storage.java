@@ -26,6 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Property;
 
 /**
  * Custom storage configurations
@@ -124,20 +125,9 @@ public class Storage {
   private String transactionHistoreSwitch;
 
   /**
-   * Other custom database configurations
-   */
-  @Getter
-  @Setter
-  private static class Property {
-
-    private String name;
-    private String path;
-    private Options dbOptions;
-  }
-
-  /**
    * Key: dbName, Value: Property object of that database
    */
+  @Getter
   private Map<String, Property> propertyMap;
 
   public static int getDbVersionFromConfig(final Config config) {
