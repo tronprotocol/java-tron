@@ -61,8 +61,6 @@ public class multiValidateSignContract003 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
-  byte[] selfdestructContractAddress = null;
-  byte[] emptyAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -120,44 +118,6 @@ public class multiValidateSignContract003 {
   }
 
 
-//  @Test(enabled = true, description = "Extra long hash string test multivalidatesign")
-//  public void test01multivalidatesign() {
-//    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-//        blockingStubFull);
-//    System.out.println(txid);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    String filePath = "src/test/resources/soliditycode/multivalidatesign.sol";
-//    String contractName = "Demo";
-//    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-//    String code = retMap.get("byteCode").toString();
-//    String abi = retMap.get("abI").toString();
-//    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-//        0L, 100, null, contractExcKey,
-//        contractExcAddress, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    List<Object> signatures = new ArrayList<>();
-//    List<Object> addresses = new ArrayList<>();
-//    byte[] hash = Hash.sha3(txid.getBytes());
-//    System.out.println(Hex.toHexString(hash));
-//    for (int i = 0; i < 5; i++) {
-//      ECKey key = new ECKey();
-//      byte[] sign = key.sign(hash).toByteArray();
-//      signatures.add(Hex.toHexString(sign));
-//      addresses.add(Wallet.encode58Check(key.getAddress()));
-//    }
-//    System.out.println(addresses);
-//    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-//    String input =parametersString(parameters);
-//    System.out.println(input);
-//    TransactionExtention transactionExtention = PublicMethed
-//        .triggerConstantContractForExtention(contractAddress,
-//            "testArray(bytes32,bytes[],address[])", input, false,
-//            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-//    System.out.println(transactionExtention);
-//    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
-//  }
-
 
   @Test(enabled = true, description = "Extra long addresses and signatures array test multivalidatesign")
   public void test01multivalidatesign() {
@@ -166,7 +126,7 @@ public class multiValidateSignContract003 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -180,7 +140,7 @@ public class multiValidateSignContract003 {
     byte[] hash = Hash.sha3(txid.getBytes());
     System.out.println(ByteArray.toHexString(hash));
     System.out.println(txid);
-    for (int i = 0; i < 75; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -189,6 +149,7 @@ public class multiValidateSignContract003 {
 
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input =parametersString(parameters);
+    System.out.println(input);
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,

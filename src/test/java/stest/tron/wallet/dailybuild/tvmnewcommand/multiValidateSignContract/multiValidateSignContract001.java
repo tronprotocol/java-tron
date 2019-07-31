@@ -61,8 +61,7 @@ public class multiValidateSignContract001 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
-  byte[] selfdestructContractAddress = null;
-  byte[] emptyAddress = null;
+
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -127,7 +126,7 @@ public class multiValidateSignContract001 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -139,7 +138,7 @@ public class multiValidateSignContract001 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i     < 5; i++) {
+    for (int i = 0; i < 5; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -162,7 +161,7 @@ public class multiValidateSignContract001 {
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -199,7 +198,7 @@ public class multiValidateSignContract001 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -238,7 +237,7 @@ public class multiValidateSignContract001 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();

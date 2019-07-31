@@ -56,8 +56,6 @@ public class multiValidateSignContract002 {
   private String soliditynode = Configuration.getByPath("testng.conf")
       .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
-  byte[] selfdestructContractAddress = null;
-  byte[] emptyAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -121,7 +119,7 @@ public class multiValidateSignContract002 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -152,7 +150,7 @@ public class multiValidateSignContract002 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -191,7 +189,7 @@ public class multiValidateSignContract002 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -230,7 +228,7 @@ public class multiValidateSignContract002 {
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -256,39 +254,6 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(0, infoById.get().getResultValue());
     Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
-
-/*  @Test(enabled = true, description = "all null test multivalidatesign")
-  public void testIncorrect05multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull);
-    System.out.println(txid);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign02.sol";
-    String contractName = "Demo";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    List<Object> signatures = new ArrayList<>();
-    List<Object> addresses = new ArrayList<>();
-    byte[] hash = Hash.sha3(txid.getBytes());
-    System.out.println(ByteArray.toHexString(hash));
-    System.out.println(txid);
-    String param = "\"null\",\"null\",\"null\"";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testArray(bytes32,bytes[],address[])", param, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = null;
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-  }*/
 
   /**
    * constructor.
