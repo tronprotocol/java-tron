@@ -187,7 +187,7 @@ dependencies {
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
-    compile 'com.github.tronprotocol:chainbase:AccountStore-SNAPSHOT'
+    compile 'com.github.tronprotocol:chainbase:TransactionResultCapsule-SNAPSHOT'
 }
 
 check.dependsOn 'lint'
