@@ -221,8 +221,43 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "all empyt test multivalidatesign")
+  @Test(enabled = true, description = "signatures and addresses empyt test multivalidatesign")
   public void testIncorrect04multivalidatesign() {
+    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+        blockingStubFull);
+    System.out.println(txid);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/multivalidatesign002.sol";
+    String contractName = "Demo";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    List<Object> signatures = new ArrayList<>();
+    List<Object> addresses = new ArrayList<>();
+    byte[] hash = Hash.sha3(txid.getBytes());
+    System.out.println(ByteArray.toHexString(hash));
+    System.out.println(txid);
+    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+    String input =parametersString(parameters);
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testArray(bytes32,bytes[],address[])", input, false,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    PublicMethed.getTransactionById(txid,blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = null;
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    System.out.println(infoById);
+    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+  }
+
+  @Test(enabled = true, description = "all empyt test multivalidatesign")
+  public void testIncorrect05multivalidatesign() {
     String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
         blockingStubFull);
     System.out.println(txid);
