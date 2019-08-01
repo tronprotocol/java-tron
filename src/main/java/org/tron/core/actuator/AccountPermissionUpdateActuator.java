@@ -8,6 +8,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -96,7 +97,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           "address should be distinct in permission " + permission.getType());
     }
     for (Key key : permission.getKeysList()) {
-      if (!Wallet.addressValid(key.getAddress().toByteArray())) {
+      if (!Commons.addressValid(key.getAddress().toByteArray())) {
         throw new ContractValidateException("key is not a validate address");
       }
       if (key.getWeight() <= 0) {
@@ -164,7 +165,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);

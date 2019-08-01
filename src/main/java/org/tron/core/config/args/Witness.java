@@ -21,6 +21,7 @@ import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 
@@ -42,7 +43,7 @@ public class Witness implements Serializable {
    * set address.
    */
   public void setAddress(final byte[] address) {
-    if (!Wallet.addressValid(address)) {
+    if (!Commons.addressValid(address)) {
       throw new IllegalArgumentException(
           "The address(" + StringUtil.createReadableString(address) + ") must be a 21 bytes.");
     }

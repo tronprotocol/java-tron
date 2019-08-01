@@ -57,7 +57,6 @@ public class Parameter {
   public class DatabaseConstants {
 
     public static final int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
-    public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     public static final int EXCHANGE_COUNT_LIMIT_MAX = 1000;
   }

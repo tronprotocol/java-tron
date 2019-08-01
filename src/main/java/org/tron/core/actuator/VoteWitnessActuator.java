@@ -13,6 +13,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -72,7 +73,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -96,7 +97,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-        if (!Wallet.addressValid(witnessCandidate)) {
+        if (!Commons.addressValid(witnessCandidate)) {
           throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();

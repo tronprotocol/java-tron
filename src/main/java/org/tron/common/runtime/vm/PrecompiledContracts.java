@@ -64,6 +64,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -1193,7 +1194,7 @@ public class PrecompiledContracts {
       }
 
       String addressBase58 = new String(data);
-      byte[] resultBytes = Wallet.decodeFromBase58Check(addressBase58);
+      byte[] resultBytes = Commons.decodeFromBase58Check(addressBase58);
       String hexString = Hex.toHexString(resultBytes);
 
       return Pair.of(true, new DataWord(new DataWord(hexString).getLast20Bytes()).getData());

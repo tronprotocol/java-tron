@@ -23,6 +23,7 @@ import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -685,7 +686,7 @@ public class Util {
 
   public static String getHexAddress(final String address) {
     if (address != null) {
-      byte[] addressByte = Wallet.decodeFromBase58Check(address);
+      byte[] addressByte = Commons.decodeFromBase58Check(address);
       return ByteArray.toHexString(addressByte);
     } else {
       return null;

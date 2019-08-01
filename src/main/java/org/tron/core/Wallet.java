@@ -18,6 +18,8 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.Commons.ADDRESS_SIZE;
+import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -94,6 +96,7 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -204,7 +207,6 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-  private static byte addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
@@ -260,27 +262,7 @@ public class Wallet {
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Wallet.addressPreFixByte = addressPreFixByte;
-  }
-
-  public static boolean addressValid(byte[] address) {
-    if (ArrayUtils.isEmpty(address)) {
-      logger.warn("Warning: Address is empty !!");
-      return false;
-    }
-    if (address.length != Constant.ADDRESS_SIZE / 2) {
-      logger.warn(
-          "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
-              + " !!");
-      return false;
-    }
-    if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
-          + address[0] + " !!");
-      return false;
-    }
-    //Other rule;
-    return true;
+    Commons.addressPreFixByte = addressPreFixByte;
   }
 
   public static String encode58Check(byte[] input) {
@@ -290,24 +272,6 @@ public class Wallet {
     System.arraycopy(input, 0, inputCheck, 0, input.length);
     System.arraycopy(hash1, 0, inputCheck, input.length, 4);
     return Base58.encode(inputCheck);
-  }
-
-  private static byte[] decode58Check(String input) {
-    byte[] decodeCheck = Base58.decode(input);
-    if (decodeCheck.length <= 4) {
-      return null;
-    }
-    byte[] decodeData = new byte[decodeCheck.length - 4];
-    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
-    byte[] hash0 = Sha256Hash.hash(decodeData);
-    byte[] hash1 = Sha256Hash.hash(hash0);
-    if (hash1[0] == decodeCheck[decodeData.length] &&
-        hash1[1] == decodeCheck[decodeData.length + 1] &&
-        hash1[2] == decodeCheck[decodeData.length + 2] &&
-        hash1[3] == decodeCheck[decodeData.length + 3]) {
-      return decodeData;
-    }
-    return null;
   }
 
   public static byte[] generateContractAddress(Transaction trx) {
@@ -354,27 +318,10 @@ public class Wallet {
 
   public static byte[] tryDecodeFromBase58Check(String address) {
     try {
-      return Wallet.decodeFromBase58Check(address);
+      return Commons.decodeFromBase58Check(address);
     } catch (Exception ex) {
       return null;
     }
-  }
-
-  public static byte[] decodeFromBase58Check(String addressBase58) {
-    if (StringUtils.isEmpty(addressBase58)) {
-      logger.warn("Warning: Address is empty !!");
-      return null;
-    }
-    byte[] address = decode58Check(addressBase58);
-    if (address == null) {
-      return null;
-    }
-
-    if (!addressValid(address)) {
-      return null;
-    }
-
-    return address;
   }
 
 //  public ShieldAddress generateShieldAddress() {

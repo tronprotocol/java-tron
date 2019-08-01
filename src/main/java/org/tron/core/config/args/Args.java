@@ -42,6 +42,7 @@ import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -593,14 +594,14 @@ public class Args {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixByte(Commons.ADD_PRE_FIX_BYTE_MAINNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
     }
 
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
-        byte[] bytes = Wallet.decodeFromBase58Check(INSTANCE.witnessAddress);
+        byte[] bytes = Commons.decodeFromBase58Check(INSTANCE.witnessAddress);
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from cmd");
@@ -621,7 +622,7 @@ public class Args {
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath("localWitnessAccountAddress")) {
-        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        byte[] bytes = Commons.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -1018,7 +1019,7 @@ public class Args {
   private static Witness createWitness(final ConfigObject witnessAccount) {
     final Witness witness = new Witness();
     witness.setAddress(
-        Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
+        Commons.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;
@@ -1034,7 +1035,7 @@ public class Args {
     final Account account = new Account();
     account.setAccountName(asset.get("accountName").unwrapped().toString());
     account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
+    account.setAddress(Commons.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
   }

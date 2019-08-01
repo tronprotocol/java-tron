@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -120,10 +121,10 @@ public class TransferAssetActuator extends AbstractActuator {
     byte[] assetName = transferAssetContract.getAssetName().toByteArray();
     long amount = transferAssetContract.getAmount();
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {
@@ -199,10 +200,10 @@ public class TransferAssetActuator extends AbstractActuator {
     long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {
