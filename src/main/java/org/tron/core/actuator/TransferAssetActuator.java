@@ -28,11 +28,11 @@ import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -58,7 +58,7 @@ public class TransferAssetActuator extends AbstractActuator {
         boolean withDefaultPermission =
             dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         toAccountCapsule = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
+            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
         dbManager.getAccountStore().put(toAddress, toAccountCapsule);
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
@@ -70,12 +70,12 @@ public class TransferAssetActuator extends AbstractActuator {
       dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
-      if (!ownerAccountCapsule.reduceAssetAmountV2(assetName.toByteArray(), amount, dbManager)) {
+      if (!ownerAccountCapsule.reduceAssetAmountV2(assetName.toByteArray(), amount, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore())) {
         throw new ContractExeException("reduceAssetAmount failed !");
       }
       accountStore.put(ownerAddress, ownerAccountCapsule);
 
-      toAccountCapsule.addAssetAmountV2(assetName.toByteArray(), amount, dbManager);
+      toAccountCapsule.addAssetAmountV2(assetName.toByteArray(), amount, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       accountStore.put(toAddress, toAccountCapsule);
 
       ret.setStatus(fee, code.SUCESS);

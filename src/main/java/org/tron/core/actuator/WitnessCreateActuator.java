@@ -122,7 +122,7 @@ public class WitnessCreateActuator extends AbstractActuator {
         .get(witnessCapsule.createDbKey());
     accountCapsule.setIsWitness(true);
     if (dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1) {
-      accountCapsule.setDefaultWitnessPermission(dbManager);
+      accountCapsule.setDefaultWitnessPermission(dbManager.getDynamicPropertiesStore());
     }
     this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     long cost = dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();

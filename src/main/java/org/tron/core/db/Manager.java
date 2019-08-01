@@ -107,6 +107,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.WitnessService;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.witness.ProposalController;
@@ -715,11 +716,11 @@ public class Manager {
   public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
       throws BalanceInsufficientException {
     if (amount < 0) {
-      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this)) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
         throw new BalanceInsufficientException("reduceAssetAmount failed !");
       }
     } else if (amount > 0 &&
-            !account.addAssetAmountV2(AssetID.getBytes(), amount, this)) {
+            !account.addAssetAmountV2(AssetID.getBytes(), amount, this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
         throw new BalanceInsufficientException("addAssetAmount failed !");
     }
     accountStore.put(account.getAddress().toByteArray(), account);

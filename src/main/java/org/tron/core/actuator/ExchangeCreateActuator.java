@@ -47,13 +47,13 @@ public class ExchangeCreateActuator extends AbstractActuator {
       if (Arrays.equals(firstTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - firstTokenBalance);
       } else {
-        accountCapsule.reduceAssetAmountV2(firstTokenID, firstTokenBalance, dbManager);
+        accountCapsule.reduceAssetAmountV2(firstTokenID, firstTokenBalance, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       }
 
       if (Arrays.equals(secondTokenID, "_".getBytes())) {
         accountCapsule.setBalance(newBalance - secondTokenBalance);
       } else {
-        accountCapsule.reduceAssetAmountV2(secondTokenID, secondTokenBalance, dbManager);
+        accountCapsule.reduceAssetAmountV2(secondTokenID, secondTokenBalance, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       }
 
       long id = dbManager.getDynamicPropertiesStore().getLatestExchangeNum() + 1;
@@ -185,7 +185,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(firstTokenID, firstTokenBalance, dbManager)) {
+      if (!accountCapsule.assetBalanceEnoughV2(firstTokenID, firstTokenBalance, dbManager.getDynamicPropertiesStore())) {
         throw new ContractValidateException("first token balance is not enough");
       }
     }
@@ -195,7 +195,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
-      if (!accountCapsule.assetBalanceEnoughV2(secondTokenID, secondTokenBalance, dbManager)) {
+      if (!accountCapsule.assetBalanceEnoughV2(secondTokenID, secondTokenBalance, dbManager.getDynamicPropertiesStore())) {
         throw new ContractValidateException("second token balance is not enough");
       }
     }

@@ -41,7 +41,7 @@ public class TransferActuator extends AbstractActuator {
         boolean withDefaultPermission =
             dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
+            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
         dbManager.getAccountStore().put(toAddress, toAccount);
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();

@@ -24,7 +24,6 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
 import org.tron.core.db.ContractStore;
@@ -36,6 +35,7 @@ import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -427,9 +427,9 @@ public class DepositImpl implements Deposit {
               + " insufficient balance");
     }
     if (value >= 0) {
-      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager);
+      accountCapsule.addAssetAmountV2(tokenIdWithoutLeadingZero, value, this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     } else {
-      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager);
+      accountCapsule.reduceAssetAmountV2(tokenIdWithoutLeadingZero, -value, this.dbManager.getDynamicPropertiesStore(), this.dbManager.getAssetIssueStore());
     }
 //    accountCapsule.getAssetMap().put(new String(tokenIdWithoutLeadingZero), Math.addExact(balance, value));
     Key key = Key.create(address);

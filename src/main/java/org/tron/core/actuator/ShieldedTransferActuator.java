@@ -116,7 +116,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         boolean withDefaultPermission =
             dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
         toAccount = new AccountCapsule(ByteString.copyFrom(toAddress), AccountType.Normal,
-            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager);
+            dbManager.getHeadBlockTimeStamp(), withDefaultPermission, dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
         dbManager.getAccountStore().put(toAddress, toAccount);
       }
       dbManager.adjustAssetBalanceV2(toAddress, zenTokenId, amount);

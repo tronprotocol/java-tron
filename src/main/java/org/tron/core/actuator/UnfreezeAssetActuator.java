@@ -51,11 +51,11 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         accountCapsule
             .addAssetAmountV2(accountCapsule.getAssetIssuedName().toByteArray(), unfreezeAsset,
-                dbManager);
+                dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       } else {
         accountCapsule
             .addAssetAmountV2(accountCapsule.getAssetIssuedID().toByteArray(), unfreezeAsset,
-                dbManager);
+                dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
       }
 
       accountCapsule.setInstance(accountCapsule.getInstance().toBuilder()
