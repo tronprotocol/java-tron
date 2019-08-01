@@ -48,7 +48,7 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
 
   @Override
   public boolean isEmpty() {
-    return super.size() <= 0;
+    return super.getStreamCount() <= 0;
   }
 
   @Override
