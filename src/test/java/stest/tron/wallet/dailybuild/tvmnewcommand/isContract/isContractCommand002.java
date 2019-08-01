@@ -95,7 +95,7 @@ public class isContractCommand002 {
   }
 
 
-  @Test(enabled = true, description = "selfdestruct vontract test isContract Command")
+  @Test(enabled = true, description = "selfdestruct contract test isContract Command")
   public void testselfdestructContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -172,6 +172,8 @@ public class isContractCommand002 {
     System.out.println(info.get());
     Assert.assertEquals(0,info.get().getResultValue());
   }
+
+
 
 
 
