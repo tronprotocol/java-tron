@@ -28,7 +28,6 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.*;
 import org.tron.core.Constant;
 import org.tron.core.capsule.*;
@@ -1266,16 +1265,11 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
-    VMConfig.initVmHardFork();
-    VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
-    VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
-    VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
 
-
-    trace.init(blockCap, eventPluginLoaded);
+    trace.execute(blockCap, eventPluginLoaded);
+/*    trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
-    trace.exec();
+    trace.exec();*/
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
@@ -1283,9 +1277,10 @@ public class Manager {
         if (trace.checkNeedRetry()) {
           String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
           logger.info("Retry for tx id: {}", txId);
-          trace.init(blockCap, eventPluginLoaded);
+          trace.execute(blockCap, eventPluginLoaded);
+/*          trace.init(blockCap, eventPluginLoaded);
           trace.checkIsConstant();
-          trace.exec();
+          trace.exec();*/
           trace.setResult();
           logger.info("Retry result for tx id: {}, tx resultCode in receipt: {}",
               txId, trace.getReceipt().getResult());

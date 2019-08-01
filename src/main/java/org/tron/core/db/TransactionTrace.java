@@ -6,13 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
 import org.tron.common.runtime.vm.program.Program.*;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.runtime2.TxRunnerRouter;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.runtime2.config.VMConfigLoader;
+import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -21,7 +21,7 @@ import org.tron.core.capsule.*;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.*;
 import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -92,10 +92,21 @@ public class TransactionTrace {
     init(blockCap, false);
   }
 
+
+  public void execute(BlockCapsule blockCap, boolean eventPluginLoaded)
+          throws ContractExeException, ContractValidateException, VMIllegalException {
+    init(blockCap, eventPluginLoaded);
+    //TODO: add checkIsConstant in exec detail
+    exec();
+  }
+
+
   //pre transaction check
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
+
     txStartTimeInMs = System.currentTimeMillis();
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    //create storage
+    Deposit deposit = DepositImpl.createRoot(dbManager);
     //load config
     VMConfig config = VMConfigLoader.getInstance().loadCached();
     config.setEventPluginLoaded(eventPluginLoaded);
@@ -110,7 +121,7 @@ public class TransactionTrace {
 
     TriggerSmartContract triggerContractFromTransaction = ContractCapsule
         .getTriggerContractFromTransaction(this.getTrx().getInstance());
-    if (TrxType.TRX_CONTRACT_CALL_TYPE == this.trxType) {
+    if (InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE == this.trxType) {
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
       ContractCapsule contract = deposit
           .getContract(triggerContractFromTransaction.getContractAddress().toByteArray());
@@ -121,7 +132,7 @@ public class TransactionTrace {
             .encode58Check(triggerContractFromTransaction.getContractAddress().toByteArray())
             + " is not in contract store");
       }
-      ABI abi = contract.getInstance().getAbi();
+      Protocol.SmartContract.ABI abi = contract.getInstance().getAbi();
       if (Wallet.isConstant(abi, triggerContractFromTransaction)) {
         throw new VMIllegalException("cannot call constant method");
       }
@@ -168,6 +179,7 @@ public class TransactionTrace {
     } catch (BalanceInsufficientException e) {
       throw new ContractExeException(e.getMessage());
     }
+    //TODO:old finaliztion
 //    runtime.finalization();
   }
 

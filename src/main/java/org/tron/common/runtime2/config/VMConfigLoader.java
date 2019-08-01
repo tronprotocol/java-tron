@@ -39,6 +39,14 @@ public class VMConfigLoader {
       cachedVmConfig.setMaxCpuTimeOfOneTx(source.getMaxCpuTimeOfOneTx());
     }
 
+    //for previous vm1 use
+    org.tron.common.runtime.config.VMConfig.initVmHardFork();
+    org.tron.common.runtime.config.VMConfig.initAllowMultiSign(source.getAllowMultiSign());
+    org.tron.common.runtime.config.VMConfig.initAllowTvmTransferTrc10(source.getAllowTvmTransferTrc10());
+    org.tron.common.runtime.config.VMConfig.initAllowTvmConstantinople(source.getAllowTvmConstantinople());
+    org.tron.common.runtime.config.VMConfig.initAllowTvmSolidity059(source.getAllowTvmSolidity059());
+
+
     return cachedVmConfig;
   }
 

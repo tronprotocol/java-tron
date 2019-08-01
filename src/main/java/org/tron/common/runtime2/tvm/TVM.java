@@ -1,4 +1,4 @@
-package org.tron.common.runtime2.evm;
+package org.tron.common.runtime2.tvm;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,14 +75,28 @@ public class TVM implements IVM {
   public void execute(boolean isStatic) throws ContractValidateException, VMIllegalException {
     //Validate and getBaseProgram
     Program program = preValidateAndGetBaseProgram(isStatic);
-    //create Program
-
+    //load eventPlugin
+    if (vmConfig.isEventPluginLoaded() &&
+            (EventPluginLoader.getInstance().isContractEventTriggerEnable()
+                    || EventPluginLoader.getInstance().isContractLogTriggerEnable())
+            && isCheckTransaction()) {
+      logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
+              program.getRootTransactionId(), program.getCallerAddress());
+    }
+    //setup program environment
+    ProgramEnv env = ProgramEnv.createEnvironment(deposit);
+    //play program
+    new Interpreter().play(program, env);
+    //process result
+    program.getProgramResult();
+    //finalization
 
   }
 
 
   Program preValidateAndGetBaseProgram(boolean isStatic) throws ContractValidateException, VMIllegalException {
     Program program = new Program();
+    program.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
       Contract.CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
       if (contract == null) {
@@ -118,11 +132,35 @@ public class TVM implements IVM {
 
 
     } else { // TRX_CONTRACT_CALL_TYPE
+      Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+      if (contract.getContractAddress() == null) {
+        throw new ContractValidateException("Cannot get contract address from TriggerContract");
+      }
+      byte[] contractAddress = contract.getContractAddress().toByteArray();
 
+      ContractCapsule deployedContract = this.deposit.getContract(contractAddress);
+      if (null == deployedContract) {
+        logger.info("No contract or not a smart contract");
+        throw new ContractValidateException("No contract or not a smart contract");
+      }
+      AccountCapsule creator = this.deposit
+              .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
+      byte[] callerAddress = contract.getOwnerAddress().toByteArray();
+      AccountCapsule caller = this.deposit.getAccount(callerAddress);
+
+
+      program.setCallValue(contract.getCallValue());
+      program.setTokenId(contract.getTokenId());
+      program.setTokenValue(contract.getCallTokenValue());
+      program.setCreator(creator);
+      program.setCallerAddress(callerAddress);
+      program.setCaller(caller);
+      program.setContractAddress(contractAddress);
+      program.setOps(deposit.getCode(contractAddress));
 
     }
     //calculateEnergyLimit
-    long energylimt = calculateEnergyLimit(program.getCreator(), null, null, isStatic, program.getCallValue());
+    long energylimt = calculateEnergyLimit(program.getCreator(), program.getCaller(), program.getContractAddress(), isStatic, program.getCallValue());
     program.setEnergyLimit(energylimt);
     //maxCpuTime
     long maxCpuTimeOfOneTx = vmConfig.getMaxCpuTimeOfOneTx()
@@ -133,27 +171,22 @@ public class TVM implements IVM {
     program.setEnergyLimit(energylimt);
     program.setVmStartInUs(vmStartInUs);
     program.setVmShouldEndInUs(vmShouldEndInUs);
-    //
+    program.setStatic(isStatic);
+
+    //set rootTransaction
 
     byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
     program.setRootTransactionId(txId);
     program.setInternalTransaction(new InternalTransaction(trx, trxType));
 
-    if (vmConfig.isEventPluginLoaded() &&
-            (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-                    || EventPluginLoader.getInstance().isContractLogTriggerEnable())
-            && isCheckTransaction()) {
-      logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
-              txId, program.getCallerAddress());
 
-    }
 
     return program;
   }
 
 
   private long calculateEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-                                    Contract.TriggerSmartContract contract, boolean isStatic, long callValue) throws ContractValidateException {
+                                    byte[] contractAddress, boolean isStatic, long callValue) throws ContractValidateException {
     long energyLimit = 0;
     long rawfeeLimit = trx.getRawData().getFeeLimit();
     if (rawfeeLimit < 0 || rawfeeLimit > vmConfig.getMaxFeeLimit()) {
@@ -167,7 +200,7 @@ public class TVM implements IVM {
       if (isStatic) {
         energyLimit = Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
       } else {
-        energyLimit = getTotalEnergyLimit(creator, caller, contract, rawfeeLimit, callValue);
+        energyLimit = getTotalEnergyLimit(creator, caller, contractAddress, rawfeeLimit, callValue);
       }
     }
     return energyLimit;
@@ -194,7 +227,7 @@ public class TVM implements IVM {
 
 
   private long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,
-                                               Contract.TriggerSmartContract contract, long feeLimit, long callValue)
+                                               byte[] contractAddress, long feeLimit, long callValue)
           throws ContractValidateException {
 
     long callerEnergyLimit = getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
@@ -207,7 +240,7 @@ public class TVM implements IVM {
 
     long creatorEnergyLimit = 0;
     ContractCapsule contractCapsule = this.deposit
-            .getContract(contract.getContractAddress().toByteArray());
+            .getContract(contractAddress);
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
     long originEnergyLimit = contractCapsule.getOriginEnergyLimit();
@@ -236,12 +269,12 @@ public class TVM implements IVM {
 
 
   private long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
-                                   Contract.TriggerSmartContract contract, long feeLimit, long callValue)
+                                   byte[] contractAddress, long feeLimit, long callValue)
           throws ContractValidateException {
     if (Objects.isNull(creator)) {
       return getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     }
-    return getTotalEnergyLimitWithFixRatio(creator, caller, contract, feeLimit, callValue);
+    return getTotalEnergyLimitWithFixRatio(creator, caller, contractAddress, feeLimit, callValue);
 
   }
 

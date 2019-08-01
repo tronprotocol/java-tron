@@ -1,7 +1,7 @@
 package org.tron.common.runtime2;
 
 import org.tron.common.runtime2.config.VMConfig;
-import org.tron.common.runtime2.evm.TVM;
+import org.tron.common.runtime2.tvm.TVM;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TransactionTrace;
