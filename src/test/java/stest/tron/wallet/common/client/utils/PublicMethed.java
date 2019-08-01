@@ -110,7 +110,7 @@ public class PublicMethed {
   private static ShieldWrapper shieldWrapper = new ShieldWrapper();
   //private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   //private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-  public static Map<Long, ShieldNoteInfo>  utxoMapNote = new ConcurrentHashMap();
+  public static Map<Long, ShieldNoteInfo> utxoMapNote = new ConcurrentHashMap();
   public static List<ShieldNoteInfo> spendUtxoList = new ArrayList<>();
 
   /**
@@ -3169,17 +3169,17 @@ public class PublicMethed {
       System.out.println("RPC create call trx failed!");
       System.out.println("Code = " + transactionExtention.getResult().getCode());
       System.out
-              .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+          .println("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
       return null;
     }
     Transaction transaction = transactionExtention.getTransaction();
     if (transaction.getRetCount() != 0
-            && transactionExtention.getConstantResult(0) != null
-            && transactionExtention.getResult() != null) {
+        && transactionExtention.getConstantResult(0) != null
+        && transactionExtention.getResult() != null) {
       byte[] result = transactionExtention.getConstantResult(0).toByteArray();
       System.out.println("message:" + transaction.getRet(0).getRet());
       System.out.println(":" + ByteArray
-              .toStr(transactionExtention.getResult().getMessage().toByteArray()));
+          .toStr(transactionExtention.getResult().getMessage().toByteArray()));
       System.out.println("Result:" + Hex.toHexString(result));
       return null;
     }
@@ -3187,7 +3187,7 @@ public class PublicMethed {
     final TransactionExtention.Builder texBuilder = TransactionExtention.newBuilder();
     Transaction.Builder transBuilder = Transaction.newBuilder();
     Transaction.raw.Builder rawBuilder = transactionExtention.getTransaction().getRawData()
-            .toBuilder();
+        .toBuilder();
     rawBuilder.setFeeLimit(feeLimit);
     transBuilder.setRawData(rawBuilder);
     for (int i = 0; i < transactionExtention.getTransaction().getSignatureCount(); i++) {
@@ -3218,8 +3218,8 @@ public class PublicMethed {
     }
     transaction = signTransaction(ecKey, transaction);
     System.out.println(
-            "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
-                    .toByteArray())));
+        "trigger txid = " + ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData()
+            .toByteArray())));
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
     if (response.getResult() == false) {
       return null;
@@ -4897,10 +4897,10 @@ public class PublicMethed {
    * constructor.
    */
   public static boolean sendShieldCoin(byte[] publicZenTokenOwnerAddress,
-                                       long fromAmount,ShieldAddressInfo shieldAddressInfo,
-                                       NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx, List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress,
-      long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long toAmount, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -4945,15 +4945,11 @@ public class PublicMethed {
         System.out.println(e);
       }
 
-
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
       noteBuild.setValue(noteTx.getNote().getValue());
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
-
-
-
 
       //System.out.println("address " + noteInfo.getPaymentAddress());
       //System.out.println("value " + noteInfo.getValue());
@@ -5224,8 +5220,8 @@ public class PublicMethed {
   /**
    * constructor.
    */
-  public static List<Note> addShieldOutputList(List<Note> shieldOutList,String shieldToAddress,
-      String toAmountString,String menoString) {
+  public static List<Note> addShieldOutputList(List<Note> shieldOutList, String shieldToAddress,
+      String toAmountString, String menoString) {
     String shieldAddress = shieldToAddress;
     String amountString = toAmountString;
     if (menoString.equals("null")) {
@@ -5283,7 +5279,7 @@ public class PublicMethed {
    * constructor.
    */
   public static DecryptNotes listShieldNote(Optional<ShieldAddressInfo> shieldAddressInfo,
-                                            WalletGrpc.WalletBlockingStub blockingStubFull) {
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
     Long startBlockNum = 0L;
@@ -5391,7 +5387,6 @@ public class PublicMethed {
     Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
 
-
     if (currentBlockNum < 100) {
       IvkDecryptParameters.Builder builder = IvkDecryptParameters.newBuilder();
       builder.setStartBlockIndex(0);
@@ -5445,7 +5440,6 @@ public class PublicMethed {
   }
 
 
-
   /**
    * constructor.
    */
@@ -5472,7 +5466,7 @@ public class PublicMethed {
    */
   public static DecryptNotes getShieldNotesByOvkOnSolidity(
       Optional<ShieldAddressInfo> shieldAddressInfo, WalletSolidityGrpc
-          .WalletSolidityBlockingStub blockingStubSolidity) {
+      .WalletSolidityBlockingStub blockingStubSolidity) {
     Block currentBlock = blockingStubSolidity
         .getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
     Long currentBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
@@ -5501,9 +5495,8 @@ public class PublicMethed {
    * constructor.
    */
   public static SpendResult getSpendResult(
-          ShieldAddressInfo shieldAddressInfo, NoteTx noteTx,
-          WalletGrpc.WalletBlockingStub blockingStubFull) {
-
+      ShieldAddressInfo shieldAddressInfo, NoteTx noteTx,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
 
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
     OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
@@ -5523,7 +5516,6 @@ public class PublicMethed {
       } catch (Exception e) {
         Assert.assertTrue(1 == 1);
       }
-
 
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
@@ -5548,7 +5540,7 @@ public class PublicMethed {
    */
   public static SpendResult getSpendResultOnSolidity(
       ShieldAddressInfo shieldAddressInfo, NoteTx noteTx, WalletSolidityGrpc
-          .WalletSolidityBlockingStub blockingStubSolidity) {
+      .WalletSolidityBlockingStub blockingStubSolidity) {
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
     OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
@@ -5585,7 +5577,7 @@ public class PublicMethed {
    * constructor.
    */
   public static String getShieldNullifier(ShieldAddressInfo shieldAddressInfo,
-      NoteTx noteTx,WalletGrpc.WalletBlockingStub blockingStubFull) {
+      NoteTx noteTx, WalletGrpc.WalletBlockingStub blockingStubFull) {
     OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
     OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
     outPointBuild.setHash(ByteString.copyFrom(noteTx.getTxid().toByteArray()));
@@ -5629,10 +5621,10 @@ public class PublicMethed {
    * constructor.
    */
   public static String sendShieldCoinGetTxid(byte[] publicZenTokenOwnerAddress,
-      long fromAmount,ShieldAddressInfo shieldAddressInfo,
-      NoteTx noteTx,List<GrpcAPI.Note> shieldOutputList,
+      long fromAmount, ShieldAddressInfo shieldAddressInfo,
+      NoteTx noteTx, List<GrpcAPI.Note> shieldOutputList,
       byte[] publicZenTokenToAddress,
-      long toAmount, String priKey,  WalletGrpc.WalletBlockingStub blockingStubFull) {
+      long toAmount, String priKey, WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ECKey temKey = null;
     try {
@@ -5677,14 +5669,11 @@ public class PublicMethed {
         System.out.println(e);
       }
 
-
       Note.Builder noteBuild = Note.newBuilder();
       noteBuild.setPaymentAddress(shieldAddressInfo.getAddress());
       noteBuild.setValue(noteTx.getNote().getValue());
       noteBuild.setRcm(ByteString.copyFrom(noteTx.getNote().getRcm().toByteArray()));
       noteBuild.setMemo(ByteString.copyFrom(noteTx.getNote().getMemo().toByteArray()));
-
-
 
       //System.out.println("address " + noteInfo.getPaymentAddress());
       //System.out.println("value " + noteInfo.getValue());
@@ -5762,8 +5751,23 @@ public class PublicMethed {
         .toByteArray()));
   }
 
-
-
+  public static byte[] decode58Check(String input) {
+    byte[] decodeCheck = org.tron.common.utils.Base58.decode(input);
+    if (decodeCheck.length <= 4) {
+      return null;
+    }
+    byte[] decodeData = new byte[decodeCheck.length - 4];
+    System.arraycopy(decodeCheck, 0, decodeData, 0, decodeData.length);
+    byte[] hash0 = Sha256Hash.hash(decodeData);
+    byte[] hash1 = Sha256Hash.hash(hash0);
+    if (hash1[0] == decodeCheck[decodeData.length] &&
+        hash1[1] == decodeCheck[decodeData.length + 1] &&
+        hash1[2] == decodeCheck[decodeData.length + 2] &&
+        hash1[3] == decodeCheck[decodeData.length + 3]) {
+      return decodeData;
+    }
+    return null;
+  }
 
 
 }
