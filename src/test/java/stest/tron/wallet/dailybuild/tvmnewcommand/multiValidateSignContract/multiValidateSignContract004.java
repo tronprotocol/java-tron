@@ -1,8 +1,5 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.multiValidateSignContract;
 
-import static org.hamcrest.core.StringContains.containsString;
-
-import com.googlecode.cqengine.query.simple.Has;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
@@ -27,11 +24,9 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -121,7 +116,9 @@ public class multiValidateSignContract004 {
 
   @Test(enabled = true, description = "constructor test multivalidatesign")
   public void test01multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+    String txid = PublicMethed
+        .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
+            testNetAccountKey,
         blockingStubFull);
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -135,7 +132,7 @@ public class multiValidateSignContract004 {
     byte[] hash = Hash.sha3(txid.getBytes());
     System.out.println(ByteArray.toHexString(hash));
     System.out.println(txid);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -150,15 +147,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
-    System.out.println(info);
+    logger.info(info.toString());
     Assert.assertEquals(0,info.get().getResultValue());
     contractAddress = info.get().getContractAddress().toByteArray();
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testConstructor()", "", false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    System.out.println(transactionExtention);
-    Assert.assertEquals(0,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert
+        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
 

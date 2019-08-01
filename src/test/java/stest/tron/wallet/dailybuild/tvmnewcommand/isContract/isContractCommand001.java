@@ -86,24 +86,23 @@ public class isContractCommand001 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-  }
-
-
-  @Test(enabled = true, description = "correct contract address test")
-  public void test01CorrectContract() {
-    Assert.assertTrue(PublicMethed
+    PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
+            blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
+  }
+
+
+  @Test(enabled = true, description = "correct contract address test")
+  public void test01CorrectContract() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -126,6 +125,8 @@ public class isContractCommand001 {
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -136,7 +137,6 @@ public class isContractCommand001 {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
     logger.info("energyUsageTotal:" + energyUsageTotal);
-
     Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
     GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
         .getAccountResource(contractExcAddress,
@@ -149,40 +149,16 @@ public class isContractCommand001 {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = " account Address test")
   public void test02AccountAddress() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
-    String contractName = "testIsContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Protocol.Account info;
-
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress,
             blockingStubFull);
@@ -203,7 +179,8 @@ public class isContractCommand001 {
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println(infoById.get().getContractResult(0));
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -227,39 +204,16 @@ public class isContractCommand001 {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "nonexistent Account Address test")
   public void test03NonexistentAddress() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
-    String contractName = "testIsContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Protocol.Account info;
-
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress,
             blockingStubFull);
@@ -280,7 +234,8 @@ public class isContractCommand001 {
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println(infoById.get().getContractResult(0));
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -291,7 +246,6 @@ public class isContractCommand001 {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
     logger.info("energyUsageTotal:" + energyUsageTotal);
-
     Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
     GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
         .getAccountResource(contractExcAddress,
@@ -304,39 +258,17 @@ public class isContractCommand001 {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(0, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
   }
 
   @Test(enabled = true, description = "constructor return test")
   public void test04ConstructorReturn() {
-    Assert.assertTrue(PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
-    String contractName = "testIsContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     Protocol.Account info;
-
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress,
             blockingStubFull);
@@ -356,7 +288,9 @@ public class isContractCommand001 {
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println(infoById.get().getContractResult(0));
+    logger.info(infoById.toString());
+    Assert.assertTrue(infoById.get().getResultValue() == 0);
+    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -367,7 +301,6 @@ public class isContractCommand001 {
     logger.info("energyUsed:" + energyUsed);
     logger.info("netFee:" + netFee);
     logger.info("energyUsageTotal:" + energyUsageTotal);
-
     Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
     GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
         .getAccountResource(contractExcAddress,
@@ -380,19 +313,11 @@ public class isContractCommand001 {
     logger.info("afterEnergyUsed:" + afterEnergyUsed);
     logger.info("afterNetUsed:" + afterNetUsed);
     logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-
     Assert.assertTrue(afterBalance + fee == beforeBalance);
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testConstructor()", "", false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    System.out.println(infoById);
-    Assert.assertTrue(infoById.get().getResultValue() == 0);
-    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+
   }
 
 

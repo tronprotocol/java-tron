@@ -18,11 +18,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
-import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -119,7 +117,7 @@ public class isContractCommand002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    System.out.println(infoById);
+    logger.info(infoById.toString());
     Assert.assertTrue(PublicMethed
         .sendcoin(selfdestructContractExcAddress, 10000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -136,21 +134,21 @@ public class isContractCommand002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-    System.out.println(infoById1);
+    logger.info(infoById1.toString());
     String txid1 = "";
     txid1 = PublicMethed.triggerContract(contractAddress,
         "selfdestructContract(address)", num, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
-    System.out.println(infoById1);
+    logger.info(infoById1.toString());
     txid1 = PublicMethed.triggerContract(selfdestructContractAddress,
         "testIsContractCommand(address)", num, false,
         0, maxFeeLimit, selfdestructContractExcAddress, selfdestructContractKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertEquals(0, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
-    System.out.println(infoById);
+    logger.info(infoById.toString());
   }
 
   @Test(enabled = true, description = "no constructor test isContract Command")
@@ -169,7 +167,7 @@ public class isContractCommand002 {
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
-    System.out.println(info.get());
+    logger.info(info.get().toString());
     Assert.assertEquals(0,info.get().getResultValue());
   }
 

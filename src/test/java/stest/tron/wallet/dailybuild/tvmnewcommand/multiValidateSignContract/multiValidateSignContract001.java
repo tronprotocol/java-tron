@@ -1,15 +1,11 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.multiValidateSignContract;
 
-import static org.hamcrest.core.StringContains.containsString;
-
-import com.googlecode.cqengine.query.simple.Has;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,11 +23,8 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
-import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
@@ -66,6 +59,7 @@ public class multiValidateSignContract001 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  String txid = "";
 
   private String parametersString(List<Object>parameters){
     String[] inputArr = new String[parameters.size()];
@@ -116,14 +110,10 @@ public class multiValidateSignContract001 {
         .usePlaintext(true)
         .build();
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
-  }
-
-
-  @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
-  public void test01multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull);
-    System.out.println(txid);
+    txid = PublicMethed
+        .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
+            testNetAccountKey,
+            blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
@@ -134,48 +124,39 @@ public class multiValidateSignContract001 {
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
+  }
+
+
+  @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
+  public void test01multivalidatesign() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String input =parametersString(parameters);
+    String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    System.out.println(transactionExtention);
+    logger.info(transactionExtention.toString());
     Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
 
   @Test(enabled = true, description = "incorrect address test multivalidatesign")
   public void test02multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
-    String contractName = "Demo";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    System.out.println(ByteArray.toHexString(hash));
-    System.out.println(txid);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -193,26 +174,11 @@ public class multiValidateSignContract001 {
 
   @Test(enabled = true, description = "incorrect signatures test multivalidatesign")
   public void test03multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-        blockingStubFull);
-    System.out.println(txid);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
-    String contractName = "Demo";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    System.out.println(ByteArray.toHexString(hash));
-    System.out.println(txid);
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -230,11 +196,14 @@ public class multiValidateSignContract001 {
 
   @Test(enabled = true, description = "incorrect hash test multivalidatesign")
   public void test04multivalidatesign() {
-    String txid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+    String txid = PublicMethed
+        .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
+            testNetAccountKey,
         blockingStubFull);
-    String incorrecttxid = PublicMethed.sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+    String incorrecttxid = PublicMethed
+        .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
+            testNetAccountKey,
         blockingStubFull);
-    System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
@@ -249,7 +218,7 @@ public class multiValidateSignContract001 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -261,7 +230,7 @@ public class multiValidateSignContract001 {
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    System.out.println(transactionExtention);
+    logger.info(transactionExtention.toString());
     Assert.assertEquals(2,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
