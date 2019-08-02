@@ -113,9 +113,9 @@ public class Interpreter {
         }
         Protocol.SmartContract newSmartContract = builder.build();
         env.getStorage().createContract(newAddress, new ContractCapsule(newSmartContract));
-
-
         contractAddress = newAddress;
+        program.setContractAddress(contractAddress);
+
       } else {
         //normal create
         contractAddress = Wallet.generateContractAddress(trx);
@@ -140,9 +140,7 @@ public class Interpreter {
 
 
     } else {
-      Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
-      contractAddress = contract.getContractAddress().toByteArray();
-
+        contractAddress = program.getContractAddress();
     }
     program.getProgramResult().setContractAddress(contractAddress);
 
@@ -1388,9 +1386,7 @@ public class Interpreter {
           boolean isTokenTransferMsg = false;
           if (op == CALLTOKEN) {
             tokenId = env.stackPop();
-
             isTokenTransferMsg = true;
-
           }
 
           DataWord inDataOffs = env.stackPop();

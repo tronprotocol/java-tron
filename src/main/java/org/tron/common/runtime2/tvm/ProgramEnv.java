@@ -962,6 +962,7 @@ public class ProgramEnv {
       call.setVmStartInUs(vmStartInUs);
       call.setVmShouldEndInUs(program.getVmShouldEndInUs());
       call.setStatic(program.isStatic() || msg.getType().callIsStatic());
+      call.setContractAddress(contextAddress);
       call.getCallInfo().setFromVM(true);
       call.setBlockInfo(program.getBlockInfo());
       call.setRootTransactionId(program.getRootTransactionId());
@@ -970,7 +971,8 @@ public class ProgramEnv {
       try {
         Interpreter.getInstance().play(call, cenv);
       } catch (ContractValidateException e) {
-        e.printStackTrace();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        throw ExceptionFactory.transferException( e.getMessage());
       }
       callResult = call.getProgramResult();
 
