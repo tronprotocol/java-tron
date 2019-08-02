@@ -22,7 +22,7 @@ public class BuyStorageActuator extends AbstractActuator {
 
   BuyStorageActuator(Any contract, Manager dbManager) {
     super(contract, dbManager);
-    storageMarket = new StorageMarket(dbManager);
+    storageMarket = new StorageMarket(dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
   }
 
   @Override

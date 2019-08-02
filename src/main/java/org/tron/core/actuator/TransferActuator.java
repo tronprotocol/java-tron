@@ -46,11 +46,11 @@ public class TransferActuator extends AbstractActuator {
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
       ret.setStatus(fee, code.SUCESS);
-      dbManager.adjustBalance(ownerAddress, -amount);
-      dbManager.adjustBalance(toAddress, amount);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), ownerAddress, -amount);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), toAddress, amount);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);

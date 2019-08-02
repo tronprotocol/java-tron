@@ -46,8 +46,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           accountPermissionUpdateContract.getActivesList());
       accountStore.put(ownerAddress, account);
 
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(accountStore, ownerAddress, -fee);
+      Commons.adjustBalance(accountStore, dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       result.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {

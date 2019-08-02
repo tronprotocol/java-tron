@@ -37,9 +37,9 @@ public class CreateAccountActuator extends AbstractActuator {
       dbManager.getAccountStore()
           .put(accountCreateContract.getAccountAddress().toByteArray(), accountCapsule);
 
-      dbManager.adjustBalance(accountCreateContract.getOwnerAddress().toByteArray(), -fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), accountCreateContract.getOwnerAddress().toByteArray(), -fee);
       // Add to blackhole address
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {

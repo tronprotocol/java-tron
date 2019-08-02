@@ -79,8 +79,8 @@ public class AssetIssueActuator extends AbstractActuator {
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       }
 
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           fee);//send to blackhole
 
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);

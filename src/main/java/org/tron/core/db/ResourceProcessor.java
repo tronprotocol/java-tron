@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
@@ -63,8 +64,8 @@ abstract class ResourceProcessor {
     try {
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule, -fee);
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), accountCapsule, -fee);
+      Commons.adjustBalance(this.dbManager.getAccountStore(), this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;

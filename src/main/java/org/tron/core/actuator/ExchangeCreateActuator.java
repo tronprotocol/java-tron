@@ -99,7 +99,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
       dbManager.getDynamicPropertiesStore().saveLatestExchangeNum(id);
 
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       ret.setExchangeId(id);
       ret.setStatus(fee, code.SUCESS);
