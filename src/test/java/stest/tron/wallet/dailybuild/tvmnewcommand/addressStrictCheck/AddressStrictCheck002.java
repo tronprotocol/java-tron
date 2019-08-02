@@ -108,7 +108,7 @@ public class AddressStrictCheck002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    System.out.println(infoById);
+    logger.info(infoById.toString());
 
     num = "10000000000000000000004108362A6DB594586C035758ECA382A49FDF13EF61";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -117,8 +117,7 @@ public class AddressStrictCheck002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    System.out.println(infoById);
-
+    logger.info(infoById.toString());
   }
 
 
@@ -127,6 +126,7 @@ public class AddressStrictCheck002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
