@@ -18,43 +18,14 @@
 
 package org.tron.common.runtime.vm.program;
 
-import static java.lang.StrictMath.min;
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
-import static org.tron.common.runtime.utils.MUtil.transfer;
-import static org.tron.common.runtime.utils.MUtil.transferAllToken;
-import static org.tron.common.utils.BIUtil.isPositive;
-import static org.tron.common.utils.BIUtil.toBI;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
-
 import com.google.protobuf.ByteString;
-import java.io.ByteArrayOutputStream;
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.TreeSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.EnergyCost;
-import org.tron.common.runtime.vm.MessageCall;
-import org.tron.common.runtime.vm.OpCode;
-import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime.vm.VM;
-import org.tron.common.runtime.vm.VMConstant;
+import org.tron.common.runtime.vm.*;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -80,6 +51,18 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.SmartContract;
 import org.tron.protos.Protocol.SmartContract.Builder;
+
+import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
+import java.util.*;
+
+import static java.lang.StrictMath.min;
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.*;
+import static org.tron.common.runtime.utils.MUtil.*;
+import static org.tron.common.utils.BIUtil.isPositive;
+import static org.tron.common.utils.BIUtil.toBI;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 /**
  * @author Roman Mandeleil
@@ -1742,7 +1725,7 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
-  public class StackTooLargeException extends BytecodeExecutionException {
+  public static class StackTooLargeException extends BytecodeExecutionException {
 
     public StackTooLargeException(String message) {
       super(message);

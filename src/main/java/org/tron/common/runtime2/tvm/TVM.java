@@ -9,6 +9,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.IVM;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.storage.Deposit;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -76,6 +77,18 @@ public class TVM implements IVM {
     //Validate and getBaseProgram
     Program program = preValidateAndGetBaseProgram(isStatic);
     //load eventPlugin
+    loadEventPlugin(program);
+    //setup program environment
+    ProgramEnv env = ProgramEnv.createEnvironment(deposit, program, null);
+    //play program
+    Interpreter.getInstance().play(program, env);
+    //process result
+    program.getProgramResult();
+    //finalization
+
+  }
+
+  private void loadEventPlugin(Program program) {
     if (vmConfig.isEventPluginLoaded() &&
             (EventPluginLoader.getInstance().isContractEventTriggerEnable()
                     || EventPluginLoader.getInstance().isContractLogTriggerEnable())
@@ -83,14 +96,6 @@ public class TVM implements IVM {
       logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
               program.getRootTransactionId(), program.getCallerAddress());
     }
-    //setup program environment
-    ProgramEnv env = ProgramEnv.createEnvironment(deposit);
-    //play program
-    new Interpreter().play(program, env);
-    //process result
-    program.getProgramResult();
-    //finalization
-
   }
 
 
@@ -129,6 +134,8 @@ public class TVM implements IVM {
       program.setCreator(creator);
       program.setCallerAddress(callerAddress);
       program.setOps(newSmartContract.getBytecode().toByteArray());
+      program.setOrigin(contract.getOwnerAddress().toByteArray());
+      program.setMsgData(ByteUtil.EMPTY_BYTE_ARRAY);
 
 
     } else { // TRX_CONTRACT_CALL_TYPE
@@ -157,8 +164,14 @@ public class TVM implements IVM {
       program.setCaller(caller);
       program.setContractAddress(contractAddress);
       program.setOps(deposit.getCode(contractAddress));
+      program.setOrigin(contract.getOwnerAddress().toByteArray());
+      program.setMsgData(contract.getData().toByteArray());
+
 
     }
+    //setBlockInfo
+    setBlockInfo(program);
+
     //calculateEnergyLimit
     long energylimt = calculateEnergyLimit(program.getCreator(), program.getCaller(), program.getContractAddress(), isStatic, program.getCallValue());
     program.setEnergyLimit(energylimt);
@@ -168,7 +181,6 @@ public class TVM implements IVM {
     long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
     long vmStartInUs = System.nanoTime() / VMConfig.ONE_THOUSAND;
     long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
-    program.setEnergyLimit(energylimt);
     program.setVmStartInUs(vmStartInUs);
     program.setVmShouldEndInUs(vmShouldEndInUs);
     program.setStatic(isStatic);
@@ -182,6 +194,21 @@ public class TVM implements IVM {
 
 
     return program;
+  }
+
+  private void setBlockInfo(Program program) {
+    Protocol.Block block = blockCap.getInstance();
+    byte[] lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
+    byte[] coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
+            .toByteArray();
+    long timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
+    long number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
+    program.getBlockInfo().setCoinbase(coinbase);
+    program.getBlockInfo().setLastHash(lastHash);
+    program.getBlockInfo().setNumber(number);
+    program.getBlockInfo().setTimestamp(timestamp);
+
+
   }
 
 
