@@ -2,8 +2,10 @@ plugins {
     id 'java'
 }
 
+apply plugin: "java"
+
 group 'tronprotocol'
-version '1.0-SNAPSHOT'
+version '1.0.0'
 
 sourceCompatibility = 1.8
 
@@ -13,4 +15,12 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+task copyToParent(type: Copy) {
+    into "$buildDir/libs"
+    subprojects {
+        from tasks.withType(Jar)
+    }
 }

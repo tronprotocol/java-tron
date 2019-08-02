@@ -13,7 +13,7 @@ plugins {
     id "org.sonarqube" version "2.6"
 }
 
-group 'org.tron'
+group 'tronprotocol'
 version '1.0.0'
 
 apply plugin: 'java'
@@ -24,7 +24,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: "jacoco"
 apply plugin: 'maven-publish'
 
-jar.enabled = false
+jar.enabled = true
 shadowJar.enabled = true
 
 sourceCompatibility = 1.8
@@ -187,7 +187,9 @@ dependencies {
 
     compile group: 'org.zeromq', name: 'jeromq', version: '0.5.0'
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
-    compile 'com.github.tronprotocol:chainbase:dynamicStore-SNAPSHOT'
+//    compile 'com.github.tronprotocol:chainbase:dynamicStore-SNAPSHOT'
+    compile project(":chainbase")
+    compile project(":protocol")
 }
 
 check.dependsOn 'lint'
@@ -241,30 +243,30 @@ sourceSets {
 
 }
 
-protobuf {
-    generatedFilesBaseDir = "$projectDir/src/"
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.5.1-1"
-    }
-
-    plugins {
-        grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
-        }
-    }
-    generateProtoTasks {
-        all().each { task ->
-            task.builtins {
-                java { outputSubDir = "gen" }
-            }
-        }
-        all()*.plugins {
-            grpc {
-                outputSubDir = "gen"
-            }
-        }
-    }
-}
+//protobuf {
+//    generatedFilesBaseDir = "$projectDir/src/"
+//    protoc {
+//        artifact = "com.google.protobuf:protoc:3.5.1-1"
+//    }
+//
+//    plugins {
+//        grpc {
+//            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+//        }
+//    }
+//    generateProtoTasks {
+//        all().each { task ->
+//            task.builtins {
+//                java { outputSubDir = "gen" }
+//            }
+//        }
+//        all()*.plugins {
+//            grpc {
+//                outputSubDir = "gen"
+//            }
+//        }
+//    }
+//}
 
 run {
     if (project.hasProperty('witness')) {

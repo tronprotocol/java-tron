@@ -1,16 +1,123 @@
-plugins {
-    id 'java'
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url 'https://jitpack.io' }
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
+    }
 }
 
 group 'tronprotocol'
-version '1.0-SNAPSHOT'
+version '1.0.0'
+
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+//apply plugin: 'application'
+apply plugin: 'maven-publish'
+
+jar.enabled = true
+//shadowJar.enabled = true
 
 sourceCompatibility = 1.8
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourceJar
+        }
+    }
+    repositories {
+        mavenLocal()
+    }
+}
+
+task sourceJar(type: Jar, dependsOn: classes) {
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
 
 repositories {
+    mavenLocal()
     mavenCentral()
+    maven { url 'http://repo.spring.io/plugins-release' }
+    // maven { url 'https://maven.aliyun.com/nexus/content/repositories/central/' }
+    maven { url 'https://jitpack.io' }
 }
+def versions = [
+        checkstyle: '8.7',
+]
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
+    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.4.0'
+    compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
+
+//    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
+    // google grpc
+    compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
+    compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
+    // end google grpc
+
+    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
 }
+
+tasks.matching { it instanceof Test }.all {
+    testLogging.events = ["failed", "passed", "skipped"]
+}
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/protos'
+        }
+        java {
+            srcDir 'src/main/gen'
+            srcDir 'src/main/java'
+        }
+    }
+
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src/"
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.5.1-1"
+    }
+
+    plugins {
+        grpc {
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { outputSubDir = "java" }
+            }
+        }
+        all()*.plugins {
+            grpc {
+                outputSubDir = "java"
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+//    archives javadocJar
+}
+
+

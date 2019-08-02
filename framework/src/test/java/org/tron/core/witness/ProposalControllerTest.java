@@ -18,7 +18,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.DynamicPropertiesStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;

@@ -51,7 +51,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.DynamicPropertiesStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
