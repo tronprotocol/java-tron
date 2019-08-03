@@ -36,6 +36,24 @@ public class ExceptionFactory {
     return new Program.TransferException("validateForSmartContract failure:%s", message);
   }
 
+  public static Program.OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
+                                                                  long leftEnergy) {
+    return new Program.OutOfEnergyException(
+            "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];", hint, needEnergy,
+            leftEnergy);
+  }
+
+  public static Program.JVMStackOverFlowException jvmStackOverFlow (){
+    return new Program.JVMStackOverFlowException();
+
+  }
+
+  public static Program.BytecodeExecutionException unknownThrowable(String message){
+    return new Program.BytecodeExecutionException(message);
+
+  }
+
+
 
   public static class StaticCallTransferException extends Program.BytecodeExecutionException {
 

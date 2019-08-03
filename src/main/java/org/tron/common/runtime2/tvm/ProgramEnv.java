@@ -41,6 +41,8 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 @Slf4j(topic = "VM2")
 @Data
 public class ProgramEnv {
+  private VMConfig vmConfig;
+
   private DataWord contractAddress;
   private DataWord originAddress;
   private DataWord callerAddress;
@@ -97,11 +99,18 @@ public class ProgramEnv {
 
   }
 
+  public static ProgramEnv createEnvironment(Deposit deposit, Program program, VMConfig vmConfig) {
+    ProgramEnv env = new ProgramEnv(deposit, program);
+    env.setVmConfig(vmConfig);
+    return env;
+  }
+
 
   public static ProgramEnv createEnvironment(Deposit deposit, Program program, ProgramEnv pre) {
     ProgramEnv env = new ProgramEnv(deposit, program);
     if (pre != null) {
       env.callDeep = pre.getCallDeep() + 1;
+      env.setVmConfig(pre.getVmConfig());
     }
     return env;
   }
@@ -742,7 +751,7 @@ public class ProgramEnv {
     ProgramEnv cenv = ProgramEnv.createEnvironment(this.getStorage().newDepositChild(), create, this);
     //play program
     try {
-      Interpreter.getInstance().play(program, cenv);
+      Interpreter.getInstance().play(create, cenv);
     } catch (ContractValidateException e) {
       //frankly, is the transfer reason
       throw ExceptionFactory.transferException("create opcode validateForSmartContract failure");
@@ -753,7 +762,7 @@ public class ProgramEnv {
     ProgramResult createResult = create.getProgramResult();
 
     //spend energy and save code
-    byte[] code = createResult.getHReturn();
+/*    byte[] code = createResult.getHReturn();
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
 
@@ -762,13 +771,13 @@ public class ProgramEnv {
     if (!createResult.isRevert()) {
       if (afterSpend < 0) {
         createResult.setException(
-                org.tron.common.runtime.vm.program.Program.Exception.notEnoughSpendEnergy("No energy to save just created contract code",
+                ExceptionFactory.notEnoughSpendEnergy("No energy to save just created contract code",
                         saveCodeEnergy, create.getEnergyLimit() - createResult.getEnergyUsed()));
       } else {
         createResult.spendEnergy(saveCodeEnergy);
         cenv.getStorage().saveCode(newAddress, code);
       }
-    }
+    }*/
 
     //deal with result
 
@@ -945,35 +954,37 @@ public class ProgramEnv {
             !isTokenTransfer ? endowment : 0, data, "call", nonce,
             !isTokenTransfer ? null : tokenInfo);
     ProgramResult callResult = null;
-    if (isNotEmpty(programCode)) {
-      long vmStartInUs = System.nanoTime() / 1000;
-      DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
 
-      Program call = new Program();
-      call.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
-      call.setCallValue(isTokenTransfer ? 0 : callValue.longValueSafe());
-      call.setTokenValue(isTokenTransfer ? callValue.longValueSafe() : 0);
-      call.setTokenId(isTokenTransfer ? msg.getTokenId().longValueSafe() : 0);
-      call.setCallerAddress(senderAddress);
-      call.setOps(programCode);
-      call.setOrigin(program.getOrigin());
-      call.setMsgData(data);
-      call.setEnergyLimit(msg.getEnergy().longValueSafe());
-      call.setVmStartInUs(vmStartInUs);
-      call.setVmShouldEndInUs(program.getVmShouldEndInUs());
-      call.setStatic(program.isStatic() || msg.getType().callIsStatic());
-      call.setContractAddress(contextAddress);
-      call.getCallInfo().setFromVM(true);
-      call.setBlockInfo(program.getBlockInfo());
-      call.setRootTransactionId(program.getRootTransactionId());
-      call.setInternalTransaction(internalTx);
-      ProgramEnv cenv = createEnvironment(childStroage, call, this);
-      try {
-        Interpreter.getInstance().play(call, cenv);
-      } catch (ContractValidateException e) {
-        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-        throw ExceptionFactory.transferException( e.getMessage());
-      }
+
+    long vmStartInUs = System.nanoTime() / 1000;
+    DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
+
+    Program call = new Program();
+    call.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
+    call.setCallValue(isTokenTransfer ? 0 : callValue.longValueSafe());
+    call.setTokenValue(isTokenTransfer ? callValue.longValueSafe() : 0);
+    call.setTokenId(isTokenTransfer ? msg.getTokenId().longValueSafe() : 0);
+    call.setCallerAddress(senderAddress);
+    call.setOps(programCode);
+    call.setOrigin(program.getOrigin());
+    call.setMsgData(data);
+    call.setEnergyLimit(msg.getEnergy().longValueSafe());
+    call.setVmStartInUs(vmStartInUs);
+    call.setVmShouldEndInUs(program.getVmShouldEndInUs());
+    call.setStatic(program.isStatic() || msg.getType().callIsStatic());
+    call.setContractAddress(contextAddress);
+    call.getCallInfo().setFromVM(true);
+    call.setBlockInfo(program.getBlockInfo());
+    call.setRootTransactionId(program.getRootTransactionId());
+    call.setInternalTransaction(internalTx);
+    ProgramEnv cenv = createEnvironment(childStroage, call, this);
+    try {
+      Interpreter.getInstance().play(call, cenv);
+    } catch (ContractValidateException e) {
+      refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+      throw ExceptionFactory.transferException( e.getMessage());
+    }
+    if(isNotEmpty(programCode)){
       callResult = call.getProgramResult();
 
       program.getProgramResult().merge(callResult);
@@ -998,12 +1009,14 @@ public class ProgramEnv {
         childStroage.commit();
         stackPushOne();
       }
-
-    } else {
+    }else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       childStroage.commit();
       stackPushOne();
     }
+
+
+
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
     if (callResult != null) {

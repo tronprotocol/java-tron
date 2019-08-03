@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.*;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.Stack;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.core.Wallet;
@@ -18,6 +19,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.vm.OpCode.*;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
@@ -38,17 +41,63 @@ public class Interpreter {
   }
 
   public void play(Program program, ProgramEnv env) throws ContractValidateException {
-    //transfer assets
-    transferAssets(program, env);
-    //step the code
-    while (!env.isStopped()) {
-      this.step(program, env);
+    try{
+      //check static call
+      preStaticCheck(program);
+      //transfer assets
+      transferAssets(program, env);
+      //step the code
+      stepCode(program, env);
+      //save code for create
+      postProcess(program, env);
+    }
+    catch (ContractValidateException e){
+      //transferAssets Error
+      throw e;
+    }
+    catch (StackOverflowError soe){
+      // if JVM StackOverflow then convert to runtimeExcepton
+      setException(program, ExceptionFactory.jvmStackOverFlow());
+    }
+    catch (RuntimeException e){
+      setException(program,e);
+    }
+    catch (Throwable throwable){
+      setException(program,ExceptionFactory.unknownThrowable(throwable.getMessage()));
+    }
+
+  }
+
+  private void setException(Program program, RuntimeException soe) {
+    program.getProgramResult().setException(soe);
+    program.getProgramResult().setRuntimeError(soe.getMessage());
+  }
+
+  private void postProcess(Program program, ProgramEnv env) {
+    ProgramResult result = program.getProgramResult();
+    if(program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE && !result.isRevert() ){
+      byte[] code = program.getProgramResult().getHReturn();
+      long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+      long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
+      if (afterSpend < 0) {
+        throw ExceptionFactory.notEnoughSpendEnergy("saveContractCode",
+                saveCodeEnergy, program.getEnergyLimit() - result.getEnergyUsed());
+      }else {
+        result.spendEnergy(saveCodeEnergy);
+        env.getStorage().saveCode(program.getContractAddress(), code);
+      }
     }
   }
 
-  private void transferAssets(Program program, ProgramEnv env) throws ContractValidateException {
-    byte[] contractAddress = fetchAddress(program, env);
-    long tokenId = program.getTokenId();
+  private void stepCode(Program program, ProgramEnv env) {
+    if (isNotEmpty(program.getOps())){
+      while (!env.isStopped()) {
+        this.step(program, env);
+      }
+    }
+  }
+
+  private void preStaticCheck(Program program){
     long tokenValue = program.getTokenValue();
     long callValue = program.getCallValue();
     //checkStaticCall
@@ -58,6 +107,14 @@ public class Interpreter {
         throw ExceptionFactory.staticCallTransferException();
       }
     }
+  }
+
+  private void transferAssets(Program program, ProgramEnv env) throws ContractValidateException {
+    byte[] contractAddress = fetchAddress(program, env);
+    long tokenId = program.getTokenId();
+    long tokenValue = program.getTokenValue();
+    long callValue = program.getCallValue();
+
     // tokenid can only be 0
     // or (MIN_TOKEN_ID, Long.Max]
     if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
@@ -73,7 +130,7 @@ public class Interpreter {
     //transefer Trx and trc10
     // transfer from callerAddress to contractAddress according to callValue
     if (program.getCallValue() > 0) {
-      ProgramEnv.transfer(env.getStorage(), program.getCallerAddress(), contractAddress, program.getCallValue());
+      ProgramEnv.transfer(env.getStorage(), program.getCallerAddress(), contractAddress, callValue);
     }
     if (program.getTokenValue() > 0) {
       ProgramEnv.transferToken(env.getStorage(), program.getCallerAddress(), contractAddress, String.valueOf(tokenId),
@@ -114,7 +171,7 @@ public class Interpreter {
         Protocol.SmartContract newSmartContract = builder.build();
         env.getStorage().createContract(newAddress, new ContractCapsule(newSmartContract));
         contractAddress = newAddress;
-        program.setContractAddress(contractAddress);
+
 
       } else {
         //normal create
@@ -137,7 +194,8 @@ public class Interpreter {
         env.getStorage().createContract(contractAddress, new ContractCapsule(newSmartContract));
 
       }
-
+      program.setContractAddress(contractAddress);
+      env.setContractAddress(new DataWord(program.getContractAddress()));
 
     } else {
         contractAddress = program.getContractAddress();

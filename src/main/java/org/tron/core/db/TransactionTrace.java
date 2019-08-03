@@ -179,8 +179,8 @@ public class TransactionTrace {
     } catch (BalanceInsufficientException e) {
       throw new ContractExeException(e.getMessage());
     }
-    //TODO:old finaliztion
-//    runtime.finalization();
+
+    runner.finalization();
   }
 
   /**

@@ -9,7 +9,5 @@ import org.tron.core.exception.VMIllegalException;
  */
 public interface IVM extends TxRunner {
 
-  void execute(boolean isStatic) throws ContractValidateException, VMIllegalException;
 
-  ProgramResult getResult();
 }

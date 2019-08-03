@@ -2,7 +2,10 @@ package org.tron.common.runtime2.tvm;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -24,10 +27,12 @@ import org.tron.protos.Protocol;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 @Slf4j(topic = "VM2")
 public class TVM implements IVM {
@@ -49,6 +54,10 @@ public class TVM implements IVM {
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
+  private ProgramResult result;
+
+  private InternalTransaction.ExecutorType executorType; //TODO: Discuss
+
 
   public TVM(TransactionTrace trace, Protocol.Transaction trx, BlockCapsule block, Deposit deposit) {
     this.trace = trace;
@@ -57,8 +66,11 @@ public class TVM implements IVM {
     this.deposit = deposit;
     if (Objects.nonNull(block)) {
       this.blockCap = block;
+      this.executorType = InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
     } else {
       this.blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
+      this.executorType = InternalTransaction.ExecutorType.ET_PRE_TYPE;
+
     }
 
     Protocol.Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
@@ -76,16 +88,43 @@ public class TVM implements IVM {
   public void execute(boolean isStatic) throws ContractValidateException, VMIllegalException {
     //Validate and getBaseProgram
     Program program = preValidateAndGetBaseProgram(isStatic);
-    //load eventPlugin
-    loadEventPlugin(program);
     //setup program environment
-    ProgramEnv env = ProgramEnv.createEnvironment(deposit, program, null);
+    ProgramEnv env = ProgramEnv.createEnvironment(deposit, program, vmConfig);
     //play program
     Interpreter.getInstance().play(program, env);
     //process result
-    program.getProgramResult();
-    //finalization
+    processResult(program, env);
+  }
 
+  private void processResult(Program program, ProgramEnv env) {
+    result =  program.getProgramResult();
+    //
+    if (result.getException() != null || result.isRevert()) {
+      result.getDeleteAccounts().clear();
+      result.getLogInfoList().clear();
+      result.resetFutureRefund();
+      result.rejectInternalTransactions();
+
+      if (result.getException() != null) {
+        if (!(result.getException() instanceof
+                org.tron.common.runtime.vm.program.Program.TransferException)) {
+          env.spendAllEnergy();
+        }
+      } else {
+        result.setRuntimeError("REVERT opcode executed");
+      }
+    } else {
+      deposit.commit();
+
+      if (logInfoTriggerParser != null) {
+        List<ContractTrigger> triggers = logInfoTriggerParser
+                .parseLogInfos(program.getProgramResult().getLogInfoList(), this.deposit);
+        program.getProgramResult().setTriggerList(triggers);
+      }
+
+
+    }
+    trace.setBill(result.getEnergyUsed());
   }
 
   private void loadEventPlugin(Program program) {
@@ -190,6 +229,9 @@ public class TVM implements IVM {
     byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
     program.setRootTransactionId(txId);
     program.setInternalTransaction(new InternalTransaction(trx, trxType));
+
+    //load eventPlugin
+    loadEventPlugin(program);
 
 
 
@@ -307,6 +349,14 @@ public class TVM implements IVM {
 
   private double getCpuLimitInUsRatio() {
     double cpuLimitRatio;
+
+    //TODO:Discuss
+    if (InternalTransaction.ExecutorType.ET_PRE_TYPE == executorType) {
+      cpuLimitRatio =1.0;
+      return cpuLimitRatio;
+    }
+
+
     // self witness generates block
     if (this.blockCap != null && blockCap.generatedByMyself &&
             this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
@@ -324,7 +374,21 @@ public class TVM implements IVM {
 
   @Override
   public ProgramResult getResult() {
-    return null;
+    return result;
+  }
+
+  @Override
+  public String getRuntimeError() {
+    return getResult().getRuntimeError();
+  }
+
+  @Override
+  public void finalization() {
+    if (StringUtils.isEmpty(getRuntimeError())) {
+      for (DataWord contract : result.getDeleteAccounts()) {
+        deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
+      }
+    }
   }
 
   private boolean isCheckTransaction() {

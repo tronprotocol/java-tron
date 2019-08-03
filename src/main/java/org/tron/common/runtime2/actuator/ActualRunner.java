@@ -41,4 +41,14 @@ public class ActualRunner implements TxRunner {
   public ProgramResult getResult() {
     return result;
   }
+
+  @Override
+  public String getRuntimeError() {
+    return getResult().getRuntimeError();
+  }
+
+  @Override
+  public void finalization() {
+
+  }
 }

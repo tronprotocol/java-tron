@@ -12,4 +12,8 @@ public interface TxRunner {
   void execute(boolean isStatic) throws ContractValidateException, ContractExeException, VMIllegalException;
 
   ProgramResult getResult();
+
+  String getRuntimeError();
+
+  void finalization();
 }
