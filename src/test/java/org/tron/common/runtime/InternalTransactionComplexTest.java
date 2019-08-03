@@ -11,6 +11,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -27,7 +28,7 @@ import org.tron.protos.Protocol.AccountType;
 @Slf4j
 public class InternalTransactionComplexTest {
 
-  private static Runtime runtime;
+  private static TxRunner runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;

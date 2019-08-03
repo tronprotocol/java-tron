@@ -1,12 +1,13 @@
 package org.tron.common.runtime;
 
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.core.capsule.ReceiptCapsule;
 
 @Slf4j
 public class TVMTestResult {
 
-  private Runtime runtime;
+  private TxRunner runtime;
   private ReceiptCapsule receipt;
   private byte[] contractAddress;
 
@@ -19,11 +20,11 @@ public class TVMTestResult {
     return this;
   }
 
-  public Runtime getRuntime() {
+  public TxRunner getRuntime() {
     return runtime;
   }
 
-  public TVMTestResult setRuntime(Runtime runtime) {
+  public TVMTestResult setRuntime(TxRunner runtime) {
     this.runtime = runtime;
     return this;
   }
@@ -37,7 +38,7 @@ public class TVMTestResult {
     return this;
   }
 
-  public TVMTestResult(Runtime runtime, ReceiptCapsule receipt, byte[] contractAddress) {
+  public TVMTestResult(TxRunner runtime, ReceiptCapsule receipt, byte[] contractAddress) {
     this.runtime = runtime;
     this.receipt = receipt;
     this.contractAddress = contractAddress;

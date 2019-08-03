@@ -15,6 +15,7 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.InternalTransaction;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -38,7 +39,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class ProgramResultTest {
 
-  private static Runtime runtime;
+  private static TxRunner runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;
@@ -243,7 +244,7 @@ public class ProgramResultTest {
             triggerData1, 0, 100000000);
     TransactionTrace traceSuccess = TvmTestUtils
         .processTransactionAndReturnTrace(trx1, deposit, null);
-    runtime = traceSuccess.getRuntime();
+    runtime = traceSuccess.getRunner();
     byte[] bContract = runtime.getResult().getHReturn();
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
@@ -287,7 +288,7 @@ public class ProgramResultTest {
             triggerData2, 0, 100000000);
     TransactionTrace traceFailed = TvmTestUtils
         .processTransactionAndReturnTrace(trx2, deposit, null);
-    runtime = traceFailed.getRuntime();
+    runtime = traceFailed.getRunner();
     byte[] bContract2 = Wallet
         .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
     List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
@@ -405,7 +406,7 @@ public class ProgramResultTest {
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), suicideContract,
             triggerData1, 0, 100000000);
     TransactionTrace trace = TvmTestUtils.processTransactionAndReturnTrace(trx, deposit, null);
-    runtime = trace.getRuntime();
+    runtime = trace.getRunner();
     List<InternalTransaction> internalTransactionsList = runtime.getResult()
         .getInternalTransactions();
     Assert

@@ -266,7 +266,7 @@ public class TransactionTraceTest {
     Assert.assertEquals(totalBalance,
         trace.getReceipt().getEnergyFee() + accountCapsule
             .getBalance());
-    return trace.getRuntime().getResult().getContractAddress();
+    return trace.getRunner().getResult().getContractAddress();
 
   }
 

@@ -13,6 +13,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -34,7 +35,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class TransferTokenTest {
 
-  private static Runtime runtime;
+  private static TxRunner runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;

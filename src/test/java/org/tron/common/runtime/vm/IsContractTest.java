@@ -228,14 +228,14 @@ contract isTestCtr {
     methodByAddr = "senderIsContrct()";
     hexInput = AbiUtil.parseMethod(methodByAddr, "");
     result = TvmTestUtils
-        .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
-            factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
+            .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
+                    factoryAddress, Hex.decode(hexInput), 0, fee, manager, null);
     Assert.assertNull(result.getRuntime().getRuntimeError());
 
     returnValue = result.getRuntime().getResult().getHReturn();
     // check deployed contract
     Assert.assertEquals(Hex.toHexString(returnValue),
-        "0000000000000000000000000000000000000000000000000000000000000000");
+            "0000000000000000000000000000000000000000000000000000000000000000");
 
     // trigger deployed contract
     methodByAddr = "killme()";

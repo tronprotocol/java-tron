@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.Wallet;
@@ -66,7 +67,7 @@ public class TvmTestUtils {
     return Wallet.generateContractAddress(trx);
   }
 
-  public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
+  public static TxRunner triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
       byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
       BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException,
@@ -166,7 +167,7 @@ public class TvmTestUtils {
    * contracts).
    */
 
-  public static Runtime processTransactionAndReturnRuntime(Transaction trx,
+  public static TxRunner processTransactionAndReturnRuntime(Transaction trx,
       Deposit deposit, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
@@ -180,11 +181,11 @@ public class TvmTestUtils {
 
     trace.finalization();
 
-    return trace.getRuntime();
+    return trace.getRunner();
   }
 
-  public static Runtime processTransactionAndReturnRuntime(Transaction trx,
-      Manager dbmanager, BlockCapsule block)
+  public static TxRunner processTransactionAndReturnRuntime(Transaction trx,
+                                                            Manager dbmanager, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
@@ -197,7 +198,7 @@ public class TvmTestUtils {
 
     trace.finalization();
 
-    return trace.getRuntime();
+    return trace.getRunner();
   }
 
   public static TransactionTrace processTransactionAndReturnTrace(Transaction trx,
@@ -277,7 +278,7 @@ public class TvmTestUtils {
     trace.finalization();
 
     trace.setResult();
-    return new TVMTestResult(trace.getRuntime(), trace.getReceipt(), null);
+    return new TVMTestResult(trace.getRunner(), trace.getReceipt(), null);
   }
 
   public static CreateSmartContract buildCreateSmartContract(String contractName,

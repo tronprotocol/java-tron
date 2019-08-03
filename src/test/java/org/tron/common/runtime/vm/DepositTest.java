@@ -15,6 +15,7 @@ import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
@@ -120,7 +121,7 @@ public class DepositTest {
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
-    Runtime runtime = TvmTestUtils
+    TxRunner runtime = TvmTestUtils
         .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -215,7 +216,7 @@ public class DepositTest {
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null);
     Deposit rootDeposit = DepositImpl.createRoot(manager);
-    Runtime runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit, null);
+    TxRunner runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
