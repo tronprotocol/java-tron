@@ -698,7 +698,7 @@ public class ProgramEnv {
     byte[] newAddress;
     if (isCreate2) {
       newAddress = Wallet
-              .generateContractAddress2(senderAddress, salt.getData(), programCode);
+              .generateContractAddress2(convertToTronAddress(getCallerAddress().getLast20Bytes()), salt.getData(), programCode);
     } else {
       newAddress = Wallet
               .generateContractAddress(program.getRootTransactionId(), nonce);
