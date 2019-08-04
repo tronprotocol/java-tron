@@ -16,7 +16,7 @@ public class VMConfigLoader {
   private VMConfigLoader() {
   }
 
-  VMConfigLoader setSource(DynamicPropertiesStore source) {
+  public VMConfigLoader setSource(DynamicPropertiesStore source) {
     this.source = source;
     return this;
   }
