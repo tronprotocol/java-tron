@@ -964,7 +964,7 @@ public class ProgramEnv {
     call.setCallValue(isTokenTransfer ? 0 : callValue.longValueSafe());
     call.setTokenValue(isTokenTransfer ? callValue.longValueSafe() : 0);
     call.setTokenId(isTokenTransfer ? msg.getTokenId().longValueSafe() : 0);
-    call.setCallerAddress(senderAddress);
+    call.setCallerAddress(msg.getType().callIsDelegate()?convertToTronAddress(getCallerAddress().getLast20Bytes()):senderAddress);
     call.setOps(programCode);
     call.setOrigin(program.getOrigin());
     call.setMsgData(data);
