@@ -41,6 +41,7 @@ public class Interpreter {
   }
 
   public void play(Program program, ProgramEnv env) throws ContractValidateException {
+    logger.info("play:{}",program.getOps());
     try{
       //check static call
       preStaticCheck(program);
@@ -91,9 +92,12 @@ public class Interpreter {
 
   private void stepCode(Program program, ProgramEnv env) {
     if (isNotEmpty(program.getOps())){
+      StringBuffer opSeq=new StringBuffer("");
       while (!env.isStopped()) {
-        this.step(program, env);
+        this.step(program, env,opSeq);
       }
+      //   logger.info("OP sequece:{}",opSeq);
+
     }
   }
 
@@ -147,8 +151,12 @@ public class Interpreter {
         byte[] newAddress = program.getCallInfo().getNewAddress();
         AccountCapsule existingAccount = env.getStorage().getAccount(newAddress);
         ContractCapsule contractCapsule = null;
+        //create Account for create2
         if (existingAccount != null) {
           contractCapsule = env.getStorage().getContract(existingAccount.getAddress().toByteArray());
+        } else {
+          env.getStorage().createAccount(newAddress, "CreatedByContract",
+                  Protocol.AccountType.Contract);
         }
         //judge if is already exist addr
         if (existingAccount != null && contractCapsule != null) {
@@ -198,7 +206,7 @@ public class Interpreter {
       env.setContractAddress(new DataWord(program.getContractAddress()));
 
     } else {
-        contractAddress = program.getContractAddress();
+      contractAddress = program.getContractAddress();
     }
     program.getProgramResult().setContractAddress(contractAddress);
 
@@ -206,7 +214,7 @@ public class Interpreter {
   }
 
 
-  public void step(Program program, ProgramEnv env) {
+  public void step(Program program, ProgramEnv env,StringBuffer opSeq) {
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {
@@ -323,7 +331,7 @@ public class Interpreter {
           energyCost = energyCosts.getCALL();
           DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
-          DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
+          DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO.clone();
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL || op == CALLTOKEN) {
@@ -646,12 +654,16 @@ public class Interpreter {
         }
         break;
         case ISZERO: {
+          logger.info("before:{}",env.getStack().toString());
           DataWord word1 = env.stackPop();
+          logger.info("before:{}",word1);
+          logger.info("isZero:{}",word1.isZero());
           if (word1.isZero()) {
             word1.getData()[31] = 1;
           } else {
             word1.and(DataWord.ZERO);
           }
+          logger.info("after:{}",word1);
 
           if (logger.isDebugEnabled()) {
             hint = "" + word1.value();
@@ -1422,6 +1434,7 @@ public class Interpreter {
         case CALLTOKEN:
         case DELEGATECALL:
         case STATICCALL: {
+          logger.info("begin internal call");
           env.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = env.stackPop();
 
@@ -1429,7 +1442,7 @@ public class Interpreter {
           if (op.callHasValue()) {
             value = env.stackPop();
           } else {
-            value = DataWord.ZERO;
+            value = DataWord.ZERO.clone();
           }
 
           if (program.isStatic() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
@@ -1529,6 +1542,7 @@ public class Interpreter {
       }
 
       env.setPreviouslyExecutedOp(op.val());
+      logger.info("op : {},hint : {}",op.toString(),hint);
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
       if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
