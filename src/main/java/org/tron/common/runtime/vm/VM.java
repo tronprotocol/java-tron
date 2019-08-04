@@ -219,7 +219,7 @@ public class VM {
           energyCost = energyCosts.getCALL();
           DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
-          DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO;
+          DataWord value = op.callHasValue() ? stack.get(stack.size() - 3) : DataWord.ZERO.clone();
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL || op == CALLTOKEN) {
