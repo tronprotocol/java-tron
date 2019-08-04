@@ -415,7 +415,7 @@ public class ProgramEnv {
 
   public DataWord getDataSize() {
     if (program.getMsgData() == null || program.getMsgData().length == 0) {
-      return DataWord.ZERO;
+      return DataWord.ZERO.clone();
     }
     int size = program.getMsgData().length;
     return new DataWord(size);
@@ -665,7 +665,7 @@ public class ProgramEnv {
 
       // sophisticated assumption that msg.data != codedata
       // means we are calling the contract not creating it
-      byte[] txData = getDataCopy(DataWord.ZERO, getDataSize());
+      byte[] txData = getDataCopy(DataWord.ZERO.clone(), getDataSize());
       if (!Arrays.equals(txData, ops)) {
         globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
       }
