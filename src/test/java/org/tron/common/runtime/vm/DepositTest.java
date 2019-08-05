@@ -121,7 +121,7 @@ public class DepositTest {
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null, engeryLiimt);
-    TxRunner runtime = TvmTestUtils
+    TvmTestUtils.TxRunnerX runtime = TvmTestUtils
         .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
     Assert.assertNull(runtime.getRuntimeError());
 
@@ -216,7 +216,7 @@ public class DepositTest {
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         contractA, address, aABI, aCode, value, fee, consumeUserResourcePercent, null);
     Deposit rootDeposit = DepositImpl.createRoot(manager);
-    TxRunner runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit, null);
+    TvmTestUtils.TxRunnerX runtime = TvmTestUtils.processTransactionAndReturnRuntime(aTrx, rootDeposit, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(

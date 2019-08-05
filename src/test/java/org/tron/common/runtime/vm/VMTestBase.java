@@ -8,6 +8,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
@@ -27,7 +28,7 @@ public class VMTestBase {
   protected String dbPath;
   protected Deposit rootDeposit;
   protected String OWNER_ADDRESS;
-  protected TxRunner runtime;
+  protected TvmTestUtils.TxRunnerX runtime;
 
   @Before
   public void init() {

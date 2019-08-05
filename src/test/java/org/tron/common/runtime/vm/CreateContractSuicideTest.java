@@ -121,25 +121,25 @@ contract D {
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner aRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX aRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(aRuntime.getRuntimeError(), "REVERT opcode executed");
 
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testB", address, abi, bCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner bRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX bRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(bRuntime.getRuntimeError(), "REVERT opcode executed");
 
     Transaction cTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testC", address, abi, cCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner cRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX cRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(cTrx, DepositImpl.createRoot(manager), null);
     Assert.assertTrue(cRuntime.getResult().getException() instanceof OutOfEnergyException);
 
     Transaction dTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testC", address, abi, dCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner dRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX dRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(dTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(dRuntime.getRuntimeError(), "REVERT opcode executed");
 
@@ -152,14 +152,14 @@ contract D {
     byte[] address = Hex.decode(OWNER_ADDRESS);
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner aRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX aRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(aTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(aRuntime.getRuntimeError(), "Unknown Exception");
 //
 //
     Transaction bTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testB", address, abi, bCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner bRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX bRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(bTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(bRuntime.getRuntimeError(), "REVERT opcode executed");
 
@@ -171,7 +171,7 @@ contract D {
 
     Transaction dTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testC", address, abi, dCode, value, fee, consumeUserResourcePercent, null, engeryLimit);
-    TxRunner dRuntime = TvmTestUtils
+    TvmTestUtils.TxRunnerX dRuntime = TvmTestUtils
         .processTransactionAndReturnRuntime(dTrx, DepositImpl.createRoot(manager), null);
     Assert.assertEquals(dRuntime.getRuntimeError(), "REVERT opcode executed");
 

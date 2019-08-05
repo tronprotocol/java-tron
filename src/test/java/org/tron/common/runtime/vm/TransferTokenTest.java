@@ -35,7 +35,7 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j
 public class TransferTokenTest {
 
-  private static TxRunner runtime;
+  private static TvmTestUtils.TxRunnerX runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;

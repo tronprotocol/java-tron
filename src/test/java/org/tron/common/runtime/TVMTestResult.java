@@ -20,8 +20,8 @@ public class TVMTestResult {
     return this;
   }
 
-  public TxRunner getRuntime() {
-    return runtime;
+  public TvmTestUtils.TxRunnerX getRuntime() {
+    return new TvmTestUtils.TxRunnerX(runtime);
   }
 
   public TVMTestResult setRuntime(TxRunner runtime) {

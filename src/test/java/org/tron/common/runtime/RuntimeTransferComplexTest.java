@@ -31,7 +31,7 @@ import stest.tron.wallet.common.client.utils.DataWord;
 @Slf4j
 public class RuntimeTransferComplexTest {
 
-  private static TxRunner runtime;
+  private static TvmTestUtils.TxRunnerX runtime;
   private static Manager dbManager;
   private static TronApplicationContext context;
   private static Application appT;

@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
@@ -167,7 +168,7 @@ public class TvmTestUtils {
    * contracts).
    */
 
-  public static TxRunner processTransactionAndReturnRuntime(Transaction trx,
+  public static TxRunnerX processTransactionAndReturnRuntime(Transaction trx,
       Deposit deposit, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
@@ -181,10 +182,10 @@ public class TvmTestUtils {
 
     trace.finalization();
 
-    return trace.getRunner();
+    return new TxRunnerX(trace.getRunner());
   }
 
-  public static TxRunner processTransactionAndReturnRuntime(Transaction trx,
+  public static TxRunnerX processTransactionAndReturnRuntime(Transaction trx,
                                                             Manager dbmanager, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
@@ -198,7 +199,7 @@ public class TvmTestUtils {
 
     trace.finalization();
 
-    return trace.getRunner();
+    return new TxRunnerX(trace.getRunner());
   }
 
   public static TransactionTrace processTransactionAndReturnTrace(Transaction trx,
@@ -654,5 +655,30 @@ public class TvmTestUtils {
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     return builder.build();
+  }
+
+  public static class TxRunnerX implements TxRunner{
+    private TxRunner txRunner;
+    TxRunnerX(TxRunner txRunner){
+      this.txRunner = txRunner;
+    }
+    @Override
+    public void execute() throws ContractValidateException, ContractExeException, VMIllegalException {
+      txRunner.execute();
+    }
+
+    @Override
+    public ProgramResult getResult() {
+      return txRunner.getResult();
+    }
+
+    @Override
+    public void finalization() {
+      txRunner.finalization();
+    }
+
+    public String getRuntimeError(){
+      return txRunner.getResult().getRuntimeError();
+    }
   }
 }
