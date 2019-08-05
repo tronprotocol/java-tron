@@ -920,7 +920,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void setResult(TxRunner runner) {
     RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-            .isEmpty(runner.getRuntimeError()) && !runner.getResult().isRevert()) {
+            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
       this.setResultCode(contractResult.SUCCESS);
       return;
     }

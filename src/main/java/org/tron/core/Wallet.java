@@ -2224,10 +2224,10 @@ public class Wallet {
 
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(runtime.getResult().getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
       retBuilder
-          .setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()))
+          .setMessage(ByteString.copyFromUtf8(runtime.getResult().getRuntimeError()))
           .build();
     }
     if (runtime.getResult().isRevert()) {

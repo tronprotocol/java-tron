@@ -53,11 +53,6 @@ public class ActualRunner implements TxRunner {
   }
 
   @Override
-  public String getRuntimeError() {
-    return getResult().getRuntimeError();
-  }
-
-  @Override
   public void finalization() {
 
   }

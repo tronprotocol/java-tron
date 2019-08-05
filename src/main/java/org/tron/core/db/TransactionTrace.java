@@ -258,7 +258,7 @@ public class TransactionTrace {
     }
     RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-            .isEmpty(runner.getRuntimeError()) && !runner.getResult().isRevert()) {
+            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
       receipt.setResult(contractResult.SUCCESS);
       return;
     }
@@ -312,7 +312,7 @@ public class TransactionTrace {
   }
 
   public String getRuntimeError() {
-    return runner.getRuntimeError();
+    return runner.getResult().getRuntimeError();
   }
 
   public ProgramResult getRuntimeResult() {

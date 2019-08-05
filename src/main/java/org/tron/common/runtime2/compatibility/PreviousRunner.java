@@ -47,6 +47,9 @@ public class PreviousRunner implements TxRunner {
     /*  VM execute  */
     previousImpl.execute();
     previousImpl.go();
+    //set runtimeError into result
+    previousImpl.getResult().setRuntimeError(previousImpl.getRuntimeError());
+
 
   }
 
@@ -55,10 +58,7 @@ public class PreviousRunner implements TxRunner {
     return previousImpl.getResult();
   }
 
-  @Override
-  public String getRuntimeError() {
-    return previousImpl.getRuntimeError();
-  }
+
 
   @Override
   public void finalization() {

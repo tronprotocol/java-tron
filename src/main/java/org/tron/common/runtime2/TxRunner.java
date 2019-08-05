@@ -13,7 +13,5 @@ public interface TxRunner {
 
   ProgramResult getResult();
 
-  String getRuntimeError();
-
   void finalization();
 }

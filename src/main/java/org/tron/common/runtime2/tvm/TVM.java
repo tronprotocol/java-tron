@@ -384,13 +384,8 @@ public class TVM implements IVM {
   }
 
   @Override
-  public String getRuntimeError() {
-    return getResult().getRuntimeError();
-  }
-
-  @Override
   public void finalization() {
-    if (StringUtils.isEmpty(getRuntimeError())) {
+    if (StringUtils.isEmpty(result.getRuntimeError())) {
       for (DataWord contract : result.getDeleteAccounts()) {
         deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
       }
