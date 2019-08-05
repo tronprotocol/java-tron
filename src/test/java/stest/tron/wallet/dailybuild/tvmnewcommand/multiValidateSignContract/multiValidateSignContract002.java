@@ -63,28 +63,6 @@ public class multiValidateSignContract002 {
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   String txid = "";
 
-  private String parametersString(List<Object>parameters){
-    String[] inputArr = new String[parameters.size()];
-    int i = 0;
-    for (Object parameter: parameters) {
-      if (parameter instanceof  List) {
-        StringBuilder sb = new StringBuilder();
-        for (Object item: (List) parameter) {
-          if (sb.length() != 0) {
-            sb.append(",");
-          }
-          sb.append("\"").append(item).append("\"");
-        }
-        inputArr[i++] = "[" + sb.toString() + "]";
-      } else {
-        inputArr[i++] = (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
-      }
-    }
-    String input = StringUtils.join(inputArr, ',');
-    return input;
-  }
-
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -168,12 +146,12 @@ public class multiValidateSignContract002 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid,blockingStubFull);
+    PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "signatures is empyt test multivalidatesign")
@@ -192,12 +170,12 @@ public class multiValidateSignContract002 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid,blockingStubFull);
+    PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "signatures and addresses empyt test multivalidatesign")
@@ -211,12 +189,12 @@ public class multiValidateSignContract002 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid,blockingStubFull);
+    PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "all empyt test multivalidatesign")
@@ -230,12 +208,12 @@ public class multiValidateSignContract002 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid,blockingStubFull);
+    PublicMethed.getTransactionById(txid, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2,ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
@@ -324,5 +302,25 @@ public class multiValidateSignContract002 {
     }
   }
 
-
+  private String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
+  }
 }

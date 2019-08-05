@@ -60,28 +60,6 @@ public class multiValidateSignContract004 {
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
-  private String parametersString(List<Object>parameters){
-    String[] inputArr = new String[parameters.size()];
-    int i = 0;
-    for (Object parameter: parameters) {
-      if (parameter instanceof  List) {
-        StringBuilder sb = new StringBuilder();
-        for (Object item: (List) parameter) {
-          if (sb.length() != 0) {
-            sb.append(",");
-          }
-          sb.append("\"").append(item).append("\"");
-        }
-        inputArr[i++] = "[" + sb.toString() + "]";
-      } else {
-        inputArr[i++] = (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
-      }
-    }
-    String input = StringUtils.join(inputArr, ',');
-    return input;
-  }
-
-
 
   @BeforeSuite
   public void beforeSuite() {
@@ -112,13 +90,12 @@ public class multiValidateSignContract004 {
   }
 
 
-
   @Test(enabled = true, description = "constructor test multivalidatesign")
   public void test01multivalidatesign() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
-        blockingStubFull);
+            blockingStubFull);
     System.out.println(txid);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/multivalidatesign003.sol";
@@ -141,13 +118,14 @@ public class multiValidateSignContract004 {
     String data = parametersString(parameters);
     System.out.println(data);
     String constructorStr = "constructor(bytes32,bytes[],address[])";
-    txid = PublicMethed.deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
+    txid = PublicMethed
+        .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
             maxFeeLimit, 0L, 100, null, contractExcKey, contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info(info.toString());
-    Assert.assertEquals(0,info.get().getResultValue());
+    Assert.assertEquals(0, info.get().getResultValue());
     contractAddress = info.get().getContractAddress().toByteArray();
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
@@ -219,7 +197,6 @@ public class multiValidateSignContract004 {
         .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-
   /**
    * constructor.
    */
@@ -242,5 +219,25 @@ public class multiValidateSignContract004 {
     }
   }
 
-
+  private String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
+  }
 }

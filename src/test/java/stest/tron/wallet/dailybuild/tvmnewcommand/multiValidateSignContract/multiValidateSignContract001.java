@@ -61,29 +61,6 @@ public class multiValidateSignContract001 {
   String contractExcKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   String txid = "";
 
-  private String parametersString(List<Object>parameters){
-    String[] inputArr = new String[parameters.size()];
-    int i = 0;
-    for (Object parameter: parameters) {
-      if (parameter instanceof  List) {
-        StringBuilder sb = new StringBuilder();
-        for (Object item: (List) parameter) {
-          if (sb.length() != 0) {
-            sb.append(",");
-          }
-          sb.append("\"").append(item).append("\"");
-        }
-        inputArr[i++] = "[" + sb.toString() + "]";
-      } else {
-        inputArr[i++] = (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
-      }
-    }
-    String input = StringUtils.join(inputArr, ',');
-    return input;
-  }
-
-
-
   @BeforeSuite
   public void beforeSuite() {
     Wallet wallet = new Wallet();
@@ -146,7 +123,8 @@ public class multiValidateSignContract001 {
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info(transactionExtention.toString());
-    Assert.assertEquals(1,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert
+        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
 
@@ -169,7 +147,8 @@ public class multiValidateSignContract001 {
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals(2,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert
+        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "incorrect signatures test multivalidatesign")
@@ -191,7 +170,8 @@ public class multiValidateSignContract001 {
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals(2,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert
+        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "incorrect hash test multivalidatesign")
@@ -199,11 +179,11 @@ public class multiValidateSignContract001 {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
-        blockingStubFull);
+            blockingStubFull);
     String incorrecttxid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
-        blockingStubFull);
+            blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
@@ -224,17 +204,17 @@ public class multiValidateSignContract001 {
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
+    List<Object> parameters = Arrays
+        .asList("0x" + Hex.toHexString(Hash.sha3(incorrecttxid.getBytes())), signatures, addresses);
     String input = parametersString(parameters);
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info(transactionExtention.toString());
-    Assert.assertEquals(2,ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert
+        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
-
-
 
   /**
    * constructor.
@@ -258,5 +238,25 @@ public class multiValidateSignContract001 {
     }
   }
 
-
+  private String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
+  }
 }
