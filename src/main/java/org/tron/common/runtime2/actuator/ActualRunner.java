@@ -19,9 +19,13 @@ public class ActualRunner implements TxRunner {
 
   Deposit deposit;
 
-  public ActualRunner(TransactionCapsule trxCap, Deposit deposit) {
+  private ActualRunner(TransactionCapsule trxCap, Deposit deposit) {
     this.trxCap = trxCap;
     this.deposit = deposit;
+  }
+
+  public static ActualRunner createActualRunner(TransactionCapsule trxCap, Deposit deposit) {
+    return new ActualRunner(trxCap, deposit);
   }
 
   @Override

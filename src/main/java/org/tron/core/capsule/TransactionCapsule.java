@@ -47,6 +47,7 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 
 import java.io.IOException;
+import java.lang.Exception;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,9 +59,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
-import static org.tron.protos.Contract.*;
-
-import java.lang.Exception;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -922,7 +920,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void setResult(TxRunner runner) {
     RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
+            .isEmpty(runner.getRuntimeError()) && !runner.getResult().isRevert()) {
       this.setResultCode(contractResult.SUCCESS);
       return;
     }

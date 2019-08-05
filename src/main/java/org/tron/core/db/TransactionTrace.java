@@ -96,7 +96,6 @@ public class TransactionTrace {
   public void execute(BlockCapsule blockCap, boolean eventPluginLoaded)
           throws ContractExeException, ContractValidateException, VMIllegalException {
     init(blockCap, eventPluginLoaded);
-    //TODO: add checkIsConstant in exec detail
     exec();
   }
 
@@ -259,7 +258,7 @@ public class TransactionTrace {
     }
     RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
+            .isEmpty(runner.getRuntimeError()) && !runner.getResult().isRevert()) {
       receipt.setResult(contractResult.SUCCESS);
       return;
     }
@@ -313,7 +312,7 @@ public class TransactionTrace {
   }
 
   public String getRuntimeError() {
-    return runner.getResult().getRuntimeError();
+    return runner.getRuntimeError();
   }
 
   public ProgramResult getRuntimeResult() {
