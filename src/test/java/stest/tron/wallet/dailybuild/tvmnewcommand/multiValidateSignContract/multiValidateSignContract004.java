@@ -24,6 +24,7 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter;
@@ -166,7 +167,7 @@ public class multiValidateSignContract004 {
         .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "empty address hex test multivalidatesign")
+  @Test(enabled = true, description = "empty address and signatures hex test multivalidatesign")
   public void test03multivalidatesign() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress,
@@ -184,17 +185,15 @@ public class multiValidateSignContract004 {
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    List<Object> signatures = new ArrayList<>();
-    List<Object> addresses = new ArrayList<>();
-    String input = "da586d881362c0c38eb31b556ce0f7c2837a3ebb60080e8e665a6b92c7541837b95064ba000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000412d34d149ddf924b3ef806d7bc9b658ea28141962238a1b3dd351b777e28e84ce0794cf92de31d527476b4240a6d496089a2ae0c312816bbb20858ee607ab446a010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000";
+    String input = "da586d881362c0c38eb31b556ce0f7c2837a3ebb60080e8e665a6b92c7541837b95064ba0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000";
     String method = "testArray(bytes32,bytes[],address[])";
-    TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress,
-            "testArray(bytes32,bytes[],address[])", input, true,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    logger.info(transactionExtention.toString());
-    Assert
-        .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    txid = PublicMethed.triggerContract(contractAddress,
+        method, input, true,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+//    System.out.println(infoById.get().getResMessage().toStringUtf8());
   }
 
   /**

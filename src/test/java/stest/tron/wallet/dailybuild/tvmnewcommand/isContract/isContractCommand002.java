@@ -11,6 +11,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -99,6 +100,19 @@ public class isContractCommand002 {
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Protocol.Account info;
+    GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
+        .getAccountResource(contractExcAddress,
+            blockingStubFull);
+    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
+    Long beforeBalance = info.getBalance();
+    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
+    Long beforeNetUsed = resourceInfo.getNetUsed();
+    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
+    logger.info("beforeBalance:" + beforeBalance);
+    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
+    logger.info("beforeNetUsed:" + beforeNetUsed);
+    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
     String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
     String contractName = "testIsContract";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
@@ -163,7 +177,7 @@ public class isContractCommand002 {
     Assert.assertEquals(0,info.get().getResultValue());
   }
 
-  @Test(enabled = true, description = "incorrect hash test isContract Command")
+  @Test(enabled = true, description = "incorrect address hex test isContract Command")
   public void testIncorrectHashContract() {
     PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -215,6 +229,7 @@ public class isContractCommand002 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(infoById.toString());
     Assert.assertTrue(infoById.get().getResultValue() == 1);
+//    infoById.get().getResMessage().toStringUtf8().;
   }
 
 
