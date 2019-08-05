@@ -326,6 +326,12 @@ public class isContractCommand001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
+    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

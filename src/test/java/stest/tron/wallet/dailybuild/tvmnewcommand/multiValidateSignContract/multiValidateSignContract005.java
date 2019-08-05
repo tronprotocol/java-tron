@@ -11,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
-import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -19,7 +18,6 @@ import org.testng.annotations.Test;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
@@ -91,7 +89,7 @@ public class multiValidateSignContract005 {
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
-  @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
+  @Test(enabled = true, description = "incorrect hex test multivalidatesign")
   public void test01multivalidatesign() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress,
@@ -111,18 +109,7 @@ public class multiValidateSignContract005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
-    byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 5; i++) {
-      ECKey key = new ECKey();
-      byte[] sign = key.sign(hash).toByteArray();
-      signatures.add(Hex.toHexString(sign));
-      addresses.add(Wallet.encode58Check(key.getAddress()));
-    }
-    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
-    String input = parametersString(parameters);
-    input = "7d889f42b4a56ebe78264631a3b4daf21019e1170cce71929fb396761cdf532e000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000041ad7ca8100cf0ce028b83ac719c8458655a6605317abfd071b91f5cc14d53e87a299fe0cdf6a8567074e9be3944affba33b1e15d14b7cb9003ec2c87cb1a56405000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000417ce31e565fb99451f87db65e75f46672e8a8f7b29e6589e60fd11e076550d0a66d0b05e4b4d7d40bd34140f13dc3632d3ce0f25e4cf75840238b6fe2346c94fa010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000410d6b1de9e84c1d7a9a5b43d93dbe4a5aae79b18900000000000000000000004122d4ace3a58c55c668d88dbf3a30d436972440d7";
-//    input = "7d889f42b4a56ebe78264631a3b4daf21019e1170cce71929fb396761cdf532e00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000041431770038afd2fb3a728cc9b61a1f153e38ec4fe8e2b0bba20de132982a46163282a48bfd8ed18c0da10f43e0a4abef59410d6f8ffa3ed5c247561ab59c38b070100000000000000000000000000000000000000000000000000000000000000";
-
+    String input = "7d889f42b4a56ebe78264631a3b4daf21019e1170cce71929fb396761cdf532e000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000001c00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000041ad7ca8100cf0ce028b83ac719c8458655a6605317abfd071b91f5cc14d53e87a299fe0cdf6a8567074e9be3944affba33b1e15d14b7cb9003ec2c87cb1a56405000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000417ce31e565fb99451f87db65e75f46672e8a8f7b29e6589e60fd11e076550d0a66d0b05e4b4d7d40bd34140f13dc3632d3ce0f25e4cf75840238b6fe2346c94fa010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000410d6b1de9e84c1d7a9a5b43d93dbe4a5aae79b1890000000000000000000000123456";
     String method = "testArray2(bytes)";
     AbiUtil.parseMethod(method, Arrays.asList(input));
     txid = PublicMethed.triggerContract(contractAddress,
@@ -132,10 +119,8 @@ public class multiValidateSignContract005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
+    Assert.assertEquals(1, infoById.get().getResultValue());
     logger.info("infoById:" + infoById.get());
-
-//    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
 
@@ -144,6 +129,12 @@ public class multiValidateSignContract005 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+        blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
+    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
