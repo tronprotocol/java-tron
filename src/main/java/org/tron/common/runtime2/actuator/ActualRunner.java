@@ -35,7 +35,7 @@ public class ActualRunner implements TxRunner {
 
 
   @Override
-  public void execute(boolean isStatic) throws ContractValidateException, ContractExeException {
+  public void execute() throws ContractValidateException, ContractExeException {
     final List<Actuator> actuatorList = ActuatorFactory
             .createActuator(trxCap, deposit.getDbManager());
 

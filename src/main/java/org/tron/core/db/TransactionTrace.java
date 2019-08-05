@@ -159,7 +159,7 @@ public class TransactionTrace {
   public void exec()
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  TXRunner execute  */
-    runner.execute(false);
+    runner.execute();
 
     if (TRX_PRECOMPILED_TYPE != trxType) {
       if (contractResult.OUT_OF_TIME

@@ -2209,8 +2209,8 @@ public class Wallet {
     }
 
     VMConfig vmConfig = VMConfigLoader.getInstance().loadNew();
-    TxRunner runtime = TxRunnerRouter.getInstance().routeWallet(trxCap.getInstance(), new BlockCapsule(headBlock), deposit, vmConfig);
-    runtime.execute(true);
+    TxRunner runtime = TxRunnerRouter.getInstance().routeWallet(trxCap, new BlockCapsule(headBlock), deposit, vmConfig);
+    runtime.execute();
     runtime.finalization();
 
     if (runtime.getResult().getException() != null) {

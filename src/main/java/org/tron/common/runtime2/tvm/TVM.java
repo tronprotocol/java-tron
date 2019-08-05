@@ -46,7 +46,7 @@ public class TVM implements IVM {
 
   private BlockCapsule blockCap;
 
-  private Protocol.Transaction trx;
+  private TransactionCapsule trx;
 
   private InternalTransaction.TrxType trxType;
 
@@ -55,14 +55,16 @@ public class TVM implements IVM {
   private LogInfoTriggerParser logInfoTriggerParser;
 
   private ProgramResult result;
+  @Setter
+  private boolean isStatic;
 
   @Setter
   private InternalTransaction.ExecutorType executorType;
 
 
-  public TVM(TransactionTrace trace, Protocol.Transaction trx, BlockCapsule block, Deposit deposit) {
+  public TVM(TransactionTrace trace, TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
     this.trace = trace;
-    this.trx = (trx == null ? trace.getTrx().getInstance() : trx);
+    this.trx = (trx == null ? trace.getTrx() : trx);
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.deposit = deposit;
     if (Objects.nonNull(block)) {
@@ -74,7 +76,7 @@ public class TVM implements IVM {
 
     }
 
-    Protocol.Transaction.Contract.ContractType contractType = this.trx.getRawData().getContract(0).getType();
+    Protocol.Transaction.Contract.ContractType contractType = this.trx.getInstance().getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
       case Protocol.Transaction.Contract.ContractType.TriggerSmartContract_VALUE:
         trxType = InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
@@ -86,13 +88,13 @@ public class TVM implements IVM {
 
 
   @Override
-  public void execute(boolean isStatic) throws ContractValidateException, VMIllegalException {
+  public void execute() throws ContractValidateException, VMIllegalException {
     //Validate and getBaseProgram
     Program program = preValidateAndGetBaseProgram(isStatic);
     //setup program environment
     ProgramEnv env = ProgramEnv.createEnvironment(deposit, program, vmConfig);
     //play program
-    Interpreter.getInstance().play(program, env);
+    env.execute();
     //process result
     processResult(program, env, isStatic);
   }
@@ -147,7 +149,7 @@ public class TVM implements IVM {
     Program program = new Program();
     program.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
-      Contract.CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+      Contract.CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx.getInstance());
       if (contract == null) {
         throw new ContractValidateException("Cannot get CreateSmartContract from transaction");
       }
@@ -183,7 +185,7 @@ public class TVM implements IVM {
 
 
     } else { // TRX_CONTRACT_CALL_TYPE
-      Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+      Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx.getInstance());
       if (contract.getContractAddress() == null) {
         throw new ContractValidateException("Cannot get contract address from TriggerContract");
       }
@@ -231,9 +233,9 @@ public class TVM implements IVM {
 
     //set rootTransaction
 
-    byte[] txId = new TransactionCapsule(trx).getTransactionId().getBytes();
+    byte[] txId = new TransactionCapsule(trx.getInstance()).getTransactionId().getBytes();
     program.setRootTransactionId(txId);
-    program.setInternalTransaction(new InternalTransaction(trx, trxType));
+    program.setInternalTransaction(new InternalTransaction(trx.getInstance(), trxType));
 
     //load eventPlugin
     loadEventPlugin(program);
@@ -262,7 +264,7 @@ public class TVM implements IVM {
   private long calculateEnergyLimit(AccountCapsule creator, AccountCapsule caller,
                                     byte[] contractAddress, boolean isStatic, long callValue) throws ContractValidateException {
     long energyLimit = 0;
-    long rawfeeLimit = trx.getRawData().getFeeLimit();
+    long rawfeeLimit = trx.getInstance().getRawData().getFeeLimit();
     if (rawfeeLimit < 0 || rawfeeLimit > vmConfig.getMaxFeeLimit()) {
       logger.info("invalid feeLimit {}", rawfeeLimit);
       throw new ContractValidateException(
@@ -367,7 +369,7 @@ public class TVM implements IVM {
       cpuLimitRatio = 1.0;
     } else {
       // self witness or other witness or fullnode verifies block
-      if (trx.getRet(0).getContractRet() == Protocol.Transaction.Result.contractResult.OUT_OF_TIME) {
+      if (trx.getInstance().getRet(0).getContractRet() == Protocol.Transaction.Result.contractResult.OUT_OF_TIME) {
         cpuLimitRatio = vmConfig.getMinTimeRatio();
       } else {
         cpuLimitRatio = vmConfig.getMaxTimeRatio();

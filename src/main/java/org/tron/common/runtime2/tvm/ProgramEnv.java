@@ -1,5 +1,6 @@
 package org.tron.common.runtime2.tvm;
 
+import com.google.protobuf.ByteString;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -24,6 +25,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
+import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
 import java.math.BigInteger;
@@ -114,6 +116,154 @@ public class ProgramEnv {
     }
     return env;
   }
+
+
+  public void execute() throws ContractValidateException {
+    //check static call
+    preStaticCheck(program);
+    //transfer assets
+    transferAssets(program, this);
+    //processCode
+    Interpreter.getInstance().play(program, this);
+    //save code for create
+    postProcess(program, this);
+  }
+
+
+  private void preStaticCheck(Program program) {
+    long tokenValue = program.getTokenValue();
+    long callValue = program.getCallValue();
+    //checkStaticCall
+    if (program.isStatic()) {
+      if (callValue > 0 || tokenValue > 0) {
+        //throw exception and exit.
+        throw ExceptionFactory.staticCallTransferException();
+      }
+    }
+  }
+
+  private void transferAssets(Program program, ProgramEnv env) throws ContractValidateException {
+    byte[] contractAddress = fetchAddress(program, env);
+    long tokenId = program.getTokenId();
+    long tokenValue = program.getTokenValue();
+    long callValue = program.getCallValue();
+
+    // tokenid can only be 0
+    // or (MIN_TOKEN_ID, Long.Max]
+    if (tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0) {
+      throw new ContractValidateException("tokenId must > " + VMConstant.MIN_TOKEN_ID);
+    }
+    // tokenid can only be 0 when tokenvalue = 0,
+    // or (MIN_TOKEN_ID, Long.Max]
+    if (tokenValue > 0 && tokenId == 0) {
+      throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
+              ", tokenId = " + tokenId);
+    }
+
+    //transefer Trx and trc10
+    // transfer from callerAddress to contractAddress according to callValue
+    if (program.getCallValue() > 0) {
+      ProgramEnv.transfer(env.getStorage(), program.getCallerAddress(), contractAddress, callValue);
+    }
+    if (program.getTokenValue() > 0) {
+      ProgramEnv.transferToken(env.getStorage(), program.getCallerAddress(), contractAddress, String.valueOf(tokenId),
+              tokenValue);
+    }
+  }
+
+  private byte[] fetchAddress(Program program, ProgramEnv env) throws ContractValidateException {
+    byte[] contractAddress;
+    Protocol.Transaction trx = program.getInternalTransaction().getTransaction();
+    if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
+      //create or create2 OpCode
+      if (program.getCallInfo().fromVM) {
+        byte[] newAddress = program.getCallInfo().getNewAddress();
+        AccountCapsule existingAccount = env.getStorage().getAccount(newAddress);
+        ContractCapsule contractCapsule = null;
+        //create Account for create2
+        if (existingAccount != null) {
+          contractCapsule = env.getStorage().getContract(existingAccount.getAddress().toByteArray());
+        } else {
+          env.getStorage().createAccount(newAddress, "CreatedByContract",
+                  Protocol.AccountType.Contract);
+        }
+        //judge if is already exist addr
+        if (existingAccount != null && contractCapsule != null) {
+          throw new ContractValidateException(
+                  "Trying to create a contract with existing contract address: " + Hex
+                          .toHexString(newAddress));
+        } else if (existingAccount != null && contractCapsule == null) {
+          //update accountInfos
+          existingAccount.updateAccountType(Protocol.AccountType.Contract);
+          existingAccount.clearDelegatedResource();
+          env.getStorage().updateAccount(newAddress, existingAccount);
+        }
+        Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
+        builder.setContractAddress(ByteString.copyFrom(newAddress))
+                .setConsumeUserResourcePercent(100)
+                .setOriginAddress(ByteString.copyFrom(program.getCallerAddress()));
+        if (program.getCallInfo().isCreate2) {
+          builder.setTrxHash(ByteString.copyFrom(program.getRootTransactionId()));
+        }
+        Protocol.SmartContract newSmartContract = builder.build();
+        env.getStorage().createContract(newAddress, new ContractCapsule(newSmartContract));
+        contractAddress = newAddress;
+
+
+      } else {
+        //normal create
+        contractAddress = Wallet.generateContractAddress(trx);
+        // insure the new contract address haven't exist
+        if (env.getStorage().getAccount(contractAddress) != null) {
+          throw new ContractValidateException(
+                  "Trying to create a contract with existing contract address: " + Wallet
+                          .encode58Check(contractAddress));
+        }
+        //if not created by smartcontract then
+        Contract.CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+        Protocol.SmartContract newSmartContract = contract.getNewContract();
+        newSmartContract = newSmartContract.toBuilder()
+                .setContractAddress(ByteString.copyFrom(contractAddress)).build();
+
+        env.getStorage().createAccount(contractAddress, newSmartContract.getName(),
+                Protocol.AccountType.Contract);
+
+        env.getStorage().createContract(contractAddress, new ContractCapsule(newSmartContract));
+
+      }
+      program.setContractAddress(contractAddress);
+      env.setContractAddress(new DataWord(program.getContractAddress()));
+
+    } else {
+      contractAddress = program.getContractAddress();
+    }
+    program.getProgramResult().setContractAddress(contractAddress);
+
+    return contractAddress;
+  }
+
+
+  private void setException(Program program, RuntimeException soe) {
+    program.getProgramResult().setException(soe);
+    program.getProgramResult().setRuntimeError(soe.getMessage());
+  }
+
+  private void postProcess(Program program, ProgramEnv env) {
+    ProgramResult result = program.getProgramResult();
+    if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE && !result.isRevert()) {
+      byte[] code = program.getProgramResult().getHReturn();
+      long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
+      long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
+      if (afterSpend < 0) {
+        throw ExceptionFactory.notEnoughSpendEnergy("saveContractCode",
+                saveCodeEnergy, program.getEnergyLimit() - result.getEnergyUsed());
+      } else {
+        result.spendEnergy(saveCodeEnergy);
+        env.getStorage().saveCode(program.getContractAddress(), code);
+      }
+    }
+  }
+
 
   public void step() {
     setPC(pc + 1);
@@ -751,7 +901,7 @@ public class ProgramEnv {
     ProgramEnv cenv = ProgramEnv.createEnvironment(this.getStorage().newDepositChild(), create, this);
     //play program
     try {
-      Interpreter.getInstance().play(create, cenv);
+      cenv.execute();
     } catch (ContractValidateException e) {
       //frankly, is the transfer reason
       throw ExceptionFactory.transferException("create opcode validateForSmartContract failure");
@@ -961,7 +1111,7 @@ public class ProgramEnv {
     call.setInternalTransaction(internalTx);
     ProgramEnv cenv = createEnvironment(childStroage, call, this);
     try {
-      Interpreter.getInstance().play(call, cenv);
+      cenv.execute();
     } catch (ContractValidateException e) {
       refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
       throw ExceptionFactory.transferException( e.getMessage());

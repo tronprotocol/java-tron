@@ -40,20 +40,10 @@ public class Interpreter {
     return InterpreterInstance.instance;
   }
 
-  public void play(Program program, ProgramEnv env) throws ContractValidateException {
+  public void play(Program program, ProgramEnv env) {
     try{
-      //check static call
-      preStaticCheck(program);
-      //transfer assets
-      transferAssets(program, env);
       //step the code
       stepCode(program, env);
-      //save code for create
-      postProcess(program, env);
-    }
-    catch (ContractValidateException e){
-      //transferAssets Error
-      throw e;
     }
     catch (StackOverflowError soe){
       // if JVM StackOverflow then convert to runtimeExcepton
@@ -91,9 +81,8 @@ public class Interpreter {
 
   private void stepCode(Program program, ProgramEnv env) {
     if (isNotEmpty(program.getOps())){
-      StringBuffer opSeq=new StringBuffer("");
       while (!env.isStopped()) {
-        this.step(program, env,opSeq);
+        this.step(program, env);
       }
     }
   }
@@ -211,7 +200,7 @@ public class Interpreter {
   }
 
 
-  public void step(Program program, ProgramEnv env,StringBuffer opSeq) {
+  public void step(Program program, ProgramEnv env) {
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {

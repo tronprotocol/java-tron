@@ -9,7 +9,7 @@ import org.tron.core.exception.VMIllegalException;
  * Interface to Run the Transaction.
  */
 public interface TxRunner {
-  void execute(boolean isStatic) throws ContractValidateException, ContractExeException, VMIllegalException;
+  void execute() throws ContractValidateException, ContractExeException, VMIllegalException;
 
   ProgramResult getResult();
 
