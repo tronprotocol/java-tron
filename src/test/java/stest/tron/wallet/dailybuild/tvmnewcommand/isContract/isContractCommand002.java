@@ -190,6 +190,33 @@ public class isContractCommand002 {
     Assert.assertTrue(infoById.get().getResultValue() == 1);
   }
 
+  @Test(enabled = true, description = "empty addresses hash test isContract Command")
+  public void testEmptyAddressHashContract() {
+    PublicMethed
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
+    String contractName = "testIsContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String input = "ac5a3e29";
+    String txid = "";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testIsContractCommand(address)", input, true,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info(infoById.toString());
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
+  }
+
 
   /**
    * constructor.
