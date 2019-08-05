@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GetTransactionCountByBlockNumServlet extends HttpServlet {
+public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;
