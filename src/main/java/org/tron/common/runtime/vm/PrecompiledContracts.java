@@ -64,6 +64,7 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -1340,7 +1341,7 @@ public class PrecompiledContracts {
 
     @Override
     public long getEnergyForData(byte[] data) {
-      int cnt = (data.length / DataWord.WORD_SIZE - 5) / 6;
+      int cnt = getCntOfSign(data);
       // one sign 1500, half of ecrecover
       return (long) (cnt * ENGERYPERSIGN);
     }
@@ -1348,6 +1349,10 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
       try {
+        int cnt = getCntOfSign(data);
+        if (cnt == 0 || cnt > 27 * 2) {
+          return Pair.of(false, new DataWord(0).getData());
+        }
         return doExecute(data);
       } catch (Throwable t) {
         return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
@@ -1381,6 +1386,13 @@ public class PrecompiledContracts {
       }
       // all signatures have been validated successfully
       return Pair.of(true, DataWord.ONE().getData());
+    }
+
+    private static int getCntOfSign(byte[] data) {
+      if (ByteUtil.isNullOrZeroArray(data)) {
+        return 0;
+      }
+      return (data.length / DataWord.WORD_SIZE - 5) / 6;
     }
 
     private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
