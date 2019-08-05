@@ -110,14 +110,6 @@ public class isContractCommand002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     String txid = "";
     String num = "\"" + Base58.encode58Check(contractAddress) + "\"";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", num, false,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    logger.info(infoById.toString());
     Assert.assertTrue(PublicMethed
         .sendcoin(selfdestructContractExcAddress, 10000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -133,7 +125,7 @@ public class isContractCommand002 {
     Optional<Protocol.TransactionInfo> infoById1 = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert.assertEquals(1, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
     logger.info(infoById1.toString());
     String txid1 = "";
     txid1 = PublicMethed.triggerContract(contractAddress,
@@ -148,7 +140,7 @@ public class isContractCommand002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertEquals(0, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
-    logger.info(infoById.toString());
+    logger.info(infoById1.toString());
   }
 
   @Test(enabled = true, description = "no constructor test isContract Command")
@@ -171,8 +163,32 @@ public class isContractCommand002 {
     Assert.assertEquals(0,info.get().getResultValue());
   }
 
-
-
+  @Test(enabled = true, description = "incorrect hash test isContract Command")
+  public void testIncorrectHashContract() {
+    PublicMethed
+        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
+            blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
+    String contractName = "testIsContract";
+    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
+    String code = retMap.get("byteCode").toString();
+    String abi = retMap.get("abI").toString();
+    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
+        0L, 100, null, contractExcKey,
+        contractExcAddress, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    String input = "ac5a3e290000000000000000000000123456789123456789";
+    String txid = "";
+    txid = PublicMethed.triggerContract(contractAddress,
+        "testIsContractCommand(address)", input, true,
+        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
+    Optional<Protocol.TransactionInfo> infoById = null;
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    logger.info(infoById.toString());
+    Assert.assertTrue(infoById.get().getResultValue() == 1);
+  }
 
 
   /**
