@@ -11,6 +11,7 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.protos.Protocol;
 
 public class PreviousRunner implements TxRunner {
   TransactionTrace transactionTrace;
@@ -22,16 +23,26 @@ public class PreviousRunner implements TxRunner {
     return ret;
   }
 
+  public static PreviousRunner createPreviouRunnerForWallet(Protocol.Transaction tx, BlockCapsule block, Deposit deposit) {
+    return new PreviousRunner(tx, block, deposit);
+  }
+
 
   private PreviousRunner(TransactionTrace trace, BlockCapsule block, Deposit deposit) {
     this.transactionTrace = trace;
     previousImpl = new RuntimeImpl(trace, block, deposit, new ProgramInvokeFactoryImpl());
   }
 
+  private PreviousRunner(Protocol.Transaction tx, BlockCapsule block, Deposit deposit) {
+    previousImpl = new RuntimeImpl(tx, block, deposit, new ProgramInvokeFactoryImpl());
+  }
+
   @Override
   public void execute(boolean isStatic) throws ContractValidateException, ContractExeException, VMIllegalException {
     previousImpl.setStaticCall(isStatic);
-    transactionTrace.checkIsConstant();
+    if (!isStatic && transactionTrace != null) {
+      transactionTrace.checkIsConstant();
+    }
     /*  VM execute  */
     previousImpl.execute();
     previousImpl.go();

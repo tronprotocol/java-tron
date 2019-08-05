@@ -41,7 +41,6 @@ public class Interpreter {
   }
 
   public void play(Program program, ProgramEnv env) throws ContractValidateException {
-    logger.info("play:{}",program.getOps());
     try{
       //check static call
       preStaticCheck(program);
@@ -96,8 +95,6 @@ public class Interpreter {
       while (!env.isStopped()) {
         this.step(program, env,opSeq);
       }
-      //   logger.info("OP sequece:{}",opSeq);
-
     }
   }
 
@@ -654,16 +651,12 @@ public class Interpreter {
         }
         break;
         case ISZERO: {
-          logger.info("before:{}",env.getStack().toString());
           DataWord word1 = env.stackPop();
-          logger.info("before:{}",word1);
-          logger.info("isZero:{}",word1.isZero());
           if (word1.isZero()) {
             word1.getData()[31] = 1;
           } else {
             word1.and(DataWord.ZERO);
           }
-          logger.info("after:{}",word1);
 
           if (logger.isDebugEnabled()) {
             hint = "" + word1.value();
@@ -1434,7 +1427,6 @@ public class Interpreter {
         case CALLTOKEN:
         case DELEGATECALL:
         case STATICCALL: {
-          logger.info("begin internal call");
           env.stackPop(); // use adjustedCallEnergy instead of requested
           DataWord codeAddress = env.stackPop();
 
@@ -1542,7 +1534,6 @@ public class Interpreter {
       }
 
       env.setPreviouslyExecutedOp(op.val());
-      logger.info("op : {},hint : {}",op.toString(),hint);
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
       if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {

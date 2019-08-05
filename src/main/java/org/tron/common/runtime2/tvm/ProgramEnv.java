@@ -761,24 +761,6 @@ public class ProgramEnv {
 
     ProgramResult createResult = create.getProgramResult();
 
-    //spend energy and save code
-/*    byte[] code = createResult.getHReturn();
-
-    long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
-
-    long afterSpend =
-            create.getEnergyLimit() - createResult.getEnergyUsed() - saveCodeEnergy;
-    if (!createResult.isRevert()) {
-      if (afterSpend < 0) {
-        createResult.setException(
-                ExceptionFactory.notEnoughSpendEnergy("No energy to save just created contract code",
-                        saveCodeEnergy, create.getEnergyLimit() - createResult.getEnergyUsed()));
-      } else {
-        createResult.spendEnergy(saveCodeEnergy);
-        cenv.getStorage().saveCode(newAddress, code);
-      }
-    }*/
-
     //deal with result
 
     program.getProgramResult().merge(createResult);

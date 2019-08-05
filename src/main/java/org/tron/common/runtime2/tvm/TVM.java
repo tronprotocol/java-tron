@@ -56,7 +56,8 @@ public class TVM implements IVM {
 
   private ProgramResult result;
 
-  private InternalTransaction.ExecutorType executorType; //TODO: Discuss
+  @Setter
+  private InternalTransaction.ExecutorType executorType;
 
 
   public TVM(TransactionTrace trace, Protocol.Transaction trx, BlockCapsule block, Deposit deposit) {
@@ -93,11 +94,15 @@ public class TVM implements IVM {
     //play program
     Interpreter.getInstance().play(program, env);
     //process result
-    processResult(program, env);
+    processResult(program, env, isStatic);
   }
 
-  private void processResult(Program program, ProgramEnv env) {
+  private void processResult(Program program, ProgramEnv env, Boolean isStatic) {
     result =  program.getProgramResult();
+    // for static call don't processResult
+    if (isStatic) {
+      return;
+    }
     //
     if (result.getException() != null || result.isRevert()) {
       result.getDeleteAccounts().clear();
@@ -350,7 +355,6 @@ public class TVM implements IVM {
   private double getCpuLimitInUsRatio() {
     double cpuLimitRatio;
 
-    //TODO:Discuss
     if (InternalTransaction.ExecutorType.ET_PRE_TYPE == executorType) {
       cpuLimitRatio =1.0;
       return cpuLimitRatio;

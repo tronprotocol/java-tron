@@ -25,10 +25,8 @@ public class VMConfigLoader {
     return INSTACE;
   }
 
-  public VMConfig load() {
-    if (cachedVmConfig == null) {
-      cachedVmConfig = new VMConfig();
-    }
+  public VMConfig loadNew() {
+    cachedVmConfig = new VMConfig();
     cachedVmConfig.setMaxFeeLimit(MAX_FEE_LIMIT);
     cachedVmConfig.setSwitchVm2(true);
     cachedVmConfig.setVmTrace(Args.getInstance().isVmTrace());
@@ -43,16 +41,19 @@ public class VMConfigLoader {
       org.tron.common.runtime.config.VMConfig.initAllowTvmTransferTrc10(source.getAllowTvmTransferTrc10());
       org.tron.common.runtime.config.VMConfig.initAllowTvmConstantinople(source.getAllowTvmConstantinople());
       org.tron.common.runtime.config.VMConfig.initAllowTvmSolidity059(source.getAllowTvmSolidity059());
-
     }
+    return cachedVmConfig;
+  }
 
-
-
+  public VMConfig loadIntoCache() {
+    if (cachedVmConfig == null) {
+      cachedVmConfig = loadNew();
+    }
     return cachedVmConfig;
   }
 
   public VMConfig loadCached() {
-    return cachedVmConfig == null ? load() : cachedVmConfig;
+    return cachedVmConfig == null ? loadIntoCache() : cachedVmConfig;
   }
 
 }

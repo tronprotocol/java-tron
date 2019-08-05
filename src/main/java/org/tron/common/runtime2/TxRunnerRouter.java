@@ -6,6 +6,7 @@ import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
@@ -21,8 +22,24 @@ public class TxRunnerRouter {
     return TxRunnerRouterInstance.instance;
   }
 
+  public TxRunner routeWallet(Protocol.Transaction tx, BlockCapsule block, Deposit deposit, VMConfig config) {
+    if (!config.isSwitchVm2()) {
+      return PreviousRunner.createPreviouRunnerForWallet(tx, block, deposit);
+    } else {
+      switch (tx.getRawData().getContract(0).getType().getNumber()) {
+        case ContractType.TriggerSmartContract_VALUE:
+        case ContractType.CreateSmartContract_VALUE:
+          return VMFactory.createTVMForWallet(config, tx, block, deposit);
+        default:
+          return ActualRunner.createActualRunner(tx, deposit);
+
+      }
+    }
+  }
+
+
   public TxRunner route(TransactionTrace trace, BlockCapsule block, Deposit deposit, VMConfig config) {
-    if (true) {
+    if (!config.isSwitchVm2()) {
       //no need to route ,run previous runtime
       return PreviousRunner.createPreviouRunner(trace, block, deposit, config);
 

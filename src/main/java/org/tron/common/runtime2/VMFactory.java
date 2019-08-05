@@ -1,5 +1,6 @@
 package org.tron.common.runtime2;
 
+import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.runtime2.tvm.TVM;
 import org.tron.common.storage.Deposit;
@@ -14,9 +15,10 @@ public class VMFactory {
     return tvm;
   }
 
-  public static IVM createTVM(VMConfig config, Protocol.Transaction trx, BlockCapsule block, Deposit deposit) {
+  public static IVM createTVMForWallet(VMConfig config, Protocol.Transaction trx, BlockCapsule block, Deposit deposit) {
     TVM tvm = new TVM(null, trx, block, deposit);
     tvm.setVmConfig(config);
+    tvm.setExecutorType(InternalTransaction.ExecutorType.ET_PRE_TYPE);
     return tvm;
   }
 }

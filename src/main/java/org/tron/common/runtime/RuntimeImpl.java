@@ -135,8 +135,8 @@ public class RuntimeImpl implements Runtime {
     this.isStaticCall = isStaticCall;
   }
 
-  private RuntimeImpl(Transaction tx, BlockCapsule block, DepositImpl deposit,
-      ProgramInvokeFactory programInvokeFactory) {
+  public RuntimeImpl(Transaction tx, BlockCapsule block, Deposit deposit,
+                     ProgramInvokeFactory programInvokeFactory) {
     this.trx = tx;
     this.deposit = deposit;
     this.programInvokeFactory = programInvokeFactory;

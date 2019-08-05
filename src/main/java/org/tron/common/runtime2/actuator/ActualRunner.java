@@ -8,6 +8,7 @@ import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.Protocol;
 
 import java.util.List;
 
@@ -27,6 +28,11 @@ public class ActualRunner implements TxRunner {
   public static ActualRunner createActualRunner(TransactionCapsule trxCap, Deposit deposit) {
     return new ActualRunner(trxCap, deposit);
   }
+
+  public static ActualRunner createActualRunner(Protocol.Transaction tx, Deposit deposit) {
+    return new ActualRunner(new TransactionCapsule(tx), deposit);
+  }
+
 
   @Override
   public void execute(boolean isStatic) throws ContractValidateException, ContractExeException {

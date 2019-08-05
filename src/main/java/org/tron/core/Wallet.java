@@ -41,11 +41,11 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.RuntimeImpl;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.runtime2.TxRunner;
+import org.tron.common.runtime2.TxRunnerRouter;
+import org.tron.common.runtime2.config.VMConfig;
+import org.tron.common.runtime2.config.VMConfigLoader;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.*;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -2208,25 +2208,11 @@ public class Wallet {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
 
-    VMConfig.initVmHardFork();
-    VMConfig.initAllowTvmTransferTrc10(
-            dbManager.getDynamicPropertiesStore().getAllowTvmTransferTrc10());
-    VMConfig.initAllowMultiSign(
-            dbManager.getDynamicPropertiesStore().getAllowMultiSign());
-    VMConfig.initAllowTvmConstantinople(
-            dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
-    VMConfig.initAllowTvmSolidity059(
-            dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
-
-
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(),
-        new BlockCapsule(headBlock), deposit,
-        new ProgramInvokeFactoryImpl(), true);
-
-    runtime.execute();
-    runtime.go();
+    VMConfig vmConfig = VMConfigLoader.getInstance().loadNew();
+    TxRunner runtime = TxRunnerRouter.getInstance().routeWallet(trxCap.getInstance(), new BlockCapsule(headBlock), deposit, vmConfig);
+    runtime.execute(true);
     runtime.finalization();
-    // TODO exception
+
     if (runtime.getResult().getException() != null) {
       RuntimeException e = runtime.getResult().getException();
       logger.warn("Constant call has error {}", e.getMessage());
