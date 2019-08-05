@@ -52,16 +52,6 @@ public class ProgramEnv {
   private DataWord tokenValue;
   private DataWord tokenId;
 
-  @Data
-  class BlockInfo {
-    DataWord lastHash;
-    DataWord coinbase;
-    DataWord timestamp;
-    DataWord number;
-    DataWord Difficulty;
-  }
-
-
   private byte[] ops;
   private int pc;
   private byte lastOp;
@@ -77,6 +67,16 @@ public class ProgramEnv {
 
   private byte[] returnDataBuffer;
   private BlockInfo blockInfo = new BlockInfo();
+
+  @Data
+  class BlockInfo {
+    DataWord lastHash;
+    DataWord coinbase;
+    DataWord timestamp;
+    DataWord number;
+    DataWord Difficulty;
+  }
+
 
   public ProgramEnv(Deposit deposit, Program program) {
     stopped = false;
@@ -117,6 +117,10 @@ public class ProgramEnv {
     return env;
   }
 
+  /**
+   * Program execute entrance
+   * @throws ContractValidateException
+   */
 
   public void execute() throws ContractValidateException {
     //check static call
