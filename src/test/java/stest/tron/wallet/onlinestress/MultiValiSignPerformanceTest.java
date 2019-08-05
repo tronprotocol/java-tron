@@ -144,6 +144,7 @@ public class MultiValiSignPerformanceTest {
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
     ecrecoverContractAddress = infoById.get().getContractAddress().toByteArray();
+    logger.info("ecrecoverContractAddress:" + infoById.get().getContractAddress());
     SmartContract smartContract = PublicMethed.getContract(ecrecoverContractAddress,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
@@ -203,6 +204,7 @@ public class MultiValiSignPerformanceTest {
     logger.info("NetUsage: " + transactionInfo.getReceipt().getNetUsage());
 
     multiValiSignContractAddress = infoById.get().getContractAddress().toByteArray();
+    logger.info("multiValiSignContractAddress:" + infoById.get().getContractAddress());
     SmartContract smartContract = PublicMethed.getContract(multiValiSignContractAddress,
         blockingStubFull);
     Assert.assertNotNull(smartContract.getAbi());
@@ -210,12 +212,19 @@ public class MultiValiSignPerformanceTest {
 
   @Test(enabled = true, description = "trigger ecrecover contract test")
   public void test03triggerEcrecoverContract() {
+    /*Assert.assertTrue(PublicMethed.sendcoin(contractDepAddress, 1000_000_000L, fromAddress,
+        fromKey, blockingStubFull));
+    try {
+      Thread.sleep(new Long(30000));
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }*/
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = ByteArray
         .fromHexString("7d889f42b4a56ebe78264631a3b4daf21019e1170cce71929fb396761cdf532e");
     logger.info("hash:" + Hex.toHexString(hash));
-    int cnt = 40;
+    int cnt = 15;
     for (int i = 0; i < cnt; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
@@ -245,7 +254,8 @@ public class MultiValiSignPerformanceTest {
     String txid = "";
     long start = System.currentTimeMillis();
     txid = PublicMethed
-        .triggerContract(ecrecoverContractAddress, "validateSign(bytes32,bytes[],address[])", input,
+        .triggerContract(PublicMethed.decode58Check("TDgdUs1gmn1JoeGMqQGkkxE1pcMNSo8kFj"),
+            "validateSign(bytes32,bytes[],address[])", input,
             false, 0, maxFeeLimit, contractDepAddress, contractDepKey, blockingStubFull);
     long timeCosts = System.currentTimeMillis() - start;
     logger.info(
@@ -260,13 +270,20 @@ public class MultiValiSignPerformanceTest {
 
   @Test(enabled = true, description = "trigger mulivalisign contract test")
   public void test04triggerMuliValiSignContract() {
+    /*Assert.assertTrue(PublicMethed.sendcoin(contractDepAddress, 1000_000_000L, fromAddress,
+        fromKey, blockingStubFull));
+    try {
+      Thread.sleep(new Long(30000));
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }*/
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
 
     byte[] hash = ByteArray
         .fromHexString("7d889f42b4a56ebe78264631a3b4daf21019e1170cce71929fb396761cdf532e");
     logger.info("hash:" + Hex.toHexString(hash));
-    int cnt = 40;
+    int cnt = 15;
     for (int i = 0; i < cnt; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
@@ -295,9 +312,10 @@ public class MultiValiSignPerformanceTest {
 
     String txid = "";
     long start = System.currentTimeMillis();
-    txid = PublicMethed.triggerContract(multiValiSignContractAddress,
-        "testArray(bytes32,bytes[],address[])", input, false,
-        0, maxFeeLimit, contractDepAddress, contractDepKey, blockingStubFull);
+    txid = PublicMethed
+        .triggerContract(PublicMethed.decode58Check("TVpTLZbBbP82aufo7p3qmb4ELiowH3mjQW"),
+            "testArray(bytes32,bytes[],address[])", input, false,
+            0, maxFeeLimit, contractDepAddress, contractDepKey, blockingStubFull);
     long timeCosts = System.currentTimeMillis() - start;
     logger.info(
         "MuliValiSign--cnt:" + cnt + ",timeCost:" + timeCosts + ",ms:" + (timeCosts * 1.0 / cnt));
