@@ -2,7 +2,7 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ import org.tron.core.Wallet;
 
 @Component
 @Slf4j(topic = "API")
-public class GenerateAddressServlet extends HttpServlet {
+public class GenerateAddressServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {

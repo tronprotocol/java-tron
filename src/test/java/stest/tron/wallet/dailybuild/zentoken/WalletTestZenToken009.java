@@ -162,7 +162,7 @@ public class WalletTestZenToken009 {
         null, null,
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull,ownerKeyString));
+        zenTokenOwnerKey, blockingStubFull,0,ownerKeyString));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterAssetBalance = PublicMethed.getAssetIssueValue(zenTokenOwnerAddress,
@@ -203,7 +203,7 @@ public class WalletTestZenToken009 {
         shieldAddressInfo.get(), notes.getNoteTxs(0),
         shieldOutList,
         null, 0,
-        zenTokenOwnerKey, blockingStubFull, ownerKeyString));
+        zenTokenOwnerKey, blockingStubFull,0, ownerKeyString));
 
 
     Assert.assertFalse(PublicMethed.sendShieldCoin(
