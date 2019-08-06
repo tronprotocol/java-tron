@@ -28,7 +28,7 @@ public class VMConfigLoader {
   public VMConfig loadNew() {
     cachedVmConfig = new VMConfig();
     cachedVmConfig.setMaxFeeLimit(MAX_FEE_LIMIT);
-    cachedVmConfig.setSwitchVm2(true);
+    cachedVmConfig.setSwitchVm2(false);
     cachedVmConfig.setVmTrace(Args.getInstance().isVmTrace());
     cachedVmConfig.setVmTraceCompressed(false);
     cachedVmConfig.setMaxTimeRatio(Args.getInstance().getMaxTimeRatio());

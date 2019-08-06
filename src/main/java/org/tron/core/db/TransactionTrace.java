@@ -107,7 +107,7 @@ public class TransactionTrace {
     //create storage
     Deposit deposit = DepositImpl.createRoot(dbManager);
     //load config
-    VMConfig config = VMConfigLoader.getInstance().setSource(dbManager.getDynamicPropertiesStore()).loadCached();
+    VMConfig config = VMConfigLoader.getInstance().setSource(dbManager.getDynamicPropertiesStore()).loadNew();
     config.setEventPluginLoaded(eventPluginLoaded);
     //load runner
     runner = TxRunnerRouter.getInstance().route(this, blockCap, deposit, config);
