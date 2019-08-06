@@ -36,15 +36,10 @@ public class ProposalDeleteActuator extends AbstractActuator {
     try {
       final ProposalDeleteContract proposalDeleteContract = this.contract
           .unpack(ProposalDeleteContract.class);
-      ProposalCapsule proposalCapsule = (Objects.isNull(deposit)) ? dbManager.getProposalStore().
-          get(ByteArray.fromLong(proposalDeleteContract.getProposalId())) :
-          deposit.getProposalCapsule(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
+      ProposalCapsule proposalCapsule = dbManager.getProposalStore().
+          get(ByteArray.fromLong(proposalDeleteContract.getProposalId()));
       proposalCapsule.setState(State.CANCELED);
-      if (Objects.isNull(deposit)) {
-        dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-      } else {
-        deposit.putProposalValue(proposalCapsule.createDbKey(), proposalCapsule);
-      }
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -64,7 +59,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (deposit == null || deposit.getDbManager() == null)) {
+    if (dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalDeleteContract.class)) {
@@ -86,18 +81,13 @@ public class ProposalDeleteActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!Objects.isNull(deposit)) {
-      if (Objects.isNull(deposit.getAccount(ownerAddress))) {
-        throw new ContractValidateException(
-            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
-      }
-    } else if (!dbManager.getAccountStore().has(ownerAddress)) {
+    if (!dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException(ACCOUNT_EXCEPTION_STR + readableOwnerAddress
           + NOT_EXIST_STR);
     }
 
-    long latestProposalNum = Objects.isNull(deposit) ? dbManager.getDynamicPropertiesStore()
-        .getLatestProposalNum() : deposit.getLatestProposalNum();
+    long latestProposalNum = dbManager.getDynamicPropertiesStore()
+        .getLatestProposalNum();
     if (contract.getProposalId() > latestProposalNum) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);
@@ -105,9 +95,8 @@ public class ProposalDeleteActuator extends AbstractActuator {
 
     ProposalCapsule proposalCapsule;
     try {
-      proposalCapsule = Objects.isNull(getDeposit()) ? dbManager.getProposalStore().
-          get(ByteArray.fromLong(contract.getProposalId())) :
-          deposit.getProposalCapsule(ByteArray.fromLong(contract.getProposalId()));
+      proposalCapsule =  dbManager.getProposalStore().
+          get(ByteArray.fromLong(contract.getProposalId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException(PROPOSAL_EXCEPTION_STR + contract.getProposalId()
           + NOT_EXIST_STR);

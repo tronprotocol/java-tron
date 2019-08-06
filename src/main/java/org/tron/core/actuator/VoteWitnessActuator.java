@@ -43,7 +43,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       VoteWitnessContract voteContract = contract.unpack(VoteWitnessContract.class);
-      countVoteAccount(voteContract, getDeposit());
+      countVoteAccount(voteContract);
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -58,7 +58,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
+    if (dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(VoteWitnessContract.class)) {
@@ -105,21 +105,11 @@ public class VoteWitnessActuator extends AbstractActuator {
           throw new ContractValidateException("vote count must be greater than 0");
         }
         String readableWitnessAddress = StringUtil.createReadableString(vote.getVoteAddress());
-        if (!Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getAccount(witnessCandidate))) {
-            throw new ContractValidateException(
-                ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        } else if (!accountStore.has(witnessCandidate)) {
+        if (!accountStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               ACCOUNT_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
-        if (!Objects.isNull(getDeposit())) {
-          if (Objects.isNull(getDeposit().getWitness(witnessCandidate))) {
-            throw new ContractValidateException(
-                WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
-          }
-        } else if (!witnessStore.has(witnessCandidate)) {
+        if (!witnessStore.has(witnessCandidate)) {
           throw new ContractValidateException(
               WITNESS_EXCEPTION_STR + readableWitnessAddress + NOT_EXIST_STR);
         }
@@ -127,8 +117,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       }
 
       AccountCapsule accountCapsule =
-          (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
-              : getDeposit().getAccount(ownerAddress);
+          accountStore.get(ownerAddress);
       if (accountCapsule == null) {
         throw new ContractValidateException(
             ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
@@ -150,25 +139,16 @@ public class VoteWitnessActuator extends AbstractActuator {
     return true;
   }
 
-  private void countVoteAccount(VoteWitnessContract voteContract, Deposit deposit) {
+  private void countVoteAccount(VoteWitnessContract voteContract) {
     byte[] ownerAddress = voteContract.getOwnerAddress().toByteArray();
 
     VotesCapsule votesCapsule;
     VotesStore votesStore = dbManager.getVotesStore();
     AccountStore accountStore = dbManager.getAccountStore();
 
-    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? accountStore.get(ownerAddress)
-        : getDeposit().getAccount(ownerAddress);
+    AccountCapsule accountCapsule = accountStore.get(ownerAddress);
 
-    if (!Objects.isNull(getDeposit())) {
-      VotesCapsule vCapsule = getDeposit().getVotesCapsule(ownerAddress);
-      if (Objects.isNull(vCapsule)) {
-        votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
-            accountCapsule.getVotesList());
-      } else {
-        votesCapsule = vCapsule;
-      }
-    } else if (!votesStore.has(ownerAddress)) {
+    if (!votesStore.has(ownerAddress)) {
       votesCapsule = new VotesCapsule(voteContract.getOwnerAddress(),
           accountCapsule.getVotesList());
     } else {
@@ -186,14 +166,8 @@ public class VoteWitnessActuator extends AbstractActuator {
       accountCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
     });
 
-    if (Objects.isNull(deposit)) {
-      accountStore.put(accountCapsule.createDbKey(), accountCapsule);
-      votesStore.put(ownerAddress, votesCapsule);
-    } else {
-      // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-      deposit.putVoteValue(ownerAddress, votesCapsule);
-    }
+    accountStore.put(accountCapsule.createDbKey(), accountCapsule);
+    votesStore.put(ownerAddress, votesCapsule);
 
   }
 

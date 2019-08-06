@@ -38,37 +38,27 @@ public class ProposalCreateActuator extends AbstractActuator {
     try {
       final ProposalCreateContract proposalCreateContract = this.contract
           .unpack(ProposalCreateContract.class);
-      long id = (Objects.isNull(getDeposit())) ?
-          dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1 :
-          getDeposit().getLatestProposalNum() + 1;
+      long id = dbManager.getDynamicPropertiesStore().getLatestProposalNum() + 1;
       ProposalCapsule proposalCapsule =
           new ProposalCapsule(proposalCreateContract.getOwnerAddress(), id);
 
       proposalCapsule.setParameters(proposalCreateContract.getParametersMap());
 
       long now = dbManager.getHeadBlockTimeStamp();
-      long maintenanceTimeInterval = (Objects.isNull(getDeposit())) ?
-          dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval() :
-          getDeposit().getMaintenanceTimeInterval();
+      long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore().getMaintenanceTimeInterval();
       proposalCapsule.setCreateTime(now);
 
       long currentMaintenanceTime =
-          (Objects.isNull(getDeposit())) ? dbManager.getDynamicPropertiesStore()
-              .getNextMaintenanceTime() :
-              getDeposit().getNextMaintenanceTime();
+          dbManager.getDynamicPropertiesStore()
+              .getNextMaintenanceTime();
       long now3 = now + Args.getInstance().getProposalExpireTime();
       long round = (now3 - currentMaintenanceTime) / maintenanceTimeInterval;
       long expirationTime =
           currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
       proposalCapsule.setExpirationTime(expirationTime);
 
-      if (Objects.isNull(deposit)) {
-        dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
-        dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
-      } else {
-        deposit.putProposalValue(proposalCapsule.createDbKey(), proposalCapsule);
-        deposit.putDynamicPropertiesWithLatestProposalNum(id);
-      }
+      dbManager.getProposalStore().put(proposalCapsule.createDbKey(), proposalCapsule);
+      dbManager.getDynamicPropertiesStore().saveLatestProposalNum(id);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -84,7 +74,7 @@ public class ProposalCreateActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (deposit == null || deposit.getDbManager() == null)) {
+    if (dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(ProposalCreateContract.class)) {
@@ -106,22 +96,12 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("Invalid address");
     }
 
-    if (!Objects.isNull(deposit)) {
-      if (Objects.isNull(deposit.getAccount(ownerAddress))) {
-        throw new ContractValidateException(
-            ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
-      }
-    } else if (!dbManager.getAccountStore().has(ownerAddress)) {
+    if (!dbManager.getAccountStore().has(ownerAddress)) {
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }
 
-    if (!Objects.isNull(getDeposit())) {
-      if (Objects.isNull(getDeposit().getWitness(ownerAddress))) {
-        throw new ContractValidateException(
-            WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
-      }
-    } else if (!dbManager.getWitnessStore().has(ownerAddress)) {
+    if (!dbManager.getWitnessStore().has(ownerAddress)) {
       throw new ContractValidateException(
           WITNESS_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
     }

@@ -472,12 +472,12 @@ public class Program {
     AccountCapsule existingAccount = getContractState().getAccount(newAddress);
     boolean contractAlreadyExists = existingAccount != null;
 
-    if (VMConfig.allowTvmConstantinople()) {
+    if (allowTvmConstantinople()) {
       contractAlreadyExists =
           contractAlreadyExists && isContractExist(existingAccount, getContractState());
     }
     Deposit deposit = getContractState().newDepositChild();
-    if (VMConfig.allowTvmConstantinople()) {
+    if (allowTvmConstantinople()) {
       if (existingAccount == null) {
         deposit.createAccount(newAddress, "CreatedByContract",
             AccountType.Contract);
@@ -655,7 +655,7 @@ public class Program {
     try {
       endowment = msg.getEndowment().value().longValueExact();
     } catch (ArithmeticException e) {
-      if (VMConfig.allowTvmConstantinople()) {
+      if (allowTvmConstantinople()) {
         refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
         throw new TransferException("endowment out of long range");
       } else {
@@ -707,7 +707,7 @@ public class Program {
           TransferActuator
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
-          if (VMConfig.allowTvmConstantinople()) {
+          if (allowTvmConstantinople()) {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trx failed: %s", e.getMessage());
           }
@@ -720,7 +720,7 @@ public class Program {
           TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
-          if (VMConfig.allowTvmConstantinople()) {
+          if (allowTvmConstantinople()) {
             refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
             throw new TransferException("transfer trc10 failed: %s", e.getMessage());
           }
@@ -1504,7 +1504,7 @@ public class Program {
       try {
         tokenId = msg.getTokenId().sValue().longValueExact();
       } catch (ArithmeticException e) {
-        if (VMConfig.allowTvmConstantinople()) {
+        if (allowTvmConstantinople()) {
           refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
@@ -1515,7 +1515,7 @@ public class Program {
       if ((tokenId <= VMConstant.MIN_TOKEN_ID && tokenId != 0)
           || (tokenId == 0 && msg.isTokenTransferMsg())) {
         // tokenId == 0 is a default value for token id DataWord.
-        if (VMConfig.allowTvmConstantinople()) {
+        if (allowTvmConstantinople()) {
           refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
@@ -1540,7 +1540,7 @@ public class Program {
       try {
         tokenId = tokenIdDataWord.sValue().longValueExact();
       } catch (ArithmeticException e) {
-        if (VMConfig.allowTvmConstantinople()) {
+        if (allowTvmConstantinople()) {
           throw new TransferException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, INVALID_TOKEN_ID_MSG);
         }
         throw e;

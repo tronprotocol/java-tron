@@ -41,9 +41,8 @@ public class WithdrawBalanceActuator extends AbstractActuator {
       throw new ContractExeException(e.getMessage());
     }
 
-    AccountCapsule accountCapsule = (Objects.isNull(getDeposit())) ? dbManager.getAccountStore().
-        get(withdrawBalanceContract.getOwnerAddress().toByteArray())
-        : getDeposit().getAccount(withdrawBalanceContract.getOwnerAddress().toByteArray());
+    AccountCapsule accountCapsule = dbManager.getAccountStore().
+        get(withdrawBalanceContract.getOwnerAddress().toByteArray());
     long oldBalance = accountCapsule.getBalance();
     long allowance = accountCapsule.getAllowance();
 
@@ -53,12 +52,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
         .setAllowance(0L)
         .setLatestWithdrawTime(now)
         .build());
-    if (Objects.isNull(getDeposit())) {
-      dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
-    } else {
-      // cache
-      deposit.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
-    }
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
     ret.setWithdrawAmount(allowance);
     ret.setStatus(fee, code.SUCESS);
@@ -71,7 +65,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (dbManager == null && (getDeposit() == null || getDeposit().getDbManager() == null)) {
+    if (dbManager == null) {
       throw new ContractValidateException("No dbManager!");
     }
     if (!this.contract.is(WithdrawBalanceContract.class)) {
@@ -92,8 +86,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
 
     AccountCapsule accountCapsule =
-        Objects.isNull(getDeposit()) ? dbManager.getAccountStore().get(ownerAddress)
-            : getDeposit().getAccount(ownerAddress);
+        dbManager.getAccountStore().get(ownerAddress);
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
@@ -116,9 +109,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     long latestWithdrawTime = accountCapsule.getLatestWithdrawTime();
     long now = dbManager.getHeadBlockTimeStamp();
-    long witnessAllowanceFrozenTime = Objects.isNull(getDeposit()) ?
-        dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L :
-        getDeposit().getWitnessAllowanceFrozenTime() * 86_400_000L;
+    long witnessAllowanceFrozenTime = dbManager.getDynamicPropertiesStore().getWitnessAllowanceFrozenTime() * 86_400_000L;
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "
