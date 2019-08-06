@@ -1,12 +1,10 @@
 package org.tron.common.runtime.vm;
 
 
-import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
@@ -18,6 +16,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Protocol.Transaction;
+
+import java.util.Arrays;
 
 @Slf4j
 public class CreateContractSuicideTest extends VMTestBase {
@@ -110,9 +110,10 @@ contract D {
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
-    VMConfig.initAllowTvmTransferTrc10(1);
+//    VMConfig.initAllowTvmTransferTrc10(1);
     byte[] address = Hex.decode(OWNER_ADDRESS);
 
+    this.manager.getDynamicPropertiesStore().saveAllowMultiSign(1);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_2_2.getValue(), stats);
     this.manager.getDynamicPropertiesStore()
