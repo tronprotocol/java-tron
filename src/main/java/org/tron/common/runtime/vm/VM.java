@@ -16,6 +16,7 @@ import static org.tron.common.runtime.vm.OpCode.SHL;
 import static org.tron.common.runtime.vm.OpCode.SHR;
 import static org.tron.common.runtime.vm.OpCode.TOKENBALANCE;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -99,7 +100,7 @@ public class VM {
         }
       }
 
-      if (!VMConfig.allowTvmConstantinople()) {
+      if (!allowTvmConstantinople()) {
         if (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH) {
           throw Program.Exception.invalidOpCode(program.getCurrentOp());
         }

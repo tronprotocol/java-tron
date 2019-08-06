@@ -111,6 +111,7 @@ import org.tron.core.services.WitnessService;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.ContractStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;

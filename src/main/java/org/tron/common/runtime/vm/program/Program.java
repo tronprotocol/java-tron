@@ -31,6 +31,7 @@ import static org.tron.common.runtime.utils.MUtil.transferAllToken;
 import static org.tron.common.utils.BIUtil.isPositive;
 import static org.tron.common.utils.BIUtil.toBI;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
 
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
@@ -422,7 +423,7 @@ public class Program {
           transferAllToken(getContractState(), owner, obtainer);
         }
       } catch (ContractValidateException e) {
-        if (VMConfig.allowTvmConstantinople()) {
+        if (allowTvmConstantinople()) {
           throw new TransferException(
               "transfer all token or transfer all trx failed in suicide: %s", e.getMessage());
         }

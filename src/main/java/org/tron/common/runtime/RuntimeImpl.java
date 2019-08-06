@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.utils.MUtil.transfer;
 import static org.tron.common.runtime.utils.MUtil.transferToken;
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
 
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -315,7 +316,7 @@ public class RuntimeImpl implements Runtime {
   public long getTotalEnergyLimit(AccountCapsule creator, AccountCapsule caller,
       TriggerSmartContract contract, long feeLimit, long callValue)
       throws ContractValidateException {
-    if (Objects.isNull(creator) && VMConfig.allowTvmConstantinople()) {
+    if (Objects.isNull(creator) && allowTvmConstantinople()) {
       return getAccountEnergyLimitWithFixRatio(caller, feeLimit, callValue);
     }
     //  according to version
@@ -470,7 +471,7 @@ public class RuntimeImpl implements Runtime {
 
     deposit.createContract(contractAddress, new ContractCapsule(newSmartContract));
     byte[] code = newSmartContract.getBytecode().toByteArray();
-    if (!VMConfig.allowTvmConstantinople()) {
+    if (!allowTvmConstantinople()) {
       deposit.saveCode(contractAddress, ProgramPrecompile.getCode(code));
     }
     // transfer from callerAddress to contractAddress according to callValue
@@ -639,7 +640,7 @@ public class RuntimeImpl implements Runtime {
             }
           } else {
             result.spendEnergy(saveCodeEnergy);
-            if (VMConfig.allowTvmConstantinople()) {
+            if (allowTvmConstantinople()) {
               deposit.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
             }
           }

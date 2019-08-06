@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
+
 import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
@@ -107,7 +109,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if (Objects.isNull(origin) && VMConfig.allowTvmConstantinople()) {
+    if (Objects.isNull(origin) && allowTvmConstantinople()) {
       payEnergyBill(manager, caller, receipt.getEnergyUsageTotal(), energyProcessor, now);
       return;
     }

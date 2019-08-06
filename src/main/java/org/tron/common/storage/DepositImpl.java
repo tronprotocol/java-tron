@@ -1,6 +1,7 @@
 package org.tron.common.storage;
 
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -26,7 +27,6 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
-import org.tron.core.db.ContractStore;
 import org.tron.core.db.DelegatedResourceStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.ProposalStore;
@@ -36,6 +36,7 @@ import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.ContractStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -292,7 +293,7 @@ public class DepositImpl implements Deposit {
     Value value = Value.create(code, Type.VALUE_TYPE_CREATE);
     codeCache.put(key, value);
 
-    if (VMConfig.allowTvmConstantinople()) {
+    if (allowTvmConstantinople()) {
       ContractCapsule contract = getContract(address);
       byte[] codeHash = Hash.sha3(code);
       contract.setCodeHash(codeHash);

@@ -3,6 +3,7 @@ package org.tron.core.db;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
 
 import java.util.Objects;
 import lombok.Getter;
@@ -119,7 +120,7 @@ public class TransactionTrace {
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {
-    if (VMConfig.allowTvmConstantinople()) {
+    if (allowTvmConstantinople()) {
       return;
     }
 

@@ -17,6 +17,8 @@
  */
 package org.tron.common.runtime.vm.program;
 
+import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
+
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +82,7 @@ public class ProgramPrecompile {
         i += op.asInt() - OpCode.PUSH1.asInt() + 1;
       }
     }
-    if (VMConfig.allowTvmConstantinople()) {
+    if (allowTvmConstantinople()) {
       return new byte[0];
     } else {
       return new DataWord(0).getData();
