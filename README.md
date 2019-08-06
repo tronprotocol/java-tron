@@ -72,7 +72,6 @@ TRON enables large-scale development and engagement. With over 2000 transactions
 
 # Developer Community
 
-* [Discord](https://discord.gg/GsRgsTD) Please join our Developer Discord
 * [Gitter](https://gitter.im/tronprotocol/allcoredev) the core dev gitter
 
 # Projects
