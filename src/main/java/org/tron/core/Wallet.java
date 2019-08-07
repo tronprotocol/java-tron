@@ -46,6 +46,7 @@ import org.tron.common.runtime2.TxRunner;
 import org.tron.common.runtime2.TxRunnerRouter;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.runtime2.config.VMConfigLoader;
+import org.tron.common.runtime2.tvm.ExceptionFactory;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.*;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -2216,7 +2217,10 @@ public class Wallet {
     if (runtime.getResult().getException() != null) {
       RuntimeException e = runtime.getResult().getException();
       logger.warn("Constant call has error {}", e.getMessage());
-      throw e;
+      //for StaticCallTransferException don't throw
+      if (!(e instanceof ExceptionFactory.StaticCallTransferException)) {
+        throw e;
+      }
     }
 
     ProgramResult result = runtime.getResult();
