@@ -1,25 +1,15 @@
 package org.tron.common.runtime2.tvm;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.*;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.Stack;
 import org.tron.common.runtime2.config.VMConfig;
-import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Protocol;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.commons.lang3.ArrayUtils.getLength;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.runtime.vm.OpCode.*;
@@ -41,21 +31,7 @@ public class Interpreter {
   }
 
   public void play(Program program, ProgramEnv env) {
-    try{
-      //step the code
       stepCode(program, env);
-    }
-    catch (StackOverflowError soe){
-      // if JVM StackOverflow then convert to runtimeExcepton
-      setException(program, ExceptionFactory.jvmStackOverFlow());
-    }
-    catch (RuntimeException e){
-      setException(program,e);
-    }
-    catch (Throwable throwable){
-      setException(program,ExceptionFactory.unknownThrowable(throwable.getMessage()));
-    }
-
   }
 
   private void setException(Program program, RuntimeException soe) {

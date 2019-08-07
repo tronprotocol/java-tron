@@ -26,7 +26,7 @@ public class PreviousRunner implements TxRunner {
   public static PreviousRunner createPreviouRunnerForWallet(TransactionCapsule txc, BlockCapsule block, Deposit deposit) {
     PreviousRunner ret = new PreviousRunner(txc, block, deposit);
     ret.previousImpl.setStaticCall(true);
-    return new PreviousRunner(txc, block, deposit);
+    return ret;
   }
 
 

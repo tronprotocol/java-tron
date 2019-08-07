@@ -123,14 +123,23 @@ public class ProgramEnv {
    */
 
   public void execute() throws ContractValidateException {
-    //check static call
-    preStaticCheck(program);
-    //transfer assets
-    transferAssets(program, this);
-    //processCode
-    Interpreter.getInstance().play(program, this);
-    //save code for create
-    postProcess(program, this);
+    try {
+      //check static call
+      preStaticCheck(program);
+      //transfer assets
+      transferAssets(program, this);
+      //processCode
+      Interpreter.getInstance().play(program, this);
+      //save code for create
+      postProcess(program, this);
+    } catch (StackOverflowError soe) {
+      // if JVM StackOverflow then convert to runtimeExcepton
+      setException(program, ExceptionFactory.jvmStackOverFlow());
+    } catch (RuntimeException e) {
+      setException(program, e);
+    } catch (Throwable throwable) {
+      setException(program, ExceptionFactory.unknownThrowable(throwable.getMessage()));
+    }
   }
 
 
