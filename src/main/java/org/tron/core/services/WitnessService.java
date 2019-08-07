@@ -2,11 +2,14 @@ package org.tron.core.services;
 
 import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
@@ -36,6 +39,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.peer.Item;
 import org.tron.core.witness.BlockProductionCondition;
 import org.tron.core.witness.WitnessController;
 
@@ -77,6 +81,7 @@ public class WitnessService implements Service {
   private AtomicLong dupBlockTime = new AtomicLong(0);
   private long blockCycle =
       ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+  private Cache<ByteString, Long> blocks = CacheBuilder.newBuilder().maximumSize(10).build();
 
   /**
    * Construction method.
@@ -338,6 +343,11 @@ public class WitnessService implements Service {
 
   public void checkDupWitness(BlockCapsule block) {
     if (block.generatedByMyself) {
+      blocks.put(block.getBlockId().getByteString(), System.currentTimeMillis());
+      return;
+    }
+
+    if (blocks.getIfPresent(block.getBlockId().getByteString()) != null) {
       return;
     }
 
