@@ -137,6 +137,9 @@ public class ProgramEnv {
       setException(program, ExceptionFactory.jvmStackOverFlow());
     } catch (RuntimeException e) {
       setException(program, e);
+    } catch (ContractValidateException e) {
+      // throw ContractValidateException to upper
+      throw e;
     } catch (Throwable throwable) {
       setException(program, ExceptionFactory.unknownThrowable(throwable.getMessage()));
     }
@@ -854,6 +857,11 @@ public class ProgramEnv {
       stackPushZero();
       return;
     }
+    //simply judgement of if balance sufficient
+    if (getStorage().getBalance(senderAddress) < endowment) {
+      stackPushZero();
+      return;
+    }
 
     // [1] fenth memory code
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
@@ -871,6 +879,7 @@ public class ProgramEnv {
       logger.debug("creating a new contract inside contract run: [{}]",
               Hex.toHexString(senderAddress));
     }
+
     // [3] create Program
     // actual energy subtract
     DataWord energyLimit = program.getEnergyLimitLeft();
@@ -904,11 +913,7 @@ public class ProgramEnv {
     create.setInternalTransaction(internalTx);
 
     //[4]execute
-    //simply judgement of if balance sufficient
-    if (getStorage().getBalance(senderAddress) < endowment) {
-      stackPushZero();
-      return;
-    }
+
 
     //setup program environment
     ProgramEnv cenv = ProgramEnv.createEnvironment(this.getStorage().newDepositChild(), create, this);
@@ -1073,17 +1078,30 @@ public class ProgramEnv {
       endowment = msg.getEndowment().value().longValueExact();
     } catch (ArithmeticException e) {
       refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
-      throw new org.tron.common.runtime.vm.program.Program.TransferException("endowment out of long range");
-    }
-    if (logger.isDebugEnabled()) {
-      logger.debug(msg.getType().name()
-                      + " for existing contract: address: [{}], outDataOffs: [{}], outDataSize: [{}]  ",
-              Hex.toHexString(contextAddress), msg.getOutDataOffs().longValue(),
-              msg.getOutDataSize().longValue());
+      throw ExceptionFactory.transferException("endowment out of long range");
     }
     Deposit childStroage = getStorage().newDepositChild();
+
     // transfer trx validation
     boolean isTokenTransfer = msg.isTokenTransferMsg();
+    // if not suffcient then stack push zero (need optimized)
+    if (!isTokenTransfer) {
+      long senderBalance = childStroage.getBalance(senderAddress);
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
+    } else {
+      // transfer trc10 token validation
+      tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
+      long senderBalance = childStroage.getTokenBalance(senderAddress, tokenId);
+      if (senderBalance < endowment) {
+        stackPushZero();
+        refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
+        return;
+      }
+    }
 
     // FETCH THE CODE
     AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);

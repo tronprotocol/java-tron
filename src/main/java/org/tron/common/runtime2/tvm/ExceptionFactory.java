@@ -33,7 +33,7 @@ public class ExceptionFactory {
   }
 
   public static Program.TransferException transferException(String message) {
-    return new Program.TransferException("validateForSmartContract failure:%s", message);
+    return new Program.TransferException("transfer trx failed: %s", message);
   }
 
   public static Program.OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
