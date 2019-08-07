@@ -28,7 +28,6 @@ public class VMConfigLoader {
   public VMConfig loadNew() {
     cachedVmConfig = new VMConfig();
     cachedVmConfig.setMaxFeeLimit(MAX_FEE_LIMIT);
-    cachedVmConfig.setSwitchVm2(false);
     cachedVmConfig.setVmTrace(Args.getInstance().isVmTrace());
     cachedVmConfig.setVmTraceCompressed(false);
     cachedVmConfig.setMaxTimeRatio(Args.getInstance().getMaxTimeRatio());
@@ -41,6 +40,14 @@ public class VMConfigLoader {
       org.tron.common.runtime.config.VMConfig.initAllowTvmTransferTrc10(source.getAllowTvmTransferTrc10());
       org.tron.common.runtime.config.VMConfig.initAllowTvmConstantinople(source.getAllowTvmConstantinople());
       org.tron.common.runtime.config.VMConfig.initAllowTvmSolidity059(source.getAllowTvmSolidity059());
+    }
+    if (org.tron.common.runtime.config.VMConfig.allowMultiSign()
+            && org.tron.common.runtime.config.VMConfig.allowTvmTransferTrc10()
+            && org.tron.common.runtime.config.VMConfig.allowTvmConstantinople()
+    ) {
+      cachedVmConfig.setSwitchVm2(true);
+    } else {
+      cachedVmConfig.setSwitchVm2(false);
     }
     return cachedVmConfig;
   }
