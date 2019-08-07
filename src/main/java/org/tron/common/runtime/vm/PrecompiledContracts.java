@@ -1350,7 +1350,7 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
       try {
         int cnt = getCntOfSign(data);
-        if (cnt == 0 || cnt > 27 * 2) {
+        if (cnt == 0 || cnt > 27) {
           return Pair.of(false, new DataWord(0).getData());
         }
         return doExecute(data);
