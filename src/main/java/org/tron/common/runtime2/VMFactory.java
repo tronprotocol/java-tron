@@ -9,14 +9,17 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
 
 public class VMFactory {
-  public static IVM createTVM(VMConfig config, TransactionTrace trace, BlockCapsule block, Deposit deposit) {
+
+  public static IVM createTVM(
+      VMConfig config, TransactionTrace trace, BlockCapsule block, Deposit deposit) {
     TVM tvm = new TVM(trace, null, block, deposit);
     tvm.setVmConfig(config);
     tvm.setStatic(false);
     return tvm;
   }
 
-  public static IVM createTVMForWallet(VMConfig config, TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
+  public static IVM createTVMForWallet(
+      VMConfig config, TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
     TVM tvm = new TVM(null, trx, block, deposit);
     tvm.setVmConfig(config);
     tvm.setExecutorType(InternalTransaction.ExecutorType.ET_PRE_TYPE);

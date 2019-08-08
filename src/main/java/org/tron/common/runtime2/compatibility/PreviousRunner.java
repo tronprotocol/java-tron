@@ -17,13 +17,15 @@ public class PreviousRunner implements TxRunner {
   TransactionTrace transactionTrace;
   RuntimeImpl previousImpl;
 
-  public static PreviousRunner createPreviouRunner(TransactionTrace trace, BlockCapsule block, Deposit deposit, VMConfig config) {
+  public static PreviousRunner createPreviouRunner(
+      TransactionTrace trace, BlockCapsule block, Deposit deposit, VMConfig config) {
     PreviousRunner ret = new PreviousRunner(trace, block, deposit);
     ret.previousImpl.setEnableEventLinstener(config.isEventPluginLoaded());
     return ret;
   }
 
-  public static PreviousRunner createPreviouRunnerForWallet(TransactionCapsule txc, BlockCapsule block, Deposit deposit) {
+  public static PreviousRunner createPreviouRunnerForWallet(
+      TransactionCapsule txc, BlockCapsule block, Deposit deposit) {
     PreviousRunner ret = new PreviousRunner(txc, block, deposit);
     ret.previousImpl.setStaticCall(true);
     return ret;
@@ -36,7 +38,8 @@ public class PreviousRunner implements TxRunner {
   }
 
   private PreviousRunner(TransactionCapsule tx, BlockCapsule block, Deposit deposit) {
-    previousImpl = new RuntimeImpl(tx.getInstance(), block, deposit, new ProgramInvokeFactoryImpl());
+    previousImpl =
+        new RuntimeImpl(tx.getInstance(), block, deposit, new ProgramInvokeFactoryImpl());
   }
 
   @Override

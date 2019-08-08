@@ -1,20 +1,26 @@
 package org.tron.common.runtime2.tvm;
 
-import com.sun.javafx.font.directwrite.DWFactory;
-import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.vm.*;
-import org.tron.common.runtime.vm.program.Stack;
-import org.tron.common.runtime2.config.VMConfig;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.tron.common.crypto.Hash.sha3;
+import static org.tron.common.runtime.vm.OpCode.CALL;
+import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
+import static org.tron.common.runtime.vm.OpCode.PUSH1;
+import static org.tron.common.runtime.vm.OpCode.REVERT;
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.runtime.vm.OpCode.*;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
+import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.runtime.vm.MessageCall;
+import org.tron.common.runtime.vm.OpCode;
+import org.tron.common.runtime.vm.PrecompiledContracts;
+import org.tron.common.runtime.vm.program.Stack;
+import org.tron.common.runtime2.config.VMConfig;
 
 @Slf4j(topic = "VM2")
 public class Interpreter {
@@ -33,7 +39,7 @@ public class Interpreter {
 
 
   public void play(Program program, ProgramEnv env) {
-    if (isNotEmpty(program.getOps())){
+    if (isNotEmpty(program.getOps())) {
       while (!env.isStopped()) {
         this.step(program, env);
       }
@@ -45,7 +51,8 @@ public class Interpreter {
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {
-        throw org.tron.common.runtime.vm.program.Program.Exception.invalidOpCode(env.getCurrentOp());
+        throw org.tron.common.runtime.vm.program.Program.Exception
+            .invalidOpCode(env.getCurrentOp());
       }
       env.setLastOp(op.val());
       env.verifyStackSize(op.require());
@@ -560,13 +567,13 @@ public class Interpreter {
         env.step();
         break;
       case CALLTOKENID:
-        DataWord _tokenId = env.getTokenId();
+        DataWord callTokenId = env.getTokenId();
 
         if (logger.isDebugEnabled()) {
-          hint = "tokenId: " + _tokenId;
+          hint = "tokenId: " + callTokenId;
         }
 
-        env.stackPush(_tokenId);
+        env.stackPush(callTokenId);
         env.step();
         break;
       case CALLDATALOAD: {
@@ -626,7 +633,8 @@ public class Interpreter {
         byte[] msgData = env.getReturnDataBufferData(dataOffsetData, lengthData);
 
         if (msgData == null) {
-          throw new org.tron.common.runtime.vm.program.Program.ReturnDataCopyIllegalBoundsException(dataOffsetData, lengthData,
+          throw new org.tron.common.runtime.vm.program.Program
+              .ReturnDataCopyIllegalBoundsException(dataOffsetData, lengthData,
                   env.getReturnDataBufferSize().longValueSafe());
         }
 
@@ -809,8 +817,8 @@ public class Interpreter {
       case DUP16: {
 
         int n = op.val() - OpCode.DUP1.val() + 1;
-        DataWord word_1 = stack.get(stack.size() - n);
-        env.stackPush(word_1.clone());
+        DataWord word1 = stack.get(stack.size() - n);
+        env.stackPush(word1.clone());
         env.step();
 
         break;
@@ -1424,7 +1432,8 @@ public class Interpreter {
         DataWord exp = stack.get(stack.size() - 2);
         int bytesOccupied = exp.bytesOccupied();
         energyCost =
-                (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
+            (long) energyCosts.getEXP_ENERGY()
+                + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
         break;
       default:
         break;

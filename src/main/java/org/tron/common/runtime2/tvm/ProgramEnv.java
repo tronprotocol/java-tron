@@ -1,13 +1,33 @@
 package org.tron.common.runtime2.tvm;
 
+import static java.lang.String.format;
+import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
+import static org.apache.commons.lang3.ArrayUtils.getLength;
+import static org.apache.commons.lang3.ArrayUtils.isEmpty;
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.tron.common.utils.BIUtil.isPositive;
+import static org.tron.common.utils.BIUtil.toBI;
+import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
-import org.tron.common.runtime.vm.*;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.EnergyCost;
+import org.tron.common.runtime.vm.MessageCall;
+import org.tron.common.runtime.vm.OpCode;
+import org.tron.common.runtime.vm.PrecompiledContracts;
+import org.tron.common.runtime.vm.VMConstant;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Memory;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -27,18 +47,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
-
-import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-
-import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.*;
-import static org.tron.common.utils.BIUtil.isPositive;
-import static org.tron.common.utils.BIUtil.toBI;
-import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
 @Slf4j(topic = "VM2")
 @Data
@@ -74,7 +82,7 @@ public class ProgramEnv {
     DataWord coinbase;
     DataWord timestamp;
     DataWord number;
-    DataWord Difficulty;
+    DataWord difficulty;
   }
 
 
@@ -97,7 +105,7 @@ public class ProgramEnv {
     this.blockInfo.lastHash = new DataWord(program.getBlockInfo().getLastHash());
     this.blockInfo.timestamp = new DataWord(program.getBlockInfo().getTimestamp());
     this.blockInfo.number = new DataWord(program.getBlockInfo().getNumber());
-    this.blockInfo.Difficulty = new DataWord(program.getBlockInfo().getDifficulty());
+    this.blockInfo.difficulty = new DataWord(program.getBlockInfo().getDifficulty());
 
   }
 
@@ -118,11 +126,11 @@ public class ProgramEnv {
   }
 
   /**
-   * Program execute entrance
+   * execute the bytecode
+   * @return
    * @throws ContractValidateException
    */
-
-  public void execute() throws ContractValidateException {
+  public ProgramEnv execute() throws ContractValidateException {
     try {
       //check static call
       preStaticCheck(program);
@@ -143,6 +151,7 @@ public class ProgramEnv {
     } catch (Throwable throwable) {
       setException(program, ExceptionFactory.unknownThrowable(throwable.getMessage()));
     }
+    return this;
   }
 
 
@@ -172,8 +181,9 @@ public class ProgramEnv {
     // tokenid can only be 0 when tokenvalue = 0,
     // or (MIN_TOKEN_ID, Long.Max]
     if (tokenValue > 0 && tokenId == 0) {
-      throw new ContractValidateException("invalid arguments with tokenValue = " + tokenValue +
-              ", tokenId = " + tokenId);
+      throw new ContractValidateException("invalid arguments with tokenValue = "
+          + tokenValue
+          + ", tokenId = " + tokenId);
     }
 
     //transefer Trx and trc10
@@ -182,8 +192,9 @@ public class ProgramEnv {
       ProgramEnv.transfer(env.getStorage(), program.getCallerAddress(), contractAddress, callValue);
     }
     if (program.getTokenValue() > 0) {
-      ProgramEnv.transferToken(env.getStorage(), program.getCallerAddress(), contractAddress, String.valueOf(tokenId),
-              tokenValue);
+      ProgramEnv
+          .transferToken(env.getStorage(), program.getCallerAddress(),
+              contractAddress, String.valueOf(tokenId), tokenValue);
     }
   }
 
@@ -198,7 +209,9 @@ public class ProgramEnv {
         ContractCapsule contractCapsule = null;
         //create Account for create2
         if (existingAccount != null) {
-          contractCapsule = env.getStorage().getContract(existingAccount.getAddress().toByteArray());
+          contractCapsule = env
+              .getStorage()
+              .getContract(existingAccount.getAddress().toByteArray());
         } else {
           env.getStorage().createAccount(newAddress, "CreatedByContract",
                   Protocol.AccountType.Contract);
@@ -236,7 +249,8 @@ public class ProgramEnv {
                           .encode58Check(contractAddress));
         }
         //if not created by smartcontract then
-        Contract.CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
+        Contract.CreateSmartContract contract =
+            ContractCapsule.getSmartContractFromTransaction(trx);
         Protocol.SmartContract newSmartContract = contract.getNewContract();
         newSmartContract = newSmartContract.toBuilder()
                 .setContractAddress(ByteString.copyFrom(contractAddress)).build();
@@ -266,7 +280,8 @@ public class ProgramEnv {
 
   private void postProcess(Program program, ProgramEnv env) {
     ProgramResult result = program.getProgramResult();
-    if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE && !result.isRevert()) {
+    if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE
+        && !result.isRevert()) {
       byte[] code = program.getProgramResult().getHReturn();
       long saveCodeEnergy = (long) getLength(code) * EnergyCost.getInstance().getCREATE_DATA();
       long afterSpend = program.getEnergyLimitLeft().longValue() - saveCodeEnergy;
@@ -334,8 +349,23 @@ public class ProgramEnv {
     memory.write(addrB.intValue(), value.getData(), value.getData().length, false);
   }
 
+  /**
+   * . Allocates a piece of memory and stores value at given offset address
+   *
+   * @param addr is the offset address
+   * @param allocSize size of memory needed to write
+   * @param value the data to write to memory
+   */
+  public void memorySave(int addr, int allocSize, byte[] value) {
+    memory.extendAndWrite(addr, allocSize, value);
+  }
+
   public void memorySave(int addr, byte[] value) {
     memory.write(addr, value, value.length, false);
+  }
+
+  public void memorySaveLimited(int addr, byte[] data, int dataSize) {
+    memory.write(addr, data, dataSize, true);
   }
 
   public DataWord memoryLoad(DataWord addr) {
@@ -364,20 +394,6 @@ public class ProgramEnv {
   }
 
 
-  /**
-   * . Allocates a piece of memory and stores value at given offset address
-   *
-   * @param addr      is the offset address
-   * @param allocSize size of memory needed to write
-   * @param value     the data to write to memory
-   */
-  public void memorySave(int addr, int allocSize, byte[] value) {
-    memory.extendAndWrite(addr, allocSize, value);
-  }
-
-  public void memorySaveLimited(int addr, byte[] data, int dataSize) {
-    memory.write(addr, data, dataSize, true);
-  }
 
 
   public byte[] sweep(int n) {
@@ -453,7 +469,8 @@ public class ProgramEnv {
 
   public void verifyStackOverflow(int argsReqs, int returnReqs) {
     if ((stack.size() - argsReqs + returnReqs) > VMConfig.MAX_STACK_SIZE) {
-      throw ExceptionFactory.tooLargeStack((stack.size() - argsReqs + returnReqs), VMConfig.MAX_STACK_SIZE);
+      throw ExceptionFactory
+          .tooLargeStack((stack.size() - argsReqs + returnReqs), VMConfig.MAX_STACK_SIZE);
     }
   }
 
@@ -499,7 +516,8 @@ public class ProgramEnv {
 
   public DataWord storageLoad(DataWord key) {
     DataWord ret = storage
-            .getStorageValue(convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
+        .getStorageValue(
+            convertToTronAddress(getContractAddress().getLast20Bytes()), key.clone());
     return ret == null ? null : ret.clone();
   }
 
@@ -513,7 +531,8 @@ public class ProgramEnv {
       throw new org.tron.common.runtime.vm.program.Program.OutOfEnergyException(
               "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
                       + " curOpEnergy[%d], usedEnergy[%d]",
-              opName, program.getEnergyLimit(), energyValue, program.getProgramResult().getEnergyUsed());
+          opName, program.getEnergyLimit(), energyValue,
+          program.getProgramResult().getEnergyUsed());
     }
     program.getProgramResult().spendEnergy(energyValue);
   }
@@ -678,7 +697,8 @@ public class ProgramEnv {
     try {
       return storage.getDbManager().getBlockByNum(index);
     } catch (StoreException e) {
-      throw new org.tron.common.runtime.vm.program.Program.IllegalOperationException("cannot find block num");
+      throw new org.tron.common.runtime.vm.program.Program
+          .IllegalOperationException("cannot find block num");
     }
   }
 
@@ -691,8 +711,8 @@ public class ProgramEnv {
    * @param value           the trx value transferred in the internaltransaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
-                                            byte[] transferAddress,
-                                            long value, byte[] data, String note, long nonce, Map<String, Long> tokenInfo) {
+      byte[] transferAddress, long value, byte[] data,
+      String note, long nonce, Map<String, Long> tokenInfo) {
 
     InternalTransaction addedInternalTx = null;
     if (program.getInternalTransaction() != null) {
@@ -835,9 +855,10 @@ public class ProgramEnv {
       if (!Arrays.equals(txData, ops)) {
         globalOutput.append("\n  msg.data: ").append(Hex.toHexString(txData));
       }
-      globalOutput.append("\n\n  Spent Energy: ").append(program.getProgramResult().getEnergyUsed());
+      globalOutput
+          .append("\n\n  Spent Energy: ").append(program.getProgramResult().getEnergyUsed());
 
-/*      if (listener != null) {
+      /*      if (listener != null) {
         listener.output(globalOutput.toString());
       }*/
     }
@@ -848,7 +869,8 @@ public class ProgramEnv {
     createContract(value, memStart, memSize, null, false);
   }
 
-  public void createContract(DataWord value, DataWord memStart, DataWord memSize, DataWord salt, boolean isCreate2) {
+  public void createContract(DataWord value, DataWord memStart,
+      DataWord memSize, DataWord salt, boolean isCreate2) {
     returnDataBuffer = null; // reset return buffer right before the call
     long endowment = value.value().longValueExact();
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
@@ -869,7 +891,9 @@ public class ProgramEnv {
     byte[] newAddress;
     if (isCreate2) {
       newAddress = Wallet
-              .generateContractAddress2(convertToTronAddress(getCallerAddress().getLast20Bytes()), salt.getData(), programCode);
+          .generateContractAddress2(
+              convertToTronAddress(getCallerAddress().getLast20Bytes()), salt.getData(),
+              programCode);
     } else {
       newAddress = Wallet
               .generateContractAddress(program.getRootTransactionId(), nonce);
@@ -891,6 +915,7 @@ public class ProgramEnv {
     long vmStartInUs = System.nanoTime() / 1000;
 
     Program create = new Program();
+    create.setInternalTransaction(internalTx);
     create.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE);
     create.setCallValue(endowment);
     create.setCallerAddress(senderAddress);
@@ -910,13 +935,14 @@ public class ProgramEnv {
     create.setBlockInfo(program.getBlockInfo());
 
     create.setRootTransactionId(program.getRootTransactionId());
-    create.setInternalTransaction(internalTx);
+
 
     //[4]execute
 
 
     //setup program environment
-    ProgramEnv cenv = ProgramEnv.createEnvironment(this.getStorage().newDepositChild(), create, this);
+    ProgramEnv cenv = ProgramEnv
+        .createEnvironment(this.getStorage().newDepositChild(), create, this);
     //play program
     try {
       cenv.execute();
@@ -1003,14 +1029,18 @@ public class ProgramEnv {
           transfer(deposit, senderAddress, contextAddress,
                   msg.getEndowment().value().longValueExact());
         } catch (ContractValidateException e) {
-          throw new org.tron.common.runtime.vm.program.Program.BytecodeExecutionException("transfer failure");
+          throw new org.tron.common.runtime.vm.program.Program
+              .BytecodeExecutionException("transfer failure");
         }
       } else {
         try {
           TransferAssetActuator
-                  .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
+              .validateForSmartContract(
+                  deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
-          throw new org.tron.common.runtime.vm.program.Program.BytecodeExecutionException(ExceptionFactory.VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
+          throw new org.tron.common.runtime.vm.program.Program
+              .BytecodeExecutionException(ExceptionFactory.VALIDATE_FOR_SMART_CONTRACT_FAILURE,
+              e.getMessage());
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
@@ -1103,9 +1133,6 @@ public class ProgramEnv {
       }
     }
 
-    // FETCH THE CODE
-    AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);
-    byte[] programCode = accountCapsule != null ? getStorage().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     // CREATE CALL INTERNAL TRANSACTION
     increaseNonce();
@@ -1118,16 +1145,23 @@ public class ProgramEnv {
             !isTokenTransfer ? null : tokenInfo);
     ProgramResult callResult = null;
 
+    // FETCH THE CODE
+    AccountCapsule accountCapsule = getStorage().getAccount(codeAddress);
+    byte[] programCode =
+        accountCapsule != null ? getStorage().getCode(codeAddress) : EMPTY_BYTE_ARRAY;
 
     long vmStartInUs = System.nanoTime() / 1000;
     DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
 
     Program call = new Program();
+    call.setInternalTransaction(internalTx);
     call.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     call.setCallValue(isTokenTransfer ? 0 : callValue.longValueSafe());
     call.setTokenValue(isTokenTransfer ? callValue.longValueSafe() : 0);
     call.setTokenId(isTokenTransfer ? msg.getTokenId().longValueSafe() : 0);
-    call.setCallerAddress(msg.getType().callIsDelegate()?convertToTronAddress(getCallerAddress().getLast20Bytes()):senderAddress);
+    call.setCallerAddress(
+        msg.getType().callIsDelegate() ? convertToTronAddress(getCallerAddress().getLast20Bytes())
+            : senderAddress);
     call.setOps(programCode);
     call.setOrigin(program.getOrigin());
     call.setMsgData(data);
@@ -1139,15 +1173,15 @@ public class ProgramEnv {
     call.getCallInfo().setFromVM(true);
     call.setBlockInfo(program.getBlockInfo());
     call.setRootTransactionId(program.getRootTransactionId());
-    call.setInternalTransaction(internalTx);
+
     ProgramEnv cenv = createEnvironment(childStroage, call, this);
     try {
       cenv.execute();
     } catch (ContractValidateException e) {
       refundEnergy(msg.getEnergy().longValue(), "refund energy from message call");
-      throw ExceptionFactory.transferException( e.getMessage());
+      throw ExceptionFactory.transferException(e.getMessage());
     }
-    if(isNotEmpty(programCode)){
+    if (isNotEmpty(programCode)) {
       callResult = call.getProgramResult();
 
       program.getProgramResult().merge(callResult);
@@ -1172,7 +1206,7 @@ public class ProgramEnv {
         childStroage.commit();
         stackPushOne();
       }
-    }else {
+    } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       childStroage.commit();
       stackPushOne();
@@ -1222,13 +1256,14 @@ public class ProgramEnv {
   }
 
   public void refundEnergy(long energyValue, String cause) {
-    logger.debug("[{}] Refund for cause: [{}], energy: [{}]", getBlockInfo().hashCode(), cause, energyValue);
+    logger.debug("[{}] Refund for cause: [{}], energy: [{}]",
+        getBlockInfo().hashCode(), cause, energyValue);
     program.getProgramResult().refundEnergy(energyValue);
   }
 
 
   /**
-   * check TokenId TokenId  \ isTransferToken -------------------------------------------------------------------
+   * check TokenId TokenId  \ isTransferToken -----------------------------------------------------
    * false                                     true -----------------------------------------------
    * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------

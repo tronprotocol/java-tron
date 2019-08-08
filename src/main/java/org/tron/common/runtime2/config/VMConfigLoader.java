@@ -35,11 +35,16 @@ public class VMConfigLoader {
     if (source != null) {
       cachedVmConfig.setMaxCpuTimeOfOneTx(source.getMaxCpuTimeOfOneTx());
       //for previous vm1 use
-      org.tron.common.runtime.config.VMConfig.initVmHardFork();
-      org.tron.common.runtime.config.VMConfig.initAllowMultiSign(source.getAllowMultiSign());
-      org.tron.common.runtime.config.VMConfig.initAllowTvmTransferTrc10(source.getAllowTvmTransferTrc10());
-      org.tron.common.runtime.config.VMConfig.initAllowTvmConstantinople(source.getAllowTvmConstantinople());
-      org.tron.common.runtime.config.VMConfig.initAllowTvmSolidity059(source.getAllowTvmSolidity059());
+      org.tron.common.runtime.config.VMConfig
+          .initVmHardFork();
+      org.tron.common.runtime.config.VMConfig
+          .initAllowMultiSign(source.getAllowMultiSign());
+      org.tron.common.runtime.config.VMConfig
+          .initAllowTvmTransferTrc10(source.getAllowTvmTransferTrc10());
+      org.tron.common.runtime.config.VMConfig
+          .initAllowTvmConstantinople(source.getAllowTvmConstantinople());
+      org.tron.common.runtime.config.VMConfig
+          .initAllowTvmSolidity059(source.getAllowTvmSolidity059());
     }
     if (org.tron.common.runtime.config.VMConfig.allowMultiSign()
             && org.tron.common.runtime.config.VMConfig.allowTvmTransferTrc10()

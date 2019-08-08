@@ -1,12 +1,26 @@
 package org.tron.core.db;
 
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.TRX_PRECOMPILED_TYPE;
+
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.Program.*;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime.vm.program.Program.TransferException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.runtime2.TxRunnerRouter;
@@ -17,18 +31,22 @@ import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ReceiptCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.*;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ReceiptCheckErrException;
+import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-
-import java.util.Objects;
-
-import static org.tron.common.runtime.vm.program.InternalTransaction.TrxType.*;
 
 @Slf4j(topic = "TransactionTrace")
 public class TransactionTrace {
@@ -38,8 +56,6 @@ public class TransactionTrace {
   private ReceiptCapsule receipt;
 
   private Manager dbManager;
-
-//  private Runtime runtime;
 
   private TxRunner runner;
 
@@ -92,14 +108,6 @@ public class TransactionTrace {
     init(blockCap, false);
   }
 
-
-  public void execute(BlockCapsule blockCap, boolean eventPluginLoaded)
-          throws ContractExeException, ContractValidateException, VMIllegalException {
-    init(blockCap, eventPluginLoaded);
-    exec();
-  }
-
-
   //pre transaction check
   public void init(BlockCapsule blockCap, boolean eventPluginLoaded) {
 
@@ -107,7 +115,8 @@ public class TransactionTrace {
     //create storage
     Deposit deposit = DepositImpl.createRoot(dbManager);
     //load config
-    VMConfig config = VMConfigLoader.getInstance().setSource(dbManager.getDynamicPropertiesStore()).loadNew();
+    VMConfig config = VMConfigLoader.getInstance()
+        .setSource(dbManager.getDynamicPropertiesStore()).loadNew();
     config.setEventPluginLoaded(eventPluginLoaded);
     //load runner
     runner = TxRunnerRouter.getInstance().route(this, blockCap, deposit, config);
@@ -136,6 +145,12 @@ public class TransactionTrace {
         throw new VMIllegalException("cannot call constant method");
       }
     }
+  }
+
+  public void execute(BlockCapsule blockCap, boolean eventPluginLoaded)
+      throws ContractExeException, ContractValidateException, VMIllegalException {
+    init(blockCap, eventPluginLoaded);
+    exec();
   }
 
   //set bill
@@ -319,9 +334,6 @@ public class TransactionTrace {
     return runner.getResult();
   }
 
-/*  public Runtime getRuntime() {
-    return runtime;
-  }*/
 
   public TxRunner getRunner() {
     return runner;

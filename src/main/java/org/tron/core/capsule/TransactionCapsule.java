@@ -15,39 +15,14 @@
 
 package org.tron.core.capsule;
 
-import com.google.protobuf.*;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.vm.program.Program;
-import org.tron.common.runtime.vm.program.Program.*;
-import org.tron.common.runtime2.TxRunner;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Wallet;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
-import org.tron.core.db.Manager;
-import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.*;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.*;
-import org.tron.protos.Protocol.Key;
-import org.tron.protos.Protocol.Permission;
-import org.tron.protos.Protocol.Permission.PermissionType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.Transaction.Result;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import org.tron.protos.Protocol.Transaction.raw;
+import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.CodedInputStream;
+import com.google.protobuf.Internal;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
-import java.lang.Exception;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -57,8 +32,78 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.overlay.message.Message;
+import org.tron.common.runtime.vm.program.Program;
+import org.tron.common.runtime.vm.program.Program.BadJumpDestinationException;
+import org.tron.common.runtime.vm.program.Program.IllegalOperationException;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
+import org.tron.common.runtime.vm.program.Program.PrecompiledContractException;
+import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
+import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
+import org.tron.common.runtime2.TxRunner;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Wallet;
+import org.tron.core.config.args.Args;
+import org.tron.core.db.AccountStore;
+import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.P2pException;
+import org.tron.core.exception.PermissionException;
+import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.protos.Contract;
+import org.tron.protos.Contract.AccountCreateContract;
+import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.Contract.AccountUpdateContract;
+import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.Contract.ClearABIContract;
+import org.tron.protos.Contract.CreateSmartContract;
+import org.tron.protos.Contract.ExchangeCreateContract;
+import org.tron.protos.Contract.ExchangeInjectContract;
+import org.tron.protos.Contract.ExchangeTransactionContract;
+import org.tron.protos.Contract.ExchangeWithdrawContract;
+import org.tron.protos.Contract.FreezeBalanceContract;
+import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.Contract.ProposalApproveContract;
+import org.tron.protos.Contract.ProposalCreateContract;
+import org.tron.protos.Contract.ProposalDeleteContract;
+import org.tron.protos.Contract.SetAccountIdContract;
+import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.Contract.UnfreezeBalanceContract;
+import org.tron.protos.Contract.UpdateAssetContract;
+import org.tron.protos.Contract.UpdateEnergyLimitContract;
+import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.Contract.VoteAssetContract;
+import org.tron.protos.Contract.VoteWitnessContract;
+import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.Contract.WitnessUpdateContract;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
+import org.tron.protos.Protocol.Transaction.raw;
 
 @Slf4j(topic = "capsule")
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
@@ -920,7 +965,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public void setResult(TxRunner runner) {
     RuntimeException exception = runner.getResult().getException();
     if (Objects.isNull(exception) && StringUtils
-            .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
+        .isEmpty(runner.getResult().getRuntimeError()) && !runner.getResult().isRevert()) {
       this.setResultCode(contractResult.SUCCESS);
       return;
     }

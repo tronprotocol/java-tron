@@ -1,8 +1,8 @@
 package org.tron.common.runtime2.tvm;
 
-import org.tron.common.runtime.vm.program.Program;
-
 import static java.lang.String.format;
+
+import org.tron.common.runtime.vm.program.Program;
 
 public class ExceptionFactory {
 
@@ -12,15 +12,18 @@ public class ExceptionFactory {
 
 
   public static StaticCallTransferException staticCallTransferException() {
-    return new StaticCallTransferException("constant cannot set call value or call token value.");
+    return new StaticCallTransferException(
+        "constant cannot set call value or call token value.");
   }
 
   public static Program.StackTooSmallException tooSmallStack(int expectedSize, int actualSize) {
-    return new Program.StackTooSmallException("Expected stack size %d but actual %d;", expectedSize, actualSize);
+    return new Program.StackTooSmallException(
+        "Expected stack size %d but actual %d;", expectedSize, actualSize);
   }
 
   public static Program.StackTooLargeException tooLargeStack(int expectedSize, int maxSize) {
-    return new Program.StackTooLargeException(format("Expected stack size %d exceeds stack limit %d", expectedSize, maxSize)
+    return new Program.StackTooLargeException(
+        format("Expected stack size %d exceeds stack limit %d", expectedSize, maxSize)
     );
   }
 
@@ -29,26 +32,28 @@ public class ExceptionFactory {
   }
 
   public static Program.TransferException transferSuicideAllTokenException(String message) {
-    return new Program.TransferException("transfer all token or transfer all trx failed in suicide: %s", message);
+    return new Program.TransferException(
+        "transfer all token or transfer all trx failed in suicide: %s", message);
   }
 
   public static Program.TransferException transferException(String message) {
-    return new Program.TransferException("transfer trx failed: %s", message);
+    return new Program.TransferException(
+        "transfer trx failed: %s", message);
   }
 
   public static Program.OutOfEnergyException notEnoughSpendEnergy(String hint, long needEnergy,
                                                                   long leftEnergy) {
     return new Program.OutOfEnergyException(
-            "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];", hint, needEnergy,
-            leftEnergy);
+        "Not enough energy for '%s' executing: needEnergy[%d], leftEnergy[%d];",
+        hint, needEnergy, leftEnergy);
   }
 
-  public static Program.JVMStackOverFlowException jvmStackOverFlow (){
+  public static Program.JVMStackOverFlowException jvmStackOverFlow() {
     return new Program.JVMStackOverFlowException();
 
   }
 
-  public static Program.BytecodeExecutionException unknownThrowable(String message){
+  public static Program.BytecodeExecutionException unknownThrowable(String message) {
     return new Program.BytecodeExecutionException(message);
 
   }
