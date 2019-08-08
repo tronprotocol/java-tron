@@ -12,6 +12,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -153,6 +154,14 @@ public class isContractCommand001 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testIsContractView(address)", num, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = " account Address test")
@@ -208,6 +217,14 @@ public class isContractCommand001 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testIsContractView(address)", num, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "nonexistent Account Address test")
@@ -263,6 +280,13 @@ public class isContractCommand001 {
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
 
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testIsContractView(address)", num, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "constructor return test")
@@ -318,6 +342,13 @@ public class isContractCommand001 {
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
 
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testConstructorView()", "", false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
 

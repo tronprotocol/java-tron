@@ -127,15 +127,14 @@ public class AddressStrictCheck001 {
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert.assertEquals("REVERT opcode executed", infoById.get().getResMessage().toStringUtf8());
 
-    transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress,
-            "checkAddress2(address)", num, true,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    logger.info(transactionExtention.toString());
-    Assert
-        .assertEquals(
-            "REVERT opcode executed",
-            transactionExtention.getResult().getMessage().toStringUtf8());
+    transactionExtention = PublicMethed.triggerConstantContractForExtention(contractAddress,
+        "checkAddress2(address)", num, true,
+        0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    logger.info("AAAAA:" + transactionExtention.toString());
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
   }
 
 

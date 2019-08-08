@@ -12,6 +12,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -95,7 +96,7 @@ public class isContractCommand002 {
 
 
   @Test(enabled = true, description = "selfdestruct contract test isContract Command")
-  public void testselfdestructContract() {
+  public void test01selfdestructContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -105,21 +106,25 @@ public class isContractCommand002 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     String txid = "";
     String num = "\"" + Base58.encode58Check(contractAddress) + "\"";
     Assert.assertTrue(PublicMethed
         .sendcoin(selfdestructContractExcAddress, 10000000000L, testNetAccountAddress,
             testNetAccountKey,
             blockingStubFull));
+
     selfdestructContractAddress = PublicMethed
         .deployContract(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, selfdestructContractKey,
             selfdestructContractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     txid = PublicMethed.triggerContract(selfdestructContractAddress,
         "testIsContractCommand(address)", num, false,
         0, maxFeeLimit, selfdestructContractExcAddress, selfdestructContractKey, blockingStubFull);
@@ -128,6 +133,16 @@ public class isContractCommand002 {
     infoById1 = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(1, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
     logger.info(infoById1.toString());
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(selfdestructContractAddress,
+            "testIsContractView(address)", num, false,
+            0, 0, "0", 0, selfdestructContractExcAddress, selfdestructContractKey,
+            blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+
     String txid1 = "";
     txid1 = PublicMethed.triggerContract(contractAddress,
         "selfdestructContract(address)", num, false,
@@ -135,6 +150,7 @@ public class isContractCommand002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     logger.info(infoById1.toString());
+
     txid1 = PublicMethed.triggerContract(selfdestructContractAddress,
         "testIsContractCommand(address)", num, false,
         0, maxFeeLimit, selfdestructContractExcAddress, selfdestructContractKey, blockingStubFull);
@@ -142,10 +158,20 @@ public class isContractCommand002 {
     infoById1 = PublicMethed.getTransactionInfoById(txid1, blockingStubFull);
     Assert.assertEquals(0, ByteArray.toInt(infoById1.get().getContractResult(0).toByteArray()));
     logger.info(infoById1.toString());
+
+    transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(selfdestructContractAddress,
+            "testIsContractView(address)", num, false,
+            0, 0, "0", 0, selfdestructContractExcAddress, selfdestructContractKey,
+            blockingStubFull);
+    logger.info("transactionExtention:" + transactionExtention.toString());
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+    Assert
+        .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "no constructor test isContract Command")
-  public void testNoConstructorContract() {
+  public void test02NoConstructorContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -155,17 +181,18 @@ public class isContractCommand002 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
-    String txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
+    String txid = PublicMethed
+        .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
+            0L, 100, null, contractExcKey,
+            contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid,blockingStubFull);
+    Optional<TransactionInfo> info = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(info.get().toString());
-    Assert.assertEquals(0,info.get().getResultValue());
+    Assert.assertEquals(0, info.get().getResultValue());
   }
 
   @Test(enabled = true, description = "incorrect address hex test isContract Command")
-  public void testIncorrectHashContract() {
+  public void test03IncorrectHashContract() {
     PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -175,6 +202,7 @@ public class isContractCommand002 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
@@ -192,6 +220,7 @@ public class isContractCommand002 {
     logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
     logger.info("beforeNetUsed:" + beforeNetUsed);
     logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
+
     String input = "ac5a3e290000000000000000000000123456789123456789";
     String txid = "";
     txid = PublicMethed.triggerContract(contractAddress,
@@ -199,6 +228,7 @@ public class isContractCommand002 {
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info(infoById.toString());
     Assert.assertTrue(infoById.get().getResultValue() == 1);
@@ -230,10 +260,19 @@ public class isContractCommand002 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testIsContractView(address)", input, true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
   }
 
   @Test(enabled = true, description = "empty addresses hash test isContract Command")
-  public void testEmptyAddressHashContract() {
+  public void test04EmptyAddressHashContract() {
     PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
@@ -243,10 +282,12 @@ public class isContractCommand002 {
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
     String abi = retMap.get("abI").toString();
+
     contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+
     Protocol.Account info;
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress,
@@ -298,6 +339,15 @@ public class isContractCommand002 {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
+
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testIsContractView(address)", input, true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("FAILED",
+        transactionExtention.getTransaction().getRet(0).getRet().toString());
+    Assert.assertEquals("REVERT opcode executed",
+        transactionExtention.getResult().getMessage().toStringUtf8());
   }
 
 
