@@ -154,6 +154,11 @@ public class TransactionTrace {
   }
 
   //set bill
+  public void setBill(TxRunner txRunner) {
+    setBill(txRunner.getResult().getEnergyUsed());
+  }
+
+  //set bill
   public void setBill(long energyUsage) {
     if (energyUsage < 0) {
       energyUsage = 0L;
@@ -175,6 +180,7 @@ public class TransactionTrace {
       throws ContractExeException, ContractValidateException, VMIllegalException {
     /*  TXRunner execute  */
     runner.execute();
+    setBill(runner);
 
     if (TRX_PRECOMPILED_TYPE != trxType) {
       if (contractResult.OUT_OF_TIME

@@ -132,7 +132,8 @@ public class TVM implements IVM {
 
 
     }
-    trace.setBill(result.getEnergyUsed());
+    //trace.setBill(result.getEnergyUsed());
+
   }
 
   private void loadEventPlugin(ContractContext program) {
