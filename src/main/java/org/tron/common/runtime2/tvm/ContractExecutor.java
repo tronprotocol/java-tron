@@ -51,14 +51,6 @@ import org.tron.protos.Protocol;
 @Data
 public class ContractExecutor {
   private VMConfig vmConfig;
-
-  private DataWord contractAddress;
-  private DataWord originAddress;
-  private DataWord callerAddress;
-  private DataWord callValue;
-  private DataWord tokenValue;
-  private DataWord tokenId;
-
   private byte[] ops;
   private int pc;
   private byte lastOp;
@@ -70,18 +62,51 @@ public class ContractExecutor {
   private ContractContext program;
   private int callDeep = 0;
   private long nonce;
-
-
   private byte[] returnDataBuffer;
-  private BlockInfo blockInfo = new BlockInfo();
 
-  @Data
-  class BlockInfo {
-    DataWord lastHash;
-    DataWord coinbase;
-    DataWord timestamp;
-    DataWord number;
-    DataWord difficulty;
+
+  public DataWord getContractAddress(){
+    return new DataWord(program.getContractAddress());
+  }
+
+  public DataWord getOriginAddress(){
+    return new DataWord(program.getOrigin());
+  }
+
+  public DataWord getCallerAddress(){
+    return new DataWord(program.getCallerAddress());
+  }
+
+  public DataWord getCallValue(){
+    return new DataWord(program.getCallValue());
+  }
+
+  public DataWord getTokenValue(){
+    return new DataWord(program.getTokenValue());
+  }
+
+  public DataWord getTokenId(){
+    return new DataWord(program.getTokenId());
+  }
+
+  public DataWord getLastHash() {
+    return new DataWord(program.getBlockInfo().getLastHash());
+  }
+
+  public DataWord getCoinbase() {
+    return new DataWord(program.getBlockInfo().getCoinbase());
+  }
+
+  public DataWord getTimestamp() {
+    return new DataWord(program.getBlockInfo().getTimestamp());
+  }
+
+  public DataWord getNumber() {
+    return new DataWord(program.getBlockInfo().getNumber());
+  }
+
+  public DataWord getDifficulty() {
+    return new DataWord(program.getBlockInfo().getDifficulty());
   }
 
 
@@ -92,20 +117,7 @@ public class ContractExecutor {
     storage = deposit;
     ops = program.getOps();
     this.program = program;
-    this.contractAddress = new DataWord(program.getContractAddress());
-    this.originAddress = new DataWord(program.getOrigin());
-    this.callerAddress = new DataWord(program.getCallerAddress());
-    this.callValue = new DataWord(program.getCallValue());
-    this.tokenValue = new DataWord(program.getTokenValue());
-    this.tokenId = new DataWord(program.getTokenId());
     this.nonce = program.getInternalTransaction().getNonce();
-
-    this.blockInfo.coinbase = new DataWord(program.getBlockInfo().getCoinbase());
-    this.blockInfo.lastHash = new DataWord(program.getBlockInfo().getLastHash());
-    this.blockInfo.timestamp = new DataWord(program.getBlockInfo().getTimestamp());
-    this.blockInfo.number = new DataWord(program.getBlockInfo().getNumber());
-    this.blockInfo.difficulty = new DataWord(program.getBlockInfo().getDifficulty());
-
   }
 
   public static ContractExecutor createEnvironment(Deposit deposit, ContractContext program,
@@ -265,8 +277,6 @@ public class ContractExecutor {
 
       }
       program.setContractAddress(contractAddress);
-      this.setContractAddress(new DataWord(program.getContractAddress()));
-
     } else {
       contractAddress = program.getContractAddress();
     }
@@ -1260,7 +1270,7 @@ public class ContractExecutor {
 
   public void refundEnergy(long energyValue, String cause) {
     logger.debug("[{}] Refund for cause: [{}], energy: [{}]",
-        getBlockInfo().hashCode(), cause, energyValue);
+        program.hashCode(), cause, energyValue);
     program.getProgramResult().refundEnergy(energyValue);
   }
 

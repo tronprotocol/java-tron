@@ -740,7 +740,7 @@ public class Interpreter {
       }
       break;
       case COINBASE: {
-        DataWord coinbase = env.getBlockInfo().getCoinbase();
+        DataWord coinbase = env.getCoinbase();
 
         if (logger.isDebugEnabled()) {
           hint = "coinbase: " + Hex.toHexString(coinbase.getLast20Bytes());
@@ -751,7 +751,7 @@ public class Interpreter {
       }
       break;
       case TIMESTAMP: {
-        DataWord timestamp = env.getBlockInfo().getTimestamp();
+        DataWord timestamp = env.getTimestamp();
 
         if (logger.isDebugEnabled()) {
           hint = "timestamp: " + timestamp.value();
@@ -762,7 +762,7 @@ public class Interpreter {
       }
       break;
       case NUMBER: {
-        DataWord number = env.getBlockInfo().getNumber();
+        DataWord number = env.getNumber();
 
         if (logger.isDebugEnabled()) {
           hint = "number: " + number.value();
@@ -773,7 +773,7 @@ public class Interpreter {
       }
       break;
       case DIFFICULTY: {
-        DataWord difficulty = env.getBlockInfo().getDifficulty();
+        DataWord difficulty = env.getDifficulty();
 
         if (logger.isDebugEnabled()) {
           hint = "difficulty: " + difficulty;
