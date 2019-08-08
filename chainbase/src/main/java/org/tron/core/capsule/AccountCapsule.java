@@ -264,7 +264,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setDefaultWitnessPermission(DynamicPropertiesStore dynamicPropertiesStore) {
-    Account.Builder builder = this.account.toBuilder();
+    Builder builder = this.account.toBuilder();
     Permission witness = createDefaultWitnessPermission(this.getAddress());
     if (!this.account.hasOwnerPermission()) {
       Permission owner = createDefaultOwnerPermission(this.getAddress());
@@ -982,7 +982,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
-    Account.Builder builder = this.account.toBuilder();
+    Builder builder = this.account.toBuilder();
     owner = owner.toBuilder().setId(0).build();
     builder.setOwnerPermission(owner);
     if (builder.getIsWitness()) {

@@ -22,12 +22,12 @@ import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.Chainbase;
+import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
+import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.db2.core.SnapshotRoot;
 
 
 @Slf4j(topic = "DB")

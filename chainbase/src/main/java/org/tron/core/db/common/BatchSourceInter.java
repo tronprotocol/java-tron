@@ -19,7 +19,6 @@
 package org.tron.core.db.common;
 
 import java.util.Map;
-import org.iq80.leveldb.WriteOptions;
 
 
 public interface BatchSourceInter<K, V> extends SourceInter<K, V> {
