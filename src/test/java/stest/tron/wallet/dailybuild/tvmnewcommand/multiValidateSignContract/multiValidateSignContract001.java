@@ -118,11 +118,14 @@ public class multiValidateSignContract001 {
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
+    System.out.println(input);
+    System.out.println(ByteArray.toHexString(contractAddress));
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    logger.info(transactionExtention.toString());
+    logger.info("Code = " + transactionExtention.getResult().getCode());
+    logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert
         .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
@@ -216,6 +219,33 @@ public class multiValidateSignContract001 {
         .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
+  @Test(enabled = true, description = "Extra long addresses and signatures array test multivalidatesign")
+  public void test05multivalidatesign() {
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
+    List<Object> signatures = new ArrayList<>();
+    List<Object> addresses = new ArrayList<>();
+    byte[] hash = Hash.sha3(txid.getBytes());
+    for (int i = 0; i < 100; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      signatures.add(Hex.toHexString(sign));
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+    String input = parametersString(parameters);
+    System.out.println(input);
+    System.out.println(ByteArray.toHexString(contractAddress));
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "testArray(bytes32,bytes[],address[])", input, false,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    logger.info("Code = " + transactionExtention.getResult().getCode());
+    logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert
+        .assertEquals(
+            "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
+            transactionExtention.getResult().getMessage().toStringUtf8());
+  }
   /**
    * constructor.
    */
