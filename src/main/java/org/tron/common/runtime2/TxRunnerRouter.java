@@ -1,6 +1,6 @@
 package org.tron.common.runtime2;
 
-import org.tron.common.runtime2.actuator.ActualRunner;
+import org.tron.common.runtime2.actuator.ActuatorRunner;
 import org.tron.common.runtime2.compatibility.PreviousRunner;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.common.storage.Deposit;
@@ -32,7 +32,7 @@ public class TxRunnerRouter {
         case ContractType.CreateSmartContract_VALUE:
           return VMFactory.createTVMForWallet(config, trxCapsule, block, deposit);
         default:
-          return ActualRunner.createActualRunner(trxCapsule.getInstance(), deposit);
+          return ActuatorRunner.createActuatorRunner(trxCapsule.getInstance(), deposit);
 
       }
     }
@@ -51,7 +51,7 @@ public class TxRunnerRouter {
         case ContractType.CreateSmartContract_VALUE:
           return VMFactory.createTVM(config, trace, block, deposit);
         default:
-          return ActualRunner.createActualRunner(trace.getTrx(), deposit);
+          return ActuatorRunner.createActuatorRunner(trace.getTrx(), deposit);
 
       }
     }

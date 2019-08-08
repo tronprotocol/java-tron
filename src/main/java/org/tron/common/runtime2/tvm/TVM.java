@@ -165,12 +165,12 @@ public class TVM implements IVM {
 
       byte[] contractName = newSmartContract.getName().getBytes();
 
-      if (contractName.length > VMConfig.CONTRACT_NAME_LENGTH) {
+      if (contractName.length > VMConstant.CONTRACT_NAME_LENGTH) {
         throw new ContractValidateException("contractName's length cannot be greater than 32");
       }
 
       long percent = contract.getNewContract().getConsumeUserResourcePercent();
-      if (percent < 0 || percent > VMConfig.ONE_HUNDRED) {
+      if (percent < 0 || percent > VMConstant.ONE_HUNDRED) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
       AccountCapsule creator =
@@ -230,9 +230,9 @@ public class TVM implements IVM {
     program.setEnergyLimit(energylimt);
     //maxCpuTime
     long maxCpuTimeOfOneTx = vmConfig.getMaxCpuTimeOfOneTx()
-            * VMConfig.ONE_THOUSAND;
+            * VMConstant.ONE_THOUSAND;
     long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
-    long vmStartInUs = System.nanoTime() / VMConfig.ONE_THOUSAND;
+    long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
     long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
     program.setVmStartInUs(vmStartInUs);
     program.setVmShouldEndInUs(vmShouldEndInUs);

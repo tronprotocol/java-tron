@@ -12,7 +12,7 @@ import org.tron.protos.Protocol;
 
 import java.util.List;
 
-public class ActualRunner implements TxRunner {
+public class ActuatorRunner implements TxRunner {
 
   ProgramResult result = new ProgramResult();
 
@@ -20,17 +20,17 @@ public class ActualRunner implements TxRunner {
 
   Deposit deposit;
 
-  private ActualRunner(TransactionCapsule trxCap, Deposit deposit) {
+  private ActuatorRunner(TransactionCapsule trxCap, Deposit deposit) {
     this.trxCap = trxCap;
     this.deposit = deposit;
   }
 
-  public static ActualRunner createActualRunner(TransactionCapsule trxCap, Deposit deposit) {
-    return new ActualRunner(trxCap, deposit);
+  public static ActuatorRunner createActuatorRunner(TransactionCapsule trxCap, Deposit deposit) {
+    return new ActuatorRunner(trxCap, deposit);
   }
 
-  public static ActualRunner createActualRunner(Protocol.Transaction tx, Deposit deposit) {
-    return new ActualRunner(new TransactionCapsule(tx), deposit);
+  public static ActuatorRunner createActuatorRunner(Protocol.Transaction tx, Deposit deposit) {
+    return new ActuatorRunner(new TransactionCapsule(tx), deposit);
   }
 
 

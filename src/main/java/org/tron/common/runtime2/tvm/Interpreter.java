@@ -1243,7 +1243,7 @@ public class Interpreter {
   }
 
   private void checkMemorySize(OpCode op, BigInteger newMemSize) {
-    if (newMemSize.compareTo(VMConfig.MEM_LIMIT) > 0) {
+    if (newMemSize.compareTo(VMConstant.MEM_LIMIT) > 0) {
       throw org.tron.common.runtime.vm.program.Program.Exception.memoryOverflow(op);
     }
   }

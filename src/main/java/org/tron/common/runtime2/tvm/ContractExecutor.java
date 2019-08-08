@@ -27,7 +27,6 @@ import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime.vm.VMConstant;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Memory;
 import org.tron.common.runtime.vm.program.ProgramResult;
@@ -472,9 +471,9 @@ public class ContractExecutor {
   }
 
   public void verifyStackOverflow(int argsReqs, int returnReqs) {
-    if ((stack.size() - argsReqs + returnReqs) > VMConfig.MAX_STACK_SIZE) {
+    if ((stack.size() - argsReqs + returnReqs) > VMConstant.MAX_STACK_SIZE) {
       throw ExceptionFactory
-          .tooLargeStack((stack.size() - argsReqs + returnReqs), VMConfig.MAX_STACK_SIZE);
+          .tooLargeStack((stack.size() - argsReqs + returnReqs), VMConstant.MAX_STACK_SIZE);
     }
   }
 
@@ -508,7 +507,7 @@ public class ContractExecutor {
       throw ExceptionFactory.tokenInvalid();
     }
     // or tokenId can only be (MIN_TOKEN_ID, Long.Max]
-    if (tokenIdL <= VMConfig.MIN_TOKEN_ID) {
+    if (tokenIdL <= VMConstant.MIN_TOKEN_ID) {
       throw ExceptionFactory.tokenInvalid();
     }
 
@@ -879,7 +878,7 @@ public class ContractExecutor {
     long endowment = value.value().longValueExact();
     byte[] senderAddress = convertToTronAddress(this.getContractAddress().getLast20Bytes());
 
-    if (getCallDeep() == VMConfig.MAX_CALLDEEP_DEPTH) {
+    if (getCallDeep() == VMConstant.MAX_CALLDEEP_DEPTH) {
       stackPushZero();
       return;
     }
@@ -991,7 +990,7 @@ public class ContractExecutor {
                                        PrecompiledContracts.PrecompiledContract contract) {
     returnDataBuffer = null; // reset return buffer right before the call
 
-    if (getCallDeep() == VMConfig.MAX_CALLDEEP_DEPTH) {
+    if (getCallDeep() == VMConstant.MAX_CALLDEEP_DEPTH) {
       stackPushZero();
       this.refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
@@ -1095,7 +1094,7 @@ public class ContractExecutor {
    */
   public void callToAddress(MessageCall msg) {
     returnDataBuffer = null; // reset return buffer right before the call
-    if (getCallDeep() == VMConfig.MAX_CALLDEEP_DEPTH) {
+    if (getCallDeep() == VMConstant.MAX_CALLDEEP_DEPTH) {
       stackPushZero();
       refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
