@@ -38,16 +38,17 @@ public class Interpreter {
   }
 
 
-  public void play(Program program, ProgramEnv env) {
-    if (isNotEmpty(program.getOps())) {
+  public void play(ContractExecutor env) {
+    if (isNotEmpty(env.getProgram().getOps())) {
       while (!env.isStopped()) {
-        this.step(program, env);
+        this.step(env);
       }
     }
   }
 
 
-  public void step(Program program, ProgramEnv env) {
+  public void step(ContractExecutor env) {
+    ContractContext program = env.getProgram();
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {
@@ -78,9 +79,9 @@ public class Interpreter {
     }
   }
 
-  private void exec(ProgramEnv env, OpCode op, DataWord adjustedCallEnergy) {
+  private void exec(ContractExecutor env, OpCode op, DataWord adjustedCallEnergy) {
     EnergyCost energyCosts = EnergyCost.getInstance();
-    Program program = env.getProgram();
+    ContractContext program = env.getProgram();
     String hint = "";
     Stack stack = env.getStack();
     // Execute operation
@@ -1248,13 +1249,13 @@ public class Interpreter {
   }
 
 
-  private DataWord spendEnergyAndGetCallEnergy(OpCode op, ProgramEnv env) {
+  private DataWord spendEnergyAndGetCallEnergy(OpCode op, ContractExecutor env) {
     DataWord adjustedCallEnergy = null;
     long oldMemSize = env.getMemory().size();
     long energyCost = op.getTier().asInt();
     EnergyCost energyCosts = EnergyCost.getInstance();
     Stack stack = env.getStack();
-    Program program = env.getProgram();
+    ContractContext program = env.getProgram();
 
     // Calculate fees and spend energy
     switch (op) {

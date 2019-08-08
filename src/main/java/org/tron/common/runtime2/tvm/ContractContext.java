@@ -1,5 +1,9 @@
 package org.tron.common.runtime2.tvm;
 
+import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+
+import java.util.HashSet;
+import java.util.Set;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
@@ -9,14 +13,9 @@ import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.config.VMConfig;
 import org.tron.core.capsule.AccountCapsule;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
-
 @Slf4j(topic = "VM2")
 @Data
-public class Program {
+public class ContractContext {
 
   @Data
   class BlockInfo {

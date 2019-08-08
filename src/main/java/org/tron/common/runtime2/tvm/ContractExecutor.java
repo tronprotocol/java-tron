@@ -50,7 +50,7 @@ import org.tron.protos.Protocol;
 
 @Slf4j(topic = "VM2")
 @Data
-public class ProgramEnv {
+public class ContractExecutor {
   private VMConfig vmConfig;
 
   private DataWord contractAddress;
@@ -68,7 +68,7 @@ public class ProgramEnv {
   private Stack stack;
   private Memory memory;
   private Deposit storage;
-  private Program program;
+  private ContractContext program;
   private int callDeep = 0;
   private long nonce;
 
@@ -86,7 +86,7 @@ public class ProgramEnv {
   }
 
 
-  public ProgramEnv(Deposit deposit, Program program) {
+  public ContractExecutor(Deposit deposit, ContractContext program) {
     stopped = false;
     stack = new Stack();
     memory = new Memory();
@@ -109,15 +109,17 @@ public class ProgramEnv {
 
   }
 
-  public static ProgramEnv createEnvironment(Deposit deposit, Program program, VMConfig vmConfig) {
-    ProgramEnv env = new ProgramEnv(deposit, program);
+  public static ContractExecutor createEnvironment(Deposit deposit, ContractContext program,
+      VMConfig vmConfig) {
+    ContractExecutor env = new ContractExecutor(deposit, program);
     env.setVmConfig(vmConfig);
     return env;
   }
 
 
-  public static ProgramEnv createEnvironment(Deposit deposit, Program program, ProgramEnv pre) {
-    ProgramEnv env = new ProgramEnv(deposit, program);
+  public static ContractExecutor createEnvironment(Deposit deposit, ContractContext program,
+      ContractExecutor pre) {
+    ContractExecutor env = new ContractExecutor(deposit, program);
     if (pre != null) {
       env.callDeep = pre.getCallDeep() + 1;
       env.setVmConfig(pre.getVmConfig());
@@ -130,32 +132,32 @@ public class ProgramEnv {
    * @return
    * @throws ContractValidateException
    */
-  public ProgramEnv execute() throws ContractValidateException {
+  public ContractExecutor execute() throws ContractValidateException {
     try {
       //check static call
-      preStaticCheck(program);
+      preStaticCheck();
       //transfer assets
-      transferAssets(program, this);
+      transferAssets();
       //processCode
-      Interpreter.getInstance().play(program, this);
+      Interpreter.getInstance().play(this);
       //save code for create
-      postProcess(program, this);
+      postProcess();
     } catch (StackOverflowError soe) {
       // if JVM StackOverflow then convert to runtimeExcepton
-      setException(program, ExceptionFactory.jvmStackOverFlow());
+      setException(ExceptionFactory.jvmStackOverFlow());
     } catch (RuntimeException e) {
-      setException(program, e);
+      setException(e);
     } catch (ContractValidateException e) {
       // throw ContractValidateException to upper
       throw e;
     } catch (Throwable throwable) {
-      setException(program, ExceptionFactory.unknownThrowable(throwable.getMessage()));
+      setException(ExceptionFactory.unknownThrowable(throwable.getMessage()));
     }
     return this;
   }
 
 
-  private void preStaticCheck(Program program) {
+  private void preStaticCheck() {
     long tokenValue = program.getTokenValue();
     long callValue = program.getCallValue();
     //checkStaticCall
@@ -167,8 +169,9 @@ public class ProgramEnv {
     }
   }
 
-  private void transferAssets(Program program, ProgramEnv env) throws ContractValidateException {
-    byte[] contractAddress = fetchAddress(program, env);
+  private void transferAssets()
+      throws ContractValidateException {
+    byte[] contractAddress = fetchAddress();
     long tokenId = program.getTokenId();
     long tokenValue = program.getTokenValue();
     long callValue = program.getCallValue();
@@ -189,31 +192,32 @@ public class ProgramEnv {
     //transefer Trx and trc10
     // transfer from callerAddress to contractAddress according to callValue
     if (program.getCallValue() > 0) {
-      ProgramEnv.transfer(env.getStorage(), program.getCallerAddress(), contractAddress, callValue);
+      ContractExecutor
+          .transfer(this.getStorage(), program.getCallerAddress(), contractAddress, callValue);
     }
     if (program.getTokenValue() > 0) {
-      ProgramEnv
-          .transferToken(env.getStorage(), program.getCallerAddress(),
+      ContractExecutor
+          .transferToken(this.getStorage(), program.getCallerAddress(),
               contractAddress, String.valueOf(tokenId), tokenValue);
     }
   }
 
-  private byte[] fetchAddress(Program program, ProgramEnv env) throws ContractValidateException {
+  private byte[] fetchAddress()
+      throws ContractValidateException {
     byte[] contractAddress;
     Protocol.Transaction trx = program.getInternalTransaction().getTransaction();
     if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
       //create or create2 OpCode
       if (program.getCallInfo().fromVM) {
         byte[] newAddress = program.getCallInfo().getNewAddress();
-        AccountCapsule existingAccount = env.getStorage().getAccount(newAddress);
+        AccountCapsule existingAccount = getStorage().getAccount(newAddress);
         ContractCapsule contractCapsule = null;
         //create Account for create2
         if (existingAccount != null) {
-          contractCapsule = env
-              .getStorage()
+          contractCapsule = getStorage()
               .getContract(existingAccount.getAddress().toByteArray());
         } else {
-          env.getStorage().createAccount(newAddress, "CreatedByContract",
+          this.getStorage().createAccount(newAddress, "CreatedByContract",
                   Protocol.AccountType.Contract);
         }
         //judge if is already exist addr
@@ -225,7 +229,7 @@ public class ProgramEnv {
           //update accountInfos
           existingAccount.updateAccountType(Protocol.AccountType.Contract);
           existingAccount.clearDelegatedResource();
-          env.getStorage().updateAccount(newAddress, existingAccount);
+          this.getStorage().updateAccount(newAddress, existingAccount);
         }
         Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
         builder.setContractAddress(ByteString.copyFrom(newAddress))
@@ -235,7 +239,7 @@ public class ProgramEnv {
           builder.setTrxHash(ByteString.copyFrom(program.getRootTransactionId()));
         }
         Protocol.SmartContract newSmartContract = builder.build();
-        env.getStorage().createContract(newAddress, new ContractCapsule(newSmartContract));
+        this.getStorage().createContract(newAddress, new ContractCapsule(newSmartContract));
         contractAddress = newAddress;
 
 
@@ -243,7 +247,7 @@ public class ProgramEnv {
         //normal create
         contractAddress = Wallet.generateContractAddress(trx);
         // insure the new contract address haven't exist
-        if (env.getStorage().getAccount(contractAddress) != null) {
+        if (this.getStorage().getAccount(contractAddress) != null) {
           throw new ContractValidateException(
                   "Trying to create a contract with existing contract address: " + Wallet
                           .encode58Check(contractAddress));
@@ -255,14 +259,14 @@ public class ProgramEnv {
         newSmartContract = newSmartContract.toBuilder()
                 .setContractAddress(ByteString.copyFrom(contractAddress)).build();
 
-        env.getStorage().createAccount(contractAddress, newSmartContract.getName(),
+        this.getStorage().createAccount(contractAddress, newSmartContract.getName(),
                 Protocol.AccountType.Contract);
 
-        env.getStorage().createContract(contractAddress, new ContractCapsule(newSmartContract));
+        this.getStorage().createContract(contractAddress, new ContractCapsule(newSmartContract));
 
       }
       program.setContractAddress(contractAddress);
-      env.setContractAddress(new DataWord(program.getContractAddress()));
+      this.setContractAddress(new DataWord(program.getContractAddress()));
 
     } else {
       contractAddress = program.getContractAddress();
@@ -273,12 +277,12 @@ public class ProgramEnv {
   }
 
 
-  private void setException(Program program, RuntimeException soe) {
+  private void setException(RuntimeException soe) {
     program.getProgramResult().setException(soe);
     program.getProgramResult().setRuntimeError(soe.getMessage());
   }
 
-  private void postProcess(Program program, ProgramEnv env) {
+  private void postProcess() {
     ProgramResult result = program.getProgramResult();
     if (program.getTrxType() == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE
         && !result.isRevert()) {
@@ -290,7 +294,7 @@ public class ProgramEnv {
                 saveCodeEnergy, program.getEnergyLimit() - result.getEnergyUsed());
       } else {
         result.spendEnergy(saveCodeEnergy);
-        env.getStorage().saveCode(program.getContractAddress(), code);
+        this.getStorage().saveCode(program.getContractAddress(), code);
       }
     }
   }
@@ -914,7 +918,7 @@ public class ProgramEnv {
             programCode, "create", nonce, null);
     long vmStartInUs = System.nanoTime() / 1000;
 
-    Program create = new Program();
+    ContractContext create = new ContractContext();
     create.setInternalTransaction(internalTx);
     create.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE);
     create.setCallValue(endowment);
@@ -941,7 +945,7 @@ public class ProgramEnv {
 
 
     //setup program environment
-    ProgramEnv cenv = ProgramEnv
+    ContractExecutor cenv = ContractExecutor
         .createEnvironment(this.getStorage().newDepositChild(), create, this);
     //play program
     try {
@@ -1153,7 +1157,7 @@ public class ProgramEnv {
     long vmStartInUs = System.nanoTime() / 1000;
     DataWord callValue = msg.getType().callIsDelegate() ? getCallValue() : msg.getEndowment();
 
-    Program call = new Program();
+    ContractContext call = new ContractContext();
     call.setInternalTransaction(internalTx);
     call.setTrxType(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     call.setCallValue(isTokenTransfer ? 0 : callValue.longValueSafe());
@@ -1174,7 +1178,7 @@ public class ProgramEnv {
     call.setBlockInfo(program.getBlockInfo());
     call.setRootTransactionId(program.getRootTransactionId());
 
-    ProgramEnv cenv = createEnvironment(childStroage, call, this);
+    ContractExecutor cenv = createEnvironment(childStroage, call, this);
     try {
       cenv.execute();
     } catch (ContractValidateException e) {

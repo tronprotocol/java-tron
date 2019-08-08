@@ -90,16 +90,17 @@ public class TVM implements IVM {
   @Override
   public void execute() throws ContractValidateException, VMIllegalException {
     //Validate and getBaseProgram
-    Program program = preValidateAndGetBaseProgram(isStatic);
+    ContractContext program = preValidateAndGetBaseProgram(isStatic);
     //setup program environment and play
-    ProgramEnv env = ProgramEnv
+    ContractExecutor env = ContractExecutor
         .createEnvironment(deposit, program, vmConfig)
         .execute();
     //process result
-    processResult(program, env, isStatic);
+    processResult(env, isStatic);
   }
 
-  private void processResult(Program program, ProgramEnv env, Boolean isStatic) {
+  private void processResult(ContractExecutor env, boolean isStatic) {
+    ContractContext program = env.getProgram();
     result =  program.getProgramResult();
     // for static call don't processResult
     if (isStatic) {
@@ -134,7 +135,7 @@ public class TVM implements IVM {
     trace.setBill(result.getEnergyUsed());
   }
 
-  private void loadEventPlugin(Program program) {
+  private void loadEventPlugin(ContractContext program) {
     if (vmConfig.isEventPluginLoaded()
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
                     || EventPluginLoader.getInstance().isContractLogTriggerEnable())
@@ -145,9 +146,9 @@ public class TVM implements IVM {
   }
 
 
-  Program preValidateAndGetBaseProgram(boolean isStatic)
+  ContractContext preValidateAndGetBaseProgram(boolean isStatic)
       throws ContractValidateException, VMIllegalException {
-    Program program = new Program();
+    ContractContext program = new ContractContext();
     program.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
       Contract.CreateSmartContract contract =
@@ -251,7 +252,7 @@ public class TVM implements IVM {
     return program;
   }
 
-  private void setBlockInfo(Program program) {
+  private void setBlockInfo(ContractContext program) {
     Protocol.Block block = blockCap.getInstance();
     byte[] lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
     byte[] coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
