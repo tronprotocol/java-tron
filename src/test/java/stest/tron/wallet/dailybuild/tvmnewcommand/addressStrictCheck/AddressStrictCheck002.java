@@ -11,6 +11,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
@@ -110,6 +111,12 @@ public class AddressStrictCheck002 {
     Assert.assertEquals(0, infoById.get().getResultValue());
     logger.info(infoById.toString());
 
+    TransactionExtention transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "checkAddress2(address)", num, true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+
     num = "10000000000000000000004108362A6DB594586C035758ECA382A49FDF13EF61";
     txid = PublicMethed.triggerContract(contractAddress,
         "checkAddress(address)", num, true,
@@ -118,6 +125,12 @@ public class AddressStrictCheck002 {
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
     logger.info(infoById.toString());
+
+    transactionExtention = PublicMethed
+        .triggerConstantContractForExtention(contractAddress,
+            "checkAddress2(address)", num, true,
+            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
   }
 
 

@@ -118,8 +118,6 @@ public class multiValidateSignContract001 {
     }
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
-    System.out.println(input);
-    System.out.println(ByteArray.toHexString(contractAddress));
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
@@ -128,6 +126,9 @@ public class multiValidateSignContract001 {
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert
         .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+
+
   }
 
 
@@ -150,8 +151,12 @@ public class multiValidateSignContract001 {
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+    logger.info("Code = " + transactionExtention.getResult().getCode());
+    logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
     Assert
         .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+
   }
 
   @Test(enabled = true, description = "incorrect signatures test multivalidatesign")
@@ -175,6 +180,8 @@ public class multiValidateSignContract001 {
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert
         .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
+
   }
 
   @Test(enabled = true, description = "incorrect hash test multivalidatesign")
@@ -217,6 +224,7 @@ public class multiValidateSignContract001 {
     logger.info(transactionExtention.toString());
     Assert
         .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+    Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
   }
 
   @Test(enabled = true, description = "Extra long addresses and signatures array test multivalidatesign")
@@ -245,6 +253,8 @@ public class multiValidateSignContract001 {
         .assertEquals(
             "class org.tron.common.runtime.vm.program.Program$OutOfTimeException : CPU timeout for 'ISZERO' operation executing",
             transactionExtention.getResult().getMessage().toStringUtf8());
+    Assert
+        .assertEquals("CONTRACT_EXE_ERROR", transactionExtention.getResult().getCode().toString());
   }
   /**
    * constructor.
