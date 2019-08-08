@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "AssetIssueContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+message AssetIssueContract {
+    string id = 41;
+
+    message FrozenSupply {
+        int64 frozen_amount = 1;
+        int64 frozen_days = 2;
+    }
+    bytes owner_address = 1;
+    bytes name = 2;
+    bytes abbr = 3;
+    int64 total_supply = 4;
+    repeated FrozenSupply frozen_supply = 5;
+    int32 trx_num = 6;
+    int32 precision = 7;
+    int32 num = 8;
+    int64 start_time = 9;
+    int64 end_time = 10;
+    int64 order = 11; // useless
+    int32 vote_score = 16;
+    bytes description = 20;
+    bytes url = 21;
+    int64 free_asset_net_limit = 22;
+    int64 public_free_asset_net_limit = 23;
+    int64 public_free_asset_net_usage = 24;
+    int64 public_latest_free_net_time = 25;
+}

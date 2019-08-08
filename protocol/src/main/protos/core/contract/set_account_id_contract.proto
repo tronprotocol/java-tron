@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "SetAccountIdContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+// Set account id if the account has no id. Account id is unique and case insensitive.
+message SetAccountIdContract {
+    bytes account_id = 1;
+    bytes owner_address = 2;
+}

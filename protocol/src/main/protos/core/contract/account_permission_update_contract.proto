@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "AccountPermissionUpdateContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+import "core/Tron.proto";
+
+message AccountPermissionUpdateContract {
+    bytes owner_address = 1;
+    Permission owner = 2; //Empty is invalidate
+    Permission witness = 3; //Can be empty
+    repeated Permission actives = 4; //Empty is invalidate
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "UpdateSettingContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+message UpdateSettingContract {
+    bytes owner_address = 1;
+    bytes contract_address = 2;
+    int64 consume_user_resource_percent = 3;
+}
