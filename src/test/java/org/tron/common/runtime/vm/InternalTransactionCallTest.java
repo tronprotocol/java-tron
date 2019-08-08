@@ -10,7 +10,6 @@ import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.DepositImpl;
@@ -53,6 +52,8 @@ public class InternalTransactionCallTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+
   }
 
 

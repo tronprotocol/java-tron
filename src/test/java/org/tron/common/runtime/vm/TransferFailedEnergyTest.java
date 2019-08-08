@@ -10,7 +10,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiptCapsule;
@@ -216,8 +215,8 @@ contract Caller {
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -252,8 +251,8 @@ contract Caller {
   @Test
   public void testTransferFailedBeforeAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    VMConfig.initAllowTvmTransferTrc10(1);
-    VMConfig.initAllowTvmConstantinople(0);
+    manager.getDynamicPropertiesStore().saveAllowTvmTransferTrc10(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);

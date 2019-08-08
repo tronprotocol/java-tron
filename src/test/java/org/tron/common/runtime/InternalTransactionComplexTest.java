@@ -53,6 +53,8 @@ public class InternalTransactionComplexTest {
     deposit = DepositImpl.createRoot(dbManager);
     deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
+
   }
 
   /**
