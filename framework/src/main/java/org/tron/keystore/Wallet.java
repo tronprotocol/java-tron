@@ -5,7 +5,6 @@ import org.spongycastle.crypto.generators.PKCS5S2ParametersGenerator;
 import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 
 import javax.crypto.BadPaddingException;
@@ -20,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.UUID;
+import org.tron.common.utils.Hash;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 

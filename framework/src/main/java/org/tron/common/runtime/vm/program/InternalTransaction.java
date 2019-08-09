@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.Hash;
+import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;

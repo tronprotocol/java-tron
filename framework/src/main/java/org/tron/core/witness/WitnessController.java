@@ -26,10 +26,10 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.db.VotesStore;
-import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 
 @Slf4j(topic = "witness")
 public class WitnessController {

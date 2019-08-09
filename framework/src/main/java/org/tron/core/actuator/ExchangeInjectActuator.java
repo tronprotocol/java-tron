@@ -38,7 +38,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
           .get(exchangeInjectContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule;
-      exchangeCapsule = dbManager.getExchangeStoreFinal().
+      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -81,7 +81,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
       }
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-      dbManager.putExchangeCapsule(exchangeCapsule);
+      Commons.putExchangeCapsule(exchangeCapsule, dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store(), dbManager.getAssetIssueStore());
 
       ret.setExchangeInjectAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
@@ -136,7 +137,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().
+      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {

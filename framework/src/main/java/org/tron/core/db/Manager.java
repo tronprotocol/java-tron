@@ -119,6 +119,8 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.core.zen.merkle.MerkleContainer;
