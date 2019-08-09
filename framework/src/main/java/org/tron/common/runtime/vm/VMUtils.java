@@ -29,12 +29,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.storage.Deposit;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.exception.ContractValidateException;
 
 @Slf4j(topic = "VM")
 public final class VMUtils {
@@ -156,4 +164,131 @@ public final class VMUtils {
       return content;
     }
   }
+
+  public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
+      byte[] toAddress, long amount) throws ContractValidateException {
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+    if (!Wallet.addressValid(toAddress)) {
+      throw new ContractValidateException("Invalid toAddress");
+    }
+
+    if (Arrays.equals(toAddress, ownerAddress)) {
+      throw new ContractValidateException("Cannot transfer trx to yourself.");
+    }
+
+    AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
+    if (ownerAccount == null) {
+      throw new ContractValidateException("Validate InternalTransfer error, no OwnerAccount.");
+    }
+
+    AccountCapsule toAccount = deposit.getAccount(toAddress);
+    if (toAccount == null) {
+      throw new ContractValidateException(
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+    }
+
+    long balance = ownerAccount.getBalance();
+
+    if (amount < 0) {
+      throw new ContractValidateException("Amount must greater than or equals 0.");
+    }
+
+    try {
+      if (balance < amount) {
+        throw new ContractValidateException(
+            "Validate InternalTransfer error, balance is not sufficient.");
+      }
+
+      if (toAccount != null) {
+        long toAddressBalance = Math.addExact(toAccount.getBalance(), amount);
+      }
+    } catch (ArithmeticException e) {
+      logger.debug(e.getMessage(), e);
+      throw new ContractValidateException(e.getMessage());
+    }
+
+    return true;
+  }
+
+  public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
+      byte[] toAddress, byte[] tokenId, long amount) throws ContractValidateException {
+    if (deposit == null) {
+      throw new ContractValidateException("No deposit!");
+    }
+
+    long fee = 0;
+    byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
+
+    if (!Wallet.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+    if (!Wallet.addressValid(toAddress)) {
+      throw new ContractValidateException("Invalid toAddress");
+    }
+//    if (!TransactionUtil.validAssetName(assetName)) {
+//      throw new ContractValidateException("Invalid assetName");
+//    }
+    if (amount <= 0) {
+      throw new ContractValidateException("Amount must greater than 0.");
+    }
+
+    if (Arrays.equals(ownerAddress, toAddress)) {
+      throw new ContractValidateException("Cannot transfer asset to yourself.");
+    }
+
+    AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
+    if (ownerAccount == null) {
+      throw new ContractValidateException("No owner account!");
+    }
+
+    if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
+      throw new ContractValidateException("No asset !");
+    }
+    if (!deposit.getDbManager().getAssetIssueStoreFinal().has(tokenIdWithoutLeadingZero)) {
+      throw new ContractValidateException("No asset !");
+    }
+
+    Map<String, Long> asset;
+    if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      asset = ownerAccount.getAssetMap();
+    } else {
+      asset = ownerAccount.getAssetMapV2();
+    }
+    if (asset.isEmpty()) {
+      throw new ContractValidateException("Owner no asset!");
+    }
+
+    Long assetBalance = asset.get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+    if (null == assetBalance || assetBalance <= 0) {
+      throw new ContractValidateException("assetBalance must greater than 0.");
+    }
+    if (amount > assetBalance) {
+      throw new ContractValidateException("assetBalance is not sufficient.");
+    }
+
+    AccountCapsule toAccount = deposit.getAccount(toAddress);
+    if (toAccount != null) {
+      if (deposit.getDbManager().getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      } else {
+        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(tokenIdWithoutLeadingZero));
+      }
+      if (assetBalance != null) {
+        try {
+          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+        } catch (Exception e) {
+          logger.debug(e.getMessage(), e);
+          throw new ContractValidateException(e.getMessage());
+        }
+      }
+    } else {
+      throw new ContractValidateException(
+          "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+    }
+
+    return true;
+  }
+
 }

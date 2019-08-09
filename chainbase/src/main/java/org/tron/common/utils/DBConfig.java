@@ -109,7 +109,7 @@ public class DBConfig {
 
   @Setter
   @Getter
-  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
+  public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;

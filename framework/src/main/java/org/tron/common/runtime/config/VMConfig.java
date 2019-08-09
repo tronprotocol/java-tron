@@ -17,7 +17,10 @@
  */
 package org.tron.common.runtime.config;
 
+import static org.tron.common.utils.DBConfig.ALLOW_TVM_CONSTANTINOPLE;
+
 import lombok.Setter;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
@@ -44,9 +47,6 @@ public class VMConfig {
 
   @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
-
-  @Setter
-  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
