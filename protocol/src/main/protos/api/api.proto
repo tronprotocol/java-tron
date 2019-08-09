@@ -5,37 +5,14 @@ import "core/Tron.proto";
 import "google/api/annotations.proto";
 
 import "core/contract/asset_issue_contract.proto";
-import "core/contract/transfer_contract.proto";
-import "core/contract/account_update_contract.proto";
-import "core/contract/set_account_id_contract.proto";
-import "core/contract/vote_witness_contract.proto";
-import "core/contract/update_setting_contract.proto";
-import "core/contract/update_energy_limit_contract.proto";
-import "core/contract/witness_update_contract.proto";
-import "core/contract/account_create_contract.proto";
-import "core/contract/witness_create_contract.proto";
-import "core/contract/transfer_asset_contract.proto";
-import "core/contract/participate_asset_issue_contract.proto";
-import "core/contract/freeze_balance_contract.proto";
-import "core/contract/unfreeze_balance_contract.proto";
-import "core/contract/unfreeze_asset_contract.proto";
-import "core/contract/withdraw_balance_contract.proto";
-import "core/contract/update_asset_contract.proto";
-import "core/contract/proposal_create_contract.proto";
-import "core/contract/proposal_approve_contract.proto";
-import "core/contract/proposal_delete_contract.proto";
-import "core/contract/buy_storage_contract.proto";
-import "core/contract/buy_storage_bytes_contract.proto";
-import "core/contract/sell_storage_contract.proto";
-import "core/contract/exchange_create_contract.proto";
-import "core/contract/exchange_inject_contract.proto";
-import "core/contract/exchange_withdraw_contract.proto";
-import "core/contract/exchange_transaction_contract.proto";
-import "core/contract/create_smart_contract.proto";
-import "core/contract/trigger_smart_contract.proto";
-import "core/contract/clear_ABI_contract.proto";
-import "core/contract/account_permission_update_contract.proto";
-import "core/contract/shielded_transfer_contract.proto";
+import "core/contract/account_contract.proto";
+import "core/contract/witness_contract.proto";
+import "core/contract/balance_contract.proto";
+import "core/contract/proposal_contract.proto";
+import "core/contract/storage_contract.proto";
+import "core/contract/exchange_contract.proto";
+import "core/contract/smart_contract.proto";
+import "core/contract/shield_contract.proto";
 
 option java_package = "org.tron.api"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "GrpcAPI"; //Specify the class name of the generated Java file

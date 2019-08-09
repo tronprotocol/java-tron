@@ -10,3 +10,13 @@ message BuyStorageBytesContract {
     bytes owner_address = 1;
     int64 bytes = 2; // storage bytes for buy
 }
+
+message BuyStorageContract {
+    bytes owner_address = 1;
+    int64 quant = 2; // trx quantity for buy storage (sun)
+}
+
+message SellStorageContract {
+    bytes owner_address = 1;
+    int64 storage_bytes = 2;
+}

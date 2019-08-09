@@ -13,8 +13,8 @@ import org.tron.core.db.AssetIssueStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AccountUpdateContractOuterClass.AccountUpdateContract;
-import org.tron.protos.contract.UpdateAssetContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

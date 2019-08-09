@@ -3,7 +3,7 @@ package org.tron.core.capsule;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.protos.contract.ShieldedTransferContractOuterClass.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 
 @Slf4j(topic = "capsule")
 public class ReceiveDescriptionCapsule implements ProtoCapsule<ReceiveDescription> {

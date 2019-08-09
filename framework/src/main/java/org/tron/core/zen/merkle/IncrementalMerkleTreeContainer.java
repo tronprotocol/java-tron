@@ -13,7 +13,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.contract.ShieldedTransferContractOuterClass.PedersenHash;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 @Slf4j
 public class IncrementalMerkleTreeContainer {

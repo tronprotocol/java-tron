@@ -78,8 +78,8 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract.Builder;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
 /**
  * @author Roman Mandeleil

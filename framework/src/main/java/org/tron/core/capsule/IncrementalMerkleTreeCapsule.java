@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.protos.contract.ShieldedTransferContractOuterClass.IncrementalMerkleTree;
-import org.tron.protos.contract.ShieldedTransferContractOuterClass.PedersenHash;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 @Slf4j
 public class IncrementalMerkleTreeCapsule implements ProtoCapsule<IncrementalMerkleTree> {

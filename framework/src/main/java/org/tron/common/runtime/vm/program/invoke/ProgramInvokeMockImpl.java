@@ -31,7 +31,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.StoreException;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 
 /**

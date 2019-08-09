@@ -8,7 +8,7 @@ import lombok.Setter;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.contract.ShieldedTransferContractOuterClass.PedersenHash;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 public class IncrementalMerkleVoucherContainer {
   @Getter

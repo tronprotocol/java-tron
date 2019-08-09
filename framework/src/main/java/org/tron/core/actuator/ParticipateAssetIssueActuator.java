@@ -28,7 +28,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.ParticipateAssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 

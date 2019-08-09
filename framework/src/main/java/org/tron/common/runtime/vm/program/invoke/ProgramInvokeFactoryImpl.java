@@ -32,8 +32,8 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.CreateSmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.TriggerSmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 

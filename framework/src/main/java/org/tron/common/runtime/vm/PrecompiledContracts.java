@@ -76,11 +76,11 @@ import org.tron.core.actuator.WithdrawBalanceActuator;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.ProposalApproveContractOuterClass.ProposalApproveContract;
-import org.tron.protos.contract.ProposalCreateContractOuterClass.ProposalCreateContract;
-import org.tron.protos.contract.ProposalDeleteContractOuterClass.ProposalDeleteContract;
-import org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract;
-import org.tron.protos.contract.WithdrawBalanceContractOuterClass.WithdrawBalanceContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**

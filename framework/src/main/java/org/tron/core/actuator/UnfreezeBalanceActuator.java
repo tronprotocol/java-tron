@@ -20,7 +20,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.UnfreezeBalanceContractOuterClass.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;

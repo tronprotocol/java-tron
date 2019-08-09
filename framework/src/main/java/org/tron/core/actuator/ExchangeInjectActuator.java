@@ -17,7 +17,7 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.contract.ExchangeInjectContractOuterClass.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")
