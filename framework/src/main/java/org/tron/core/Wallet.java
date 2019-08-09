@@ -160,17 +160,17 @@ import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.IncrementalMerkleTree;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ReceiveDescription;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.IncrementalMerkleTree;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.OutputPoint;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.OutputPointInfo;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.PedersenHash;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.ReceiveDescription;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.ShieldedTransferContract;
+import org.tron.protos.contract.TransferContractOuterClass.TransferContract;
+import org.tron.protos.contract.TriggerSmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -179,9 +179,9 @@ import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
-import org.tron.protos.Protocol.SmartContract;
-import org.tron.protos.Protocol.SmartContract.ABI;
-import org.tron.protos.Protocol.SmartContract.ABI.Entry.StateMutabilityType;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -1498,7 +1498,7 @@ public class Wallet {
           }
 
         } else {
-          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+          for (ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
             cmCapsule.setContent(receiveDescription.getNoteCommitment());
@@ -1549,7 +1549,7 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+          for (ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
@@ -1587,7 +1587,7 @@ public class Wallet {
           ShieldedTransferContract zkContract = contract1.getParameter()
               .unpack(ShieldedTransferContract.class);
 
-          for (org.tron.protos.Contract.ReceiveDescription receiveDescription :
+          for (ReceiveDescription receiveDescription :
               zkContract.getReceiveDescriptionList()) {
 
             PedersenHashCapsule cmCapsule = new PedersenHashCapsule();
@@ -1613,7 +1613,7 @@ public class Wallet {
       throw new BadItemException("request.OutPointsCount must be range in【1，10】");
     }
 
-    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
+    for (OutputPoint outputPoint : request.getOutPointsList()) {
 
       if (outputPoint.getHash() == null) {
         throw new BadItemException("outPoint.getHash() == null");
@@ -1637,7 +1637,7 @@ public class Wallet {
     IncrementalMerkleVoucherInfo.Builder result = IncrementalMerkleVoucherInfo.newBuilder();
 
     long largeBlockNum = 0;
-    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
+    for (OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       if (blockNum1 > largeBlockNum) {
         largeBlockNum = blockNum1;
@@ -1648,7 +1648,7 @@ public class Wallet {
     int opIndex = 0;
 
     List<IncrementalMerkleVoucherContainer> witnessList = Lists.newArrayList();
-    for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
+    for (OutputPoint outputPoint : request.getOutPointsList()) {
       Long blockNum1 = getBlockNumber(outputPoint);
       logger.debug("blockNum:" + blockNum1 + ",opIndex:" + opIndex++);
       if (blockNum1 + 100 < largeBlockNum) {
@@ -2653,8 +2653,7 @@ public class Wallet {
         }
         ShieldedTransferContract stContract = null;
         try {
-          stContract = c.getParameter().unpack(
-              org.tron.protos.Contract.ShieldedTransferContract.class);
+          stContract = c.getParameter().unpack(ShieldedTransferContract.class);
         } catch (InvalidProtocolBufferException e) {
           throw new RuntimeException(
               "unpack ShieldedTransferContract failed.");

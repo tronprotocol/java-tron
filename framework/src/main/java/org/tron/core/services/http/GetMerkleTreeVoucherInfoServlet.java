@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.OutputPointInfo;
 
 
 @Component

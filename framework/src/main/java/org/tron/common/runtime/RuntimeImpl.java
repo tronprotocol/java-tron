@@ -54,12 +54,11 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.TriggerSmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -498,7 +497,7 @@ public class RuntimeImpl implements Runtime {
       throw new ContractValidateException("VM work is off, need to be opened by the committee");
     }
 
-    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+    TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
     if (contract == null) {
       return;
     }

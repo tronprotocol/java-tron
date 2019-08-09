@@ -6,8 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.pf4j.util.StringUtils;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.SmartContract.ABI.Entry.Param;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract.ABI.Entry.Param;
 
 public class LogEventWrapper extends ContractTrigger {
 
@@ -31,7 +31,7 @@ public class LogEventWrapper extends ContractTrigger {
    */
   @Getter
   @Setter
-  private Protocol.SmartContract.ABI.Entry abiEntry;
+  private SmartContract.ABI.Entry abiEntry;
 
   public LogEventWrapper() {
     super();

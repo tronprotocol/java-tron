@@ -25,8 +25,8 @@ import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
+import org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract;
+import org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

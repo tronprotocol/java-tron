@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract.ABI;
 
 @Slf4j(topic = "Parser")
 public class ContractEventParserAbi extends ContractEventParser {

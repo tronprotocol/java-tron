@@ -28,8 +28,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
+import org.tron.protos.contract.ParticipateAssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -45,7 +44,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
     long fee = calcFee();
     try {
       final ParticipateAssetIssueContract participateAssetIssueContract =
-          contract.unpack(Contract.ParticipateAssetIssueContract.class);
+          contract.unpack(ParticipateAssetIssueContract.class);
       long cost = participateAssetIssueContract.getAmount();
 
       //subtract from owner address
@@ -191,7 +190,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return this.contract.unpack(Contract.ParticipateAssetIssueContract.class).getOwnerAddress();
+    return this.contract.unpack(ParticipateAssetIssueContract.class).getOwnerAddress();
   }
 
   @Override

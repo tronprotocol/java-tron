@@ -16,11 +16,11 @@
 package org.tron.core.capsule;
 
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
-import static org.tron.protos.Contract.AssetIssueContract;
-import static org.tron.protos.Contract.VoteAssetContract;
-import static org.tron.protos.Contract.VoteWitnessContract;
-import static org.tron.protos.Contract.WitnessCreateContract;
-import static org.tron.protos.Contract.WitnessUpdateContract;
+import static org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import static org.tron.protos.contract.VoteAssetContractOuterClass.VoteAssetContract;
+import static org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract;
+import static org.tron.protos.contract.WitnessCreateContractOuterClass.WitnessCreateContract;
+import static org.tron.protos.contract.WitnessUpdateContractOuterClass.WitnessUpdateContract;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -69,33 +69,32 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.exception.ValidateSignatureException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
-import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.ClearABIContract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.ExchangeCreateContract;
-import org.tron.protos.Contract.ExchangeInjectContract;
-import org.tron.protos.Contract.ExchangeTransactionContract;
-import org.tron.protos.Contract.ExchangeWithdrawContract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.ProposalApproveContract;
-import org.tron.protos.Contract.ProposalCreateContract;
-import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.SetAccountIdContract;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Contract.UnfreezeAssetContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
-import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.contract.AccountCreateContractOuterClass.AccountCreateContract;
+import org.tron.protos.contract.AccountPermissionUpdateContractOuterClass.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountUpdateContractOuterClass.AccountUpdateContract;
+import org.tron.protos.contract.ClearABIContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.ExchangeCreateContractOuterClass.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeInjectContractOuterClass.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeTransactionContractOuterClass.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeWithdrawContractOuterClass.ExchangeWithdrawContract;
+import org.tron.protos.contract.FreezeBalanceContractOuterClass.FreezeBalanceContract;
+import org.tron.protos.contract.ParticipateAssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.ProposalApproveContractOuterClass.ProposalApproveContract;
+import org.tron.protos.contract.ProposalCreateContractOuterClass.ProposalCreateContract;
+import org.tron.protos.contract.ProposalDeleteContractOuterClass.ProposalDeleteContract;
+import org.tron.protos.contract.SetAccountIdContractOuterClass.SetAccountIdContract;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.SpendDescription;
+import org.tron.protos.contract.TransferAssetContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.TransferContractOuterClass.TransferContract;
+import org.tron.protos.contract.TriggerSmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.UnfreezeAssetContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.UnfreezeBalanceContractOuterClass.UnfreezeBalanceContract;
+import org.tron.protos.contract.UpdateAssetContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.UpdateEnergyLimitContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.UpdateSettingContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.WithdrawBalanceContractOuterClass.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -367,10 +366,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
           owner = contractParameter.unpack(WithdrawBalanceContract.class).getOwnerAddress();
           break;
         case CreateSmartContract:
-          owner = contractParameter.unpack(Contract.CreateSmartContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(CreateSmartContract.class).getOwnerAddress();
           break;
         case TriggerSmartContract:
-          owner = contractParameter.unpack(Contract.TriggerSmartContract.class).getOwnerAddress();
+          owner = contractParameter.unpack(TriggerSmartContract.class).getOwnerAddress();
           break;
         case UpdateAssetContract:
           owner = contractParameter.unpack(UpdateAssetContract.class).getOwnerAddress();
@@ -522,10 +521,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         clazz = WithdrawBalanceContract.class;
         break;
       case CreateSmartContract:
-        clazz = Contract.CreateSmartContract.class;
+        clazz = CreateSmartContract.class;
         break;
       case TriggerSmartContract:
-        clazz = Contract.TriggerSmartContract.class;
+        clazz = TriggerSmartContract.class;
         break;
       case UpdateAssetContract:
         clazz = UpdateAssetContract.class;

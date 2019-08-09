@@ -24,8 +24,8 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.contract.TransferAssetContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.TransferContractOuterClass.TransferContract;
 import org.tron.protos.Protocol;
 
 @Slf4j

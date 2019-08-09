@@ -14,7 +14,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.UnfreezeAssetContract;
+import org.tron.protos.contract.UnfreezeAssetContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.Transaction.Result.code;
 

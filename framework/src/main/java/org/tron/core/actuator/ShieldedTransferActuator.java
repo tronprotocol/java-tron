@@ -30,9 +30,9 @@ import org.tron.core.exception.ZkProofValidateException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.MerkleContainer;
-import org.tron.protos.Contract.ReceiveDescription;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.ReceiveDescription;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.SpendDescription;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 

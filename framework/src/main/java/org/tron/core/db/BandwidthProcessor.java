@@ -15,8 +15,8 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.contract.TransferAssetContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.TransferContractOuterClass.TransferContract;
 import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j(topic = "DB")

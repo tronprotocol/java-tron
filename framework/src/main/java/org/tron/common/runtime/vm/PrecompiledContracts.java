@@ -76,12 +76,11 @@ import org.tron.core.actuator.WithdrawBalanceActuator;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.ProposalApproveContract;
-import org.tron.protos.Contract.ProposalCreateContract;
-import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.contract.ProposalApproveContractOuterClass.ProposalApproveContract;
+import org.tron.protos.contract.ProposalCreateContractOuterClass.ProposalCreateContract;
+import org.tron.protos.contract.ProposalDeleteContractOuterClass.ProposalDeleteContract;
+import org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract;
+import org.tron.protos.contract.WithdrawBalanceContractOuterClass.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 /**
@@ -678,10 +677,10 @@ public class PrecompiledContracts {
       byte[] value = new byte[8];
       System.arraycopy(data, 32 + 16 + 8, value, 0, 8);
 
-      Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+      VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
       long count = Longs.fromByteArray(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote
           .newBuilder();
       byte[] witnessAddress20 = new byte[20];
       System.arraycopy(witnessAddress, 12, witnessAddress20, 0, 20);
@@ -867,7 +866,7 @@ public class PrecompiledContracts {
         return Pair.of(true, new DataWord(0).getData());
       }
 
-      Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
+      WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
           .newBuilder();
       ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
       builder.setOwnerAddress(byteAddress);
@@ -942,7 +941,7 @@ public class PrecompiledContracts {
       byte[] isAddApproval = new byte[32];
       System.arraycopy(data, 32, isAddApproval, 0, 32);
 
-      Contract.ProposalApproveContract.Builder builder = Contract.ProposalApproveContract
+      ProposalApproveContract.Builder builder = ProposalApproveContract
           .newBuilder();
       ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
       builder.setOwnerAddress(byteAddress);
@@ -1025,7 +1024,7 @@ public class PrecompiledContracts {
         index += 64;
       }
 
-      Contract.ProposalCreateContract.Builder builder = Contract.ProposalCreateContract
+      ProposalCreateContract.Builder builder = ProposalCreateContract
           .newBuilder();
       ByteString byteAddress = ByteString.copyFrom(getCallerAddress());
       builder.setOwnerAddress(byteAddress);
@@ -1097,7 +1096,7 @@ public class PrecompiledContracts {
       if (data == null || data.length != DataWord.WORD_SIZE) {
         return Pair.of(false, new DataWord(0).getData());
       }
-      Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract
+      ProposalDeleteContract.Builder builder = ProposalDeleteContract
           .newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(getCallerAddress()));
       builder.setProposalId(ByteArray.toLong(data));

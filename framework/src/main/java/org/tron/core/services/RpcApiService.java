@@ -99,21 +99,37 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.ClearABIContract;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.UnfreezeAssetContract;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WitnessCreateContract;
+import org.tron.protos.contract.AccountCreateContractOuterClass.AccountCreateContract;
+import org.tron.protos.contract.AccountPermissionUpdateContractOuterClass.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ClearABIContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldedTransferContractOuterClass.OutputPointInfo;
+import org.tron.protos.contract.ParticipateAssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.TransferAssetContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.TransferContractOuterClass.TransferContract;
+import org.tron.protos.contract.UnfreezeAssetContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.UpdateEnergyLimitContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.UpdateSettingContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.VoteWitnessContractOuterClass.VoteWitnessContract;
+import org.tron.protos.contract.WitnessCreateContractOuterClass.WitnessCreateContract;
+import org.tron.protos.contract.WitnessUpdateContractOuterClass.WitnessUpdateContract;
+import org.tron.protos.contract.SetAccountIdContractOuterClass.SetAccountIdContract;
+import org.tron.protos.contract.AccountUpdateContractOuterClass.AccountUpdateContract;
+import org.tron.protos.contract.UpdateAssetContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.FreezeBalanceContractOuterClass.FreezeBalanceContract;
+import org.tron.protos.contract.UnfreezeBalanceContractOuterClass.UnfreezeBalanceContract;
+import org.tron.protos.contract.WithdrawBalanceContractOuterClass.WithdrawBalanceContract;
+import org.tron.protos.contract.ProposalCreateContractOuterClass.ProposalCreateContract;
+import org.tron.protos.contract.ProposalApproveContractOuterClass.ProposalApproveContract;
+import org.tron.protos.contract.ProposalDeleteContractOuterClass.ProposalDeleteContract;
+import org.tron.protos.contract.ExchangeInjectContractOuterClass.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeCreateContractOuterClass.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeTransactionContractOuterClass.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeWithdrawContractOuterClass.ExchangeWithdrawContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.TriggerSmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.CreateSmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1120,8 +1136,8 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateWitness(Contract.WitnessUpdateContract request,
-        StreamObserver<Transaction> responseObserver) {
+    public void updateWitness(WitnessUpdateContract request,
+                              StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
             createTransactionCapsule(request, ContractType.WitnessUpdateContract).getInstance());
@@ -1134,13 +1150,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateWitness2(Contract.WitnessUpdateContract request,
+    public void updateWitness2(WitnessUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.WitnessUpdateContract, responseObserver);
     }
 
     @Override
-    public void updateAccount(Contract.AccountUpdateContract request,
+    public void updateAccount(AccountUpdateContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1154,7 +1170,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void setAccountId(Contract.SetAccountIdContract request,
+    public void setAccountId(SetAccountIdContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1168,13 +1184,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateAccount2(Contract.AccountUpdateContract request,
+    public void updateAccount2(AccountUpdateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.AccountUpdateContract, responseObserver);
     }
 
     @Override
-    public void updateAsset(Contract.UpdateAssetContract request,
+    public void updateAsset(UpdateAssetContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1189,13 +1205,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void updateAsset2(Contract.UpdateAssetContract request,
+    public void updateAsset2(UpdateAssetContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UpdateAssetContract, responseObserver);
     }
 
     @Override
-    public void freezeBalance(Contract.FreezeBalanceContract request,
+    public void freezeBalance(FreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1209,13 +1225,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void freezeBalance2(Contract.FreezeBalanceContract request,
+    public void freezeBalance2(FreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.FreezeBalanceContract, responseObserver);
     }
 
     @Override
-    public void unfreezeBalance(Contract.UnfreezeBalanceContract request,
+    public void unfreezeBalance(UnfreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1230,13 +1246,13 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void unfreezeBalance2(Contract.UnfreezeBalanceContract request,
+    public void unfreezeBalance2(UnfreezeBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.UnfreezeBalanceContract, responseObserver);
     }
 
     @Override
-    public void withdrawBalance(Contract.WithdrawBalanceContract request,
+    public void withdrawBalance(WithdrawBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
         responseObserver.onNext(
@@ -1251,26 +1267,26 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void withdrawBalance2(Contract.WithdrawBalanceContract request,
+    public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
     }
 
     @Override
-    public void proposalCreate(Contract.ProposalCreateContract request,
+    public void proposalCreate(ProposalCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalCreateContract, responseObserver);
     }
 
 
     @Override
-    public void proposalApprove(Contract.ProposalApproveContract request,
+    public void proposalApprove(ProposalApproveContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalApproveContract, responseObserver);
     }
 
     @Override
-    public void proposalDelete(Contract.ProposalDeleteContract request,
+    public void proposalDelete(ProposalDeleteContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ProposalDeleteContract, responseObserver);
     }
@@ -1294,26 +1310,26 @@ public class RpcApiService implements Service {
 //    }
 
     @Override
-    public void exchangeCreate(Contract.ExchangeCreateContract request,
+    public void exchangeCreate(ExchangeCreateContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ExchangeCreateContract, responseObserver);
     }
 
 
     @Override
-    public void exchangeInject(Contract.ExchangeInjectContract request,
+    public void exchangeInject(ExchangeInjectContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ExchangeInjectContract, responseObserver);
     }
 
     @Override
-    public void exchangeWithdraw(Contract.ExchangeWithdrawContract request,
+    public void exchangeWithdraw(ExchangeWithdrawContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ExchangeWithdrawContract, responseObserver);
     }
 
     @Override
-    public void exchangeTransaction(Contract.ExchangeTransactionContract request,
+    public void exchangeTransaction(ExchangeTransactionContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.ExchangeTransactionContract,
           responseObserver);
@@ -1619,7 +1635,7 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void deployContract(org.tron.protos.Contract.CreateSmartContract request,
+    public void deployContract(CreateSmartContract request,
         io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
@@ -1645,20 +1661,20 @@ public class RpcApiService implements Service {
     }
 
     @Override
-    public void triggerContract(Contract.TriggerSmartContract request,
+    public void triggerContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, false);
     }
 
     @Override
-    public void triggerConstantContract(Contract.TriggerSmartContract request,
+    public void triggerConstantContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, true);
     }
 
-    private void callContract(Contract.TriggerSmartContract request,
+    private void callContract(TriggerSmartContract request,
         StreamObserver<TransactionExtention> responseObserver, boolean isConstant) {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
@@ -1704,8 +1720,8 @@ public class RpcApiService implements Service {
 
     @Override
     public void getContract(BytesMessage request,
-        StreamObserver<Protocol.SmartContract> responseObserver) {
-      Protocol.SmartContract contract = wallet.getContract(request);
+        StreamObserver<SmartContract> responseObserver) {
+      SmartContract contract = wallet.getContract(request);
       responseObserver.onNext(contract);
       responseObserver.onCompleted();
     }
