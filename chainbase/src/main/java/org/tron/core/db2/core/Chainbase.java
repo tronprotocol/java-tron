@@ -9,12 +9,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.tron.common.utils.ByteUtil;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.common.utils.ByteUtil;
 
 public class Chainbase implements IRevokingDB {
 
