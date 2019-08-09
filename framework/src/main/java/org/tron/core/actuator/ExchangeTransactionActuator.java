@@ -36,7 +36,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(exchangeTransactionContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().
+      ExchangeCapsule exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
@@ -71,7 +72,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-      dbManager.putExchangeCapsule(exchangeCapsule);
+      Commons.putExchangeCapsule(exchangeCapsule, dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store(), dbManager.getAssetIssueStore());
 
       ret.setExchangeReceivedAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
@@ -127,7 +129,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().
+      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");

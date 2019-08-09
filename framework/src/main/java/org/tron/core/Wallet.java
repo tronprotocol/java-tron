@@ -18,6 +18,7 @@
 
 package org.tron.core;
 
+import static org.tron.common.utils.Commons.addressPreFixByte;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
@@ -205,7 +206,6 @@ public class Wallet {
   @Autowired
   private NodeManager nodeManager;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
-  private static byte addressPreFixByte = Commons.ADD_PRE_FIX_BYTE_MAINNET;
 
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
 
@@ -261,7 +261,7 @@ public class Wallet {
   }
 
   public static void setAddressPreFixByte(byte addressPreFixByte) {
-    Wallet.addressPreFixByte = addressPreFixByte;
+    Commons.addressPreFixByte = addressPreFixByte;
   }
 
   public static String encode58Check(byte[] input) {
@@ -779,7 +779,8 @@ public class Wallet {
 
   public ExchangeList getExchangeList() {
     ExchangeList.Builder builder = ExchangeList.newBuilder();
-    List<ExchangeCapsule> exchangeCapsuleList = dbManager.getExchangeStoreFinal().getAllExchanges();
+    List<ExchangeCapsule> exchangeCapsuleList = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+        dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).getAllExchanges();
 
     exchangeCapsuleList
         .forEach(exchangeCapsule -> builder.addExchanges(exchangeCapsule.getInstance()));
@@ -1331,7 +1332,8 @@ public class Wallet {
     }
     ExchangeCapsule exchangeCapsule = null;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().get(exchangeId.toByteArray());
+      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(exchangeId.toByteArray());
     } catch (StoreException e) {
       return null;
     }
@@ -2432,7 +2434,8 @@ public class Wallet {
         .asList();
     rangeList.stream().map(ExchangeCapsule::calculateDbKey).map(key -> {
       try {
-        return dbManager.getExchangeStoreFinal().get(key);
+        return Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+            dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).get(key);
       } catch (Exception ex) {
         return null;
       }
