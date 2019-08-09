@@ -57,7 +57,6 @@ public class Parameter {
   public class DatabaseConstants {
 
     public static final int TRANSACTIONS_COUNT_LIMIT_MAX = 1000;
-    public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
     public static final int PROPOSAL_COUNT_LIMIT_MAX = 1000;
     public static final int EXCHANGE_COUNT_LIMIT_MAX = 1000;
   }
@@ -110,21 +109,6 @@ public class Parameter {
 
     public static final int START_NEW_TRANSACTION = 4;
     public static final int ENERGY_LIMIT = 5;
-  }
-
-  public enum ForkBlockVersionEnum {
-    ENERGY_LIMIT(5),
-    VERSION_3_2_2(6),
-    VERSION_3_5(7),
-    VERSION_3_6(8),
-    VERSION_4_0(9);
-
-    @Getter
-    private int value;
-
-    ForkBlockVersionEnum(int value) {
-      this.value = value;
-    }
   }
 
 }

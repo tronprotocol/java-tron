@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -104,7 +105,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     ByteString newUrl = updateAssetContract.getUrl();
     ByteString newDescription = updateAssetContract.getDescription();
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 

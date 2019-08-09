@@ -40,6 +40,7 @@ import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -167,10 +168,10 @@ public final class VMUtils {
 
   public static boolean validateForSmartContract(Deposit deposit, byte[] ownerAddress,
       byte[] toAddress, long amount) throws ContractValidateException {
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 
@@ -221,10 +222,10 @@ public final class VMUtils {
     long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {
@@ -246,7 +247,8 @@ public final class VMUtils {
     if (deposit.getAssetIssue(tokenIdWithoutLeadingZero) == null) {
       throw new ContractValidateException("No asset !");
     }
-    if (!deposit.getDbManager().getAssetIssueStoreFinal().has(tokenIdWithoutLeadingZero)) {
+    if (!Commons.getAssetIssueStoreFinal(deposit.getDbManager().getDynamicPropertiesStore(),
+        deposit.getDbManager().getAssetIssueStore(), deposit.getDbManager().getAssetIssueV2Store()).has(tokenIdWithoutLeadingZero)) {
       throw new ContractValidateException("No asset !");
     }
 

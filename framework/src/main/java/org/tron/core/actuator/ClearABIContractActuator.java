@@ -6,15 +6,16 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -72,7 +73,7 @@ public class ClearABIContractActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();

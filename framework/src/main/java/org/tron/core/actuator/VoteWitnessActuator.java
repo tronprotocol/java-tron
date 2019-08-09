@@ -13,18 +13,19 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.VotesStore;
 import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.VoteWitnessContract;
 import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -72,7 +73,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
     }
-    if (!Wallet.addressValid(contract.getOwnerAddress().toByteArray())) {
+    if (!Commons.addressValid(contract.getOwnerAddress().toByteArray())) {
       throw new ContractValidateException("Invalid address");
     }
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
@@ -96,7 +97,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       while (iterator.hasNext()) {
         Vote vote = iterator.next();
         byte[] witnessCandidate = vote.getVoteAddress().toByteArray();
-        if (!Wallet.addressValid(witnessCandidate)) {
+        if (!Commons.addressValid(witnessCandidate)) {
           throw new ContractValidateException("Invalid vote address!");
         }
         long voteCount = vote.getVoteCount();

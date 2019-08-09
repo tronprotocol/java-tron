@@ -13,7 +13,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 
 @Slf4j(topic = "utils")
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ForkUtils {
 
   protected static final byte VERSION_DOWNGRADE = (byte) 0;

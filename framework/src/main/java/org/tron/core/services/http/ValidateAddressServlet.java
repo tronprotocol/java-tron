@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 
@@ -24,13 +25,13 @@ public class ValidateAddressServlet extends HttpServlet {
     boolean result = true;
     String msg;
     try {
-      if (input.length() == Constant.ADDRESS_SIZE) {
+      if (input.length() == Commons.ADDRESS_SIZE) {
         //hex
         address = ByteArray.fromHexString(input);
         msg = "Hex string format";
       } else if (input.length() == 34) {
         //base58check
-        address = Wallet.decodeFromBase58Check(input);
+        address = Commons.decodeFromBase58Check(input);
         msg = "Base58check format";
       } else if (input.length() == 28) {
         //base64
@@ -41,7 +42,7 @@ public class ValidateAddressServlet extends HttpServlet {
         msg = "Length error";
       }
       if (result) {
-        result = Wallet.addressValid(address);
+        result = Commons.addressValid(address);
         if (!result) {
           msg = "Invalid address";
         }

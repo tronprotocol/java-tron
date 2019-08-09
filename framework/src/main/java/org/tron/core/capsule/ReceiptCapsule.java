@@ -4,6 +4,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -165,7 +166,7 @@ public class ReceiptCapsule {
       account.setBalance(balance - energyFee);
 
       //send to blackHole
-      manager.adjustBalance(manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+      Commons.adjustBalance(manager.getAccountStore(), manager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           energyFee);
     }
 

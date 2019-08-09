@@ -6,6 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -45,11 +46,11 @@ public class TransferActuator extends AbstractActuator {
 
         fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       }
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
       ret.setStatus(fee, code.SUCESS);
-      dbManager.adjustBalance(ownerAddress, -amount);
-      dbManager.adjustBalance(toAddress, amount);
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -amount);
+      Commons.adjustBalance(dbManager.getAccountStore(), toAddress, amount);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
@@ -92,10 +93,10 @@ public class TransferActuator extends AbstractActuator {
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 

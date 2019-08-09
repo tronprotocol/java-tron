@@ -8,14 +8,15 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -45,8 +46,8 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           accountPermissionUpdateContract.getActivesList());
       accountStore.put(ownerAddress, account);
 
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       result.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
@@ -96,7 +97,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           "address should be distinct in permission " + permission.getType());
     }
     for (Key key : permission.getKeysList()) {
-      if (!Wallet.addressValid(key.getAddress().toByteArray())) {
+      if (!Commons.addressValid(key.getAddress().toByteArray())) {
         throw new ContractValidateException("key is not a validate address");
       }
       if (key.getWeight() <= 0) {
@@ -164,7 +165,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = accountPermissionUpdateContract.getOwnerAddress().toByteArray();
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("invalidate ownerAddress");
     }
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);

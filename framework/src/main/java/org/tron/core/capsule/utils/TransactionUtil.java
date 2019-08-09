@@ -18,6 +18,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
@@ -31,7 +32,7 @@ public class TransactionUtil {
   public static Transaction newGenesisTransaction(byte[] key, long value)
       throws IllegalArgumentException {
 
-    if (!Wallet.addressValid(key)) {
+    if (!Commons.addressValid(key)) {
       throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()

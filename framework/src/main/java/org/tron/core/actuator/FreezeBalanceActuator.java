@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -116,7 +117,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = freezeBalanceContract.getOwnerAddress().toByteArray();
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -179,7 +180,7 @@ public class FreezeBalanceActuator extends AbstractActuator {
             "receiverAddress must not be the same as ownerAddress");
       }
 
-      if (!Wallet.addressValid(receiverAddress)) {
+      if (!Commons.addressValid(receiverAddress)) {
         throw new ContractValidateException("Invalid receiverAddress");
       }
 

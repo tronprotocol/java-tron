@@ -24,14 +24,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -65,8 +66,8 @@ public class TransferAssetActuator extends AbstractActuator {
       ByteString assetName = transferAssetContract.getAssetName();
       long amount = transferAssetContract.getAmount();
 
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
 
       AccountCapsule ownerAccountCapsule = accountStore.get(ownerAddress);
       if (!ownerAccountCapsule.reduceAssetAmountV2(assetName.toByteArray(), amount, dbManager)) {
@@ -120,10 +121,10 @@ public class TransferAssetActuator extends AbstractActuator {
     byte[] assetName = transferAssetContract.getAssetName().toByteArray();
     long amount = transferAssetContract.getAmount();
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
-    if (!Wallet.addressValid(toAddress)) {
+    if (!Commons.addressValid(toAddress)) {
       throw new ContractValidateException("Invalid toAddress");
     }
 //    if (!TransactionUtil.validAssetName(assetName)) {
@@ -142,7 +143,8 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No owner account!");
     }
 
-    if (!this.dbManager.getAssetIssueStoreFinal().has(assetName)) {
+    if (!Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).has(assetName)) {
       throw new ContractValidateException("No asset !");
     }
 
