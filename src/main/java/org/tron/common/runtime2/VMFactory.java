@@ -10,6 +10,9 @@ import org.tron.core.db.TransactionTrace;
 
 public class VMFactory {
 
+  private VMFactory() {
+  }
+
   public static IVM createTVM(
       VMConfig config, TransactionTrace trace, BlockCapsule block, Deposit deposit) {
     TVM tvm = new TVM(trace, null, block, deposit);

@@ -20,7 +20,7 @@ import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.program.Stack;
-import org.tron.common.runtime2.config.VMConfig;
+
 
 @Slf4j(topic = "VM2")
 public class Interpreter {
@@ -48,7 +48,6 @@ public class Interpreter {
 
 
   public void step(ContractExecutor env) {
-    ContractContext program = env.getProgram();
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {
@@ -74,8 +73,6 @@ public class Interpreter {
       env.resetFutureRefund();
       env.stop();
       throw e;
-    } finally {
-      env.fullTrace();
     }
   }
 
@@ -632,12 +629,6 @@ public class Interpreter {
         DataWord lengthData = env.stackPop();
 
         byte[] msgData = env.getReturnDataBufferData(dataOffsetData, lengthData);
-
-        if (msgData == null) {
-          throw new org.tron.common.runtime.vm.program.Program
-              .ReturnDataCopyIllegalBoundsException(dataOffsetData, lengthData,
-                  env.getReturnDataBufferSize().longValueSafe());
-        }
 
         if (logger.isDebugEnabled()) {
           hint = "data: " + Hex.toHexString(msgData);
@@ -1390,7 +1381,7 @@ public class Interpreter {
         DataWord getEnergyLimitLeft = program.getEnergyLimitLeft().clone();
         getEnergyLimitLeft.sub(new DataWord(energyCost));
 
-        adjustedCallEnergy = env.getCallEnergy(op, callEnergyWord, getEnergyLimitLeft);
+        adjustedCallEnergy = env.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
         energyCost += adjustedCallEnergy.longValueSafe();
         break;
       case CREATE:

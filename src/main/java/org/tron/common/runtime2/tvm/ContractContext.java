@@ -23,7 +23,7 @@ public class ContractContext {
     byte[] coinbase = null;
     long timestamp = 0L;
     long number = -1L;
-    int Difficulty = 0;
+    int difficulty = 0;
   }
 
   /**

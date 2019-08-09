@@ -6,6 +6,9 @@ import org.tron.common.runtime.vm.program.Program;
 
 public class ExceptionFactory {
 
+  private ExceptionFactory() {
+  }
+
   public static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
           "validateForSmartContract failure:%s";
   public static final String INVALID_TOKEN_ID_MSG = "not valid token id";
