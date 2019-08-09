@@ -27,7 +27,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.EnergyProcessor;
-import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract;
@@ -40,8 +39,6 @@ public class TVM implements IVM {
   private VMConfig vmConfig;
 
   private EnergyProcessor energyProcessor;
-
-  private TransactionTrace trace;
 
   private BlockCapsule blockCap;
 
@@ -61,9 +58,8 @@ public class TVM implements IVM {
   private InternalTransaction.ExecutorType executorType;
 
 
-  public TVM(TransactionTrace trace, TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
-    this.trace = trace;
-    this.trx = (trx == null ? trace.getTrx() : trx);
+  public TVM(TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
+    this.trx = trx;
     this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
     this.deposit = deposit;
     if (Objects.nonNull(block)) {

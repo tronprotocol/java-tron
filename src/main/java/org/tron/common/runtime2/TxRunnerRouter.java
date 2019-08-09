@@ -49,7 +49,7 @@ public class TxRunnerRouter {
       switch (trace.getTrx().getInstance().getRawData().getContract(0).getType().getNumber()) {
         case ContractType.TriggerSmartContract_VALUE:
         case ContractType.CreateSmartContract_VALUE:
-          return VMFactory.createTVM(config, trace, block, deposit);
+          return VMFactory.createTVM(config, trace.getTrx(), block, deposit);
         default:
           return ActuatorRunner.createActuatorRunner(trace.getTrx(), deposit);
 
