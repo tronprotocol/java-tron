@@ -11,10 +11,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
-import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -43,9 +41,6 @@ public class isContractCommand002 {
   private ManagedChannel channelFull1 = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull1 = null;
 
-
-  private WalletSolidityGrpc.WalletSolidityBlockingStub blockingStubSolidity = null;
-
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private String fullnode1 = Configuration.getByPath("testng.conf")
@@ -55,7 +50,6 @@ public class isContractCommand002 {
       .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
   byte[] selfdestructContractAddress = null;
-  byte[] emptyAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
   byte[] contractExcAddress = ecKey1.getAddress();
@@ -87,11 +81,6 @@ public class isContractCommand002 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
 
@@ -191,166 +180,6 @@ public class isContractCommand002 {
     Assert.assertEquals(0, info.get().getResultValue());
   }
 
-  @Test(enabled = true, description = "incorrect address hex test isContract Command")
-  public void test03IncorrectHashContract() {
-    PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
-    String contractName = "testIsContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Protocol.Account info;
-    GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
-        .getAccountResource(contractExcAddress,
-            blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-
-    String input = "ac5a3e290000000000000000000000123456789123456789";
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", input, true,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info(infoById.toString());
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
-        .contains("REVERT opcode executed"));
-    Long fee = infoById.get().getFee();
-    Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
-    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
-    logger.info("fee:" + fee);
-    logger.info("netUsed:" + netUsed);
-    logger.info("energyUsed:" + energyUsed);
-    logger.info("netFee:" + netFee);
-    logger.info("energyUsageTotal:" + energyUsageTotal);
-    Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
-    GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
-        .getAccountResource(contractExcAddress,
-            blockingStubFull1);
-    Long afterBalance = infoafter.getBalance();
-    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
-    Long afterNetUsed = resourceInfoafter.getNetUsed();
-    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-    logger.info("afterBalance:" + afterBalance);
-    logger.info("afterEnergyUsed:" + afterEnergyUsed);
-    logger.info("afterNetUsed:" + afterNetUsed);
-    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-    Assert.assertTrue(afterBalance + fee == beforeBalance);
-    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
-    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
-    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-
-    TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress,
-            "testIsContractView(address)", input, true,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("FAILED",
-        transactionExtention.getTransaction().getRet(0).getRet().toString());
-    Assert.assertEquals("REVERT opcode executed",
-        transactionExtention.getResult().getMessage().toStringUtf8());
-  }
-
-  @Test(enabled = true, description = "empty addresses hash test isContract Command")
-  public void test04EmptyAddressHashContract() {
-    PublicMethed
-        .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
-            blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/TvmIsContract001.sol";
-    String contractName = "testIsContract";
-    HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
-    String code = retMap.get("byteCode").toString();
-    String abi = retMap.get("abI").toString();
-
-    contractAddress = PublicMethed.deployContract(contractName, abi, code, "", maxFeeLimit,
-        0L, 100, null, contractExcKey,
-        contractExcAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
-    Protocol.Account info;
-    GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
-        .getAccountResource(contractExcAddress,
-            blockingStubFull);
-    info = PublicMethed.queryAccount(contractExcKey, blockingStubFull);
-    Long beforeBalance = info.getBalance();
-    Long beforeEnergyUsed = resourceInfo.getEnergyUsed();
-    Long beforeNetUsed = resourceInfo.getNetUsed();
-    Long beforeFreeNetUsed = resourceInfo.getFreeNetUsed();
-    logger.info("beforeBalance:" + beforeBalance);
-    logger.info("beforeEnergyUsed:" + beforeEnergyUsed);
-    logger.info("beforeNetUsed:" + beforeNetUsed);
-    logger.info("beforeFreeNetUsed:" + beforeFreeNetUsed);
-    String input = "ac5a3e29";
-    String txid = "";
-    txid = PublicMethed.triggerContract(contractAddress,
-        "testIsContractCommand(address)", input, true,
-        0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    Optional<Protocol.TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    logger.info(infoById.toString());
-    Assert.assertTrue(infoById.get().getResultValue() == 1);
-    Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
-        .contains("REVERT opcode executed"));
-    Long fee = infoById.get().getFee();
-    Long netUsed = infoById.get().getReceipt().getNetUsage();
-    Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
-    Long netFee = infoById.get().getReceipt().getNetFee();
-    long energyUsageTotal = infoById.get().getReceipt().getEnergyUsageTotal();
-    logger.info("fee:" + fee);
-    logger.info("netUsed:" + netUsed);
-    logger.info("energyUsed:" + energyUsed);
-    logger.info("netFee:" + netFee);
-    logger.info("energyUsageTotal:" + energyUsageTotal);
-    Protocol.Account infoafter = PublicMethed.queryAccount(contractExcKey, blockingStubFull1);
-    GrpcAPI.AccountResourceMessage resourceInfoafter = PublicMethed
-        .getAccountResource(contractExcAddress,
-            blockingStubFull1);
-    Long afterBalance = infoafter.getBalance();
-    Long afterEnergyUsed = resourceInfoafter.getEnergyUsed();
-    Long afterNetUsed = resourceInfoafter.getNetUsed();
-    Long afterFreeNetUsed = resourceInfoafter.getFreeNetUsed();
-    logger.info("afterBalance:" + afterBalance);
-    logger.info("afterEnergyUsed:" + afterEnergyUsed);
-    logger.info("afterNetUsed:" + afterNetUsed);
-    logger.info("afterFreeNetUsed:" + afterFreeNetUsed);
-    Assert.assertTrue(afterBalance + fee == beforeBalance);
-    Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
-    Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
-    Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-
-    TransactionExtention transactionExtention = PublicMethed
-        .triggerConstantContractForExtention(contractAddress,
-            "testIsContractView(address)", input, true,
-            0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
-    Assert.assertEquals("FAILED",
-        transactionExtention.getTransaction().getRet(0).getRet().toString());
-    Assert.assertEquals("REVERT opcode executed",
-        transactionExtention.getResult().getMessage().toStringUtf8());
-  }
-
-
   /**
    * constructor.
    */
@@ -361,7 +190,6 @@ public class isContractCommand002 {
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
-    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
