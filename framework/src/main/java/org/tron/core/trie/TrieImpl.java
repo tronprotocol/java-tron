@@ -1,9 +1,9 @@
 package org.tron.core.trie;
 
 import static org.apache.commons.lang3.concurrent.ConcurrentUtils.constantFuture;
-import static org.tron.common.crypto.Hash.EMPTY_TRIE_HASH;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.toHexString;
+import static org.tron.common.utils.Hash.EMPTY_TRIE_HASH;
 import static org.tron.core.capsule.utils.RLP.EMPTY_ELEMENT_RLP;
 import static org.tron.core.capsule.utils.RLP.encodeElement;
 import static org.tron.core.capsule.utils.RLP.encodeList;
@@ -22,7 +22,7 @@ import org.apache.commons.lang3.text.StrBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
+import org.tron.common.utils.Hash;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;

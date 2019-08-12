@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -78,8 +79,8 @@ public class AssetIssueActuator extends AbstractActuator {
             .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       }
 
-      dbManager.adjustBalance(ownerAddress, -fee);
-      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
+      Commons.adjustBalance(dbManager.getAccountStore(), ownerAddress, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), dbManager.getAccountStore().getBlackhole().getAddress().toByteArray(),
           fee);//send to blackhole
 
       AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
@@ -153,7 +154,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     byte[] ownerAddress = assetIssueContract.getOwnerAddress().toByteArray();
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 

@@ -18,7 +18,8 @@
 
 package org.tron.common.overlay.discover.node;
 
-import static org.tron.common.crypto.Hash.sha3;
+
+import static org.tron.common.utils.Hash.sha3;
 
 import java.io.Serializable;
 import java.net.URI;

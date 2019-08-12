@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -67,7 +68,7 @@ public class WitnessCreateActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -125,9 +126,9 @@ public class WitnessCreateActuator extends AbstractActuator {
     }
     this.dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     long cost = dbManager.getDynamicPropertiesStore().getAccountUpgradeCost();
-    dbManager.adjustBalance(witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
+    Commons.adjustBalance(dbManager.getAccountStore(), witnessCreateContract.getOwnerAddress().toByteArray(), -cost);
 
-    dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +cost);
+    Commons.adjustBalance(dbManager.getAccountStore(), this.dbManager.getAccountStore().getBlackhole().createDbKey(), +cost);
 
     dbManager.getDynamicPropertiesStore().addTotalCreateWitnessCost(cost);
   }

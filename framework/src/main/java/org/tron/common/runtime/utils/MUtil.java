@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.tron.common.runtime.vm.VMUtils;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
@@ -23,7 +24,7 @@ public class MUtil {
     if (0 == amount) {
       return;
     }
-    TransferActuator.validateForSmartContract(deposit, fromAddress, toAddress, amount);
+    VMUtils.validateForSmartContract(deposit, fromAddress, toAddress, amount);
     deposit.addBalance(toAddress, amount);
     deposit.addBalance(fromAddress, -amount);
   }
@@ -47,7 +48,7 @@ public class MUtil {
     if (0 == amount) {
       return;
     }
-    TransferAssetActuator
+    VMUtils
         .validateForSmartContract(deposit, fromAddress, toAddress, tokenId.getBytes(), amount);
     deposit.addTokenBalance(toAddress, tokenId.getBytes(), amount);
     deposit.addTokenBalance(fromAddress, tokenId.getBytes(), -amount);

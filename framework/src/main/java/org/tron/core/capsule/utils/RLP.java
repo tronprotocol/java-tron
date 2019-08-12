@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.Value;
 
 /**

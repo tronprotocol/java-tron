@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.EnergyCost;
@@ -55,6 +54,7 @@ import org.tron.common.runtime.vm.OpCode;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.VM;
 import org.tron.common.runtime.vm.VMConstant;
+import org.tron.common.runtime.vm.VMUtils;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -66,6 +66,7 @@ import org.tron.common.runtime.vm.trace.ProgramTraceListener;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
@@ -513,7 +514,7 @@ public class Program {
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
       try {
-        TransferActuator.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
+        VMUtils.validateForSmartContract(deposit, senderAddress, newAddress, endowment);
       } catch (ContractValidateException e) {
         // TODO: unreachable exception
         throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());
@@ -703,7 +704,7 @@ public class Program {
         && senderAddress != contextAddress && endowment > 0) {
       if (!isTokenTransfer) {
         try {
-          TransferActuator
+          VMUtils
               .validateForSmartContract(deposit, senderAddress, contextAddress, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
@@ -716,7 +717,7 @@ public class Program {
         contextBalance = deposit.addBalance(contextAddress, endowment);
       } else {
         try {
-          TransferAssetActuator.validateForSmartContract(deposit, senderAddress, contextAddress,
+          VMUtils.validateForSmartContract(deposit, senderAddress, contextAddress,
               tokenId, endowment);
         } catch (ContractValidateException e) {
           if (VMConfig.allowTvmConstantinople()) {
@@ -1427,7 +1428,7 @@ public class Program {
         }
       } else {
         try {
-          TransferAssetActuator
+          VMUtils
               .validateForSmartContract(deposit, senderAddress, contextAddress, tokenId, endowment);
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException(VALIDATE_FOR_SMART_CONTRACT_FAILURE, e.getMessage());

@@ -10,8 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
@@ -22,6 +22,7 @@ import org.tron.core.exception.BadBlockException;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 import org.tron.core.trie.TrieImpl.ScanAction;
+
 
 @Slf4j(topic = "AccountState")
 @Component

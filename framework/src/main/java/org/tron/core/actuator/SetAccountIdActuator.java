@@ -4,15 +4,16 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.Commons;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.core.db.AccountIdIndexStore;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Contract.SetAccountIdContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -73,7 +74,7 @@ public class SetAccountIdActuator extends AbstractActuator {
     if (!TransactionUtil.validAccountId(accountId)) {
       throw new ContractValidateException("Invalid accountId");
     }
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
 

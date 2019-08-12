@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksIterator;
-import org.tron.core.db.common.iterator.DBIterator;
 
 
 @Slf4j

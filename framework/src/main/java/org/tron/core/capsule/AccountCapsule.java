@@ -192,10 +192,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getAddress().toByteArray();
   }
 
-  public String createReadableString() {
-    return ByteArray.toHexString(getAddress().toByteArray());
-  }
-
   public AccountType getType() {
     return this.account.getType();
   }

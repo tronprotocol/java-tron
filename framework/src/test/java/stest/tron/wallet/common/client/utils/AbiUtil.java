@@ -8,7 +8,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 

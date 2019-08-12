@@ -42,7 +42,6 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
-import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -69,6 +68,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
     this.dataBaseName = dataBaseName;
     this.options = options;
     this.writeOptions = writeOptions;
+    initDB();
   }
 
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName) {

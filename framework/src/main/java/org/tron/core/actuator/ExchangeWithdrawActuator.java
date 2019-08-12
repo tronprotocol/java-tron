@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -37,7 +38,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       AccountCapsule accountCapsule = dbManager.getAccountStore()
           .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
-      ExchangeCapsule exchangeCapsule = dbManager.getExchangeStoreFinal().
+      ExchangeCapsule exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
@@ -88,7 +90,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
       dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
 
-      dbManager.putExchangeCapsule(exchangeCapsule);
+      Commons.putExchangeCapsule(exchangeCapsule, dbManager.getDynamicPropertiesStore(),
+          dbManager.getExchangeStore(), dbManager.getExchangeV2Store(), dbManager.getAssetIssueStore());
 
       ret.setExchangeWithdrawAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
@@ -128,7 +131,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
 
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -144,7 +147,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = dbManager.getExchangeStoreFinal().
+      exchangeCapsule = Commons.getExchangeStoreFinal(dbManager.getDynamicPropertiesStore(), dbManager.getExchangeStore(), dbManager.getExchangeV2Store()).
           get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + "] not exists");

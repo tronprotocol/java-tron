@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -227,7 +228,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
       throw new ContractValidateException(e.getMessage());
     }
     byte[] ownerAddress = unfreezeBalanceContract.getOwnerAddress().toByteArray();
-    if (!Wallet.addressValid(ownerAddress)) {
+    if (!Commons.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid address");
     }
 
@@ -247,7 +248,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             "receiverAddress must not be the same as ownerAddress");
       }
 
-      if (!Wallet.addressValid(receiverAddress)) {
+      if (!Commons.addressValid(receiverAddress)) {
         throw new ContractValidateException("Invalid receiverAddress");
       }
 
@@ -325,7 +326,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
             }
           }
 
-          if (delegatedResourceCapsule.getExpireTimeForEnergy(dbManager) > now) {
+          if (delegatedResourceCapsule.getExpireTimeForEnergy(dbManager.getDynamicPropertiesStore()) > now) {
             throw new ContractValidateException("It's not time to unfreeze.");
           }
           break;

@@ -8,12 +8,13 @@ import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -24,19 +25,19 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.CodeStore;
-import org.tron.core.db.ContractStore;
-import org.tron.core.db.DelegatedResourceStore;
 import org.tron.core.db.Manager;
-import org.tron.core.db.ProposalStore;
 import org.tron.core.db.TransactionStore;
-import org.tron.core.db.VotesStore;
-import org.tron.core.db.WitnessStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.ContractStore;
+import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ProposalStore;
+import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -360,7 +361,8 @@ public class DepositImpl implements Deposit {
     if (this.parent != null) {
       assetIssueCapsule = parent.getAssetIssue(tokenIdWithoutLeadingZero);
     } else {
-      assetIssueCapsule = this.dbManager.getAssetIssueStoreFinal().get(tokenIdWithoutLeadingZero);
+      assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
+          dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).get(tokenIdWithoutLeadingZero);
     }
     if (assetIssueCapsule != null) {
       assetIssueCache.put(key, Value.create(assetIssueCapsule.getData()));

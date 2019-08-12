@@ -58,6 +58,7 @@ public class FullNode {
     DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
+    DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
   }
 
   /**
