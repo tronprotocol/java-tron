@@ -707,7 +707,6 @@ public class PrecompiledContracts {
                 "can't initiate VoteWitnessActuator for precompiled vm method");
           }
         }
-        voteWitnessActuator.setDeposit(getDeposit());
         voteWitnessActuator.validate();
         voteWitnessActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
@@ -894,7 +893,6 @@ public class PrecompiledContracts {
           }
         }
 
-        withdrawBalanceActuator.setDeposit(getDeposit());
         withdrawBalanceActuator.validate();
         withdrawBalanceActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
@@ -970,7 +968,6 @@ public class PrecompiledContracts {
                 "can't initiate ProposalApproveActuator for precompiled vm method");
           }
         }
-        proposalApproveActuator.setDeposit(getDeposit());
         proposalApproveActuator.validate();
         proposalApproveActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {
@@ -1054,7 +1051,6 @@ public class PrecompiledContracts {
                 "can't initiate ProposalCreateActuator for precompiled vm method");
           }
         }
-        proposalCreateActuator.setDeposit(getDeposit());
         proposalCreateActuator.validate();
         proposalCreateActuator.execute(getResult().getRet());
         id = getDeposit().getLatestProposalNum();
@@ -1124,7 +1120,6 @@ public class PrecompiledContracts {
                 "can't initiate ProposalDeleteActuator for precompiled vm method");
           }
         }
-        proposalDeleteActuator.setDeposit(getDeposit());
         proposalDeleteActuator.validate();
         proposalDeleteActuator.execute(getResult().getRet());
       } catch (ContractExeException e) {

@@ -16,7 +16,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 
 @Slf4j(topic = "utils")

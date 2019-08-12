@@ -17,7 +17,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
+import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;

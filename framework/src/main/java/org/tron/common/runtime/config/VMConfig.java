@@ -22,8 +22,8 @@ import static org.tron.common.utils.DBConfig.ALLOW_TVM_CONSTANTINOPLE;
 import lombok.Setter;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 
 /**
  * For developer only

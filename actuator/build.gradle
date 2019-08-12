@@ -62,10 +62,10 @@ dependencies {
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
     compile "org.projectlombok:lombok:$lombokVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile  "com.github.wubinTron:protocol:master-SNAPSHOT"
-    compile 'com.github.tronprotocol:chainbase:forkinstance-SNAPSHOT'
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "org.apache.commons:commons-lang3:3.4"
+    compile project(":protocol")
+    compile project(":chainbase")
 }
 
 //javadoc {
