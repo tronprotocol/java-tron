@@ -16,6 +16,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db.Manager;
+import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.BadBlockException;
@@ -26,11 +27,9 @@ import org.tron.core.trie.TrieImpl.ScanAction;
 
 @Slf4j(topic = "AccountState")
 @Component
-public class AccountStateCallBack {
+public class AccountStateCallBack extends AccountStateCallBackUtils {
 
   private BlockCapsule blockCapsule;
-  private volatile boolean execute = false;
-  private volatile boolean allowGenerateRoot = false;
   private TrieImpl trie;
 
   @Setter
@@ -38,48 +37,6 @@ public class AccountStateCallBack {
 
   @Autowired
   private AccountStateStoreTrie db;
-
-  private List<TrieEntry> trieEntryList = new ArrayList<>();
-
-  private static class TrieEntry {
-
-    private byte[] key;
-    private byte[] data;
-
-    public byte[] getKey() {
-      return key;
-    }
-
-    public TrieEntry setKey(byte[] key) {
-      this.key = key;
-      return this;
-    }
-
-    public byte[] getData() {
-      return data;
-    }
-
-    public TrieEntry setData(byte[] data) {
-      this.data = data;
-      return this;
-    }
-
-    public static TrieEntry build(byte[] key, byte[] data) {
-      TrieEntry trieEntry = new TrieEntry();
-      return trieEntry.setKey(key).setData(data);
-    }
-  }
-
-  public void accountCallBack(byte[] key, AccountCapsule item) {
-    if (!exe()) {
-      return;
-    }
-    if (item == null) {
-      return;
-    }
-    trieEntryList
-        .add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
-  }
 
   public void preExeTrans() {
     trieEntryList.clear();
@@ -156,15 +113,6 @@ public class AccountStateCallBack {
 
   public void exceptionFinish() {
     execute = false;
-  }
-
-  private boolean exe() {
-    if (!execute || !allowGenerateRoot) {
-      //Agreement same block high to generate account state root
-      execute = false;
-      return false;
-    }
-    return true;
   }
 
   private void printErrorLog(TrieImpl trie) {
