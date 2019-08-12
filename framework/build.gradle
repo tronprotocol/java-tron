@@ -187,6 +187,7 @@ dependencies {
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
     compile project(":chainbase")
     compile project(":protocol")
+    compile project(":actuator")
 }
 
 check.dependsOn 'lint'

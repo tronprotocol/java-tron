@@ -34,7 +34,7 @@ public class ForkUtils {
     this.dynamicPropertiesStore = dynamicPropertiesStore;
   }
 
-  public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
+    public boolean pass(ForkBlockVersionEnum forkBlockVersionEnum) {
     return pass(forkBlockVersionEnum.getValue());
   }
 

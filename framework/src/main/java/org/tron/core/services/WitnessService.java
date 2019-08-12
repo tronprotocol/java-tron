@@ -1,7 +1,10 @@
 package org.tron.core.services;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
@@ -75,7 +78,8 @@ public class WitnessService implements Service {
   private AtomicInteger dupBlockCount = new AtomicInteger(0);
   private AtomicLong dupBlockTime = new AtomicLong(0);
   private long blockCycle =
-      ChainConstant.BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+      BLOCK_PRODUCED_INTERVAL * ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+  private Cache<ByteString, Long> blocks = CacheBuilder.newBuilder().maximumSize(10).build();
   /**
    * Cycle thread to generate blocks
    */
@@ -92,11 +96,11 @@ public class WitnessService implements Service {
               Thread.sleep(500L);
             } else {
               DateTime time = DateTime.now();
-              long timeToNextSecond = ChainConstant.BLOCK_PRODUCED_INTERVAL
+              long timeToNextSecond = BLOCK_PRODUCED_INTERVAL
                   - (time.getSecondOfMinute() * 1000 + time.getMillisOfSecond())
-                  % ChainConstant.BLOCK_PRODUCED_INTERVAL;
+                  % BLOCK_PRODUCED_INTERVAL;
               if (timeToNextSecond < 50L) {
-                timeToNextSecond = timeToNextSecond + ChainConstant.BLOCK_PRODUCED_INTERVAL;
+                timeToNextSecond = timeToNextSecond + BLOCK_PRODUCED_INTERVAL;
               }
               DateTime nextTime = time.plus(timeToNextSecond);
               logger.debug(
@@ -263,8 +267,8 @@ public class WitnessService implements Service {
         int blockProducedTimeOut = Args.getInstance().getBlockProducedTimeOut();
 
         long timeout = Math
-            .min(ChainConstant.BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
-                ChainConstant.BLOCK_PRODUCED_INTERVAL);
+            .min(BLOCK_PRODUCED_INTERVAL * blockProducedTimeOut / 100 + 500,
+                BLOCK_PRODUCED_INTERVAL);
         if (DateTime.now().getMillis() - now > timeout) {
           logger.warn("Task timeout ( > {}ms)，startTime:{},endTime:{}", timeout, new DateTime(now),
               DateTime.now());
@@ -336,6 +340,11 @@ public class WitnessService implements Service {
 
   public void checkDupWitness(BlockCapsule block) {
     if (block.generatedByMyself) {
+      blocks.put(block.getBlockId().getByteString(), System.currentTimeMillis());
+      return;
+    }
+
+    if (blocks.getIfPresent(block.getBlockId().getByteString()) != null) {
       return;
     }
 
@@ -343,7 +352,7 @@ public class WitnessService implements Service {
       return;
     }
 
-    if (System.currentTimeMillis() - block.getTimeStamp() > ChainConstant.BLOCK_PRODUCED_INTERVAL) {
+    if (System.currentTimeMillis() - block.getTimeStamp() > BLOCK_PRODUCED_INTERVAL) {
       return;
     }
 

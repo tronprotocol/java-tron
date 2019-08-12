@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.common.collect.Lists;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -118,7 +120,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         MessageCount tronOutAdvBlock = peer.getNodeStatistics().messageStatistics.tronOutAdvBlock;
         tronOutAdvBlock.add(fetchInvDataMsg.getHashList().size());
         int outBlockCountIn1min = tronOutAdvBlock.getCount(60);
-        int producedBlockIn2min = 120_000 / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+        int producedBlockIn2min = 120_000 / BLOCK_PRODUCED_INTERVAL;
         if (outBlockCountIn1min > producedBlockIn2min) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "producedBlockIn2min: " + producedBlockIn2min
               + ", outBlockCountIn1min: " + outBlockCountIn1min);
