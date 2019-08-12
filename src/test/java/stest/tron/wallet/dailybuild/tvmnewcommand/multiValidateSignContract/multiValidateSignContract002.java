@@ -38,7 +38,6 @@ public class multiValidateSignContract002 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -54,8 +53,6 @@ public class multiValidateSignContract002 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -85,10 +82,6 @@ public class multiValidateSignContract002 {
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
 
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -105,8 +98,8 @@ public class multiValidateSignContract002 {
         contractExcAddress, blockingStubFull);
   }
 
-  @Test(enabled = true, description = "hash is empyt test multivalidatesign")
-  public void testIncorrect01multivalidatesign() {
+  @Test(enabled = true, description = "Hash is empty test multivalidatesign")
+  public void test01HashIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -130,8 +123,8 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "addresses is empyt test multivalidatesign")
-  public void testIncorrect02multivalidatesign() {
+  @Test(enabled = true, description = "Address is empty test multivalidatesign")
+  public void test02AddressIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -154,8 +147,8 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "signatures is empyt test multivalidatesign")
-  public void testIncorrect03multivalidatesign() {
+  @Test(enabled = true, description = "Signatures is empty test multivalidatesign")
+  public void test03SignaturesIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -178,8 +171,8 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "signatures and addresses empyt test multivalidatesign")
-  public void testIncorrect04multivalidatesign() {
+  @Test(enabled = true, description = "Signatures and addresses are empty test multivalidatesign")
+  public void test04SignaturesAndAddressesAreEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -197,8 +190,8 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "all empyt test multivalidatesign")
-  public void testIncorrect05multivalidatesign() {
+  @Test(enabled = true, description = "All empty test multivalidatesign")
+  public void test05AllEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -216,8 +209,8 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
-  public void testIncorrect06multivalidatesign() {
+  @Test(enabled = true, description = "Correct data test multivalidatesign")
+  public void test06CorrectData() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -285,20 +278,14 @@ public class multiValidateSignContract002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
-    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 

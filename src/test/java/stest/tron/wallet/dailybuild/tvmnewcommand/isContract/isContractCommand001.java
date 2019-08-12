@@ -102,8 +102,8 @@ public class isContractCommand001 {
   }
 
 
-  @Test(enabled = true, description = "correct contract address test")
-  public void test01CorrectContract() {
+  @Test(enabled = true, description = "Correct contract address test")
+  public void test01CorrectContractAddress() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
@@ -164,7 +164,7 @@ public class isContractCommand001 {
         .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = " account Address test")
+  @Test(enabled = true, description = "Account address test")
   public void test02AccountAddress() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
@@ -227,7 +227,7 @@ public class isContractCommand001 {
         .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "nonexistent Account Address test")
+  @Test(enabled = true, description = "Nonexistent account address test")
   public void test03NonexistentAddress() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
@@ -289,7 +289,7 @@ public class isContractCommand001 {
         .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "constructor return test")
+  @Test(enabled = true, description = "Constructor return test")
   public void test04ConstructorReturn() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;
@@ -357,20 +357,14 @@ public class isContractCommand001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
-    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 

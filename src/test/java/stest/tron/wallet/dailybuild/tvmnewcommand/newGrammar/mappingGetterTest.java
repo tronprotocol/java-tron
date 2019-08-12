@@ -150,6 +150,9 @@ public class mappingGetterTest {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    long balance = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(fromAddress, balance, dev001Address, dev001Key,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -33,7 +33,6 @@ public class isContractCommand002 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -46,8 +45,6 @@ public class isContractCommand002 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
   byte[] selfdestructContractAddress = null;
 
@@ -84,8 +81,8 @@ public class isContractCommand002 {
   }
 
 
-  @Test(enabled = true, description = "selfdestruct contract test isContract Command")
-  public void test01selfdestructContract() {
+  @Test(enabled = true, description = "Selfdestruct contract test isContract Command")
+  public void test01SelfdestructContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull));
@@ -159,7 +156,7 @@ public class isContractCommand002 {
         .assertEquals(0, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "no constructor test isContract Command")
+  @Test(enabled = true, description = "No constructor test isContract Command")
   public void test02NoConstructorContract() {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractExcAddress, 10000000000L, testNetAccountAddress, testNetAccountKey,
@@ -185,19 +182,14 @@ public class isContractCommand002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 

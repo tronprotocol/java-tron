@@ -82,11 +82,6 @@ public class multiValidateSignContract001 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -104,8 +99,8 @@ public class multiValidateSignContract001 {
   }
 
 
-  @Test(enabled = true, description = "correct signatures and address test multivalidatesign")
-  public void test01multivalidatesign() {
+  @Test(enabled = true, description = "Correct data test pure multivalidatesign")
+  public void test01CorrectData() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -132,9 +127,8 @@ public class multiValidateSignContract001 {
   }
 
 
-  @Test(enabled = true, description = "incorrect address test multivalidatesign")
-  public void test02multivalidatesign() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+  @Test(enabled = true, description = "Incorrect address test pure multivalidatesign")
+  public void test02IncorrectAddress() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
@@ -159,9 +153,8 @@ public class multiValidateSignContract001 {
 
   }
 
-  @Test(enabled = true, description = "incorrect signatures test multivalidatesign")
-  public void test03multivalidatesign() {
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+  @Test(enabled = true, description = "Incorrect signatures test pure multivalidatesign")
+  public void test03IncorrectSignatures() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
@@ -184,8 +177,8 @@ public class multiValidateSignContract001 {
 
   }
 
-  @Test(enabled = true, description = "incorrect hash test multivalidatesign")
-  public void test04multivalidatesign() {
+  @Test(enabled = true, description = "Incorrect hash test pure multivalidatesign")
+  public void test04IncorrectHash() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -227,8 +220,8 @@ public class multiValidateSignContract001 {
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
   }
 
-  @Test(enabled = true, description = "Extra long addresses and signatures array test multivalidatesign")
-  public void test05multivalidatesign() {
+  @Test(enabled = true, description = "Extra long addresses and signatures array test pure multivalidatesign")
+  public void test05ExtraLongArray() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -262,20 +255,14 @@ public class multiValidateSignContract001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
-    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 

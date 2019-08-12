@@ -4,11 +4,9 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,7 +32,6 @@ public class multiValidateSignContract005 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -94,8 +91,8 @@ public class multiValidateSignContract005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "trigger precompile multivalisign function with correct data")
-  public void test01triggerPrecompileMultivalisignWithCorrectData() {
+  @Test(enabled = true, description = "Trigger precompile multivalisign function with correct data")
+  public void test01TriggerPrecompileMultivalisignWithCorrectData() {
     String input = "d5d16b4c4a4143e94b3e9858440e462f2713a6b9a83e6da870a52efe84aa3aff00000000000"
         + "000000000000000000000000000000000000000000000000000600000000000000000000000000000000"
         + "000000000000000000000000000001160000000000000000000000000000000000000000000000000000"
@@ -248,9 +245,9 @@ public class multiValidateSignContract005 {
 
   }
 
-  @Test(enabled = true, description = "trigger precompile multivalidatesign function with incor"
+  @Test(enabled = true, description = "Trigger precompile multivalidatesign function with incor"
       + "rect data")
-  public void test02triggerPrecompileMultivalisignWithIncorrectData() {
+  public void test02TriggerPrecompileMultivalisignWithIncorrectData() {
     String input = "d5d16b4c4a4143e94b3e9858440e462f2713a6b9a83e6da870a52efe84aa3aff00000000000"
         + "000000000000000000000000000000000000000000000000000600000000000000000000000000000000"
         + "000000000000000000000000000001160000000000000000000000000000000000000000000000000000"
@@ -408,39 +405,15 @@ public class multiValidateSignContract005 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-  }
-
-  private String parametersString(List<Object> parameters) {
-    String[] inputArr = new String[parameters.size()];
-    int i = 0;
-    for (Object parameter : parameters) {
-      if (parameter instanceof List) {
-        StringBuilder sb = new StringBuilder();
-        for (Object item : (List) parameter) {
-          if (sb.length() != 0) {
-            sb.append(",");
-          }
-          sb.append("\"").append(item).append("\"");
-        }
-        inputArr[i++] = "[" + sb.toString() + "]";
-      } else {
-        inputArr[i++] =
-            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
-      }
-    }
-    String input = StringUtils.join(inputArr, ',');
-    return input;
   }
 
 }

@@ -37,8 +37,8 @@ public class constructorDefaultsTest {
       .getLong("defaultParameter.maxFeeLimit");
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract004Address = ecKey1.getAddress();
-  String contract004Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+  byte[] dev001Address = ecKey1.getAddress();
+  String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -52,18 +52,18 @@ public class constructorDefaultsTest {
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
-    PublicMethed.printAddress(contract004Key);
+    PublicMethed.printAddress(dev001Key);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
-  public void TestConstructorDefaults() {
+  @Test(enabled = true, description = "Constructor default test")
+  public void Test01ConstructorDefault() {
     Assert.assertTrue(PublicMethed
-        .sendcoin(contract004Address, 200000000L, fromAddress, testKey002, blockingStubFull));
-    AccountResourceMessage accountResource = PublicMethed.getAccountResource(contract004Address,
+        .sendcoin(dev001Address, 200000000L, fromAddress, testKey002, blockingStubFull));
+    AccountResourceMessage accountResource = PublicMethed.getAccountResource(dev001Address,
         blockingStubFull);
     String filePath = "./src/test/resources/soliditycode/ConstructorDefaults.sol";
     String contractName = "testIsContract";
@@ -74,9 +74,9 @@ public class constructorDefaultsTest {
     String data = "0";
     String txid = PublicMethed
         .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
-            maxFeeLimit, 0L, 100, null, contract004Key, contract004Address, blockingStubFull);
+            maxFeeLimit, 0L, 100, null, dev001Key, dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-     byte [] contractaddress = null;
+    byte[] contractaddress = null;
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info(info.toString());
@@ -84,7 +84,7 @@ public class constructorDefaultsTest {
     data = "false";
     txid = PublicMethed
         .deployContractWithConstantParame(contractName, abi, code, constructorStr, data, "",
-            maxFeeLimit, 0L, 100, null, contract004Key, contract004Address, blockingStubFull);
+            maxFeeLimit, 0L, 100, null, dev001Key, dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     info = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
@@ -99,6 +99,9 @@ public class constructorDefaultsTest {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    long balance = PublicMethed.queryAccount(dev001Key, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(fromAddress, balance, dev001Address, dev001Key,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

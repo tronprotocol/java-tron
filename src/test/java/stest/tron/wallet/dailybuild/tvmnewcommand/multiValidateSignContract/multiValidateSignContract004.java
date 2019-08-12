@@ -39,7 +39,6 @@ public class multiValidateSignContract004 {
   private final byte[] testNetAccountAddress = PublicMethed.getFinalAddress(testNetAccountKey);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-  private ManagedChannel channelSolidity = null;
 
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -55,8 +54,6 @@ public class multiValidateSignContract004 {
   private String fullnode1 = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(1);
 
-  private String soliditynode = Configuration.getByPath("testng.conf")
-      .getStringList("solidityNode.ip.list").get(0);
   byte[] contractAddress = null;
 
   ECKey ecKey1 = new ECKey(Utils.getRandom());
@@ -84,16 +81,11 @@ public class multiValidateSignContract004 {
         .usePlaintext(true)
         .build();
     blockingStubFull1 = WalletGrpc.newBlockingStub(channelFull1);
-
-    channelSolidity = ManagedChannelBuilder.forTarget(soliditynode)
-        .usePlaintext(true)
-        .build();
-    blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
   }
 
 
-  @Test(enabled = true, description = "constructor test multivalidatesign")
-  public void test01multivalidatesign() {
+  @Test(enabled = true, description = "Constructor test multivalidatesign")
+  public void test01Constructor() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -137,8 +129,8 @@ public class multiValidateSignContract004 {
         .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = true, description = "incorrect address hex test multivalidatesign")
-  public void test02multivalidatesign() {
+  @Test(enabled = true, description = "Incorrect address hex test multivalidatesign")
+  public void test02IncorrectAddressHex() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -205,8 +197,8 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "empty address and signatures hex test multivalidatesign")
-  public void test03multivalidatesign() {
+  @Test(enabled = true, description = "Empty address and signatures hex test multivalidatesign")
+  public void test03EmptyAddressAndSignaturesHex() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress,
             testNetAccountKey,
@@ -279,20 +271,14 @@ public class multiValidateSignContract004 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
-    long beforeBalance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
-    PublicMethed.sendcoin(testNetAccountAddress, beforeBalance, contractExcAddress, contractExcKey,
+    long balance = PublicMethed.queryAccount(contractExcKey, blockingStubFull).getBalance();
+    PublicMethed.sendcoin(testNetAccountAddress, balance, contractExcAddress, contractExcKey,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Long afterBalancer = PublicMethed.queryAccount(contractExcKey, blockingStubFull1).getBalance();
-    logger.info("Balance:" + afterBalancer);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
     if (channelFull1 != null) {
       channelFull1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
   }
 
