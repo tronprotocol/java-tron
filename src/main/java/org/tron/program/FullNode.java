@@ -83,7 +83,9 @@ public class FullNode {
     if (cfgArgs.isGenerate()) {
       logger.info("is generate is true");
       new TransactionGenerator(context, cfgArgs.getStressCount()).start();
+
     }
+
 
     if (cfgArgs.isReplayGenerate()) {
       logger.info("Collect mainnet flow is true");
@@ -125,6 +127,7 @@ public class FullNode {
     FileInputStream fis = null;
     long startTime = System.currentTimeMillis();
     long trxCount = 0;
+
 
     saveTransactionIDPool.submit(() -> {
       BufferedWriter bufferedWriter = null;
@@ -174,6 +177,10 @@ public class FullNode {
         }
       }
     });
+
+    if(cfgArgs.getStressTps() < 5) {
+      System.exit(1);
+    }
 
     try {
       fis = new FileInputStream(f);
