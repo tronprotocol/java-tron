@@ -56,15 +56,15 @@ public class MultiValidateSignContractTest {
     List<Object> incorrectSigns = new ArrayList<>(signatures);
     incorrectSigns.remove(incorrectSigns.size() - 1);
     incorrectSigns.add(Hex.toHexString(incorrectSign));
-    ret = validateMultiSign(incorrectHash, signatures, addresses);
+    ret = validateMultiSign(hash, incorrectSigns, addresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
 
     // incorrect address
-    byte[] address = DataWord.ONE().getData();
-    List<Object> incorrectAddresses = new ArrayList<>(signatures);
+    List<Object> incorrectAddresses = new ArrayList<>(addresses);
     incorrectAddresses.remove(incorrectSigns.size() - 1);
-    incorrectAddresses.add(Hex.toHexString(address));
-    ret = validateMultiSign(incorrectHash, signatures, addresses);
+    ECKey newKey = new ECKey();
+    incorrectAddresses.add(Wallet.encode58Check(newKey.getAddress()));
+    ret = validateMultiSign(hash, signatures, incorrectAddresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
   }
 

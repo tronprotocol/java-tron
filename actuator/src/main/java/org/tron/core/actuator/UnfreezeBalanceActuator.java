@@ -35,8 +35,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
 
   UnfreezeBalanceActuator(Any contract, AccountStore accountStore, DynamicPropertiesStore dynamicStore, DelegatedResourceStore delegatedResourceStore,
       DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore, VotesStore votesStore) {
-    super(contract, accountStore, dynamicStore, delegatedResourceStore,
-        delegatedResourceAccountIndexStore, votesStore);
+    super(contract, accountStore, dynamicStore, delegatedResourceStore, delegatedResourceAccountIndexStore, votesStore);
   }
 
   @Override
@@ -56,11 +55,10 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     long oldBalance = accountCapsule.getBalance();
 
     long unfreezeBalance = 0L;
-    ;
 
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
-    //If the receiver is not included in the contract, unfreeze frozen balance for this accountStore.
-    //otherwise,unfreeze delegated frozen balance provided this accountStore.
+    //If the receiver is not included in the contract, unfreeze frozen balance for this account.
+    //otherwise,unfreeze delegated frozen balance provided this account.
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       byte[] key = DelegatedResourceCapsule
           .createDbKey(unfreezeBalanceContract.getOwnerAddress().toByteArray(),
@@ -89,10 +87,20 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract)) {
         switch (unfreezeBalanceContract.getResource()) {
           case BANDWIDTH:
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+            if (dynamicStore.supportShieldedTransaction()
+                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth() < unfreezeBalance) {
+              receiverCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+            } else {
+              receiverCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+            }
             break;
           case ENERGY:
-            receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+            if (dynamicStore.supportShieldedTransaction()
+                && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy() < unfreezeBalance) {
+              receiverCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+            } else {
+              receiverCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+            }
             break;
           default:
             //this should never happen
@@ -129,7 +137,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                 .getFromAccountsList());
             fromAccountsList.remove(ByteString.copyFrom(ownerAddress));
             delegatedResourceAccountIndexCapsule.setAllFromAccounts(fromAccountsList);
-            delegatedResourceAccountIndexStore
+           delegatedResourceAccountIndexStore
                 .put(receiverAddress, delegatedResourceAccountIndexCapsule);
           }
         }
@@ -144,7 +152,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           List<Frozen> frozenList = Lists.newArrayList();
           frozenList.addAll(accountCapsule.getFrozenList());
           Iterator<Frozen> iterator = frozenList.iterator();
-          long now =  dynamicStore.getLatestBlockHeaderTimestamp();
+          long now = dynamicStore.getLatestBlockHeaderTimestamp();
           while (iterator.hasNext()) {
             Frozen next = iterator.next();
             if (next.getExpireTime() <= now) {
@@ -179,11 +187,11 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     switch (unfreezeBalanceContract.getResource()) {
       case BANDWIDTH:
         dynamicStore
-            .addTotalNetWeight(-unfreezeBalance / 1000_000L);
+            .addTotalNetWeight(-unfreezeBalance / 1_000_000L);
         break;
       case ENERGY:
         dynamicStore
-            .addTotalEnergyWeight(-unfreezeBalance / 1000_000L);
+            .addTotalEnergyWeight(-unfreezeBalance / 1_000_000L);
         break;
       default:
         //this should never happen
@@ -243,8 +251,8 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     long now = dynamicStore.getLatestBlockHeaderTimestamp();
     byte[] receiverAddress = unfreezeBalanceContract.getReceiverAddress().toByteArray();
-    //If the receiver is not included in the contract, unfreeze frozen balance for this accountStore.
-    //otherwise,unfreeze delegated frozen balance provided this accountStore.
+    //If the receiver is not included in the contract, unfreeze frozen balance for this account.
+    //otherwise,unfreeze delegated frozen balance provided this account.
     if (!ArrayUtils.isEmpty(receiverAddress) && dynamicStore.supportDR()) {
       if (Arrays.equals(receiverAddress, ownerAddress)) {
         throw new ContractValidateException(
@@ -289,7 +297,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
-            if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
+            if (!dynamicStore.supportShieldedTransaction()
+                && receiverCapsule != null
+                && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
                 < delegatedResourceCapsule.getFrozenBalanceForBandwidth()) {
               throw new ContractValidateException(
@@ -318,7 +328,9 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
-            if (receiverCapsule != null && receiverCapsule.getType() != AccountType.Contract
+            if (!dynamicStore.supportShieldedTransaction()
+                && receiverCapsule != null
+                && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
                 < delegatedResourceCapsule.getFrozenBalanceForEnergy()) {
               throw new ContractValidateException(
