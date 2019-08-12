@@ -233,7 +233,7 @@ public class multiValidateSignContract001 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 150; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -256,6 +256,7 @@ public class multiValidateSignContract001 {
     Assert
         .assertEquals("CONTRACT_EXE_ERROR", transactionExtention.getResult().getCode().toString());
   }
+
   /**
    * constructor.
    */
