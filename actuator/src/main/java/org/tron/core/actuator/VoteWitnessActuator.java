@@ -21,6 +21,7 @@ import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Contract.VoteWitnessContract;
@@ -31,8 +32,8 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 public class VoteWitnessActuator extends AbstractActuator {
 
 
-  VoteWitnessActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,  VotesStore votesStore) {
-    super(contract, accountStore, witnessStore, votesStore);
+  VoteWitnessActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore,  VotesStore votesStore, DynamicPropertiesStore dynamicPropertiesStore) {
+    super(contract, accountStore, witnessStore, votesStore, dynamicPropertiesStore);
   }
 
   @Override
