@@ -51,13 +51,13 @@ public class LibrustzcashParam {
 
   public static void validValueParams(long value) throws ZksnarkException {
     if(value < 0){
-      throw new ZksnarkException("Value shoud be non-negative.");
+      throw new ZksnarkException("Value should be non-negative.");
     }
   }
 
   public static void validPositionParams(long value) throws ZksnarkException {
     if(value < 0){
-      throw new ZksnarkException("Position shoud be non-negative.");
+      throw new ZksnarkException("Position should be non-negative.");
     }
   }
 
@@ -830,7 +830,7 @@ public class LibrustzcashParam {
       valid11Params(d);
       valid32Params(pkD);
       if((ivk[31] >> 3) != 0){
-        throw new ZksnarkException("Most significant five bits of ivk shoud be 0.");
+        throw new ZksnarkException("Most significant five bits of ivk should be 0.");
       }
     }
   }
