@@ -683,7 +683,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       if (permissionId == 2) {
         permission = AccountCapsule
-            .createDefaultActivePermission(ByteString.copyFrom(owner), manager);
+            .createDefaultActivePermission(ByteString.copyFrom(owner), manager.getDynamicPropertiesStore());
       }
     } else {
       permission = account.getPermissionById(permissionId);
