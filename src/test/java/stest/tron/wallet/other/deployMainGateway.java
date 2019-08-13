@@ -36,6 +36,21 @@ public class deployMainGateway {
   private final byte[] testDepositAddress = PublicMethed.getFinalAddress(testDepositTrx);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
+  private final String foundationKey001 = Configuration.getByPath("testng.conf").
+      getString("foundationAccount.key1");
+  private final byte[] foundationAddress001 = PublicMethed.getFinalAddress(foundationKey001);
+  private final String foundationKey002 = Configuration.getByPath("testng.conf").
+      getString("foundationAccount.key2");
+  private final byte[] foundationAddress002 = PublicMethed.getFinalAddress(foundationKey002);
+
+
+  private static final long now = System.currentTimeMillis();
+  private static final long TotalSupply = 1000000000000000L;
+  String description = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetDescription");
+  String url = Configuration.getByPath("testng.conf")
+      .getString("defaultParameter.assetUrl");
+
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
 
@@ -70,7 +85,7 @@ public class deployMainGateway {
   }
 
   @Test(enabled = true, description = "deploy Main Chain Gateway")
-  public void test1DepositTrc20001() {
+  public void deplyMainChainGateway() {
 
     PublicMethed.printAddress(testKeyFordeposit);
 
@@ -125,8 +140,29 @@ public class deployMainGateway {
 
   }
 
+  @Test(enabled = true, description = "deploy Main Chain Gateway")
+  public void createTokenFoundation(){
+    logger.info("foundationAccount 001 : ");
+    PublicMethed.printAddress(foundationKey001);
+    logger.info("foundationAccount 002 : ");
+    PublicMethed.printAddress(foundationKey002);
+
+
+    long start = System.currentTimeMillis() + 2000;
+    long end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed.createAssetIssue(foundationAddress001,"testAssetIssue_001",TotalSupply,
+        1,1, start,end,1,description,url,maxFeeLimit,1000L,
+        1L,1L,foundationKey001,blockingStubFull));
+
+    start = System.currentTimeMillis() + 2000;
+    end = System.currentTimeMillis() + 1000000000;
+    Assert.assertTrue(PublicMethed.createAssetIssue(foundationAddress002,"testAssetIssue_002",TotalSupply,
+        1,1, start,end,1,description,url,maxFeeLimit,1000L,
+        1L,1L,foundationKey002,blockingStubFull));
+
+  }
   /**
-   * constructor.
+   * constructor
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
