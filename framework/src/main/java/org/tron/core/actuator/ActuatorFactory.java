@@ -69,7 +69,7 @@ public class ActuatorFactory {
         break;
       case VoteWitnessContract:
         return new VoteWitnessActuator(contract.getParameter(), manager.getAccountStore(),
-            manager.getWitnessStore(), manager.getVotesStore());
+            manager.getWitnessStore(), manager.getVotesStore(), manager.getDynamicPropertiesStore());
       case WitnessCreateContract:
         return new WitnessCreateActuator(contract.getParameter(), manager.getAccountStore(),
             manager.getDynamicPropertiesStore(), manager.getWitnessStore());

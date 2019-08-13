@@ -144,9 +144,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   /**
    * get account from address.
    */
+  /**
+   * get account from address.
+   */
   public AccountCapsule(ByteString address,
       AccountType accountType, long createTime,
-      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(address);
       Permission active = createDefaultActivePermission(address, dynamicPropertiesStore);
