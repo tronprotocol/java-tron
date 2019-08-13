@@ -98,7 +98,7 @@ public class deployMainGateway {
     PublicMethed.printAddress(testKeyFordeposit);
 
     Assert.assertTrue(PublicMethed
-        .sendcoin(depositAddress, 1000_000_000L, testDepositAddress, testDepositTrx,
+        .sendcoin(depositAddress, 10000000_000_000L, testDepositAddress, testDepositTrx,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -112,10 +112,10 @@ public class deployMainGateway {
     String abi = Configuration.getByPath("testng.conf")
         .getString("abi.abi_MainGateway");
     String parame = "\"" + Base58.encode58Check(testDepositAddress) + "\"";
-    String mainChainGatewayAddress = null;
+    String mainChainGatewayAddress = "3QJmnh";
 
     int tryCount = 0;
-    while (tryCount++ > 3){
+    while (tryCount++ < 3){
       String deployTxid = PublicMethed
           .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
               parame, "",
@@ -129,7 +129,7 @@ public class deployMainGateway {
       byte[] mainChainGateway = infoById.get().getContractAddress().toByteArray();
       mainChainGatewayAddress = WalletClient.encode58Check(mainChainGateway);
 
-      if(!mainChainGatewayAddress.equals("3QJmnh")){
+      if((!mainChainGatewayAddress.equals("3QJmnh"))&& !mainChainGatewayAddress.isEmpty()){
         break;
       }
     }
