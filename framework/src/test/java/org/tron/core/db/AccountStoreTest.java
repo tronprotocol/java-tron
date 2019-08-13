@@ -15,6 +15,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.AccountType;
 
 public class AccountStoreTest {

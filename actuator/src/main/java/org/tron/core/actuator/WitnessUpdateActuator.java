@@ -50,7 +50,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     if (this.contract == null) {
       throw new ContractValidateException("No contract!");
     }
-    if (accountStore == null || dynamicStore == null) {
+    if (accountStore == null || witnessStore == null) {
       throw new ContractValidateException("No account store or witness store!");
     }
     if (!this.contract.is(WitnessUpdateContract.class)) {
