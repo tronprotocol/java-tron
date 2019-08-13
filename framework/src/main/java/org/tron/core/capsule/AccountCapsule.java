@@ -192,10 +192,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return getAddress().toByteArray();
   }
 
-  public String createReadableString() {
-    return ByteArray.toHexString(getAddress().toByteArray());
-  }
-
   public AccountType getType() {
     return this.account.getType();
   }
@@ -340,6 +336,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getAcquiredDelegatedFrozenBalanceForEnergy() {
     return getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy();
+  }
+
+  public void setAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setAcquiredDelegatedFrozenBalanceForEnergy(balance).build();
+
+    this.account = this.account.toBuilder()
+            .setAccountResource(newAccountResource)
+            .build();
   }
 
   public long getDelegatedFrozenBalanceForEnergy() {

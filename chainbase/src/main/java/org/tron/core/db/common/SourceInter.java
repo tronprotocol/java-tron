@@ -17,8 +17,6 @@
  */
 package org.tron.core.db.common;
 
-import org.tron.common.storage.WriteOptionsWrapper;
-
 public interface SourceInter<K, V> {
 
   void putData(K key, V val);

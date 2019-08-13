@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -225,7 +226,8 @@ public class BandwidthProcessor extends ResourceProcessor {
     }
 
     AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
-    assetIssueCapsule = dbManager.getAssetIssueStoreFinal().get(assetName.toByteArray());
+    assetIssueCapsule = Commons.getAssetIssueStoreFinal(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store()).get(assetName.toByteArray());
     if (assetIssueCapsule == null) {
       throw new ContractValidateException("asset not exists");
     }

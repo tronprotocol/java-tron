@@ -701,7 +701,9 @@ public class RuntimeImpl implements Runtime {
       }
       logger.info("runtime result is :{}", result.getException().getMessage());
     }
-    trace.setBill(result.getEnergyUsed());
+    if (!isStaticCall) {
+      trace.setBill(result.getEnergyUsed());
+    }
   }
 
   private static long getEnergyFee(long callerEnergyUsage, long callerEnergyFrozen,

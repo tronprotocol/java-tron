@@ -18,6 +18,7 @@ package org.tron.core.capsule.utils;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
@@ -31,7 +32,7 @@ public class TransactionUtil {
   public static Transaction newGenesisTransaction(byte[] key, long value)
       throws IllegalArgumentException {
 
-    if (!Wallet.addressValid(key)) {
+    if (!Commons.addressValid(key)) {
       throw new IllegalArgumentException("Invalid address");
     }
     TransferContract transferContract = TransferContract.newBuilder()
@@ -42,105 +43,6 @@ public class TransactionUtil {
 
     return new TransactionCapsule(transferContract,
         Contract.ContractType.TransferContract).getInstance();
-  }
-
-  public static boolean validAccountName(byte[] accountName) {
-    if (ArrayUtils.isEmpty(accountName)) {
-      return true;   //accountname can empty
-    }
-
-    return accountName.length <= 200;
-  }
-
-  public static boolean validAccountId(byte[] accountId) {
-    if (ArrayUtils.isEmpty(accountId)) {
-      return false;
-    }
-
-    if (accountId.length < 8) {
-      return false;
-    }
-
-    if (accountId.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : accountId) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
-  public static boolean validAssetName(byte[] assetName) {
-    if (ArrayUtils.isEmpty(assetName)) {
-      return false;
-    }
-    if (assetName.length > 32) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : assetName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
-  public static boolean validTokenAbbrName(byte[] abbrName) {
-    if (ArrayUtils.isEmpty(abbrName)) {
-      return false;
-    }
-    if (abbrName.length > 5) {
-      return false;
-    }
-    // b must read able.
-    for (byte b : abbrName) {
-      if (b < 0x21) {
-        return false; // 0x21 = '!'
-      }
-      if (b > 0x7E) {
-        return false; // 0x7E = '~'
-      }
-    }
-    return true;
-  }
-
-
-  public static boolean validAssetDescription(byte[] description) {
-    if (ArrayUtils.isEmpty(description)) {
-      return true;   //description can empty
-    }
-
-    return description.length <= 200;
-  }
-
-  public static boolean validUrl(byte[] url) {
-    if (ArrayUtils.isEmpty(url)) {
-      return false;
-    }
-    return url.length <= 256;
-  }
-
-  public static boolean isNumber(byte[] id) {
-    if (ArrayUtils.isEmpty(id)) {
-      return false;
-    }
-    for (byte b : id) {
-      if (b < '0' || b > '9') {
-        return false;
-      }
-    }
-
-    return !(id.length > 1 && id[0] == '0');
   }
 
   /**

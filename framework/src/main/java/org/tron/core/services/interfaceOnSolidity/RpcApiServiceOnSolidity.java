@@ -1,7 +1,6 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -18,7 +17,6 @@ import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
-import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
@@ -39,13 +37,11 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.BadItemException;
-import org.tron.core.exception.ItemNotFoundException;
-import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
@@ -64,6 +60,9 @@ public class RpcApiServiceOnSolidity implements Service {
 
   @Autowired
   private RpcApiService rpcApiService;
+
+  @Autowired
+  private RateLimiterInterceptor rateLimiterInterceptor;
 
   @Override
   public void init() {
@@ -97,7 +96,14 @@ public class RpcApiServiceOnSolidity implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      apiServer = serverBuilder.build().start();
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+
+      apiServer.start();
+
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -362,7 +368,8 @@ public class RpcApiServiceOnSolidity implements Service {
     public void getMerkleTreeVoucherInfo(OutputPointInfo request,
         StreamObserver<IncrementalMerkleVoucherInfo> responseObserver) {
       walletOnSolidity.futureGet(
-          () -> rpcApiService.getWalletSolidityApi().getMerkleTreeVoucherInfo(request, responseObserver)
+          () -> rpcApiService.getWalletSolidityApi()
+              .getMerkleTreeVoucherInfo(request, responseObserver)
       );
     }
 
@@ -373,7 +380,7 @@ public class RpcApiServiceOnSolidity implements Service {
           () -> rpcApiService.getWalletSolidityApi().scanNoteByIvk(request, responseObserver)
       );
     }
-  
+
     @Override
     public void scanAndMarkNoteByIvk(GrpcAPI.IvkDecryptAndMarkParameters request,
         StreamObserver<GrpcAPI.DecryptNotesMarked> responseObserver) {
@@ -381,7 +388,7 @@ public class RpcApiServiceOnSolidity implements Service {
           () -> rpcApiService.getWalletSolidityApi().scanAndMarkNoteByIvk(request, responseObserver)
       );
     }
-    
+
     @Override
     public void scanNoteByOvk(GrpcAPI.OvkDecryptParameters request,
         StreamObserver<GrpcAPI.DecryptNotes> responseObserver) {
