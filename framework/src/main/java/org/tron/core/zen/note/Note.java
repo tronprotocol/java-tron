@@ -5,9 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
@@ -242,7 +242,7 @@ public class Note {
     Note ret = decode(pt.get());
     byte[] pkD = new byte[32];
     if (!JLibrustzcash
-        .librustzcashIvkToPkd(new LibrustzcashParam.IvkToPkdParams(ivk, ret.d.getData(), pkD))) {
+        .librustzcashIvkToPkd(new IvkToPkdParams(ivk, ret.d.getData(), pkD))) {
       return Optional.empty();
     }
     byte[] cmuExpected = new byte[32];

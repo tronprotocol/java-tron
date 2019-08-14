@@ -66,6 +66,7 @@ dependencies {
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "org.apache.commons:commons-lang3:3.4"
+    compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
 }
 
 //javadoc {

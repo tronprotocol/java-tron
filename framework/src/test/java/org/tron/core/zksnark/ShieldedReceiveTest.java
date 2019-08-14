@@ -28,12 +28,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam;
-import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParams.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParams.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParams.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParams.OutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParams.SpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -2281,7 +2280,7 @@ public class ShieldedReceiveTest {
         Note noteText = ret1.get();
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
-            new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
+            new LibrustzcashParams.IvkToPkdParams(incomingViewingKey.getValue(),
                 noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
@@ -2364,7 +2363,7 @@ public class ShieldedReceiveTest {
         Note noteText = ret1.get();
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
-            new LibrustzcashParam.IvkToPkdParams(incomingViewingKey.getValue(),
+            new LibrustzcashParams.IvkToPkdParams(incomingViewingKey.getValue(),
                 noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;

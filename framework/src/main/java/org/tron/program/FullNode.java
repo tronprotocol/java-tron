@@ -59,6 +59,11 @@ public class FullNode {
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
     DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
+    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
+    DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
+    DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
+    DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
+    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
   }
 
   /**

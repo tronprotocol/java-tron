@@ -2,6 +2,7 @@ package org.tron.common.zksnark;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
@@ -20,7 +21,6 @@ import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskMasterParams;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 
 @Slf4j
@@ -286,7 +286,7 @@ public class JLibrustzcash {
   }
 
   public static boolean isOpenZen() {
-    boolean res = Args.getInstance().isFullNodeAllowShieldedTransaction();
+    boolean res = DBConfig.isFullNodeAllowShieldedTransaction();
     if (res) {
       INSTANCE = LibrustzcashWrapper.getInstance();
     }

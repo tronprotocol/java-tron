@@ -103,13 +103,23 @@ public class DBConfig {
   @Getter
   @Setter
   private static int checkFrozenTime; // for test only
-
-  @Setter
-  private static boolean ENERGY_LIMIT_HARD_FORK = false;
-
-  @Setter
-  @Getter
+  
   public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
+
+  //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
+
+  @Getter
+  @Setter
+  private static String dbDirectory;
+
+  @Getter
+  @Setter
+  private static boolean fullNodeAllowShieldedTransaction;
+
+  @Getter
+  @Setter
+  private static String zenTokenId;
 
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;

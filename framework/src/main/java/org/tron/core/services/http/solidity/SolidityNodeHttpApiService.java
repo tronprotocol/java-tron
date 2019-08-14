@@ -1,10 +1,6 @@
 package org.tron.core.services.http.solidity;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -12,10 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.application.Service;
-import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.http.GetAccountByIdServlet;
 import org.tron.core.services.http.GetAccountServlet;
