@@ -115,7 +115,7 @@ public class deployMainGateway {
     String mainChainGatewayAddress = "3QJmnh";
 
     int tryCount = 0;
-    while (tryCount++ < 3){
+    while (tryCount++ < 3) {
       String deployTxid = PublicMethed
           .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
               parame, "",
