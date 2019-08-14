@@ -43,6 +43,7 @@ import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
@@ -1027,7 +1028,7 @@ public class Args {
     }
 
     logConfig();
-
+    initDBConfig(INSTANCE);
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1433,5 +1434,34 @@ public class Args {
     logger.info("DB engine : {}", args.getStorage().getDbEngine());
     logger.info("***************************************************************");
     logger.info("\n");
+  }
+
+
+  public static void initDBConfig(Args cfgArgs) {
+    DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
+    DBConfig.setDbEngine(cfgArgs.getStorage().getDbEngine());
+    DBConfig.setOutputDirectory(cfgArgs.getOutputDirectory());
+    DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
+    DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
+    DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
+    DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
+    DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
+    DBConfig.setAllowAdaptiveEnergy(cfgArgs.getAllowAdaptiveEnergy());
+    DBConfig.setAllowDelegateResource(cfgArgs.getAllowDelegateResource());
+    DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
+    DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
+    DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
+    DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
+    DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
+    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
+    DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
+    DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
+    DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
+    DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
+    DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
+    DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
+    DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
+    DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
   }
 }
