@@ -12,6 +12,8 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
+import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -24,8 +26,6 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.Contract.OutputPoint;
 import org.tron.protos.Contract.OutputPointInfo;
@@ -52,7 +52,7 @@ public class MerkleContainerTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    merkleContainer = MerkleContainer.createInstance(dbManager);
+    merkleContainer = MerkleContainer.createInstance(dbManager.getMerkleTreeStore(), dbManager.getMerkleTreeIndexStore());
   }
 
   @AfterClass

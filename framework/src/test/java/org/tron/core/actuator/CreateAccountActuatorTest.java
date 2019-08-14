@@ -86,7 +86,7 @@ public class CreateAccountActuatorTest {
   public void firstCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST),
-            dbManager);
+            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -113,7 +113,8 @@ public class CreateAccountActuatorTest {
   public void secondCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(
-            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND), dbManager);
+            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

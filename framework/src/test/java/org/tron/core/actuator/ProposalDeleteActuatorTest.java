@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ForkUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -28,6 +29,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ProposalStore;
+import org.tron.core.store.WitnessStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
@@ -123,7 +128,9 @@ public class ProposalDeleteActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 3 * 27 * 1000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
     try {
@@ -171,7 +178,8 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager);
+        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
     try {
@@ -209,7 +217,9 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_INVALID, id), dbManager);
+        getContract(OWNER_ADDRESS_INVALID, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -232,7 +242,9 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_NOACCOUNT, id), dbManager);
+        getContract(OWNER_ADDRESS_NOACCOUNT, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -256,7 +268,9 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_SECOND, id), dbManager);
+        getContract(OWNER_ADDRESS_SECOND, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -282,7 +296,9 @@ public class ProposalDeleteActuatorTest {
     long id = 2;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager);
+        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -306,7 +322,9 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager);
+        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -330,7 +348,9 @@ public class ProposalDeleteActuatorTest {
     long id = 1;
 
     ProposalDeleteActuator actuator = new ProposalDeleteActuator(
-        getContract(OWNER_ADDRESS_FIRST, id), dbManager);
+        getContract(OWNER_ADDRESS_FIRST, id), dbManager.getAccountStore(),
+        dbManager.getProposalStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     ProposalCapsule proposalCapsule;
     try {

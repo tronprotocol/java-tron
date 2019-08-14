@@ -173,7 +173,9 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -218,7 +220,8 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -265,7 +268,9 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -290,7 +295,9 @@ public class UnfreezeAssetActuatorTest {
   public void invalidOwnerAddress() {
     createAssertBeforSameTokenNameActive();
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS_INVALID),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -308,7 +315,9 @@ public class UnfreezeAssetActuatorTest {
   public void invalidOwnerAccount() {
     createAssertBeforSameTokenNameActive();
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ACCOUNT_INVALID),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -340,7 +349,9 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -358,7 +369,9 @@ public class UnfreezeAssetActuatorTest {
   public void noFrozenSupply() {
     createAssertBeforSameTokenNameActive();
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -388,7 +401,9 @@ public class UnfreezeAssetActuatorTest {
     AccountCapsule accountCapsule = new AccountCapsule(account);
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     UnfreezeAssetActuator actuator = new UnfreezeAssetActuator(getContract(OWNER_ADDRESS),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getAssetIssueStore(),
+        dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

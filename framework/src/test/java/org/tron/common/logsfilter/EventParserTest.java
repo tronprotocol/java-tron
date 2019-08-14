@@ -1,5 +1,7 @@
 package org.tron.common.logsfilter;
 
+import static org.tron.common.utils.Commons.ADD_PRE_FIX_BYTE_MAINNET;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -8,6 +10,7 @@ import org.testng.Assert;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.vm.LogInfoTriggerParser;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -17,7 +20,7 @@ public class EventParserTest {
   @Test
   public synchronized void testEventParser() {
 
-    Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
 
     String eventSign = "eventBytesL(address,bytes,bytes32,uint256,string)";
 

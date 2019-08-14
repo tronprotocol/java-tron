@@ -27,6 +27,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.ContractStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.SmartContract.ABI;
@@ -130,7 +132,8 @@ public class ClearABIContractActuatorTest {
   public void successClearABIContract() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -154,7 +157,8 @@ public class ClearABIContractActuatorTest {
   public void invalidAddress() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -174,7 +178,8 @@ public class ClearABIContractActuatorTest {
   public void noExistAccount() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -194,7 +199,8 @@ public class ClearABIContractActuatorTest {
   public void noExistContract() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -214,7 +220,8 @@ public class ClearABIContractActuatorTest {
   public void callerNotContractOwner() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS), dbManager);
+            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -236,11 +243,13 @@ public class ClearABIContractActuatorTest {
   public void twiceUpdateSettingContract() {
     ClearABIContractActuator actuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     ClearABIContractActuator secondActuator =
         new ClearABIContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

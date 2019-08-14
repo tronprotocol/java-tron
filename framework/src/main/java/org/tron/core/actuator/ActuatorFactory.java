@@ -136,6 +136,11 @@ public class ActuatorFactory {
             manager.getDynamicPropertiesStore(), manager.getExchangeStore(), manager.getExchangeV2Store());
       case AccountPermissionUpdateContract:
         return new AccountPermissionUpdateActuator(contract.getParameter(), manager.getAccountStore(), manager.getDynamicPropertiesStore());
+      case ShieldedTransferContract:
+        return new ShieldedTransferActuator(contract.getParameter(), manager.getAccountStore(),
+            manager.getAssetIssueStore(), manager.getDynamicPropertiesStore(), manager.getNullfierStore(),
+            manager.getMerkleContainer(),manager.getProofStore(),
+            tx.getTransactionId(), tx.getInstance());
       default:
         break;
 

@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -26,6 +27,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DelegatedResourceAccountIndexStore;
+import org.tron.core.store.DelegatedResourceStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.ResourceCode;
 import org.tron.protos.Protocol.AccountType;
@@ -149,7 +154,9 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -159,7 +166,7 @@ public class FreezeBalanceActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
       Assert.assertEquals(frozenBalance, owner.getTronPower());
     } catch (ContractValidateException e) {
@@ -174,7 +181,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForCpu(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForCpu(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -184,7 +194,7 @@ public class FreezeBalanceActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getEnergyFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
@@ -213,7 +223,10 @@ public class FreezeBalanceActuatorTest {
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration),
-        dbManager);
+        dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -233,7 +246,10 @@ public class FreezeBalanceActuatorTest {
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForBandwidth(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration),
-        dbManager);
+        dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long totalNetWeightBefore = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
 
@@ -245,7 +261,7 @@ public class FreezeBalanceActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
@@ -301,7 +317,10 @@ public class FreezeBalanceActuatorTest {
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration),
-        dbManager);
+        dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
     try {
@@ -312,7 +331,7 @@ public class FreezeBalanceActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(frozenBalance, owner.getDelegatedFrozenBalanceForEnergy());
@@ -371,7 +390,10 @@ public class FreezeBalanceActuatorTest {
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
         getDelegatedContractForCpu(OWNER_ADDRESS, RECEIVER_ADDRESS, frozenBalance, duration),
-        dbManager);
+        dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long totalEnergyWeightBefore = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
     try {
@@ -381,7 +403,7 @@ public class FreezeBalanceActuatorTest {
       AccountCapsule owner = dbManager.getAccountStore()
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), initBalance - frozenBalance
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(0L, owner.getFrozenBalance());
       Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForBandwidth());
       Assert.assertEquals(0L, owner.getDelegatedFrozenBalanceForEnergy());
@@ -409,7 +431,9 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = -1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -429,7 +453,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 11_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -448,7 +475,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS_INVALID, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS_INVALID, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -471,7 +501,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ACCOUNT_INVALID, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ACCOUNT_INVALID, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -491,7 +524,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 2;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -515,7 +551,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 4;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -538,7 +577,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -563,7 +605,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 20_000_000L;
     long duration = 3L;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -582,7 +627,10 @@ public class FreezeBalanceActuatorTest {
     long frozenBalance = 1_000_000_000L;
     long duration = 3;
     FreezeBalanceActuator actuator = new FreezeBalanceActuator(
-        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager);
+        getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getDelegatedResourceStore(),
+        dbManager.getDelegatedResourceAccountIndexStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

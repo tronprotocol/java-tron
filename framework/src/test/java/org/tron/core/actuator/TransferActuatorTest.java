@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -25,6 +26,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
@@ -125,7 +129,8 @@ public class TransferActuatorTest {
 
   @Test
   public void rightTransfer() {
-    TransferActuator actuator = new TransferActuator(getContract(AMOUNT), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(AMOUNT), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -136,7 +141,7 @@ public class TransferActuatorTest {
       AccountCapsule toAccount =
           dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
 
-      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - AMOUNT - ChainConstant.TRANSFER_FEE);
+      Assert.assertEquals(owner.getBalance(), OWNER_BALANCE - AMOUNT - TRANSFER_FEE);
       Assert.assertEquals(toAccount.getBalance(), TO_BALANCE + AMOUNT);
       Assert.assertTrue(true);
     } catch (ContractValidateException e) {
@@ -149,7 +154,9 @@ public class TransferActuatorTest {
   @Test
   public void perfectTransfer() {
     TransferActuator actuator = new TransferActuator(
-        getContract(OWNER_BALANCE - ChainConstant.TRANSFER_FEE), dbManager);
+        getContract(OWNER_BALANCE - TRANSFER_FEE), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -172,7 +179,9 @@ public class TransferActuatorTest {
 
   @Test
   public void moreTransfer() {
-    TransferActuator actuator = new TransferActuator(getContract(OWNER_BALANCE + 1), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(OWNER_BALANCE + 1), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -198,7 +207,9 @@ public class TransferActuatorTest {
   @Test
   public void iniviateOwnerAddress() {
     TransferActuator actuator = new TransferActuator(
-        getContract(10000L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager);
+        getContract(10000L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -224,7 +235,9 @@ public class TransferActuatorTest {
   @Test
   public void iniviateToAddress() {
     TransferActuator actuator = new TransferActuator(
-        getContract(10000L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager);
+        getContract(10000L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -249,7 +262,9 @@ public class TransferActuatorTest {
   @Test
   public void iniviateTrx() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -274,7 +289,9 @@ public class TransferActuatorTest {
   @Test
   public void noExitOwnerAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(100L, OWNER_ACCOUNT_INVALID, TO_ADDRESS), dbManager);
+        getContract(100L, OWNER_ACCOUNT_INVALID, TO_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -301,7 +318,9 @@ public class TransferActuatorTest {
    */
   public void noExitToAccount() {
     TransferActuator actuator = new TransferActuator(
-        getContract(1_000_000L, OWNER_ADDRESS, To_ACCOUNT_INVALID), dbManager);
+        getContract(1_000_000L, OWNER_ADDRESS, To_ACCOUNT_INVALID), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       AccountCapsule noExitAccount = dbManager.getAccountStore()
@@ -332,7 +351,9 @@ public class TransferActuatorTest {
 
   @Test
   public void zeroAmountTest() {
-    TransferActuator actuator = new TransferActuator(getContract(0), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(0), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -354,7 +375,9 @@ public class TransferActuatorTest {
 
   @Test
   public void negativeAmountTest() {
-    TransferActuator actuator = new TransferActuator(getContract(-AMOUNT), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(-AMOUNT), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -380,7 +403,9 @@ public class TransferActuatorTest {
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.setBalance(Long.MAX_VALUE);
     dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
-    TransferActuator actuator = new TransferActuator(getContract(1), dbManager);
+    TransferActuator actuator = new TransferActuator(getContract(1), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -417,7 +442,9 @@ public class TransferActuatorTest {
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
 
     TransferActuator actuator = new TransferActuator(
-        getContract(AMOUNT, OWNER_NO_BALANCE, To_ACCOUNT_INVALID), dbManager);
+        getContract(AMOUNT, OWNER_NO_BALANCE, To_ACCOUNT_INVALID), dbManager.getAccountStore(),
+        dbManager.getAssetIssueStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

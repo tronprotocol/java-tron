@@ -45,7 +45,7 @@ public class ExchangeCapsuleTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    storageMarket = new StorageMarket(dbManager);
+    storageMarket = new StorageMarket(dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();

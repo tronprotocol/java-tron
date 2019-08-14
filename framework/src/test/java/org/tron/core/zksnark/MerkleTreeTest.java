@@ -13,9 +13,13 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.testng.collections.Lists;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
+import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
+import org.tron.common.zksnark.MerklePath;
+import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
@@ -23,10 +27,6 @@ import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.MerklePath;
 import org.tron.protos.Contract.PedersenHash;
 
 public class MerkleTreeTest {

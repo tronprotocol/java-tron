@@ -18,20 +18,24 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
+import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParams.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParams.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParams.CheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParams.ComputeCmParams;
-import org.tron.common.zksnark.LibrustzcashParams.FinalCheckParams;
-import org.tron.common.zksnark.LibrustzcashParams.IvkToPkdParams;
-import org.tron.common.zksnark.LibrustzcashParams.SpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
+import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.MerklePath;
 import org.tron.common.zksnark.ZksnarkClient;
+import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -62,6 +66,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.DiversifierT;
@@ -71,10 +76,6 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.MerklePath;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
@@ -685,7 +686,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
+        TransactionUtil.getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000
     );
     Assert.assertTrue(ret);

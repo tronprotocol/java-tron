@@ -21,6 +21,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
@@ -184,7 +188,9 @@ public class UpdateAssetActuatorTest {
     UpdateAssetActuator actuator;
     actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -229,7 +235,10 @@ public class UpdateAssetActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAssetActuator actuator;
     actuator = new UpdateAssetActuator(
-        getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+        getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L),
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -270,7 +279,9 @@ public class UpdateAssetActuatorTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAssetActuator actuator;
     actuator = new UpdateAssetActuator(getContract(OWNER_ADDRESS, DESCRIPTION, URL,
-        500L, 8000L), dbManager);
+        500L, 8000L), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+        dbManager.getAssetIssueV2Store());
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -305,7 +316,10 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L), dbManager);
+            getContract(OWNER_ADDRESS_INVALID, DESCRIPTION, URL, 500L, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -330,7 +344,10 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L), dbManager);
+            getContract(OWNER_ADDRESS_NOTEXIST, DESCRIPTION, URL, 500L, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -355,7 +372,10 @@ public class UpdateAssetActuatorTest {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L), dbManager);
+            getContract(SECOND_ACCOUNT_ADDRESS, DESCRIPTION, URL, 500L, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -384,7 +404,10 @@ public class UpdateAssetActuatorTest {
     String localUrl = "";
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L), dbManager);
+            getContract(OWNER_ADDRESS, DESCRIPTION, localUrl, 500L, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -417,7 +440,11 @@ public class UpdateAssetActuatorTest {
 
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L), dbManager);
+            getContract(OWNER_ADDRESS, localDescription, URL, 500L, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -445,7 +472,10 @@ public class UpdateAssetActuatorTest {
     long localNewLimit = 57_600_000_001L;
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS, DESCRIPTION, URL, localNewLimit, 8000L), dbManager);
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, localNewLimit, 8000L),
+            dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -471,7 +501,9 @@ public class UpdateAssetActuatorTest {
     long localNewPublicLimit = -1L;
     UpdateAssetActuator actuator =
         new UpdateAssetActuator(
-            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, localNewPublicLimit), dbManager);
+            getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, localNewPublicLimit), dbManager.getAccountStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore(),
+            dbManager.getAssetIssueV2Store());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

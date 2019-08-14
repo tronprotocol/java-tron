@@ -107,6 +107,7 @@ public class DBConfig {
   public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
   @Getter

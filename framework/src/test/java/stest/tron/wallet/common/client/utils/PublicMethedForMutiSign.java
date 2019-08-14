@@ -40,6 +40,8 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
@@ -2006,7 +2008,7 @@ public class PublicMethedForMutiSign {
       }
       String libraryName = cur.substring(0, lastPosition);
       String addr = cur.substring(lastPosition + 1);
-      String libraryAddressHex = ByteArray.toHexString(Wallet.decodeFromBase58Check(addr))
+      String libraryAddressHex = ByteArray.toHexString(Commons.decodeFromBase58Check(addr))
           .substring(2);
 
       String repeated = new String(new char[40 - libraryName.length() - 2]).replace("\0", "_");

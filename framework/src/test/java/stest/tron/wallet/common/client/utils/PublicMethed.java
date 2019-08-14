@@ -1,5 +1,8 @@
 package stest.tron.wallet.common.client.utils;
 
+import static org.tron.common.utils.Hash.sha3;
+import static org.tron.common.utils.Hash.sha3omit12;
+
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.primitives.Longs;
@@ -65,6 +68,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -2771,7 +2776,7 @@ public class PublicMethed {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return sha3omit12(combined);
 
   }
 
@@ -2810,7 +2815,7 @@ public class PublicMethed {
       }
       String libraryName = cur.substring(0, lastPosition);
       String addr = cur.substring(lastPosition + 1);
-      String libraryAddressHex = ByteArray.toHexString(Wallet.decodeFromBase58Check(addr))
+      String libraryAddressHex = ByteArray.toHexString(Commons.decodeFromBase58Check(addr))
           .substring(2);
 
       String repeated = new String(new char[40 - libraryName.length() - 2]).replace("\0", "_");
@@ -2847,7 +2852,7 @@ public class PublicMethed {
       String addr = cur.substring(lastPosition + 1);
       String libraryAddressHex;
       try {
-        libraryAddressHex = (new String(Hex.encode(Wallet.decodeFromBase58Check(addr)),
+        libraryAddressHex = (new String(Hex.encode(Commons.decodeFromBase58Check(addr)),
             "US-ASCII")).substring(2);
       } catch (UnsupportedEncodingException e) {
         throw new RuntimeException(e);  // now ignore
@@ -2861,7 +2866,7 @@ public class PublicMethed {
       } else if (compilerVersion.equalsIgnoreCase("v5")) {
         //0.5.4 version
         String libraryNameKeccak256 = ByteArray
-            .toHexString(Hash.sha3(ByteArray.fromString(libraryName))).substring(0, 34);
+            .toHexString(sha3(ByteArray.fromString(libraryName))).substring(0, 34);
         beReplaced = "__\\$" + libraryNameKeccak256 + "\\$__";
       } else {
         throw new RuntimeException("unknown compiler version.");

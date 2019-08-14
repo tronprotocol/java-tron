@@ -1,5 +1,7 @@
 package org.tron.core.zksnark;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -27,12 +29,15 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParams.BindingSigParams;
-import org.tron.common.zksnark.LibrustzcashParams.CheckOutputParams;
-import org.tron.common.zksnark.LibrustzcashParams.CheckSpendParams;
-import org.tron.common.zksnark.LibrustzcashParams.OutputProofParams;
-import org.tron.common.zksnark.LibrustzcashParams.SpendSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
+import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
+import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
+import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -70,6 +75,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.ReceiveDescriptionInfo;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
@@ -80,8 +86,6 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
@@ -390,8 +394,8 @@ public class ShieldedReceiveTest {
     // begin to generate dataToBeSigned
     TransactionCapsule transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
         builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-    byte[] dataToBeSigned = TransactionCapsule
-        .getShieldTransactionHashIgnoreTypeException(transactionCapsule);
+    byte[] dataToBeSigned = TransactionUtil
+        .getShieldTransactionHashIgnoreTypeException(transactionCapsule.getInstance());
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, dataToBeSigned,
         transactionCapsule);
 
@@ -621,7 +625,7 @@ public class ShieldedReceiveTest {
       TransactionExtention transactionExtention = TransactionExtention.newBuilder()
           .setTransaction(transactionCapsule.getInstance()).build();
 
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -662,7 +666,7 @@ public class ShieldedReceiveTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -704,7 +708,7 @@ public class ShieldedReceiveTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -746,7 +750,7 @@ public class ShieldedReceiveTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -788,7 +792,7 @@ public class ShieldedReceiveTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -830,7 +834,7 @@ public class ShieldedReceiveTest {
     try {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new RuntimeException("Could not construct signature hash: " + ex.getMessage());
@@ -982,7 +986,7 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           contractBuilder.build(), ContractType.ShieldedTransferContract);
 
-      dataToBeSigned = transactionCapsule.hashShieldTransaction(transactionCapsule);
+      dataToBeSigned = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
       throw new ZksnarkException("Could not construct signature hash: " + ex.getMessage());
@@ -2017,7 +2021,7 @@ public class ShieldedReceiveTest {
       transactionCapsule = wallet.createTransactionCapsuleWithoutValidate(
           builder.getContractBuilder().build(), ContractType.ShieldedTransferContract);
 
-      hashOfTransaction = TransactionCapsule.hashShieldTransaction(transactionCapsule);
+      hashOfTransaction = TransactionUtil.hashShieldTransaction(transactionCapsule.getInstance());
 
     } catch (Exception ex) {
       JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
@@ -2280,7 +2284,7 @@ public class ShieldedReceiveTest {
         Note noteText = ret1.get();
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
-            new LibrustzcashParams.IvkToPkdParams(incomingViewingKey.getValue(),
+            new IvkToPkdParams(incomingViewingKey.getValue(),
                 noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
@@ -2363,7 +2367,7 @@ public class ShieldedReceiveTest {
         Note noteText = ret1.get();
         byte[] pkD = new byte[32];
         if (!JLibrustzcash.librustzcashIvkToPkd(
-            new LibrustzcashParams.IvkToPkdParams(incomingViewingKey.getValue(),
+            new IvkToPkdParams(incomingViewingKey.getValue(),
                 noteText.getD().getData(), pkD))) {
           JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
           return;
@@ -2411,7 +2415,7 @@ public class ShieldedReceiveTest {
       if (capsule1 != null) {
         break;
       }
-      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
+      TimeUnit.MILLISECONDS.sleep(BLOCK_PRODUCED_INTERVAL);
     }
 
     //create transactions
@@ -2465,7 +2469,7 @@ public class ShieldedReceiveTest {
       if (capsule2 != null) {
         break;
       }
-      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
+      TimeUnit.MILLISECONDS.sleep(BLOCK_PRODUCED_INTERVAL);
     }
 
     BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());

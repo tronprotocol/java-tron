@@ -17,6 +17,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
@@ -129,7 +130,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     } else {
       logger.info("Release resources failure.");
     }
-    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   private Any getContract(String accountAddress, String contractAddress, long originEnergyLimit) {

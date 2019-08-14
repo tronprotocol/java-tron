@@ -25,6 +25,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.ContractStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 
@@ -126,7 +128,8 @@ public class UpdateSettingContractActuatorTest {
   public void successUpdateSettingContract() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -150,7 +153,8 @@ public class UpdateSettingContractActuatorTest {
   public void invalidAddress() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS_INVALID, CONTRACT_ADDRESS, TARGET_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -170,7 +174,8 @@ public class UpdateSettingContractActuatorTest {
   public void noExistAccount() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS_NOTEXIST, CONTRACT_ADDRESS, TARGET_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -190,7 +195,8 @@ public class UpdateSettingContractActuatorTest {
   public void invalidResourcePercent() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, INVALID_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -210,7 +216,8 @@ public class UpdateSettingContractActuatorTest {
   public void noExistContract() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS, NO_EXIST_CONTRACT_ADDRESS, TARGET_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -230,7 +237,8 @@ public class UpdateSettingContractActuatorTest {
   public void callerNotContractOwner() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(SECOND_ACCOUNT_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
@@ -252,11 +260,13 @@ public class UpdateSettingContractActuatorTest {
   public void twiceUpdateSettingContract() {
     UpdateSettingContractActuator actuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, TARGET_PERCENT), dbManager.getAccountStore(),
+            dbManager.getContractStore());
 
     UpdateSettingContractActuator secondActuator =
         new UpdateSettingContractActuator(
-            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L), dbManager);
+            getContract(OWNER_ADDRESS, CONTRACT_ADDRESS, 90L),
+            dbManager.getAccountStore(), dbManager.getContractStore());
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {

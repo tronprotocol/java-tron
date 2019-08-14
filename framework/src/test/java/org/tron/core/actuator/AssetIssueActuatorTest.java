@@ -25,9 +25,14 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
 import org.tron.protos.Protocol.AccountType;
@@ -144,7 +149,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void SameTokenNameCloseAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -191,7 +199,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void oldNotUpdateAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -233,7 +244,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void SameTokenNameOpenAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -287,7 +301,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -333,7 +350,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -379,7 +399,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -425,7 +448,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -471,7 +497,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -517,7 +546,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -563,7 +595,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -601,7 +636,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -638,7 +676,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -675,7 +716,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -712,7 +756,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -750,7 +797,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -794,7 +844,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.EMPTY)
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -833,7 +886,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(url256Bytes + "0"))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -870,7 +926,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(url256Bytes))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -907,7 +966,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8("0"))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -944,7 +1006,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(" "))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -989,7 +1054,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1027,7 +1095,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1065,7 +1136,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1102,7 +1176,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1150,7 +1227,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1193,7 +1273,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1240,7 +1323,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1285,7 +1371,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1331,7 +1420,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1376,7 +1468,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1407,7 +1502,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1432,7 +1530,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1458,7 +1559,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1484,7 +1588,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1510,7 +1617,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1536,7 +1646,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1562,7 +1675,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1596,7 +1712,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1617,7 +1736,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1647,7 +1769,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1687,7 +1812,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .addAllFrozenSupply(frozenList)
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract,dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1722,7 +1850,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .addAllFrozenSupply(frozenList)
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1758,7 +1889,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1795,12 +1929,15 @@ public class AssetIssueActuatorTest {
             .setPrecision(7)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
     try {
@@ -1840,12 +1977,15 @@ public class AssetIssueActuatorTest {
             .setPrecision(4)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
 
     try {
       actuator.validate();
@@ -1896,7 +2036,10 @@ public class AssetIssueActuatorTest {
     ownerCapsule.addAsset(NAME.getBytes(), 1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     // SameTokenName not active, same assert name, should failure
@@ -1950,7 +2093,7 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // PublicFreeAssetNetUsage must be 0!
@@ -1968,7 +2111,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setPublicFreeAssetNetUsage(100)
             .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -1997,7 +2143,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setFreeAssetNetLimit(-10)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -2026,7 +2175,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setPublicFreeAssetNetLimit(-10)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -2052,7 +2204,7 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // No enough balance for fee!
@@ -2069,7 +2221,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .setPrecision(3)
             .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(1000);
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
@@ -2102,7 +2257,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .setPrecision(3)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);

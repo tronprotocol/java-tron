@@ -9,6 +9,8 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 
 public class AbiUtil {
@@ -208,7 +210,7 @@ public class AbiUtil {
 
     @Override
     byte[] encode(String value) {
-      byte[] address = Wallet.decodeFromBase58Check(value);
+      byte[] address = Commons.decodeFromBase58Check(value);
       if (address == null) {
         return null;
       }

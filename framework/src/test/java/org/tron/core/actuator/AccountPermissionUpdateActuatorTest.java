@@ -27,6 +27,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Contract;
 import org.tron.protos.Contract.AccountPermissionUpdateContract;
 import org.tron.protos.Protocol.AccountType;
@@ -165,7 +167,7 @@ public class AccountPermissionUpdateActuatorTest {
   private Any getContract(String ownerAddress) {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(ownerAddress));
     Permission owner = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission active = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission active = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
     Contract.AccountPermissionUpdateContract contract =
         Contract.AccountPermissionUpdateContract.newBuilder()
@@ -207,7 +209,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     Permission owner = AccountCapsule.createDefaultOwnerPermission(account.getAddress());
     Permission active = AccountCapsule
-        .createDefaultActivePermission(account.getAddress(), dbManager);
+        .createDefaultActivePermission(account.getAddress(), dbManager.getDynamicPropertiesStore());
     List<Permission> activeList = new ArrayList<>();
     activeList.add(active);
     account.updatePermissions(owner, null, activeList);
@@ -248,7 +250,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountCapsule owner = dbManager.getAccountStore().get(owner_name_array);
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
     Assert.assertEquals(owner.getInstance().getActivePermissionCount(), 1);
     Permission ownerPermission1 = owner.getInstance().getOwnerPermission();
@@ -302,7 +304,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     try {
@@ -329,7 +331,8 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void nullContract() {
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(null, dbManager);
+        new AccountPermissionUpdateActuator(null,
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -342,7 +345,8 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void nullDbManager() {
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS), null);
+        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -356,7 +360,8 @@ public class AccountPermissionUpdateActuatorTest {
   public void invalidContract() {
     Any invalidContract = getInvalidContract();
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(invalidContract, dbManager);
+        new AccountPermissionUpdateActuator(invalidContract,
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -371,7 +376,8 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void invalidOwnerAddress() {
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_INVALID), dbManager);
+        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_INVALID),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "invalidate ownerAddress", "invalidate ownerAddress");
@@ -380,7 +386,8 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void nullAccount() {
     AccountPermissionUpdateActuator actuator =
-        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_NOACCOUNT), dbManager);
+        new AccountPermissionUpdateActuator(getContract(OWNER_ADDRESS_NOACCOUNT),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -393,13 +400,15 @@ public class AccountPermissionUpdateActuatorTest {
   @Test
   public void ownerMissed() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, null, null, activeList), dbManager);
+            getContract(address, null, null, activeList),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "owner permission is missed",
@@ -413,7 +422,8 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, null), dbManager);
+            getContract(address, ownerPermission, null, null),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -424,7 +434,8 @@ public class AccountPermissionUpdateActuatorTest {
   public void activeToMany() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     for (int i = 0; i <= 8; i++) {
@@ -433,7 +444,8 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, null), dbManager);
+            getContract(address, ownerPermission, null, null),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -445,14 +457,16 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS));
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
     Permission witnessPermission = AccountCapsule.createDefaultWitnessPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, witnessPermission, activeList), dbManager);
+            getContract(address, ownerPermission, witnessPermission, activeList),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -464,14 +478,16 @@ public class AccountPermissionUpdateActuatorTest {
   public void witnessMissed() {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, activeList), dbManager);
+            getContract(address, ownerPermission, null, activeList),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "witness permission is missed",
@@ -484,14 +500,15 @@ public class AccountPermissionUpdateActuatorTest {
 
     Permission ownerPermission = Permission.newBuilder().setType(PermissionType.Active)
         .setPermissionName("owner").setThreshold(1).setParentId(0).build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -513,7 +530,8 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
-            getContract(address, ownerPermission, null, activeList), dbManager);
+            getContract(address, ownerPermission, null, activeList),
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(actuator, ret, "active permission type is error",
@@ -535,7 +553,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
             getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -551,14 +569,15 @@ public class AccountPermissionUpdateActuatorTest {
 
     Permission ownerPermission = Permission.newBuilder().setPermissionName("owner").setThreshold(1)
         .build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -582,14 +601,15 @@ public class AccountPermissionUpdateActuatorTest {
         .addKeys(VALID_KEY5)
         .setThreshold(1)
         .build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -613,7 +633,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -645,7 +665,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -660,7 +680,7 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
     Permission witnessPermission =
         Permission.newBuilder().setType(PermissionType.Witness).setPermissionName("active")
             .setThreshold(1).setParentId(0).build();
@@ -671,7 +691,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
             getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -686,7 +706,8 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
     Permission witnessPermission = Permission.newBuilder()
         .setType(PermissionType.Witness)
         .setPermissionName("witness")
@@ -705,7 +726,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
             getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -720,7 +741,8 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
     Permission witnessPermission = Permission.newBuilder()
         .setType(PermissionType.Witness)
         .setPermissionName("witness")
@@ -738,7 +760,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
             getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -758,14 +780,15 @@ public class AccountPermissionUpdateActuatorTest {
             .setThreshold(0)
             .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
             .build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -785,14 +808,15 @@ public class AccountPermissionUpdateActuatorTest {
             .setPermissionName("0123456789ABCDEF0123456789ABCDEF0")
             .addKeys(Key.newBuilder().setAddress(address).setWeight(1).build())
             .build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -821,7 +845,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -851,7 +875,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -885,7 +909,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -912,7 +936,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -941,7 +965,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -964,14 +988,15 @@ public class AccountPermissionUpdateActuatorTest {
         .setParentId(0)
         .addKeys(VALID_KEY)
         .build();
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
 
     List<Permission> activeList = new ArrayList<>();
     activeList.add(activePermission);
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -999,7 +1024,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1029,7 +1054,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1059,7 +1084,7 @@ public class AccountPermissionUpdateActuatorTest {
 
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(getContract(address, ownerPermission, null, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(
@@ -1074,7 +1099,8 @@ public class AccountPermissionUpdateActuatorTest {
     ByteString address = ByteString.copyFrom(ByteArray.fromHexString(WITNESS_ADDRESS));
 
     Permission ownerPermission = AccountCapsule.createDefaultOwnerPermission(address);
-    Permission activePermission = AccountCapsule.createDefaultActivePermission(address, dbManager);
+    Permission activePermission = AccountCapsule.createDefaultActivePermission(address,
+        dbManager.getDynamicPropertiesStore());
     Permission witnessPermission = Permission.newBuilder()
         .setType(PermissionType.Witness)
         .setPermissionName("witness")
@@ -1091,7 +1117,7 @@ public class AccountPermissionUpdateActuatorTest {
     AccountPermissionUpdateActuator actuator =
         new AccountPermissionUpdateActuator(
             getContract(address, ownerPermission, witnessPermission, activeList),
-            dbManager);
+            dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     processAndCheckInvalid(

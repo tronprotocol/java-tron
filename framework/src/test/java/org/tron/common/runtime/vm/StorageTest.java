@@ -11,6 +11,7 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.exception.ContractExeException;
@@ -225,7 +226,7 @@ public class StorageTest extends VMTestBase {
         parentChangedVal);
     Assert
         .assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
-    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -315,6 +316,6 @@ public class StorageTest extends VMTestBase {
         parentChangedVal);
     Assert
         .assertNull(DepositImpl.createRoot(manager).getStorageValue(address, storageParentZeroKey));
-    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 }
