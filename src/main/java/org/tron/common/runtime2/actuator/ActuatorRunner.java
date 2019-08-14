@@ -1,5 +1,6 @@
 package org.tron.common.runtime2.actuator;
 
+import java.util.List;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime2.TxRunner;
 import org.tron.common.storage.Deposit;
@@ -9,8 +10,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
-
-import java.util.List;
 
 public class ActuatorRunner implements TxRunner {
 
@@ -43,7 +42,7 @@ public class ActuatorRunner implements TxRunner {
       act.validate();
       act.execute(result.getRet());
     }
-    deposit.commit();
+//    deposit.commit();
 
   }
 
