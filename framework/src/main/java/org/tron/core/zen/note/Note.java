@@ -1,5 +1,12 @@
 package org.tron.core.zen.note;
 
+import static org.tron.core.utils.ZenChainParams.ZC_DIVERSIFIER_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_ENCPLAINTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_MEMO_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_NOTEPLAINTEXT_LEADING;
+import static org.tron.core.utils.ZenChainParams.ZC_R_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_V_SIZE;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static org.tron.core.zen.note.ZenChainParams.*;
 
 public class Note {
 

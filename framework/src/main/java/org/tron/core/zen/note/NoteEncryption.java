@@ -1,11 +1,11 @@
 package org.tron.core.zen.note;
 
 import static org.tron.common.zksnark.JLibsodium.crypto_aead_chacha20poly1305_IETF_NPUBBYTES;
+import static org.tron.core.utils.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_ENCPLAINTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 import static org.tron.core.zen.note.NoteEncryption.Encryption.NOTEENCRYPTION_CIPHER_KEYSIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_ENCPLAINTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -16,6 +16,7 @@ import org.tron.common.zksnark.LibrustzcashParam.KaAgreeParams;
 import org.tron.common.zksnark.LibrustzcashParam.KaDerivepublicParams;
 import org.tron.common.zksnark.JLibsodium;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.utils.ZenChainParams;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncCiphertext;
 import org.tron.core.zen.note.NoteEncryption.Encryption.EncPlaintext;
@@ -82,7 +83,7 @@ public class NoteEncryption {
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     EncCiphertext ciphertext = new EncCiphertext();
     JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
-        ZenChainParams.ZC_ENCPLAINTEXT_SIZE, null, 0, null, cipherNonce, kEnc);
+        ZC_ENCPLAINTEXT_SIZE, null, 0, null, cipherNonce, kEnc);
     alreadyEncryptedEnc = true;
     return Optional.of(ciphertext);
   }
@@ -108,7 +109,7 @@ public class NoteEncryption {
     byte[] cipherNonce = new byte[crypto_aead_chacha20poly1305_IETF_NPUBBYTES];
     OutCiphertext ciphertext = new OutCiphertext();
     JLibsodium.cryptoAeadChacha20Poly1305IetfEncrypt(ciphertext.data, null, message.data,
-        ZenChainParams.ZC_OUTPLAINTEXT_SIZE, null, 0, null, cipherNonce, ock);
+        ZC_OUTPLAINTEXT_SIZE, null, 0, null, cipherNonce, ock);
     alreadyEncryptedOut = true;
     return ciphertext;
   }

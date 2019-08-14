@@ -103,7 +103,7 @@ public class DBConfig {
   @Getter
   @Setter
   private static int checkFrozenTime; // for test only
-  
+
   public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT

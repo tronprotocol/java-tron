@@ -63,6 +63,7 @@ import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
+import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -119,12 +120,15 @@ import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
+import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.store.ZKProofStore;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
-import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -474,7 +478,8 @@ public class Manager {
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
-    this.setMerkleContainer(merkleContainer.createInstance(this));
+    this.setMerkleContainer(merkleContainer.createInstance(
+        this.getMerkleTreeStore(),this.getMerkleTreeIndexStore()));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -675,26 +680,6 @@ public class Manager {
     return this.accountStore;
   }
 
-  public void adjustAssetBalanceV2(byte[] accountAddress, String AssetID, long amount)
-      throws BalanceInsufficientException {
-    AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
-    adjustAssetBalanceV2(account, AssetID, amount);
-  }
-
-  public void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount)
-      throws BalanceInsufficientException {
-    if (amount < 0) {
-      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
-        throw new BalanceInsufficientException("reduceAssetAmount failed !");
-      }
-    } else if (amount > 0 &&
-            !account.addAssetAmountV2(AssetID.getBytes(), amount, this.getDynamicPropertiesStore(), this.getAssetIssueStore())) {
-        throw new BalanceInsufficientException("addAssetAmount failed !");
-    }
-    accountStore.put(account.getAddress().toByteArray(), account);
-  }
-
-
   public void adjustAllowance(byte[] accountAddress, long amount)
       throws BalanceInsufficientException {
     AccountCapsule account = getAccountStore().getUnchecked(accountAddress);
@@ -709,16 +694,6 @@ public class Manager {
     }
     account.setAllowance(allowance + amount);
     this.getAccountStore().put(account.createDbKey(), account);
-  }
-
-
-  public void adjustTotalShieldedPoolValue(long valueBalance) throws BalanceInsufficientException {
-    long totalShieldedPoolValue = Math
-        .subtractExact(getDynamicPropertiesStore().getTotalShieldedPoolValue(), valueBalance);
-    if (totalShieldedPoolValue < 0) {
-      throw new BalanceInsufficientException("Total shielded pool value can not below 0");
-    }
-    getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
