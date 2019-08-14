@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
+import org.spongycastle.util.encoders.Hex;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
@@ -25,8 +26,10 @@ import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
+import stest.tron.wallet.common.client.utils.AbiUtil;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.PublicMethedForMutiSign;
 
 @Slf4j
 public class deployMainGateway {
@@ -117,8 +120,7 @@ public class deployMainGateway {
     int tryCount = 0;
     while (tryCount++ < 3) {
       String deployTxid = PublicMethed
-          .deployContractWithConstantParame(contractName, abi, code, "constructor(address)",
-              parame, "",
+          .deployContractAndGetTransactionInfoById(contractName, abi, code, "",
               maxFeeLimit,
               0L, 100, null, testKeyFordeposit, depositAddress
               , blockingStubFull);
@@ -130,6 +132,13 @@ public class deployMainGateway {
       mainChainGatewayAddress = WalletClient.encode58Check(mainChainGateway);
 
       if((!mainChainGatewayAddress.equals("3QJmnh"))&& !mainChainGatewayAddress.isEmpty()){
+        String triggerTxid1 = PublicMethed
+            .triggerContract(
+                WalletClient.decodeFromBase58Check(mainChainGatewayAddress),"addOracle(address)",parame,false,0L, maxFeeLimit,
+                depositAddress, testKeyFordeposit, blockingStubFull);
+        PublicMethed.waitProduceNextBlock(blockingStubFull);
+        Optional<TransactionInfo> infoById1 = PublicMethed
+            .getTransactionInfoById(triggerTxid1, blockingStubFull);
         break;
       }
     }
