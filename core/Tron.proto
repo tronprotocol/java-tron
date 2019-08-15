@@ -73,6 +73,7 @@ message Account {
     int64 frozen_balance = 1; // the frozen trx balance
     int64 expire_time = 2; // the expire time
   }
+  // account nick name
   bytes account_name = 1;
   AccountType type = 2;
   // the create address
@@ -83,12 +84,18 @@ message Account {
   repeated Vote votes = 5;
   // the other asset owned by this account
   map<string, int64> asset = 6;
-  // latest asset operation time
 
-  // the frozen balance
+  // the other asset owned by this account，key is assetId
+  map<string, int64> assetV2 = 56;
+
+  // the frozen balance for bandwidth
   repeated Frozen frozen = 7;
   // bandwidth, get from frozen
   int64 net_usage = 8;
+  //Frozen balance provided by other accounts to this account
+  int64 acquired_delegated_frozen_balance_for_bandwidth = 41;
+  //Freeze and provide balances to other accounts
+  int64 delegated_frozen_balance_for_bandwidth = 42;
 
   // this account create time
   int64 create_time = 0x09;
@@ -106,13 +113,16 @@ message Account {
   repeated Frozen frozen_supply = 16;
   // asset_issued_name
   bytes asset_issued_name = 17;
+  bytes asset_issued_ID = 57;
   map<string, int64> latest_asset_operation_time = 18;
-
+  map<string, int64> latest_asset_operation_timeV2 = 58;
   int64 free_net_usage = 19;
   map<string, int64> free_asset_net_usage = 20;
+  map<string, int64> free_asset_net_usageV2 = 59;
   int64 latest_consume_time = 21;
   int64 latest_consume_free_time = 22;
 
+  // the identity of this account, case insensitive
   bytes account_id = 23;
 
   message AccountResource {
@@ -122,36 +132,58 @@ message Account {
     Frozen frozen_balance_for_energy = 2;
     int64 latest_consume_time_for_energy = 3;
 
+    //Frozen balance provided by other accounts to this account
+    int64 acquired_delegated_frozen_balance_for_energy = 4;
+    //Frozen balances provided to other accounts
+    int64 delegated_frozen_balance_for_energy = 5;
+
     // storage resource, get from market
     int64 storage_limit = 6;
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
+
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;
-  repeated Permission permissions = 31;
+  Permission owner_permission = 31;
+  Permission witness_permission = 32;
+  repeated Permission active_permission = 33;
 }
+
 
 message Key {
   bytes address = 1;
   int64 weight = 2;
 }
 
-message Permission {
-  string name = 1;
-  int64 threshold = 2;
-  bytes parent = 3;
-  repeated Key keys = 4;
+message DelegatedResource {
+  bytes from = 1;
+  bytes to = 2;
+  int64 frozen_balance_for_bandwidth = 3;
+  int64 frozen_balance_for_energy = 4;
+  int64 expire_time_for_bandwidth = 5;
+  int64 expire_time_for_energy = 6;
 }
 
 message authority {
   AccountId account = 1;
   bytes permission_name = 2;
 }
-//
-//message permission {
-//  AccountId account = 1;
-//}
+
+message Permission {
+  enum PermissionType {
+    Owner = 0;
+    Witness = 1;
+    Active = 2;
+  }
+  PermissionType type = 1;
+  int32 id = 2;     //Owner id=0, Witness id=1, Active id start by 2
+  string permission_name = 3;
+  int64 threshold = 4;
+  int32 parent_id = 5;
+  bytes operations = 6;   //1 bit 1 contract
+  repeated Key keys = 7;
+}
 
 // Witness
 message Witness {
@@ -195,16 +227,13 @@ message TXOutputs {
 }
 
 message ResourceReceipt {
-  enum code {
-    SUCCESS = 0;
-    FAILED = 1;
-  }
   int64 energy_usage = 1;
   int64 energy_fee = 2;
   int64 origin_energy_usage = 3;
   int64 energy_usage_total = 4;
   int64 net_usage = 5;
   int64 net_fee = 6;
+  Transaction.Result.contractResult result = 7;
 }
 
 message Transaction {
@@ -241,16 +270,15 @@ message Transaction {
       ExchangeInjectContract = 42;
       ExchangeWithdrawContract = 43;
       ExchangeTransactionContract = 44;
-      AccountPermissionUpdateContract = 45;
-      PermissionAddKeyContract = 46;
-      PermissionUpdateKeyContract = 47;
-      PermissionDeleteKeyContract = 48;
+      UpdateEnergyLimitContract = 45;
+      AccountPermissionUpdateContract = 46;
+      ClearABIContract = 48;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
     bytes provider = 3;
     bytes ContractName = 4;
-
+    int32 Permission_id = 5;
   }
 
   message Result {
@@ -258,11 +286,34 @@ message Transaction {
       SUCESS = 0;
       FAILED = 1;
     }
+    enum contractResult {
+      DEFAULT = 0;
+      SUCCESS = 1;
+      REVERT = 2;
+      BAD_JUMP_DESTINATION = 3;
+      OUT_OF_MEMORY = 4;
+      PRECOMPILED_CONTRACT = 5;
+      STACK_TOO_SMALL = 6;
+      STACK_TOO_LARGE = 7;
+      ILLEGAL_OPERATION = 8;
+      STACK_OVERFLOW = 9;
+      OUT_OF_ENERGY = 10;
+      OUT_OF_TIME = 11;
+      JVM_STACK_OVER_FLOW = 12;
+      UNKNOWN = 13;
+      TRANSFER_FAILED = 14;
+    }
     int64 fee = 1;
     code ret = 2;
+    contractResult contractRet = 3;
 
+    string assetIssueID = 14;
     int64 withdraw_amount = 15;
     int64 unfreeze_amount = 16;
+    int64 exchange_received_amount = 18;
+    int64 exchange_inject_another_amount = 19;
+    int64 exchange_withdraw_another_amount = 20;
+    int64 exchange_id = 21;
   }
 
   message raw {
@@ -308,8 +359,14 @@ message TransactionInfo {
   code result = 9;
   bytes resMessage = 10;
 
+  string assetIssueID = 14;
   int64 withdraw_amount = 15;
   int64 unfreeze_amount = 16;
+  repeated InternalTransaction internal_transactions = 17;
+  int64 exchange_received_amount = 18;
+  int64 exchange_inject_another_amount = 19;
+  int64 exchange_withdraw_another_amount = 20;
+  int64 exchange_id = 21;
 }
 
 message Transactions {
@@ -331,6 +388,8 @@ message BlockHeader {
     int64 number = 7;
     int64 witness_id = 8;
     bytes witness_address = 9;
+    int32 version = 10;
+    bytes accountStateRoot = 11;
   }
   raw raw_data = 1;
   bytes witness_signature = 2;
@@ -440,17 +499,6 @@ message HelloMessage {
   BlockId headBlockId = 6;
 }
 
-message StorageItem {
-  bytes contract_address = 1;
-  map<string, bytes> items = 2;
-}
-
-message StorageRow {
-  bytes key = 1; // composition of contract_address and storage_key
-  bytes value = 2;
-}
-
-
 message SmartContract {
   message ABI {
     message Entry {
@@ -493,5 +541,131 @@ message SmartContract {
   int64 call_value = 5;
   int64 consume_user_resource_percent = 6;
   string name = 7;
+  int64 origin_energy_limit = 8;
+  bytes code_hash = 9;
+  bytes trx_hash = 10;
+}
 
+message InternalTransaction {
+  // internalTransaction identity, the root InternalTransaction hash
+  // should equals to root transaction id.
+  bytes hash = 1;
+  // the one send trx (TBD: or token) via function
+  bytes caller_address = 2;
+  // the one recieve trx (TBD: or token) via function
+  bytes transferTo_address = 3;
+  message CallValueInfo {
+    // trx (TBD: or token) value
+    int64 callValue = 1;
+    // TBD: tokenName, trx should be empty
+    string tokenId = 2;
+  }
+  repeated CallValueInfo callValueInfo = 4;
+  bytes note = 5;
+  bool rejected = 6;
+}
+
+message DelegatedResourceAccountIndex {
+  bytes account = 1;
+  repeated bytes fromAccounts = 2;
+  repeated bytes toAccounts = 3;
+}
+
+message NodeInfo {
+  int64 beginSyncNum = 1;
+  string block = 2;
+  string solidityBlock = 3;
+  //connect information
+  int32 currentConnectCount = 4;
+  int32 activeConnectCount = 5;
+  int32 passiveConnectCount = 6;
+  int64 totalFlow = 7;
+  repeated PeerInfo peerInfoList = 8;
+  ConfigNodeInfo configNodeInfo = 9;
+  MachineInfo machineInfo = 10;
+  map<string, string> cheatWitnessInfoMap = 11;
+
+  message PeerInfo {
+    string lastSyncBlock = 1;
+    int64 remainNum = 2;
+    int64 lastBlockUpdateTime = 3;
+    bool syncFlag = 4;
+    int64 headBlockTimeWeBothHave = 5;
+    bool needSyncFromPeer = 6;
+    bool needSyncFromUs = 7;
+    string host = 8;
+    int32 port = 9;
+    string nodeId = 10;
+    int64 connectTime = 11;
+    double avgLatency = 12;
+    int32 syncToFetchSize = 13;
+    int64 syncToFetchSizePeekNum = 14;
+    int32 syncBlockRequestedSize = 15;
+    int64 unFetchSynNum = 16;
+    int32 blockInPorcSize = 17;
+    string headBlockWeBothHave = 18;
+    bool isActive = 19;
+    int32 score = 20;
+    int32 nodeCount = 21;
+    int64 inFlow = 22;
+    int32 disconnectTimes = 23;
+    string localDisconnectReason = 24;
+    string remoteDisconnectReason = 25;
+  }
+
+  message ConfigNodeInfo {
+    string codeVersion = 1;
+    string p2pVersion = 2;
+    int32 listenPort = 3;
+    bool discoverEnable = 4;
+    int32 activeNodeSize = 5;
+    int32 passiveNodeSize = 6;
+    int32 sendNodeSize = 7;
+    int32 maxConnectCount = 8;
+    int32 sameIpMaxConnectCount = 9;
+    int32 backupListenPort = 10;
+    int32 backupMemberSize = 11;
+    int32 backupPriority = 12;
+    int32 dbVersion = 13;
+    int32 minParticipationRate = 14;
+    bool supportConstant = 15;
+    double minTimeRatio = 16;
+    double maxTimeRatio = 17;
+    int64 allowCreationOfContracts = 18;
+    int64 allowAdaptiveEnergy = 19;
+  }
+
+  message MachineInfo {
+    int32 threadCount = 1;
+    int32 deadLockThreadCount = 2;
+    int32 cpuCount = 3;
+    int64 totalMemory = 4;
+    int64 freeMemory = 5;
+    double cpuRate = 6;
+    string javaVersion = 7;
+    string osName = 8;
+    int64 jvmTotalMemoery = 9;
+    int64 jvmFreeMemory = 10;
+    double processCpuRate = 11;
+    repeated MemoryDescInfo memoryDescInfoList = 12;
+    repeated DeadLockThreadInfo deadLockThreadInfoList = 13;
+
+    message MemoryDescInfo {
+      string name = 1;
+      int64 initSize = 2;
+      int64 useSize = 3;
+      int64 maxSize = 4;
+      double useRate = 5;
+    }
+
+    message DeadLockThreadInfo {
+      string name = 1;
+      string lockName = 2;
+      string lockOwner = 3;
+      string state = 4;
+      int64 blockTime = 5;
+      int64 waitTime = 6;
+      string stackTrace = 7;
+    }
+  }
 }
