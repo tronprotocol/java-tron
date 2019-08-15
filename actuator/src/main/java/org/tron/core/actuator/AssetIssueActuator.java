@@ -274,7 +274,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (!accountCapsule.getAssetIssuedName().isEmpty()) {
-      throw new ContractValidateException("An accountStore can only issue one asset");
+      throw new ContractValidateException("An account can only issue one asset");
     }
 
     if (accountCapsule.getBalance() < calcFee()) {

@@ -178,7 +178,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       AccountCapsule toAccount = accountStore.get(toAddress);
       if (toAccount == null) {
-        throw new ContractValidateException("To accountStore does not exist!");
+        throw new ContractValidateException("To account does not exist!");
       }
 
       if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
