@@ -525,7 +525,7 @@ library AddressUtils {
    * @param addr address to check
    * @return whether the target address is a contract
    */
-    function isContract(address addr) internal view returns (bool) {
+    function isContract1(address addr) internal view returns (bool) {
         uint256 size;
         // XXX Currently there is no better way to check if there is a contract in an address
         // than to check the size of the code at that address.
@@ -920,7 +920,7 @@ contract ERC721BasicToken is CardProto, SupportsInterfaceWithLookup, ERC721Basic
         internal
         returns (bool)
     {
-        if (!_to.isContract()) {
+        if (!_to.isContract1()) {
             return true;
         }
         bytes4 retval = ERC721Receiver(_to).onERC721Received(
