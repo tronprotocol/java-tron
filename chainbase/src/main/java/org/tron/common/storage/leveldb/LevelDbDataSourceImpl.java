@@ -42,6 +42,7 @@ import org.iq80.leveldb.DBIterator;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -64,7 +65,10 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
    * constructor.
    */
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName, Options options, WriteOptions writeOptions) {
-    this.parentPath = parentPath;
+    this.parentPath = Paths.get(
+        parentPath,
+        DBConfig.getDbDirectory()
+    ).toString();
     this.dataBaseName = dataBaseName;
     this.options = options;
     this.writeOptions = writeOptions;
@@ -72,7 +76,11 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   }
 
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName) {
-    this.parentPath = parentPath;
+    this.parentPath = Paths.get(
+        parentPath,
+        DBConfig.getDbDirectory()
+    ).toString();
+
     this.dataBaseName = dataBaseName;
     options = new Options();
     writeOptions = new WriteOptions();
@@ -105,6 +113,9 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   private void openDatabase(Options dbOptions) throws IOException {
     final Path dbPath = getDbPath();
+    if (dbPath == null || dbPath.getParent() == null) {
+      return;
+    }
     if (!Files.isSymbolicLink(dbPath.getParent())) {
       Files.createDirectories(dbPath.getParent());
     }

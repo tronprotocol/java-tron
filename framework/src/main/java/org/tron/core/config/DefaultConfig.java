@@ -40,15 +40,6 @@ public class DefaultConfig {
   }
 
   @Bean
-  public IndexHelper indexHelper() {
-    if (Args.getInstance().isSolidityNode()
-        && BooleanUtils.toBoolean(Args.getInstance().getStorage().getIndexSwitch())) {
-      return new IndexHelper();
-    }
-    return null;
-  }
-
-  @Bean
   public RevokingDatabase revokingDatabase() {
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     RevokingDatabase revokingDatabase;

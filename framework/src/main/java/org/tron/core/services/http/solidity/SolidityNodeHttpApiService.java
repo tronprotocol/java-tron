@@ -52,10 +52,6 @@ public class SolidityNodeHttpApiService implements Service {
   @Autowired
   private GetTransactionInfoByIdSolidityServlet getTransactionInfoByIdServlet;
   @Autowired
-  private GetTransactionsFromThisServlet getTransactionsFromThisServlet;
-  @Autowired
-  private GetTransactionsToThisServlet getTransactionsToThisServlet;
-  @Autowired
   private GetTransactionCountByBlockNumServlet getTransactionCountByBlockNumServlet;
   @Autowired
   private GetDelegatedResourceServlet getDelegatedResourceServlet;
@@ -176,15 +172,6 @@ public class SolidityNodeHttpApiService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),
               "/walletsolidity/gettransactioncountbyblocknum");
-
-      // for extension api
-      if (args.isWalletExtensionApi()) {
-        context.addServlet(new ServletHolder(getTransactionsFromThisServlet),
-            "/walletextension/gettransactionsfromthis");
-        context
-            .addServlet(new ServletHolder(getTransactionsToThisServlet),
-                "/walletextension/gettransactionstothis");
-      }
 
       context.addServlet(new ServletHolder(getNodeInfoServlet), "/wallet/getnodeinfo");
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();

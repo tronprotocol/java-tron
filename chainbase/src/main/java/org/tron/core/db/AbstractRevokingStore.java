@@ -25,6 +25,7 @@ import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.db.common.SourceInter;
 import org.tron.core.db2.common.IRevokingDB;
@@ -47,16 +48,12 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
   private WriteOptionsWrapper writeOptionsWrapper = WriteOptionsWrapper.getInstance()
       .sync(isDbSync);
-  private String parentPath = "";
   private List<LevelDbDataSourceImpl> dbs = new ArrayList<>();
 
   public void setDbSync(boolean isDbSync) {
     this.isDbSync = isDbSync;
   }
 
-  public void setParentPath(String parentPath) {
-    this.parentPath = parentPath;
-  }
 
   @Override
   public ISession buildSession() {
@@ -91,7 +88,7 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
   @Override
   public synchronized void check() {
     LevelDbDataSourceImpl check =
-        new LevelDbDataSourceImpl(parentPath, "tmp", new Options(), new WriteOptions());
+        new LevelDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName("tmp"), "tmp", new Options(), new WriteOptions());
     check.initDB();
 
     if (!check.allKeys().isEmpty()) {

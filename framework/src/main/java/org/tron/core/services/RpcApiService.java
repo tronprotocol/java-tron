@@ -83,7 +83,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -140,8 +139,6 @@ public class RpcApiService implements Service {
   private Manager dbManager;
   @Autowired
   private NodeManager nodeManager;
-  @Autowired
-  private WalletSolidity walletSolidity;
   @Autowired
   private Wallet wallet;
   @Autowired
@@ -641,70 +638,6 @@ public class RpcApiService implements Service {
         builder.addTransaction(transaction2Extention(transaction));
       }
       return builder.build();
-    }
-
-    @Override
-    public void getTransactionsFromThis(AccountPaginated request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString thisAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != thisAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, offset, limit);
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsFromThis2(AccountPaginated request,
-        StreamObserver<TransactionListExtention> responseObserver) {
-      ByteString thisAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != thisAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, offset, limit);
-        responseObserver.onNext(transactionList2Extention(reply));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsToThis(AccountPaginated request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString toAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != toAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, offset, limit);
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsToThis2(AccountPaginated request,
-        StreamObserver<TransactionListExtention> responseObserver) {
-      ByteString toAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != toAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, offset, limit);
-        responseObserver.onNext(transactionList2Extention(reply));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
     }
   }
 
