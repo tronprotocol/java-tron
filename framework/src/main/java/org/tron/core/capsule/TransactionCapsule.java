@@ -60,7 +60,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -95,6 +94,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -682,7 +682,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       if (permissionId == 2) {
         permission = AccountCapsule
-            .createDefaultActivePermission(ByteString.copyFrom(owner), manager);
+            .createDefaultActivePermission(ByteString.copyFrom(owner), manager.getDynamicPropertiesStore());
       }
     } else {
       permission = account.getPermissionById(permissionId);

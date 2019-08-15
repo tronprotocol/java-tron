@@ -1,5 +1,8 @@
 package org.tron.core.db;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
+import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter.AdaptiveResourceLimitConstants;
@@ -19,9 +22,9 @@ abstract class ResourceProcessor {
   public ResourceProcessor(Manager manager) {
     this.dbManager = manager;
     this.precision = ChainConstant.PRECISION;
-    this.windowSize = ChainConstant.WINDOW_SIZE_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+    this.windowSize = ChainConstant.WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
     this.averageWindowSize =
-        AdaptiveResourceLimitConstants.PERIODS_MS / ChainConstant.BLOCK_PRODUCED_INTERVAL;
+        AdaptiveResourceLimitConstants.PERIODS_MS / BLOCK_PRODUCED_INTERVAL;
   }
 
   abstract void updateUsage(AccountCapsule accountCapsule);
@@ -63,8 +66,8 @@ abstract class ResourceProcessor {
     try {
       long latestOperationTime = dbManager.getHeadBlockTimeStamp();
       accountCapsule.setLatestOperationTime(latestOperationTime);
-      dbManager.adjustBalance(accountCapsule, -fee);
-      dbManager.adjustBalance(this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), accountCapsule, -fee);
+      Commons.adjustBalance(dbManager.getAccountStore(), this.dbManager.getAccountStore().getBlackhole().createDbKey(), +fee);
       return true;
     } catch (BalanceInsufficientException e) {
       return false;

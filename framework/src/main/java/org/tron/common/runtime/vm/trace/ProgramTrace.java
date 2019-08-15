@@ -20,7 +20,7 @@ package org.tron.common.runtime.vm.trace;
 import static java.lang.String.format;
 import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 import static org.tron.common.runtime.vm.trace.Serializers.serializeFieldsOnly;
-import static org.tron.common.utils.ByteUtil.toHexString;
+import static org.tron.common.utils.ByteArray.toHexString;
 
 import java.util.ArrayList;
 import java.util.List;

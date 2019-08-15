@@ -63,9 +63,9 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
-import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -74,16 +74,38 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.keystore.WalletFile;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.CreateSmartContract.Builder;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.StorageContract.SellStorageContract;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -91,7 +113,7 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
-import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -132,7 +154,7 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -145,7 +167,7 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder = Contract.AssetIssueContract
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder = AssetIssueContract
           .FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -186,7 +208,7 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setAbbr(ByteString.copyFrom(abbreviation.getBytes()));
@@ -200,8 +222,8 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -242,7 +264,7 @@ public class PublicMethed {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -256,8 +278,8 @@ public class PublicMethed {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -298,7 +320,7 @@ public class PublicMethed {
     ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -313,8 +335,8 @@ public class PublicMethed {
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
       //builder.setPublicFreeAssetNetUsage();
       //builder.setPublicLatestFreeNetTime();
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -521,7 +543,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -530,7 +552,7 @@ public class PublicMethed {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
@@ -553,7 +575,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -562,7 +584,7 @@ public class PublicMethed {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.participateAssetIssue2(contract);
     if (transactionExtention == null) {
@@ -625,13 +647,13 @@ public class PublicMethed {
       logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
     }
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -692,13 +714,13 @@ public class PublicMethed {
       logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
     }
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.freezeBalance2(contract);
     if (transactionExtention == null) {
@@ -761,7 +783,7 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+    UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
@@ -770,7 +792,7 @@ public class PublicMethed {
       builder.setReceiverAddress(receiverAddressBytes);
     }
 
-    Contract.UnfreezeBalanceContract contract = builder.build();
+    UnfreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.unfreezeBalance(contract);
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
@@ -798,14 +820,14 @@ public class PublicMethed {
     Integer times = 0;
     while (times++ <= 2) {
 
-      Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+      TransferContract.Builder builder = TransferContract.newBuilder();
       ByteString bsTo = ByteString.copyFrom(to);
       ByteString bsOwner = ByteString.copyFrom(owner);
       builder.setToAddress(bsTo);
       builder.setOwnerAddress(bsOwner);
       builder.setAmount(amount);
 
-      Contract.TransferContract contract = builder.build();
+      TransferContract contract = builder.build();
       Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
       if (transaction == null || transaction.getRawData().getContractCount() == 0) {
         logger.info("transaction ==null");
@@ -836,14 +858,14 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     Integer times = 0;
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -872,12 +894,12 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    /*Contract.CancelDeferredTransactionContract.Builder builder = Contract
+    /*CancelDeferredTransactionContract.Builder builder = Contract
       .CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.CancelDeferredTransactionContract contract = builder.build();
+    CancelDeferredTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull
      .createCancelDeferredTransactionContract(contract);
 
@@ -924,12 +946,12 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    /* Contract.CancelDeferredTransactionContract.Builder builder = Contract
+    /* CancelDeferredTransactionContract.Builder builder = Contract
       .CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.CancelDeferredTransactionContract contract = builder.build();
+    CancelDeferredTransactionContract contract = builder.build();
    TransactionExtention transactionExtention = blockingStubFull
      .createCancelDeferredTransactionContract(contract);
 
@@ -978,14 +1000,14 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
 
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
@@ -1018,7 +1040,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -1027,7 +1049,7 @@ public class PublicMethed {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
@@ -1063,10 +1085,10 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
     Transaction transaction = blockingStubFull.createAccount(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1096,14 +1118,14 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountUpdateContract.Builder builder = Contract.AccountUpdateContract.newBuilder();
+    AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(addressBytes);
     ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
 
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.AccountUpdateContract contract = builder.build();
+    AccountUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAccount(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1133,12 +1155,12 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+    UnfreezeAssetContract.Builder builder = UnfreezeAssetContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
 
-    Contract.UnfreezeAssetContract contract = builder.build();
+    UnfreezeAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.unfreezeAsset(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1172,7 +1194,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -1181,7 +1203,7 @@ public class PublicMethed {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
@@ -1217,14 +1239,14 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
 
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
@@ -1258,12 +1280,12 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.SetAccountIdContract.Builder builder = Contract.SetAccountIdContract.newBuilder();
+    SetAccountIdContract.Builder builder = SetAccountIdContract.newBuilder();
     ByteString bsAddress = ByteString.copyFrom(owner);
     ByteString bsAccountId = ByteString.copyFrom(accountIdBytes);
     builder.setAccountId(bsAccountId);
     builder.setOwnerAddress(bsAddress);
-    Contract.SetAccountIdContract contract = builder.build();
+    SetAccountIdContract contract = builder.build();
     Transaction transaction = blockingStubFull.setAccountId(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
@@ -1294,8 +1316,8 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -1303,7 +1325,7 @@ public class PublicMethed {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAsset(contract);
     //transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
@@ -1336,14 +1358,14 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.createTransaction2(contract);
     if (transactionExtention == null) {
       return transactionExtention.getResult();
@@ -1394,14 +1416,14 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -1547,8 +1569,8 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -1556,7 +1578,7 @@ public class PublicMethed {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAsset(contract);
 
@@ -1584,8 +1606,8 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -1593,7 +1615,7 @@ public class PublicMethed {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.updateAsset2(contract);
@@ -1642,7 +1664,7 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -1651,7 +1673,7 @@ public class PublicMethed {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1685,14 +1707,14 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountUpdateContract.Builder builder = Contract.AccountUpdateContract.newBuilder();
+    AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(addressBytes);
     ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
 
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.AccountUpdateContract contract = builder.build();
+    AccountUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateAccount(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1833,10 +1855,10 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
     Transaction transaction = blockingStubFull.createAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -1863,10 +1885,10 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.createAccount2(contract);
 
@@ -1916,11 +1938,11 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalCreateContract.Builder builder = Contract.ProposalCreateContract.newBuilder();
+    ProposalCreateContract.Builder builder = ProposalCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.putAllParameters(parametersMap);
 
-    Contract.ProposalCreateContract contract = builder.build();
+    ProposalCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -1961,12 +1983,12 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalApproveContract.Builder builder = Contract.ProposalApproveContract
+    ProposalApproveContract.Builder builder = ProposalApproveContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
     builder.setIsAddApproval(isAddApproval);
-    Contract.ProposalApproveContract contract = builder.build();
+    ProposalApproveContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalApprove(contract);
     if (transactionExtention == null) {
       return false;
@@ -2006,11 +2028,11 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract.newBuilder();
+    ProposalDeleteContract.Builder builder = ProposalDeleteContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
 
-    Contract.ProposalDeleteContract contract = builder.build();
+    ProposalDeleteContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalDelete(contract);
     if (transactionExtention == null) {
       return false;
@@ -2085,12 +2107,12 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.SetAccountIdContract.Builder builder = Contract.SetAccountIdContract.newBuilder();
+    SetAccountIdContract.Builder builder = SetAccountIdContract.newBuilder();
     ByteString bsAddress = ByteString.copyFrom(owner);
     ByteString bsAccountId = ByteString.copyFrom(accountIdBytes);
     builder.setAccountId(bsAccountId);
     builder.setOwnerAddress(bsAddress);
-    Contract.SetAccountIdContract contract = builder.build();
+    SetAccountIdContract contract = builder.build();
     Transaction transaction = blockingStubFull.setAccountId(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -2120,13 +2142,13 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -2166,10 +2188,10 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.BuyStorageContract.Builder builder = Contract.BuyStorageContract.newBuilder();
+    BuyStorageContract.Builder builder = BuyStorageContract.newBuilder();
     ByteString byteAddress = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddress).setQuant(quantity);
-    Contract.BuyStorageContract contract = builder.build();
+    BuyStorageContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.buyStorage(contract);
     if (transactionExtention == null) {
       return false;
@@ -2208,10 +2230,10 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.SellStorageContract.Builder builder = Contract.SellStorageContract.newBuilder();
+    SellStorageContract.Builder builder = SellStorageContract.newBuilder();
     ByteString byteAddress = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddress).setStorageBytes(quantity);
-    Contract.SellStorageContract contract = builder.build();
+    SellStorageContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.sellStorage(contract);
     if (transactionExtention == null) {
       return false;
@@ -2811,7 +2833,7 @@ public class PublicMethed {
       }
       String libraryName = cur.substring(0, lastPosition);
       String addr = cur.substring(lastPosition + 1);
-      String libraryAddressHex = ByteArray.toHexString(Wallet.decodeFromBase58Check(addr))
+      String libraryAddressHex = ByteArray.toHexString(Wallet.tryDecodeFromBase58Check(addr))
           .substring(2);
 
       String repeated = new String(new char[40 - libraryName.length() - 2]).replace("\0", "_");
@@ -2848,7 +2870,7 @@ public class PublicMethed {
       String addr = cur.substring(lastPosition + 1);
       String libraryAddressHex;
       try {
-        libraryAddressHex = (new String(Hex.encode(Wallet.decodeFromBase58Check(addr)),
+        libraryAddressHex = (new String(Hex.encode(Wallet.tryDecodeFromBase58Check(addr)),
             "US-ASCII")).substring(2);
       } catch (UnsupportedEncodingException e) {
         throw new RuntimeException(e);  // now ignore
@@ -2893,7 +2915,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.UpdateSettingContract.Builder builder = Contract.UpdateSettingContract.newBuilder();
+    UpdateSettingContract.Builder builder = UpdateSettingContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
@@ -2949,7 +2971,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.UpdateSettingContract.Builder builder = Contract.UpdateSettingContract.newBuilder();
+    UpdateSettingContract.Builder builder = UpdateSettingContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
@@ -3009,7 +3031,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.UpdateSettingContract.Builder builder = Contract.UpdateSettingContract.newBuilder();
+    UpdateSettingContract.Builder builder = UpdateSettingContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setConsumeUserResourcePercent(consumeUserResourcePercent);
@@ -3068,7 +3090,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.UpdateEnergyLimitContract.Builder builder = Contract.UpdateEnergyLimitContract
+    UpdateEnergyLimitContract.Builder builder = UpdateEnergyLimitContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
@@ -3155,14 +3177,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -3251,14 +3273,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, params));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -3345,14 +3367,14 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeCreateContract.Builder builder = Contract.ExchangeCreateContract.newBuilder();
+    ExchangeCreateContract.Builder builder = ExchangeCreateContract.newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setFirstTokenId(ByteString.copyFrom(firstTokenId))
         .setFirstTokenBalance(firstTokenBalance)
         .setSecondTokenId(ByteString.copyFrom(secondTokenId))
         .setSecondTokenBalance(secondTokenBalance);
-    Contract.ExchangeCreateContract contract = builder.build();
+    ExchangeCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -3397,13 +3419,13 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeInjectContract.Builder builder = Contract.ExchangeInjectContract.newBuilder();
+    ExchangeInjectContract.Builder builder = ExchangeInjectContract.newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeInjectContract contract = builder.build();
+    ExchangeInjectContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeInject(contract);
     if (transactionExtention == null) {
       return false;
@@ -3490,14 +3512,14 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeWithdrawContract.Builder builder = Contract.ExchangeWithdrawContract
+    ExchangeWithdrawContract.Builder builder = ExchangeWithdrawContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeWithdrawContract contract = builder.build();
+    ExchangeWithdrawContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeWithdraw(contract);
     if (transactionExtention == null) {
       return false;
@@ -3541,7 +3563,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeTransactionContract.Builder builder = Contract.ExchangeTransactionContract
+    ExchangeTransactionContract.Builder builder = ExchangeTransactionContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
@@ -3549,7 +3571,7 @@ public class PublicMethed {
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant)
         .setExpected(expected);
-    Contract.ExchangeTransactionContract contract = builder.build();
+    ExchangeTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeTransaction(contract);
     if (transactionExtention == null) {
       return false;
@@ -3722,13 +3744,13 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
     builder.setReceiverAddress(receiverAddressBytes);
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -3780,7 +3802,7 @@ public class PublicMethed {
    * constructor.
    */
 
-  public static Contract.AssetIssueContract getAssetIssueByName(String assetName,
+  public static AssetIssueContract getAssetIssueByName(String assetName,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString assetNameBs = ByteString.copyFrom(assetName.getBytes());
@@ -3805,7 +3827,7 @@ public class PublicMethed {
    * constructor.
    */
 
-  public static Contract.AssetIssueContract getAssetIssueById(String assetId,
+  public static AssetIssueContract getAssetIssueById(String assetId,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
     ByteString assetIdBs = ByteString.copyFrom(assetId.getBytes());
@@ -3870,8 +3892,8 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
@@ -3896,7 +3918,7 @@ public class PublicMethed {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
     if (transactionExtention == null) {
@@ -4165,14 +4187,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -4251,7 +4273,7 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.UpdateEnergyLimitContract.Builder builder = Contract.UpdateEnergyLimitContract
+    UpdateEnergyLimitContract.Builder builder = UpdateEnergyLimitContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
@@ -4306,8 +4328,8 @@ public class PublicMethed {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
@@ -4332,7 +4354,7 @@ public class PublicMethed {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
     if (transactionExtention == null) {
@@ -4585,14 +4607,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .triggerConstantContract(triggerContract);
@@ -4677,12 +4699,12 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
 
-    Contract.ClearABIContract.Builder builder = Contract.ClearABIContract
+    ClearABIContract.Builder builder = ClearABIContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    Contract.ClearABIContract clearAbiContract = builder.build();
+    ClearABIContract clearAbiContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .clearContractABI(clearAbiContract);
@@ -4766,12 +4788,12 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
 
-    Contract.ClearABIContract.Builder builder = Contract.ClearABIContract
+    ClearABIContract.Builder builder = ClearABIContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    Contract.ClearABIContract clearAbiContract = builder.build();
+    ClearABIContract clearAbiContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .clearContractABI(clearAbiContract);
@@ -4805,14 +4827,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .triggerConstantContract(triggerContract);
@@ -4846,14 +4868,14 @@ public class PublicMethed {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     return transactionExtention;
@@ -5011,8 +5033,8 @@ public class PublicMethed {
     Any any = transaction.getRawData().getContract(0).getParameter();
 
     try {
-      Contract.ShieldedTransferContract shieldedTransferContract =
-          any.unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract shieldedTransferContract =
+          any.unpack(ShieldedTransferContract.class);
       if (shieldedTransferContract.getFromAmount() > 0 || fromAmount == 321321) {
         transaction = signTransactionForShield(ecKey, transaction);
         System.out.println(
@@ -5202,8 +5224,8 @@ public class PublicMethed {
         transaction1 = signTransaction(ecKey, transaction1);
       } else {
         Any any1 = transaction1.getRawData().getContract(0).getParameter();
-        Contract.ShieldedTransferContract shieldedTransferContract =
-            any1.unpack(Contract.ShieldedTransferContract.class);
+        ShieldedTransferContract shieldedTransferContract =
+            any1.unpack(ShieldedTransferContract.class);
         if (shieldedTransferContract.getFromAmount() > 0) {
           transaction1 = signTransactionForShield(ecKey, transaction1);
           System.out.println(
@@ -5742,8 +5764,8 @@ public class PublicMethed {
     Any any = transaction.getRawData().getContract(0).getParameter();
 
     try {
-      Contract.ShieldedTransferContract shieldedTransferContract =
-          any.unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract shieldedTransferContract =
+          any.unpack(ShieldedTransferContract.class);
       if (shieldedTransferContract.getFromAmount() > 0) {
         transaction = signTransactionForShield(ecKey, transaction);
         System.out.println(

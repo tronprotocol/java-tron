@@ -3,7 +3,6 @@ package org.tron.core.services.http;
 import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +16,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Component
 @Slf4j(topic = "API")
-public class UpdateEnergyLimitServlet extends HttpServlet {
+public class UpdateEnergyLimitServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

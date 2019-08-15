@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright (c) [2016] [ <ether.camp> ]
  * This file is part of the ethereumJ library.
  *
@@ -20,6 +20,7 @@ package org.tron.common.crypto;
 
 import static org.tron.common.utils.BIUtil.isLessThan;
 import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+import static org.tron.common.utils.Commons.computeAddress;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -360,27 +361,6 @@ public class ECKey implements Serializable {
       compressed) {
     ECPoint point = CURVE.getG().multiply(privKey);
     return point.getEncoded(compressed);
-  }
-
-  /**
-   * Compute an address from an encoded public key.
-   *
-   * @param pubBytes an encoded (uncompressed) public key
-   * @return 21-byte address
-   */
-  public static byte[] computeAddress(byte[] pubBytes) {
-    return Hash.sha3omit12(
-        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
-  }
-
-  /**
-   * Compute an address from a public point.
-   *
-   * @param pubPoint a public point
-   * @return 21-byte address
-   */
-  public static byte[] computeAddress(ECPoint pubPoint) {
-    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
   }
 
   /**

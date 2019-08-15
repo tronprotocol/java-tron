@@ -11,8 +11,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.WeakHashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.db2.common.Key;
-import org.tron.core.db2.common.WrappedByteArray;
 
 @Slf4j(topic = "DB")
 public class TxCacheDB implements DB<byte[], byte[]>, Flusher {

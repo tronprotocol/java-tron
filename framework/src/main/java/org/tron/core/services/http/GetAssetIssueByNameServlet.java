@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.stream.Collectors;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Component
 @Slf4j(topic = "API")
-public class GetAssetIssueByNameServlet extends HttpServlet {
+public class GetAssetIssueByNameServlet extends RateLimiterServlet {
 
   @Autowired
   private Wallet wallet;

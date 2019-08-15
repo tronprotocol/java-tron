@@ -42,14 +42,15 @@ import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.backup.DbBackupConfig;
+import org.tron.core.store.AccountStore;
 import org.tron.keystore.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
@@ -492,6 +493,10 @@ public class Args {
   @Setter
   private int shieldedTransInPendingMaxCounts;
 
+  @Getter
+  @Setter
+  private RateLimiterInitialization rateLimiterInitialization;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -593,14 +598,14 @@ public class Args {
       Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
     } else {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_MAINNET);
+      Wallet.setAddressPreFixByte(Commons.ADD_PRE_FIX_BYTE_MAINNET);
       Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
     }
 
     if (StringUtils.isNoneBlank(INSTANCE.privateKey)) {
       INSTANCE.setLocalWitnesses(new LocalWitnesses(INSTANCE.privateKey));
       if (StringUtils.isNoneBlank(INSTANCE.witnessAddress)) {
-        byte[] bytes = Wallet.decodeFromBase58Check(INSTANCE.witnessAddress);
+        byte[] bytes = Commons.decodeFromBase58Check(INSTANCE.witnessAddress);
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from cmd");
@@ -621,7 +626,7 @@ public class Args {
       INSTANCE.localWitnesses.setPrivateKeys(localwitness);
 
       if (config.hasPath("localWitnessAccountAddress")) {
-        byte[] bytes = Wallet.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        byte[] bytes = Commons.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
         if (bytes != null) {
           INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
           logger.debug("Got localWitnessAccountAddress from config.conf");
@@ -666,6 +671,17 @@ public class Args {
         }
       }
       INSTANCE.localWitnesses.setPrivateKeys(privateKeys);
+
+      if (config.hasPath("localWitnessAccountAddress")) {
+        byte[] bytes = Commons.decodeFromBase58Check(config.getString("localWitnessAccountAddress"));
+        if (bytes != null) {
+          INSTANCE.localWitnesses.setWitnessAccountAddress(bytes);
+          logger.debug("Got localWitnessAccountAddress from config.conf");
+        } else {
+          logger.warn("The localWitnessAccountAddress format is incorrect, ignored");
+        }
+      }
+      INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from keystore");
     }
 
@@ -1000,6 +1016,10 @@ public class Args {
       INSTANCE.fullNodeAllowShieldedTransaction = true;
     }
 
+    INSTANCE.rateLimiterInitialization =
+        config.hasPath("rate.limiter") ? getRateLimiterFromConfig(config)
+            : new RateLimiterInitialization();
+
     initBackupProperty(config);
     if ("ROCKSDB".equals(Args.getInstance().getStorage().getDbEngine().toUpperCase())) {
       initRocksDbBackupProperty(config);
@@ -1007,6 +1027,7 @@ public class Args {
     }
 
     logConfig();
+
   }
 
   private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
@@ -1018,7 +1039,7 @@ public class Args {
   private static Witness createWitness(final ConfigObject witnessAccount) {
     final Witness witness = new Witness();
     witness.setAddress(
-        Wallet.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
+        Commons.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
     witness.setUrl(witnessAccount.get("url").unwrapped().toString());
     witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
     return witness;
@@ -1034,9 +1055,28 @@ public class Args {
     final Account account = new Account();
     account.setAccountName(asset.get("accountName").unwrapped().toString());
     account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(Wallet.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
+    account.setAddress(Commons.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
     account.setBalance(asset.get("balance").unwrapped().toString());
     return account;
+  }
+
+  private static RateLimiterInitialization getRateLimiterFromConfig(
+      final com.typesafe.config.Config config) {
+
+    RateLimiterInitialization initialization = new RateLimiterInitialization();
+    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
+        .getObjectList("rate.limiter.http").stream()
+        .map(RateLimiterInitialization::createHttpItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+    initialization.setHttpMap(list1);
+
+    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
+        .getObjectList("rate.limiter.rpc").stream()
+        .map(RateLimiterInitialization::createRpcItem)
+        .collect(Collectors.toCollection(ArrayList::new));
+
+    initialization.setRpcMap(list2);
+    return initialization;
   }
 
   public static Args getInstance() {

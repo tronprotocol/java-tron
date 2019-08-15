@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.accountstate.AccountStateCallBackUtils;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Slf4j(topic = "DB")
@@ -18,6 +19,9 @@ import org.tron.core.db.TronStoreWithRevoking;
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
+
+  @Autowired
+  private AccountStateCallBackUtils accountStateCallBackUtils;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -34,6 +38,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public void put(byte[] key, AccountCapsule item) {
     super.put(key, item);
+    accountStateCallBackUtils.accountCallBack(key, item);
   }
 
   /**
