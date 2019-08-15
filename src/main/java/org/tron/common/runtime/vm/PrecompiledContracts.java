@@ -1321,21 +1321,30 @@ public class PrecompiledContracts {
 
     @Data
     @AllArgsConstructor
-    private static class ValidateSignTask implements Callable<Boolean> {
+    private static class ValidateSignTask implements Callable<ValidateSignResult> {
 
       private CountDownLatch countDownLatch;
       private byte[] hash;
       private byte[] signature;
       private byte[] address;
+      private int nonce;
 
       @Override
-      public Boolean call() {
+      public ValidateSignResult call() {
         try {
-          return validSign(this.signature, this.hash, this.address);
+          return new ValidateSignResult(validSign(this.signature, this.hash, this.address), nonce);
         } finally {
           countDownLatch.countDown();
         }
       }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ValidateSignResult {
+
+      private Boolean res;
+      private int nonce;
     }
 
     @Override
@@ -1364,23 +1373,33 @@ public class PrecompiledContracts {
       if (cnt == 0 || signatures.length != addresses.length) {
         return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
       }
-      // add check
-      CountDownLatch countDownLatch = new CountDownLatch(cnt);
-      List<Future<Boolean>> futures = new ArrayList<>(cnt);
-
-      for (int i = 0; i < cnt; i++) {
-        Future<Boolean> future = workers
-            .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i]));
-        futures.add(future);
-      }
-      countDownLatch.await();
-      for (Future<Boolean> future : futures) {
-          if (!future.get()) {
-            return Pair.of(true, DataWord.ZERO().getData());
+      byte[] res = new DataWord(0).getData();
+      if (isStaticCall()) {
+        //for static call not use thread pool to avoid potential effect
+        for (int i = 0; i < cnt; i++) {
+          if (validSign(signatures[i], hash, addresses[i])) {
+            res[i] = 1;
           }
+        }
+      } else {
+        // add check
+        CountDownLatch countDownLatch = new CountDownLatch(cnt);
+        List<Future<ValidateSignResult>> futures = new ArrayList<>(cnt);
+
+        for (int i = 0; i < cnt; i++) {
+          Future<ValidateSignResult> future = workers
+              .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
+          futures.add(future);
+        }
+        countDownLatch.await();
+
+        for (Future<ValidateSignResult> future : futures) {
+          if (future.get().getRes()) {
+            res[future.get().getNonce()] = 1;
+          }
+        }
       }
-      // all signatures have been validated successfully
-      return Pair.of(true, DataWord.ONE().getData());
+      return Pair.of(true, res);
     }
 
     private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
