@@ -133,7 +133,7 @@ public class Commons {
       exchangeCapsuleV2.resetTokenWithID(assetIssueStore, dynamicPropertiesStore);
       exchangeV2Store.put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
     } else {
-      exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      exchangeV2Store.put(exchangeCapsule.createDbKey(), exchangeCapsule);
     }
   }
 

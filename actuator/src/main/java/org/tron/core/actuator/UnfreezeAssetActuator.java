@@ -115,11 +115,11 @@ public class UnfreezeAssetActuator extends AbstractActuator {
 
     if (dynamicStore.getAllowSameTokenName() == 0) {
       if (accountCapsule.getAssetIssuedName().isEmpty()) {
-        throw new ContractValidateException("this accountStore did not issue any asset");
+        throw new ContractValidateException("this account did not issue any asset");
       }
     } else {
       if (accountCapsule.getAssetIssuedID().isEmpty()) {
-        throw new ContractValidateException("this accountStore did not issue any asset");
+        throw new ContractValidateException("this account did not issue any asset");
       }
     }
 

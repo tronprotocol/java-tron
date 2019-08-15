@@ -72,7 +72,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     }
 
     if (!accountStore.has(ownerAddress)) {
-      throw new ContractValidateException("accountStore does not exist");
+      throw new ContractValidateException("account does not exist");
     }
 
     if (!TransactionUtil.validUrl(contract.getUpdateUrl().toByteArray())) {

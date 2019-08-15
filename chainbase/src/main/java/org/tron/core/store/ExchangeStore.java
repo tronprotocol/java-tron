@@ -25,7 +25,6 @@ public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
     return new ExchangeCapsule(value);
   }
 
-
   /**
    * get all exchanges.
    */

@@ -79,7 +79,7 @@ public class SetAccountIdActuator extends AbstractActuator {
       throw new ContractValidateException("Account has not existed");
     }
     if (account.getAccountId() != null && !account.getAccountId().isEmpty()) {
-      throw new ContractValidateException("This accountStore id already set");
+      throw new ContractValidateException("This account id already set");
     }
     if (accountIdIndexStore.has(accountId)) {
       throw new ContractValidateException("This id has existed");

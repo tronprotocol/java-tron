@@ -1463,5 +1463,6 @@ public class Args {
     DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
+    DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
   }
 }

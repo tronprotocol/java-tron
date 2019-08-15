@@ -140,7 +140,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (!accountStore.has(ownerAddress)) {
-      throw new ContractValidateException("accountStore[" + readableOwnerAddress + "] not exists");
+      throw new ContractValidateException("account[" + readableOwnerAddress + "] not exists");
     }
 
     AccountCapsule accountCapsule = accountStore.get(ownerAddress);
@@ -158,7 +158,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (!accountCapsule.getAddress().equals(exchangeCapsule.getCreatorAddress())) {
-      throw new ContractValidateException("accountStore[" + readableOwnerAddress + "] is not creator");
+      throw new ContractValidateException("account[" + readableOwnerAddress + "] is not creator");
     }
 
     byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
