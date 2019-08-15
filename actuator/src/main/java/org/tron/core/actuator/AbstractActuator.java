@@ -3,9 +3,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.Any;
 import org.tron.common.utils.ForkUtils;
 import org.tron.common.zksnark.MerkleContainer;
-import org.tron.core.capsule.ProtoCapsule;
-import org.tron.core.db2.common.IRevokingDB;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
@@ -21,7 +18,6 @@ import org.tron.core.store.ProposalStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.protos.Protocol.Account;
 
 
 public abstract class AbstractActuator implements Actuator {
