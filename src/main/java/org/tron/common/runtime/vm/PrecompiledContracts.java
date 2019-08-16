@@ -1359,7 +1359,7 @@ public class PrecompiledContracts {
       try {
         return doExecute(data);
       } catch (Throwable t) {
-        return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
+        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
       }
     }
 
@@ -1373,10 +1373,11 @@ public class PrecompiledContracts {
       if (cnt == 0 || signatures.length != addresses.length) {
         return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
       }
-      byte[] res = new DataWord(0).getData();
+      int min = Math.min(cnt, DataWord.WORD_SIZE);
+      byte[] res = new byte[DataWord.WORD_SIZE];
       if (isStaticCall()) {
         //for static call not use thread pool to avoid potential effect
-        for (int i = 0; i < cnt; i++) {
+        for (int i = 0; i < min; i++) {
           if (validSign(signatures[i], hash, addresses[i])) {
             res[i] = 1;
           }
@@ -1386,7 +1387,7 @@ public class PrecompiledContracts {
         CountDownLatch countDownLatch = new CountDownLatch(cnt);
         List<Future<ValidateSignResult>> futures = new ArrayList<>(cnt);
 
-        for (int i = 0; i < cnt; i++) {
+        for (int i = 0; i < min; i++) {
           Future<ValidateSignResult> future = workers
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
@@ -1414,11 +1415,14 @@ public class PrecompiledContracts {
         if (v < 27) {
           v += 27;
         }
-        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
-        if (v != 0 && signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(hash, signature));
+        if (v != 0 ) {
+          ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+          if (signature.validateComponents()) {
+            out = new DataWord(ECKey.signatureToAddress(hash, signature));
+          }
         }
       } catch (Throwable any) {
+        logger.info("ECRecover error", any);
       }
       return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
           out.getLast20Bytes());
