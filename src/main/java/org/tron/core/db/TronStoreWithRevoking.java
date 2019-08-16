@@ -151,7 +151,7 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     });
   }
 
-  public long getStreamCount() {
+  public long size() {
     return Streams.stream(revokingDB.iterator()).count();
   }
 

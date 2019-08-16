@@ -632,7 +632,7 @@ public class Manager {
     }
     long start = System.currentTimeMillis();
     long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    long recentBlockCount = recentBlockStore.getStreamCount();
+    long recentBlockCount = recentBlockStore.size();
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
@@ -668,7 +668,7 @@ public class Manager {
     }
 
     logger.info("end to init txs cache. trxids:{}, block count:{}, empty block count:{}, cost:{}",
-        transactionCache.getStreamCount(),
+        transactionCache.size(),
         blockCount.get(),
         emptyBlockCount.get(),
         System.currentTimeMillis() - start
