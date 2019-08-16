@@ -1371,7 +1371,7 @@ public class PrecompiledContracts {
       byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE);
       int cnt = signatures.length;
       if (cnt == 0 || signatures.length != addresses.length) {
-        return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
+        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
       }
       int min = Math.min(cnt, DataWord.WORD_SIZE);
       byte[] res = new byte[DataWord.WORD_SIZE];
