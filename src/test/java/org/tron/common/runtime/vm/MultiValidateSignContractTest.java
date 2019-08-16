@@ -58,6 +58,30 @@ public class MultiValidateSignContractTest {
         Assert.assertEquals(ret.getValue()[i], 1);
       }
     }
+    signatures = new ArrayList<>();
+    addresses = new ArrayList<>();
+
+    //test when length >= 32
+    for (int i = 0; i < 100; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      if (i == 30) {
+        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
+      } else {
+        signatures.add(Hex.toHexString(sign));
+      }
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    ret = validateMultiSign(hash, signatures, addresses);
+    Assert.assertEquals(ret.getValue().length, 32);
+    for (int i = 0; i < 32; i++) {
+      if (i == 30) {
+        Assert.assertEquals(ret.getValue()[i], 0);
+      } else {
+        Assert.assertEquals(ret.getValue()[i], 1);
+      }
+    }
+
   }
 
   @Test
@@ -77,7 +101,7 @@ public class MultiValidateSignContractTest {
       }
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    Pair<Boolean, byte[]> ret;
+    Pair<Boolean, byte[]> ret = null;
     ret = validateMultiSign(hash, signatures, addresses);
     for (int i = 0; i < 27; i++) {
       if (i >= 27) {
@@ -88,6 +112,7 @@ public class MultiValidateSignContractTest {
         Assert.assertEquals(ret.getValue()[i], 1);
       }
     }
+
     // incorrect hash
     byte[] incorrectHash = DataWord.ONE().getData();
     ret = validateMultiSign(incorrectHash, signatures, addresses);
@@ -100,6 +125,29 @@ public class MultiValidateSignContractTest {
     incorrectSigns.remove(incorrectSigns.size() - 1);
     ret = validateMultiSign(hash, incorrectSigns, addresses);
     Assert.assertEquals(ret.getValue(), DataWord.ZERO().getData());
+
+    //test when length >= 32
+    signatures = new ArrayList<>();
+    addresses = new ArrayList<>();
+    for (int i = 0; i < 80; i++) {
+      ECKey key = new ECKey();
+      byte[] sign = key.sign(hash).toByteArray();
+      if (i == 13) {
+        signatures.add(Hex.toHexString(DataWord.ONE().getData()));
+      } else {
+        signatures.add(Hex.toHexString(sign));
+      }
+      addresses.add(Wallet.encode58Check(key.getAddress()));
+    }
+    ret = validateMultiSign(hash, signatures, addresses);
+    Assert.assertEquals(ret.getValue().length, 32);
+    for (int i = 0; i < 32; i++) {
+      if (i == 13) {
+        Assert.assertEquals(ret.getValue()[i], 0);
+      } else {
+        Assert.assertEquals(ret.getValue()[i], 1);
+      }
+    }
 
   }
 
