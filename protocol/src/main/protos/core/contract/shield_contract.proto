@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package protocol;
+
+option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
+//option java_outer_classname = "ShieldedTransferContract"; //Specify the class name of the generated Java file
+option go_package = "github.com/tronprotocol/grpc-gateway/core";
+
+// for shielded transaction
+
+message AuthenticationPath {
+    repeated bool value = 1;
+}
+
+message MerklePath {
+    repeated AuthenticationPath authentication_paths = 1;
+    repeated bool index = 2;
+    bytes rt = 3;
+}
+
+message OutputPoint {
+    bytes hash = 1;
+    int32 index = 2;
+}
+
+message OutputPointInfo {
+    repeated OutputPoint out_points = 1;
+    int32 block_num = 2;
+}
+
+message PedersenHash {
+    bytes content = 1;
+}
+
+message IncrementalMerkleTree {
+    PedersenHash left = 1;
+    PedersenHash right = 2;
+    repeated PedersenHash parents = 3;
+}
+
+message IncrementalMerkleVoucher {
+    IncrementalMerkleTree tree = 1;
+    repeated PedersenHash filled = 2;
+    IncrementalMerkleTree cursor = 3;
+    int64 cursor_depth = 4;
+    bytes rt = 5;
+    OutputPoint output_point = 10;
+}
+
+message IncrementalMerkleVoucherInfo {
+    repeated IncrementalMerkleVoucher vouchers = 1;
+    repeated bytes paths = 2;
+}
+
+message SpendDescription {
+    bytes value_commitment = 1;
+    bytes anchor = 2; // merkle root
+    bytes nullifier = 3; // used for check double spend
+    bytes rk = 4; // used for check spend authority signature
+    bytes zkproof = 5;
+    bytes spend_authority_signature = 6;
+}
+
+message ReceiveDescription {
+    bytes value_commitment = 1;
+    bytes note_commitment = 2;
+    bytes epk = 3; // for Encryption
+    bytes c_enc = 4; // Encryption for incoming, decrypt it with ivk
+    bytes c_out = 5; // Encryption for audit, decrypt it with ovk
+    bytes zkproof = 6;
+}
+
+message ShieldedTransferContract {
+    bytes transparent_from_address = 1; // transparent address
+    int64 from_amount = 2;
+    repeated SpendDescription spend_description = 3;
+    repeated ReceiveDescription receive_description = 4;
+    bytes binding_signature = 5;
+    bytes transparent_to_address = 6; // transparent address
+    int64 to_amount = 7; // the amount to transparent to_address
+}

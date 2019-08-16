@@ -9,10 +9,10 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Contract.WitnessUpdateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

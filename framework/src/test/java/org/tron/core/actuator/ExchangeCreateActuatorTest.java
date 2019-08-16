@@ -32,8 +32,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -121,7 +121,7 @@ public class ExchangeCreateActuatorTest {
   private Any getContract(String address, String firstTokenId, long firstTokenBalance,
       String secondTokenId, long secondTokenBalance) {
     return Any.pack(
-        Contract.ExchangeCreateContract.newBuilder()
+        ExchangeCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setFirstTokenId(ByteString.copyFrom(firstTokenId.getBytes()))
             .setFirstTokenBalance(firstTokenBalance)

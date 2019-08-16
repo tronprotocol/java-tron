@@ -19,7 +19,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -152,8 +152,8 @@ public class AccountCapsuleTest {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
 
-    Contract.AssetIssueContract assetIssueContract =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
             .setId(Long.toString(id))
@@ -169,8 +169,8 @@ public class AccountCapsuleTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueStore().put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
 
-    Contract.AssetIssueContract assetIssueContract2 =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract2 =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
             .setId(Long.toString(id + 1))
@@ -235,8 +235,8 @@ public class AccountCapsuleTest {
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
 
-    Contract.AssetIssueContract assetIssueContract =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
             .setId(Long.toString(id))
@@ -252,8 +252,8 @@ public class AccountCapsuleTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
-    Contract.AssetIssueContract assetIssueContract2 =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract2 =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFrom(ByteArray.fromString("abc")))
             .setId(Long.toString(id + 1))

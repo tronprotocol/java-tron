@@ -35,7 +35,8 @@ import org.tron.core.exception.TronException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.Protocol;
 
 
@@ -97,7 +98,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
 
     // smartContract in contractStore
-    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
+    SmartContract.Builder builder = SmartContract.newBuilder();
     builder.setName(SMART_CONTRACT_NAME);
     builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
     builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
@@ -135,7 +136,7 @@ public class UpdateEnergyLimitContractActuatorTest {
 
   private Any getContract(String accountAddress, String contractAddress, long originEnergyLimit) {
     return Any.pack(
-        Contract.UpdateEnergyLimitContract.newBuilder()
+        UpdateEnergyLimitContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
             .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
             .setOriginEnergyLimit(originEnergyLimit).build());

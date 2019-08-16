@@ -32,7 +32,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -125,7 +125,7 @@ public class ProposalCreateActuatorTest {
 
   private Any getContract(String address, HashMap<Long, Long> paras) {
     return Any.pack(
-        Contract.ProposalCreateContract.newBuilder()
+        ProposalCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .putAllParameters(paras)
             .build());

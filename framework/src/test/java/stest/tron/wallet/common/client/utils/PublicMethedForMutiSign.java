@@ -47,20 +47,47 @@ import org.tron.core.Wallet;
 import org.tron.core.exception.CancelException;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.CreateSmartContract.Builder;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.ShieldContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
-import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -93,7 +120,7 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -106,8 +133,8 @@ public class PublicMethedForMutiSign {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -156,7 +183,7 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -169,8 +196,8 @@ public class PublicMethedForMutiSign {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -227,7 +254,7 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -240,8 +267,8 @@ public class PublicMethedForMutiSign {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);
@@ -446,7 +473,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -455,7 +482,7 @@ public class PublicMethedForMutiSign {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
@@ -478,7 +505,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -487,7 +514,7 @@ public class PublicMethedForMutiSign {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     try {
       transaction = setPermissionId(transaction, permissionId);
@@ -515,7 +542,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -524,7 +551,7 @@ public class PublicMethedForMutiSign {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     try {
       transaction = setPermissionId(transaction, permissionId);
@@ -572,13 +599,13 @@ public class PublicMethedForMutiSign {
       logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
     }
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -626,13 +653,13 @@ public class PublicMethedForMutiSign {
       logger.info(Long.toString(beforeFronzen.getFrozen(0).getFrozenBalance()));
     }
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -669,7 +696,7 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+    UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
@@ -678,7 +705,7 @@ public class PublicMethedForMutiSign {
       builder.setReceiverAddress(receiverAddressBytes);
     }
 
-    Contract.UnfreezeBalanceContract contract = builder.build();
+    UnfreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.unfreezeBalance(contract);
     try {
       transaction = setPermissionId(transaction, permissionId);
@@ -706,7 +733,7 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+    UnfreezeBalanceContract.Builder builder = UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess).setResourceValue(resourceCode);
@@ -715,7 +742,7 @@ public class PublicMethedForMutiSign {
       builder.setReceiverAddress(receiverAddressBytes);
     }
 
-    Contract.UnfreezeBalanceContract contract = builder.build();
+    UnfreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.unfreezeBalance(contract);
     transaction = signTransaction(transaction, blockingStubFull, permissionKeyString);
 
@@ -740,14 +767,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -778,14 +805,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -816,8 +843,8 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -825,7 +852,7 @@ public class PublicMethedForMutiSign {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
     Transaction transaction = blockingStubFull.updateAsset(contract);
 
@@ -853,8 +880,8 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -862,7 +889,7 @@ public class PublicMethedForMutiSign {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
     Transaction transaction = blockingStubFull.updateAsset(contract);
 
@@ -896,8 +923,8 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UpdateAssetContract.Builder builder =
-        Contract.UpdateAssetContract.newBuilder();
+    UpdateAssetContract.Builder builder =
+        UpdateAssetContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(address);
     builder.setDescription(ByteString.copyFrom(description));
     builder.setUrl(ByteString.copyFrom(url));
@@ -905,7 +932,7 @@ public class PublicMethedForMutiSign {
     builder.setNewPublicLimit(newPublicLimit);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.UpdateAssetContract contract
+    UpdateAssetContract contract
         = builder.build();
     Transaction transaction = blockingStubFull.updateAsset(contract);
 
@@ -945,7 +972,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -954,7 +981,7 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.transferAsset(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -987,7 +1014,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -996,7 +1023,7 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.transferAsset2(contract);
     Return ret = transactionExtention.getResult();
     if (!ret.getResult()) {
@@ -1038,7 +1065,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -1047,7 +1074,7 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.transferAsset(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1085,14 +1112,14 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountUpdateContract.Builder builder = Contract.AccountUpdateContract.newBuilder();
+    AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(addressBytes);
     ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
 
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.AccountUpdateContract contract = builder.build();
+    AccountUpdateContract contract = builder.build();
     Transaction transaction = blockingStubFull.updateAccount(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -1156,10 +1183,10 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
     Transaction transaction = blockingStubFull.createAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -1188,10 +1215,10 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.createAccount2(contract);
     if (transactionExtention == null) {
       return false;
@@ -1238,12 +1265,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalCreateContract.Builder builder = Contract.ProposalCreateContract
+    ProposalCreateContract.Builder builder = ProposalCreateContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.putAllParameters(parametersMap);
 
-    Contract.ProposalCreateContract contract = builder.build();
+    ProposalCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -1284,12 +1311,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalCreateContract.Builder builder = Contract.ProposalCreateContract
+    ProposalCreateContract.Builder builder = ProposalCreateContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.putAllParameters(parametersMap);
 
-    Contract.ProposalCreateContract contract = builder.build();
+    ProposalCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -1335,12 +1362,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalApproveContract.Builder builder = Contract.ProposalApproveContract
+    ProposalApproveContract.Builder builder = ProposalApproveContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
     builder.setIsAddApproval(isAddApproval);
-    Contract.ProposalApproveContract contract = builder.build();
+    ProposalApproveContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalApprove(contract);
     if (transactionExtention == null) {
       return false;
@@ -1382,12 +1409,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalApproveContract.Builder builder = Contract.ProposalApproveContract
+    ProposalApproveContract.Builder builder = ProposalApproveContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
     builder.setIsAddApproval(isAddApproval);
-    Contract.ProposalApproveContract contract = builder.build();
+    ProposalApproveContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalApprove(contract);
     if (transactionExtention == null) {
       return false;
@@ -1432,12 +1459,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract
+    ProposalDeleteContract.Builder builder = ProposalDeleteContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
 
-    Contract.ProposalDeleteContract contract = builder.build();
+    ProposalDeleteContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalDelete(contract);
     if (transactionExtention == null) {
       return false;
@@ -1479,12 +1506,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.ProposalDeleteContract.Builder builder = Contract.ProposalDeleteContract
+    ProposalDeleteContract.Builder builder = ProposalDeleteContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setProposalId(id);
 
-    Contract.ProposalDeleteContract contract = builder.build();
+    ProposalDeleteContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.proposalDelete(contract);
     if (transactionExtention == null) {
       return false;
@@ -1529,12 +1556,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.SetAccountIdContract.Builder builder = Contract.SetAccountIdContract.newBuilder();
+    SetAccountIdContract.Builder builder = SetAccountIdContract.newBuilder();
     ByteString bsAddress = ByteString.copyFrom(owner);
     ByteString bsAccountId = ByteString.copyFrom(accountIdBytes);
     builder.setAccountId(bsAccountId);
     builder.setOwnerAddress(bsAddress);
-    Contract.SetAccountIdContract contract = builder.build();
+    SetAccountIdContract contract = builder.build();
     Transaction transaction = blockingStubFull.setAccountId(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -1564,13 +1591,13 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -2242,14 +2269,14 @@ public class PublicMethedForMutiSign {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -2331,7 +2358,7 @@ public class PublicMethedForMutiSign {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeCreateContract.Builder builder = Contract.ExchangeCreateContract
+    ExchangeCreateContract.Builder builder = ExchangeCreateContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
@@ -2339,7 +2366,7 @@ public class PublicMethedForMutiSign {
         .setFirstTokenBalance(firstTokenBalance)
         .setSecondTokenId(ByteString.copyFrom(secondTokenId))
         .setSecondTokenBalance(secondTokenBalance);
-    Contract.ExchangeCreateContract contract = builder.build();
+    ExchangeCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -2381,14 +2408,14 @@ public class PublicMethedForMutiSign {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeInjectContract.Builder builder = Contract.ExchangeInjectContract
+    ExchangeInjectContract.Builder builder = ExchangeInjectContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeInjectContract contract = builder.build();
+    ExchangeInjectContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeInject(contract);
     if (transactionExtention == null) {
       return false;
@@ -2435,14 +2462,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeWithdrawContract.Builder builder = Contract.ExchangeWithdrawContract
+    ExchangeWithdrawContract.Builder builder = ExchangeWithdrawContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeWithdrawContract contract = builder.build();
+    ExchangeWithdrawContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeWithdraw(contract);
     if (transactionExtention == null) {
       return false;
@@ -2483,7 +2510,7 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeTransactionContract.Builder builder = Contract.ExchangeTransactionContract
+    ExchangeTransactionContract.Builder builder = ExchangeTransactionContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
@@ -2491,7 +2518,7 @@ public class PublicMethedForMutiSign {
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant)
         .setExpected(expected);
-    Contract.ExchangeTransactionContract contract = builder.build();
+    ExchangeTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeTransaction(contract);
     if (transactionExtention == null) {
       return false;
@@ -2663,13 +2690,13 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
     builder.setReceiverAddress(receiverAddressBytes);
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -2740,8 +2767,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
@@ -2766,7 +2793,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -2809,8 +2836,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
@@ -2835,7 +2862,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -2883,8 +2910,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownerpermission = permissions.getJSONObject("owner_permission");
@@ -2909,7 +2936,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -2986,12 +3013,12 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       final long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       if (address == null) {
@@ -3002,7 +3029,7 @@ public class PublicMethedForMutiSign {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -3119,14 +3146,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.createTransaction2(contract);
 
     Transaction transaction = transactionExtention.getTransaction();
@@ -3175,8 +3202,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
@@ -3201,7 +3228,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -3253,8 +3280,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
@@ -3279,7 +3306,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -3387,14 +3414,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.createTransaction2(contract);
 
     Transaction transaction = transactionExtention.getTransaction();
@@ -3486,8 +3513,8 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountPermissionUpdateContract.Builder builder =
+        AccountPermissionUpdateContract.newBuilder();
 
     JSONObject permissions = JSONObject.parseObject(permissionJson);
     JSONObject ownersPermission = permissions.getJSONObject("owner_permission");
@@ -3512,7 +3539,7 @@ public class PublicMethedForMutiSign {
     }
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountPermissionUpdateContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .accountPermissionUpdate(contract);
@@ -3588,14 +3615,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(priKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction ==null");
@@ -3611,7 +3638,7 @@ public class PublicMethedForMutiSign {
   public static Protocol.Transaction createFakeTransaction(byte[] toAddrss, Long amount,
       byte[] fromAddress) {
 
-    Contract.TransferContract contract = Contract.TransferContract.newBuilder()
+    TransferContract contract = TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(fromAddress))
         .setToAddress(ByteString.copyFrom(toAddrss))
         .setAmount(amount)
@@ -3694,14 +3721,14 @@ public class PublicMethedForMutiSign {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -4064,14 +4091,14 @@ public class PublicMethedForMutiSign {
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
 
-    Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
+    TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
     builder.setData(ByteString.copyFrom(input));
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong("0"));
     builder.setCallTokenValue(0L);
-    Contract.TriggerSmartContract triggerContract = builder.build();
+    TriggerSmartContract triggerContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
     if (transactionExtention == null || !transactionExtention.getResult().getResult()) {
@@ -4158,14 +4185,14 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.AccountUpdateContract.Builder builder = Contract.AccountUpdateContract.newBuilder();
+    AccountUpdateContract.Builder builder = AccountUpdateContract.newBuilder();
     ByteString basAddreess = ByteString.copyFrom(addressBytes);
     ByteString bsAccountName = ByteString.copyFrom(accountNameBytes);
 
     builder.setAccountName(bsAccountName);
     builder.setOwnerAddress(basAddreess);
 
-    Contract.AccountUpdateContract contract = builder.build();
+    AccountUpdateContract contract = builder.build();
     Transaction transaction = blockingStubFull.updateAccount(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -4201,7 +4228,7 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -4210,7 +4237,7 @@ public class PublicMethedForMutiSign {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.transferAsset(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -4258,13 +4285,13 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -4305,13 +4332,13 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    FreezeBalanceContract.Builder builder = FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration).setResourceValue(resourceCode);
     builder.setReceiverAddress(receiverAddressBytes);
-    Contract.FreezeBalanceContract contract = builder.build();
+    FreezeBalanceContract contract = builder.build();
     Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -4348,10 +4375,10 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.AccountCreateContract.Builder builder = Contract.AccountCreateContract.newBuilder();
+    AccountCreateContract.Builder builder = AccountCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setAccountAddress(ByteString.copyFrom(newAddress));
-    Contract.AccountCreateContract contract = builder.build();
+    AccountCreateContract contract = builder.build();
     Transaction transaction = blockingStubFull.createAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -4385,12 +4412,12 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] owner = ownerAddress;
-    Contract.SetAccountIdContract.Builder builder = Contract.SetAccountIdContract.newBuilder();
+    SetAccountIdContract.Builder builder = SetAccountIdContract.newBuilder();
     ByteString bsAddress = ByteString.copyFrom(owner);
     ByteString bsAccountId = ByteString.copyFrom(accountIdBytes);
     builder.setAccountId(bsAccountId);
     builder.setOwnerAddress(bsAddress);
-    Contract.SetAccountIdContract contract = builder.build();
+    SetAccountIdContract contract = builder.build();
     Transaction transaction = blockingStubFull.setAccountId(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -4430,12 +4457,12 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       final long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       if (address == null) {
@@ -4446,7 +4473,7 @@ public class PublicMethedForMutiSign {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    VoteWitnessContract contract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull.voteWitnessAccount2(contract);
     Transaction transaction = transactionExtention.getTransaction();
@@ -4493,7 +4520,7 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -4506,8 +4533,8 @@ public class PublicMethedForMutiSign {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
 
@@ -4556,14 +4583,14 @@ public class PublicMethedForMutiSign {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeInjectContract.Builder builder = Contract.ExchangeInjectContract
+    ExchangeInjectContract.Builder builder = ExchangeInjectContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeInjectContract contract = builder.build();
+    ExchangeInjectContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeInject(contract);
     if (transactionExtention == null) {
       return false;
@@ -4610,14 +4637,14 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeWithdrawContract.Builder builder = Contract.ExchangeWithdrawContract
+    ExchangeWithdrawContract.Builder builder = ExchangeWithdrawContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setExchangeId(exchangeId)
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant);
-    Contract.ExchangeWithdrawContract contract = builder.build();
+    ExchangeWithdrawContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeWithdraw(contract);
     if (transactionExtention == null) {
       return false;
@@ -4665,7 +4692,7 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeTransactionContract.Builder builder = Contract.ExchangeTransactionContract
+    ExchangeTransactionContract.Builder builder = ExchangeTransactionContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
@@ -4673,7 +4700,7 @@ public class PublicMethedForMutiSign {
         .setTokenId(ByteString.copyFrom(tokenId))
         .setQuant(quant)
         .setExpected(expected);
-    Contract.ExchangeTransactionContract contract = builder.build();
+    ExchangeTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeTransaction(contract);
     if (transactionExtention == null) {
       return false;
@@ -4721,7 +4748,7 @@ public class PublicMethedForMutiSign {
 
     byte[] owner = ownerAddress;
 
-    Contract.ExchangeCreateContract.Builder builder = Contract.ExchangeCreateContract
+    ExchangeCreateContract.Builder builder = ExchangeCreateContract
         .newBuilder();
     builder
         .setOwnerAddress(ByteString.copyFrom(owner))
@@ -4729,7 +4756,7 @@ public class PublicMethedForMutiSign {
         .setFirstTokenBalance(firstTokenBalance)
         .setSecondTokenId(ByteString.copyFrom(secondTokenId))
         .setSecondTokenBalance(secondTokenBalance);
-    Contract.ExchangeCreateContract contract = builder.build();
+    ExchangeCreateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.exchangeCreate(contract);
     if (transactionExtention == null) {
       return false;
@@ -4776,12 +4803,12 @@ public class PublicMethedForMutiSign {
 
     byte[] owner = ownerAddress;
 
-    Contract.ClearABIContract.Builder builder = Contract.ClearABIContract
+    ClearABIContract.Builder builder = ClearABIContract
         .newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
 
-    Contract.ClearABIContract clearABIContract = builder.build();
+    ClearABIContract clearABIContract = builder.build();
 
     TransactionExtention transactionExtention = blockingStubFull
         .clearContractABI(clearABIContract);
@@ -4965,8 +4992,8 @@ public class PublicMethedForMutiSign {
     Any any = transaction.getRawData().getContract(0).getParameter();
 
     try {
-      Contract.ShieldedTransferContract shieldedTransferContract =
-          any.unpack(Contract.ShieldedTransferContract.class);
+      ShieldContract.ShieldedTransferContract shieldedTransferContract =
+          any.unpack(ShieldContract.ShieldedTransferContract.class);
       if (shieldedTransferContract.getFromAmount() > 0
           || fromAmount == 321321) {
         Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
@@ -5050,10 +5077,10 @@ public class PublicMethedForMutiSign {
     final ECKey ecKey = temKey;
 
     byte[] byteurl = url.getBytes();
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessCreateContract.Builder builder = WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(byteurl));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessCreateContract contract = builder.build();
 
 
     TransactionExtention transactionExtention = blockingStubFull.createWitness2(contract);
@@ -5108,10 +5135,10 @@ public class PublicMethedForMutiSign {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
+    WitnessUpdateContract.Builder builder = WitnessUpdateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUpdateUrl(ByteString.copyFrom(url));
-    Contract.WitnessUpdateContract contract = builder.build();
+    WitnessUpdateContract contract = builder.build();
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.updateWitness2(contract);
     if (transactionExtention == null) {
@@ -5161,11 +5188,11 @@ public class PublicMethedForMutiSign {
     }
     ECKey ecKey = temKey;
 
-    Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
+    WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-    Contract.WithdrawBalanceContract contract = builder.build();
+    WithdrawBalanceContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.withdrawBalance(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -5201,11 +5228,11 @@ public class PublicMethedForMutiSign {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+    UnfreezeAssetContract.Builder builder = UnfreezeAssetContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-    Contract.UnfreezeAssetContract contract = builder.build();
+    UnfreezeAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.unfreezeAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;

@@ -27,7 +27,7 @@ import org.tron.core.capsule.PedersenHashCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 public class MerkleTreeTest {
 

@@ -22,7 +22,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -175,10 +177,10 @@ public class WalletTestWitness003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessCreateContract.Builder builder = WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessCreateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -201,10 +203,10 @@ public class WalletTestWitness003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
+    WitnessUpdateContract.Builder builder = WitnessUpdateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUpdateUrl(ByteString.copyFrom(url));
-    Contract.WitnessUpdateContract contract = builder.build();
+    WitnessUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -238,14 +240,14 @@ public class WalletTestWitness003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;

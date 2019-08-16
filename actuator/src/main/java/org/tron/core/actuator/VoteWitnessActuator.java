@@ -19,12 +19,12 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

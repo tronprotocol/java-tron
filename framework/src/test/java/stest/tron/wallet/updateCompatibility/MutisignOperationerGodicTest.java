@@ -28,7 +28,7 @@ import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.ChainParameters;
 import org.tron.protos.Protocol.Exchange;
-import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;

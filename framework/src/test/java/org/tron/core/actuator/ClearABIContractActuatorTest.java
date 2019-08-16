@@ -29,9 +29,10 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 
 
 @Slf4j
@@ -85,7 +86,7 @@ public class ClearABIContractActuatorTest {
     dbManager.getAccountStore().put(ByteArray.fromHexString(OWNER_ADDRESS), accountCapsule);
 
     // smartContarct in contractStore
-    Protocol.SmartContract.Builder builder = Protocol.SmartContract.newBuilder();
+    SmartContract.Builder builder = SmartContract.newBuilder();
     builder.setName(SMART_CONTRACT_NAME);
     builder.setOriginAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
     builder.setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(CONTRACT_ADDRESS)));
@@ -122,7 +123,7 @@ public class ClearABIContractActuatorTest {
 
   private Any getContract(String accountAddress, String contractAddress) {
     return Any.pack(
-        Contract.ClearABIContract.newBuilder()
+        ClearABIContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
             .setContractAddress(StringUtil.hexString2ByteString(contractAddress))
             .build());

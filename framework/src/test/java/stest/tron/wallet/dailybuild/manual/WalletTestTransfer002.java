@@ -21,7 +21,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -132,14 +132,14 @@ public class WalletTestTransfer002 {
     ECKey ecKey = temKey;
     Account search = queryAccount(ecKey, blockingStubFull);
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    TransferContract.Builder builder = TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    TransferContract contract = builder.build();
     Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;

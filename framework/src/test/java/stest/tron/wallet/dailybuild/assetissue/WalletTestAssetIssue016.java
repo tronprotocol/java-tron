@@ -17,7 +17,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
@@ -120,7 +123,7 @@ public class WalletTestAssetIssue016 {
 
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
         .setValue(assetAccountId).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
     Assert.assertTrue(assetIssueByName.getFreeAssetNetLimit() == freeAssetNetLimit);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetLimit() == publicFreeAssetNetLimit);
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() == 0);

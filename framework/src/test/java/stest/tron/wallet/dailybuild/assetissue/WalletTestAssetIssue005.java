@@ -22,7 +22,10 @@ import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -110,7 +113,7 @@ public class WalletTestAssetIssue005 {
 
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder().setValue(assetAccountId)
         .build();
-    Contract.AssetIssueContract assetIssueByName =
+    AssetIssueContract assetIssueByName =
         blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertFalse(assetIssueByName.getUrl().isEmpty());
@@ -163,7 +166,7 @@ public class WalletTestAssetIssue005 {
     ECKey ecKey = temKey;
 
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -176,8 +179,8 @@ public class WalletTestAssetIssue005 {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(20000);
       builder.setPublicFreeAssetNetLimit(20000);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply
               .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -274,7 +277,7 @@ public class WalletTestAssetIssue005 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -283,7 +286,7 @@ public class WalletTestAssetIssue005 {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null || transaction.getRawData().getContractCount() == 0");

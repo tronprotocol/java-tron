@@ -13,10 +13,10 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

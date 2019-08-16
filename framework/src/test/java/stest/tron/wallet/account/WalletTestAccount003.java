@@ -23,10 +23,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -185,10 +187,10 @@ public class WalletTestAccount003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessContract.WitnessCreateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -217,14 +219,14 @@ public class WalletTestAccount003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    BalanceContract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -257,7 +259,7 @@ public class WalletTestAccount003 {
     ECKey ecKey = temKey;
 
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(TotalSupply);
@@ -350,13 +352,13 @@ public class WalletTestAccount003 {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.UnfreezeBalanceContract.Builder builder = Contract.UnfreezeBalanceContract
+    BalanceContract.UnfreezeBalanceContract.Builder builder = BalanceContract.UnfreezeBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
 
-    Contract.UnfreezeBalanceContract contract = builder.build();
+    BalanceContract.UnfreezeBalanceContract contract = builder.build();
 
     Protocol.Transaction transaction = blockingStubFull.unfreezeBalance(contract);
 
@@ -388,12 +390,12 @@ public class WalletTestAccount003 {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(address));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
@@ -404,7 +406,7 @@ public class WalletTestAccount003 {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    WitnessContract.VoteWitnessContract contract = builder.build();
 
     Protocol.Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -441,13 +443,13 @@ public class WalletTestAccount003 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    BalanceContract.FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {

@@ -12,10 +12,10 @@ import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 

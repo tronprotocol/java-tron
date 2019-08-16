@@ -16,7 +16,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.Hash;
 import org.tron.core.config.args.Args;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
 

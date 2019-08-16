@@ -23,8 +23,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
@@ -100,7 +100,7 @@ public class UnfreezeAssetActuatorTest {
 
   private Any getContract(String ownerAddress) {
     return Any.pack(
-        Contract.UnfreezeAssetContract.newBuilder()
+        UnfreezeAssetContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .build());
   }

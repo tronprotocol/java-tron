@@ -28,8 +28,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -133,7 +133,7 @@ public class ParticipateAssetIssueActuatorTest {
     }
 
     return Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
@@ -149,7 +149,7 @@ public class ParticipateAssetIssueActuatorTest {
     }
 
     return Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
@@ -164,7 +164,7 @@ public class ParticipateAssetIssueActuatorTest {
       assertName = String.valueOf(tokenIdNum);
     }
     return Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toAddress)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
@@ -174,7 +174,7 @@ public class ParticipateAssetIssueActuatorTest {
 
   private Any getContract(long count, String assetName) {
     return Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName)))
@@ -184,7 +184,7 @@ public class ParticipateAssetIssueActuatorTest {
 
   private Any getContract(long count, ByteString assetName) {
     return Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(assetName)
@@ -1710,7 +1710,7 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseInvalidOwerAddressTest() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     Any any = Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12131312")))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
@@ -1741,7 +1741,7 @@ public class ParticipateAssetIssueActuatorTest {
   public void sameTokenNameCloseInvalidToAddressTest() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     Any any = Any.pack(
-        Contract.ParticipateAssetIssueContract.newBuilder()
+        ParticipateAssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("12313123")))
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))

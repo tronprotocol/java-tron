@@ -22,7 +22,7 @@ import org.tron.common.utils.Commons;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 

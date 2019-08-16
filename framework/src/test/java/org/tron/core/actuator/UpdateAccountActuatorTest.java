@@ -24,7 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -73,7 +73,7 @@ public class UpdateAccountActuatorTest {
 
   private Any getContract(String name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
+        AccountUpdateContract.newBuilder()
             .setAccountName(ByteString.copyFromUtf8(name))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
@@ -81,7 +81,7 @@ public class UpdateAccountActuatorTest {
 
   private Any getContract(ByteString name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
+        AccountUpdateContract.newBuilder()
             .setAccountName(name)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());

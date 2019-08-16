@@ -24,11 +24,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -183,10 +184,10 @@ public class SuperWitnessAllowance {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessContract.WitnessCreateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -215,10 +216,10 @@ public class SuperWitnessAllowance {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
+    WitnessContract.WitnessUpdateContract.Builder builder = WitnessContract.WitnessUpdateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUpdateUrl(ByteString.copyFrom(url));
-    Contract.WitnessUpdateContract contract = builder.build();
+    WitnessContract.WitnessUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -252,14 +253,14 @@ public class SuperWitnessAllowance {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    BalanceContract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -361,12 +362,12 @@ public class SuperWitnessAllowance {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       final long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       logger.info("address ====== " + ByteArray.toHexString(address));
@@ -378,7 +379,7 @@ public class SuperWitnessAllowance {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    WitnessContract.VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {

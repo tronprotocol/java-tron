@@ -6,9 +6,9 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.Contract.IncrementalMerkleVoucher;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucher;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 @Slf4j
 public class IncrementalMerkleVoucherCapsule implements ProtoCapsule<IncrementalMerkleVoucher> {

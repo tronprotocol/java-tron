@@ -25,9 +25,9 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 
@@ -152,7 +152,7 @@ public class BandwidthProcessorTest {
   }
 
   private TransferAssetContract getTransferAssetContract() {
-    return Contract.TransferAssetContract.newBuilder()
+    return TransferAssetContract.newBuilder()
         .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -161,7 +161,7 @@ public class BandwidthProcessorTest {
   }
 
   private TransferAssetContract getTransferAssetV2Contract() {
-    return Contract.TransferAssetContract.newBuilder()
+    return TransferAssetContract.newBuilder()
         .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME_V2)))
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -170,7 +170,7 @@ public class BandwidthProcessorTest {
   }
 
   private AssetIssueContract getAssetIssueContract() {
-    return Contract.AssetIssueContract.newBuilder()
+    return AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ASSET_ADDRESS)))
         .setName(ByteString.copyFromUtf8(ASSET_NAME))
         .setFreeAssetNetLimit(1000L)
@@ -179,7 +179,7 @@ public class BandwidthProcessorTest {
   }
 
   private AssetIssueContract getAssetIssueV2Contract() {
-    return Contract.AssetIssueContract.newBuilder()
+    return AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ASSET_ADDRESS_V2)))
         .setName(ByteString.copyFromUtf8(ASSET_NAME_V2))
         .setId(ASSET_NAME_V2)
@@ -599,7 +599,7 @@ public class BandwidthProcessorTest {
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     dbManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(), toAddressCapsule);
 
-    TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
+    TransferAssetContract contract = TransferAssetContract.newBuilder()
         .setAssetName(ByteString.copyFrom(ByteArray.fromString(ASSET_NAME)))
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -709,7 +709,7 @@ public class BandwidthProcessorTest {
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     dbManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(), toAddressCapsule);
 
-    TransferAssetContract contract = Contract.TransferAssetContract.newBuilder()
+    TransferAssetContract contract = TransferAssetContract.newBuilder()
         .setAssetName(ByteString.copyFrom(ByteArray.fromString(String.valueOf(id))))
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -790,7 +790,7 @@ public class BandwidthProcessorTest {
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     dbManager.getAccountStore().delete(toAddressCapsule.getAddress().toByteArray());
 
-    Contract.TransferContract contract = Contract.TransferContract.newBuilder()
+    TransferContract contract = TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
         .setAmount(100L)

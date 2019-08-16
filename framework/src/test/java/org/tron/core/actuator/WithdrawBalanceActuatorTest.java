@@ -30,7 +30,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -96,7 +96,7 @@ public class WithdrawBalanceActuatorTest {
 
   private Any getContract(String ownerAddress) {
     return Any.pack(
-        Contract.WithdrawBalanceContract.newBuilder()
+        WithdrawBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .build());
   }

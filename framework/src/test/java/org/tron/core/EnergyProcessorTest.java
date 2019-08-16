@@ -18,8 +18,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -93,7 +92,7 @@ public class EnergyProcessorTest {
 
   //todo ,replaced by smartContract later
   private AssetIssueContract getAssetIssueContract() {
-    return Contract.AssetIssueContract.newBuilder()
+    return AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(USER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(ASSET_NAME))
         .setFreeAssetNetLimit(1000L)

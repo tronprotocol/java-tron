@@ -13,7 +13,7 @@ import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 @Slf4j
 public class LogInfoTriggerParser {

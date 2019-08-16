@@ -120,4 +120,7 @@ artifacts {
 //    archives javadocJar
 }
 
+clean.doFirst {
+    delete "src/main/java"
+}
 

@@ -22,9 +22,9 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.WalletGrpc;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 

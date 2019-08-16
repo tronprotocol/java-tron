@@ -15,8 +15,8 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -116,7 +116,7 @@ public class WalletTestAssetIssue020 {
     getAssetIdFromThisAccount = PublicMethed.queryAccount(asset020Address, blockingStubFull);
     assetAccountId = getAssetIdFromThisAccount.getAssetIssuedID();
 
-    Contract.AssetIssueContract assetIssueInfo = PublicMethed
+    AssetIssueContractOuterClass.AssetIssueContract assetIssueInfo = PublicMethed
         .getAssetIssueByName(name, blockingStubFull);
     final Integer preCisionByName = assetIssueInfo.getPrecision();
     final Long TotalSupplyByName = assetIssueInfo.getTotalSupply();

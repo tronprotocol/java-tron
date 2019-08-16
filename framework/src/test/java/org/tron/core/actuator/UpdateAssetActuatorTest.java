@@ -25,7 +25,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 import org.tron.protos.Protocol;
 
 import java.io.File;
@@ -106,7 +107,7 @@ public class UpdateAssetActuatorTest {
   private Any getContract(
       String accountAddress, String description, String url, long newLimit, long newPublicLimit) {
     return Any.pack(
-        Contract.UpdateAssetContract.newBuilder()
+        UpdateAssetContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(accountAddress))
             .setDescription(ByteString.copyFromUtf8(description))
             .setUrl(ByteString.copyFromUtf8(url))
@@ -115,12 +116,12 @@ public class UpdateAssetActuatorTest {
             .build());
   }
 
-  private Contract.AssetIssueContract getAssetIssueContract() {
+  private AssetIssueContract getAssetIssueContract() {
     long tokenId = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(tokenId);
 
     long nowTime = new Date().getTime();
-    return Contract.AssetIssueContract.newBuilder()
+    return AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)

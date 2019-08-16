@@ -33,8 +33,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -129,7 +129,7 @@ public class AssetIssueActuatorTest {
   private Any getContract() {
     long nowTime = new Date().getTime();
     return Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -289,7 +289,7 @@ public class AssetIssueActuatorTest {
   public void negativeTotalSupplyTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(-TOTAL_SUPPLY)
@@ -338,7 +338,7 @@ public class AssetIssueActuatorTest {
   public void zeroTotalSupplyTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(0)
@@ -387,7 +387,7 @@ public class AssetIssueActuatorTest {
   public void negativeTrxNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -436,7 +436,7 @@ public class AssetIssueActuatorTest {
   public void zeroTrxNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -485,7 +485,7 @@ public class AssetIssueActuatorTest {
   public void negativeNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -534,7 +534,7 @@ public class AssetIssueActuatorTest {
   public void zeroNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -584,7 +584,7 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     //Empty name, throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.EMPTY)
         .setTotalSupply(TOTAL_SUPPLY)
@@ -625,7 +625,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Too long name, throw exception. Max long is 32.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklmo"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -665,7 +665,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Contain space, throw exception. Every character need readable .
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("t e"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -705,7 +705,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Contain chinese character, throw exception.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -745,7 +745,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 32 byte readable character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklm"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -786,7 +786,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte readable character ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("0"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -833,7 +833,7 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     //Empty url, throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -875,7 +875,7 @@ public class AssetIssueActuatorTest {
 
     String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     //Too long url, throw exception. Max long is 256.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -915,7 +915,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 256 byte readable character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -955,7 +955,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte url.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -995,7 +995,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1043,7 +1043,7 @@ public class AssetIssueActuatorTest {
 
     String description200Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567";
     //Too long description, throw exception. Max long is 200.
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1084,7 +1084,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 200 bytes character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1125,7 +1125,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // Empty description is ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1165,7 +1165,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1214,7 +1214,7 @@ public class AssetIssueActuatorTest {
         .build();
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1260,7 +1260,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(-1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1310,7 +1310,7 @@ public class AssetIssueActuatorTest {
         .build();
     nowTime = new Date().getTime();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1358,7 +1358,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(-1).setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1407,7 +1407,7 @@ public class AssetIssueActuatorTest {
         .setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1455,7 +1455,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1493,7 +1493,7 @@ public class AssetIssueActuatorTest {
   @Test
   public void issueTimeTest() {
     //empty start time will throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1521,7 +1521,7 @@ public class AssetIssueActuatorTest {
     }
 
     //empty end time will throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1549,7 +1549,7 @@ public class AssetIssueActuatorTest {
     }
 
     //startTime == now, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1578,7 +1578,7 @@ public class AssetIssueActuatorTest {
     }
 
     //startTime < now, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1607,7 +1607,7 @@ public class AssetIssueActuatorTest {
     }
 
     //endTime == startTime, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1636,7 +1636,7 @@ public class AssetIssueActuatorTest {
     }
 
     //endTime < startTime, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1665,7 +1665,7 @@ public class AssetIssueActuatorTest {
     }
 
     //right issue, will not throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1702,7 +1702,7 @@ public class AssetIssueActuatorTest {
    */
   @Test
   public void assetIssueNameTest() {
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1726,7 +1726,7 @@ public class AssetIssueActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1759,7 +1759,7 @@ public class AssetIssueActuatorTest {
   @Test
   public void assetIssueTRXNameTest() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("TRX"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1801,7 +1801,7 @@ public class AssetIssueActuatorTest {
           .build());
     }
 
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1839,7 +1839,7 @@ public class AssetIssueActuatorTest {
         .setFrozenAmount(TOTAL_SUPPLY + 1)
         .setFrozenDays(3)
         .build());
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1877,7 +1877,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12312315345345")))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1916,7 +1916,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1962,7 +1962,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2011,8 +2011,8 @@ public class AssetIssueActuatorTest {
 
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
-    Contract.AssetIssueContract assetIssueContract =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setName(ByteString.copyFrom(ByteArray.fromString(NAME)))
             .setId(Long.toString(id))
@@ -2098,7 +2098,7 @@ public class AssetIssueActuatorTest {
 
     // PublicFreeAssetNetUsage must be 0!
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2130,7 +2130,7 @@ public class AssetIssueActuatorTest {
 
     //Invalid FreeAssetNetLimit
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2162,7 +2162,7 @@ public class AssetIssueActuatorTest {
 
     //Invalid PublicFreeAssetNetLimit
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2209,7 +2209,7 @@ public class AssetIssueActuatorTest {
 
     // No enough balance for fee!
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2245,7 +2245,7 @@ public class AssetIssueActuatorTest {
     //Account not exists
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)

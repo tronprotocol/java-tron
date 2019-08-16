@@ -33,8 +33,8 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -119,7 +119,7 @@ public class ExchangeWithdrawActuatorTest {
 
   private Any getContract(String address, long exchangeId, String tokenId, long quant) {
     return Any.pack(
-        Contract.ExchangeWithdrawContract.newBuilder()
+        ExchangeWithdrawContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setExchangeId(exchangeId)
             .setTokenId(ByteString.copyFrom(tokenId.getBytes()))
