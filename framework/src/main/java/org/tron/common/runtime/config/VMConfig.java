@@ -17,10 +17,14 @@
  */
 package org.tron.common.runtime.config;
 
+import static org.tron.common.utils.DBConfig.ALLOW_TVM_CONSTANTINOPLE;
+import static org.tron.common.utils.DBConfig.ENERGY_LIMIT_HARD_FORK;
+
 import lombok.Setter;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 
 /**
  * For developer only
@@ -34,19 +38,12 @@ public class VMConfig {
   private boolean vmTraceCompressed = false;
   private boolean vmTrace = Args.getInstance().isVmTrace();
 
-  //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
-  @Setter
-  private static boolean ENERGY_LIMIT_HARD_FORK = false;
-
 //  @Getter
 //  @Setter
 //  private static boolean VERSION_3_5_HARD_FORK = false;
 
   @Setter
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
-
-  @Setter
-  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
 
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;

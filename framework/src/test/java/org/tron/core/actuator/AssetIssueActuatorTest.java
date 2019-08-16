@@ -25,11 +25,16 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract.FrozenSupply;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -124,7 +129,7 @@ public class AssetIssueActuatorTest {
   private Any getContract() {
     long nowTime = new Date().getTime();
     return Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -144,7 +149,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void SameTokenNameCloseAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -191,7 +199,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void oldNotUpdateAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
@@ -233,7 +244,10 @@ public class AssetIssueActuatorTest {
   @Test
   public void SameTokenNameOpenAssetIssueSuccess() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -275,7 +289,7 @@ public class AssetIssueActuatorTest {
   public void negativeTotalSupplyTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(-TOTAL_SUPPLY)
@@ -287,7 +301,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -321,7 +338,7 @@ public class AssetIssueActuatorTest {
   public void zeroTotalSupplyTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(0)
@@ -333,7 +350,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -367,7 +387,7 @@ public class AssetIssueActuatorTest {
   public void negativeTrxNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -379,7 +399,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -413,7 +436,7 @@ public class AssetIssueActuatorTest {
   public void zeroTrxNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -425,7 +448,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -459,7 +485,7 @@ public class AssetIssueActuatorTest {
   public void negativeNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -471,7 +497,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -505,7 +534,7 @@ public class AssetIssueActuatorTest {
   public void zeroNumTest() {
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -517,7 +546,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -552,7 +584,7 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     //Empty name, throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.EMPTY)
         .setTotalSupply(TOTAL_SUPPLY)
@@ -563,7 +595,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -590,7 +625,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Too long name, throw exception. Max long is 32.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklmo"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -601,7 +636,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -627,7 +665,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Contain space, throw exception. Every character need readable .
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("t e"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -638,7 +676,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -664,7 +705,7 @@ public class AssetIssueActuatorTest {
     }
 
     //Contain chinese character, throw exception.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFrom(ByteArray.fromHexString("E6B58BE8AF95")))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -675,7 +716,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -701,7 +745,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 32 byte readable character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("testname0123456789abcdefghijgklm"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -712,7 +756,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -739,7 +786,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte readable character ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("0"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -750,7 +797,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -783,7 +833,7 @@ public class AssetIssueActuatorTest {
     long nowTime = new Date().getTime();
 
     //Empty url, throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -794,7 +844,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.EMPTY)
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -822,7 +875,7 @@ public class AssetIssueActuatorTest {
 
     String url256Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
     //Too long url, throw exception. Max long is 256.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -833,7 +886,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(url256Bytes + "0"))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -859,7 +915,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 256 byte readable character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -870,7 +926,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(url256Bytes))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -896,7 +955,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte url.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -907,7 +966,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8("0"))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -933,7 +995,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -944,7 +1006,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(" "))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -978,7 +1043,7 @@ public class AssetIssueActuatorTest {
 
     String description200Bytes = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567";
     //Too long description, throw exception. Max long is 200.
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -989,7 +1054,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1016,7 +1084,7 @@ public class AssetIssueActuatorTest {
     }
 
     // 200 bytes character just ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1027,7 +1095,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1054,7 +1125,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // Empty description is ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1065,7 +1136,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1091,7 +1165,7 @@ public class AssetIssueActuatorTest {
 
     createCapsule();
     // 1 byte space ok.
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1102,7 +1176,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
       actuator.validate();
@@ -1137,7 +1214,7 @@ public class AssetIssueActuatorTest {
         .build();
     long nowTime = new Date().getTime();
     Any contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1150,7 +1227,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1180,7 +1260,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(-1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1193,7 +1273,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1227,7 +1310,7 @@ public class AssetIssueActuatorTest {
         .build();
     nowTime = new Date().getTime();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1240,7 +1323,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1272,7 +1358,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(-1).setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1285,7 +1371,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1318,7 +1407,7 @@ public class AssetIssueActuatorTest {
         .setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1331,7 +1420,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1363,7 +1455,7 @@ public class AssetIssueActuatorTest {
     frozenSupply = FrozenSupply.newBuilder().setFrozenDays(1).setFrozenAmount(1)
         .build();
     contract = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1376,7 +1468,10 @@ public class AssetIssueActuatorTest {
             .addFrozenSupply(frozenSupply)
             .build());
 
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     try {
@@ -1398,7 +1493,7 @@ public class AssetIssueActuatorTest {
   @Test
   public void issueTimeTest() {
     //empty start time will throw exception
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1407,7 +1502,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1423,7 +1521,7 @@ public class AssetIssueActuatorTest {
     }
 
     //empty end time will throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1432,7 +1530,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1448,7 +1549,7 @@ public class AssetIssueActuatorTest {
     }
 
     //startTime == now, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1458,7 +1559,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1474,7 +1578,7 @@ public class AssetIssueActuatorTest {
     }
 
     //startTime < now, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1484,7 +1588,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1500,7 +1607,7 @@ public class AssetIssueActuatorTest {
     }
 
     //endTime == startTime, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1510,7 +1617,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1526,7 +1636,7 @@ public class AssetIssueActuatorTest {
     }
 
     //endTime < startTime, throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1536,7 +1646,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1552,7 +1665,7 @@ public class AssetIssueActuatorTest {
     }
 
     //right issue, will not throw exception
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1562,7 +1675,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1586,7 +1702,7 @@ public class AssetIssueActuatorTest {
    */
   @Test
   public void assetIssueNameTest() {
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1596,7 +1712,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1607,7 +1726,7 @@ public class AssetIssueActuatorTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
 
-    contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(ASSET_NAME_SECOND))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1617,7 +1736,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    actuator = new AssetIssueActuator(contract, dbManager);
+    actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1637,7 +1759,7 @@ public class AssetIssueActuatorTest {
   @Test
   public void assetIssueTRXNameTest() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8("TRX"))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1647,7 +1769,10 @@ public class AssetIssueActuatorTest {
         .setDescription(ByteString.copyFromUtf8("description"))
         .setUrl(ByteString.copyFromUtf8(URL))
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1676,7 +1801,7 @@ public class AssetIssueActuatorTest {
           .build());
     }
 
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1687,7 +1812,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .addAllFrozenSupply(frozenList)
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract,dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1711,7 +1839,7 @@ public class AssetIssueActuatorTest {
         .setFrozenAmount(TOTAL_SUPPLY + 1)
         .setFrozenDays(3)
         .build());
-    Any contract = Any.pack(Contract.AssetIssueContract.newBuilder()
+    Any contract = Any.pack(AssetIssueContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
         .setName(ByteString.copyFromUtf8(NAME))
         .setTotalSupply(TOTAL_SUPPLY)
@@ -1722,7 +1850,10 @@ public class AssetIssueActuatorTest {
         .setUrl(ByteString.copyFromUtf8(URL))
         .addAllFrozenSupply(frozenList)
         .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(contract, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1746,7 +1877,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("12312315345345")))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1758,7 +1889,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1782,7 +1916,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1795,12 +1929,15 @@ public class AssetIssueActuatorTest {
             .setPrecision(7)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
 
     try {
@@ -1825,7 +1962,7 @@ public class AssetIssueActuatorTest {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
     long nowTime = new Date().getTime();
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1840,12 +1977,15 @@ public class AssetIssueActuatorTest {
             .setPrecision(4)
             .build());
 
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
 
     try {
       actuator.validate();
@@ -1871,8 +2011,8 @@ public class AssetIssueActuatorTest {
 
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);
-    Contract.AssetIssueContract assetIssueContract =
-        Contract.AssetIssueContract.newBuilder()
+    AssetIssueContract assetIssueContract =
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setName(ByteString.copyFrom(ByteArray.fromString(NAME)))
             .setId(Long.toString(id))
@@ -1896,7 +2036,10 @@ public class AssetIssueActuatorTest {
     ownerCapsule.addAsset(NAME.getBytes(), 1000L);
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
-    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(getContract(), dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Long blackholeBalance = dbManager.getAccountStore().getBlackhole().getBalance();
     // SameTokenName not active, same assert name, should failure
@@ -1950,12 +2093,12 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // PublicFreeAssetNetUsage must be 0!
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1968,7 +2111,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setPublicFreeAssetNetUsage(100)
             .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -1984,7 +2130,7 @@ public class AssetIssueActuatorTest {
 
     //Invalid FreeAssetNetLimit
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -1997,7 +2143,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setFreeAssetNetLimit(-10)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -2013,7 +2162,7 @@ public class AssetIssueActuatorTest {
 
     //Invalid PublicFreeAssetNetLimit
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2026,7 +2175,10 @@ public class AssetIssueActuatorTest {
             .setPrecision(3)
             .setPublicFreeAssetNetLimit(-10)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -2052,12 +2204,12 @@ public class AssetIssueActuatorTest {
     byte[] stats = new byte[27];
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
-        .statsByVersion(Parameter.ForkBlockVersionConsts.ENERGY_LIMIT, stats);
+        .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     // No enough balance for fee!
     Any any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2069,7 +2221,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .setPrecision(3)
             .build());
-    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager);
+    AssetIssueActuator actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     AccountCapsule owner = dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
     owner.setBalance(1000);
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
@@ -2090,7 +2245,7 @@ public class AssetIssueActuatorTest {
     //Account not exists
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
     any = Any.pack(
-        Contract.AssetIssueContract.newBuilder()
+        AssetIssueContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setName(ByteString.copyFromUtf8(NAME))
             .setTotalSupply(TOTAL_SUPPLY)
@@ -2102,7 +2257,10 @@ public class AssetIssueActuatorTest {
             .setUrl(ByteString.copyFromUtf8(URL))
             .setPrecision(3)
             .build());
-    actuator = new AssetIssueActuator(any, dbManager);
+    actuator = new AssetIssueActuator(any, dbManager.getAccountStore(),
+        dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);

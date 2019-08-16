@@ -17,12 +17,13 @@ import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -187,7 +188,7 @@ public class DepositTest {
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
-    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
   @Test
@@ -280,7 +281,7 @@ public class DepositTest {
     Assert.assertEquals(checkN1.getRuntime().getResult().getHReturn(), new DataWord(100).getData());
     Assert
         .assertEquals(checkN2.getRuntime().getResult().getHReturn(), new DataWord(1000).getData());
-    VMConfig.setENERGY_LIMIT_HARD_FORK(false);
+    DBConfig.setENERGY_LIMIT_HARD_FORK(false);
   }
 
 

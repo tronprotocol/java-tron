@@ -60,7 +60,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -95,6 +94,7 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -266,55 +266,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       currentWeight += weight;
     }
     return currentWeight;
-  }
-
-  //make sure that contractType is validated before
-  //No exception will be thrown here
-  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
-    try {
-      return hashShieldTransaction(tx);
-    } catch (ContractValidateException|InvalidProtocolBufferException e) {
-      logger.debug(e.getMessage(), e);
-    }
-    return null;
-  }
-
-  public static byte[] hashShieldTransaction(TransactionCapsule tx)
-      throws ContractValidateException, InvalidProtocolBufferException {
-    Any contractParameter = tx.getInstance().getRawData().getContract(0).getParameter();
-    if (!contractParameter.is(ShieldedTransferContract.class)) {
-      throw new ContractValidateException(
-          "contract type error,expected type [ShieldedTransferContract],real type["
-              + contractParameter
-              .getClass() + "]");
-    }
-
-    ShieldedTransferContract shieldedTransferContract = contractParameter
-        .unpack(ShieldedTransferContract.class);
-    ShieldedTransferContract.Builder newContract = ShieldedTransferContract.newBuilder();
-    newContract.setFromAmount(shieldedTransferContract.getFromAmount());
-    newContract.addAllReceiveDescription(shieldedTransferContract.getReceiveDescriptionList());
-    newContract.setToAmount(shieldedTransferContract.getToAmount());
-    newContract.setTransparentFromAddress(shieldedTransferContract.getTransparentFromAddress());
-    newContract.setTransparentToAddress(shieldedTransferContract.getTransparentToAddress());
-    for (SpendDescription spendDescription : shieldedTransferContract.getSpendDescriptionList()) {
-      newContract
-          .addSpendDescription(spendDescription.toBuilder().clearSpendAuthoritySignature().build());
-    }
-
-    Transaction.raw.Builder rawBuilder = tx.getInstance().toBuilder()
-        .getRawDataBuilder()
-        .clearContract()
-        .addContract(
-            Transaction.Contract.newBuilder().setType(ContractType.ShieldedTransferContract)
-                .setParameter(
-                    Any.pack(newContract.build())).build());
-
-    Transaction transaction = tx.getInstance().toBuilder().clearRawData()
-        .setRawData(rawBuilder).build();
-
-    return Sha256Hash.of(transaction.getRawData().toByteArray())
-        .getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -682,7 +633,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       }
       if (permissionId == 2) {
         permission = AccountCapsule
-            .createDefaultActivePermission(ByteString.copyFrom(owner), manager);
+            .createDefaultActivePermission(ByteString.copyFrom(owner), manager.getDynamicPropertiesStore());
       }
     } else {
       permission = account.getPermissionById(permissionId);

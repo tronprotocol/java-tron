@@ -1,8 +1,8 @@
 package org.tron.core.zen.note;
 
-import static org.tron.core.zen.note.ZenChainParams.ZC_JUBJUB_POINT_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_JUBJUB_SCALAR_SIZE;
-import static org.tron.core.zen.note.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_JUBJUB_POINT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_JUBJUB_SCALAR_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_OUTPLAINTEXT_SIZE;
 
 import java.util.Optional;
 import lombok.AllArgsConstructor;

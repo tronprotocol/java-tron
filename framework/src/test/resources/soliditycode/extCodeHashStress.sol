@@ -33,7 +33,7 @@ contract Trigger {
     }
  }
 
-  contract TriggerNormal {
+  contract TriggerNormal1 {
      function test(address[] memory addrs) public returns(uint i) {
         bytes32 hash;
         uint i = 0;

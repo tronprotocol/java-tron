@@ -21,7 +21,10 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -70,7 +73,7 @@ public class UpdateAccountActuatorTest {
 
   private Any getContract(String name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
+        AccountUpdateContract.newBuilder()
             .setAccountName(ByteString.copyFromUtf8(name))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
@@ -78,7 +81,7 @@ public class UpdateAccountActuatorTest {
 
   private Any getContract(ByteString name, String address) {
     return Any.pack(
-        Contract.AccountUpdateContract.newBuilder()
+        AccountUpdateContract.newBuilder()
             .setAccountName(name)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .build());
@@ -94,7 +97,8 @@ public class UpdateAccountActuatorTest {
   public void rightUpdateAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -114,7 +118,9 @@ public class UpdateAccountActuatorTest {
   public void invalidAddress() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_INVALID), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -131,7 +137,9 @@ public class UpdateAccountActuatorTest {
   public void noExitAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -151,9 +159,13 @@ public class UpdateAccountActuatorTest {
   public void twiceUpdateAccount() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     UpdateAccountActuator actuator1 = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME_1, OWNER_ADDRESS), dbManager);
+        getContract(ACCOUNT_NAME_1, OWNER_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -187,9 +199,13 @@ public class UpdateAccountActuatorTest {
   public void nameAlreadyUsed() {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     UpdateAccountActuator actuator = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     UpdateAccountActuator actuator1 = new UpdateAccountActuator(
-        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager);
+        getContract(ACCOUNT_NAME, OWNER_ADDRESS_1), dbManager.getAccountStore(),
+        dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -236,7 +252,9 @@ public class UpdateAccountActuatorTest {
     //Just OK 32 bytes is OK
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS), dbManager);
+          getContract("testname0123456789abcdefghijgklm", OWNER_ADDRESS), dbManager.getAccountStore(),
+          dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -257,7 +275,9 @@ public class UpdateAccountActuatorTest {
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract("testname", OWNER_ADDRESS), dbManager);
+          getContract("testname", OWNER_ADDRESS), dbManager.getAccountStore(),
+          dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -274,7 +294,9 @@ public class UpdateAccountActuatorTest {
     //Empty name
     try {
       UpdateAccountActuator actuator = new UpdateAccountActuator(
-          getContract(ByteString.EMPTY, OWNER_ADDRESS), dbManager);
+          getContract(ByteString.EMPTY, OWNER_ADDRESS), dbManager.getAccountStore(),
+          dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -290,7 +312,9 @@ public class UpdateAccountActuatorTest {
           getContract("testname0123456789abcdefghijgklmo0123456789abcdefghijgk"
               + "lmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
               + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo0123456789abcdefghijgklmo"
-              + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager);
+              + "0123456789abcdefghijgklmo0123456789abcdefghijgklmo", OWNER_ADDRESS), dbManager.getAccountStore(),
+          dbManager.getAccountIdIndexStore(), dbManager.getDynamicPropertiesStore());
+
       actuator.validate();
       actuator.execute(ret);
       Assert.assertFalse(true);

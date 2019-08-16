@@ -1,13 +1,20 @@
 package org.tron.core.zen.note;
 
+import static org.tron.core.utils.ZenChainParams.ZC_DIVERSIFIER_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_ENCPLAINTEXT_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_MEMO_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_NOTEPLAINTEXT_LEADING;
+import static org.tron.core.utils.ZenChainParams.ZC_R_SIZE;
+import static org.tron.core.utils.ZenChainParams.ZC_V_SIZE;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
+import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.FullViewingKey;
@@ -18,7 +25,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static org.tron.core.zen.note.ZenChainParams.*;
 
 public class Note {
 
@@ -242,7 +248,7 @@ public class Note {
     Note ret = decode(pt.get());
     byte[] pkD = new byte[32];
     if (!JLibrustzcash
-        .librustzcashIvkToPkd(new LibrustzcashParam.IvkToPkdParams(ivk, ret.d.getData(), pkD))) {
+        .librustzcashIvkToPkd(new IvkToPkdParams(ivk, ret.d.getData(), pkD))) {
       return Optional.empty();
     }
     byte[] cmuExpected = new byte[32];

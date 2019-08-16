@@ -17,6 +17,8 @@
  */
 package org.tron.common.runtime.vm.trace;
 
+import static org.tron.common.utils.ByteArray.toHexString;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.tron.common.runtime.vm.DataWord;
 
@@ -24,8 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.tron.common.utils.ByteUtil.toHexString;
 
 public class OpActions {
 

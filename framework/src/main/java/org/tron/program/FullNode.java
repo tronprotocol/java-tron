@@ -38,28 +38,6 @@ public class FullNode {
     }
   }
 
-  public static void initDBConfig(Args cfgArgs) {
-    DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
-    DBConfig.setDbEngine(cfgArgs.getStorage().getDbEngine());
-    DBConfig.setOutputDirectory(cfgArgs.getOutputDirectory());
-    DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
-    DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
-    DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
-    DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
-    DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
-    DBConfig.setAllowAdaptiveEnergy(cfgArgs.getAllowAdaptiveEnergy());
-    DBConfig.setAllowDelegateResource(cfgArgs.getAllowDelegateResource());
-    DBConfig.setAllowTvmTransferTrc10(cfgArgs.getAllowTvmTransferTrc10());
-    DBConfig.setAllowTvmConstantinople(cfgArgs.getAllowTvmConstantinople());
-    DBConfig.setAllowTvmSolidity059(cfgArgs.getAllowTvmSolidity059());
-    DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
-    DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
-    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
-    DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
-    DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
-    DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
-  }
-
   /**
    * Start the FullNode.
    */
@@ -69,7 +47,6 @@ public class FullNode {
     Args cfgArgs = Args.getInstance();
 
     load(cfgArgs.getLogbackPath());
-    initDBConfig(cfgArgs);
 
     if (cfgArgs.isHelp()) {
       logger.info("Here is the help message.");

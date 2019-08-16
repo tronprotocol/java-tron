@@ -23,9 +23,9 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -624,10 +624,10 @@ public class MultiSign23 {
 
     logger.info("** created an empty transaction");
 
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountContract.AccountPermissionUpdateContract.Builder builder =
+        AccountContract.AccountPermissionUpdateContract.newBuilder();
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountContract.AccountPermissionUpdateContract contract = builder.build();
     TransactionExtention transactionExtention =
         blockingStubFull.accountPermissionUpdate(contract);
     Transaction transaction = transactionExtention.getTransaction();

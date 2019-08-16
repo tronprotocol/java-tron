@@ -24,7 +24,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -93,7 +93,7 @@ public class WitnessUpdateActuatorTest {
 
   private Any getContract(String address, String url) {
     return Any.pack(
-        Contract.WitnessUpdateContract.newBuilder()
+        WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUpdateUrl(ByteString.copyFrom(ByteArray.fromString(url)))
             .build());
@@ -101,7 +101,7 @@ public class WitnessUpdateActuatorTest {
 
   private Any getContract(String address, ByteString url) {
     return Any.pack(
-        Contract.WitnessUpdateContract.newBuilder()
+        WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUpdateUrl(url)
             .build());
@@ -113,7 +113,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void rightUpdateWitness() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(getContract(OWNER_ADDRESS, NewURL),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getWitnessStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -136,7 +136,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void InvalidAddress() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-        getContract(OWNER_ADDRESS_INVALID, NewURL), dbManager);
+        getContract(OWNER_ADDRESS_INVALID, NewURL), dbManager.getAccountStore(), dbManager.getWitnessStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -159,7 +159,8 @@ public class WitnessUpdateActuatorTest {
     //Url cannot empty
     try {
       WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-          getContract(OWNER_ADDRESS, ByteString.EMPTY), dbManager);
+          getContract(OWNER_ADDRESS, ByteString.EMPTY),
+          dbManager.getAccountStore(), dbManager.getWitnessStore());
       actuator.validate();
       actuator.execute(ret);
       fail("Invalid url");
@@ -175,7 +176,7 @@ public class WitnessUpdateActuatorTest {
     //Url length can not greater than 256
     try {
       WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-          getContract(OWNER_ADDRESS, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager);
+          getContract(OWNER_ADDRESS, ByteString.copyFromUtf8(url256Bytes + "0")), dbManager.getAccountStore(), dbManager.getWitnessStore());
       actuator.validate();
       actuator.execute(ret);
       fail("Invalid url");
@@ -189,7 +190,7 @@ public class WitnessUpdateActuatorTest {
     // 1 byte url is ok.
     try {
       WitnessUpdateActuator actuator = new WitnessUpdateActuator(getContract(OWNER_ADDRESS, "0"),
-          dbManager);
+          dbManager.getAccountStore(), dbManager.getWitnessStore());
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -206,7 +207,7 @@ public class WitnessUpdateActuatorTest {
     // 256 bytes url is ok.
     try {
       WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-          getContract(OWNER_ADDRESS, url256Bytes), dbManager);
+          getContract(OWNER_ADDRESS, url256Bytes), dbManager.getAccountStore(), dbManager.getWitnessStore());
       actuator.validate();
       actuator.execute(ret);
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
@@ -228,7 +229,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void notExistWitness() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-        getContract(OWNER_ADDRESS_NOT_WITNESS, URL), dbManager);
+        getContract(OWNER_ADDRESS_NOT_WITNESS, URL), dbManager.getAccountStore(), dbManager.getWitnessStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -248,7 +249,7 @@ public class WitnessUpdateActuatorTest {
   @Test
   public void notExistAccount() {
     WitnessUpdateActuator actuator = new WitnessUpdateActuator(
-        getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager);
+        getContract(OWNER_ADDRESS_NOTEXIST, URL), dbManager.getAccountStore(), dbManager.getWitnessStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

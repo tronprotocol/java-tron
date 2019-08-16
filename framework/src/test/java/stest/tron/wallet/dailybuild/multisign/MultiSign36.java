@@ -18,12 +18,13 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract;
+import org.tron.protos.contract.BalanceContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.Base58;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -800,10 +801,10 @@ public class MultiSign36 {
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Contract.AccountPermissionUpdateContract.Builder builder =
-        Contract.AccountPermissionUpdateContract.newBuilder();
+    AccountContract.AccountPermissionUpdateContract.Builder builder =
+        AccountContract.AccountPermissionUpdateContract.newBuilder();
 
-    Contract.AccountPermissionUpdateContract contract = builder.build();
+    AccountContract.AccountPermissionUpdateContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull.accountPermissionUpdate(contract);
     Transaction transaction = transactionExtention.getTransaction();
     String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
@@ -836,7 +837,7 @@ public class MultiSign36 {
   public Protocol.Transaction createFakeTransaction(byte[] toAddrss, Long amount,
       byte[] fromAddress) {
 
-    Contract.TransferContract contract = Contract.TransferContract.newBuilder()
+    BalanceContract.TransferContract contract = BalanceContract.TransferContract.newBuilder()
         .setOwnerAddress(ByteString.copyFrom(fromAddress))
         .setToAddress(ByteString.copyFrom(toAddrss))
         .setAmount(amount)

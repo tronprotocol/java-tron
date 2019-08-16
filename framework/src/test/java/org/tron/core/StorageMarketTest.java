@@ -1,5 +1,8 @@
 package org.tron.core;
 
+
+import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -18,7 +21,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -47,7 +50,7 @@ public class StorageMarketTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
-    storageMarket = new StorageMarket(dbManager);
+    storageMarket = new StorageMarket(dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     //    Args.setParam(new String[]{"--output-directory", dbPath},
     //        "config-junit.conf");
     //    dbManager = new Manager();
@@ -91,7 +94,7 @@ public class StorageMarketTest {
 
   private Any getContract(String ownerAddress, long quant) {
     return Any.pack(
-        Contract.BuyStorageContract.newBuilder()
+        BuyStorageContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setQuant(quant)
             .build());
@@ -111,7 +114,7 @@ public class StorageMarketTest {
     storageMarket.buyStorage(owner, quant);
 
     Assert.assertEquals(owner.getBalance(), initBalance - quant
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(2694881440L, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - 2694881440L,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -135,7 +138,7 @@ public class StorageMarketTest {
     storageMarket.buyStorage(owner, quant);
 
     Assert.assertEquals(owner.getBalance(), initBalance - quant
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(1360781717L, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - 1360781717L,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -145,7 +148,7 @@ public class StorageMarketTest {
     storageMarket.buyStorage(owner, quant);
 
     Assert.assertEquals(owner.getBalance(), initBalance - 2 * quant
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(2694881439L, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - 2694881439L,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -169,7 +172,7 @@ public class StorageMarketTest {
     storageMarket.buyStorageBytes(owner, bytes);
 
     Assert.assertEquals(owner.getBalance(), initBalance - 2_000_000_000_000L
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(bytes, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - bytes,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -193,7 +196,7 @@ public class StorageMarketTest {
     storageMarket.buyStorageBytes(owner, bytes1);
 
     Assert.assertEquals(owner.getBalance(), initBalance - 1_000_000_000_000L
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(bytes1, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - bytes1,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -203,7 +206,7 @@ public class StorageMarketTest {
     long bytes2 = 1334099723L;
     storageMarket.buyStorageBytes(owner, bytes2);
     Assert.assertEquals(owner.getBalance(), initBalance - 2 * 1_000_000_000_000L
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(bytes1 + bytes2, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - (bytes1 + bytes2),
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -226,7 +229,7 @@ public class StorageMarketTest {
     storageMarket.buyStorage(owner, quant);
 
     Assert.assertEquals(owner.getBalance(), initBalance - quant
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(2694881440L, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - 2694881440L,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -259,7 +262,7 @@ public class StorageMarketTest {
     storageMarket.buyStorage(owner, quant);
 
     Assert.assertEquals(owner.getBalance(), initBalance - quant
-        - ChainConstant.TRANSFER_FEE);
+        - TRANSFER_FEE);
     Assert.assertEquals(2694881440L, owner.getStorageLimit());
     Assert.assertEquals(currentReserved - 2694881440L,
         dbManager.getDynamicPropertiesStore().getTotalStorageReserved());

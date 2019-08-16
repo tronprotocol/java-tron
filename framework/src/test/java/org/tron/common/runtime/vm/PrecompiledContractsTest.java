@@ -42,7 +42,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 
@@ -142,7 +142,7 @@ public class PrecompiledContractsTest {
 
   private Any getFreezeContract(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)

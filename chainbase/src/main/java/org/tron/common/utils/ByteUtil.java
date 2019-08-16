@@ -22,7 +22,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import org.spongycastle.util.encoders.Hex;
 
 public class ByteUtil {
 
@@ -31,26 +34,23 @@ public class ByteUtil {
 
 
   /**
-   * return a cloned byte array.
-   * return null if parameter data is null
-   * @param data
-   * @return
+   * return a cloned byte array. return null if parameter data is null
    */
-  public static byte[] cloneBytes(byte[] data){
-    if (data == null){
+  public static byte[] cloneBytes(byte[] data) {
+    if (data == null) {
       return null;
     }
 
     int length = data.length;
     byte[] rc = new byte[length];
-    if (length > 0){
+    if (length > 0) {
       System.arraycopy(data, 0, rc, 0, length);
     }
     return rc;
   }
 
   /**
-   * The regular {@link BigInteger#toByteArray()} method isn't quite what we often need:
+   * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
    * it appends a leading zero to indicate that the number is positive and may need padding.
    *
    * @param b the integer to format into a byte array
@@ -69,6 +69,14 @@ public class ByteUtil {
     return bytes;
   }
 
+  /**
+   * Omitting sign indication byte. <br><br> Instead of {@link org.spongycastle.util.BigIntegers#asUnsignedByteArray(BigInteger)}
+   * <br>we use this custom method to avoid an empty array in case of BigInteger.ZERO
+   *
+   * @param value - any big integer number. A <code>null</code>-value will return <code>null</code>
+   * @return A byte array without a leading zero byte if present in the signed encoding.
+   * BigInteger.ZERO will return an array with length 1 and byte-value 0.
+   */
   public static byte[] bigIntegerToBytes(BigInteger value) {
     if (value == null) {
       return null;
@@ -140,6 +148,19 @@ public class ByteUtil {
       retVal = "0" + retVal;
     }
     return retVal;
+  }
+
+  /**
+   * Convert a byte-array into a hex String.<br> Works similar to {@link Hex#toHexString} but allows
+   * for <code>null</code>
+   *
+   * @param data - byte-array to convert to a hex-string
+   * @return hex representation of the data.<br> Returns an empty String if the input is
+   * <code>null</code>
+   * @see Hex#toHexString
+   */
+  public static String toHexString(byte[] data) {
+    return data == null ? "" : Hex.toHexString(data);
   }
 
   /**
@@ -348,6 +369,10 @@ public class ByteUtil {
     return compare(bytes1, bytes2) == 0;
   }
 
+  public static boolean isNullOrZeroArray(byte[] array){
+    return (array == null) || (array.length == 0);
+  }
+
   // lexicographical order
   public static int compare(byte[] bytes1, byte[] bytes2) {
     Preconditions.checkNotNull(bytes1);
@@ -362,6 +387,31 @@ public class ByteUtil {
     }
 
     return 0;
+  }
+
+  public static byte[] hexToBytes(String s) {
+    int len = s.length();
+    byte[] data = new byte[len / 2];
+    for (int i = 0; i < len; i += 2) {
+      data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+          + Character.digit(s.charAt(i + 1), 16));
+    }
+    return data;
+  }
+
+
+  public static List<Boolean> convertBytesVectorToVector(final byte[] bytes) {
+    List<Boolean> ret = new ArrayList<>();
+
+    byte c;
+    for (int i = 0; i < bytes.length; i++) {
+      c = bytes[i];
+      for (int j = 0; j < 8; j++) {
+        ret.add(((c >> (7 - j)) & 1) == 1);
+      }
+    }
+
+    return ret;
   }
 
 }

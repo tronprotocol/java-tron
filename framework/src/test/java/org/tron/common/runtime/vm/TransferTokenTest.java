@@ -27,7 +27,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -152,7 +152,8 @@ public class TransferTokenTest {
     long id2 = createAsset("testToken2");
     // add token balance for last created contract
     AccountCapsule changeAccountCapsule = dbManager.getAccountStore().get(contractAddress);
-    changeAccountCapsule.addAssetAmountV2(String.valueOf(id2).getBytes(), 99, dbManager);
+    changeAccountCapsule.addAssetAmountV2(String.valueOf(id2).getBytes(), 99,
+        dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(contractAddress, changeAccountCapsule);
     String selectorStr2 = "suicide(address)";
     String params2 = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc"; //TRANSFER_TO

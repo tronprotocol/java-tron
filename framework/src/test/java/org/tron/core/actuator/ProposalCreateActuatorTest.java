@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ForkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -27,7 +28,11 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.Contract;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ProposalStore;
+import org.tron.core.store.WitnessStore;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -120,7 +125,7 @@ public class ProposalCreateActuatorTest {
 
   private Any getContract(String address, HashMap<Long, Long> paras) {
     return Any.pack(
-        Contract.ProposalCreateContract.newBuilder()
+        ProposalCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .putAllParameters(paras)
             .build());
@@ -134,7 +139,9 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 1000000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);
     try {
@@ -166,7 +173,10 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_INVALID, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_INVALID, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -188,7 +198,10 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_NOACCOUNT, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_NOACCOUNT, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -211,7 +224,10 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(0L, 10000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_SECOND, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_SECOND, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -234,7 +250,10 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(31L, 10000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -251,7 +270,9 @@ public class ProposalCreateActuatorTest {
     paras = new HashMap<>();
     paras.put(3L, 1 + 100_000_000_000_000_000L);
     actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -267,7 +288,10 @@ public class ProposalCreateActuatorTest {
     paras = new HashMap<>();
     paras.put(10L, -1L);
     actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(-1);
     try {
       actuator.validate();
@@ -282,7 +306,10 @@ public class ProposalCreateActuatorTest {
     paras.put(10L, -1L);
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
     actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     dbManager.getDynamicPropertiesStore().saveRemoveThePowerOfTheGr(0);
     try {
       actuator.validate();
@@ -301,7 +328,10 @@ public class ProposalCreateActuatorTest {
   public void emptyProposal() {
     HashMap<Long, Long> paras = new HashMap<>();
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -322,7 +352,10 @@ public class ProposalCreateActuatorTest {
     HashMap<Long, Long> paras = new HashMap<>();
     paras.put(10L, 1000L);
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -362,9 +395,15 @@ public class ProposalCreateActuatorTest {
     paras.put(13L, 64L);
 
     ProposalCreateActuator actuator =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
     ProposalCreateActuator actuatorSecond =
-        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager);
+        new ProposalCreateActuator(getContract(OWNER_ADDRESS_FIRST, paras), dbManager.getAccountStore(),
+            dbManager.getProposalStore(), dbManager.getWitnessStore(),
+            dbManager.getDynamicPropertiesStore(), dbManager.getForkController());
+
 
     dbManager.getDynamicPropertiesStore().saveLatestProposalNum(0L);
     Assert.assertEquals(dbManager.getDynamicPropertiesStore().getLatestProposalNum(), 0);

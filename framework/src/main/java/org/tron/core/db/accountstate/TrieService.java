@@ -6,7 +6,7 @@ import java.util.Arrays;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
+import org.tron.common.utils.Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;

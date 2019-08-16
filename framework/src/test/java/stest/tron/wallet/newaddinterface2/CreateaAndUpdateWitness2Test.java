@@ -22,10 +22,11 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.Base58;
@@ -172,10 +173,10 @@ public class CreateaAndUpdateWitness2Test {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessContract.WitnessCreateContract contract = builder.build();
 
     Protocol.Transaction transaction = blockingStubFull.createWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -205,10 +206,10 @@ public class CreateaAndUpdateWitness2Test {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessCreateContract.Builder builder = Contract.WitnessCreateContract.newBuilder();
+    WitnessContract.WitnessCreateContract.Builder builder = WitnessContract.WitnessCreateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUrl(ByteString.copyFrom(url));
-    Contract.WitnessCreateContract contract = builder.build();
+    WitnessContract.WitnessCreateContract contract = builder.build();
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.createWitness2(contract);
 
@@ -255,10 +256,10 @@ public class CreateaAndUpdateWitness2Test {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
+    WitnessContract.WitnessUpdateContract.Builder builder = WitnessContract.WitnessUpdateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUpdateUrl(ByteString.copyFrom(url));
-    Contract.WitnessUpdateContract contract = builder.build();
+    WitnessContract.WitnessUpdateContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.updateWitness(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       logger.info("transaction == null");
@@ -290,10 +291,10 @@ public class CreateaAndUpdateWitness2Test {
     }
     final ECKey ecKey = temKey;
 
-    Contract.WitnessUpdateContract.Builder builder = Contract.WitnessUpdateContract.newBuilder();
+    WitnessContract.WitnessUpdateContract.Builder builder = WitnessContract.WitnessUpdateContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setUpdateUrl(ByteString.copyFrom(url));
-    Contract.WitnessUpdateContract contract = builder.build();
+    WitnessContract.WitnessUpdateContract contract = builder.build();
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.updateWitness2(contract);
     if (transactionExtention == null) {
@@ -342,14 +343,14 @@ public class CreateaAndUpdateWitness2Test {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferContract.Builder builder = Contract.TransferContract.newBuilder();
+    BalanceContract.TransferContract.Builder builder = BalanceContract.TransferContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsOwner = ByteString.copyFrom(owner);
     builder.setToAddress(bsTo);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferContract contract = builder.build();
+    BalanceContract.TransferContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.createTransaction(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;

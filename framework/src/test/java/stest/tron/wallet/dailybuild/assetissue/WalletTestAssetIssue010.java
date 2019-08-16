@@ -21,7 +21,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -120,7 +123,7 @@ public class WalletTestAssetIssue010 {
     //Query the description and url,freeAssetNetLimit and publicFreeAssetNetLimit
     GrpcAPI.BytesMessage request = GrpcAPI.BytesMessage.newBuilder()
         .setValue(assetAccountId).build();
-    Contract.AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
+    AssetIssueContract assetIssueByName = blockingStubFull.getAssetIssueByName(request);
 
     Assert.assertTrue(
         ByteArray.toStr(assetIssueByName.getDescription().toByteArray()).equals(description));
@@ -220,7 +223,7 @@ public class WalletTestAssetIssue010 {
     Account search = PublicMethed.queryAccount(priKey, blockingStubFull);
 
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -231,8 +234,8 @@ public class WalletTestAssetIssue010 {
       builder.setVoteScore(voteScore);
       builder.setDescription(ByteString.copyFrom(description.getBytes()));
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply
+      AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContract.FrozenSupply
               .newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
@@ -331,7 +334,7 @@ public class WalletTestAssetIssue010 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -340,7 +343,7 @@ public class WalletTestAssetIssue010 {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    TransferAssetContract contract = builder.build();
     Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       return false;
@@ -372,13 +375,13 @@ public class WalletTestAssetIssue010 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.UnfreezeAssetContract.Builder builder = Contract.UnfreezeAssetContract
+    UnfreezeAssetContract.Builder builder = UnfreezeAssetContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess);
 
-    Contract.UnfreezeAssetContract contract = builder.build();
+    UnfreezeAssetContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.unfreezeAsset(contract);
 
@@ -412,7 +415,7 @@ public class WalletTestAssetIssue010 {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    ParticipateAssetIssueContract.Builder builder = ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -421,7 +424,7 @@ public class WalletTestAssetIssue010 {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    ParticipateAssetIssueContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(ecKey, transaction);

@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.TRANSFER_FEE;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -22,7 +24,9 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -94,7 +98,7 @@ public class BuyStorageActuatorTest {
 
   private Any getContract(String ownerAddress, long quant) {
     return Any.pack(
-        Contract.BuyStorageContract.newBuilder()
+        BuyStorageContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setQuant(quant)
             .build());
@@ -109,7 +113,7 @@ public class BuyStorageActuatorTest {
 
     long quant = 2_000_000_000_000L; // 2 million trx
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -119,7 +123,7 @@ public class BuyStorageActuatorTest {
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
 
       Assert.assertEquals(owner.getBalance(), initBalance - quant
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(2694881440L, owner.getStorageLimit());
       Assert.assertEquals(currentReserved - 2694881440L,
           dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -142,11 +146,12 @@ public class BuyStorageActuatorTest {
     long quant = 1_000_000_000_000L; // 1 million trx
 
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant),dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     BuyStorageActuator actuator2 = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant),dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret2 = new TransactionResultCapsule();
 
     try {
@@ -156,7 +161,7 @@ public class BuyStorageActuatorTest {
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), initBalance - quant
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(1360781717L, owner.getStorageLimit());
       Assert.assertEquals(currentReserved - 1360781717L,
           dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -170,7 +175,7 @@ public class BuyStorageActuatorTest {
       owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), initBalance - 2 * quant
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(2694881439L, owner.getStorageLimit());
       Assert.assertEquals(currentReserved - 2694881439L,
           dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -244,7 +249,8 @@ public class BuyStorageActuatorTest {
   public void buyLessThanZero() {
     long quant = -1_000_000_000L;
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -263,7 +269,8 @@ public class BuyStorageActuatorTest {
   public void buyLessThan1Trx() {
     long quant = 200_000L;
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -288,11 +295,13 @@ public class BuyStorageActuatorTest {
     long quant = 9_000_000_000_000_000L; // 9 billion trx
 
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     BuyStorageActuator actuator2 = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, 1_000_000), dbManager);
+        getContract(OWNER_ADDRESS, 1_000_000), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret2 = new TransactionResultCapsule();
 
     try {
@@ -302,7 +311,7 @@ public class BuyStorageActuatorTest {
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(owner.getBalance(), initBalance - quant
-          - ChainConstant.TRANSFER_FEE);
+          - TRANSFER_FEE);
       Assert.assertEquals(135928635301L, owner.getStorageLimit());
       Assert.assertEquals(currentReserved - 135928635301L,
           dbManager.getDynamicPropertiesStore().getTotalStorageReserved());
@@ -327,7 +336,8 @@ public class BuyStorageActuatorTest {
   public void buyMoreThanBalance() {
     long quant = 11_000_000_000_000_000L;
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS, quant), dbManager);
+        getContract(OWNER_ADDRESS, quant),dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -345,7 +355,8 @@ public class BuyStorageActuatorTest {
   public void invalidOwnerAddress() {
     long quant = 1_000_000_000L;
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ADDRESS_INVALID, quant), dbManager);
+        getContract(OWNER_ADDRESS_INVALID, quant), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -367,7 +378,7 @@ public class BuyStorageActuatorTest {
   public void invalidOwnerAccount() {
     long quant = 1_000_000_000L;
     BuyStorageActuator actuator = new BuyStorageActuator(
-        getContract(OWNER_ACCOUNT_INVALID, quant), dbManager);
+        getContract(OWNER_ACCOUNT_INVALID, quant),dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

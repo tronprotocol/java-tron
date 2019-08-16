@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
+import org.tron.core.config.args.GenesisBlock;
 
 public class DBConfig {
 
@@ -26,6 +27,10 @@ public class DBConfig {
   @Getter
   @Setter
   private static Map<String, Property> propertyMap;
+
+  @Getter
+  @Setter
+  private static GenesisBlock genesisBlock;
 
   @Getter
   @Setter
@@ -85,7 +90,37 @@ public class DBConfig {
 
   @Getter
   @Setter
+  private static long blockNumForEneryLimit;
+
+  @Getter
+  @Setter
+  private static long proposalExpireTime; // (ms)
+
+  @Getter
+  @Setter
   private static long allowProtoFilterNum;
+
+  @Getter
+  @Setter
+  private static int checkFrozenTime; // for test only
+
+  public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
+
+  //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
+  @Setter
+  public static boolean ENERGY_LIMIT_HARD_FORK = false;
+
+  @Getter
+  @Setter
+  private static String dbDirectory;
+
+  @Getter
+  @Setter
+  private static boolean fullNodeAllowShieldedTransaction;
+
+  @Getter
+  @Setter
+  private static String zenTokenId;
 
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
@@ -93,6 +128,13 @@ public class DBConfig {
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024L;
   private static final int DEFAULT_MAX_OPEN_FILES = 100;
 
+  public static boolean allowTvmConstantinople() {
+    return ALLOW_TVM_CONSTANTINOPLE;
+  }
+
+  public static boolean getEnergyLimitHardFork() {
+    return ENERGY_LIMIT_HARD_FORK;
+  }
 
   public static String getOutputDirectoryByDbName(String dbName) {
     String path = getPathByDbName(dbName);

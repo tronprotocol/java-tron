@@ -22,14 +22,17 @@ import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.utils.ByteArray;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
+import org.tron.protos.contract.AccountContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.WitnessContract;
 
 
 public class GrpcClient {
@@ -94,11 +97,11 @@ public class GrpcClient {
     }
   }
 
-  public Transaction createTransaction(Contract.AccountUpdateContract contract) {
+  public Transaction createTransaction(AccountContract.AccountUpdateContract contract) {
     return blockingStubFull.updateAccount(contract);
   }
 
-  public Transaction createTransaction(Contract.TransferContract contract) {
+  public Transaction createTransaction(BalanceContract.TransferContract contract) {
     return blockingStubFull.createTransaction(contract);
   }
 
@@ -114,28 +117,28 @@ public class GrpcClient {
     return blockingStubFull.unfreezeBalance(contract);
   }
 
-  public Transaction createTransferAssetTransaction(Contract.TransferAssetContract contract) {
+  public Transaction createTransferAssetTransaction(AssetIssueContractOuterClass.TransferAssetContract contract) {
     return blockingStubFull.transferAsset(contract);
   }
 
   public Transaction createParticipateAssetIssueTransaction(
-      Contract.ParticipateAssetIssueContract contract) {
+      AssetIssueContractOuterClass.ParticipateAssetIssueContract contract) {
     return blockingStubFull.participateAssetIssue(contract);
   }
 
-  public Transaction createAccount(Contract.AccountCreateContract contract) {
+  public Transaction createAccount(AccountContract.AccountCreateContract contract) {
     return blockingStubFull.createAccount(contract);
   }
 
-  public Transaction createAssetIssue(Contract.AssetIssueContract contract) {
+  public Transaction createAssetIssue(AssetIssueContract contract) {
     return blockingStubFull.createAssetIssue(contract);
   }
 
-  public Transaction voteWitnessAccount(Contract.VoteWitnessContract contract) {
+  public Transaction voteWitnessAccount(WitnessContract.VoteWitnessContract contract) {
     return blockingStubFull.voteWitnessAccount(contract);
   }
 
-  public Transaction createWitness(Contract.WitnessCreateContract contract) {
+  public Transaction createWitness(WitnessContract.WitnessCreateContract contract) {
     return blockingStubFull.createWitness(contract);
   }
 

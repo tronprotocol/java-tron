@@ -1,8 +1,22 @@
 package org.tron.common.utils;
 
+import static org.tron.common.utils.Hash.sha3omit12;
+
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.spongycastle.math.ec.ECPoint;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.exception.BalanceInsufficientException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.ExchangeStore;
+import org.tron.core.store.ExchangeV2Store;
+import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j(topic = "Commons")
 public class Commons {
@@ -36,7 +50,6 @@ public class Commons {
     }
     return null;
   }
-
 
   public static boolean addressValid(byte[] address) {
     if (ArrayUtils.isEmpty(address)) {
@@ -73,5 +86,103 @@ public class Commons {
     }
 
     return address;
+  }
+
+  public static void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    adjustBalance(accountStore, account, amount);
+  }
+
+  public static String createReadableString(byte[] bytes) {
+    return ByteArray.toHexString(bytes);
+  }
+  /**
+   * judge balance.
+   */
+  public static void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount)
+      throws BalanceInsufficientException {
+
+    long balance = account.getBalance();
+    if (amount == 0) {
+      return;
+    }
+
+    if (amount < 0 && balance < -amount) {
+      throw new BalanceInsufficientException(
+          createReadableString(account.createDbKey()) + " insufficient balance");
+    }
+    account.setBalance(Math.addExact(balance, amount));
+    accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
+  public static ExchangeStore getExchangeStoreFinal(DynamicPropertiesStore dynamicPropertiesStore, ExchangeStore exchangeStore,
+      ExchangeV2Store exchangeV2Store) {
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      return exchangeStore;
+    } else {
+      return exchangeV2Store;
+    }
+  }
+
+  public static void putExchangeCapsule(ExchangeCapsule exchangeCapsule, DynamicPropertiesStore dynamicPropertiesStore, ExchangeStore exchangeStore,
+      ExchangeV2Store exchangeV2Store, AssetIssueStore assetIssueStore) {
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      exchangeStore.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+      ExchangeCapsule exchangeCapsuleV2 = new ExchangeCapsule(exchangeCapsule.getData());
+      exchangeCapsuleV2.resetTokenWithID(assetIssueStore, dynamicPropertiesStore);
+      exchangeV2Store.put(exchangeCapsuleV2.createDbKey(), exchangeCapsuleV2);
+    } else {
+      exchangeV2Store.put(exchangeCapsule.createDbKey(), exchangeCapsule);
+    }
+  }
+
+  public static AssetIssueStore getAssetIssueStoreFinal(
+      DynamicPropertiesStore dynamicPropertiesStore,
+      AssetIssueStore assetIssueStore, AssetIssueV2Store assetIssueV2Store) {
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      return assetIssueStore;
+    } else {
+      return assetIssueV2Store;
+    }
+  }
+
+  public static byte[] computeAddress(ECPoint pubPoint) {
+    return computeAddress(pubPoint.getEncoded(/* uncompressed */ false));
+  }
+
+  public static byte[] computeAddress(byte[] pubBytes) {
+    return sha3omit12(
+        Arrays.copyOfRange(pubBytes, 1, pubBytes.length));
+  }
+
+  public static void adjustAssetBalanceV2(AccountCapsule account, String AssetID, long amount,
+      AccountStore accountStore, AssetIssueStore assetIssueStore, DynamicPropertiesStore dynamicPropertiesStore)
+      throws BalanceInsufficientException {
+    if (amount < 0) {
+      if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, dynamicPropertiesStore, assetIssueStore)) {
+        throw new BalanceInsufficientException("reduceAssetAmount failed !");
+      }
+    } else if (amount > 0 &&
+        !account.addAssetAmountV2(AssetID.getBytes(), amount, dynamicPropertiesStore, assetIssueStore)) {
+      throw new BalanceInsufficientException("addAssetAmount failed !");
+    }
+    accountStore.put(account.getAddress().toByteArray(), account);
+  }
+
+  public static void adjustTotalShieldedPoolValue(long valueBalance, DynamicPropertiesStore dynamicPropertiesStore) throws BalanceInsufficientException {
+    long totalShieldedPoolValue = Math
+        .subtractExact(dynamicPropertiesStore.getTotalShieldedPoolValue(), valueBalance);
+    if (totalShieldedPoolValue < 0) {
+      throw new BalanceInsufficientException("Total shielded pool value can not below 0");
+    }
+    dynamicPropertiesStore.saveTotalShieldedPoolValue(totalShieldedPoolValue);
+  }
+
+  public static void adjustAssetBalanceV2(byte[] accountAddress, String AssetID, long amount
+      , AccountStore accountStore, AssetIssueStore assetIssueStore, DynamicPropertiesStore dynamicPropertiesStore)
+      throws BalanceInsufficientException {
+    AccountCapsule account = accountStore.getUnchecked(accountAddress);
+    adjustAssetBalanceV2(account, AssetID, amount, accountStore, assetIssueStore, dynamicPropertiesStore);
   }
 }

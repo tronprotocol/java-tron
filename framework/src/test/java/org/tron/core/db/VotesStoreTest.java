@@ -15,6 +15,7 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.store.VotesStore;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j

@@ -22,7 +22,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -73,7 +73,7 @@ public class CreateAccountActuatorTest {
 
   private Any getContract(String ownerAddress, String accountAddress) {
     return Any.pack(
-        Contract.AccountCreateContract.newBuilder()
+        AccountCreateContract.newBuilder()
             .setAccountAddress(ByteString.copyFrom(ByteArray.fromHexString(accountAddress)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .build());
@@ -86,7 +86,7 @@ public class CreateAccountActuatorTest {
   public void firstCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_FIRST),
-            dbManager);
+            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -113,7 +113,8 @@ public class CreateAccountActuatorTest {
   public void secondCreateAccount() {
     CreateAccountActuator actuator =
         new CreateAccountActuator(
-            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND), dbManager);
+            getContract(OWNER_ADDRESS_SECOND, OWNER_ADDRESS_SECOND),
+            dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();

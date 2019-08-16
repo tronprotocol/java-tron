@@ -18,11 +18,13 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.testng.collections.Lists;
 import org.tron.api.GrpcAPI;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.crypto.zksnark.ZksnarkUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
+import org.tron.common.zksnark.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
+import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
@@ -31,7 +33,9 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeCmParams;
 import org.tron.common.zksnark.LibrustzcashParam.FinalCheckParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.MerklePath;
 import org.tron.common.zksnark.ZksnarkClient;
+import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
@@ -62,6 +66,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.FullNodeHttpApiService;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.ZenTransactionBuilder.SpendDescriptionInfo;
 import org.tron.core.zen.address.DiversifierT;
@@ -71,20 +76,16 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
-import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer.EmptyMerkleRoots;
-import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
-import org.tron.core.zen.merkle.MerklePath;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ReceiveDescription;
-import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -350,7 +351,7 @@ public class SendCoinShieldTest {
 
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(output, ctx);
-    Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
+    ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     Optional<Note> ret1 = Note.decrypt(
         receiveDescription.getCEnc().toByteArray(),//ciphertext
@@ -415,7 +416,7 @@ public class SendCoinShieldTest {
     builder2.addOutput(fullViewingKey.getOvk(), paymentAddress2, 10000, new byte[512]);
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder2.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder2.generateOutputProof(output, ctx);
-    Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
+    ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
     Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
@@ -526,8 +527,8 @@ public class SendCoinShieldTest {
       if (c.getType() != ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
       Optional<Note> ret1 = Note.decrypt(
@@ -609,8 +610,8 @@ public class SendCoinShieldTest {
       if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
       
       //first try to decrypt cOut with ovk, get pkd、esk
@@ -685,7 +686,7 @@ public class SendCoinShieldTest {
     TransactionCapsule transactionCap = builder.build();
     JLibrustzcash.librustzcashSaplingProvingCtxFree(ctx);
     boolean ret = ZksnarkClient.getInstance().checkZksnarkProof(transactionCap.getInstance(),
-        TransactionCapsule.getShieldTransactionHashIgnoreTypeException(transactionCap),
+        TransactionUtil.getShieldTransactionHashIgnoreTypeException(transactionCap.getInstance()),
         10 * 1000000
     );
     Assert.assertTrue(ret);

@@ -41,8 +41,12 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -162,7 +166,7 @@ public class TransferAssetActuatorTest {
     }
 
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -172,7 +176,7 @@ public class TransferAssetActuatorTest {
 
   private Any getContract(long sendCoin, ByteString assetName) {
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(assetName)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -182,7 +186,7 @@ public class TransferAssetActuatorTest {
 
   private Any getContract(long sendCoin, String assetName) {
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -197,7 +201,7 @@ public class TransferAssetActuatorTest {
       assertName = String.valueOf(tokenIdNum);
     }
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owner)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(to)))
@@ -275,7 +279,10 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameCloseSuccessTransfer() {
     createAssertBeforSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L),
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -311,7 +318,9 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameOpenSuccessTransfer() {
     createAssertSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -347,7 +356,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseSuccessTransfer2() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -384,7 +395,9 @@ public class TransferAssetActuatorTest {
     createAssertBeforSameTokenNameActive();
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -419,7 +432,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenSuccessTransfer2() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -456,7 +471,9 @@ public class TransferAssetActuatorTest {
     owner.setInstance(owner.getInstance().toBuilder().clearAsset().build());
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -484,7 +501,9 @@ public class TransferAssetActuatorTest {
     owner.setInstance(owner.getInstance().toBuilder().clearAssetV2().build());
     dbManager.getAccountStore().put(owner.createDbKey(), owner);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -510,7 +529,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseNotEnoughAssetTest() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE + 1),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -538,7 +559,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenNotEnoughAssetTest() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(OWNER_ASSET_BALANCE + 1),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -567,7 +590,9 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameCloseZeroAmountTest() {
     createAssertBeforSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(0), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(0),
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -595,7 +620,9 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameOpenZeroAmountTest() {
     createAssertSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(0), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(0), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -624,7 +651,9 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameCloseNegativeAmountTest() {
     createAssertBeforSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(-999), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(-999), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -652,7 +681,9 @@ public class TransferAssetActuatorTest {
   @Test
   public void SameTokenNameOpenNegativeAmountTest() {
     createAssertSameTokenNameActive();
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(-999), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(-999), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -682,7 +713,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseNoneExistAssetTest() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, "TTTTTTTTTTTT"),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -710,7 +743,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenNoneExistAssetTest() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, "TTTTTTTTTTTT"),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -741,7 +776,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseNoExitToAccount() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       AccountCapsule noExitAccount = dbManager.getAccountStore()
@@ -777,7 +814,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenNoExitToAccount() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS_2), dbManager);
+        getContract(100L, OWNER_ADDRESS, NOT_EXIT_ADDRESS_2), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       AccountCapsule noExitAccount = dbManager.getAccountStore()
@@ -817,7 +856,9 @@ public class TransferAssetActuatorTest {
     AccountCapsule toAccount = dbManager.getAccountStore().get(ByteArray.fromHexString(TO_ADDRESS));
     toAccount.addAsset(ASSET_NAME.getBytes(), Long.MAX_VALUE);
     dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -849,7 +890,9 @@ public class TransferAssetActuatorTest {
     long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
     toAccount.addAssetV2(ByteArray.fromString(String.valueOf(tokenIdNum)), Long.MAX_VALUE);
     dbManager.getAccountStore().put(ByteArray.fromHexString(TO_ADDRESS), toAccount);
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(1), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -878,7 +921,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseTransferToYourself() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -907,7 +952,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenTransferToYourself() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS, OWNER_ADDRESS), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -937,7 +984,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseInvalidOwnerAddress() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -964,7 +1013,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenInvalidOwnerAddress() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager);
+        getContract(100L, OWNER_ADDRESS_INVALID, TO_ADDRESS), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -993,7 +1044,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameCloseInvalidToAddress() {
     createAssertBeforSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager);
+        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1020,7 +1073,9 @@ public class TransferAssetActuatorTest {
   public void SameTokenNameOpenInvalidToAddress() {
     createAssertSameTokenNameActive();
     TransferAssetActuator actuator = new TransferAssetActuator(
-        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager);
+        getContract(100L, OWNER_ADDRESS, TO_ADDRESS_INVALID), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1074,7 +1129,9 @@ public class TransferAssetActuatorTest {
         .getAssetIssueStore()
         .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(1, ownerASSET_NAME),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1135,7 +1192,9 @@ public class TransferAssetActuatorTest {
         .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
     TransferAssetActuator actuator = new TransferAssetActuator(
         getContract(1, String.valueOf(tokenIdNum)),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1188,7 +1247,9 @@ public class TransferAssetActuatorTest {
 
     dbManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
 
-    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager);
+    TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1214,7 +1275,9 @@ public class TransferAssetActuatorTest {
     //Empty name, throw exception
     ByteString emptyName = ByteString.EMPTY;
     TransferAssetActuator actuator = new TransferAssetActuator(getContract(100L, emptyName),
-        dbManager);
+        dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     TransactionResultCapsule ret = new TransactionResultCapsule();
     try {
       actuator.validate();
@@ -1284,7 +1347,9 @@ public class TransferAssetActuatorTest {
     // 32 byte readable character just ok.
     assetName = "testname0123456789abcdefghijgklm";
     createAsset(assetName);
-    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
+    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);
@@ -1304,7 +1369,9 @@ public class TransferAssetActuatorTest {
     // 1 byte readable character ok.
     assetName = "t";
     createAsset(assetName);
-    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager);
+    actuator = new TransferAssetActuator(getContract(100L, assetName), dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore(),
+        dbManager.getAssetIssueStore(), dbManager.getAssetIssueV2Store());
+
     try {
       actuator.validate();
       actuator.execute(ret);

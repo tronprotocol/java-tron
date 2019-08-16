@@ -83,7 +83,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.core.WalletSolidity;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -96,6 +95,7 @@ import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
 import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -155,11 +155,12 @@ public class RpcApiService implements Service {
   @Autowired
   private NodeManager nodeManager;
   @Autowired
-  private WalletSolidity walletSolidity;
-  @Autowired
   private Wallet wallet;
   @Autowired
   private NodeInfoService nodeInfoService;
+  @Autowired
+  private RateLimiterInterceptor rateLimiterInterceptor;
+
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -170,6 +171,7 @@ public class RpcApiService implements Service {
 
   @Override
   public void init() {
+
   }
 
   @Override
@@ -179,9 +181,7 @@ public class RpcApiService implements Service {
   @Override
   public void start() {
     try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(databaseApi);
-
+      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
       Args args = Args.getInstance();
 
       if (args.getRpcThreadNum() > 0) {
@@ -207,7 +207,13 @@ public class RpcApiService implements Service {
           .maxMessageSize(args.getMaxMessageSize())
           .maxHeaderListSize(args.getMaxHeaderListSize());
 
-      apiServer = serverBuilder.build().start();
+      // add a ratelimiter interceptor
+      serverBuilder.intercept(rateLimiterInterceptor);
+
+      apiServer = serverBuilder.build();
+      rateLimiterInterceptor.init(apiServer);
+
+      apiServer.start();
     } catch (IOException e) {
       logger.debug(e.getMessage(), e);
     }
@@ -647,70 +653,6 @@ public class RpcApiService implements Service {
         builder.addTransaction(transaction2Extention(transaction));
       }
       return builder.build();
-    }
-
-    @Override
-    public void getTransactionsFromThis(AccountPaginated request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString thisAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != thisAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, offset, limit);
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsFromThis2(AccountPaginated request,
-        StreamObserver<TransactionListExtention> responseObserver) {
-      ByteString thisAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != thisAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsFromThis(thisAddress, offset, limit);
-        responseObserver.onNext(transactionList2Extention(reply));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsToThis(AccountPaginated request,
-        StreamObserver<TransactionList> responseObserver) {
-      ByteString toAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != toAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, offset, limit);
-        responseObserver.onNext(reply);
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionsToThis2(AccountPaginated request,
-        StreamObserver<TransactionListExtention> responseObserver) {
-      ByteString toAddress = request.getAccount().getAddress();
-      long offset = request.getOffset();
-      long limit = request.getLimit();
-      if (null != toAddress && offset >= 0 && limit >= 0) {
-        TransactionList reply = walletSolidity
-            .getTransactionsToThis(toAddress, offset, limit);
-        responseObserver.onNext(transactionList2Extention(reply));
-      } else {
-        responseObserver.onNext(null);
-      }
-      responseObserver.onCompleted();
     }
   }
 

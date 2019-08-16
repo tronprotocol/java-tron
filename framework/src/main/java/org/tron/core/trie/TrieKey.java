@@ -1,8 +1,8 @@
 
 package org.tron.core.trie;
 
+import static org.tron.common.utils.ByteArray.toHexString;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.ByteUtil.toHexString;
 
 /**
  * Created by Anton Nashatyrev on 13.02.2017.
