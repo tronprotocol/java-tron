@@ -1384,8 +1384,8 @@ public class PrecompiledContracts {
         }
       } else {
         // add check
-        CountDownLatch countDownLatch = new CountDownLatch(cnt);
-        List<Future<ValidateSignResult>> futures = new ArrayList<>(cnt);
+        CountDownLatch countDownLatch = new CountDownLatch(min);
+        List<Future<ValidateSignResult>> futures = new ArrayList<>(min);
 
         for (int i = 0; i < min; i++) {
           Future<ValidateSignResult> future = workers
@@ -1408,6 +1408,9 @@ public class PrecompiledContracts {
       byte[] r;
       byte[] s;
       DataWord out = null;
+      if (sign.length < 65) {
+        return false;
+      }
       try {
         r = Arrays.copyOfRange(sign, 0, 32);
         s = Arrays.copyOfRange(sign, 32, 64);
@@ -1422,7 +1425,7 @@ public class PrecompiledContracts {
           }
         }
       } catch (Throwable any) {
-        logger.info("ECRecover error", any);
+        logger.info("ECRecover error", any.getMessage());
       }
       return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
           out.getLast20Bytes());
