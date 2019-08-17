@@ -11,7 +11,7 @@ import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.core.vm.program.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.exception.ContractExeException;

@@ -12,7 +12,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
-import org.tron.common.runtime.vm.LogEventWrapper;
+import org.tron.core.vm.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
 public class FilterQueryTest {

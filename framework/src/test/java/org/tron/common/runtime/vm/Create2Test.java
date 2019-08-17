@@ -9,7 +9,7 @@ import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;

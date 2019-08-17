@@ -10,7 +10,7 @@ import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;

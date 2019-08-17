@@ -9,7 +9,7 @@ import org.testng.Assert;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
+import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractExeException;

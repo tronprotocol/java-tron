@@ -2,7 +2,7 @@ package org.tron.common.runtime.vm;
 
 
 import static junit.framework.TestCase.fail;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -20,8 +20,9 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
-import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
+import org.tron.core.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
@@ -42,6 +43,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.vm.DataWord;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
