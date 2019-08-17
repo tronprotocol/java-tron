@@ -1,6 +1,6 @@
 package org.tron.common.storage;
 
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Storage;
+import org.tron.core.vm.DataWord;
+import org.tron.core.vm.program.Storage;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
@@ -38,6 +38,9 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.vm.repository.Key;
+import org.tron.core.vm.repository.Type;
+import org.tron.core.vm.repository.Value;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 

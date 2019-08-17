@@ -4,7 +4,6 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +17,8 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.core.vm.program.InternalTransaction;
+import org.tron.core.vm.program.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;

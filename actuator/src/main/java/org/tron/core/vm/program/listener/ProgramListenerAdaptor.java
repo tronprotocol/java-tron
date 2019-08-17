@@ -15,29 +15,45 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.logsfilter.capsule;
+package org.tron.core.vm.program.listener;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import lombok.Getter;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.core.vm.DataWord;
 
-@Data
-public class RawData {
+// Empty ListenerAdapter
+public class ProgramListenerAdaptor implements ProgramListener {
 
-  // for mongodb
-  @Getter
-  private String address;
-  @Getter
-  private List<DataWord> topics;
-  @Getter
-  private String data;
+  @Override
+  public void onMemoryExtend(int delta) {
+    // do nothing
+  }
 
-  public RawData(byte[] address, List<DataWord> topics, byte[] data) {
-    this.address = (address != null) ? Hex.toHexString(address) : "";
-    this.topics = (address != null) ? topics : new ArrayList<>();
-    this.data = (data != null) ? Hex.toHexString(data) : "";
+  @Override
+  public void onMemoryWrite(int address, byte[] data, int size) {
+    // do nothing
+  }
+
+  @Override
+  public void onStackPop() {
+    // do nothing
+  }
+
+  @Override
+  public void onStackPush(DataWord value) {
+    // do nothing
+  }
+
+  @Override
+  public void onStackSwap(int from, int to) {
+    // do nothing
+  }
+
+  @Override
+  public void onStoragePut(DataWord key, DataWord value) {
+    // do nothing
+  }
+
+  @Override
+  public void onStorageClear() {
+    // do nothing
   }
 }

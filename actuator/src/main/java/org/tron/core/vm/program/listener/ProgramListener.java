@@ -15,29 +15,23 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.logsfilter.capsule;
+package org.tron.core.vm.program.listener;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import lombok.Getter;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.core.vm.DataWord;
 
-@Data
-public class RawData {
+public interface ProgramListener {
 
-  // for mongodb
-  @Getter
-  private String address;
-  @Getter
-  private List<DataWord> topics;
-  @Getter
-  private String data;
+  void onMemoryExtend(int delta);
 
-  public RawData(byte[] address, List<DataWord> topics, byte[] data) {
-    this.address = (address != null) ? Hex.toHexString(address) : "";
-    this.topics = (address != null) ? topics : new ArrayList<>();
-    this.data = (data != null) ? Hex.toHexString(data) : "";
-  }
+  void onMemoryWrite(int address, byte[] data, int size);
+
+  void onStackPop();
+
+  void onStackPush(DataWord value);
+
+  void onStackSwap(int from, int to);
+
+  void onStoragePut(DataWord key, DataWord value);
+
+  void onStorageClear();
 }

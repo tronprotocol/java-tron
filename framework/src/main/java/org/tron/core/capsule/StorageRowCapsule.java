@@ -19,7 +19,7 @@ import java.util.Arrays;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm.DataWord;
 import org.tron.common.utils.Sha256Hash;
 
 

@@ -15,29 +15,40 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
-package org.tron.common.logsfilter.capsule;
+package org.tron.core.vm;
 
-import java.util.ArrayList;
-import java.util.List;
-import lombok.Data;
-import lombok.Getter;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.DataWord;
+/**
+ * @author Roman Mandeleil
+ * @since 03.07.2014
+ */
+public class CallCreate {
 
-@Data
-public class RawData {
+  private final byte[] data;
+  private final byte[] destination;
+  private final byte[] energyLimit;
+  private final byte[] value;
 
-  // for mongodb
-  @Getter
-  private String address;
-  @Getter
-  private List<DataWord> topics;
-  @Getter
-  private String data;
 
-  public RawData(byte[] address, List<DataWord> topics, byte[] data) {
-    this.address = (address != null) ? Hex.toHexString(address) : "";
-    this.topics = (address != null) ? topics : new ArrayList<>();
-    this.data = (data != null) ? Hex.toHexString(data) : "";
+  public CallCreate(byte[] data, byte[] destination, byte[] energyLimit, byte[] value) {
+    this.data = data;
+    this.destination = destination;
+    this.energyLimit = energyLimit;
+    this.value = value;
+  }
+
+  public byte[] getData() {
+    return data;
+  }
+
+  public byte[] getDestination() {
+    return destination;
+  }
+
+  public byte[] getEnergyLimit() {
+    return energyLimit;
+  }
+
+  public byte[] getValue() {
+    return value;
   }
 }
