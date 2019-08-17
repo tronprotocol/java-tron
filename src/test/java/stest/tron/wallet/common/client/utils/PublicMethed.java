@@ -4804,6 +4804,7 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
+    System.out.println("hexstring：" + ByteArray.toHexString(input));
 
     Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
@@ -4813,9 +4814,8 @@ public class PublicMethed {
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
     Contract.TriggerSmartContract triggerContract = builder.build();
+    TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
 
-    TransactionExtention transactionExtention = blockingStubFull
-        .triggerConstantContract(triggerContract);
     return transactionExtention;
 
   }
@@ -5769,5 +5769,12 @@ public class PublicMethed {
     return null;
   }
 
-
+  public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+    long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
+    System.out.println("剩余资产：" + balance);
+    sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
+    System.out
+        .println("之后资产：" + PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
+  }
 }
