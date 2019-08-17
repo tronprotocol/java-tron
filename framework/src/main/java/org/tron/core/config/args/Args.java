@@ -1464,5 +1464,7 @@ public class Args {
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+    DBConfig.setVmTrace(cfgArgs.isVmTrace());
+
   }
 }

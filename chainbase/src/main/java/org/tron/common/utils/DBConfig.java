@@ -122,6 +122,10 @@ public class DBConfig {
   @Setter
   private static String zenTokenId;
 
+  @Getter
+  @Setter
+  private static boolean vmTrace;
+
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;
