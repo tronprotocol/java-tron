@@ -150,6 +150,7 @@ public abstract class AbstractActuator implements Actuator {
     this.contract = contract;
     this.accountStore = accountStore;
     this.dynamicStore = dynamicPropertiesStore;
+    this.contractStore = contractStore;
   }
 
   AbstractActuator(Any contract, AccountStore accountStore, WitnessStore witnessStore, ProposalStore proposalStore, DynamicPropertiesStore dynamicPropertiesStore) {
