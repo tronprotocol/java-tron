@@ -1,0 +1,15 @@
+package org.tron.consensus.base;
+
+public enum State {
+  OK,
+  NOT_SYNCED,
+  DUP_WITNESS,
+  CLOCK_ERROR,
+  SLAVE_STATUS,
+  NOT_MY_TURN,
+  NOT_TIME_YET,
+  PERMISSION_ERROR,
+  LOW_PARTICIPATION,
+  PRODUCE_BLOCK_FAILED,
+  OTHER
+}

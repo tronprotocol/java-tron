@@ -1,6 +1,5 @@
 package stest.tron.wallet.dailybuild.tvmnewcommand.create2;
 
-import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.HashMap;

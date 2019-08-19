@@ -48,9 +48,6 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Account;
-import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.BlockHeader;
-import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 @Slf4j
