@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -59,6 +60,7 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
@@ -226,6 +228,21 @@ public class PrecompiledContracts {
     @Setter
     @Getter
     private boolean isStaticCall;
+
+    @Getter
+    @Setter
+    private long vmShouldEndInUs;
+
+
+    public long getCPUTimeLeftInUs() {
+      long vmNowInUs = System.nanoTime() / 1000;
+      long left = getVmShouldEndInUs() - vmNowInUs;
+      if (left <= 0) {
+        throw Program.Exception.notEnoughTime("call");
+      } else {
+        return left;
+      }
+    }
   }
 
   public static class Identity extends PrecompiledContract {
@@ -1314,6 +1331,8 @@ public class PrecompiledContracts {
   public static class MultiValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
+    private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
+    private static final byte[] EMPTYADDR = new byte[32];
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
@@ -1367,8 +1386,10 @@ public class PrecompiledContracts {
         throws InterruptedException, ExecutionException {
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
-      byte[][] signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
-      byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE);
+      byte[][] signatures = extractBytesArray(
+          words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
+      byte[][] addresses = extractBytes32Array(
+          words, words[2].intValueSafe() / DataWord.WORD_SIZE);
       int cnt = signatures.length;
       if (cnt == 0 || signatures.length != addresses.length) {
         return Pair.of(true, new byte[DataWord.WORD_SIZE]);
@@ -1392,9 +1413,13 @@ public class PrecompiledContracts {
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
         }
-        countDownLatch.await();
+        countDownLatch.await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
 
         for (Future<ValidateSignResult> future : futures) {
+          if (future.get() == null) {
+            logger.info("MultiValidateSign timeout");
+            throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+          }
           if (future.get().getRes()) {
             res[future.get().getNonce()] = 1;
           }
@@ -1408,7 +1433,8 @@ public class PrecompiledContracts {
       byte[] r;
       byte[] s;
       DataWord out = null;
-      if (sign.length < 65) {
+      if (sign.length < 65 || Arrays.equals(ZEROADDR, address)
+          || Arrays.equals(EMPTYADDR, address)) {
         return false;
       }
       try {
@@ -1418,11 +1444,9 @@ public class PrecompiledContracts {
         if (v < 27) {
           v += 27;
         }
-        if (v != 0 ) {
-          ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
-          if (signature.validateComponents()) {
-            out = new DataWord(ECKey.signatureToAddress(hash, signature));
-          }
+        ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
+        if (signature.validateComponents()) {
+          out = new DataWord(ECKey.signatureToAddress(hash, signature));
         }
       } catch (Throwable any) {
         logger.info("ECRecover error", any.getMessage());
