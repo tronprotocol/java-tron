@@ -1332,7 +1332,7 @@ public class PrecompiledContracts {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
     private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
-    private static final byte[] EMPTYADDR = new byte[32];
+    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
