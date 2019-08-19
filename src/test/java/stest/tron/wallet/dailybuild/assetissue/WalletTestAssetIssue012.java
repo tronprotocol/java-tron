@@ -146,6 +146,11 @@ public class WalletTestAssetIssue012 {
 
     Assert.assertTrue(creatorAfterNetUsed - creatorBeforeNetUsed > netCostMeasure);
     Assert.assertTrue(transferAfterFreeNetUsed - transferBeforeFreeNetUsed < netCostMeasure);
+
+    PublicMethed
+        .freedResource(asset012Address, testKeyForAssetIssue012, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(asset012Address, testKeyForAssetIssue012, 0, asset012Address,
+        blockingStubFull);
   }
 
   /**

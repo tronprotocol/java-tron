@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -211,6 +212,14 @@ public class WalletTestAssetIssue015 {
     Assert.assertTrue(transferNetUsedAfter - transferNetUsedBefore > 200);
 
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed
+        .freedResource(asset015Address, testKeyForAssetIssue015, fromAddress, blockingStubFull);
+    PublicMethed
+        .freedResource(transferAssetAddress, transferAssetCreateKey, fromAddress, blockingStubFull);
   }
 
   /**

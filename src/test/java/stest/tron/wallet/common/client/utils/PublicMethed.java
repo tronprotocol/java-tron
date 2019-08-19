@@ -5772,9 +5772,9 @@ public class PublicMethed {
   public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
-    System.out.println("剩余资产：" + balance);
+//    System.out.println(balance);
     sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
-    System.out
-        .println("之后资产：" + PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
+//    System.out
+//        .println(PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
   }
 }
