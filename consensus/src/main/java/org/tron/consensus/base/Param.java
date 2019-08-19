@@ -9,16 +9,19 @@ import org.tron.core.config.args.GenesisBlock;
 public class Param {
   @Getter
   @Setter
+  private boolean enable;
+  @Getter
+  @Setter
   private boolean needSyncCheck;
   @Getter
   @Setter
   private int minParticipationRate;
   @Getter
   @Setter
-  private List<Miner> miners;
+  private GenesisBlock genesisBlock;
   @Getter
   @Setter
-  private GenesisBlock genesisBlock;
+  private List<Miner> miners;
   @Getter
   @Setter
   private BlockHandle blockHandle;

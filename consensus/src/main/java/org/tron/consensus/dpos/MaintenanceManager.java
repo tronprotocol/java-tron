@@ -104,7 +104,7 @@ public class MaintenanceManager {
           witnessCapsule.getVoteCount());
     });
 
-    sortWitness(newWitnessAddressList);
+    dposService.sortWitness(newWitnessAddressList);
 
     if (newWitnessAddressList.size() > MAX_ACTIVE_WITNESS_NUM) {
       consensusDelegate
@@ -179,13 +179,6 @@ public class MaintenanceManager {
       witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
     });
     consensusDelegate.saveRemoveThePowerOfTheGr(-1);
-  }
-
-  private void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitnesseByAddress(b).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }

@@ -4,6 +4,8 @@ package org.tron.consensus.dpos;
 import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,34 +56,47 @@ public class DposService implements ConsensusInterface {
   @Setter
   private volatile boolean needSyncCheck;
   @Getter
-  private int minParticipationRate;
+  private volatile boolean enable;
   @Getter
-  private GenesisBlock genesisBlock;
+  private int minParticipationRate;
   @Getter
   private long genesisBlockTime;
   @Getter
   private BlockHandle blockHandle;
-
   @Getter
-  protected Map<ByteString, Miner> miners = new HashMap<>();
+  private GenesisBlock genesisBlock;
+  @Getter
+  private Map<ByteString, Miner> miners = new HashMap<>();
 
   @Override
   public void start(Param param) {
+    this.enable = param.isEnable();
     this.needSyncCheck = param.isNeedSyncCheck();
     this.minParticipationRate = param.getMinParticipationRate();
     this.blockHandle = param.getBlockHandle();
     this.genesisBlock = param.getGenesisBlock();
     this.genesisBlockTime = Long.parseLong(param.getGenesisBlock().getTimestamp());
     param.getMiners().forEach(miner -> miners.put(miner.getWitnessAddress(), miner));
-    stateManager.setDposService(this);
+
     dposTask.setDposService(this);
+    stateManager.setDposService(this);
     maintenanceManager.setDposService(this);
+
+    List<ByteString> witnesses = new ArrayList<>();
+    consensusDelegate.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
+      if (witnessCapsule.getIsJobs()) {
+        witnesses.add(witnessCapsule.getAddress());
+      }
+    });
+    sortWitness(witnesses);
+    consensusDelegate.saveActiveWitnesses(witnesses);
+
     dposTask.init();
   }
 
   @Override
   public void stop() {
-
+    dposTask.stop();
   }
 
   @Override
@@ -136,6 +151,13 @@ public class DposService implements ConsensusInterface {
     }
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
     logger.info("Update solid block number to {}", newSolidNum);
+  }
+
+  public void sortWitness(List<ByteString> list) {
+    list.sort(Comparator.comparingLong((ByteString b) ->
+        consensusDelegate.getWitnesseByAddress(b).getVoteCount())
+        .reversed()
+        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
   public static Sha256Hash getBlockHash(Block block) {

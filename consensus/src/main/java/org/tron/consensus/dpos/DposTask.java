@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
@@ -43,6 +44,9 @@ public class DposTask {
   public void init() {
 
     Runnable runnable = () -> {
+      if (!dposService.isEnable() || StringUtils.isEmpty(dposService.getMiners())) {
+        return;
+      }
       while (isRunning) {
         try {
           if (dposService.isNeedSyncCheck()) {
