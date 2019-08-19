@@ -16,10 +16,10 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
-import org.tron.protos.Contract.ProposalDeleteContract;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
 

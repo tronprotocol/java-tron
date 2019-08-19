@@ -27,7 +27,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -103,7 +103,7 @@ public class WitnessCreateActuatorTest {
 
   private Any getContract(String address, String url) {
     return Any.pack(
-        Contract.WitnessCreateContract.newBuilder()
+        WitnessCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUrl(ByteString.copyFrom(ByteArray.fromString(url)))
             .build());
@@ -111,7 +111,7 @@ public class WitnessCreateActuatorTest {
 
   private Any getContract(String address, ByteString url) {
     return Any.pack(
-        Contract.WitnessCreateContract.newBuilder()
+        WitnessCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUrl(url)
             .build());

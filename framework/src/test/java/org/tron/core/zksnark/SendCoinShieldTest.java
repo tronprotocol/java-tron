@@ -81,11 +81,11 @@ import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ReceiveDescription;
-import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -351,7 +351,7 @@ public class SendCoinShieldTest {
 
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder.generateOutputProof(output, ctx);
-    Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
+    ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     Optional<Note> ret1 = Note.decrypt(
         receiveDescription.getCEnc().toByteArray(),//ciphertext
@@ -416,7 +416,7 @@ public class SendCoinShieldTest {
     builder2.addOutput(fullViewingKey.getOvk(), paymentAddress2, 10000, new byte[512]);
     ZenTransactionBuilder.ReceiveDescriptionInfo output = builder2.getReceives().get(0);
     ReceiveDescriptionCapsule receiveDescriptionCapsule = builder2.generateOutputProof(output, ctx);
-    Contract.ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
+    ReceiveDescription receiveDescription = receiveDescriptionCapsule.getInstance();
 
     byte[] pkd = paymentAddress2.getPkD();
     Note note = new Note(paymentAddress2, 4000);//construct function：this.pkD = address.getPkD();
@@ -527,8 +527,8 @@ public class SendCoinShieldTest {
       if (c.getType() != ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
       Optional<Note> ret1 = Note.decrypt(
@@ -610,8 +610,8 @@ public class SendCoinShieldTest {
       if (c.getType() != Protocol.Transaction.Contract.ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
       ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
       
       //first try to decrypt cOut with ovk, get pkd、esk

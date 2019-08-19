@@ -13,7 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Hash;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 public class EventParserTest {
 

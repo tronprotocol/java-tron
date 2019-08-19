@@ -27,8 +27,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.ResourceCode;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.Common.ResourceCode;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -103,7 +103,7 @@ public class FreezeBalanceActuatorTest {
 
   private Any getContractForBandwidth(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
@@ -112,7 +112,7 @@ public class FreezeBalanceActuatorTest {
 
   private Any getContractForCpu(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)
@@ -124,7 +124,7 @@ public class FreezeBalanceActuatorTest {
       long frozenBalance,
       long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
             .setFrozenBalance(frozenBalance)
@@ -136,7 +136,7 @@ public class FreezeBalanceActuatorTest {
       long frozenBalance,
       long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
             .setFrozenBalance(frozenBalance)

@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtil {

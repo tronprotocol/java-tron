@@ -24,7 +24,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -93,7 +93,7 @@ public class WitnessUpdateActuatorTest {
 
   private Any getContract(String address, String url) {
     return Any.pack(
-        Contract.WitnessUpdateContract.newBuilder()
+        WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUpdateUrl(ByteString.copyFrom(ByteArray.fromString(url)))
             .build());
@@ -101,7 +101,7 @@ public class WitnessUpdateActuatorTest {
 
   private Any getContract(String address, ByteString url) {
     return Any.pack(
-        Contract.WitnessUpdateContract.newBuilder()
+        WitnessUpdateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setUpdateUrl(url)
             .build());

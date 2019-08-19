@@ -27,7 +27,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 
@@ -190,7 +190,7 @@ public class RuntimeImplTest {
 
     AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
     AccountCapsule callerAccount = deposit.getAccount(callerAddress);
-    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+    TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;
@@ -280,7 +280,7 @@ public class RuntimeImplTest {
 
     AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
     AccountCapsule callerAccount = deposit.getAccount(callerAddress);
-    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+    TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;
@@ -346,7 +346,7 @@ public class RuntimeImplTest {
 
     AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
     AccountCapsule callerAccount = deposit.getAccount(callerAddress);
-    Contract.TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
+    TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;

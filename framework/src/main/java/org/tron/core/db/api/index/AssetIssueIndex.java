@@ -12,7 +12,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.ITronChainBase;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 import javax.annotation.PostConstruct;
 

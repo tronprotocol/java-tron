@@ -29,7 +29,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -111,7 +111,7 @@ public class TransferActuatorTest {
   private Any getContract(long count) {
     long nowTime = new Date().getTime();
     return Any.pack(
-        Contract.TransferContract.newBuilder()
+        TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
             .setAmount(count)
@@ -120,7 +120,7 @@ public class TransferActuatorTest {
 
   private Any getContract(long count, String owneraddress, String toaddress) {
     return Any.pack(
-        Contract.TransferContract.newBuilder()
+        TransferContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owneraddress)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(toaddress)))
             .setAmount(count)

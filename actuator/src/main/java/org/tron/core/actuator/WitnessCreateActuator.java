@@ -12,11 +12,11 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Contract.WitnessCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

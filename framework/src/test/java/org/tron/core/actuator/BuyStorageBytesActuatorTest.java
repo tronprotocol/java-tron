@@ -26,7 +26,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.StorageContract.BuyStorageBytesContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -98,7 +98,7 @@ public class BuyStorageBytesActuatorTest {
 
   private Any getContract(String ownerAddress, long bytes) {
     return Any.pack(
-        Contract.BuyStorageBytesContract.newBuilder()
+        BuyStorageBytesContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setBytes(bytes)
             .build());

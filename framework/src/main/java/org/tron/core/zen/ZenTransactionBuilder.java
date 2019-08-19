@@ -30,7 +30,7 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 

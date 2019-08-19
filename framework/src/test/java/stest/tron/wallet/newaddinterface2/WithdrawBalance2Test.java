@@ -21,7 +21,8 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -120,11 +121,11 @@ public class WithdrawBalance2Test {
     }
     ECKey ecKey = temKey;
 
-    Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
+    WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-    Contract.WithdrawBalanceContract contract = builder.build();
+    WithdrawBalanceContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.withdrawBalance(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -154,11 +155,11 @@ public class WithdrawBalance2Test {
       ex.printStackTrace();
     }
 
-    Contract.WithdrawBalanceContract.Builder builder = Contract.WithdrawBalanceContract
+    WithdrawBalanceContract.Builder builder = WithdrawBalanceContract
         .newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
     builder.setOwnerAddress(byteAddreess);
-    Contract.WithdrawBalanceContract contract = builder.build();
+    WithdrawBalanceContract contract = builder.build();
 
     GrpcAPI.TransactionExtention transactionExtention = blockingStubFull.withdrawBalance2(contract);
     if (transactionExtention == null) {
@@ -209,12 +210,12 @@ public class WithdrawBalance2Test {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    VoteWitnessContract.Builder builder = VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(address));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      VoteWitnessContract.Vote.Builder voteBuilder = VoteWitnessContract.Vote
           .newBuilder();
       byte[] addRess = WalletClient.decodeFromBase58Check(addressBase58);
       if (addRess == null) {
@@ -225,7 +226,7 @@ public class WithdrawBalance2Test {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {

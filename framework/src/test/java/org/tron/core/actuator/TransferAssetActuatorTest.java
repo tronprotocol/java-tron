@@ -45,8 +45,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -166,7 +166,7 @@ public class TransferAssetActuatorTest {
     }
 
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -176,7 +176,7 @@ public class TransferAssetActuatorTest {
 
   private Any getContract(long sendCoin, ByteString assetName) {
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(assetName)
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -186,7 +186,7 @@ public class TransferAssetActuatorTest {
 
   private Any getContract(long sendCoin, String assetName) {
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assetName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(TO_ADDRESS)))
@@ -201,7 +201,7 @@ public class TransferAssetActuatorTest {
       assertName = String.valueOf(tokenIdNum);
     }
     return Any.pack(
-        Contract.TransferAssetContract.newBuilder()
+        TransferAssetContract.newBuilder()
             .setAssetName(ByteString.copyFrom(ByteArray.fromString(assertName)))
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(owner)))
             .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(to)))

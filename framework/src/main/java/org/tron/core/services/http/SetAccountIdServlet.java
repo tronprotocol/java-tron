@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
 import org.tron.protos.Protocol;
 
 
@@ -31,7 +31,7 @@ public class SetAccountIdServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
       boolean visible = Util.getVisiblePost(contract);
-      Contract.SetAccountIdContract.Builder build = Contract.SetAccountIdContract.newBuilder();
+      SetAccountIdContract.Builder build = SetAccountIdContract.newBuilder();
       JsonFormat.merge(contract, build, visible);
       Protocol.Transaction tx = wallet.createTransactionCapsule(build.build(),
           Protocol.Transaction.Contract.ContractType.SetAccountIdContract).getInstance();

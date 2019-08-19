@@ -7,7 +7,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.MerkleHashParams;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 
 @Slf4j

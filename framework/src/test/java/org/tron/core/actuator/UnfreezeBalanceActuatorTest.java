@@ -33,7 +33,9 @@ import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.Common.ResourceCode;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.Vote;
@@ -111,22 +113,22 @@ public class UnfreezeBalanceActuatorTest {
 
   private Any getContractForBandwidth(String ownerAddress) {
     return Any.pack(
-        Contract.UnfreezeBalanceContract.newBuilder()
+        UnfreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .build());
   }
 
   private Any getContractForCpu(String ownerAddress) {
     return Any.pack(
-        Contract.UnfreezeBalanceContract.newBuilder()
+        UnfreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
-            .setResource(org.tron.protos.Contract.ResourceCode.ENERGY)
+            .setResource(ResourceCode.ENERGY)
             .build());
   }
 
   private Any getDelegatedContractForBandwidth(String ownerAddress, String receiverAddress) {
     return Any.pack(
-        Contract.UnfreezeBalanceContract.newBuilder()
+        UnfreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
             .build());
@@ -134,16 +136,16 @@ public class UnfreezeBalanceActuatorTest {
 
   private Any getDelegatedContractForCpu(String ownerAddress, String receiverAddress) {
     return Any.pack(
-        Contract.UnfreezeBalanceContract.newBuilder()
+        UnfreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setReceiverAddress(ByteString.copyFrom(ByteArray.fromHexString(receiverAddress)))
-            .setResource(org.tron.protos.Contract.ResourceCode.ENERGY)
+            .setResource(ResourceCode.ENERGY)
             .build());
   }
 
-  private Any getContract(String ownerAddress, Contract.ResourceCode resourceCode) {
+  private Any getContract(String ownerAddress, ResourceCode resourceCode) {
     return Any.pack(
-        Contract.UnfreezeBalanceContract.newBuilder()
+        UnfreezeBalanceContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setResource(resourceCode)
             .build());

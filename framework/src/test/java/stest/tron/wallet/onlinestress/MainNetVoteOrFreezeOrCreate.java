@@ -24,11 +24,12 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract;
+import org.tron.protos.contract.WitnessContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -217,12 +218,12 @@ public class MainNetVoteOrFreezeOrCreate {
       beforeVoteNum = beforeVote.getVotes(0).getVoteCount();
     }
 
-    Contract.VoteWitnessContract.Builder builder = Contract.VoteWitnessContract.newBuilder();
+    WitnessContract.VoteWitnessContract.Builder builder = WitnessContract.VoteWitnessContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(addRess));
     for (String addressBase58 : witness.keySet()) {
       String value = witness.get(addressBase58);
       final long count = Long.parseLong(value);
-      Contract.VoteWitnessContract.Vote.Builder voteBuilder = Contract.VoteWitnessContract.Vote
+      WitnessContract.VoteWitnessContract.Vote.Builder voteBuilder = WitnessContract.VoteWitnessContract.Vote
           .newBuilder();
       byte[] address = WalletClient.decodeFromBase58Check(addressBase58);
       logger.info("address = " + ByteArray.toHexString(address));
@@ -234,7 +235,7 @@ public class MainNetVoteOrFreezeOrCreate {
       builder.addVotes(voteBuilder.build());
     }
 
-    Contract.VoteWitnessContract contract = builder.build();
+    WitnessContract.VoteWitnessContract contract = builder.build();
 
     Transaction transaction = blockingStubFull.voteWitnessAccount(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
@@ -338,13 +339,13 @@ public class MainNetVoteOrFreezeOrCreate {
     Protocol.Block currentBlock = blockingStubFull.getNowBlock(GrpcAPI
         .EmptyMessage.newBuilder().build());
     final Long beforeBlockNum = currentBlock.getBlockHeader().getRawData().getNumber();
-    Contract.FreezeBalanceContract.Builder builder = Contract.FreezeBalanceContract.newBuilder();
+    BalanceContract.FreezeBalanceContract.Builder builder = BalanceContract.FreezeBalanceContract.newBuilder();
     ByteString byteAddreess = ByteString.copyFrom(address);
 
     builder.setOwnerAddress(byteAddreess).setFrozenBalance(frozenBalance)
         .setFrozenDuration(frozenDuration);
 
-    Contract.FreezeBalanceContract contract = builder.build();
+    BalanceContract.FreezeBalanceContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.freezeBalance(contract);
 
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {

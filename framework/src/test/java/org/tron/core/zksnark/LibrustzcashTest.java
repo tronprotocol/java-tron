@@ -60,7 +60,7 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
-import org.tron.protos.Contract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
 
 @Slf4j
 public class LibrustzcashTest {

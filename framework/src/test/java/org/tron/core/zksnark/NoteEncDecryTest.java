@@ -22,7 +22,7 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j
 public class NoteEncDecryTest {

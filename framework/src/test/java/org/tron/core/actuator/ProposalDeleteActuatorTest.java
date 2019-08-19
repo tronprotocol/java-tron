@@ -33,10 +33,10 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.ProposalContract;
 
 @Slf4j
 
@@ -155,7 +155,7 @@ public class ProposalDeleteActuatorTest {
 
   private Any getContract(String address, HashMap<Long, Long> paras) {
     return Any.pack(
-        Contract.ProposalCreateContract.newBuilder()
+        ProposalContract.ProposalCreateContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .putAllParameters(paras)
             .build());
@@ -163,7 +163,7 @@ public class ProposalDeleteActuatorTest {
 
   private Any getContract(String address, long id) {
     return Any.pack(
-        Contract.ProposalDeleteContract.newBuilder()
+        ProposalContract.ProposalDeleteContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(address)))
             .setProposalId(id)
             .build());

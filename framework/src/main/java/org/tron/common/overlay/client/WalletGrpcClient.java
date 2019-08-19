@@ -12,11 +12,15 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.WalletGrpc;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
 
 public class WalletGrpcClient {
 
@@ -47,16 +51,16 @@ public class WalletGrpcClient {
     return walletBlockingStub.getAccount(request);
   }
 
-  public Transaction createTransaction(Contract.TransferContract contract) {
+  public Transaction createTransaction(TransferContract contract) {
     return walletBlockingStub.createTransaction(contract);
   }
 
-  public Transaction createTransferAssetTransaction(Contract.TransferAssetContract contract) {
+  public Transaction createTransferAssetTransaction(TransferAssetContract contract) {
     return walletBlockingStub.transferAsset(contract);
   }
 
   public Transaction createParticipateAssetIssueTransaction(
-      Contract.ParticipateAssetIssueContract contract) {
+      ParticipateAssetIssueContract contract) {
     return walletBlockingStub.participateAssetIssue(contract);
   }
 
@@ -64,11 +68,11 @@ public class WalletGrpcClient {
     return walletBlockingStub.createAssetIssue(contract);
   }
 
-  public Transaction voteWitnessAccount(Contract.VoteWitnessContract contract) {
+  public Transaction voteWitnessAccount(VoteWitnessContract contract) {
     return walletBlockingStub.voteWitnessAccount(contract);
   }
 
-  public Transaction createWitness(Contract.WitnessCreateContract contract) {
+  public Transaction createWitness(WitnessCreateContract contract) {
     return walletBlockingStub.createWitness(contract);
   }
 

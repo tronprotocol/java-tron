@@ -17,7 +17,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract.TransferContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.ChainParameters;
 import org.tron.protos.Protocol.Transaction;

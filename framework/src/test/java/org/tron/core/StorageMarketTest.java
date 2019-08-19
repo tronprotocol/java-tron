@@ -21,7 +21,7 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.db.StorageMarket;
-import org.tron.protos.Contract;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -94,7 +94,7 @@ public class StorageMarketTest {
 
   private Any getContract(String ownerAddress, long quant) {
     return Any.pack(
-        Contract.BuyStorageContract.newBuilder()
+        BuyStorageContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setQuant(quant)
             .build());

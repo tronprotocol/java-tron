@@ -26,9 +26,9 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.StorageContract;
 
 @Slf4j
 public class SellStorageActuatorTest {
@@ -98,7 +98,7 @@ public class SellStorageActuatorTest {
 
   private Any getBuyContract(String ownerAddress, long quant) {
     return Any.pack(
-        Contract.BuyStorageContract.newBuilder()
+        StorageContract.BuyStorageContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setQuant(quant)
             .build());
@@ -106,7 +106,7 @@ public class SellStorageActuatorTest {
 
   private Any getContract(String ownerAddress, long bytes) {
     return Any.pack(
-        Contract.SellStorageContract.newBuilder()
+        StorageContract.SellStorageContract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
             .setStorageBytes(bytes)
             .build());

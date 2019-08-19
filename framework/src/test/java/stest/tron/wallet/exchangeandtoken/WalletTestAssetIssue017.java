@@ -22,8 +22,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.db.Manager;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -301,7 +301,7 @@ public class WalletTestAssetIssue017 {
     ECKey ecKey = temKey;
     //Protocol.Account search = queryAccount(ecKey, blockingStubFull);
     try {
-      Contract.AssetIssueContract.Builder builder = Contract.AssetIssueContract.newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.Builder builder = AssetIssueContractOuterClass.AssetIssueContract.newBuilder();
       builder.setOwnerAddress(ByteString.copyFrom(address));
       builder.setName(ByteString.copyFrom(name.getBytes()));
       builder.setTotalSupply(totalSupply);
@@ -314,8 +314,8 @@ public class WalletTestAssetIssue017 {
       builder.setUrl(ByteString.copyFrom(url.getBytes()));
       builder.setFreeAssetNetLimit(freeAssetNetLimit);
       builder.setPublicFreeAssetNetLimit(publicFreeAssetNetLimit);
-      Contract.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
-          Contract.AssetIssueContract.FrozenSupply.newBuilder();
+      AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply.Builder frozenBuilder =
+          AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply.newBuilder();
       frozenBuilder.setFrozenAmount(fronzenAmount);
       frozenBuilder.setFrozenDays(frozenDay);
       builder.addFrozenSupply(0, frozenBuilder);

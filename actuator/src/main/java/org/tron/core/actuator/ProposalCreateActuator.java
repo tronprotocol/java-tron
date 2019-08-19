@@ -20,11 +20,11 @@ import org.tron.core.config.args.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.protos.Contract.ProposalCreateContract;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
 @Slf4j(topic = "actuator")

@@ -31,8 +31,8 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol.Transaction;
 
 public class InternalTransaction {

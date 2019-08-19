@@ -32,9 +32,9 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.witness.WitnessController;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.VoteWitnessContract.Vote;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 
@@ -130,7 +130,7 @@ public class VoteWitnessActuatorTest {
 
   private Any getContract(String ownerAddress, long frozenBalance, long duration) {
     return Any.pack(
-        Contract.FreezeBalanceContract.newBuilder()
+        FreezeBalanceContract.newBuilder()
             .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .setFrozenBalance(frozenBalance)
             .setFrozenDuration(duration)

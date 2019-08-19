@@ -8,7 +8,7 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.runtime.vm.LogEventWrapper;
-import org.tron.protos.Protocol.SmartContract.ABI.Entry;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
 public class ContractEventTriggerCapsule extends TriggerCapsule {
 

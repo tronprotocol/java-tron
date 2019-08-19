@@ -30,35 +30,36 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
-import org.tron.protos.Contract.AccountUpdateContract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.CreateSmartContract;
-import org.tron.protos.Contract.ExchangeCreateContract;
-import org.tron.protos.Contract.ExchangeInjectContract;
-import org.tron.protos.Contract.ExchangeTransactionContract;
-import org.tron.protos.Contract.ExchangeWithdrawContract;
-import org.tron.protos.Contract.FreezeBalanceContract;
-import org.tron.protos.Contract.ParticipateAssetIssueContract;
-import org.tron.protos.Contract.ProposalApproveContract;
-import org.tron.protos.Contract.ProposalCreateContract;
-import org.tron.protos.Contract.ProposalDeleteContract;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.TransferAssetContract;
-import org.tron.protos.Contract.TransferContract;
-import org.tron.protos.Contract.TriggerSmartContract;
-import org.tron.protos.Contract.UnfreezeAssetContract;
-import org.tron.protos.Contract.UnfreezeBalanceContract;
-import org.tron.protos.Contract.UpdateAssetContract;
-import org.tron.protos.Contract.UpdateEnergyLimitContract;
-import org.tron.protos.Contract.UpdateSettingContract;
-import org.tron.protos.Contract.VoteAssetContract;
-import org.tron.protos.Contract.VoteWitnessContract;
-import org.tron.protos.Contract.WithdrawBalanceContract;
-import org.tron.protos.Contract.WitnessCreateContract;
-import org.tron.protos.Contract.WitnessUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.VoteAssetContractOuterClass.VoteAssetContract;
+import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
+import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.WitnessContract.WitnessCreateContract;
+import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 
@@ -311,8 +312,8 @@ public class Util {
                 selfType));
             break;
           case SetAccountIdContract:
-            Contract.SetAccountIdContract setAccountIdContract =
-                contractParameter.unpack(Contract.SetAccountIdContract.class);
+            SetAccountIdContract setAccountIdContract =
+                contractParameter.unpack(SetAccountIdContract.class);
             contractJson = JSONObject.parseObject(JsonFormat.printToString(setAccountIdContract,
                 selfType));
             break;
@@ -374,8 +375,8 @@ public class Util {
                 .parseObject(JsonFormat.printToString(accountPermissionUpdateContract, selfType));
             break;
           case ClearABIContract:
-            Contract.ClearABIContract clearABIContract = contractParameter
-                .unpack(Contract.ClearABIContract.class);
+            ClearABIContract clearABIContract = contractParameter
+                .unpack(ClearABIContract.class);
             contractJson = JSONObject
                 .parseObject(JsonFormat.printToString(clearABIContract, selfType));
             break;
@@ -550,7 +551,7 @@ public class Util {
             any = Any.pack(deleteContractBuilder.build());
             break;
           case "SetAccountIdContract":
-            Contract.SetAccountIdContract.Builder setAccountid = Contract.SetAccountIdContract
+            SetAccountIdContract.Builder setAccountid = SetAccountIdContract
                 .newBuilder();
             JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
                 setAccountid, selfType);
@@ -620,8 +621,8 @@ public class Util {
             any = Any.pack(accountPermissionUpdateContractBuilder.build());
             break;
           case "ClearABIContract":
-            Contract.ClearABIContract.Builder clearABIContract =
-                Contract.ClearABIContract.newBuilder();
+            ClearABIContract.Builder clearABIContract =
+                ClearABIContract.newBuilder();
             JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(), clearABIContract,
                 selfType);
             any = Any.pack(clearABIContract.build());

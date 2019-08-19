@@ -29,8 +29,8 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -169,8 +169,8 @@ public class AccountPermissionUpdateActuatorTest {
     Permission owner = AccountCapsule.createDefaultOwnerPermission(address);
     Permission active = AccountCapsule.createDefaultActivePermission(address, dbManager.getDynamicPropertiesStore());
 
-    Contract.AccountPermissionUpdateContract contract =
-        Contract.AccountPermissionUpdateContract.newBuilder()
+    AccountPermissionUpdateContract contract =
+        AccountPermissionUpdateContract.newBuilder()
             .setOwnerAddress(address)
             .setOwner(owner)
             .addActives(active)
@@ -199,7 +199,7 @@ public class AccountPermissionUpdateActuatorTest {
    */
   private Any getInvalidContract() {
     return Any.pack(
-        Contract.AccountCreateContract.newBuilder()
+        AccountCreateContract.newBuilder()
             .build());
   }
 

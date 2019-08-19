@@ -15,8 +15,7 @@ import org.tron.common.backup.BackupManager;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.WitnessScheduleStore;
-import org.tron.core.services.WitnessService;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.ReasonCode;
 
 @Slf4j(topic = "net")

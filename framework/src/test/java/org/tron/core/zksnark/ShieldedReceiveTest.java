@@ -89,15 +89,14 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.Contract;
-import org.tron.protos.Contract.AssetIssueContract;
-import org.tron.protos.Contract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.Contract.OutputPoint;
-import org.tron.protos.Contract.OutputPointInfo;
-import org.tron.protos.Contract.PedersenHash;
-import org.tron.protos.Contract.ReceiveDescription;
-import org.tron.protos.Contract.ShieldedTransferContract;
-import org.tron.protos.Contract.SpendDescription;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -2268,9 +2267,9 @@ public class ShieldedReceiveTest {
       if (c.getType() != ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
-      Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
+      ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
       Optional<Note> ret1 = Note.decrypt(
           receiveDescription.getCEnc().toByteArray(),//ciphertext
@@ -2351,9 +2350,9 @@ public class ShieldedReceiveTest {
       if (c.getType() != ContractType.ShieldedTransferContract) {
         continue;
       }
-      Contract.ShieldedTransferContract stContract = c.getParameter()
-          .unpack(Contract.ShieldedTransferContract.class);
-      Contract.ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
+      ShieldedTransferContract stContract = c.getParameter()
+          .unpack(ShieldedTransferContract.class);
+      ReceiveDescription receiveDescription = stContract.getReceiveDescription(0);
 
       Optional<Note> ret1 = Note.decrypt(
           receiveDescription.getCEnc().toByteArray(),//ciphertext

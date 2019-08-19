@@ -19,10 +19,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
-import org.tron.protos.Contract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.contract.AssetIssueContractOuterClass;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
@@ -267,7 +267,7 @@ public class ParticipateAssetIssue {
     }
     final ECKey ecKey = temKey;
 
-    Contract.ParticipateAssetIssueContract.Builder builder = Contract.ParticipateAssetIssueContract
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract.Builder builder = AssetIssueContractOuterClass.ParticipateAssetIssueContract
         .newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
@@ -276,7 +276,7 @@ public class ParticipateAssetIssue {
     builder.setAssetName(bsName);
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
-    Contract.ParticipateAssetIssueContract contract = builder.build();
+    AssetIssueContractOuterClass.ParticipateAssetIssueContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.participateAssetIssue(contract);
     transaction = signTransaction(ecKey, transaction);
     GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
@@ -318,7 +318,7 @@ public class ParticipateAssetIssue {
     }
     final ECKey ecKey = temKey;
 
-    Contract.TransferAssetContract.Builder builder = Contract.TransferAssetContract.newBuilder();
+    AssetIssueContractOuterClass.TransferAssetContract.Builder builder = AssetIssueContractOuterClass.TransferAssetContract.newBuilder();
     ByteString bsTo = ByteString.copyFrom(to);
     ByteString bsName = ByteString.copyFrom(assertName);
     ByteString bsOwner = ByteString.copyFrom(address);
@@ -327,7 +327,7 @@ public class ParticipateAssetIssue {
     builder.setOwnerAddress(bsOwner);
     builder.setAmount(amount);
 
-    Contract.TransferAssetContract contract = builder.build();
+    AssetIssueContractOuterClass.TransferAssetContract contract = builder.build();
     Protocol.Transaction transaction = blockingStubFull.transferAsset(contract);
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
       if (transaction == null) {
