@@ -10,6 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.PrecompiledContracts.MultiValidateSign;
 import org.tron.core.Wallet;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -36,7 +37,7 @@ public class MultiValidateSignContractTest {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
-    //insert incorrect every 5 pairs
+    //insert incorrect
     for (int i = 0; i < 27; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
@@ -45,7 +46,11 @@ public class MultiValidateSignContractTest {
       } else {
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(Wallet.encode58Check(key.getAddress()));
+      if (i == 13) {
+        addresses.add(Wallet.encode58Check(MUtil.convertToTronAddress(new byte[20])));
+      } else {
+        addresses.add(Wallet.encode58Check(key.getAddress()));
+      }
     }
     Pair<Boolean, byte[]> ret;
     ret = validateMultiSign(hash, signatures, addresses);
@@ -53,6 +58,8 @@ public class MultiValidateSignContractTest {
       if (i >= 27) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else if (i % 5 == 0) {
+        Assert.assertEquals(ret.getValue()[i], 0);
+      } else if (i == 13) {
         Assert.assertEquals(ret.getValue()[i], 0);
       } else {
         Assert.assertEquals(ret.getValue()[i], 1);
@@ -151,51 +158,11 @@ public class MultiValidateSignContractTest {
 
   }
 
-  // just test timecosts
-  //  @Test
-  @Test(enabled = false)
-  void timeCostTest() {
-    // for warming up
-    // timecost(1);
-
-    int cnt = 27;
-    for (;cnt <= 32; cnt++) {
-      timecost(cnt);
-    }
-    int i = 1;
-    while (i < 5) {
-      cnt *= 2;
-      i++;
-      timecost(cnt);
-    }
-  }
-
-  void timecost(int cnt) {
-
-    byte[] data = smellData;
-    byte[] hash = Hash.sha3(data);
-    List<Object> signatures = new ArrayList<>();
-    List<Object> addresses = new ArrayList<>();
-    for (int i = 0; i < cnt; i++) {
-      ECKey ecKey = new ECKey();
-      byte[] sign = ecKey.sign(hash).toByteArray();
-      byte[] address = ecKey.getAddress();
-      signatures.add("0x" + Hex.toHexString(sign));
-      addresses.add(Wallet.encode58Check(address));
-    }
-
-    long start =  System.currentTimeMillis();
-    Pair<Boolean, byte[]> ret = validateMultiSign(hash, signatures, addresses);
-    Assert.assertEquals(ret.getValue(), DataWord.ONE().getData());
-    long timeCosts = System.currentTimeMillis() - start;
-    logger.info("cnt:" + cnt + " timeCost:" + timeCosts + "ms" + " :" + (timeCosts * 1.0 / cnt) + " ret:" + !new DataWord(ret.getValue()).isZero());
-
-  }
-
   Pair<Boolean, byte[]> validateMultiSign(byte[] hash, List<Object> signatures, List<Object> addresses) {
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
     contract.getEnergyForData(input);
+    contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
     Pair<Boolean, byte[]> ret = contract.execute(input);
     logger.info("BytesArray:{}，HexString:{}", Arrays.toString(ret.getValue()),
         Hex.toHexString(ret.getValue()));

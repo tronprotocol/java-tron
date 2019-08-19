@@ -1451,6 +1451,7 @@ public class Program {
       contract.setDeposit(deposit);
       contract.setResult(this.result);
       contract.setStaticCall(isStaticCall());
+      contract.setVmShouldEndInUs(getVmShouldEndInUs());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
