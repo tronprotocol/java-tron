@@ -2,8 +2,10 @@ package stest.tron.wallet.other;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -98,12 +100,17 @@ public class deployMainGateway {
     logger.info("OralceBalance: " + OralceBalance);
 
     String contractName = "gateWayContract";
-    String code = Configuration.getByPath("testng.conf")
-        .getString("code.code_MainGateway");
-    String abi = Configuration.getByPath("testng.conf")
-        .getString("abi.abi_MainGateway");
+    String code = null;
+    String abi = null;
     String parame = "\"" + Base58.encode58Check(oracleAddress) + "\"";
     String mainChainGatewayAddress = "3QJmnh";
+    try {
+      code = PublicMethed.fileRead("/home/ABI_ByteCode/maingateway/MainChainGateway.bin",false);
+      abi = PublicMethed.fileRead("/home/ABI_ByteCode/maingateway/MainChainGateway.abi",false);
+    } catch (Exception e) {
+      Assert.fail("Read ABI Failed");
+      return;
+    }
 
     int tryCount = 0;
     while (tryCount++ < 3) {
