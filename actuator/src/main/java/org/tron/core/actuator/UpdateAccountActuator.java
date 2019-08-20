@@ -9,18 +9,18 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 
 @Slf4j(topic = "actuator")
 public class UpdateAccountActuator extends AbstractActuator {
 
-  UpdateAccountActuator(Any contract, AccountStore accountStore, AccountIdIndexStore accountIdIndexStore, DynamicPropertiesStore dynamicPropertiesStore) {
-    super(contract, accountStore, accountIdIndexStore, dynamicPropertiesStore);
+  UpdateAccountActuator(Any contract, AccountStore accountStore, AccountIndexStore accountIndexStore, DynamicPropertiesStore dynamicPropertiesStore) {
+    super(contract, accountStore, accountIndexStore, dynamicPropertiesStore);
   }
 
   @Override
@@ -40,7 +40,7 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     account.setAccountName(accountUpdateContract.getAccountName().toByteArray());
     accountStore.put(ownerAddress, account);
-    accountIdIndexStore.put(account);
+    accountIndexStore.put(account);
 
     ret.setStatus(fee, code.SUCESS);
 
@@ -55,6 +55,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     if (accountStore == null || dynamicStore == null) {
       throw new ContractValidateException("No account store or dynamic store!");
     }
+
     if (!this.contract.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
           "contract type error,expected type [AccountUpdateContract],real type[" + contract
@@ -83,10 +84,10 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     if (account.getAccountName() != null && !account.getAccountName().isEmpty()
         && dynamicStore.getAllowUpdateAccountName() == 0) {
-      throw new ContractValidateException("This accountStore name already exist");
+      throw new ContractValidateException("This account name already exist");
     }
 
-    if (accountIdIndexStore.has(accountName)
+    if (accountIndexStore.has(accountName)
         && dynamicStore.getAllowUpdateAccountName() == 0) {
       throw new ContractValidateException("This name has existed");
     }

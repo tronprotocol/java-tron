@@ -1,4 +1,4 @@
-package org.tron.core.db;
+package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
 import java.util.Objects;
@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.db.TronStoreWithRevoking;
 
 @Component
 public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
