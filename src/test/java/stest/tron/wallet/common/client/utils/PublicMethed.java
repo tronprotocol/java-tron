@@ -4814,9 +4814,10 @@ public class PublicMethed {
     builder.setTokenId(Long.parseLong(tokenId));
     builder.setCallTokenValue(tokenValue);
     Contract.TriggerSmartContract triggerContract = builder.build();
-    TransactionExtention transactionExtention = blockingStubFull.triggerContract(triggerContract);
-
+    TransactionExtention transactionExtention = blockingStubFull
+        .triggerConstantContract(triggerContract);
     return transactionExtention;
+
 
   }
 
