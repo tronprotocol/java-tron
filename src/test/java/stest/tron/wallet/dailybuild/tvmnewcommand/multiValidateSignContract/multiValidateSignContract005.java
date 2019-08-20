@@ -64,7 +64,7 @@ public class multiValidateSignContract005 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -91,7 +91,7 @@ public class multiValidateSignContract005 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "Trigger precompile multivalisign function with correct data")
+  @Test(enabled = false, description = "Trigger precompile multivalisign function with correct data")
   public void test01TriggerPrecompileMultivalisignWithCorrectData() {
     String input = "d5d16b4c4a4143e94b3e9858440e462f2713a6b9a83e6da870a52efe84aa3aff00000000000"
         + "000000000000000000000000000000000000000000000000000600000000000000000000000000000000"
@@ -245,7 +245,7 @@ public class multiValidateSignContract005 {
 
   }
 
-  @Test(enabled = true, description = "Trigger precompile multivalidatesign function with incor"
+  @Test(enabled = false, description = "Trigger precompile multivalidatesign function with incor"
       + "rect data")
   public void test02TriggerPrecompileMultivalisignWithIncorrectData() {
     String input = "d5d16b4c4a4143e94b3e9858440e462f2713a6b9a83e6da870a52efe84aa3aff00000000000"

@@ -71,7 +71,7 @@ public class multiValidateSignContract001 {
    * constructor.
    */
 
-  @BeforeClass(enabled = true)
+  @BeforeClass(enabled = false)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -99,7 +99,7 @@ public class multiValidateSignContract001 {
   }
 
 
-  @Test(enabled = true, description = "Correct data test pure multivalidatesign")
+  @Test(enabled = false, description = "Correct data test pure multivalidatesign")
   public void test01CorrectData() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -127,7 +127,7 @@ public class multiValidateSignContract001 {
   }
 
 
-  @Test(enabled = true, description = "Incorrect address test pure multivalidatesign")
+  @Test(enabled = false, description = "Incorrect address test pure multivalidatesign")
   public void test02IncorrectAddress() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -153,7 +153,7 @@ public class multiValidateSignContract001 {
 
   }
 
-  @Test(enabled = true, description = "Incorrect signatures test pure multivalidatesign")
+  @Test(enabled = false, description = "Incorrect signatures test pure multivalidatesign")
   public void test03IncorrectSignatures() {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
@@ -177,7 +177,7 @@ public class multiValidateSignContract001 {
 
   }
 
-  @Test(enabled = true, description = "Incorrect hash test pure multivalidatesign")
+  @Test(enabled = false, description = "Incorrect hash test pure multivalidatesign")
   public void test04IncorrectHash() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -220,7 +220,7 @@ public class multiValidateSignContract001 {
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
   }
 
-  @Test(enabled = true, description = "Extra long addresses and signatures array test pure multivalidatesign")
+  @Test(enabled = false, description = "Extra long addresses and signatures array test pure multivalidatesign")
   public void test05ExtraLongArray() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
