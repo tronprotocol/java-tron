@@ -59,7 +59,7 @@ public class ActuatorFactory {
     switch (contract.getType()) {
       case AccountUpdateContract:
         return new UpdateAccountActuator(contract.getParameter(), manager.getAccountStore(),
-            manager.getAccountIdIndexStore(), manager.getDynamicPropertiesStore());
+            manager.getAccountIndexStore(), manager.getDynamicPropertiesStore());
       case TransferContract:
         return new TransferActuator(contract.getParameter(), manager.getAccountStore(), manager.getAssetIssueStore(), manager.getDynamicPropertiesStore());
       case TransferAssetContract:
