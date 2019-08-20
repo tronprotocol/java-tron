@@ -65,7 +65,7 @@ public class multiValidateSignContract003 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -79,7 +79,7 @@ public class multiValidateSignContract003 {
   }
 
 
-  @Test(enabled = false, description = "Extra long addresses and signatures array test multivalidatesign")
+  @Test(enabled = true, description = "Extra long addresses and signatures array test multivalidatesign")
   public void test01ExtraLongArray() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,

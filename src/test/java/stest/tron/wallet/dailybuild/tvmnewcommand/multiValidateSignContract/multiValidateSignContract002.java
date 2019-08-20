@@ -70,7 +70,7 @@ public class multiValidateSignContract002 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -98,7 +98,7 @@ public class multiValidateSignContract002 {
         contractExcAddress, blockingStubFull);
   }
 
-  @Test(enabled = false, description = "Hash is empty test multivalidatesign")
+  @Test(enabled = true, description = "Hash is empty test multivalidatesign")
   public void test01HashIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -123,7 +123,7 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "Address is empty test multivalidatesign")
+  @Test(enabled = true, description = "Address is empty test multivalidatesign")
   public void test02AddressIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -147,7 +147,7 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "Signatures is empty test multivalidatesign")
+  @Test(enabled = true, description = "Signatures is empty test multivalidatesign")
   public void test03SignaturesIsEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -171,7 +171,7 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "Signatures and addresses are empty test multivalidatesign")
+  @Test(enabled = true, description = "Signatures and addresses are empty test multivalidatesign")
   public void test04SignaturesAndAddressesAreEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -190,7 +190,7 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "All empty test multivalidatesign")
+  @Test(enabled = true, description = "All empty test multivalidatesign")
   public void test05AllEmpty() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     List<Object> signatures = new ArrayList<>();
@@ -209,7 +209,7 @@ public class multiValidateSignContract002 {
     Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "Correct data test multivalidatesign")
+  @Test(enabled = true, description = "Correct data test multivalidatesign")
   public void test06CorrectData() {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Protocol.Account info;

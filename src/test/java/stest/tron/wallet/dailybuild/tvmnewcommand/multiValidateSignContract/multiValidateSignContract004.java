@@ -70,7 +70,7 @@ public class multiValidateSignContract004 {
    * constructor.
    */
 
-  @BeforeClass(enabled = false)
+  @BeforeClass(enabled = true)
   public void beforeClass() {
     PublicMethed.printAddress(contractExcKey);
     channelFull = ManagedChannelBuilder.forTarget(fullnode)
@@ -84,7 +84,7 @@ public class multiValidateSignContract004 {
   }
 
 
-  @Test(enabled = false, description = "Constructor test multivalidatesign")
+  @Test(enabled = true, description = "Constructor test multivalidatesign")
   public void test01Constructor() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -129,7 +129,7 @@ public class multiValidateSignContract004 {
         .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
   }
 
-  @Test(enabled = false, description = "Incorrect address hex test multivalidatesign")
+  @Test(enabled = true, description = "Incorrect address hex test multivalidatesign")
   public void test02IncorrectAddressHex() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 1000000000L, testNetAccountAddress,
@@ -197,7 +197,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = false, description = "Empty address and signatures hex test multivalidatesign")
+  @Test(enabled = true, description = "Empty address and signatures hex test multivalidatesign")
   public void test03EmptyAddressAndSignaturesHex() {
     String txid = PublicMethed
         .sendcoinGetTransactionId(contractExcAddress, 10000000000L, testNetAccountAddress,
