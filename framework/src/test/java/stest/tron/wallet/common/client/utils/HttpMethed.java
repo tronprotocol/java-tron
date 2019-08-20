@@ -1559,30 +1559,6 @@ public class HttpMethed {
   /**
    * constructor.
    */
-  public static HttpResponse getTransactionsFromThisFromSolidity(String httpSolidityNode,
-      byte[] fromAddress, long offset, long limit) {
-    try {
-      Map<String, String> map1 = new HashMap<String, String>();
-      Map<String, Object> map = new HashMap<String, Object>();
-      map1.put("address", ByteArray.toHexString(fromAddress));
-      map.put("account", map1);
-      map.put("offset", offset);
-      map.put("limit", limit);
-      String requestUrl = "http://" + httpSolidityNode + "/walletextension/gettransactionsfromthis";
-      String jsonStr = new Gson().toJson(map);
-      JsonObject jsonObj = new JsonParser().parse(jsonStr).getAsJsonObject();
-      response = createConnect(requestUrl, jsonObj);
-    } catch (Exception e) {
-      e.printStackTrace();
-      httppost.releaseConnection();
-      return null;
-    }
-    return response;
-  }
-
-  /**
-   * constructor.
-   */
   public static HttpResponse getTransactionsToThisFromSolidity(String httpSolidityNode,
       byte[] toAddress, long offset, long limit) {
     try {
