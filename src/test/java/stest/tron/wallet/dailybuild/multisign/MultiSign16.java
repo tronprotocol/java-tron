@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -91,8 +92,8 @@ public class MultiSign16 {
 
   @Test(enabled = true, description = "Witness weight is exception condition")
   public void testWitnessWeight01() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
@@ -384,8 +385,8 @@ public class MultiSign16 {
 
   @Test(enabled = true, description = "Witness weight is 1")
   public void testWitnessWeight02() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -461,8 +462,8 @@ public class MultiSign16 {
 
   @Test(enabled = true, description = "Witness weight is Integer.MAX_VALUE")
   public void testWitnessWeight03() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -538,8 +539,8 @@ public class MultiSign16 {
 
   @Test(enabled = true, description = "Witness weight is Long.MAX_VALUE")
   public void testWitnessWeight04() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -612,6 +613,11 @@ public class MultiSign16 {
         .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
   }
 
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
+  }
   /**
    * constructor.
    */

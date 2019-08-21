@@ -500,6 +500,9 @@ public class ContractScenario011 {
     PublicMethed
         .unFreezeBalance(triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey, 1,
             triggerUseTriggerEnergyUsageAddress, blockingStubFull);
+    PublicMethed.freedResource(triggerUseTriggerEnergyUsageAddress, triggerUseTriggerEnergyUsageKey,
+        fromAddress, blockingStubFull);
+
   }
 
   /**

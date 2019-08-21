@@ -253,6 +253,7 @@ public class HttpTestAccount002 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, freezeBalanceAddress, fromAddress, freezeBalanceKey);
     HttpMethed.disConnect();
   }
 }

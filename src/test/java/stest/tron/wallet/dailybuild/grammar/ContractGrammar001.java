@@ -378,6 +378,8 @@ public class ContractGrammar001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(grammarAddress, testKeyForGrammarAddress, testNetAccountAddress,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
