@@ -1,28 +1,8 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
-    }
-    dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
-    }
-}
-
-group 'tronprotocol'
-version '1.0.0'
-
-apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
-//apply plugin: 'application'
-apply plugin: 'maven-publish'
 
 jar.enabled = true
 //shadowJar.enabled = true
 
-sourceCompatibility = 1.8
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 publishing {
     publications {
@@ -109,16 +89,7 @@ protobuf {
     }
 }
 
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
 
-artifacts {
-    archives jar
-    archives sourcesJar
-//    archives javadocJar
-}
 
 clean.doFirst {
     delete "src/main/java"
