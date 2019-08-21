@@ -6,8 +6,8 @@
   </listeners>
   <test name="stest">
     <packages>
-      <package name="stest.tron.wallet.dailybuild.http">
-      </package>
+      <package name="stest.tron.wallet.dailybuild.http"/>
+      <package name="stest.tron.wallet.dailybuild.zentoken"/>
     </packages>
   </test>
 </suite>
