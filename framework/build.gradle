@@ -8,12 +8,6 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'org.tron.program.FullNode'
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { url 'http://repo.spring.io/plugins-release' }
-    maven { url 'https://jitpack.io' }
-}
 def versions = [
         checkstyle: '8.7',
 ]

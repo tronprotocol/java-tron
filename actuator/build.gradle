@@ -6,14 +6,8 @@ description = "actuator – a series of transactions for blockchain."
 def junitVersion = "4.12"
 def mockitoVersion = "2.1.0"
 def testNgVersion = "6.11"
-def jacocoVersion = "0.8.0"
 def slf4jVersion = "1.7.25"
 // --------------------------------------
-
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
-}
 
 dependencies {
     compile project(":chainbase")
@@ -71,23 +65,3 @@ task testng(type: Test) {
 }
 
 check.dependsOn testng
-
-jacoco {
-    toolVersion = jacocoVersion // See http://www.eclemma.org/jacoco/.
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-
-    afterEvaluate {
-        classDirectories = files(classDirectories.files.collect {
-            fileTree(dir: it,
-                    exclude: ["io/reactivex/tck/**"])
-        })
-    }
-}
-
-build.dependsOn jacocoTestReport

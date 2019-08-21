@@ -5,21 +5,11 @@ description = "chainbase – a decentralized database for blockchain."
 
 def junitVersion = "4.12"
 def mockitoVersion = "2.1.0"
-def jmhLibVersion = "1.20"
 def testNgVersion = "6.11"
-def guavaVersion = "24.1-jre"
 def jacocoVersion = "0.8.0"
 def leveldbVersion = "1.8"
-def logbackVersion = "1.2.3"
 def jansiVersion = "1.16"
-def lombokVersion = "1.18.2"
-def slf4jVersion = "1.7.25"
 // --------------------------------------
-
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
-}
 
 static def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
@@ -47,7 +37,6 @@ dependencies {
 
     compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
@@ -120,11 +109,3 @@ jacocoTestReport {
 }
 
 build.dependsOn jacocoTestReport
-
-//checkstyle {
-//    configFile file("checkstyle.xml")
-//    ignoreFailures = true
-//    toolVersion ="6.19"
-//}
-
-//apply from: file("gradle/javadoc_cleanup.gradle")
