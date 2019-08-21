@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -98,8 +99,8 @@ public class MultiSign15 {
 
   @Test(enabled = true, description = "Witness doesn't have parent_id")
   public void testWitnessParent01() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -176,8 +177,8 @@ public class MultiSign15 {
 
   @Test(enabled = true, description = "Witness parent_id is exception condition")
   public void testWitnessParent02() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
             ByteString.copyFrom(ownerAddress),
@@ -509,8 +510,8 @@ public class MultiSign15 {
 
   @Test(enabled = true, description = "Witness parent_id is 0")
   public void testWitnessParent03() {
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -589,6 +590,12 @@ public class MultiSign15 {
     PublicMethed
         .unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
   }
 
   /**

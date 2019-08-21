@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI.Return;
@@ -41,6 +42,9 @@ public class MultiSign29 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  private ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] test001Address = ecKey1.getAddress();
+  private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   private ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] test002Address = ecKey2.getAddress();
@@ -79,7 +83,7 @@ public class MultiSign29 {
       + "Then use permissionID same in active  address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_22() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 2000000;
 
     Assert.assertTrue(PublicMethed
@@ -95,7 +99,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -154,7 +158,7 @@ public class MultiSign29 {
       + "Then use permissionID same in active  address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_23() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 2000000;
 
     Assert.assertTrue(PublicMethed
@@ -170,7 +174,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -244,7 +248,7 @@ public class MultiSign29 {
       + "Then use owner address to sign,broadcastTransaction.")
   public void testMultiUpdatepermissions_24() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 2000000;
 
     Assert.assertTrue(PublicMethed
@@ -260,7 +264,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -321,7 +325,7 @@ public class MultiSign29 {
           + "Then use owner address to sign, not meet the requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_25() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed
@@ -337,7 +341,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -414,7 +418,7 @@ public class MultiSign29 {
           + "Then use owner address to sign, not meet the requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_26() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed
@@ -430,7 +434,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -500,7 +504,7 @@ public class MultiSign29 {
           + "Then use owner address to sign,  meet all requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_27() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed
@@ -516,7 +520,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -592,7 +596,7 @@ public class MultiSign29 {
           + "Then use owner address to sign,  meet all requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_28() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed
@@ -608,7 +612,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -677,7 +681,7 @@ public class MultiSign29 {
           + "Then use active address to sign, not meet the requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_29() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
     Assert.assertTrue(PublicMethed
         .sendcoin(test001Address, amount, fromAddress, testKey002,
@@ -692,7 +696,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -761,7 +765,7 @@ public class MultiSign29 {
           + "Then use active address to sign,  meet all requirements,broadcastTransaction.")
   public void testMultiUpdatepermissions_30() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = updateAccountPermissionFee + 1000000;
 
     Assert.assertTrue(PublicMethed
@@ -777,7 +781,7 @@ public class MultiSign29 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -845,6 +849,11 @@ public class MultiSign29 {
   /**
    * constructor.
    */
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(test001Address, dev001Key, fromAddress, blockingStubFull);
+  }
 
   @AfterClass
   public void shutdown() throws InterruptedException {

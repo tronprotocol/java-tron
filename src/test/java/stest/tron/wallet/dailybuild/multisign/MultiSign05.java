@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -91,8 +92,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address is witness account")
   public void testOwnerKeyAddress01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -167,8 +168,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address is contract address")
   public void testOwnerKeyAddress02() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -244,8 +245,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address is inactive address")
   public void testOwnerKeyAddress03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -321,8 +322,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address is owner address")
   public void testOwnerKeyAddress04() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -396,8 +397,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address in exception condition")
   public void testOwnerKeyAddress05() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -591,8 +592,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address count is 5")
   public void testOwnerKeyAddress06() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -671,8 +672,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address count in exception condition")
   public void testOwnerKeyAddress07() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -739,8 +740,8 @@ public class MultiSign05 {
   @Test(enabled = true, description = "Owner key-address count is 1")
   public void testOwnerKeyAddress08() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -811,6 +812,11 @@ public class MultiSign05 {
     logger.info("balanceAfter: " + balanceAfter);
 
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
 
   /**

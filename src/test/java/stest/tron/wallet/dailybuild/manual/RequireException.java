@@ -800,7 +800,7 @@ public class RequireException {
     Assert.assertTrue(beforeEnergyUsed + energyUsed >= afterEnergyUsed);
     Assert.assertTrue(beforeFreeNetUsed + netUsed >= afterFreeNetUsed);
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
-
-
+    PublicMethed.freedResource(asset016Address, testKeyForAssetIssue016, testNetAccountAddress,
+        blockingStubFull);
   }
 }

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -222,6 +223,11 @@ public class WalletTestAssetIssue003 {
     assetIssueList.hashCode();
     assetIssueList.getSerializedSize();
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(asset003Address, asset003Key, fromAddress, blockingStubFull);
   }
 
   /**
