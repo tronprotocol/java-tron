@@ -40,6 +40,7 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
+import org.tron.common.runtime.vm.trace.Op;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -497,6 +498,11 @@ public class Args {
   @Getter
   @Setter
   private RateLimiterInitialization rateLimiterInitialization;
+
+  public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
+    this.fullNodeAllowShieldedTransaction = fullNodeAllowShieldedTransaction;
+    DBConfig.setFullNodeAllowShieldedTransaction(fullNodeAllowShieldedTransaction);
+  }
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -1438,11 +1444,20 @@ public class Args {
 
 
   public static void initDBConfig(Args cfgArgs) {
-    DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
-    DBConfig.setDbEngine(cfgArgs.getStorage().getDbEngine());
+    if (Objects.nonNull(cfgArgs.getStorage())) {
+      DBConfig.setDbVersion(cfgArgs.getStorage().getDbVersion());
+      DBConfig.setDbEngine(cfgArgs.getStorage().getDbEngine());
+      DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
+      DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
+      DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
+    }
+
+    if (Objects.nonNull(cfgArgs.getGenesisBlock())){
+      DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
+      DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
+    }
+
     DBConfig.setOutputDirectory(cfgArgs.getOutputDirectory());
-    DBConfig.setPropertyMap(cfgArgs.getStorage().getPropertyMap());
-    DBConfig.setDbSync(cfgArgs.getStorage().isDbSync());
     DBConfig.setRocksDbSettings(cfgArgs.getRocksDBCustomSettings());
     DBConfig.setAllowMultiSign(cfgArgs.getAllowMultiSign());
     DBConfig.setMaintenanceTimeInterval(cfgArgs.getMaintenanceTimeInterval());
@@ -1454,13 +1469,10 @@ public class Args {
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
     DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
-    DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());
     DBConfig.setAllowProtoFilterNum(cfgArgs.getAllowProtoFilterNum());
-    DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
     DBConfig.setProposalExpireTime(cfgArgs.getProposalExpireTime());
     DBConfig.setBlockNumForEneryLimit(cfgArgs.getBlockNumForEneryLimit());
-    DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
