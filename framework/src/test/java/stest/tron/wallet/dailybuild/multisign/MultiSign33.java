@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import org.tron.api.WalletGrpc;
@@ -37,6 +38,9 @@ public class MultiSign33 {
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
       .get(0);
 
+  private ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] test001Address = ecKey1.getAddress();
+  private String dev001Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   private ECKey ecKey2 = new ECKey(Utils.getRandom());
   byte[] test002Address = ecKey2.getAddress();
@@ -73,7 +77,7 @@ public class MultiSign33 {
   @Test(enabled = true, description = "Owner address fall back into only myself")
   public void testMultiSignOwnerAddress() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = 2 * updateAccountPermissionFee + multiSignFee;
 
     Assert.assertTrue(PublicMethed
@@ -91,7 +95,7 @@ public class MultiSign33 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
     logger.info("balance:" + balance);
 
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[5];
     permissionKeyString[0] = dev001Key;
@@ -168,7 +172,7 @@ public class MultiSign33 {
   @Test(enabled = true, description = "Active address fall back into only myself")
   public void testMultiSignActiveAddress() {
     ECKey ecKey = new ECKey(Utils.getRandom());
-    byte[] test001Address = ecKey.getAddress();
+    test001Address = ecKey.getAddress();
     long amount = 2 * updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed
@@ -184,7 +188,7 @@ public class MultiSign33 {
     PublicMethedForMutiSign.printPermissionList(permissionsList);
     logger.info(PublicMethedForMutiSign.printPermission(ownerPermission));
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission));
-    String dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
+    dev001Key = ByteArray.toHexString(ecKey.getPrivKeyBytes());
 
     String[] permissionKeyString = new String[1];
     permissionKeyString[0] = dev001Key;
@@ -241,6 +245,11 @@ public class MultiSign33 {
     logger.info(PublicMethedForMutiSign.printPermission(witnessPermission2));
 
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(test001Address, dev001Key, fromAddress, blockingStubFull);
   }
 
 

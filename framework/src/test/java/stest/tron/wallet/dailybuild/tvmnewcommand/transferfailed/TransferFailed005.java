@@ -496,6 +496,8 @@ public class TransferFailed005 {
   @AfterClass
 
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(accountExcAddress, accountExcKey, testNetAccountAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

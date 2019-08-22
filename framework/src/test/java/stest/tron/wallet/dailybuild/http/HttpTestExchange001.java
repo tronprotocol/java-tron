@@ -59,7 +59,8 @@ public class HttpTestExchange001 {
    */
   @Test(enabled = true, description = "Create asset issue by http")
   public void test01CreateExchange() {
-    response = HttpMethed.sendCoin(httpnode, fromAddress, exchangeOwnerAddress, amount, testKey002);
+    response = HttpMethed
+        .sendCoin(httpnode, fromAddress, exchangeOwnerAddress, 2048000000L, testKey002);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
     response = HttpMethed.sendCoin(httpnode, fromAddress, asset2Address, amount, testKey002);
@@ -99,7 +100,6 @@ public class HttpTestExchange001 {
         1000000L, assetIssueId2, 1000000L, exchangeOwnerKey);
     Assert.assertTrue(HttpMethed.verificationResult(response));
     HttpMethed.waitToProduceOneBlock(httpnode);
-
   }
 
   /**
@@ -269,6 +269,7 @@ public class HttpTestExchange001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, asset2Address, fromAddress, asset2Key);
     HttpMethed.disConnect();
   }
 }

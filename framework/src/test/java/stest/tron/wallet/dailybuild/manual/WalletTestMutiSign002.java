@@ -455,6 +455,11 @@ public class WalletTestMutiSign002 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .unFreezeBalance(exchange001Address, exchange001Key, 0, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(exchange001Address, exchange001Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(secondExchange001Address, secondExchange001Key, fromAddress,
+        blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

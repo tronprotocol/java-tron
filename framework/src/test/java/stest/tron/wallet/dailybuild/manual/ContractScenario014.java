@@ -233,6 +233,9 @@ public class ContractScenario014 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(contract014Address, contract014Key, 1, contract014Address,
+        blockingStubFull);
+    PublicMethed.freedResource(contract014Address, contract014Key, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

@@ -230,6 +230,9 @@ public class WalletTestAccount014 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(account014Address, account014Key, fromAddress, blockingStubFull);
+    PublicMethed
+        .freedResource(account014SecondAddress, account014SecondKey, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

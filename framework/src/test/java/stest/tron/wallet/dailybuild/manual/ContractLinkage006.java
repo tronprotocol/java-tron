@@ -318,6 +318,16 @@ public class ContractLinkage006 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 1,
+        linkage006Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(linkage006Address, linkage006Key, 0,
+        linkage006Address, blockingStubFull);
+    PublicMethed.unFreezeBalance(linkage006Address2, linkage006Key2, 1,
+        linkage006Address2, blockingStubFull);
+    PublicMethed.unFreezeBalance(linkage006Address2, linkage006Key2, 0,
+        linkage006Address2, blockingStubFull);
+    PublicMethed.freedResource(linkage006Address, linkage006Key, fromAddress, blockingStubFull);
+    PublicMethed.freedResource(linkage006Address2, linkage006Key2, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
