@@ -561,6 +561,7 @@ public class WalletTestZenToken007 {
         null,0,
         zenTokenOwnerKey2,blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2,blockingStubFull);
 
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo1.get(),
