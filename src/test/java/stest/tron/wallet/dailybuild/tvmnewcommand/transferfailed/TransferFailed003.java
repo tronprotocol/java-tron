@@ -113,8 +113,6 @@ public class TransferFailed003 {
         .assertTrue(PublicMethed.createAssetIssue(contractExcAddress, tokenName, TotalSupply, 1,
             10000, start, end, 1, description, url, 100000L,
             100000L, 1L, 1L, contractExcKey, blockingStubFull));
-    assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
-        .getAssetIssuedID();
 
     String filePath = "src/test/resources/soliditycode/TransferFailed001.sol";
     String contractName = "EnergyOfTransferFailedTest";
@@ -126,9 +124,12 @@ public class TransferFailed003 {
         0L, 100, null, contractExcKey,
         contractExcAddress, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
+    assetAccountId = PublicMethed.queryAccount(contractExcAddress, blockingStubFull)
+        .getAssetIssuedID();
     Assert.assertTrue(PublicMethed.transferAsset(contractAddress,
         assetAccountId.toByteArray(), 100L, contractExcAddress, contractExcKey,
         blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account info;
 
