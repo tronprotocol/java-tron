@@ -17,7 +17,7 @@
  */
 package org.tron.core.vm.program.listener;
 
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 
 public interface ProgramListener {
 

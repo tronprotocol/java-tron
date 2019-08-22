@@ -1464,7 +1464,13 @@ public class Args {
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+    DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
     DBConfig.setVmTrace(cfgArgs.isVmTrace());
-
+    DBConfig.setDebug(cfgArgs.isDebug());
+    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
+    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
+    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
+    DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
+    DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
   }
 }

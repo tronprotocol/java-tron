@@ -17,7 +17,7 @@
  */
 package org.tron.core.vm.trace;
 
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.listener.ProgramListenerAdaptor;
 
 public class ProgramTraceListener extends ProgramListenerAdaptor {

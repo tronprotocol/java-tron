@@ -56,7 +56,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
@@ -69,7 +69,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -114,6 +113,7 @@ import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -123,10 +123,13 @@ import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.AccountType;
@@ -471,7 +474,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    Message.setManager(this);
+    Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -525,7 +528,8 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
-
+    //initStoreFactory
+    prepareStroeFactory();
   }
 
   public BlockId getGenesisBlockId() {
@@ -772,7 +776,7 @@ public class Manager {
     }
 
     try {
-      if (!trx.validateSignature(this)) {
+      if (!trx.validateSignature(accountStore, dynamicPropertiesStore)) {
         throw new ValidateSignatureException("trans sig validate failed");
       }
 
@@ -997,7 +1001,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature(this)) {
+        if (!block.validateSignature(dynamicPropertiesStore, accountStore)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -1250,17 +1254,18 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
+    if (!trxCap.validateSignature(accountStore, dynamicPropertiesStore)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap, this);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(this));
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
-    VMConfig.initVmHardFork();
+    VMConfig.initVmHardFork(true);
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
@@ -1290,7 +1295,7 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResult(trace.getRuntime());
+      trxCap.setResult(trace.getTransactionContext());
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1620,7 +1625,7 @@ public class Manager {
       }
     }
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      EnergyProcessor energyProcessor = new EnergyProcessor(this);
+      EnergyProcessor energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
       energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
@@ -1882,7 +1887,7 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(manager);
+        trx.validateSignature(manager.getAccountStore(), manager.getDynamicPropertiesStore());
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -2028,5 +2033,28 @@ public class Manager {
         }
       }
     }
+  }
+
+  private void prepareStroeFactory() {
+    StoreFactory.getInstance().setAccountStore(accountStore)
+        .setAccountIdIndexStore(accountIdIndexStore)
+        .setDynamicPropertiesStore(dynamicPropertiesStore)
+        .setAssetIssueStore(assetIssueStore)
+        .setContractStore(contractStore)
+        .setAssetIssueV2Store(assetIssueV2Store)
+        .setWitnessStore(witnessStore)
+        .setVotesStore(votesStore)
+        .setProofStore(proofStore)
+        .setNullifierStore(nullifierStore)
+        .setDelegatedResourceAccountIndexStore(delegatedResourceAccountIndexStore)
+        .setDelegatedResourceStore(delegatedResourceStore)
+        .setExchangeStore(exchangeStore)
+        .setExchangeV2Store(exchangeV2Store)
+        .setProposalStore(proposalStore)
+        .setCodeStore(codeStore)
+        .setStorageRowStore(storageRowStore)
+        .setBlockStore(blockStore)
+        .setKhaosDb(khaosDb)
+        .setBlockIndexStore(blockIndexStore);
   }
 }

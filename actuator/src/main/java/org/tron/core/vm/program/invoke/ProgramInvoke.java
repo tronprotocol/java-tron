@@ -18,7 +18,7 @@
 package org.tron.core.vm.program.invoke;
 
 
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.repository.Repository;
 
 /**

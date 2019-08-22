@@ -41,7 +41,27 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.*;
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
+import org.tron.common.utils.FastByteComparisons;
+import org.tron.common.utils.Hash;
+import org.tron.common.utils.WalletUtil;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TronException;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.OpCode;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.VM;
+import org.tron.core.vm.VMConstant;
+import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
@@ -52,14 +72,6 @@ import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
 import org.tron.core.vm.trace.ProgramTraceListener;
-
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.Hash;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.TronException;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
@@ -80,8 +92,6 @@ public class Program {
   private static final String VALIDATE_FOR_SMART_CONTRACT_FAILURE =
       "validateForSmartContract failure:%s";
   private static final String INVALID_TOKEN_ID_MSG = "not valid token id";
-
-  private BlockCapsule blockCap;
 
   private long nonce;
   private byte[] rootTransactionId;
@@ -119,15 +129,14 @@ public class Program {
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction) {
-    this(ops, programInvoke, internalTransaction, VMConfig.getInstance(), null);
+    this(ops, programInvoke, internalTransaction, VMConfig.getInstance());
   }
 
   public Program(byte[] ops, ProgramInvoke programInvoke, InternalTransaction internalTransaction,
-      VMConfig config, BlockCapsule blockCap) {
+      VMConfig config) {
     this.config = config;
     this.invoke = programInvoke;
     this.internalTransaction = internalTransaction;
-    this.blockCap = blockCap;
     this.ops = nullToEmpty(ops);
 
     traceListener = new ProgramTraceListener(config.vmTrace());
@@ -432,7 +441,7 @@ public class Program {
     // [1] FETCH THE CODE FROM THE MEMORY
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] newAddress = Wallet
+    byte[] newAddress = WalletUtil
         .generateContractAddress(rootTransactionId, nonce);
 
     createContractImpl(value, programCode, newAddress, false);
@@ -530,7 +539,7 @@ public class Program {
               .toHexString(newAddress)));
     } else if (isNotEmpty(programCode)) {
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config, this.blockCap);
+      Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
       vm.play(program);
       createResult = program.getResult();
@@ -737,8 +746,7 @@ public class Program {
           contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
-      Program program = new Program(programCode, programInvoke, internalTx, config,
-          this.blockCap);
+      Program program = new Program(programCode, programInvoke, internalTx, config);
       program.setRootTransactionId(this.rootTransactionId);
       vm.play(program);
       callResult = program.getResult();
@@ -822,10 +830,11 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-    if (Args.getInstance().isDebug()) {
+
+    if (DBConfig.isDebug()) {
       return;
     }
-    if (Args.getInstance().isSolidityNode()) {
+    if (DBConfig.isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
@@ -833,7 +842,7 @@ public class Program {
       logger.info(
           "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
               + "vm now time in us: {}, vm start time in us: {}",
-          Args.getInstance().getMinTimeRatio(), Args.getInstance().getMaxTimeRatio(),
+          DBConfig.getMinTimeRatio(), DBConfig.getMaxTimeRatio(),
           getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
       throw Exception.notEnoughTime(opName);
     }
@@ -907,7 +916,7 @@ public class Program {
     if (index < this.getNumber().longValue()
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
-      BlockCapsule blockCapsule = this.invoke.getBlockByNum(index);
+      BlockCapsule blockCapsule = contractState.getBlockByNum(index);
 
       if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());
@@ -1162,7 +1171,7 @@ public class Program {
   static String formatBinData(byte[] binData, int startPC) {
     StringBuilder ret = new StringBuilder();
     for (int i = 0; i < binData.length; i += 16) {
-      ret.append(Utils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
+      ret.append(VMUtils.align("" + Integer.toHexString(startPC + (i)) + ":", ' ', 8, false));
       ret.append(Hex.toHexString(binData, i, min(16, binData.length - i))).append('\n');
     }
     return ret.toString();
@@ -1199,7 +1208,7 @@ public class Program {
         }
       }
 
-      sb.append(Utils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
+      sb.append(VMUtils.align("" + Integer.toHexString(index) + ":", ' ', 8, false));
 
       if (op == null) {
         sb.append("<UNKNOWN>: ").append(0xFF & opCode).append("\n");
@@ -1233,7 +1242,7 @@ public class Program {
     byte[] senderAddress = MUtil.convertToTronAddress(this.getCallerAddress().getLast20Bytes());
     byte[] programCode = memoryChunk(memStart.intValue(), memSize.intValue());
 
-    byte[] contractAddress = Wallet
+    byte[] contractAddress = WalletUtil
         .generateContractAddress2(senderAddress, salt.getData(), programCode);
     createContractImpl(value, programCode, contractAddress, true);
   }
@@ -1372,7 +1381,7 @@ public class Program {
       return;
     }
 
-    Deposit deposit = getContractState().newDepositChild();
+    Repository deposit = getContractState().newRepositoryChild();
 
     byte[] senderAddress = MUtil.convertToTronAddress(this.getContractAddress().getLast20Bytes());
     byte[] codeAddress = MUtil.convertToTronAddress(msg.getCodeAddress().getLast20Bytes());
@@ -1433,7 +1442,7 @@ public class Program {
       contract.setCallerAddress(MUtil.convertToTronAddress(msg.getType().callIsDelegate()
           ? getCallerAddress().getLast20Bytes() : getContractAddress().getLast20Bytes()));
       // this is the depositImpl, not contractState as above
-      contract.setDeposit(deposit);
+      contract.setRepository(deposit);
       contract.setResult(this.result);
       contract.setStaticCall(isStaticCall());
       Pair<Boolean, byte[]> out = contract.execute(data);
@@ -1760,7 +1769,7 @@ public class Program {
     return this.invoke.getVmStartInUs();
   }
 
-  private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
+  private boolean isContractExist(AccountCapsule existingAddr, Repository deposit) {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
   }
 }

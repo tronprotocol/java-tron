@@ -9,10 +9,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.storage.Deposit;
-import org.tron.core.Wallet;
+import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 @Slf4j
@@ -31,11 +32,11 @@ public class LogInfoTriggerParser {
     this.blockTimestamp = blockTimestamp;
     this.txId = ArrayUtils.isEmpty(txId) ? "" : Hex.toHexString(txId);
     this.originAddress =
-        ArrayUtils.isEmpty(originAddress) ? "" : Wallet.encode58Check(originAddress);
+        ArrayUtils.isEmpty(originAddress) ? "" : WalletUtil.encode58Check(originAddress);
 
   }
 
-  public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos, Deposit deposit) {
+  public List<ContractTrigger> parseLogInfos(List<LogInfo> logInfos, Repository deposit) {
 
     List<ContractTrigger> list = new LinkedList<>();
     if (logInfos == null || logInfos.size() <= 0) {
@@ -49,7 +50,7 @@ public class LogInfoTriggerParser {
 
       byte[] contractAddress = MUtil.convertToTronAddress(logInfo.getAddress());
       String strContractAddr =
-          ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
+          ArrayUtils.isEmpty(contractAddress) ? "" : WalletUtil.encode58Check(contractAddress);
       if (addrMap.get(strContractAddr) != null) {
         continue;
       }
@@ -61,7 +62,7 @@ public class LogInfoTriggerParser {
         continue;
       }
       ABI abi = contract.getInstance().getAbi();
-      String creatorAddr = Wallet.encode58Check(
+      String creatorAddr = WalletUtil.encode58Check(
           MUtil.convertToTronAddress(contract.getInstance().getOriginAddress().toByteArray()));
       addrMap.put(strContractAddr, creatorAddr);
       abiMap.put(strContractAddr, abi);
@@ -72,7 +73,7 @@ public class LogInfoTriggerParser {
 
       byte[] contractAddress = MUtil.convertToTronAddress(logInfo.getAddress());
       String strContractAddr =
-          ArrayUtils.isEmpty(contractAddress) ? "" : Wallet.encode58Check(contractAddress);
+          ArrayUtils.isEmpty(contractAddress) ? "" : WalletUtil.encode58Check(contractAddress);
       ABI abi = abiMap.get(strContractAddr);
       ContractTrigger event = new ContractTrigger();
       String creatorAddr = addrMap.get(strContractAddr);

@@ -17,10 +17,9 @@
  */
 package org.tron.core.vm.program.listener;
 
-import org.tron.core.vm.DataWord;
-
 import java.util.HashMap;
 import java.util.Map;
+import org.tron.common.runtime.vm.DataWord;
 
 public class ProgramStorageChangeListener extends ProgramListenerAdaptor {
 

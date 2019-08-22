@@ -17,26 +17,24 @@
  */
 package org.tron.core.vm.program.invoke;
 
+import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
+import static org.tron.common.runtime.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
+import static org.tron.common.utils.WalletUtil.generateContractAddress;
+
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Arrays;
 import org.springframework.stereotype.Component;
-
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
-
-import org.tron.common.utils.Hash;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.vm.DataWord;
-import org.tron.core.vm.program.InternalTransaction;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-
-import static org.tron.core.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE;
-import static org.tron.core.vm.program.InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
 
 
 /**
@@ -171,22 +169,6 @@ public class ProgramInvokeFactoryImpl implements ProgramInvokeFactory {
             data, lastHash, coinbase, timestamp, number, difficulty,
             deposit, program.getCallDeep() + 1, isStaticCall, byTestingSuite, vmStartInUs,
             vmShouldEndInUs, energyLimit);
-  }
-
-
-  public static byte[] generateContractAddress(Transaction trx) {
-
-    CreateSmartContract contract = ContractCapsule.getSmartContractFromTransaction(trx);
-    byte[] ownerAddress = contract.getOwnerAddress().toByteArray();
-    TransactionCapsule trxCap = new TransactionCapsule(trx);
-    byte[] txRawDataHash = trxCap.getTransactionId().getBytes();
-
-    byte[] combined = new byte[txRawDataHash.length + ownerAddress.length];
-    System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
-    System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
-
-    return Hash.sha3omit12(combined);
-
   }
 
 

@@ -5,11 +5,11 @@ import static java.lang.System.arraycopy;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
 import org.tron.core.capsule.StorageRowCapsule;
-import org.tron.core.db.StorageRowStore;
+import org.tron.core.store.StorageRowStore;
 
 public class Storage {
 
@@ -48,20 +48,20 @@ public class Storage {
 
   public DataWord getValue(DataWord key) {
     if (rowCache.containsKey(key)) {
-      return rowCache.get(key).getValue();
+      return new DataWord(rowCache.get(key).getValue());
     } else {
       StorageRowCapsule row = store.get(compose(key.getData(), addrHash));
       if (row == null || row.getInstance() == null) {
         return null;
       }
       rowCache.put(key, row);
-      return row.getValue();
+      return new DataWord(row.getValue());
     }
   }
 
   public void put(DataWord key, DataWord value) {
     if (rowCache.containsKey(key)) {
-      rowCache.get(key).setValue(value);
+      rowCache.get(key).setValue(value.getData());
     } else {
       byte[] rowKey = compose(key.getData(), addrHash);
       StorageRowCapsule row = new StorageRowCapsule(rowKey, value.getData());
@@ -91,7 +91,7 @@ public class Storage {
   public void commit() {
     rowCache.forEach((DataWord rowKey, StorageRowCapsule row) -> {
       if (row.isDirty()) {
-        if (row.getValue().isZero()) {
+        if (new DataWord(row.getValue()).isZero()) {
           this.store.delete(row.getRowKey());
         } else {
           this.store.put(row.getRowKey(), row);

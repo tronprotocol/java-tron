@@ -25,7 +25,7 @@ import static org.tron.common.utils.ByteUtil.oneByteToHexString;
 
 import java.util.LinkedList;
 import java.util.List;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 

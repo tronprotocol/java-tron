@@ -18,9 +18,9 @@
 package org.tron.core.vm.program.invoke;
 
 
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.vm.DataWord;
-import org.tron.core.vm.program.InternalTransaction;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Block;

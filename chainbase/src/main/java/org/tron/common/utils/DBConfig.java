@@ -126,6 +126,35 @@ public class DBConfig {
   @Setter
   private static boolean vmTrace;
 
+  @Getter
+  @Setter
+  private static boolean debug;
+
+  @Getter
+  @Setter
+  private static double minTimeRatio;
+
+  @Getter
+  @Setter
+  private static double maxTimeRatio;
+
+  @Getter
+  @Setter
+  private static boolean solidityNode;
+
+  @Getter
+  @Setter
+  private static int validContractProtoThreadNum;
+
+  @Getter
+  @Setter
+  private static boolean supportConstant;
+
+  @Getter
+  @Setter
+  private static int longRunningTime;
+
+
   private static final CompressionType DEFAULT_COMPRESSION_TYPE = CompressionType.SNAPPY;
   private static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;

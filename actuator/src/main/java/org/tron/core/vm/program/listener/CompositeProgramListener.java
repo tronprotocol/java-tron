@@ -17,10 +17,9 @@
  */
 package org.tron.core.vm.program.listener;
 
-import org.tron.core.vm.DataWord;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.tron.common.runtime.vm.DataWord;
 
 
 public class CompositeProgramListener implements ProgramListener {

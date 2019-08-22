@@ -18,7 +18,7 @@
 package org.tron.core.vm.program;
 
 import java.util.Objects;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 

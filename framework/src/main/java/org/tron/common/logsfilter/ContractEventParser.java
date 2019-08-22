@@ -8,9 +8,9 @@ import org.pf4j.util.StringUtils;
 import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.utils.MUtil;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.Wallet;
+import org.tron.core.vm.utils.MUtil;
 
 @Slf4j(topic = "Parser")
 public class ContractEventParser {

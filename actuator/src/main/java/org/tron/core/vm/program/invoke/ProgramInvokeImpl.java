@@ -17,13 +17,12 @@
  */
 package org.tron.core.vm.program.invoke;
 
-import lombok.extern.slf4j.Slf4j;
-import org.tron.core.vm.DataWord;
-import org.tron.core.vm.repository.Repository;
-
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm.repository.Repository;
 
 @Slf4j
 public class ProgramInvokeImpl implements ProgramInvoke {

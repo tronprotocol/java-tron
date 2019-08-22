@@ -1,10 +1,19 @@
 package org.tron.core.vm.repository;
 
+import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.core.capsule.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.CodeCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.vm.config.VMConfig;
-import java.util.Arrays;
 
 public class Value {
 
@@ -115,7 +124,33 @@ public class Value {
     return new BytesCapsule(any);
   }
 
+  /**
+   *
+   */
+  public TransactionCapsule getTransaction() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    try {
+      return new TransactionCapsule(any);
+    } catch (BadItemException e) {
+      return null;
+    }
+  }
 
+  /**
+   *
+   */
+  public BlockCapsule getBlock() {
+    if (ArrayUtils.isEmpty(any)) {
+      return null;
+    }
+    try {
+      return new BlockCapsule(any);
+    } catch (Exception e) {
+      return null;
+    }
+  }
 
 
   /**
@@ -149,12 +184,13 @@ public class Value {
   /**
    * @return
    */
-  public byte[] getCode() {
+  public CodeCapsule getCode() {
     if (ArrayUtils.isEmpty(any)) {
       return null;
     }
-    return any;
+    return new CodeCapsule(any);
   }
+
 
   /**
    * @return

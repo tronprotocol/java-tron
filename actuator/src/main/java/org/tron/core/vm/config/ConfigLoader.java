@@ -8,21 +8,27 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 @Slf4j(topic = "VMConfigLoader")
 public class ConfigLoader {
-    public static void load(StoreFactory storeFactory){
-        DynamicPropertiesStore ds = null;
-        try {
-            storeFactory.getStore(DynamicPropertiesStore.class);
-        } catch (TypeMismatchNamingException e) {
-            logger.error("can not get DynamicPropertiesStore",e);
-        }
-        VMConfig.setVmTrace(DBConfig.isVmTrace());
-        if(ds != null){
-            VMConfig.initVmHardFork(checkForEnergyLimit(ds));
-            VMConfig.initAllowMultiSign(ds.getAllowMultiSign());
-            VMConfig.initAllowTvmTransferTrc10(ds.getAllowTvmTransferTrc10());
-            VMConfig.initAllowTvmConstantinople(ds.getAllowTvmConstantinople());
-            VMConfig.initAllowTvmSolidity059(ds.getAllowTvmSolidity059());
 
+    //only for unit test
+    public static boolean disable = false;
+
+    public static void load(StoreFactory storeFactory){
+        if (!disable) {
+            DynamicPropertiesStore ds = null;
+            try {
+                ds = storeFactory.getStore(DynamicPropertiesStore.class);
+            } catch (TypeMismatchNamingException e) {
+                logger.error("can not get DynamicPropertiesStore", e);
+            }
+            VMConfig.setVmTrace(DBConfig.isVmTrace());
+            if (ds != null) {
+                VMConfig.initVmHardFork(checkForEnergyLimit(ds));
+                VMConfig.initAllowMultiSign(ds.getAllowMultiSign());
+                VMConfig.initAllowTvmTransferTrc10(ds.getAllowTvmTransferTrc10());
+                VMConfig.initAllowTvmConstantinople(ds.getAllowTvmConstantinople());
+                VMConfig.initAllowTvmSolidity059(ds.getAllowTvmSolidity059());
+
+            }
         }
     }
 

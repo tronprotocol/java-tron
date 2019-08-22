@@ -17,6 +17,23 @@
  */
 package org.tron.core.vm;
 
+import static java.lang.String.format;
+import static org.apache.commons.codec.binary.Base64.encodeBase64String;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.Inflater;
+import java.util.zip.InflaterOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -25,17 +42,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
-
-import java.io.*;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterOutputStream;
-
-import static java.lang.String.format;
-import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 
 
 @Slf4j(topic = "VM")
@@ -276,5 +282,29 @@ public final class VMUtils {
 
     return true;
   }
+
+  public static String align(String s, char fillChar, int targetLen, boolean alignRight) {
+    if (targetLen <= s.length()) {
+      return s;
+    }
+    String alignString = repeat("" + fillChar, targetLen - s.length());
+    return alignRight ? alignString + s : s + alignString;
+
+  }
+
+  static String repeat(String s, int n) {
+    if (s.length() == 1) {
+      byte[] bb = new byte[n];
+      Arrays.fill(bb, s.getBytes()[0]);
+      return new String(bb);
+    } else {
+      StringBuilder ret = new StringBuilder();
+      for (int i = 0; i < n; i++) {
+        ret.append(s);
+      }
+      return ret.toString();
+    }
+  }
+
 
 }

@@ -1,10 +1,14 @@
 package org.tron.core.vm.repository;
 
-import org.tron.core.capsule.*;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.vm.DataWord;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 
@@ -72,6 +76,11 @@ public interface Repository {
 
     long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule);
 
+    long calculateGlobalEnergyLimit(AccountCapsule accountCapsule);
+
     byte[] getBlackHoleAddress();
+
+    public BlockCapsule getBlockByNum(final long num);
+
 
 }

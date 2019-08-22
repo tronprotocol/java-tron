@@ -18,14 +18,14 @@
 package org.tron.core.vm.trace;
 
 import static java.lang.String.format;
-import static org.tron.core.vm.trace.Serializers.serializeFieldsOnly;
 import static org.tron.common.utils.ByteArray.toHexString;
+import static org.tron.core.vm.trace.Serializers.serializeFieldsOnly;
 import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.util.ArrayList;
 import java.util.List;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.OpCode;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.invoke.ProgramInvoke;

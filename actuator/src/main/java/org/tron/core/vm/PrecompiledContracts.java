@@ -18,9 +18,6 @@
 
 package org.tron.core.vm;
 
-import static org.tron.common.utils.BIUtil.addSafely;
-import static org.tron.common.utils.BIUtil.isLessThan;
-import static org.tron.common.utils.BIUtil.isZero;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.ByteUtil.bytesToBigInteger;
 import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
@@ -32,10 +29,7 @@ import com.google.common.primitives.Longs;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -48,7 +42,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
@@ -56,16 +49,13 @@ import org.tron.common.crypto.zksnark.BN128G1;
 import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
-import org.tron.core.vm.config.VMConfig;
-import org.tron.core.vm.program.Program;
-import org.tron.core.vm.program.ProgramResult;
-
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Commons;
+import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.Sha256Hash;
-
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
-import org.tron.core.vm.utils.BIUtil;
+import org.tron.core.vm.utils.MUtil;
 
 
 /**
@@ -98,7 +88,7 @@ public class PrecompiledContracts {
 //  private static final GetTransferAssetNative getTransferAssetAmount =  new GetTransferAssetNative();
 
   private static final ECKey addressCheckECKey = new ECKey();
-  private static final String addressCheckECKeyAddress = Wallet
+  private static final String addressCheckECKeyAddress = MUtil
       .encode58Check(addressCheckECKey.getAddress());
 
 

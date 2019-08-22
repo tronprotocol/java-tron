@@ -1,7 +1,9 @@
 package org.tron.core.vm.utils;
 
 
+import org.tron.common.utils.Base58;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VMUtils;
@@ -9,6 +11,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 public class MUtil {
+
 
   private MUtil() {
   }
@@ -56,5 +59,23 @@ public class MUtil {
       address = newAddress;
     }
     return address;
+  }
+
+  public static String encode58Check(byte[] input) {
+    byte[] hash0 = Sha256Hash.hash(input);
+    byte[] hash1 = Sha256Hash.hash(hash0);
+    byte[] inputCheck = new byte[input.length + 4];
+    System.arraycopy(input, 0, inputCheck, 0, input.length);
+    System.arraycopy(hash1, 0, inputCheck, input.length, 4);
+    return Base58.encode(inputCheck);
+  }
+
+  public static boolean isNullOrEmpty(String str) {
+    return (str == null) || str.isEmpty();
+  }
+
+
+  public static boolean isNotNullOrEmpty(String str) {
+    return !isNullOrEmpty(str);
   }
 }

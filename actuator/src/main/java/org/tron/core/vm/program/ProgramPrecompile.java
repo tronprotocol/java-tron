@@ -20,7 +20,7 @@ package org.tron.core.vm.program;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.OpCode;
 import org.tron.core.vm.config.VMConfig;
 

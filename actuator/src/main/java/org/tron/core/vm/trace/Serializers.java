@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.DataWord;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.OpCode;
 
 @Slf4j(topic = "VM")

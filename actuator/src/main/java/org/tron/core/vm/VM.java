@@ -1,5 +1,7 @@
 package org.tron.core.vm;
 
+import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.Hash.sha3;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;
@@ -13,8 +15,6 @@ import static org.tron.core.vm.OpCode.SAR;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
-import static org.tron.common.utils.Hash.sha3;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -22,6 +22,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
+import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
