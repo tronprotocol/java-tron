@@ -13,8 +13,7 @@ import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.core.vm.DataWord;
-import org.tron.core.vm.program.InternalTransaction;
+import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -244,8 +243,8 @@ public class ProgramResultTest {
     TransactionTrace traceSuccess = TvmTestUtils
         .processTransactionAndReturnTrace(trx1, deposit, null);
     runtime = traceSuccess.getRuntime();
-    byte[] bContract = runtime.getResult().getHReturn();
-    List<InternalTransaction> internalTransactionsList = runtime.getResult()
+    byte[] bContract = traceSuccess.getRuntimeResult().getHReturn();
+    List<InternalTransaction> internalTransactionsList = traceSuccess.getRuntimeResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsList.get(0).getValue(), 10);
     Assert.assertEquals(internalTransactionsList.get(0).getSender(), aContract);
@@ -290,7 +289,7 @@ public class ProgramResultTest {
     runtime = traceFailed.getRuntime();
     byte[] bContract2 = Wallet
         .generateContractAddress(new TransactionCapsule(trx2).getTransactionId().getBytes(), 0);
-    List<InternalTransaction> internalTransactionsListFail = runtime.getResult()
+    List<InternalTransaction> internalTransactionsListFail = traceFailed.getRuntimeResult()
         .getInternalTransactions();
     Assert.assertEquals(internalTransactionsListFail.get(0).getValue(), 10);
     Assert.assertEquals(internalTransactionsListFail.get(0).getSender(), aContract);
@@ -406,7 +405,7 @@ public class ProgramResultTest {
             triggerData1, 0, 100000000);
     TransactionTrace trace = TvmTestUtils.processTransactionAndReturnTrace(trx, deposit, null);
     runtime = trace.getRuntime();
-    List<InternalTransaction> internalTransactionsList = runtime.getResult()
+    List<InternalTransaction> internalTransactionsList = trace.getRuntimeResult()
         .getInternalTransactions();
     Assert
         .assertEquals(dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance(), 1000);

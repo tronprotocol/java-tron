@@ -8,13 +8,11 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.vm.DataWord;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
@@ -40,7 +38,7 @@ contract TestExtCodeHash {
   @Test
   public void testExtCodeHash()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
-    VMConfig.initAllowTvmConstantinople(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
     String contractName = "TestExtCodeHash";
     byte[] address = Hex.decode(OWNER_ADDRESS);
     String ABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"uint256\"}],\"name\":\"getCodeHashByUint\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"_addr\",\"type\":\"address\"}],\"name\":\"getCodeHashByAddr\",\"outputs\":[{\"name\":\"_hash\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]";

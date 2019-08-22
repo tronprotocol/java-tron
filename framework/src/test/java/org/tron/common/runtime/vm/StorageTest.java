@@ -8,7 +8,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.storage.Deposit;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.DBConfig;
@@ -18,7 +17,7 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.core.vm.DataWord;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -156,7 +155,7 @@ public class StorageTest extends VMTestBase {
     Arrays.fill(stats, (byte) 1);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    VMConfig.initVmHardFork();
+    VMConfig.initVmHardFork(true);
     byte[] address = Hex.decode(OWNER_ADDRESS);
     DataWord storageKey1 = new DataWord("key1".getBytes());
     DataWord storageVal1 = new DataWord("val1".getBytes());

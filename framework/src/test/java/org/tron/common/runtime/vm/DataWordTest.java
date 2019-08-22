@@ -25,7 +25,6 @@ import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.core.vm.DataWord;
 
 @Slf4j
 public class DataWordTest {
