@@ -69,6 +69,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetBlockByNumServlet getBlockByNumServlet;
   @Autowired
+  private BatchBlockReadServlet getBatchBlockReadServlet;
+  @Autowired
   private GetBlockByIdServlet getBlockByIdServlet;
   @Autowired
   private GetBlockByLimitNextServlet getBlockByLimitNextServlet;
@@ -212,6 +214,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getAssetIssueByIdServlet), "/getassetissuebyid");
       context.addServlet(new ServletHolder(getNowBlockServlet), "/getnowblock");
       context.addServlet(new ServletHolder(getBlockByNumServlet), "/getblockbynum");
+      context.addServlet(new ServletHolder(getBatchBlockReadServlet), "/getbatchblockread");
       context.addServlet(new ServletHolder(getBlockByIdServlet), "/getblockbyid");
       context.addServlet(new ServletHolder(getBlockByLimitNextServlet), "/getblockbylimitnext");
       context.addServlet(new ServletHolder(getBlockByLatestNumServlet), "/getblockbylatestnum");
