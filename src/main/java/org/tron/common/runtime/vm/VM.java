@@ -223,8 +223,10 @@ public class VM {
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL || op == CALLTOKEN) {
-            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
-              energyCost += energyCosts.getNEW_ACCT_CALL();
+            if (!VMConfig.allowTvmSolidity059()) {
+              if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
+                energyCost += energyCosts.getNEW_ACCT_CALL();
+              }
             }
           }
 
