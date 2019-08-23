@@ -1,15 +1,10 @@
 package org.tron.common.runtime.utils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import org.tron.common.storage.Deposit;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.actuator.TransferAssetActuator;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.config.args.Account;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol;
 
@@ -63,4 +58,13 @@ public class MUtil {
     }
     return address;
   }
+
+  public static byte[] allZero32TronAddress() {
+    byte[] newAddress = new byte[32];
+    byte[] temp = new byte[]{Wallet.getAddressPreFixByte()};
+    System.arraycopy(temp, 0, newAddress, 11, temp.length);
+
+    return newAddress;
+  }
+
 }
