@@ -1135,7 +1135,7 @@ public class ContractExecutor {
       returnDataBuffer = buffer;
     }
     // 5. REFUND THE REMAIN ENERGY
-    if (callResult != null) {
+    if (callResult != null && isNotEmpty(programCode)) {
       BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(callResult.getEnergyUsed()));
       if (isPositive(refundEnergy)) {
         refundEnergy(refundEnergy.longValueExact(), "remaining energy from the internal call");
