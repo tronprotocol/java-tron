@@ -1,56 +1,4 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
-    }
-    dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
-    }
-}
-
-group 'tronprotocol'
-version '1.0.0'
-
-apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
-//apply plugin: 'application'
-apply plugin: 'maven-publish'
-
-jar.enabled = true
-//shadowJar.enabled = true
-
-sourceCompatibility = 1.8
-[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourceJar
-        }
-    }
-    repositories {
-        mavenLocal()
-    }
-}
-
-task sourceJar(type: Jar, dependsOn: classes) {
-    classifier 'sources'
-    from sourceSets.main.allSource
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven { url 'http://repo.spring.io/plugins-release' }
-    // maven { url 'https://maven.aliyun.com/nexus/content/repositories/central/' }
-    maven { url 'https://jitpack.io' }
-}
-def versions = [
-        checkstyle: '8.7',
-]
 
 dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
@@ -107,17 +55,6 @@ protobuf {
             }
         }
     }
-}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives jar
-    archives sourcesJar
-//    archives javadocJar
 }
 
 clean.doFirst {
