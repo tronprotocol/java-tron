@@ -19,7 +19,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
   @Override
   public void updateUsage(AccountCapsule accountCapsule) {
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = dbManager.getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
@@ -33,7 +33,7 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   public void updateTotalEnergyAverageUsage() {
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = dbManager.getHeadSlot();
     long blockEnergyUsage = dbManager.getDynamicPropertiesStore().getBlockEnergyUsage();
     long totalEnergyAverageUsage = dbManager.getDynamicPropertiesStore()
         .getTotalEnergyAverageUsage();
@@ -131,7 +131,7 @@ public class EnergyProcessor extends ResourceProcessor {
 
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
 
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = dbManager.getHeadSlot();
 
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();

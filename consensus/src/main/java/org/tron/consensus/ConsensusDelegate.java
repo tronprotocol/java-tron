@@ -92,24 +92,12 @@ public class ConsensusDelegate {
     dynamicPropertiesStore.saveStateFlag(flag);
   }
 
-  public int saveStateFlag() {
-    return dynamicPropertiesStore.getStateFlag();
-  }
-
-  public long getMaintenanceTimeInterval() {
-    return dynamicPropertiesStore.getMaintenanceTimeInterval();
-  }
-
-  public void saveMaintenanceTimeInterval(long time) {
-    dynamicPropertiesStore.saveMaintenanceTimeInterval(time);
+  public void updateNextMaintenanceTimes(long time) {
+    dynamicPropertiesStore.updateNextMaintenanceTime(time);
   }
 
   public long getNextMaintenanceTime() {
     return dynamicPropertiesStore.getNextMaintenanceTime();
-  }
-
-  public void saveNextMaintenanceTime(long time) {
-    dynamicPropertiesStore.saveNextMaintenanceTime(time);
   }
 
   public long getWitnessPayPerBlock() {
@@ -138,10 +126,6 @@ public class ConsensusDelegate {
 
   public void saveBlockFilledSlotsIndex(int index) {
     dynamicPropertiesStore.saveBlockFilledSlotsIndex(index);
-  }
-
-  public int getBlockFilledSlotsNumber() {
-    return dynamicPropertiesStore.getBlockFilledSlotsNumber();
   }
 
   public Sha256Hash getLatestBlockHeaderHash() {

@@ -9,6 +9,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -23,6 +24,7 @@ public class AccountVoteWitnessTest {
   private static TronApplicationContext context;
 
   private static Manager dbManager;
+  private static MaintenanceManager maintenanceManager;
   private static String dbPath = "output_witness_test";
 
   static {
@@ -36,6 +38,7 @@ public class AccountVoteWitnessTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    maintenanceManager = context.getBean(MaintenanceManager.class);
     // Args.setParam(new String[]{}, Constant.TEST_CONF);
     //  dbManager = new Manager();
     //  dbManager.init();
@@ -84,7 +87,7 @@ public class AccountVoteWitnessTest {
             dbManager
                 .getWitnessStore()
                 .put(witnessCapsule.getAddress().toByteArray(), witnessCapsule));
-    dbManager.getWitnessController().updateWitness();
+    maintenanceManager.doMaintenance();
     this.printWitness(ByteString.copyFrom("00000000001".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000002".getBytes()));
     this.printWitness(ByteString.copyFrom("00000000003".getBytes()));

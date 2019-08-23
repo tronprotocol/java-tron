@@ -8,6 +8,8 @@ public interface ConsensusInterface {
 
   void stop();
 
+  void receiveBlock(Block block);
+
   boolean validBlock(Block block);
 
   boolean applyBlock(Block block);

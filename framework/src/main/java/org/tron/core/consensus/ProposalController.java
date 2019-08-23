@@ -1,4 +1,4 @@
-package org.tron.core.witness;
+package org.tron.core.consensus;
 
 import com.google.protobuf.ByteString;
 import java.util.List;

@@ -2,7 +2,6 @@
 package org.tron.consensus.base;
 
 import org.tron.protos.Protocol.Block;
-import org.tron.protos.Protocol.BlockHeader;
 
 public interface BlockHandle {
 
@@ -10,7 +9,7 @@ public interface BlockHandle {
 
   Object getLock();
 
-  Block produce();
+  Block produce(long timeout);
 
   void complete(Block block);
 

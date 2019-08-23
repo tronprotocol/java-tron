@@ -5,6 +5,7 @@ import static org.tron.consensus.base.Constant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.consensus.base.Constant.SINGLE_REPEAT;
 
 import com.google.protobuf.ByteString;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class DposSlot {
   @Autowired
   private ConsensusDelegate consensusDelegate;
 
-  @Autowired
+  @Setter
   private DposService dposService;
 
   public long getAbSlot(long time) {

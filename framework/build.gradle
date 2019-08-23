@@ -188,6 +188,7 @@ dependencies {
     compile project(":chainbase")
     compile project(":protocol")
     compile project(":actuator")
+    compile project(":consensus")
 }
 
 check.dependsOn 'lint'

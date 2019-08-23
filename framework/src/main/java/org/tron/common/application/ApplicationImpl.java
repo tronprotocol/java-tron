@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.core.config.args.Args;
+import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
@@ -21,6 +22,9 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private Manager dbManager;
+
+  @Autowired
+  private ConsensusService consensusService;
 
   private boolean isProducer;
 
@@ -51,12 +55,14 @@ public class ApplicationImpl implements Application {
    */
   public void startup() {
     tronNetService.start();
+    consensusService.start();
   }
 
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
-    tronNetService.close();
+    tronNetService.stop();
+    consensusService.stop();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();

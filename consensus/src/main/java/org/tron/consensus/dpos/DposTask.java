@@ -1,9 +1,9 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -15,9 +15,7 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
-import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
-import org.tron.core.capsule.AccountCapsule;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 
@@ -43,10 +41,11 @@ public class DposTask {
 
   public void init() {
 
+    if (!dposService.isEnable() || StringUtils.isEmpty(dposService.getMiners())) {
+      return;
+    }
+
     Runnable runnable = () -> {
-      if (!dposService.isEnable() || StringUtils.isEmpty(dposService.getMiners())) {
-        return;
-      }
       while (isRunning) {
         try {
           if (dposService.isNeedSyncCheck()) {
@@ -73,7 +72,9 @@ public class DposTask {
 
   public void stop() {
     isRunning = false;
-    produceThread.interrupt();
+    if (produceThread != null) {
+      produceThread.interrupt();
+    }
     logger.info("DPoS service stopped.");
   }
 
@@ -91,18 +92,20 @@ public class DposTask {
         return State.NOT_TIME_YET;
       }
 
-      final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
-      state = stateManager.getState(scheduledWitness);
+      ByteString pWitness = dposSlot.getScheduledWitness(slot);
+      state = stateManager.getState(pWitness);
       if (!State.OK.equals(state)) {
         return state;
       }
 
-      Block block = dposService.getBlockHandle().produce();
+      long pTime = dposSlot.getTime(slot);
+      long timeout = pTime + BLOCK_PRODUCED_INTERVAL / 2 * BLOCK_PRODUCE_TIMEOUT_PERCENT / 100;
+      Block block = dposService.getBlockHandle().produce(timeout);
       if (block == null) {
         return State.PRODUCE_BLOCK_FAILED;
       }
 
-      Block sBlock = getSignedBlock(block, scheduledWitness, slot);
+      Block sBlock = getSignedBlock(block, pWitness, pTime);
 
       stateManager.setCurrentBlock(sBlock);
 
@@ -120,11 +123,11 @@ public class DposTask {
     return State.OK;
   }
 
-  public Block getSignedBlock(Block block, ByteString witness, long slot) {
+  public Block getSignedBlock(Block block, ByteString witness, long time) {
     BlockHeader.raw raw = block.getBlockHeader().getRawData().toBuilder()
         .setParentHash(ByteString.copyFrom(consensusDelegate.getLatestBlockHeaderHash().getBytes()))
         .setNumber(consensusDelegate.getLatestBlockHeaderNumber() + 1)
-        .setTimestamp(dposSlot.getTime(slot))
+        .setTimestamp(time)
         .setWitnessAddress(witness)
         .build();
 

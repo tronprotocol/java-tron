@@ -23,7 +23,12 @@ public class Consensus {
   }
 
   public void stop() {
+    consensusInterface = dposService;
     consensusInterface.stop();
+  }
+
+  public void receiveBlock(Block block){
+    consensusInterface.receiveBlock(block);
   }
 
   public boolean validBlock(Block block){

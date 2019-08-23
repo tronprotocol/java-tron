@@ -9,7 +9,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,6 +78,7 @@ public class DposService implements ConsensusInterface {
     param.getMiners().forEach(miner -> miners.put(miner.getWitnessAddress(), miner));
 
     dposTask.setDposService(this);
+    dposSlot.setDposService(this);
     stateManager.setDposService(this);
     maintenanceManager.setDposService(this);
 
@@ -97,6 +97,11 @@ public class DposService implements ConsensusInterface {
   @Override
   public void stop() {
     dposTask.stop();
+  }
+
+  @Override
+  public void receiveBlock(Block block){
+    stateManager.receiveBlock(block);
   }
 
   @Override
@@ -122,12 +127,12 @@ public class DposService implements ConsensusInterface {
           ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp), slot);
       return false;
     }
+
     return true;
   }
 
   @Override
   public boolean applyBlock(Block block) {
-    stateManager.applyBlock(block);
     statisticManager.applyBlock(block);
     incentiveManager.applyBlock(block);
     maintenanceManager.applyBlock(block);
@@ -146,7 +151,7 @@ public class DposService implements ConsensusInterface {
     long newSolidNum = numbers.get(position);
     long oldSolidNum = consensusDelegate.getLatestSolidifiedBlockNum();
     if (newSolidNum < oldSolidNum) {
-      logger.warn("Update solid block number failed, new:{} < old:{}", newSolidNum, newSolidNum);
+      logger.warn("Update solid block number failed, new:{} < old:{}", newSolidNum, oldSolidNum);
       return;
     }
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);

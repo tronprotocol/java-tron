@@ -6,7 +6,6 @@ import static org.tron.consensus.base.Constant.MAX_ACTIVE_WITNESS_NUM;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +13,6 @@ import java.util.Map.Entry;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
@@ -44,29 +42,16 @@ public class MaintenanceManager {
     long blockNum = block.getBlockHeader().getRawData().getNumber();
     long blockTime = block.getBlockHeader().getRawData().getTimestamp();
     boolean flag = consensusDelegate.getNextMaintenanceTime() <= blockTime;
-    if (flag && blockNum != 1) {
-      doMaintenance();
+    if (flag) {
+      if (blockNum != 1) {
+        doMaintenance();
+      }
+      consensusDelegate.updateNextMaintenanceTimes(blockTime);
     }
-    updateNextMaintenanceTime(block);
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
   }
 
-  private void updateNextMaintenanceTime(Block block) {
-    long blockNum = block.getBlockHeader().getRawData().getNumber();
-    long blockTime = block.getBlockHeader().getRawData().getTimestamp();
-    long maintenanceTimeInterval = consensusDelegate.getMaintenanceTimeInterval();
-    long currentMaintenanceTime = consensusDelegate.getNextMaintenanceTime();
-    long round = (blockTime - currentMaintenanceTime) / maintenanceTimeInterval;
-    long nextMaintenanceTime = currentMaintenanceTime + (round + 1) * maintenanceTimeInterval;
-    consensusDelegate.saveNextMaintenanceTime(nextMaintenanceTime);
-    logger.info("Update next maintenance time, blockNum:{}, blockTime:{}, currentMTime:{}, nextMTime:{}",
-        blockNum,
-        new DateTime(currentMaintenanceTime),
-        new DateTime(blockTime),
-        new DateTime(nextMaintenanceTime));
-  }
-
-  private void doMaintenance() {
+  public void doMaintenance() {
     WitnessStore witnessStore = consensusDelegate.getWitnessStore();
     VotesStore votesStore = consensusDelegate.getVotesStore();
     AccountStore accountStore = consensusDelegate.getAccountStore();
@@ -142,7 +127,6 @@ public class MaintenanceManager {
       Entry<byte[], VotesCapsule> next = dbIterator.next();
       VotesCapsule votes = next.getValue();
       votes.getOldVotes().forEach(vote -> {
-        //TODO validate witness //active_witness
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
         if (countWitness.containsKey(voteAddress)) {
@@ -152,7 +136,6 @@ public class MaintenanceManager {
         }
       });
       votes.getNewVotes().forEach(vote -> {
-        //TODO validate witness //active_witness
         ByteString voteAddress = vote.getVoteAddress();
         long voteCount = vote.getVoteCount();
         if (countWitness.containsKey(voteAddress)) {
@@ -164,7 +147,7 @@ public class MaintenanceManager {
       sizeCount++;
       votesStore.delete(next.getKey());
     }
-    logger.info("there is {} new votes in this epoch", sizeCount);
+    logger.info("There is {} new votes in this epoch", sizeCount);
     return countWitness;
   }
 

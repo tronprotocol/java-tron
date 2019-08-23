@@ -226,7 +226,7 @@ public class TransactionTrace {
         caller,
         percent, originEnergyLimit,
         energyProcessor,
-        dbManager.getWitnessController().getHeadSlot());
+        dbManager.getHeadSlot());
   }
 
   public boolean checkNeedRetry() {

@@ -50,7 +50,7 @@ public class StateManager {
       return status;
     }
 
-    if (dupWitnessCheck()) {
+    if (isDupWitness()) {
       return State.DUP_WITNESS;
     }
 
@@ -79,7 +79,7 @@ public class StateManager {
     return State.OK;
   }
 
-  public void applyBlock(Block block) {
+  public void receiveBlock(Block block) {
     if (block.equals(currentBlock)) {
       return;
     }
@@ -109,7 +109,7 @@ public class StateManager {
     logger.warn("Dup block produced: {}", block);
   }
 
-  private boolean dupWitnessCheck() {
+  private boolean isDupWitness() {
     if (dupBlockCount.get() == 0) {
       return false;
     }

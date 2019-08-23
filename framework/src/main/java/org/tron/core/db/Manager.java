@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
@@ -43,7 +42,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -64,6 +62,7 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.consensus.Consensus;
 import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -107,8 +106,6 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.message.BlockMessage;
-import org.tron.core.services.WitnessService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
@@ -127,8 +124,7 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.witness.ProposalController;
-import org.tron.core.witness.WitnessController;
+import org.tron.core.consensus.ProposalController;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -230,14 +226,6 @@ public class Manager {
 
   @Getter
   @Setter
-  private WitnessService witnessService;
-
-  @Getter
-  @Setter
-  private WitnessController witnessController;
-
-  @Getter
-  @Setter
   private ProposalController proposalController;
 
   @Getter
@@ -278,6 +266,9 @@ public class Manager {
   @Autowired
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
+
+  @Autowired
+  private Consensus consensus;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -367,18 +358,6 @@ public class Manager {
 
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
-  // for test only
-  public List<ByteString> getWitnesses() {
-    return witnessController.getActiveWitnesses();
-  }
-
-  // for test only
-  public void addWitness(final ByteString address) {
-    List<ByteString> witnessAddresses = witnessController.getActiveWitnesses();
-    witnessAddresses.add(address);
-    witnessController.setActiveWitnesses(witnessAddresses);
-  }
-
   public BlockCapsule getHead() throws HeaderNotFound {
     List<BlockCapsule> blocks = getBlockStore().getBlockByLatestNum(1);
     if (CollectionUtils.isNotEmpty(blocks)) {
@@ -420,10 +399,6 @@ public class Manager {
         while (isRunRepushThread) {
           TransactionCapsule tx = null;
           try {
-            if (isGeneratingBlock()) {
-              TimeUnit.MILLISECONDS.sleep(10L);
-              continue;
-            }
             tx = getRepushTransactions().peek();
             if (tx != null) {
               this.rePush(tx);
@@ -476,10 +451,9 @@ public class Manager {
     trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
-    this.setWitnessController(WitnessController.createInstance(this));
     this.setProposalController(ProposalController.createInstance(this));
     this.setMerkleContainer(merkleContainer.createInstance(
-        this.getMerkleTreeStore(),this.getMerkleTreeIndexStore()));
+        this.getMerkleTreeStore(), this.getMerkleTreeIndexStore()));
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.repushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
@@ -525,7 +499,6 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
-
   }
 
   public BlockId getGenesisBlockId() {
@@ -565,7 +538,6 @@ public class Manager {
             this.genesisBlock.getTimeStamp());
         this.initAccount();
         this.initWitness();
-        this.witnessController.initWits();
         this.khaosDb.start(genesisBlock);
         this.updateRecentBlock(genesisBlock);
       }
@@ -812,7 +784,8 @@ public class Manager {
         try {
           if (accountCapsule != null) {
             Commons.adjustBalance(this.getAccountStore(), accountCapsule, -fee);
-            Commons.adjustBalance(this.getAccountStore(), this.getAccountStore().getBlackhole().createDbKey(), +fee);
+            Commons.adjustBalance(this.getAccountStore(),
+                this.getAccountStore().getBlackhole().createDbKey(), +fee);
           }
         } catch (BalanceInsufficientException e) {
           throw new AccountResourceInsufficientException(
@@ -1018,10 +991,6 @@ public class Manager {
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
-      if (witnessService != null) {
-        witnessService.checkDupWitness(block);
-      }
-
       BlockCapsule newBlock = this.khaosDb.push(block);
 
       // DB don't need lower block
@@ -1119,28 +1088,6 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
-    long slot = 1;
-    if (block.getNum() != 1) {
-      slot = witnessController.getSlotAtTime(block.getTimeStamp());
-    }
-    for (int i = 1; i < slot; ++i) {
-      if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
-        WitnessCapsule w =
-            this.witnessStore
-                .getUnchecked(
-                    StringUtil.createDbKey(witnessController.getScheduledWitness(i)));
-        w.setTotalMissed(w.getTotalMissed() + 1);
-        this.witnessStore.put(w.createDbKey(), w);
-        logger.info(
-            "{} miss a block. totalMissed = {}", w.createReadableString(), w.getTotalMissed());
-      }
-      this.dynamicPropertiesStore.applyBlock(false);
-    }
-    this.dynamicPropertiesStore.applyBlock(true);
-
-    if (slot <= 0) {
-      logger.warn("missedBlocks [" + slot + "] is illegal");
-    }
 
     logger.info("update head, num = {}", block.getNum());
     this.dynamicPropertiesStore.saveLatestBlockHeaderHash(block.getBlockId().getByteString());
@@ -1266,7 +1213,6 @@ public class Manager {
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
 
-
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
     trace.exec();
@@ -1326,52 +1272,18 @@ public class Manager {
   /**
    * Generate a block.
    */
-  public synchronized BlockCapsule generateBlock(
-      final WitnessCapsule witnessCapsule, final long when, final byte[] privateKey,
-      Boolean lastHeadBlockIsMaintenanceBefore, Boolean needCheckWitnessPermission)
-      throws ValidateSignatureException, ContractValidateException, ContractExeException,
-      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException {
-
-    //check that the first block after the maintenance period has just been processed
-    // if (lastHeadBlockIsMaintenanceBefore != lastHeadBlockIsMaintenance()) {
-    if (!witnessController.validateWitnessSchedule(witnessCapsule.getAddress(), when)) {
-      logger.info("It's not my turn, "
-          + "and the first block after the maintenance period has just been processed.");
-
-      logger
-          .info("when:{},lastHeadBlockIsMaintenanceBefore:{},lastHeadBlockIsMaintenanceAfter:{}",
-              when, lastHeadBlockIsMaintenanceBefore, lastHeadBlockIsMaintenance());
-
-      return null;
-    }
-    // }
-
-    final long timestamp = this.dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    final long number = this.dynamicPropertiesStore.getLatestBlockHeaderNumber();
-    final Sha256Hash preHash = this.dynamicPropertiesStore.getLatestBlockHeaderHash();
-
-    // judge create block time
-    if (when < timestamp) {
-      throw new IllegalArgumentException("generate block timestamp is invalid.");
-    }
+  public synchronized BlockCapsule generateBlock(long timeout) {
 
     long postponedTrxCount = 0;
 
-    final BlockCapsule blockCapsule =
-        new BlockCapsule(number + 1, preHash, when, witnessCapsule.getAddress());
+    BlockCapsule blockCapsule = new BlockCapsule();
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
-    //
+
     accountStateCallBack.preExecute(blockCapsule);
 
-    if (needCheckWitnessPermission && !witnessService.
-        validateWitnessPermission(witnessCapsule.getAddress())) {
-      logger.warn("Witness permission is wrong");
-      return null;
-    }
-    TransactionRetCapsule transationRetCapsule =
-        new TransactionRetCapsule(blockCapsule);
+    TransactionRetCapsule transationRetCapsule = new TransactionRetCapsule(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldeTransCounts = new AtomicInteger(0);
@@ -1386,11 +1298,8 @@ public class Manager {
         trx = repushTransactions.poll();
       }
 
-      if (DateTime.now().getMillis() - when
-          > BLOCK_PRODUCED_INTERVAL * 0.5
-          * Args.getInstance().getBlockProducedTimeOut()
-          / 100) {
-        logger.warn("Processing transaction time exceeds the 50% producing time。");
+      if (System.currentTimeMillis() > timeout) {
+        logger.warn("Processing transaction time exceeds the producing time。");
         break;
       }
 
@@ -1425,98 +1334,29 @@ public class Manager {
         TransactionInfo result = processTransaction(trx, blockCapsule);
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
-        // push into block
         blockCapsule.addTransaction(trx);
-
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
         if (fromPending) {
           iterator.remove();
         }
-      } catch (ContractExeException e) {
-        logger.info("contract not processed during execute");
-        logger.debug(e.getMessage(), e);
-      } catch (ContractValidateException e) {
-        logger.info("contract not processed during validate");
-        logger.debug(e.getMessage(), e);
-      } catch (TaposException e) {
-        logger.info("contract not processed during TaposException");
-        logger.debug(e.getMessage(), e);
-      } catch (DupTransactionException e) {
-        logger.info("contract not processed during DupTransactionException");
-        logger.debug(e.getMessage(), e);
-      } catch (TooBigTransactionException e) {
-        logger.info("contract not processed during TooBigTransactionException");
-        logger.debug(e.getMessage(), e);
-      } catch (TooBigTransactionResultException e) {
-        logger.info("contract not processed during TooBigTransactionResultException");
-        logger.debug(e.getMessage(), e);
-      } catch (TransactionExpirationException e) {
-        logger.info("contract not processed during TransactionExpirationException");
-        logger.debug(e.getMessage(), e);
-      } catch (AccountResourceInsufficientException e) {
-        logger.info("contract not processed during AccountResourceInsufficientException");
-        logger.debug(e.getMessage(), e);
-      } catch (ValidateSignatureException e) {
-        logger.info("contract not processed during ValidateSignatureException");
-        logger.debug(e.getMessage(), e);
-      } catch (ReceiptCheckErrException e) {
-        logger.info("OutOfSlotTime exception: {}", e.getMessage());
-        logger.debug(e.getMessage(), e);
-      } catch (VMIllegalException e) {
-        logger.warn(e.getMessage(), e);
+      } catch (Exception e) {
+        logger.error("Process trx failed when generating block: {}", e.getMessage());
       }
-    } // end of while
+    }
 
     accountStateCallBack.executeGenerateFinish();
 
     session.reset();
-    if (postponedTrxCount > 0) {
-      logger.info("{} transactions over the block size limit", postponedTrxCount);
-    }
 
-    logger.info(
-        "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
-            + "],repushTrxCount[" + repushTransactions.size() + "]");
+    logger.info("Generate block success, pendingCount: {}, repushCount: {}, postponedCount: {}",
+        pendingTransactions.size(), repushTransactions.size(), postponedTrxCount);
 
     blockCapsule.setMerkleRoot();
-    blockCapsule.sign(privateKey);
-    blockCapsule.setResult(transationRetCapsule);
 
-    if (tronNetService != null) {
-      tronNetService.fastForward(new BlockMessage(blockCapsule));
-    }
+    return blockCapsule;
 
-    try {
-      this.pushBlock(blockCapsule);
-      return blockCapsule;
-    } catch (TaposException e) {
-      logger.info("contract not processed during TaposException");
-    } catch (TooBigTransactionException e) {
-      logger.info("contract not processed during TooBigTransactionException");
-    } catch (DupTransactionException e) {
-      logger.info("contract not processed during DupTransactionException");
-    } catch (TransactionExpirationException e) {
-      logger.info("contract not processed during TransactionExpirationException");
-    } catch (BadNumberBlockException e) {
-      logger.info("generate block using wrong number");
-    } catch (BadBlockException e) {
-      logger.info("block exception");
-    } catch (NonCommonBlockException e) {
-      logger.info("non common exception");
-    } catch (ReceiptCheckErrException e) {
-      logger.info("OutOfSlotTime exception: {}", e.getMessage());
-      logger.debug(e.getMessage(), e);
-    } catch (VMIllegalException e) {
-      logger.warn(e.getMessage(), e);
-    } catch (TooBigTransactionResultException e) {
-      logger.info("contract not processed during TooBigTransactionResultException");
-    } catch (ZksnarkException e) {
-      logger.info("zk error!", e.getMessage());
-    }
-
-    return null;
   }
 
   private void filterOwnerAddress(TransactionCapsule transactionCapsule, Set<String> result) {
@@ -1573,7 +1413,7 @@ public class Manager {
     // todo set revoking db max size.
 
     // checkWitness
-    if (!witnessController.validateWitnessSchedule(block)) {
+    if (!consensus.validBlock(block.getInstance())) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
     //reset BlockEnergyUsage
@@ -1611,25 +1451,25 @@ public class Manager {
     }
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transationRetCapsule);
-    boolean needMaint = needMaintenance(block.getTimeStamp());
-    if (needMaint) {
-      if (block.getNum() == 1) {
-        this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-      } else {
-        this.processMaintenance(block);
-      }
-    }
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       EnergyProcessor energyProcessor = new EnergyProcessor(this);
       energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
-    updateSignedWitness(block);
-    updateLatestSolidifiedBlock();
+
+    if (!consensus.applyBlock(block.getInstance())) {
+      throw new BadBlockException("consensus apply block failed");
+    }
+
+    if (dynamicPropertiesStore.getStateFlag() == 1) {
+      proposalController.processProposals();
+      forkController.reset();
+    }
+
     updateTransHashCache(block);
-    updateMaintenanceState(needMaint);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1642,40 +1482,6 @@ public class Manager {
     this.recentBlockStore.put(ByteArray.subArray(
         ByteArray.fromLong(block.getNum()), 6, 8),
         new BytesCapsule(ByteArray.subArray(block.getBlockId().getBytes(), 8, 16)));
-  }
-
-  /**
-   * update the latest solidified block.
-   */
-  public void updateLatestSolidifiedBlock() {
-    List<Long> numbers =
-        witnessController
-            .getActiveWitnesses()
-            .stream()
-            .map(address -> witnessController.getWitnesseByAddress(address)
-                .getLatestBlockNum())
-            .sorted()
-            .collect(Collectors.toList());
-
-    long size = witnessController.getActiveWitnesses().size();
-    int solidifiedPosition = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
-    if (solidifiedPosition < 0) {
-      logger.warn(
-          "updateLatestSolidifiedBlock error, solidifiedPosition:{},wits.size:{}",
-          solidifiedPosition,
-          size);
-      return;
-    }
-    long latestSolidifiedBlockNum = numbers.get(solidifiedPosition);
-    //if current value is less than the previous value，keep the previous value.
-    if (latestSolidifiedBlockNum < getDynamicPropertiesStore().getLatestSolidifiedBlockNum()) {
-      logger.warn("latestSolidifiedBlockNum = 0,LatestBlockNum:{}", numbers);
-      return;
-    }
-
-    getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(latestSolidifiedBlockNum);
-    this.latestSolidifiedBlockNumber = latestSolidifiedBlockNum;
-    logger.info("update solid block, num = {}", latestSolidifiedBlockNum);
   }
 
   public void updateFork(BlockCapsule block) {
@@ -1705,54 +1511,6 @@ public class Manager {
    */
   public boolean needMaintenance(long blockTime) {
     return this.dynamicPropertiesStore.getNextMaintenanceTime() <= blockTime;
-  }
-
-  /**
-   * Perform maintenance.
-   */
-  private void processMaintenance(BlockCapsule block) {
-    proposalController.processProposals();
-    witnessController.updateWitness();
-    this.dynamicPropertiesStore.updateNextMaintenanceTime(block.getTimeStamp());
-    forkController.reset();
-  }
-
-  /**
-   * @param block the block update signed witness. set witness who signed block the 1. the latest
-   * block num 2. pay the trx to witness. 3. the latest slot num.
-   */
-  public void updateSignedWitness(BlockCapsule block) {
-    // TODO: add verification
-    WitnessCapsule witnessCapsule =
-        witnessStore.getUnchecked(
-            block.getInstance().getBlockHeader().getRawData().getWitnessAddress()
-                .toByteArray());
-    witnessCapsule.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
-    witnessCapsule.setLatestBlockNum(block.getNum());
-    witnessCapsule.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
-
-    // Update memory witness status
-    WitnessCapsule wit = witnessController.getWitnesseByAddress(block.getWitnessAddress());
-    if (wit != null) {
-      wit.setTotalProduced(witnessCapsule.getTotalProduced() + 1);
-      wit.setLatestBlockNum(block.getNum());
-      wit.setLatestSlotNum(witnessController.getAbSlotAtTime(block.getTimeStamp()));
-    }
-
-    this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
-
-    try {
-      adjustAllowance(witnessCapsule.getAddress().toByteArray(),
-          getDynamicPropertiesStore().getWitnessPayPerBlock());
-    } catch (BalanceInsufficientException e) {
-      logger.warn(e.getMessage(), e);
-    }
-
-    logger.debug(
-        "updateSignedWitness. witness address:{}, blockNum:{}, totalProduced:{}",
-        witnessCapsule.createReadableString(),
-        block.getNum(),
-        witnessCapsule.getTotalProduced());
   }
 
   public void updateMaintenanceState(boolean needMaint) {
@@ -1857,13 +1615,6 @@ public class Manager {
   public boolean isTooManyPending() {
     return getPendingTransactions().size() + getRepushTransactions().size()
         > MAX_TRANSACTION_PENDING;
-  }
-
-  public boolean isGeneratingBlock() {
-    if (Args.getInstance().isWitness()) {
-      return witnessController.isGeneratingBlock();
-    }
-    return false;
   }
 
   private static class ValidateSignTask implements Callable<Boolean> {
@@ -2029,4 +1780,26 @@ public class Manager {
       }
     }
   }
+
+  public List<ByteString> getActiveWitnesses() {
+    return getWitnessScheduleStore().getActiveWitnesses();
+  }
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
+  // for test only
+  public List<ByteString> getWitnesses() {
+    return witnessScheduleStore.getActiveWitnesses();
+  }
+
+  // for test only
+  public void addWitness(final ByteString address) {
+    List<ByteString> witnessAddresses = witnessScheduleStore.getActiveWitnesses();
+    witnessAddresses.add(address);
+    witnessScheduleStore.saveActiveWitnesses(witnessAddresses);
+  }
+
 }

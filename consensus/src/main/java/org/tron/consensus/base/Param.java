@@ -38,6 +38,11 @@ public class Param {
     @Getter
     @Setter
     private ByteString witnessAddress;
-  }
 
+    public Miner(byte[] privateKey, ByteString privateKeyAddress, ByteString witnessAddress) {
+      this.privateKey = privateKey;
+      this.privateKeyAddress = privateKeyAddress;
+      this.witnessAddress = witnessAddress;
+    }
+  }
 }

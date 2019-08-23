@@ -31,7 +31,7 @@ public class StatisticManager {
     consensusDelegate.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     long slot = 1;
-    if (blockTime != 1) {
+    if (blockNum != 1) {
       slot = dposSlot.getSlot(blockTime);
     }
     for (int i = 1; i < slot; ++i) {
