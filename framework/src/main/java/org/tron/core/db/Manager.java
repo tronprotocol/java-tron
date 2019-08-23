@@ -81,6 +81,7 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
@@ -189,6 +190,8 @@ public class Manager {
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
+  private AccountStateStoreTrie accountStateStoreTrie;
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
@@ -1841,10 +1844,14 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
+    closeOneStore(accountStateStoreTrie);
     logger.info("******** end to close db ********");
   }
 
   public void closeOneStore(ITronChainBase database) {
+    if (Objects.isNull(database)) {
+      return;
+    }
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
