@@ -95,7 +95,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] CREATE_NEW_ACCOUNT_BANDWIDTH_RATE =
       "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
-      .getBytes();
+          .getBytes();
 
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
 
@@ -172,6 +172,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ACTIVE_DEFAULT_OPERATIONS = "ACTIVE_DEFAULT_OPERATIONS".getBytes();
   //Used only for account state root, once，value is {0,1} allow is 1
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
+
+  private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
+  private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -1303,7 +1306,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-  public void addSystemContractAndSetPermission(int id){
+  public void addSystemContractAndSetPermission(int id) {
     byte[] availableContractType = getAvailableContractType();
     availableContractType[id / 8] |= (1 << id % 8);
     saveAvailableContractType(availableContractType);
@@ -1315,12 +1318,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
 
   public void updateDynamicStoreByConfig() {
-    if(Args.getInstance().getAllowTvmConstantinople() != 0) {
+    if (Args.getInstance().getAllowTvmConstantinople() != 0) {
       saveAllowTvmConstantinople(Args.getInstance().getAllowTvmConstantinople());
       addSystemContractAndSetPermission(48);
     }
   }
-
 
 
   public void saveActiveDefaultOperations(byte[] value) {
@@ -1663,4 +1665,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public boolean allowAccountStateRoot() {
     return getAllowAccountStateRoot() == 1;
   }
+
+  public long getCurrentCycleNumber() {
+    return Optional.ofNullable(getUnchecked(CURRENT_CYCLE_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveCurrentCycleNumber(long number) {
+    this.put(CURRENT_CYCLE_NUMBER, new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public void saveChangeDelegation(long number) {
+    this.put(CHANGE_DELEGATION,
+        new BytesCapsule(ByteArray.fromLong(number)));
+  }
+
+  public long getChangeDelegation() {
+    return Optional.ofNullable(getUnchecked(CHANGE_DELEGATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public boolean allowChangeDelegation() {
+    return getChangeDelegation() == 1;
+  }
+
 }

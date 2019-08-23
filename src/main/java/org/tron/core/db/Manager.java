@@ -75,9 +75,9 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
-import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
+import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -104,6 +104,7 @@ import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
+import org.tron.core.services.DelegationService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -118,6 +119,9 @@ import org.tron.protos.Protocol.TransactionInfo;
 public class Manager {
 
   // db store
+  @Getter
+  @Autowired
+  private DelegationStore delegationStore;
   @Autowired
   private AccountStore accountStore;
   @Autowired
@@ -236,6 +240,10 @@ public class Manager {
   @Autowired
   private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
+
+  @Getter
+  @Autowired
+  private DelegationService delegationService;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -442,6 +450,7 @@ public class Manager {
   @PostConstruct
   public void init() {
     Message.setManager(this);
+    delegationService.setManager(this);
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -1693,8 +1702,14 @@ public class Manager {
     this.getWitnessStore().put(witnessCapsule.getAddress().toByteArray(), witnessCapsule);
 
     try {
-      adjustAllowance(witnessCapsule.getAddress().toByteArray(),
-          getDynamicPropertiesStore().getWitnessPayPerBlock());
+      if (getDynamicPropertiesStore().allowChangeDelegation()) {
+        delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
+            getDynamicPropertiesStore().getWitnessPayPerBlock());
+        delegationService.payStandbyWitness();
+      } else {
+        adjustAllowance(witnessCapsule.getAddress().toByteArray(),
+            getDynamicPropertiesStore().getWitnessPayPerBlock());
+      }
     } catch (BalanceInsufficientException e) {
       logger.warn(e.getMessage(), e);
     }
