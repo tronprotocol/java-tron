@@ -8,6 +8,8 @@ public class VMConstant {
   public static final int CONTRACT_NAME_LENGTH = 32;
   public static final int MIN_TOKEN_ID = 1000_000;
 
+  public static final long ENERGY_CREATE_ACCOUNT = 2000;
+
   private VMConstant() {
   }
 }

@@ -694,6 +694,7 @@ public class Program {
 
     // only for trx, not for token
     long contextBalance = 0L;
+    long createAccountEnergy = 0L;
     if (byTestingSuite()) {
       // This keeps track of the calls created for a test
       getResult().addCallCreate(data, contextAddress,
@@ -701,6 +702,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
+      createAccountEnergy = createAccountAndReturnCost(deposit, contextAddress);
       if (!isTokenTransfer) {
         try {
           TransferActuator
@@ -814,7 +816,10 @@ public class Program {
         }
       }
     } else {
-      refundEnergy(msg.getEnergy().longValue(), "remaining esnergy from the internal call");
+      BigInteger refundEnergy = msg.getEnergy().value().subtract(toBI(createAccountEnergy));
+      if (isPositive(refundEnergy)) {
+        refundEnergy(refundEnergy.longValueExact(), "remaining esnergy from the internal call");
+      }
     }
   }
 
@@ -1414,10 +1419,14 @@ public class Program {
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
         msg.getInDataSize().intValue());
+    long createAccountEnergy = 0;
 
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
+
+      createAccountEnergy += createAccountAndReturnCost(deposit, contextAddress);
+
       if (!isTokenTransfer) {
         try {
           transfer(deposit, senderAddress, contextAddress,
@@ -1437,7 +1446,7 @@ public class Program {
       }
     }
 
-    long requiredEnergy = contract.getEnergyForData(data);
+    long requiredEnergy = contract.getEnergyForData(data) + createAccountEnergy;
     if (requiredEnergy > msg.getEnergy().longValue()) {
       // Not need to throw an exception, method caller needn't know that
       // regard as consumed the energy
@@ -1777,5 +1786,17 @@ public class Program {
 
   private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
+
+  private long createAccountAndReturnCost(Deposit deposit, byte[] contextAddress) {
+    if (VMConfig.allowTvmSolidity059()) {
+      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      AccountCapsule sender = deposit.getAccount(contextAddress);
+      if (sender == null) {
+        deposit.createAccountWithPermisson(contextAddress, AccountType.Normal);
+        return VMConstant.ENERGY_CREATE_ACCOUNT;
+      }
+    }
+    return 0;
   }
 }

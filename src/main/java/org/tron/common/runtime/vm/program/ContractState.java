@@ -55,6 +55,11 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
+  public AccountCapsule createAccountWithPermisson(byte[] address, AccountType type) {
+    return deposit.createAccountWithPermisson(address, type);
+  }
+
+  @Override
   public void setProgramListener(ProgramListener listener) {
     this.programListener = listener;
   }
