@@ -27,6 +27,8 @@ import org.tron.common.runtime.vm.MessageCall;
 import org.tron.common.runtime.vm.PrecompiledContracts;
 import org.tron.common.runtime.vm.program.InternalTransaction;
 import org.tron.common.runtime.vm.program.Memory;
+import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
+import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.Stack;
 import org.tron.common.runtime2.config.VMConfig;
@@ -872,6 +874,12 @@ public class ContractExecutor {
       logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
           Hex.toHexString(newAddress),
           createResult.getException());
+      //for this kindof exception terminate the all processs
+      if (createResult.getException() instanceof JVMStackOverFlowException
+          || createResult.getException() instanceof OutOfTimeException) {
+        throw createResult.getException();
+      }
+
       if (internalTx != null) {
         internalTx.reject();
       }
@@ -1103,6 +1111,11 @@ public class ContractExecutor {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
             Hex.toHexString(contextAddress),
             callResult.getException());
+        //for this kindof exception terminate the all processs
+        if (callResult.getException() instanceof JVMStackOverFlowException
+            || callResult.getException() instanceof OutOfTimeException) {
+          throw callResult.getException();
+        }
         if (internalTx != null) {
           internalTx.reject();
         }
@@ -1125,7 +1138,7 @@ public class ContractExecutor {
     }
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
-    if (callResult != null) {
+    if (callResult != null && isNotEmpty(programCode)) {
       byte[] buffer = callResult.getHReturn();
       int offset = msg.getOutDataOffs().intValue();
       int size = msg.getOutDataSize().intValue();
