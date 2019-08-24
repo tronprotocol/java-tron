@@ -1,8 +1,6 @@
 package org.tron.core.services.http;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -74,10 +72,14 @@ public class BatchBlockReadServlet extends HttpServlet {
 
                 jsonTx.put("request", Util.printTransactionToJSON(transaction, selfType));
 
-                JSONObject jsonTransactionInfo = JSONObject.parseObject(JsonFormat.printToString(transactionInfo,
-                        selfType));
+                if(transactionInfo!=null){
+                    JSONObject jsonTransactionInfo = JSONObject.parseObject(JsonFormat.printToString(transactionInfo,
+                            selfType));
 
-                jsonTx.put("response", jsonTransactionInfo);
+                    jsonTx.put("response", jsonTransactionInfo);
+                }else{
+                    jsonTx.put("response", new JSONObject());
+                }
 
                 transactions.add(jsonTx);
             }
