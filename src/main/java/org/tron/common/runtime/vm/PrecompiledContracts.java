@@ -61,12 +61,14 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
 import org.tron.common.utils.BIUtil;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
@@ -235,8 +237,7 @@ public class PrecompiledContracts {
 
 
     public long getCPUTimeLeftInUs() {
-      long vmNowInUs = System.nanoTime() / 1000;
-      long left = getVmShouldEndInUs() - vmNowInUs;
+      long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
       } else {
@@ -1360,7 +1361,6 @@ public class PrecompiledContracts {
     @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
-
       private Boolean res;
       private int nonce;
     }
@@ -1412,8 +1412,7 @@ public class PrecompiledContracts {
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
         }
-        boolean withNoTimeout = countDownLatch
-            .await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
           logger.info("MultiValidateSign timeout");
