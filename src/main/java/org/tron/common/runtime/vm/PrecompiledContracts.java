@@ -1361,7 +1361,6 @@ public class PrecompiledContracts {
     @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
-
       private Boolean res;
       private int nonce;
     }
@@ -1413,15 +1412,17 @@ public class PrecompiledContracts {
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
         }
-        countDownLatch.await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+
+        if (!withNoTimeout) {
+          logger.info("MultiValidateSign timeout");
+          throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+        }
 
         for (Future<ValidateSignResult> future : futures) {
-          if (future.get() == null) {
-            logger.info("MultiValidateSign timeout");
-            throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
-          }
-          if (future.get().getRes()) {
-            res[future.get().getNonce()] = 1;
+          ValidateSignResult result = future.get();
+          if (result.getRes()) {
+            res[result.getNonce()] = 1;
           }
         }
       }
