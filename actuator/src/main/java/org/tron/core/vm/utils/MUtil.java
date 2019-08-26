@@ -17,7 +17,7 @@ public class MUtil {
   }
 
   public static void transfer(Repository deposit, byte[] fromAddress, byte[] toAddress, long amount)
-          throws ContractValidateException {
+      throws ContractValidateException {
     if (0 == amount) {
       return;
     }
@@ -40,8 +40,8 @@ public class MUtil {
   }
 
   public static void transferToken(Repository deposit, byte[] fromAddress, byte[] toAddress,
-                                   String tokenId, long amount)
-          throws ContractValidateException {
+      String tokenId, long amount)
+      throws ContractValidateException {
     if (0 == amount) {
       return;
     }
@@ -78,4 +78,13 @@ public class MUtil {
   public static boolean isNotNullOrEmpty(String str) {
     return !isNullOrEmpty(str);
   }
+
+  public static byte[] allZero32TronAddress() {
+    byte[] newAddress = new byte[32];
+    byte[] temp = new byte[]{Commons.addressPreFixByte};
+    System.arraycopy(temp, 0, newAddress, 11, temp.length);
+
+    return newAddress;
+  }
+
 }
