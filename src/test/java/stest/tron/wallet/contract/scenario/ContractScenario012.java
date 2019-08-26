@@ -99,6 +99,7 @@ public class ContractScenario012 {
     String txid = PublicMethed
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit, 0L, 100,
             null, contract012Key, contract012Address, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     logger.info("infobyid : --- " + infoById);
     Assert.assertTrue(infoById.get().getResultValue() == 0);

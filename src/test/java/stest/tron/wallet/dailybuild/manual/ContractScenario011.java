@@ -168,6 +168,7 @@ public class ContractScenario011 {
         .deployContractWithConstantParame(contractName, abi, code, "constructor(address,uint256)",
             data, "", maxFeeLimit, 0L, consumeUserResourcePercent, null, deployKey, deployAddress,
             blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> info = PublicMethed
         .getTransactionInfoById(deplTxid, blockingStubFull);
     Assert.assertTrue(info.get().getResultValue() == 0);

@@ -1,8 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
-import org.tron.common.logsfilter.ContractEventParserJson;
+import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
@@ -19,6 +16,7 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
+import org.tron.protos.Protocol.SmartContract.ABI;
 
 public class ContractTriggerCapsule extends TriggerCapsule {
 
@@ -39,58 +37,39 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     ContractTrigger event;
     boolean isEvent = false;
     LogInfo logInfo = contractTrigger.getLogInfo();
-    JSONObject abi = null;
-    JSONArray entrys = null;
-    String abiString = contractTrigger.getAbiString();
-
-    Object abiObj = JSON.parse(abiString);
-    if (abiObj instanceof JSONObject) {
-      abi = (JSONObject) abiObj;
-      entrys = abi.getJSONArray("entrys");
-    }
-
+    ABI abi = contractTrigger.getAbi();
     List<DataWord> topics = logInfo.getTopics();
 
     String eventSignature = "";
     String eventSignatureFull = "fallback()";
     String entryName = "";
-    JSONObject entryObj = new JSONObject();
+    ABI.Entry eventEntry = null;
 
-    if (entrys != null && topics != null && !topics.isEmpty() && !ArrayUtils
-        .isEmpty(topics.get(0).getData()) && Args.getInstance().getStorage()
+    if (abi != null && abi.getEntrysCount() > 0 && topics != null && !topics.isEmpty()
+        && !ArrayUtils.isEmpty(topics.get(0).getData()) && Args.getInstance().getStorage()
         .isContractParseSwitch()) {
       String logHash = topics.get(0).toString();
-      for (int i = 0; i < entrys.size(); i++) {
-        JSONObject entry = entrys.getJSONObject(i);
 
-        String funcType = entry.getString("type");
-        Boolean anonymous = entry.getBoolean("anonymous");
-        if (funcType == null || !"event".equalsIgnoreCase(funcType)) {
+      for (ABI.Entry entry : abi.getEntrysList()) {
+        if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
           continue;
         }
 
-        if (anonymous != null && anonymous) {
-          continue;
-        }
-
-        String signature = entry.getString("name") + "(";
-        String signatureFull = entry.getString("name") + "(";
+        String signature = entry.getName() + "(";
+        String signatureFull = entry.getName() + "(";
         StringBuilder signBuilder = new StringBuilder();
         StringBuilder signFullBuilder = new StringBuilder();
-        JSONArray inputs = entry.getJSONArray("inputs");
-        if (inputs != null) {
-          for (int j = 0; j < inputs.size(); j++) {
-            if (signBuilder.length() > 0) {
-              signBuilder.append(",");
-              signFullBuilder.append(",");
-            }
-            String type = inputs.getJSONObject(j).getString("type");
-            String name = inputs.getJSONObject(j).getString("name");
-            signBuilder.append(type);
-            signFullBuilder.append(type);
-            if (StringUtils.isNotNullOrEmpty(name)) {
-              signFullBuilder.append(" ").append(name);
-            }
+        for (ABI.Entry.Param param : entry.getInputsList()) {
+          if (signBuilder.length() > 0) {
+            signBuilder.append(",");
+            signFullBuilder.append(",");
+          }
+          String type = param.getType();
+          String name = param.getName();
+          signBuilder.append(type);
+          signFullBuilder.append(type);
+          if (StringUtils.isNotNullOrEmpty(name)) {
+            signFullBuilder.append(" ").append(name);
           }
         }
         signature += signBuilder.toString() + ")";
@@ -99,8 +78,8 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         if (sha3.equals(logHash)) {
           eventSignature = signature;
           eventSignatureFull = signatureFull;
-          entryName = entry.getString("name");
-          entryObj = entry;
+          entryName = entry.getName();
+          eventEntry = entry;
           isEvent = true;
           break;
         }
@@ -120,9 +99,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       byte[] data = logInfo.getClonedData();
 
       ((ContractEventTrigger) event)
-          .setTopicMap(ContractEventParserJson.parseTopics(topicList, entryObj));
+          .setTopicMap(ContractEventParserAbi.parseTopics(topicList, eventEntry));
       ((ContractEventTrigger) event)
-          .setDataMap(ContractEventParserJson.parseEventData(data, topicList, entryObj));
+          .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
     } else {
       if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
         return;
@@ -135,8 +114,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());
 
     event.setRawData(rawData);
-    event.setAbiString(contractTrigger.getAbiString());
 
+    event.setLatestSolidifiedBlockNumber(contractTrigger.getLatestSolidifiedBlockNumber());
+    event.setRemoved(contractTrigger.isRemoved());
     event.setUniqueId(contractTrigger.getUniqueId());
     event.setTransactionId(contractTrigger.getTransactionId());
     event.setContractAddress(contractTrigger.getContractAddress());

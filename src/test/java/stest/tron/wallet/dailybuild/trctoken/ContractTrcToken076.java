@@ -80,7 +80,6 @@ public class ContractTrcToken076 {
         .sendcoin(grammarAddress, 100000000000L, testNetAccountAddress, testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken076.sol";
     String contractName = "Test";
@@ -92,24 +91,22 @@ public class ContractTrcToken076 {
         .deployContractAndGetTransactionInfoById(contractName, abi, code, "", maxFeeLimit,
             0L, 100, null, testKeyForGrammarAddress,
             grammarAddress, blockingStubFull);
+
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
 
     contractAddress = infoById.get().getContractAddress().toByteArray();
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.triggerContract(contractAddress,
         "test()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     txid = PublicMethed.triggerContract(contractAddress,
         "getResult1()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
@@ -124,7 +121,6 @@ public class ContractTrcToken076 {
     txid = PublicMethed.triggerContract(contractAddress,
         "getResult2()", "#", false,
         0, maxFeeLimit, grammarAddress, testKeyForGrammarAddress, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
