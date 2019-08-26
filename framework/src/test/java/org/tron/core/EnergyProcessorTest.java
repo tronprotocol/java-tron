@@ -18,8 +18,8 @@ import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 
 @Slf4j
 public class EnergyProcessorTest {
@@ -109,7 +109,8 @@ public class EnergyProcessorTest {
         .get(ByteArray.fromHexString(CONTRACT_PROVIDER_ADDRESS));
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
-    EnergyProcessor processor = new EnergyProcessor(dbManager);
+    EnergyProcessor processor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     long energy = 10000;
     long now = 1526647838000L;
 
@@ -132,7 +133,8 @@ public class EnergyProcessorTest {
 
   @Test
   public void updateAdaptiveTotalEnergyLimit() {
-    EnergyProcessor processor = new EnergyProcessor(dbManager);
+    EnergyProcessor processor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
 
     // open
     dbManager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(1);

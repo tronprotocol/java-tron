@@ -8,16 +8,17 @@ import lombok.ToString;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.config.ConfigLoader;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -216,6 +217,7 @@ contract Caller {
   @Test
   public void testTransferFailedAfterAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
 
@@ -252,6 +254,7 @@ contract Caller {
   @Test
   public void testTransferFailedBeforeAllowTvmConstantinopl()
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
+    ConfigLoader.disable = true;
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(0);
 

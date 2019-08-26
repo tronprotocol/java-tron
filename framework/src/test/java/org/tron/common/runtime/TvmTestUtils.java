@@ -21,11 +21,12 @@ import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
 import stest.tron.wallet.common.client.utils.AbiUtil;
@@ -171,8 +172,8 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
-    TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
-    // init
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(deposit.getDbManager()));    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -188,7 +189,8 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
 
-    TransactionTrace trace = new TransactionTrace(trxCap, dbmanager);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(dbmanager));
     // init
     trace.init(block);
     //exec
@@ -205,8 +207,8 @@ public class TvmTestUtils {
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
     deposit.commit();
-    TransactionTrace trace = new TransactionTrace(trxCap, deposit.getDbManager());
-    // init
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(deposit.getDbManager()));    // init
     trace.init(block);
     //exec
     trace.exec();
@@ -266,8 +268,8 @@ public class TvmTestUtils {
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
-    TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
-
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(dbManager));
     // init
     trace.init(blockCap);
     //exec

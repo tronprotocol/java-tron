@@ -9,10 +9,11 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.runtime.utils.MUtil;
-import org.tron.common.runtime.vm.PrecompiledContracts.MultiValidateSign;
 import org.tron.common.utils.Hash;
 import org.tron.core.Wallet;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.PrecompiledContracts.MultiValidateSign;
+import org.tron.core.vm.utils.MUtil;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
