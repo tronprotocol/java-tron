@@ -1490,7 +1490,7 @@ public class Program {
   }
 
   /**
-   * check TokenId TokenId  \ isTransferToken -------------------------------------------------------------------
+   * check TokenId TokenId  \ isTransferToken -----------------------------------------------------
    * false                                     true -----------------------------------------------
    * (-∞,Long.Min)        Not possible            error: msg.getTokenId().value().longValueExact()
    * ---------------------------------------------------------------------------------------------
@@ -1790,7 +1790,8 @@ public class Program {
 
   private long createAccountAndReturnCost(Deposit deposit, byte[] contextAddress) {
     if (VMConfig.allowTvmSolidity059()) {
-      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      //after solidity059 proposal
+      //allow contract transfer trc10 or trx to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
         deposit.createAccountWithPermisson(contextAddress, AccountType.Normal);
