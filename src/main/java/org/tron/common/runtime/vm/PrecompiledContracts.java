@@ -1358,11 +1358,18 @@ public class PrecompiledContracts {
       }
     }
 
-    @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
       private Boolean res;
       private int nonce;
+
+      public Boolean getRes() {
+        return res;
+      }
+
+      public int getNonce() {
+        return nonce;
+      }
     }
 
     @Override
