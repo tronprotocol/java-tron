@@ -983,6 +983,8 @@ public class Manager {
                   + block.getMerkleRoot());
           throw new BadBlockException("The merkle hash is not validated");
         }
+
+        consensus.receiveBlock(block.getInstance());
       }
 
       if (block.getTransactions().stream().filter(tran -> isShieldedTransaction(tran.getInstance()))

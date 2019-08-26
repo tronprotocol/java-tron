@@ -1,7 +1,6 @@
 package org.tron.consensus.dpos;
 
 import static org.tron.consensus.base.Constant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
 import com.google.protobuf.ByteString;
 import lombok.Setter;
@@ -99,7 +98,8 @@ public class DposTask {
       }
 
       long pTime = dposSlot.getTime(slot);
-      long timeout = pTime + BLOCK_PRODUCED_INTERVAL / 2 * BLOCK_PRODUCE_TIMEOUT_PERCENT / 100;
+      long timeout =
+          pTime + BLOCK_PRODUCED_INTERVAL / 2 * dposService.getBlockProduceTimeoutPercent() / 100;
       Block block = dposService.getBlockHandle().produce(timeout);
       if (block == null) {
         return State.PRODUCE_BLOCK_FAILED;

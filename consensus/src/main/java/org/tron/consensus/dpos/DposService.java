@@ -59,6 +59,8 @@ public class DposService implements ConsensusInterface {
   @Getter
   private int minParticipationRate;
   @Getter
+  private int blockProduceTimeoutPercent;
+  @Getter
   private long genesisBlockTime;
   @Getter
   private BlockHandle blockHandle;
@@ -72,6 +74,7 @@ public class DposService implements ConsensusInterface {
     this.enable = param.isEnable();
     this.needSyncCheck = param.isNeedSyncCheck();
     this.minParticipationRate = param.getMinParticipationRate();
+    this.blockProduceTimeoutPercent = param.getBlockProduceTimeoutPercent();
     this.blockHandle = param.getBlockHandle();
     this.genesisBlock = param.getGenesisBlock();
     this.genesisBlockTime = Long.parseLong(param.getGenesisBlock().getTimestamp());

@@ -50,6 +50,7 @@ public class ConsensusService {
     param.setEnable(args.isWitness());
     param.setGenesisBlock(args.getGenesisBlock());
     param.setMinParticipationRate(args.getMinParticipationRate());
+    param.setBlockProduceTimeoutPercent(Args.getInstance().getBlockProducedTimeOut());
     param.setNeedSyncCheck(args.isNeedSyncCheck());
     List<Miner> miners = new ArrayList<>();
     byte[] privateKey = ByteArray

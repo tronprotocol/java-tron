@@ -18,6 +18,9 @@ public class Param {
   private int minParticipationRate;
   @Getter
   @Setter
+  private int blockProduceTimeoutPercent;
+  @Getter
+  @Setter
   private GenesisBlock genesisBlock;
   @Getter
   @Setter
