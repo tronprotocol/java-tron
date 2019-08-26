@@ -126,7 +126,8 @@ public class multiValidateSignContract004 {
             "testConstructor()", "", false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert
-        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+        .assertTrue(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).equals(
+            "0101010101010101010101010101010101010101010101010101010000000000"));
   }
 
   @Test(enabled = true, description = "Incorrect address hex test multivalidatesign")

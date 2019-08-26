@@ -119,8 +119,10 @@ public class multiValidateSignContract001 {
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("Code = " + transactionExtention.getResult().getCode());
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
     Assert
-        .assertEquals(1, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+        .assertTrue(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).equals(
+            "0101010101010101010101010101010101010101010101010101010000000000"));
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
 
 
@@ -138,17 +140,20 @@ public class multiValidateSignContract001 {
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-    addresses.remove(0);
+    addresses.remove(26);
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
+    System.out.println(input);
     TransactionExtention transactionExtention = PublicMethed
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     logger.info("Code = " + transactionExtention.getResult().getCode());
     logger.info("Message = " + transactionExtention.getResult().getMessage().toStringUtf8());
+    System.out.println(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
     Assert
-        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+        .assertTrue(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
 
   }
@@ -172,7 +177,8 @@ public class multiValidateSignContract001 {
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
     Assert
-        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+        .assertTrue(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
 
   }
@@ -214,9 +220,11 @@ public class multiValidateSignContract001 {
         .triggerConstantContractForExtention(contractAddress,
             "testArray(bytes32,bytes[],address[])", input, false,
             0, 0, "0", 0, contractExcAddress, contractExcKey, blockingStubFull);
+//    System.out.println(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()));
     logger.info(transactionExtention.toString());
     Assert
-        .assertEquals(2, ByteArray.toInt(transactionExtention.getConstantResult(0).toByteArray()));
+        .assertTrue(ByteArray.toHexString(transactionExtention.getConstantResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
     Assert.assertEquals("SUCCESS", transactionExtention.getResult().getCode().toString());
   }
 

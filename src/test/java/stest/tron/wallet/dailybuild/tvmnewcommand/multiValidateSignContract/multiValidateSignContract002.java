@@ -119,8 +119,10 @@ public class multiValidateSignContract002 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
   }
 
   @Test(enabled = true, description = "Address is empty test multivalidatesign")
@@ -144,8 +146,9 @@ public class multiValidateSignContract002 {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-  }
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));  }
 
   @Test(enabled = true, description = "Signatures is empty test multivalidatesign")
   public void test03SignaturesIsEmpty() {
@@ -168,7 +171,9 @@ public class multiValidateSignContract002 {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
   }
 
   @Test(enabled = true, description = "Signatures and addresses are empty test multivalidatesign")
@@ -187,7 +192,9 @@ public class multiValidateSignContract002 {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
   }
 
   @Test(enabled = true, description = "All empty test multivalidatesign")
@@ -206,7 +213,9 @@ public class multiValidateSignContract002 {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(2, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0000000000000000000000000000000000000000000000000000000000000000"));
   }
 
   @Test(enabled = true, description = "Correct data test multivalidatesign")
@@ -244,8 +253,9 @@ public class multiValidateSignContract002 {
     Optional<Protocol.TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals(1, ByteArray.toInt(infoById.get().getContractResult(0).toByteArray()));
-    Long fee = infoById.get().getFee();
+    Assert
+        .assertTrue(ByteArray.toHexString(infoById.get().getContractResult(0).toByteArray()).equals(
+            "0101010101010101010101010101010101010101010101010101010000000000"));    Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
     Long netFee = infoById.get().getReceipt().getNetFee();

@@ -111,22 +111,21 @@ public class multiValidateSignContract003 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 150; i++) {
+    for (int i = 0; i < 500; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
       addresses.add(Wallet.encode58Check(key.getAddress()));
     }
-
     List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
     String input = parametersString(parameters);
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
+    System.out.println(infoById);
     Assert.assertEquals(1, infoById.get().getResultValue());
     Assert.assertTrue(infoById.get().getResMessage().toStringUtf8()
         .contains("CPU timeout for 'PUSH1' operation executing") || infoById.get().getResMessage()
