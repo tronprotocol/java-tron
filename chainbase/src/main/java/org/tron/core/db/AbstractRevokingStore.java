@@ -43,17 +43,11 @@ public abstract class AbstractRevokingStore implements RevokingDatabase {
 
   private Deque<RevokingState> stack = new LinkedList<>();
   private boolean disabled = true;
-  private boolean isDbSync = false;
   private int activeDialog = 0;
   private AtomicInteger maxSize = new AtomicInteger(DEFAULT_STACK_MAX_SIZE);
   private WriteOptionsWrapper writeOptionsWrapper = WriteOptionsWrapper.getInstance()
-      .sync(isDbSync);
+      .sync(DBConfig.isDbSync());
   private List<LevelDbDataSourceImpl> dbs = new ArrayList<>();
-
-  public void setDbSync(boolean isDbSync) {
-    this.isDbSync = isDbSync;
-  }
-
 
   @Override
   public ISession buildSession() {

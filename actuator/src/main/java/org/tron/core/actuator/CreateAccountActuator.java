@@ -98,7 +98,7 @@ public class CreateAccountActuator extends AbstractActuator {
 
     byte[] accountAddress = contract.getAccountAddress().toByteArray();
     if (!Commons.addressValid(accountAddress)) {
-      throw new ContractValidateException("Invalid accountStore address");
+      throw new ContractValidateException("Invalid account address");
     }
 
 //    if (contract.getType() == null) {

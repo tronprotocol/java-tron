@@ -73,6 +73,7 @@ public class WalletTestZenToken001 {
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
 
+    logger.info("enter this");
     if (PublicMethed.queryAccount(foundationZenTokenKey, blockingStubFull).getCreateTime() == 0) {
       PublicMethed.sendcoin(foundationZenTokenAddress, 20480000000000L, fromAddress,
           testKey002, blockingStubFull);

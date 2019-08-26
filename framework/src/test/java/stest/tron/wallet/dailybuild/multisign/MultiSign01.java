@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -86,8 +87,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name is owner")
   public void testOwnerName01() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
@@ -245,8 +246,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name is string \"123\"")
   public void testOwnerName03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -325,8 +326,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name is string \"\"")
   public void testOwnerName04() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2;
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
@@ -401,8 +402,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name is null")
   public void testOwnerName05() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -451,8 +452,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner without permission_name")
   public void testOwnerName06() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -527,8 +528,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name is numbers")
   public void testOwnerName07() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2;
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
@@ -604,8 +605,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name length is 32")
   public void testOwnerName08() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -683,8 +684,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name length is 32")
   public void testOwnerName09() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee * 2;
 
@@ -765,8 +766,8 @@ public class MultiSign01 {
   @Test(enabled = true, description = "Owner permission_name length is 33")
   public void testOwnerName10() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1000000, fromAddress,
         testKey002, blockingStubFull));
@@ -808,6 +809,11 @@ public class MultiSign01 {
 
     Assert.assertEquals(balanceBefore, balanceAfter);
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
 
   /**

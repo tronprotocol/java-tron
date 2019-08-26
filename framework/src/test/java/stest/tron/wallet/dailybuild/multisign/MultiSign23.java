@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -100,8 +101,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for multi sign normal transaction")
   public void test01MultiSignNormalTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -191,8 +192,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for multi sign permission transaction")
   public void test02MultiSignPermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee * 2 + multiSignFee;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -284,8 +285,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for single sign normal transaction")
   public void test03SingleSignNormalTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -362,8 +363,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for not complete multi sign normal transaction")
   public void test05MultiSignNotCompletePermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
@@ -450,8 +451,8 @@ public class MultiSign23 {
       + "with address not in permission list")
   public void test06SignFailedTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee;
 
@@ -529,8 +530,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for timeout normal transaction")
   public void test07TimeoutTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -611,8 +612,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for empty transaction")
   public void test08EmptyTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -650,8 +651,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign for error transaction")
   public void test09ErrorTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -726,8 +727,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign transaction with mix order")
   public void test10MultiSignNormalTransactionWithMixOrder() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee + multiSignFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -826,8 +827,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign transaction with same address")
   public void test11MultiSignNormalTransactionBySameAccount() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long needCoin = updateAccountPermissionFee;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000_000, fromAddress,
@@ -930,8 +931,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign transaction with null address")
   public void test12MultiSignNormalTransactionByNullKey() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee;
 
@@ -1046,8 +1047,8 @@ public class MultiSign23 {
   @Test(enabled = true, description = "Add sign transaction with String address")
   public void test13MultiSignNormalTransactionByStringKey() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
     long needCoin = updateAccountPermissionFee;
 
@@ -1156,6 +1157,11 @@ public class MultiSign23 {
     logger.info("balanceAfter: " + balanceAfter);
     Assert.assertEquals(balanceBefore - balanceAfter, needCoin);
 
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
 
   /**

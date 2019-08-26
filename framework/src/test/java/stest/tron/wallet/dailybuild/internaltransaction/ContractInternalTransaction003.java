@@ -551,6 +551,9 @@ public class ContractInternalTransaction003 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed
+        .freedResource(internalTxsAddress, testKeyForinternalTxsAddress, testNetAccountAddress,
+            blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

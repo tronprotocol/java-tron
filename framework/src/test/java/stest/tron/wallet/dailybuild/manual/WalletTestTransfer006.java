@@ -15,7 +15,6 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountPaginated;
-
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc;
@@ -165,6 +164,7 @@ public class WalletTestTransfer006 {
 
   @AfterClass
   public void shutdown() throws InterruptedException {
+    PublicMethed.freedResource(toAddress, testKey003, fromAddress, blockingStubFull);
     if (channelFull != null) {
       channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }

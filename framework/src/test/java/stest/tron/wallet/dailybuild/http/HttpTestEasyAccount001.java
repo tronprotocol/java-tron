@@ -289,6 +289,9 @@ public class HttpTestEasyAccount001 {
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, Commons.decodeFromBase58Check(generateAddress), fromAddress,
+        generatePriKey);
+    HttpMethed.freedResource(httpnode, assetAddress, fromAddress, assetKey);
     HttpMethed.disConnect();
   }
 

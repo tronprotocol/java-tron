@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -94,8 +95,8 @@ public class MultiSign20 {
   @Test(enabled = true, description = "Owner address is witness")
   public void testOwnerAddress01() {
     // address = witness
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
@@ -182,8 +183,8 @@ public class MultiSign20 {
   @Test(enabled = true, description = "Owner address is witness with exception condition")
   public void testOwnerAddress02() {
     // address = witness, without witness permission
-    String ownerKey = witnessKey001;
-    byte[] ownerAddress = new WalletClient(ownerKey).getAddress();
+    ownerKey = witnessKey001;
+    ownerAddress = new WalletClient(ownerKey).getAddress();
     PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress, testKey002, blockingStubFull);
     Assert.assertTrue(PublicMethed
         .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
@@ -263,8 +264,8 @@ public class MultiSign20 {
   @Test(enabled = true, description = "Owner address is normal address with exception condition")
   public void testOwnerAddress03() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -529,6 +530,10 @@ public class MultiSign20 {
     Assert.assertEquals(balanceBefore, balanceAfter);
   }
 
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
+  }
   /**
    * constructor.
    */

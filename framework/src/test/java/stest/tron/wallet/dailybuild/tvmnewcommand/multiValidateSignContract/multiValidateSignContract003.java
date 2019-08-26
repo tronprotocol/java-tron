@@ -111,7 +111,7 @@ public class multiValidateSignContract003 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 90; i++) {
+    for (int i = 0; i < 150; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -123,7 +123,7 @@ public class multiValidateSignContract003 {
     txid = PublicMethed.triggerContract(contractAddress,
         "testArray(bytes32,bytes[],address[])", input, false,
         0, maxFeeLimit, contractExcAddress, contractExcKey, blockingStubFull);
-    PublicMethed.getTransactionById(txid, blockingStubFull);
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);

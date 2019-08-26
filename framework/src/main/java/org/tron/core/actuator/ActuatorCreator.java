@@ -8,6 +8,7 @@ import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -59,6 +60,8 @@ public class ActuatorCreator  {
 
   private ProposalStore proposalStore;
 
+  private AccountIndexStore accountIndexStore;
+
   private ForkUtils forkUtils = new ForkUtils();
   ;
 
@@ -84,6 +87,7 @@ public class ActuatorCreator  {
       exchangeV2Store = storeFactory.getStore(ExchangeV2Store.class);
       proposalStore = storeFactory.getStore(ProposalStore.class);
       merkleContainer = storeFactory.getStore(MerkleContainer.class);
+      accountIndexStore = storeFactory.getStore(AccountIndexStore.class);
       forkUtils.setDynamicPropertiesStore(dynamicPropertiesStore);
     } catch (TypeMismatchNamingException e) {
       logger.error("ActuatorCreator error", e);
@@ -113,7 +117,7 @@ public class ActuatorCreator  {
     switch (contract.getType()) {
       case AccountUpdateContract:
         return new UpdateAccountActuator(contract.getParameter(), accountStore,
-            accountIdIndexStore, dynamicPropertiesStore);
+            accountIndexStore, dynamicPropertiesStore);
       case TransferContract:
         return new TransferActuator(contract.getParameter(), accountStore,
             assetIssueStore, dynamicPropertiesStore);

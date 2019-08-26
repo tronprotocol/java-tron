@@ -80,6 +80,7 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
@@ -110,6 +111,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.WitnessService;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -191,6 +193,8 @@ public class Manager {
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
+  private AccountStateStoreTrie accountStateStoreTrie;
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
@@ -1845,10 +1849,14 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
+    closeOneStore(accountStateStoreTrie);
     logger.info("******** end to close db ********");
   }
 
   public void closeOneStore(ITronChainBase database) {
+    if (Objects.isNull(database)) {
+      return;
+    }
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
@@ -2038,6 +2046,7 @@ public class Manager {
   private void prepareStroeFactory() {
     StoreFactory.getInstance().setAccountStore(accountStore)
         .setAccountIdIndexStore(accountIdIndexStore)
+        .setAccountIndexStore(accountIndexStore)
         .setDynamicPropertiesStore(dynamicPropertiesStore)
         .setAssetIssueStore(assetIssueStore)
         .setContractStore(contractStore)

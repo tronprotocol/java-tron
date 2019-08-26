@@ -10,7 +10,7 @@ public class Parameter {
     public static final int MAX_VOTE_NUMBER = 30;
     public static final long WINDOW_SIZE_MS = 24 * 3600 * 1000L;
     public static final long PRECISION = 1_000_000;
-
+    public static final int MAX_ACTIVE_WITNESS_NUM = 27;
   }
   public enum ChainParameters {
     MAINTENANCE_TIME_INTERVAL, //ms  ,0

@@ -56,6 +56,11 @@ public class StoreFactory {
         return this;
     }
 
+    public StoreFactory setAccountIndexStore(AccountIndexStore accountIndexStore) {
+        add(accountIndexStore);
+        return this;
+    }
+
     public StoreFactory setDynamicPropertiesStore(DynamicPropertiesStore dynamicPropertiesStore) {
         add(dynamicPropertiesStore);
         return this;
