@@ -61,7 +61,7 @@ public class FastForward {
       } catch (Throwable t) {
         logger.info("Execute failed.", t);
       }
-    }, 0, 1, TimeUnit.MINUTES);
+    }, 30, 100, TimeUnit.SECONDS);
   }
 
   private void connect() {

@@ -115,7 +115,7 @@ public class DposTask {
       logger.info("Produce block successfully, num:{}, time:{}, witness:{}, hash:{} parentHash:{}",
           raw.getNumber(),
           new DateTime(raw.getTimestamp()),
-          raw.getWitnessAddress(),
+          ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
           DposService.getBlockHash(sBlock),
           ByteArray.toHexString(raw.getParentHash().toByteArray()));
     }

@@ -46,8 +46,10 @@ public class BlockHandleImpl implements BlockHandle{
     try {
       BlockCapsule blockCapsule = new BlockCapsule(block);
       blockCapsule.generatedByMyself = true;
-      tronNetService.fastForward(new BlockMessage(blockCapsule));
+      BlockMessage blockMessage = new BlockMessage(blockCapsule);
+      tronNetService.fastForward(blockMessage);
       manager.pushBlock(blockCapsule);
+      tronNetService.broadcast(blockMessage);
     }catch (Exception e) {
       logger.error("Push block failed.", e);
     }
