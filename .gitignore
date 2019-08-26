@@ -55,3 +55,6 @@ Wallet
 
 # vm_trace
 /vm_trace/
+
+# vscode
+/.vscode/
