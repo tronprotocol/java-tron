@@ -219,26 +219,15 @@ public class DelegationService {
       if (amount <= 0) {
         return;
       }
-      logger.info("before {}", manager.getAccountStore().get(address));
       manager.adjustAllowance(address, amount);
-      logger.info("end {}", manager.getAccountStore().get(address));
     } catch (BalanceInsufficientException e) {
       logger.error("withdrawReward error: {},{}", Hex.toHexString(address), address, e);
     }
   }
 
-  private long getEndCycle(byte[] address) {
-    long endCycle = manager.getDelegationStore().getEndCycle(address);
-    if (endCycle == DelegationStore.REMARK) {
-      endCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
-    }
-    return endCycle;
-  }
-
   private void sortWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) -> getWitnesseByAddress(b).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+        .reversed().thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }
