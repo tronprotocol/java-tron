@@ -139,7 +139,6 @@ public class ContractTrcToken003 {
         + ", userAssetCountBefore: " + userAssetCountBefore);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String filePath = "./src/test/resources/soliditycode/contractTrcToken003.sol";
     String contractName = "tokenTest";

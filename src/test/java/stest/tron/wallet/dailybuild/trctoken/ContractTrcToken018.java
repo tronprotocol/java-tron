@@ -250,7 +250,6 @@ public class ContractTrcToken018 {
     logger.info("after trigger, userBalanceAfter is " + Long.toString(userBalanceAfter));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<Transaction> trsById = PublicMethed.getTransactionById(triggerTxid, blockingStubFull);
     long feeLimit = trsById.get().getRawData().getFeeLimit();

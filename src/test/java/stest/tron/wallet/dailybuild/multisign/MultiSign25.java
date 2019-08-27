@@ -111,7 +111,6 @@ public class MultiSign25 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.printAddress(ownerKey);
     PublicMethed.printAddress(tmpKey02);
@@ -224,7 +223,6 @@ public class MultiSign25 {
     ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -346,7 +344,6 @@ public class MultiSign25 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
@@ -450,7 +447,6 @@ public class MultiSign25 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
@@ -539,7 +535,6 @@ public class MultiSign25 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
@@ -638,7 +633,6 @@ public class MultiSign25 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
     List<String> activePermissionKeys = new ArrayList<>();
@@ -729,7 +723,6 @@ public class MultiSign25 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.printAddress(ownerKey);
@@ -829,7 +822,6 @@ public class MultiSign25 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed.printAddress(ownerKey);
     Account test001AddressAccount = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
@@ -879,7 +871,6 @@ public class MultiSign25 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();

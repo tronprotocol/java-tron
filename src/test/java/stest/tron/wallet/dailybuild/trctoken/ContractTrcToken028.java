@@ -98,7 +98,6 @@ public class ContractTrcToken028 {
     logger.info(
         "user001Address:" + Base58.encode58Check(user001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
@@ -106,7 +105,6 @@ public class ContractTrcToken028 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         3, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     String tokenName = "testAI_" + randomInt(10000, 90000);
@@ -116,7 +114,6 @@ public class ContractTrcToken028 {
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply, 1,
         100, start, end, 1, description, url, 10000L,
         10000L, 1L, 1L, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
     // deploy transferTokenContract
@@ -131,7 +128,6 @@ public class ContractTrcToken028 {
             0L, 0, originEnergyLimit, "0",
             0, null, dev001Key, dev001Address,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Assert
@@ -196,7 +192,6 @@ public class ContractTrcToken028 {
         0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(dev001Address,
@@ -242,7 +237,6 @@ public class ContractTrcToken028 {
         "#", false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Optional<TransactionInfo> infoById1 = null;

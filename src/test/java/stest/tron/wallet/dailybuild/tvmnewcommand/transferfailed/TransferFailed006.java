@@ -137,7 +137,6 @@ public class TransferFailed006 {
     Assert.assertTrue(PublicMethed
         .sendcoin(contractAddress1, 1, accountExcAddress, accountExcKey, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     logger.info(
         "contractAddress balance before: " + PublicMethed

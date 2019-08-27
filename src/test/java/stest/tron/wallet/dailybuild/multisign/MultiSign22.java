@@ -90,7 +90,6 @@ public class MultiSign22 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     List<String> ownerPermissionKeys = new ArrayList<>();
     PublicMethed.printAddress(ownerKey);
@@ -170,7 +169,6 @@ public class MultiSign22 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1_000000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();

@@ -278,7 +278,6 @@ public class ContractGrammar003 {
         "callExistFunc()", "#", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     String i = ByteArray.toHexString(Hash.sha3("ExistFuncCalled(bytes,uint256)".getBytes()));
     String resultvalue = ByteArray
@@ -390,7 +389,6 @@ public class ContractGrammar003 {
     String txid1 = PublicMethed.triggerContract(contractAddress1,
         "check(uint256)", "1", false,
         0, maxFeeLimit, grammarAddress3, testKeyForGrammarAddress3, blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById1 = PublicMethed
         .getTransactionInfoById(txid1, blockingStubFull1);

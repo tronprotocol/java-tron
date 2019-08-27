@@ -262,7 +262,6 @@ public class MultiValiSignPerformanceTest {
         "Ecrecover--cnt:" + cnt + ",timeCost:" + timeCosts + ",ms:" + (timeCosts * 1.0 / cnt));
     Optional<Protocol.TransactionInfo> infoById = null;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
   }
@@ -320,7 +319,6 @@ public class MultiValiSignPerformanceTest {
     logger.info(
         "MuliValiSign--cnt:" + cnt + ",timeCost:" + timeCosts + ",ms:" + (timeCosts * 1.0 / cnt));
     Optional<Protocol.TransactionInfo> infoById = null;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);

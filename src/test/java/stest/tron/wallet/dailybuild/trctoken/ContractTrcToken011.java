@@ -142,7 +142,6 @@ public class ContractTrcToken011 {
             assetAccountId.toStringUtf8(), 100, null, dev001Key,
             dev001Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
     energyLimit = accountResource.getEnergyLimit();

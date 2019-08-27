@@ -460,7 +460,6 @@ public class MultiSign14 {
             ByteString.copyFrom(ownerAddress),
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -615,7 +614,6 @@ public class MultiSign14 {
         .freezeBalanceForReceiver(fromAddress, 100000000000L, 0, 0,
             ByteString.copyFrom(ownerAddress),
             testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
