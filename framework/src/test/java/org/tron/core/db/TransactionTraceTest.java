@@ -25,11 +25,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -39,17 +39,18 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Frozen;
 import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 public class TransactionTraceTest {
 
@@ -140,7 +141,8 @@ public class TransactionTraceTest {
         .build();
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
+    TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
+        .getInstance(), new RuntimeImpl(dbManager));
 
     trace.init(null);
     trace.exec();
@@ -188,8 +190,8 @@ public class TransactionTraceTest {
         Contract.newBuilder().setParameter(Any.pack(triggerContract))
             .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
-    TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-
+    TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
+        .getInstance(), new RuntimeImpl(dbManager));
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -231,8 +233,8 @@ public class TransactionTraceTest {
         Contract.newBuilder().setParameter(Any.pack(triggerContract))
             .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction2);
-    TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-
+    TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
+        .getInstance(), new RuntimeImpl(dbManager));
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -256,8 +258,8 @@ public class TransactionTraceTest {
         .put(Commons.decodeFromBase58Check(OwnerAddress), accountCapsule);
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    TransactionTrace trace = new TransactionTrace(transactionCapsule, dbManager);
-
+    TransactionTrace trace = new TransactionTrace(transactionCapsule, StoreFactory
+        .getInstance(), new RuntimeImpl(dbManager));
     trace.init(null);
     trace.exec();
     trace.pay();
@@ -320,7 +322,8 @@ public class TransactionTraceTest {
         new ContractCapsule(smartContract));
 
     TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, dbManager);
+    TransactionTrace transactionTrace = new TransactionTrace(transactionCapsule, StoreFactory
+        .getInstance(), new RuntimeImpl(dbManager));
     transactionTrace.setBill(0L);
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());

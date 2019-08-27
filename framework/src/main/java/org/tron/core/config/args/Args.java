@@ -40,7 +40,6 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.overlay.discover.node.Node;
-import org.tron.common.runtime.vm.trace.Op;
 import org.tron.common.storage.rocksdb.RocksDbSettings;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -1452,7 +1451,7 @@ public class Args {
       DBConfig.setDbDirectory(cfgArgs.getStorage().getDbDirectory());
     }
 
-    if (Objects.nonNull(cfgArgs.getGenesisBlock())){
+    if (Objects.nonNull(cfgArgs.getGenesisBlock())) {
       DBConfig.setBlocktimestamp(cfgArgs.getGenesisBlock().getTimestamp());
       DBConfig.setGenesisBlock(cfgArgs.getGenesisBlock());
     }
@@ -1476,5 +1475,13 @@ public class Args {
     DBConfig.setFullNodeAllowShieldedTransaction(cfgArgs.isFullNodeAllowShieldedTransaction());
     DBConfig.setZenTokenId(cfgArgs.getZenTokenId());
     DBConfig.setCheckFrozenTime(cfgArgs.getCheckFrozenTime());
+    DBConfig.setValidContractProtoThreadNum(cfgArgs.getValidContractProtoThreadNum());
+    DBConfig.setVmTrace(cfgArgs.isVmTrace());
+    DBConfig.setDebug(cfgArgs.isDebug());
+    DBConfig.setMinTimeRatio(cfgArgs.getMinTimeRatio());
+    DBConfig.setMaxTimeRatio(cfgArgs.getMaxTimeRatio());
+    DBConfig.setSolidityNode(cfgArgs.isSolidityNode());
+    DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
+    DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
   }
 }

@@ -4,13 +4,10 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
-
+import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
-import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,15 +15,15 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.ProgramResult;
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.TransactionTrace;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.Protocol;
 
 @Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
@@ -132,8 +129,8 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     }
 
     // program result
-    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntime()) &&  Objects.nonNull(trxTrace.getRuntime().getResult())) {
-      ProgramResult programResult = trxTrace.getRuntime().getResult();
+    if (Objects.nonNull(trxTrace) && Objects.nonNull(trxTrace.getRuntimeResult())) {
+      ProgramResult programResult = trxTrace.getRuntimeResult();
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
 

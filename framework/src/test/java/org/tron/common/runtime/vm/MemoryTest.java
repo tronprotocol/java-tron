@@ -23,10 +23,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.testng.Assert;
-import org.tron.common.runtime.vm.program.Memory;
 import org.junit.Test;
 import org.spongycastle.util.encoders.Hex;
+import org.testng.Assert;
+import org.tron.core.vm.program.Memory;
 
 @Slf4j
 public class MemoryTest {

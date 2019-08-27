@@ -25,15 +25,12 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
@@ -48,13 +45,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 /**
  * pragma solidity ^0.4.24;
@@ -149,12 +147,12 @@ public class BandWidthRuntimeTest {
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
-      TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+      TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+          new RuntimeImpl(dbManager));
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit,
-          new ProgramInvokeFactoryImpl());
+
       trace.init(blockCapsule);
       trace.exec();
       trace.finalization();
@@ -182,13 +180,12 @@ public class BandWidthRuntimeTest {
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
-      TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+      TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+          new RuntimeImpl(dbManager));
       dbManager.consumeBandwidth(trxCap, trace);
       long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit,
-          new ProgramInvokeFactoryImpl());
       trace.init(blockCapsule);
       trace.exec();
       trace.finalization();
@@ -225,11 +222,11 @@ public class BandWidthRuntimeTest {
         Contract.newBuilder().setParameter(Any.pack(smartContract))
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
     TransactionCapsule trxCap = new TransactionCapsule(transaction);
-    TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(dbManager));
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
     trace.init(blockCapsule);
     trace.exec();
     trace.finalization();
@@ -237,14 +234,14 @@ public class BandWidthRuntimeTest {
         .get(Commons.decodeFromBase58Check(OwnerAddress));
     energy = owner.getEnergyUsage() - energy;
     balance = balance - owner.getBalance();
-    Assert.assertNull(runtime.getRuntimeError());
+    Assert.assertNull(trace.getRuntimeError());
     Assert.assertEquals(52299, trace.getReceipt().getEnergyUsageTotal());
     Assert.assertEquals(50000, energy);
     Assert.assertEquals(229900, balance);
     Assert
         .assertEquals(52299 * Constant.SUN_PER_ENERGY, balance + energy * Constant.SUN_PER_ENERGY);
-    Assert.assertNull(runtime.getRuntimeError());
-    return runtime.getResult().getContractAddress();
+    Assert.assertNull(trace.getRuntimeError());
+    return trace.getRuntimeResult().getContractAddress();
   }
 
   /**

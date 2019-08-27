@@ -1,6 +1,6 @@
 package org.tron.common.runtime;
 
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;

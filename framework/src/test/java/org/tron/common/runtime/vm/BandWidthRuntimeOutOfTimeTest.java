@@ -25,15 +25,12 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
-import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -47,13 +44,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TronException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 /**
  * pragma solidity ^0.4.2;
@@ -143,12 +141,11 @@ public class BandWidthRuntimeOutOfTimeTest {
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(100000000000L)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
-      TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+      TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+          new RuntimeImpl(dbManager));
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit,
-          new ProgramInvokeFactoryImpl());
       trace.init(blockCapsule);
       trace.exec();
       trace.finalization();
@@ -157,8 +154,8 @@ public class BandWidthRuntimeOutOfTimeTest {
           .get(Commons.decodeFromBase58Check(TriggerOwnerAddress));
       energy = triggerOwner.getEnergyUsage() - energy;
       balance = balance - triggerOwner.getBalance();
-      Assert.assertNotNull(runtime.getRuntimeError());
-      Assert.assertTrue(runtime.getRuntimeError().contains(" timeout "));
+      Assert.assertNotNull(trace.getRuntimeError());
+      Assert.assertTrue(trace.getRuntimeError().contains(" timeout "));
       Assert.assertEquals(9950000, trace.getReceipt().getEnergyUsageTotal());
       Assert.assertEquals(50000, energy);
       Assert.assertEquals(990000000, balance);
@@ -185,11 +182,11 @@ public class BandWidthRuntimeOutOfTimeTest {
         Contract.newBuilder().setParameter(Any.pack(smartContract))
             .setType(ContractType.CreateSmartContract)).setFeeLimit(1000000000)).build();
     TransactionCapsule trxCap = new TransactionCapsule(transaction);
-    TransactionTrace trace = new TransactionTrace(trxCap, dbManager);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(dbManager));
     dbManager.consumeBandwidth(trxCap, trace);
     BlockCapsule blockCapsule = null;
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
-    Runtime runtime = new RuntimeImpl(trace, blockCapsule, deposit, new ProgramInvokeFactoryImpl());
     trace.init(blockCapsule);
     trace.exec();
     trace.finalization();
@@ -201,10 +198,10 @@ public class BandWidthRuntimeOutOfTimeTest {
     Assert.assertEquals(50000, energy);
     Assert.assertEquals(3852900, balance);
     Assert.assertEquals(88529 * 100, balance + energy * 100);
-    if (runtime.getRuntimeError() != null) {
-      return runtime.getResult().getContractAddress();
+    if (trace.getRuntimeError() != null) {
+      return trace.getRuntimeResult().getContractAddress();
     }
-    return runtime.getResult().getContractAddress();
+    return trace.getRuntimeResult().getContractAddress();
 
   }
 

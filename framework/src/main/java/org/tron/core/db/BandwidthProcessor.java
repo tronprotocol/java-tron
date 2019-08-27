@@ -1,7 +1,7 @@
 package org.tron.core.db;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.ShieldedTransferContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
@@ -16,15 +16,18 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TooBigTransactionResultException;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.Protocol.Transaction.Contract;
 
 @Slf4j(topic = "DB")
 public class BandwidthProcessor extends ResourceProcessor {
 
+  private Manager dbManager;
+
   public BandwidthProcessor(Manager manager) {
-    super(manager);
+    super(manager.getDynamicPropertiesStore(), manager.getAccountStore());
+    this.dbManager = manager;
   }
 
   @Override
