@@ -23,8 +23,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtil {
@@ -184,5 +187,60 @@ public class TransactionUtil {
     return Sha256Hash.of(transaction.getRawData().toByteArray())
         .getBytes();
   }
+
+  public static Sha256Hash getTransactionId(Transaction transaction) {
+    return Sha256Hash.of(transaction.getRawData().toByteArray());
+  }
+
+
+  public static contractResult getContractRet(Transaction transaction) {
+    if (transaction.getRetCount() <= 0) {
+      return null;
+    }
+    return transaction.getRet(0).getContractRet();
+  }
+
+
+  public static long getCallValue(Transaction.Contract contract) {
+    int energyForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getNewContract()
+              .getCallValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
+  }
+
+  public static long getCallTokenValue(Transaction.Contract contract) {
+    int energyForTrx;
+    try {
+      Any contractParameter = contract.getParameter();
+      long callValue;
+      switch (contract.getType()) {
+        case TriggerSmartContract:
+          return contractParameter.unpack(TriggerSmartContract.class).getCallTokenValue();
+
+        case CreateSmartContract:
+          return contractParameter.unpack(CreateSmartContract.class).getCallTokenValue();
+        default:
+          return 0L;
+      }
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return 0L;
+    }
+  }
+
 
 }

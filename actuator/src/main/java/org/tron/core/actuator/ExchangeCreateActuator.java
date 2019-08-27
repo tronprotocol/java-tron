@@ -125,7 +125,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
       throw new ContractValidateException("No contract!");
     }
     if (accountStore == null || dynamicStore == null) {
-      throw new ContractValidateException("No account store or contract store!");
+      throw new ContractValidateException("No account store or dynamicStore store!");
     }
     if (!this.contract.is(ExchangeCreateContract.class)) {
       throw new ContractValidateException(

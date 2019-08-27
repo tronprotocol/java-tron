@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -16,8 +18,6 @@ import org.tron.protos.Protocol.Proposal.State;
 public class ProposalCapsule implements ProtoCapsule<Proposal> {
 
   private Proposal proposal;
-
-  public static final int MAX_ACTIVE_WITNESS_NUM = 27;
 
   public ProposalCapsule(final Proposal proposal) {
     this.proposal = proposal;

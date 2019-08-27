@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -98,14 +99,13 @@ public class MultiSign25 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
-    PublicMethed.sendcoin(ownerAddress, 1_000_000, fromAddress, testKey002, blockingStubFull);
   }
 
   @Test(enabled = true, description = "Get sign for multi sign normal transaction")
   public void test01GetSignMultiSignNormalTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 2 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -218,10 +218,10 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for multi sign permission transaction")
   public void test02GetSignMultiSignPermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
+    ownerAddress = ecKey1.getAddress();
     long amount = 4 * updateAccountPermissionFee + 100000000;
 
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -339,8 +339,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for single sign normal transaction")
   public void test03GetSignSingleSignNormalTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 2 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -443,8 +443,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for not sign transaction")
   public void test04GetSignNotSignPermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 2 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -533,8 +533,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for not complete multi sign normal transaction")
   public void test05GetSignMultiSignNotCompletePermissionTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 4 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -723,8 +723,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for timeout normal transaction")
   public void test07GetSignTimeoutTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 4 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -822,8 +822,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for empty transaction")
   public void test08GetSignEmptyTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 4 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -873,8 +873,8 @@ public class MultiSign25 {
   @Test(enabled = true, description = "Get sign for error transaction")
   public void test09GetSignErrorTransaction() {
     ECKey ecKey1 = new ECKey(Utils.getRandom());
-    final byte[] ownerAddress = ecKey1.getAddress();
-    final String ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
+    ownerAddress = ecKey1.getAddress();
+    ownerKey = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
     long amount = 4 * updateAccountPermissionFee + 100000000;
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, amount, fromAddress,
@@ -943,6 +943,11 @@ public class MultiSign25 {
     Account test001AddressAccount1 = PublicMethed.queryAccount(ownerAddress, blockingStubFull);
     long balance1 = test001AddressAccount1.getBalance();
     Assert.assertEquals(balance - balance1, 1 * updateAccountPermissionFee);
+  }
+
+  @AfterMethod
+  public void aftertest() {
+    PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
 
   /**

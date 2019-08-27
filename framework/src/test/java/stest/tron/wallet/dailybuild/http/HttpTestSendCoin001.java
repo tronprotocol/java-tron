@@ -76,49 +76,50 @@ public class HttpTestSendCoin001 {
     Assert.assertTrue(responseContent.size() > 4);
   }
 
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Get transactions from this from solidity by http")
-  public void test4GetTransactionsFromThisFromSolidity() {
-    response = HttpMethed
-        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    JSONObject transactionObject = HttpMethed.parseStringContent(JSONArray.parseArray(
-        responseContent.getString("transaction")).get(0).toString());
-    String retString = transactionObject.getString("ret");
-    JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString())
-        .getString("contractRet"), "SUCCESS");
-    Assert.assertTrue(responseContent.size() == 1);
-  }
-
-  /**
-   * constructor.
-   */
-  @Test(enabled = true, description = "Get transactions to this from solidity by http")
-  public void test5GetTransactionsToThisFromSolidity() {
-    response = HttpMethed
-        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
-    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
-    responseContent = HttpMethed.parseResponseContent(response);
-    HttpMethed.printJsonContent(responseContent);
-    JSONObject transactionObject = HttpMethed.parseStringContent(
-        JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
-    String retString = transactionObject.getString("ret");
-    JSONArray array = JSONArray.parseArray(retString);
-    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
-        "contractRet"), "SUCCESS");
-    Assert.assertTrue(responseContent.size() == 1);
-  }
+//  /**
+//   * constructor.
+//   */
+//  @Test(enabled = true, description = "Get transactions from this from solidity by http")
+//  public void test4GetTransactionsFromThisFromSolidity() {
+//    response = HttpMethed
+//        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
+//    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+//    responseContent = HttpMethed.parseResponseContent(response);
+//    HttpMethed.printJsonContent(responseContent);
+//    JSONObject transactionObject = HttpMethed.parseStringContent(JSONArray.parseArray(
+//        responseContent.getString("transaction")).get(0).toString());
+//    String retString = transactionObject.getString("ret");
+//    JSONArray array = JSONArray.parseArray(retString);
+//    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString())
+//        .getString("contractRet"), "SUCCESS");
+//    Assert.assertTrue(responseContent.size() == 1);
+//  }
+//
+//  /**
+//   * constructor.
+//   */
+//  @Test(enabled = true, description = "Get transactions to this from solidity by http")
+//  public void test5GetTransactionsToThisFromSolidity() {
+//    response = HttpMethed
+//        .getTransactionsFromThisFromSolidity(httpSoliditynode, fromAddress, 0, 100);
+//    Assert.assertEquals(response.getStatusLine().getStatusCode(), 200);
+//    responseContent = HttpMethed.parseResponseContent(response);
+//    HttpMethed.printJsonContent(responseContent);
+//    JSONObject transactionObject = HttpMethed.parseStringContent(
+//        JSONArray.parseArray(responseContent.getString("transaction")).get(0).toString());
+//    String retString = transactionObject.getString("ret");
+//    JSONArray array = JSONArray.parseArray(retString);
+//    Assert.assertEquals(HttpMethed.parseStringContent(array.get(0).toString()).getString(
+//        "contractRet"), "SUCCESS");
+//    Assert.assertTrue(responseContent.size() == 1);
+//  }
 
   /**
    * constructor.
    */
   @AfterClass
   public void shutdown() throws InterruptedException {
+    HttpMethed.freedResource(httpnode, receiverAddress, fromAddress, receiverKey);
     HttpMethed.disConnect();
   }
 

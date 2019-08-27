@@ -54,7 +54,7 @@ import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
@@ -79,6 +79,7 @@ import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
@@ -107,9 +108,11 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetService;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.CodeStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -119,12 +122,15 @@ import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.store.TreeBlockIndexStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
 import org.tron.core.consensus.ProposalController;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -184,6 +190,8 @@ public class Manager {
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   private DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
+  @Autowired
+  private AccountStateStoreTrie accountStateStoreTrie;
   @Autowired
   @Getter
   private StorageRowStore storageRowStore;
@@ -446,7 +454,7 @@ public class Manager {
 
   @PostConstruct
   public void init() {
-    Message.setManager(this);
+    Message.setDynamicPropertiesStore(this.getDynamicPropertiesStore());
     accountStateCallBack.setManager(this);
     trieService.setManager(this);
     revokingStore.disable();
@@ -499,6 +507,8 @@ public class Manager {
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
     }
+    //initStoreFactory
+    prepareStroeFactory();
   }
 
   public BlockId getGenesisBlockId() {
@@ -744,7 +754,7 @@ public class Manager {
     }
 
     try {
-      if (!trx.validateSignature(this)) {
+      if (!trx.validateSignature(accountStore, dynamicPropertiesStore)) {
         throw new ValidateSignatureException("trans sig validate failed");
       }
 
@@ -970,7 +980,7 @@ public class Manager {
     try (PendingManager pm = new PendingManager(this)) {
 
       if (!block.generatedByMyself) {
-        if (!block.validateSignature(this)) {
+        if (!block.validateSignature(dynamicPropertiesStore, accountStore)) {
           logger.warn("The signature is not validated.");
           throw new BadBlockException("The signature is not validated");
         }
@@ -1199,17 +1209,18 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
+    if (!trxCap.validateSignature(accountStore, dynamicPropertiesStore)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
-    TransactionTrace trace = new TransactionTrace(trxCap, this);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl(this));
     trxCap.setTrxTrace(trace);
 
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
-    VMConfig.initVmHardFork();
+    VMConfig.initVmHardFork(true);
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
@@ -1238,7 +1249,7 @@ public class Manager {
 
     trace.finalization();
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
-      trxCap.setResult(trace.getRuntime());
+      trxCap.setResult(trace.getTransactionContext());
     }
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
 
@@ -1454,7 +1465,7 @@ public class Manager {
     merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     block.setResult(transationRetCapsule);
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
-      EnergyProcessor energyProcessor = new EnergyProcessor(this);
+      EnergyProcessor energyProcessor = new EnergyProcessor(dynamicPropertiesStore, accountStore);
       energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
@@ -1600,10 +1611,14 @@ public class Manager {
     closeOneStore(nullifierStore);
     closeOneStore(merkleTreeStore);
     closeOneStore(transactionRetStore);
+    closeOneStore(accountStateStoreTrie);
     logger.info("******** end to close db ********");
   }
 
   public void closeOneStore(ITronChainBase database) {
+    if (Objects.isNull(database)) {
+      return;
+    }
     logger.info("******** begin to close " + database.getName() + " ********");
     try {
       database.close();
@@ -1635,7 +1650,7 @@ public class Manager {
     @Override
     public Boolean call() throws ValidateSignatureException {
       try {
-        trx.validateSignature(manager);
+        trx.validateSignature(manager.getAccountStore(), manager.getDynamicPropertiesStore());
       } catch (ValidateSignatureException e) {
         throw e;
       } finally {
@@ -1804,4 +1819,27 @@ public class Manager {
     witnessScheduleStore.saveActiveWitnesses(witnessAddresses);
   }
 
+  private void prepareStroeFactory() {
+    StoreFactory.getInstance().setAccountStore(accountStore)
+        .setAccountIdIndexStore(accountIdIndexStore)
+        .setAccountIndexStore(accountIndexStore)
+        .setDynamicPropertiesStore(dynamicPropertiesStore)
+        .setAssetIssueStore(assetIssueStore)
+        .setContractStore(contractStore)
+        .setAssetIssueV2Store(assetIssueV2Store)
+        .setWitnessStore(witnessStore)
+        .setVotesStore(votesStore)
+        .setProofStore(proofStore)
+        .setNullifierStore(nullifierStore)
+        .setDelegatedResourceAccountIndexStore(delegatedResourceAccountIndexStore)
+        .setDelegatedResourceStore(delegatedResourceStore)
+        .setExchangeStore(exchangeStore)
+        .setExchangeV2Store(exchangeV2Store)
+        .setProposalStore(proposalStore)
+        .setCodeStore(codeStore)
+        .setStorageRowStore(storageRowStore)
+        .setBlockStore(blockStore)
+        .setKhaosDb(khaosDb)
+        .setBlockIndexStore(blockIndexStore);
+  }
 }

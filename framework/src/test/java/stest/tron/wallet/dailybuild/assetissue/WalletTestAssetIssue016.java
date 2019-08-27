@@ -154,6 +154,9 @@ public class WalletTestAssetIssue016 {
     Assert.assertTrue(assetIssueByName.getPublicLatestFreeNetTime() > 0);
     Assert.assertTrue(assetIssueByName.getPublicFreeAssetNetUsage() > 150);
 
+    PublicMethed
+        .freedResource(asset016Address, testKeyForAssetIssue016, fromAddress, blockingStubFull);
+
 
   }
 

@@ -104,25 +104,6 @@ public class HttpRateLimite001 {
     Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
   }
 
-
-  @Test(enabled = true, description = "Rate limit IpQpsStrategy for "
-      + "getTransactionsFromThisFromSolidity "
-      + "interface on real solidity")
-  public void test5IpQpsStrategyForgetTransactionsFromThisFromSolidity() {
-    Long startTimeStamp = System.currentTimeMillis();
-    Integer repeatTimes = 0;
-    while (repeatTimes++ < 15) {
-      logger.info(realHttpSoliditynode);
-      HttpMethed.getTransactionsFromThisFromSolidity(realHttpSoliditynode,fromAddress,0,50);
-    }
-    Long endTimesStap = System.currentTimeMillis();
-    logger.info("startTimeStamp - endTimesStap:" + (endTimesStap - startTimeStamp));
-    Assert.assertTrue(endTimesStap - startTimeStamp > 4000);
-  }
-
-
-
-
   @Test(enabled = true, description = "Rate limit QpsStrategy for "
       + "getTransactionsFromThisFromSolidity "
       + "interface on real solidity")

@@ -2,7 +2,7 @@ package org.tron.common.runtime.vm;
 
 
 import static junit.framework.TestCase.fail;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
+import static org.tron.core.vm.utils.MUtil.convertToTronAddress;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -20,10 +20,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.vm.PrecompiledContracts.PrecompiledContract;
-import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -42,9 +39,14 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.PrecompiledContracts.PrecompiledContract;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Proposal.State;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 
 @Slf4j
 public class PrecompiledContractsTest {
@@ -152,7 +154,7 @@ public class PrecompiledContractsTest {
   private PrecompiledContract createPrecompiledContract(DataWord addr, String ownerAddress) {
     PrecompiledContract contract = PrecompiledContracts.getContractForAddress(addr);
     contract.setCallerAddress(convertToTronAddress(Hex.decode(ownerAddress)));
-    contract.setDeposit(DepositImpl.createRoot(dbManager));
+    contract.setRepository(RepositoryImpl.createRoot(StoreFactory.getInstance()));
     ProgramResult programResult = new ProgramResult();
     contract.setResult(programResult);
     return contract;
@@ -162,7 +164,7 @@ public class PrecompiledContractsTest {
   public void voteWitnessNativeTest()
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException, ContractValidateException, ContractExeException {
     PrecompiledContract contract = createPrecompiledContract(voteContractAddr, OWNER_ADDRESS);
-    DepositImpl deposit = DepositImpl.createRoot(dbManager);
+    Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     byte[] witnessAddressBytes = new byte[32];
     byte[] witnessAddressBytes21 = Hex.decode(WITNESS_ADDRESS);
     System.arraycopy(witnessAddressBytes21, 0, witnessAddressBytes,
@@ -188,7 +190,7 @@ public class PrecompiledContractsTest {
     TransactionResultCapsule ret = new TransactionResultCapsule();
     freezeBalanceActuator.validate();
     freezeBalanceActuator.execute(ret);
-    contract.setDeposit(deposit);
+    contract.setRepository(deposit);
     Boolean result = contract.execute(data).getLeft();
     deposit.commit();
     Assert.assertEquals(1,
@@ -205,7 +207,7 @@ public class PrecompiledContractsTest {
     PrecompiledContract contract = createPrecompiledContract(withdrawBalanceAddr, WITNESS_ADDRESS);
 
     long now = System.currentTimeMillis();
-    Deposit deposit = DepositImpl.createRoot(dbManager);
+    Repository deposit = RepositoryImpl.createRoot(StoreFactory.getInstance());
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(now);
     byte[] address = ByteArray.fromHexString(WITNESS_ADDRESS);
     try {
@@ -220,7 +222,7 @@ public class PrecompiledContractsTest {
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address),
         100, "http://baidu.com");
     dbManager.getWitnessStore().put(address, witnessCapsule);
-    contract.setDeposit(deposit);
+    contract.setRepository(deposit);
     contract.execute(new byte[0]);
     deposit.commit();
     AccountCapsule witnessAccount =
@@ -252,8 +254,8 @@ public class PrecompiledContractsTest {
 
       Assert.assertEquals(0, dbManager.getDynamicPropertiesStore().getLatestProposalNum());
       ProposalCapsule proposalCapsule;
-      Deposit deposit1 = DepositImpl.createRoot(dbManager);
-      createContract.setDeposit(deposit1);
+      Repository deposit1 = RepositoryImpl.createRoot(StoreFactory.getInstance());
+      createContract.setRepository(deposit1);
       byte[] idBytes = createContract.execute(data4Create).getRight();
       long id = ByteUtil.byteArrayToLong(idBytes);
       deposit1.commit();
@@ -279,8 +281,8 @@ public class PrecompiledContractsTest {
           isApprove.getData().length);
       PrecompiledContract approveContract = createPrecompiledContract(proposalApproveAddr,
           WITNESS_ADDRESS);
-      Deposit deposit2 = DepositImpl.createRoot(dbManager);
-      approveContract.setDeposit(deposit2);
+      Repository deposit2 = RepositoryImpl.createRoot(StoreFactory.getInstance());
+      approveContract.setRepository(deposit2);
       approveContract.execute(data4Approve);
       deposit2.commit();
       proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));
@@ -293,8 +295,8 @@ public class PrecompiledContractsTest {
        */
       PrecompiledContract deleteContract = createPrecompiledContract(proposalDeleteAddr,
           WITNESS_ADDRESS);
-      Deposit deposit3 = DepositImpl.createRoot(dbManager);
-      deleteContract.setDeposit(deposit3);
+      Repository deposit3 = RepositoryImpl.createRoot(StoreFactory.getInstance());
+      deleteContract.setRepository(deposit3);
       deleteContract.execute(idBytes);
       deposit3.commit();
       proposalCapsule = dbManager.getProposalStore().get(ByteArray.fromLong(id));

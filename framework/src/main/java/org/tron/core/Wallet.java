@@ -85,11 +85,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.discover.node.NodeHandler;
 import org.tron.common.overlay.discover.node.NodeManager;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.runtime.Runtime;
-import org.tron.common.runtime.RuntimeImpl;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.ByteArray;
@@ -107,6 +103,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -129,6 +126,7 @@ import org.tron.core.config.args.Parameter.ChainConstant;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
@@ -152,6 +150,7 @@ import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.ZenTransactionBuilder;
 import org.tron.core.zen.address.DiversifierT;
@@ -163,17 +162,6 @@ import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.contract.ShieldContract.OutputPoint;
-import org.tron.protos.contract.ShieldContract.OutputPointInfo;
-import org.tron.protos.contract.ShieldContract.PedersenHash;
-import org.tron.protos.contract.ShieldContract.ReceiveDescription;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -182,15 +170,26 @@ import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionSign;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry.StateMutabilityType;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
 @Component
@@ -351,7 +350,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long genesisTimeStamp = dbManager.getGenesisBlock().getTimeStamp();
@@ -380,7 +380,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     return accountCapsule.getInstance();
@@ -1088,7 +1089,8 @@ public class Wallet {
     BandwidthProcessor processor = new BandwidthProcessor(dbManager);
     processor.updateUsage(accountCapsule);
 
-    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager);
+    EnergyProcessor energyProcessor = new EnergyProcessor(dbManager.getDynamicPropertiesStore(),
+        dbManager.getAccountStore());
     energyProcessor.updateUsage(accountCapsule);
 
     long netLimit = processor
@@ -2256,8 +2258,14 @@ public class Wallet {
     } else {
       headBlock = blockCapsuleList.get(0).getInstance();
     }
+    TransactionContext context = new TransactionContext(new BlockCapsule(headBlock), trxCap,
+        StoreFactory.getInstance(), false,
+        false);
+    VMActuator vmActuator = new VMActuator(true);
+    vmActuator.validate(context);
+    vmActuator.execute(context);
 
-    Runtime runtime = new RuntimeImpl(trxCap.getInstance(),
+/*    ActuatorRuntime runtime = new RuntimeImpl(trxCap.getInstance(),
         new BlockCapsule(headBlock), deposit,
         new ProgramInvokeFactoryImpl(), true);
     VMConfig.initVmHardFork();
@@ -2271,26 +2279,26 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());
     runtime.execute();
     runtime.go();
-    runtime.finalization();
+    runtime.finalization();*/
     // TODO exception
-    if (runtime.getResult().getException() != null) {
-      RuntimeException e = runtime.getResult().getException();
+    ProgramResult result = context.getProgramResult();
+    if (result.getException() != null) {
+      RuntimeException e = result.getException();
       logger.warn("Constant call has error {}", e.getMessage());
       throw e;
     }
 
-    ProgramResult result = runtime.getResult();
     TransactionResultCapsule ret = new TransactionResultCapsule();
 
     builder.addConstantResult(ByteString.copyFrom(result.getHReturn()));
     ret.setStatus(0, code.SUCESS);
-    if (StringUtils.isNoneEmpty(runtime.getRuntimeError())) {
+    if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
       retBuilder
-          .setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError()))
+          .setMessage(ByteString.copyFromUtf8(result.getRuntimeError()))
           .build();
     }
-    if (runtime.getResult().isRevert()) {
+    if (result.isRevert()) {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();

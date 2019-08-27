@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import org.tron.common.utils.ForkUtils;
 import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.store.AccountIdIndexStore;
+import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
@@ -32,6 +33,7 @@ public abstract class AbstractActuator implements Actuator {
   protected ExchangeStore exchangeStore;
   protected ExchangeV2Store exchangeV2Store;
   protected DelegatedResourceStore delegatedResourceStore;
+  protected AccountIndexStore accountIndexStore;
   protected DelegatedResourceAccountIndexStore delegatedResourceAccountIndexStore;
   protected VotesStore votesStore;
   protected WitnessStore witnessStore;
@@ -92,10 +94,10 @@ public abstract class AbstractActuator implements Actuator {
     this.accountIdIndexStore = accountIdIndexStore;
   }
 
-  AbstractActuator(Any contract, AccountStore accountStore, AccountIdIndexStore accountIdIndexStore, DynamicPropertiesStore dynamicPropertiesStore) {
+  AbstractActuator(Any contract, AccountStore accountStore, AccountIndexStore accountIndexStore, DynamicPropertiesStore dynamicPropertiesStore) {
     this.contract = contract;
     this.accountStore = accountStore;
-    this.accountIdIndexStore = accountIdIndexStore;
+    this.accountIndexStore = accountIndexStore;
     this.dynamicStore = dynamicPropertiesStore;
   }
 

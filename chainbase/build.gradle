@@ -1,52 +1,32 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven { url 'https://jitpack.io' }
-    }
-    dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.3'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.2'
-    }
-}
-
-group = "com.github.tronprotocol"
-ext.githubProjectName = "chainbase"
-
-version = project.properties["release.version"]
-
 description = "chainbase – a decentralized database for blockchain."
-
-apply plugin: "java"
-apply plugin: "java-library"
-//apply plugin: "checkstyle"
-apply plugin: "jacoco"
-apply plugin: "maven"
-apply plugin: "maven-publish"
-//apply plugin: "me.champeau.gradle.jmh"
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
 
 // Dependency versions
 // ---------------------------------------
 
 def junitVersion = "4.12"
 def mockitoVersion = "2.1.0"
-def jmhLibVersion = "1.20"
 def testNgVersion = "6.11"
-def guavaVersion = "24.1-jre"
 def jacocoVersion = "0.8.0"
 def leveldbVersion = "1.8"
-def logbackVersion = "1.2.3"
 def jansiVersion = "1.16"
-def lombokVersion = "1.18.2"
-def slf4jVersion = "1.7.25"
 // --------------------------------------
 
-repositories {
-    mavenCentral()
-    maven { url 'https://jitpack.io' }
+static def isWindows() {
+    return org.gradle.internal.os.OperatingSystem.current().isWindows()
+}
+
+if (isWindows()) {
+    ext {
+        leveldbGroup = "org.ethereum"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.18.3"
+    }
+} else {
+    ext {
+        leveldbGroup = "org.fusesource.leveldbjni"
+        leveldbName = "leveldbjni-all"
+        leveldbVersion = "1.8"
+    }
 }
 
 dependencies {
@@ -55,84 +35,18 @@ dependencies {
 
     testImplementation "org.testng:testng:$testNgVersion"
 
-    compile "com.google.guava:guava:$guavaVersion"
-    compile "org.fusesource.leveldbjni:leveldbjni-all:$leveldbVersion"
+    compile group: leveldbGroup, name: leveldbName, version: leveldbVersion
     compile "org.fusesource.jansi:jansi:$jansiVersion"
-    compile "org.slf4j:slf4j-api:$slf4jVersion"
-    compile "org.slf4j:jcl-over-slf4j:$slf4jVersion"
-    compile "ch.qos.logback:logback-classic:$logbackVersion"
-    compile "org.projectlombok:lombok:$lombokVersion"
     compile group: 'org.rocksdb', name: 'rocksdbjni', version: '5.15.10'
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
-    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.4.0'
-    compile group: 'joda-time', name: 'joda-time', version: '2.3'
-    compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
-    compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
-    compile "org.apache.commons:commons-lang3:3.4"
     compile "com.madgag.spongycastle:core:1.58.0.0"
     compile "com.madgag.spongycastle:prov:1.58.0.0"
     compile group: 'com.typesafe', name: 'config', version: '1.3.2'
-    compile "org.apache.commons:commons-collections4:4.0"
     compile 'com.github.tronprotocol:zksnark-java-sdk:master-SNAPSHOT'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.5'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.5'
     compile project(":protocol")
 }
 
-//javadoc {
-//    failOnError = false
-//    exclude "**/test/**"
-//    options {
-//        windowTitle = "Chainbase Javadoc ${project.version}"
-//    }
-//    // Clear the following options to make the docs consistent with the old format
-//    options.addStringOption("top").value = ""
-//    options.addStringOption("doctitle").value = ""
-//    options.addStringOption("header").value = ""
-//    options.stylesheetFile = new File(projectDir, "gradle/stylesheet.css");
-//
-//    options.links(
-//            "https://docs.oracle.com/javase/7/docs/api/"
-//    )
-//
-//    if (JavaVersion.current().isJava7()) {
-//        // "./gradle/stylesheet.css" only supports Java 7
-//        options.addStringOption("stylesheetfile", rootProject.file("./gradle/stylesheet.css").toString())
-//    }
-//}
-
-task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = "sources"
-    from sourceSets.main.allSource
-}
-
-//task javadocJar(type: Jar, dependsOn: javadoc) {
-//    classifier = "javadoc"
-//    from javadoc.destinationDir
-//}
-
-artifacts {
-    archives jar
-    archives sourcesJar
-//    archives javadocJar
-}
-
-
-//jmh {
-//    jmhVersion = jmhLibVersion
-//    humanOutputFile = null
-//    includeTests = false
-//    jvmArgs = ["-Djmh.ignoreLock=true"]
-//    jvmArgsAppend = ["-Djmh.separateClasspathJAR=true"]
-//
-//    if (project.hasProperty("jmh")) {
-//        include = ".*" + project.jmh + ".*"
-//        println("JMH: " + include);
-//    }
-//
-//}
-
-//plugins.withType(EclipsePlugin) {
-//    project.eclipse.classpath.plusConfigurations += [ configurations.jmh ]
-//}
 
 test {
 
@@ -197,11 +111,3 @@ jacocoTestReport {
 }
 
 build.dependsOn jacocoTestReport
-
-//checkstyle {
-//    configFile file("checkstyle.xml")
-//    ignoreFailures = true
-//    toolVersion ="6.19"
-//}
-
-//apply from: file("gradle/javadoc_cleanup.gradle")

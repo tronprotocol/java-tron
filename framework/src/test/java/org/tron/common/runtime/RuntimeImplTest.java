@@ -13,23 +13,27 @@ import org.testng.Assert;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 
 @Slf4j
@@ -38,7 +42,7 @@ public class RuntimeImplTest {
 
   private Manager dbManager;
   private TronApplicationContext context;
-  private DepositImpl deposit;
+  private Repository repository;
   private String dbPath = "output_RuntimeImplTest";
   private Application AppT;
   private byte[] callerAddress;
@@ -61,12 +65,12 @@ public class RuntimeImplTest {
     dbManager = context.getBean(Manager.class);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(5_000_000_000L); // unit is trx
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(callerAddress, AccountType.Normal);
-    deposit.addBalance(callerAddress, callerTotalBalance);
-    deposit.createAccount(creatorAddress, AccountType.Normal);
-    deposit.addBalance(creatorAddress, creatorTotalBalance);
-    deposit.commit();
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(callerAddress, AccountType.Normal);
+    repository.addBalance(callerAddress, callerTotalBalance);
+    repository.createAccount(creatorAddress, AccountType.Normal);
+    repository.addBalance(creatorAddress, creatorTotalBalance);
+    repository.commit();
   }
 
   // // solidity src code
@@ -94,7 +98,7 @@ public class RuntimeImplTest {
 
 
   @Test
-  public void getCreatorEnergyLimit2Test() {
+  public void getCreatorEnergyLimit2Test() throws ContractValidateException, ContractExeException {
 
     long value = 10L;
     long feeLimit = 1_000_000_000L;
@@ -108,55 +112,63 @@ public class RuntimeImplTest {
         ABI,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
 
-    RuntimeImpl runtimeImpl = new RuntimeImpl(trx, null, deposit, new ProgramInvokeFactoryImpl(),
-        true);
+    RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
+    runtimeImpl.execute(
+        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
+            true));
 
-    deposit = DepositImpl.createRoot(dbManager);
-    AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
 
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit1);
 
     value = 2_500_000_000L;
     long expectEnergyLimit2 = 5_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit2);
 
     value = 10L;
     feeLimit = 1_000_000L;
     long expectEnergyLimit3 = 10_000L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit3);
 
     long frozenBalance = 1_000_000_000L;
     long newBalance = creatorAccount.getBalance() - frozenBalance;
     creatorAccount.setFrozenForEnergy(frozenBalance, 0L);
     creatorAccount.setBalance(newBalance);
-    deposit.putAccountValue(creatorAddress, creatorAccount);
-    deposit.commit();
+    repository.putAccountValue(creatorAddress, creatorAccount);
+    repository.commit();
 
     feeLimit = 1_000_000_000L;
     long expectEnergyLimit4 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit4);
 
     feeLimit = 3_000_000_000L;
     value = 10L;
     long expectEnergyLimit5 = 20_009_999L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit5);
 
     feeLimit = 3_000L;
     value = 10L;
     long expectEnergyLimit6 = 30L;
     Assert.assertEquals(
-        runtimeImpl.getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
+        ((VMActuator) runtimeImpl.actuator2)
+            .getAccountEnergyLimitWithFixRatio(creatorAccount, feeLimit, value),
         expectEnergyLimit6);
 
   }
@@ -184,19 +196,21 @@ public class RuntimeImplTest {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 
-    deposit = DepositImpl.createRoot(dbManager);
-    RuntimeImpl runtimeImpl = new RuntimeImpl(trx, null, deposit, new ProgramInvokeFactoryImpl(),
-        true);
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
+    runtimeImpl.execute(
+        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
+            true));
 
-    AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
-    AccountCapsule callerAccount = deposit.getAccount(callerAddress);
+    AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
+    AccountCapsule callerAccount = repository.getAccount(callerAddress);
     TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit1);
@@ -205,14 +219,14 @@ public class RuntimeImplTest {
     long newBalance = creatorAccount.getBalance() - creatorFrozenBalance;
     creatorAccount.setFrozenForEnergy(creatorFrozenBalance, 0L);
     creatorAccount.setBalance(newBalance);
-    deposit.putAccountValue(creatorAddress, creatorAccount);
-    deposit.commit();
+    repository.putAccountValue(creatorAddress, creatorAccount);
+    repository.commit();
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit2);
@@ -220,7 +234,7 @@ public class RuntimeImplTest {
     value = 3_500_000_000L;
     long expectEnergyLimit3 = 5_005_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit3);
@@ -229,7 +243,7 @@ public class RuntimeImplTest {
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit4 = 40_004_999L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit4);
@@ -237,14 +251,14 @@ public class RuntimeImplTest {
     long callerFrozenBalance = 1_000_000_000L;
     callerAccount.setFrozenForEnergy(callerFrozenBalance, 0L);
     callerAccount.setBalance(callerAccount.getBalance() - callerFrozenBalance);
-    deposit.putAccountValue(callerAddress, callerAccount);
-    deposit.commit();
+    repository.putAccountValue(callerAddress, callerAccount);
+    repository.commit();
 
     value = 10L;
     feeLimit = 5_000_000_000L;
     long expectEnergyLimit5 = 30_014_999L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit5);
@@ -274,19 +288,21 @@ public class RuntimeImplTest {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 
-    deposit = DepositImpl.createRoot(dbManager);
-    RuntimeImpl runtimeImpl = new RuntimeImpl(trx, null, deposit, new ProgramInvokeFactoryImpl(),
-        true);
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
+    runtimeImpl.execute(
+        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
+            true));
 
-    AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
-    AccountCapsule callerAccount = deposit.getAccount(callerAddress);
+    AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
+    AccountCapsule callerAccount = repository.getAccount(callerAddress);
     TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit1);
@@ -295,14 +311,14 @@ public class RuntimeImplTest {
     long newBalance = creatorAccount.getBalance() - creatorFrozenBalance;
     creatorAccount.setFrozenForEnergy(creatorFrozenBalance, 0L);
     creatorAccount.setBalance(newBalance);
-    deposit.putAccountValue(creatorAddress, creatorAccount);
-    deposit.commit();
+    repository.putAccountValue(creatorAddress, creatorAccount);
+    repository.commit();
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit2 = 10_005_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit2);
@@ -310,7 +326,7 @@ public class RuntimeImplTest {
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 1_250L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit3);
@@ -340,19 +356,21 @@ public class RuntimeImplTest {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         triggerData, value, feeLimit);
 
-    deposit = DepositImpl.createRoot(dbManager);
-    RuntimeImpl runtimeImpl = new RuntimeImpl(trx, null, deposit, new ProgramInvokeFactoryImpl(),
-        true);
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    RuntimeImpl runtimeImpl = new RuntimeImpl(dbManager);
+    runtimeImpl.execute(
+        new TransactionContext(null, new TransactionCapsule(trx), StoreFactory.getInstance(), true,
+            true));
 
-    AccountCapsule creatorAccount = deposit.getAccount(creatorAddress);
-    AccountCapsule callerAccount = deposit.getAccount(callerAddress);
+    AccountCapsule creatorAccount = repository.getAccount(creatorAddress);
+    AccountCapsule callerAccount = repository.getAccount(callerAddress);
     TriggerSmartContract contract = ContractCapsule.getTriggerContractFromTransaction(trx);
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit1 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit1);
@@ -361,14 +379,14 @@ public class RuntimeImplTest {
     long newBalance = creatorAccount.getBalance() - creatorFrozenBalance;
     creatorAccount.setFrozenForEnergy(creatorFrozenBalance, 0L);
     creatorAccount.setBalance(newBalance);
-    deposit.putAccountValue(creatorAddress, creatorAccount);
-    deposit.commit();
+    repository.putAccountValue(creatorAddress, creatorAccount);
+    repository.commit();
 
     feeLimit = 1_000_000_000L;
     value = 0L;
     long expectEnergyLimit2 = 10_000_000L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit2);
@@ -376,7 +394,7 @@ public class RuntimeImplTest {
     value = 3_999_950_000L;
     long expectEnergyLimit3 = 500L;
     Assert.assertEquals(
-        runtimeImpl
+        ((VMActuator) runtimeImpl.actuator2)
             .getTotalEnergyLimitWithFixRatio(creatorAccount, callerAccount, contract, feeLimit,
                 value),
         expectEnergyLimit3);

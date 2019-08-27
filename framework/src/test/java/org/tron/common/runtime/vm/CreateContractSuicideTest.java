@@ -8,14 +8,14 @@ import org.spongycastle.util.encoders.Hex;
 import org.testng.Assert;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.vm.program.Program.OutOfEnergyException;
 import org.tron.common.storage.DepositImpl;
 import org.tron.core.config.args.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program.OutOfEnergyException;
 import org.tron.protos.Protocol.Transaction;
 
 @Slf4j
@@ -116,7 +116,7 @@ contract D {
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_2_2.getValue(), stats);
     this.manager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_3_5.getValue(), stats);
-    VMConfig.initAllowMultiSign(1);
+    this.manager.getDynamicPropertiesStore().saveAllowMultiSign(1);
 
     Transaction aTrx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
         "testA", address, abi, aCode, value, fee, consumeUserResourcePercent, null, engeryLimit);

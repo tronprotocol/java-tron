@@ -15,7 +15,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.runtime.config.VMConfig;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FileUtil;
@@ -32,12 +31,10 @@ import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
-import org.tron.protos.Protocol;
 
 
 @Slf4j
@@ -81,7 +78,7 @@ public class UpdateEnergyLimitContractActuatorTest {
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionConsts.ENERGY_LIMIT, stats);
-    VMConfig.initVmHardFork();
+    VMConfig.initVmHardFork(true);
   }
 
   /**
