@@ -141,7 +141,7 @@ public class EnergyProcessorTest {
 
     // Test resource usage auto reply
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = dbManager.getHeadSlot();
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageTime(now);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyAverageUsage(4000L);
 

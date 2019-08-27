@@ -1,4 +1,5 @@
-  /*
+package org.tron.common.crypto;
+/*
  * Copyright (c) [2016] [ <ether.camp> ]
  * This file is part of the ethereumJ library.
  *
@@ -16,66 +17,64 @@
  * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.tron.common.crypto;
+import static org.tron.common.utils.BIUtil.isLessThan;
+import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
+import static org.tron.common.utils.Commons.computeAddress;
 
-  import static org.tron.common.utils.ByteUtil.bigIntegerToBytes;
-  import static org.tron.common.utils.Commons.computeAddress;
-
-  import java.io.IOException;
-  import java.io.Serializable;
-  import java.math.BigInteger;
-  import java.nio.charset.Charset;
-  import java.security.InvalidKeyException;
-  import java.security.KeyPair;
-  import java.security.KeyPairGenerator;
-  import java.security.PrivateKey;
-  import java.security.Provider;
-  import java.security.PublicKey;
-  import java.security.SecureRandom;
-  import java.security.Signature;
-  import java.security.SignatureException;
-  import java.security.interfaces.ECPrivateKey;
-  import java.security.interfaces.ECPublicKey;
-  import java.security.spec.InvalidKeySpecException;
-  import java.util.Arrays;
-  import javax.annotation.Nullable;
-  import javax.crypto.KeyAgreement;
-  import lombok.extern.slf4j.Slf4j;
-  import org.spongycastle.asn1.ASN1InputStream;
-  import org.spongycastle.asn1.ASN1Integer;
-  import org.spongycastle.asn1.DLSequence;
-  import org.spongycastle.asn1.sec.SECNamedCurves;
-  import org.spongycastle.asn1.x9.X9ECParameters;
-  import org.spongycastle.asn1.x9.X9IntegerConverter;
-  import org.spongycastle.crypto.agreement.ECDHBasicAgreement;
-  import org.spongycastle.crypto.digests.SHA256Digest;
-  import org.spongycastle.crypto.engines.AESEngine;
-  import org.spongycastle.crypto.modes.SICBlockCipher;
-  import org.spongycastle.crypto.params.ECDomainParameters;
-  import org.spongycastle.crypto.params.ECPrivateKeyParameters;
-  import org.spongycastle.crypto.params.ECPublicKeyParameters;
-  import org.spongycastle.crypto.params.KeyParameter;
-  import org.spongycastle.crypto.params.ParametersWithIV;
-  import org.spongycastle.crypto.signers.ECDSASigner;
-  import org.spongycastle.crypto.signers.HMacDSAKCalculator;
-  import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
-  import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-  import org.spongycastle.jce.spec.ECParameterSpec;
-  import org.spongycastle.jce.spec.ECPrivateKeySpec;
-  import org.spongycastle.jce.spec.ECPublicKeySpec;
-  import org.spongycastle.math.ec.ECAlgorithms;
-  import org.spongycastle.math.ec.ECCurve;
-  import org.spongycastle.math.ec.ECPoint;
-  import org.spongycastle.util.BigIntegers;
-  import org.spongycastle.util.encoders.Base64;
-  import org.spongycastle.util.encoders.Hex;
-  import org.tron.common.crypto.jce.ECKeyAgreement;
-  import org.tron.common.crypto.jce.ECKeyFactory;
-  import org.tron.common.crypto.jce.ECKeyPairGenerator;
-  import org.tron.common.crypto.jce.ECSignatureFactory;
-  import org.tron.common.crypto.jce.TronCastleProvider;
-  import org.tron.common.utils.BIUtil;
-  import org.tron.common.utils.ByteUtil;
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.security.InvalidKeyException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
+import javax.annotation.Nullable;
+import javax.crypto.KeyAgreement;
+import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.asn1.ASN1InputStream;
+import org.spongycastle.asn1.ASN1Integer;
+import org.spongycastle.asn1.DLSequence;
+import org.spongycastle.asn1.sec.SECNamedCurves;
+import org.spongycastle.asn1.x9.X9ECParameters;
+import org.spongycastle.asn1.x9.X9IntegerConverter;
+import org.spongycastle.crypto.agreement.ECDHBasicAgreement;
+import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.engines.AESEngine;
+import org.spongycastle.crypto.modes.SICBlockCipher;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.crypto.params.KeyParameter;
+import org.spongycastle.crypto.params.ParametersWithIV;
+import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.HMacDSAKCalculator;
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
+import org.spongycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.spongycastle.jce.spec.ECParameterSpec;
+import org.spongycastle.jce.spec.ECPrivateKeySpec;
+import org.spongycastle.jce.spec.ECPublicKeySpec;
+import org.spongycastle.math.ec.ECAlgorithms;
+import org.spongycastle.math.ec.ECCurve;
+import org.spongycastle.math.ec.ECPoint;
+import org.spongycastle.util.BigIntegers;
+import org.spongycastle.util.encoders.Base64;
+import org.spongycastle.util.encoders.Hex;
+import org.tron.common.crypto.jce.ECKeyAgreement;
+import org.tron.common.crypto.jce.ECKeyFactory;
+import org.tron.common.crypto.jce.ECKeyPairGenerator;
+import org.tron.common.crypto.jce.ECSignatureFactory;
+import org.tron.common.crypto.jce.TronCastleProvider;
+import org.tron.common.utils.ByteUtil;
 
 @Slf4j(topic = "crypto")
 public class ECKey implements Serializable {
@@ -1102,17 +1101,17 @@ public class ECKey implements Serializable {
         return false;
       }
 
-      if (BIUtil.isLessThan(r, BigInteger.ONE)) {
+      if (isLessThan(r, BigInteger.ONE)) {
         return false;
       }
-      if (BIUtil.isLessThan(s, BigInteger.ONE)) {
+      if (isLessThan(s, BigInteger.ONE)) {
         return false;
       }
 
-      if (!BIUtil.isLessThan(r, SECP256K1N)) {
+      if (!isLessThan(r, SECP256K1N)) {
         return false;
       }
-      return BIUtil.isLessThan(s, SECP256K1N);
+      return isLessThan(s, SECP256K1N);
     }
 
     public static ECDSASignature decodeFromDER(byte[] bytes) {

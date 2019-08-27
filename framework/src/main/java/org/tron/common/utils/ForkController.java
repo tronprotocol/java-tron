@@ -32,7 +32,7 @@ public class ForkController extends ForkUtils {
   }
 
   public synchronized void update(BlockCapsule blockCapsule) {
-    List<ByteString> witnesses = manager.getWitnessController().getActiveWitnesses();
+    List<ByteString> witnesses = manager.getActiveWitnesses();
     ByteString witness = blockCapsule.getWitnessAddress();
     int slot = witnesses.indexOf(witness);
     if (slot < 0) {

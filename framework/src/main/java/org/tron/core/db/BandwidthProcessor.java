@@ -32,7 +32,7 @@ public class BandwidthProcessor extends ResourceProcessor {
 
   @Override
   public void updateUsage(AccountCapsule accountCapsule) {
-    long now = dbManager.getWitnessController().getHeadSlot();
+    long now = dbManager.getHeadSlot();
     updateUsage(accountCapsule, now);
   }
 
@@ -93,7 +93,7 @@ public class BandwidthProcessor extends ResourceProcessor {
       if (accountCapsule == null) {
         throw new ContractValidateException("account not exists");
       }
-      long now = dbManager.getWitnessController().getHeadSlot();
+      long now = dbManager.getHeadSlot();
 
       if (contractCreateNewAccount(contract)) {
         consumeForCreateNewAccount(accountCapsule, bytesSize, now, trace);

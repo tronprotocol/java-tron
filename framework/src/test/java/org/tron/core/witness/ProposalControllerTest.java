@@ -18,6 +18,8 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.consensus.ConsensusService;
+import org.tron.core.consensus.ProposalController;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal;
@@ -25,7 +27,8 @@ import org.tron.protos.Protocol.Proposal.State;
 
 public class ProposalControllerTest {
 
-  private static Manager dbManager = new Manager();
+  private static Manager dbManager;
+  private static ConsensusService consensusService;
   private static TronApplicationContext context;
   private static String dbPath = "output_proposal_controller_test";
   private static ProposalController proposalController;
@@ -38,6 +41,8 @@ public class ProposalControllerTest {
   @BeforeClass
   public static void init() {
     dbManager = context.getBean(Manager.class);
+    consensusService = context.getBean(ConsensusService.class);
+    consensusService.start();
     proposalController = ProposalController
         .createInstance(dbManager);
   }

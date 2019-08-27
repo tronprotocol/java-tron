@@ -134,9 +134,7 @@ public class EnergyProcessor extends ResourceProcessor {
   }
 
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
-
     long now = getHeadSlot();
-
     long energyUsage = accountCapsule.getEnergyUsage();
     long latestConsumeTime = accountCapsule.getAccountResource().getLatestConsumeTimeForEnergy();
     long energyLimit = calculateGlobalEnergyLimit(accountCapsule);

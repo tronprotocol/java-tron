@@ -23,7 +23,6 @@ import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.utils.Base58;
 
 //import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 
