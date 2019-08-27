@@ -9,18 +9,20 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
+import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.witness.WitnessController;
 import org.tron.protos.Protocol.Account;
 
 public class ManagerForTest {
 
   private Manager dbManager;
+  private DposSlot dposSlot;
 
-  public ManagerForTest(Manager dbManager) {
+  public ManagerForTest(Manager dbManager, DposSlot dposSlot) {
     this.dbManager = dbManager;
+    this.dposSlot = dposSlot;
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {
@@ -34,7 +36,7 @@ public class ManagerForTest {
 
               WitnessCapsule witnessCapsule = new WitnessCapsule(address);
               dbManager.getWitnessStore().put(address.toByteArray(), witnessCapsule);
-              dbManager.getWitnessController().addWitness(address);
+              dbManager.addWitness(address);
 
               AccountCapsule accountCapsule =
                   new AccountCapsule(Account.newBuilder().setAddress(address).build());
@@ -46,8 +48,7 @@ public class ManagerForTest {
   }
 
   private ByteString getWitnessAddress(long time) {
-    WitnessController witnessController = dbManager.getWitnessController();
-    return witnessController.getScheduledWitness(witnessController.getSlotAtTime(time));
+    return dposSlot.getScheduledWitness(dposSlot.getSlot(time));
   }
 
   public BlockCapsule createTestBlockCapsule(long time,

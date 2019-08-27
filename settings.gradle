@@ -3,4 +3,4 @@ include 'framework'
 include 'chainbase'
 include 'protocol'
 include 'actuator'
-
+include 'consensus'

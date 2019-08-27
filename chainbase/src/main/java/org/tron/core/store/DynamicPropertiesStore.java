@@ -1366,7 +1366,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
-
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1668,7 +1667,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
+        "Update nextMaintenanceTime: currentTime: {}, blockTime: {}, nextTime: {}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );

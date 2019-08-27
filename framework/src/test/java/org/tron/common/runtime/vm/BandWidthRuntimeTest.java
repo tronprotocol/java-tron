@@ -124,7 +124,7 @@ public class BandWidthRuntimeTest {
         AccountType.Normal,
         totalBalance);
     accountCapsule3.setNetUsage(5000L);
-    accountCapsule3.setLatestConsumeFreeTime(dbManager.getWitnessController().getHeadSlot());
+    accountCapsule3.setLatestConsumeFreeTime(dbManager.getHeadSlot());
     accountCapsule3.setFrozenForEnergy(10_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Commons.decodeFromBase58Check(TriggerOwnerTwoAddress), accountCapsule3);

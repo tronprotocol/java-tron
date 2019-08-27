@@ -43,7 +43,6 @@ public class PeerServer {
       b.group(bossGroup, workerGroup);
       b.channel(NioServerSocketChannel.class);
 
-      b.option(ChannelOption.SO_KEEPALIVE, true);
       b.option(ChannelOption.MESSAGE_SIZE_ESTIMATOR, DefaultMessageSizeEstimator.DEFAULT);
       b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.args.getNodeConnectionTimeout());
 

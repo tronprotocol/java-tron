@@ -24,11 +24,14 @@ import static org.tron.common.utils.Hash.sha3;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.core.config.args.Args;
 
 public class Node implements Serializable {
 
@@ -39,6 +42,12 @@ public class Node implements Serializable {
   private String host;
 
   private int port;
+
+  @Getter
+  private int bindPort;
+
+  @Setter
+  private int p2pVersion;
 
   private boolean isFakeNodeId = false;
 
@@ -85,6 +94,8 @@ public class Node implements Serializable {
       this.id = Hex.decode(uri.getUserInfo());
       this.host = uri.getHost();
       this.port = uri.getPort();
+      this.bindPort = uri.getPort();
+      this.isFakeNodeId = true;
     } catch (URISyntaxException e) {
       throw new RuntimeException("expecting URL in the format enode://PUBKEY@HOST:PORT", e);
     }
@@ -96,6 +107,20 @@ public class Node implements Serializable {
     }
     this.host = host;
     this.port = port;
+    this.isFakeNodeId = true;
+  }
+
+  public Node(byte[] id, String host, int port, int bindPort) {
+    if (id != null) {
+      this.id = id.clone();
+    }
+    this.host = host;
+    this.port = port;
+    this.bindPort = bindPort;
+  }
+
+  public boolean isConnectible() {
+    return port == bindPort && p2pVersion == Args.getInstance().getNodeP2pVersion();
   }
 
   public String getHexId() {

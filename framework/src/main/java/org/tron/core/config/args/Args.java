@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import static java.lang.Math.max;
 import static java.lang.System.exit;
+import static org.tron.consensus.base.Constant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -853,7 +854,7 @@ public class Args {
         config.getLong("node.rpc.maxConnectionIdleInMillis") : Long.MAX_VALUE;
 
     INSTANCE.blockProducedTimeOut = config.hasPath("node.blockProducedTimeOut") ?
-        config.getInt("node.blockProducedTimeOut") : ChainConstant.BLOCK_PRODUCED_TIME_OUT;
+        config.getInt("node.blockProducedTimeOut") : BLOCK_PRODUCE_TIMEOUT_PERCENT;
 
     INSTANCE.maxHttpConnectNumber = config.hasPath("node.maxHttpConnectNumber") ?
         config.getInt("node.maxHttpConnectNumber") : NodeConstant.MAX_HTTP_CONNECT_NUMBER;

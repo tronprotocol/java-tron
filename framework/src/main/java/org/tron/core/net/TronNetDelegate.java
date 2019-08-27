@@ -1,5 +1,7 @@
 package org.tron.core.net;
 
+import static org.tron.consensus.base.Constant.BLOCK_PRODUCED_INTERVAL;
+
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -9,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.backup.BackupServer;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.ChannelManager;
 import org.tron.common.overlay.server.SyncPool;
@@ -17,7 +20,6 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
-import org.tron.core.db.WitnessScheduleStore;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -45,6 +47,7 @@ import org.tron.core.net.message.BlockMessage;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j(topic = "net")
@@ -66,6 +69,11 @@ public class TronNetDelegate {
   @Getter
   private Object blockLock = new Object();
 
+  @Autowired
+  private BackupServer backupServer;
+
+  private volatile boolean backupServerStartFlag;
+
   private int blockIdCacheSize = 100;
 
   private Queue<BlockId> freshBlockId = new ConcurrentLinkedQueue<BlockId>() {
@@ -78,7 +86,7 @@ public class TronNetDelegate {
     }
   };
 
-  public void trustNode (PeerConnection peer) {
+  public void trustNode(PeerConnection peer) {
     channelManager.getTrustNodes().put(peer.getInetAddress(), peer.getNode());
   }
 
@@ -188,6 +196,11 @@ public class TronNetDelegate {
           dbManager.pushBlock(block);
           freshBlockId.add(block.getBlockId());
           logger.info("Success process block {}.", block.getBlockId().getString());
+          if (!backupServerStartFlag
+              && System.currentTimeMillis() - block.getTimeStamp() < BLOCK_PRODUCED_INTERVAL) {
+            backupServerStartFlag = true;
+            backupServer.initServer();
+          }
         }
       } catch (ValidateSignatureException
           | ContractValidateException
