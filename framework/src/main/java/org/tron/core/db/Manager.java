@@ -533,7 +533,7 @@ public class Manager {
       triggerCapsuleProcessThread.start();
     }
     //initStoreFactory
-    prepareStroeFactory();
+    prepareStoreFactory();
   }
 
   public BlockId getGenesisBlockId() {
@@ -2043,7 +2043,7 @@ public class Manager {
     }
   }
 
-  private void prepareStroeFactory() {
+  private void prepareStoreFactory() {
     StoreFactory.getInstance().setAccountStore(accountStore)
         .setAccountIdIndexStore(accountIdIndexStore)
         .setAccountIndexStore(accountIndexStore)
@@ -2064,6 +2064,7 @@ public class Manager {
         .setStorageRowStore(storageRowStore)
         .setBlockStore(blockStore)
         .setKhaosDb(khaosDb)
-        .setBlockIndexStore(blockIndexStore);
+        .setBlockIndexStore(blockIndexStore)
+        .setMerkleContainer(merkleContainer);
   }
 }

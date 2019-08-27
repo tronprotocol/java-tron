@@ -2,6 +2,7 @@ package org.tron.core.store;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.KhaosDatabase;
@@ -153,4 +154,11 @@ public class StoreFactory {
         add(blockIndexStore);
         return this;
     }
- }
+
+    public StoreFactory setMerkleContainer(MerkleContainer merkleContainer) {
+        add(merkleContainer);
+        return this;
+    }
+
+
+}
