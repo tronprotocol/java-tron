@@ -1,21 +1,13 @@
 package org.tron.common.logsfilter.capsule;
 
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
-import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
-
 import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.InternalTransactionPojo;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.runtime.vm.program.InternalTransaction;
@@ -27,6 +19,11 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
+
+import java.util.*;
+
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferAssetContract;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 @Slf4j
 public class TransactionLogTriggerCapsule extends TriggerCapsule {
@@ -136,7 +133,17 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       ProgramResult programResult = trxTrace.getRuntime().getResult();
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
-
+      List<Map<String, String>> triggerList = new ArrayList<Map<String, String>>();
+      for (ContractTrigger trigger : trxTrace.getRuntimeResult().getTriggerList()) {
+        HashMap<String, String> hash1 = new HashMap<String, String>();
+        hash1.put("transactionId", trigger.getTransactionId());
+        hash1.put("callerAddress", trigger.getCallerAddress());
+        hash1.put("originAddress", trigger.getOriginAddress());
+        hash1.put("contractAddress", trigger.getContractAddress());
+        hash1.put("creatorAddress", trigger.getCreatorAddress());
+        triggerList.add(hash1);
+      }
+      transactionLogTrigger.setTriggerList(triggerList);
       if (Objects.nonNull(contractResult) && contractResult.size() > 0) {
         transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
       }
