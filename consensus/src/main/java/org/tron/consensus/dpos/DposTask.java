@@ -1,6 +1,6 @@
 package org.tron.consensus.dpos;
 
-import static org.tron.consensus.base.Constant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import com.google.protobuf.ByteString;
 import lombok.Setter;
@@ -112,11 +112,11 @@ public class DposTask {
       dposService.getBlockHandle().complete(sBlock);
 
       BlockHeader.raw raw = sBlock.getBlockHeader().getRawData();
-      logger.info("Produce block successfully, num:{}, time:{}, witness:{}, hash:{} parentHash:{}",
+      logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
           raw.getNumber(),
           new DateTime(raw.getTimestamp()),
           ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
-          DposService.getBlockHash(sBlock),
+          new Sha256Hash(raw.getNumber(), Sha256Hash.of(raw.toByteArray())),
           ByteArray.toHexString(raw.getParentHash().toByteArray()));
     }
 
