@@ -178,7 +178,7 @@ public class TransferToAccountTest {
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getENERGY_CREATE_ACCOUNT());
+        EnergyCost.getInstance().getNEW_ACCT_CALL());
     //5. Test triggerTrx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
@@ -211,8 +211,52 @@ public class TransferToAccountTest {
 
     //7.test energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        EnergyCost.getInstance().getENERGY_CREATE_ACCOUNT());
+        EnergyCost.getInstance().getNEW_ACCT_CALL());
 
+    //8.test transfer to itself
+    selectorStr = "transferTo(address,uint256)";
+    input = Hex.decode(AbiUtil
+        .parseMethod(selectorStr,
+            "\"" + Wallet.encode58Check(contractAddress) + "\"" + ",9"));
+    transaction = TvmTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            input,
+            triggerCallValue, feeLimit, 0, 0);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+    Assert.assertTrue(runtime.getRuntimeError().contains("failed"));
+
+    // 9.Test transferToken Big Amount
+
+    selectorStr = "transferTokenTo(address,trcToken,uint256)";
+    ecKey = new ECKey(Utils.getRandom());
+    String params = "000000000000000000000000548794500882809695a8a687866e76d4271a1abc" +
+        Hex.toHexString(new DataWord(id).getData()) +
+        "0000000000000000000000000000000011111111111111111111111111111111";
+    byte[] triggerData = TvmTestUtils.parseAbi(selectorStr, params);
+
+    transaction = TvmTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData,
+            triggerCallValue, feeLimit, tokenValue, id);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    Assert.assertEquals("endowment out of long range", runtime.getRuntimeError());
+
+    // 10.Test transferToken bad format address
+    selectorStr = "transferTokenTo(address,trcToken,uint256)";
+    ecKey = new ECKey(Utils.getRandom());
+    params = "0000000000000000000000000000000000000000000000000000000000000001" +
+        Hex.toHexString(new DataWord(id).getData()) +
+        "0000000000000000000000000000000000000000000000000000000000000001";
+    triggerData = TvmTestUtils.parseAbi(selectorStr, params);
+
+    transaction = TvmTestUtils
+        .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
+            triggerData,
+            triggerCallValue, feeLimit, tokenValue, id);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+
+    Assert.assertEquals(runtime.getRuntimeError(), "endowment out of long range");
 
   }
 

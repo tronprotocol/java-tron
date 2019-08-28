@@ -38,7 +38,6 @@ public class EnergyCost {
   private final int STIPEND_CALL = 2300;
   private final int VT_CALL = 9000;  //value transfer call
   private final int NEW_ACCT_CALL = 25000;  //new account call
-  private final int ENERGY_CREATE_ACCOUNT = 10000; //create acount fee after solidity059
   private final int MEMORY = 3;
   private final int SUICIDE_REFUND = 24000;
   private final int QUAD_COEFF_DIV = 512;
@@ -275,10 +274,6 @@ public class EnergyCost {
 
   public int getEXT_CODE_HASH() {
     return EXT_CODE_HASH;
-  }
-
-  public int getENERGY_CREATE_ACCOUNT() {
-    return ENERGY_CREATE_ACCOUNT;
   }
 
 
