@@ -178,7 +178,7 @@ public class TransferToAccountTest {
     long energyCostWhenNonExist = runtime.getResult().getEnergyUsed();
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        VMConstant.ENERGY_CREATE_ACCOUNT);
+        EnergyCost.getInstance().getENERGY_CREATE_ACCOUNT());
     //5. Test triggerTrx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
@@ -211,7 +211,7 @@ public class TransferToAccountTest {
 
     //7.test energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
-        VMConstant.ENERGY_CREATE_ACCOUNT);
+        EnergyCost.getInstance().getENERGY_CREATE_ACCOUNT());
 
 
   }
