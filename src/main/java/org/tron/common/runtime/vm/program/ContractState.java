@@ -55,8 +55,8 @@ public class ContractState implements Deposit, ProgramListenerAware {
   }
 
   @Override
-  public AccountCapsule createAccountWithPermisson(byte[] address, AccountType type) {
-    return deposit.createAccountWithPermisson(address, type);
+  public AccountCapsule createNormalAccount(byte[] address) {
+    return deposit.createNormalAccount(address);
   }
 
   @Override

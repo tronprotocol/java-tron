@@ -80,7 +80,7 @@ public class DepositImpl implements Deposit {
   }
 
   @Override
-  public AccountCapsule createAccountWithPermisson(byte[] address, AccountType type) {
+  public AccountCapsule createNormalAccount(byte[] address) {
     boolean withDefaultPermission =
         dbManager.getDynamicPropertiesStore().getAllowMultiSign() == 1;
     Key key = new Key(address);

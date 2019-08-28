@@ -1419,9 +1419,6 @@ public class Program {
     // Charge for endowment - is not reversible by rollback
     if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && msg.getEndowment().value().longValueExact() > 0) {
-
-      createAccountIfNotExist(deposit, contextAddress);
-
       if (!isTokenTransfer) {
         try {
           transfer(deposit, senderAddress, contextAddress,
@@ -1788,7 +1785,7 @@ public class Program {
       //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
       AccountCapsule sender = deposit.getAccount(contextAddress);
       if (sender == null) {
-        deposit.createAccountWithPermisson(contextAddress, AccountType.Normal);
+        deposit.createNormalAccount(contextAddress);
       }
     }
   }

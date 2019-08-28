@@ -18,7 +18,7 @@ public interface Deposit {
 
   Manager getDbManager();
 
-  AccountCapsule createAccountWithPermisson(byte[] address, AccountType type);
+  AccountCapsule createNormalAccount(byte[] address);
 
   AccountCapsule createAccount(byte[] address, AccountType type);
 
