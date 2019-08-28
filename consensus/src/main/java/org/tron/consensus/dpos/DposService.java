@@ -17,7 +17,6 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
@@ -168,7 +167,4 @@ public class DposService implements ConsensusInterface {
         .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
-  public static Sha256Hash getBlockHash(Block block) {
-    return Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray());
-  }
 }
