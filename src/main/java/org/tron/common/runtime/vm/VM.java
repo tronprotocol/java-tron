@@ -223,14 +223,10 @@ public class VM {
 
           //check to see if account does not exist and is not a precompiled contract
           if (op == CALL || op == CALLTOKEN) {
-              if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
-                if (VMConfig.allowTvmSolidity059()) {
-                  energyCost += energyCosts.getENERGY_CREATE_ACCOUNT();
-                } else {
-                  energyCost += energyCosts.getNEW_ACCT_CALL();
-                }
-              }
+            if (isDeadAccount(program, callAddressWord) && !value.isZero()) {
+              energyCost += energyCosts.getNEW_ACCT_CALL();
             }
+          }
 
           // TODO #POC9 Make sure this is converted to BigInteger (256num support)
           if (!value.isZero()) {
@@ -1431,7 +1427,6 @@ public class VM {
         default:
           break;
       }
-      logger.info("{},{}", op, hint);
       program.setPreviouslyExecutedOp(op.val());
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
