@@ -54,9 +54,9 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
       transactionCapsule = wallet
           .createTransactionCapsule(builder.build(), ContractType.TransferContract);
       transactionCapsule.sign(privateKey);
-      GrpcAPI.Return retur = wallet.broadcastTransaction(transactionCapsule.getInstance());
+      GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
       responseBuild.setTransaction(transactionCapsule.getInstance());
-      responseBuild.setResult(retur);
+      responseBuild.setResult(result);
       response.getWriter().println(Util.printEasyTransferResponse(responseBuild.build(), visible));
     } catch (Exception e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
