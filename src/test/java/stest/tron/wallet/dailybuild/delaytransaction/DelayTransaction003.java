@@ -128,7 +128,6 @@ public class DelayTransaction003 {
     final Long receiverAssetBalanceInDelayTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,receiverassetKey,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);
     Long receiverAssetBalanceAfterTransferAsset = PublicMethed
@@ -168,7 +167,6 @@ public class DelayTransaction003 {
     //Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
     // assetOwnerKey,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long ownerAssetBalanceAfterTransferAsset = PublicMethed
         .getAssetBalanceByAssetId(assetId,assetOwnerKey,blockingStubFull);

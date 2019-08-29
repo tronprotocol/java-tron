@@ -72,7 +72,6 @@ public class TestMutiSignStress {
         blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     ECKey ecKey1 = new ECKey(Utils.getRandom());
     byte[] manager1Address = ecKey1.getAddress();
     String manager1Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
@@ -108,7 +107,6 @@ public class TestMutiSignStress {
     ownerKeyString1[0] = ownerKey;
     ownerKeyString1[1] = manager1Key;
     ownerKeyString1[2] = manager2Key;
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 

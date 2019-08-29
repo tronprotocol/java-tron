@@ -110,7 +110,6 @@ public class MultiSign13 {
             testKey002, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -723,7 +722,6 @@ public class MultiSign13 {
             ByteString.copyFrom(ownerAddress),
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -798,7 +796,6 @@ public class MultiSign13 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1000000, fromAddress,
         testKey002, blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();

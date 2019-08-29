@@ -4804,8 +4804,6 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
-    System.out.println("hexstring：" + ByteArray.toHexString(input));
-
     Contract.TriggerSmartContract.Builder builder = Contract.TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
@@ -5773,9 +5771,46 @@ public class PublicMethed {
   public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
-//    System.out.println(balance);
     sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
-//    System.out
-//        .println(PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
+  }
+
+  public static String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
+  }
+
+  public static String bytes32ToString(byte[] bytes) {
+    if (bytes == null) {
+      return "null";
+    }
+    int iMax = bytes.length - 1;
+    if (iMax == -1) {
+      return "";
+    }
+
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; ; i++) {
+      b.append(bytes[i]);
+      if (i == iMax) {
+        return b.toString();
+      }
+    }
   }
 }

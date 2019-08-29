@@ -1736,7 +1736,7 @@ public class HttpMethed {
     Integer currentBlockNum = Integer.parseInt(responseContent.get("number").toString());
     Integer nextBlockNum = 0;
     Integer times = 0;
-    while (nextBlockNum <= currentBlockNum && times++ <= 3) {
+    while (nextBlockNum <= currentBlockNum + 1 && times++ <= 10) {
       response = HttpMethed.getNowBlock(httpNode);
       responseContent = HttpMethed.parseResponseContent(response);
       responseContent = HttpMethed.parseStringContent(responseContent.get("block_header")
@@ -1744,7 +1744,7 @@ public class HttpMethed {
       responseContent = HttpMethed.parseStringContent(responseContent.get("raw_data").toString());
       nextBlockNum = Integer.parseInt(responseContent.get("number").toString());
       try {
-        Thread.sleep(3500);
+        Thread.sleep(1200);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

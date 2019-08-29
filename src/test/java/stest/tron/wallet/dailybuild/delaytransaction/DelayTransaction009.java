@@ -104,7 +104,6 @@ public class DelayTransaction009 {
         .getBalance();
     Assert.assertTrue(beforeSetAccountIdBalance - balanceInDelay == delayTransactionFee);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     getAccountId = new String(PublicMethed.queryAccount(doSetIdKey,blockingStubFull)
         .getAccountId().toByteArray(), Charset.forName("UTF-8"));
@@ -148,7 +147,6 @@ public class DelayTransaction009 {
         doSetIdAddress,doSetIdKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,doSetIdAddress,
         doSetIdKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     final Long afterUpdateBalance = PublicMethed.queryAccount(doSetIdKey,blockingStubFull)

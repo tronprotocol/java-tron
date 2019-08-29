@@ -113,7 +113,6 @@ public class DelayTransaction004 {
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == oldContractPercent);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     logger.info("newContractPercent: " + smartContract.getConsumeUserResourcePercent());
     Assert.assertTrue(smartContract.getConsumeUserResourcePercent() == newContractPercent);
@@ -155,7 +154,6 @@ public class DelayTransaction004 {
         smartContractOwnerAddress,smartContractOwnerKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,smartContractOwnerAddress,
         smartContractOwnerKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
