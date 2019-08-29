@@ -1840,6 +1840,7 @@ public class Manager {
         .setStorageRowStore(storageRowStore)
         .setBlockStore(blockStore)
         .setKhaosDb(khaosDb)
-        .setBlockIndexStore(blockIndexStore);
+        .setBlockIndexStore(blockIndexStore)
+        .setMerkleContainer(merkleContainer);;
   }
 }

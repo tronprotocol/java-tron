@@ -30,6 +30,8 @@ import org.tron.protos.Protocol.Transaction.Contract;
 @Slf4j(topic = "actuator")
 public class ActuatorCreator  {
 
+  private static ActuatorCreator INSTANCE;
+
   private AccountStore accountStore;
 
   private AccountIdIndexStore accountIdIndexStore;
@@ -67,8 +69,15 @@ public class ActuatorCreator  {
 
   private MerkleContainer merkleContainer;
 
+  public static ActuatorCreator getINSTANCE() {
+    if (INSTANCE == null) {
+      INSTANCE = new ActuatorCreator(StoreFactory.getInstance());
+    }
+    return INSTANCE;
+  }
 
-  public ActuatorCreator(StoreFactory storeFactory) {
+
+  private ActuatorCreator(StoreFactory storeFactory) {
     try {
       accountStore = storeFactory.getStore(AccountStore.class);
       accountIdIndexStore = storeFactory.getStore(AccountIdIndexStore.class);

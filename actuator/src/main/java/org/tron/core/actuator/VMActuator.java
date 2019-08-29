@@ -39,15 +39,8 @@ import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
-import org.tron.core.vm.program.Program.BadJumpDestinationException;
-import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
-import org.tron.core.vm.program.Program.OutOfEnergyException;
-import org.tron.core.vm.program.Program.OutOfMemoryException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
-import org.tron.core.vm.program.Program.PrecompiledContractException;
-import org.tron.core.vm.program.Program.StackTooLargeException;
-import org.tron.core.vm.program.Program.StackTooSmallException;
 import org.tron.core.vm.program.Program.TransferException;
 import org.tron.core.vm.program.ProgramPrecompile;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
@@ -244,7 +237,6 @@ public class VMActuator implements Actuator2 {
     }
     //use program returned fill context
     context.setProgramResult(result);
-    setResultCode(context.getProgramResult());
 
     if (VMConfig.vmTrace() && program != null) {
       String traceContent = program.getTrace()
@@ -691,61 +683,6 @@ public class VMActuator implements Actuator2 {
   private boolean isCheckTransaction() {
     return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
         .getWitnessSignature().isEmpty();
-  }
-
-
-  public void setResultCode(ProgramResult result) {
-    RuntimeException exception = result.getException();
-    if (Objects.isNull(exception) && StringUtils
-        .isEmpty(result.getRuntimeError()) && !result.isRevert()) {
-      result.setResultCode(contractResult.SUCCESS);
-      return;
-    }
-    if (result.isRevert()) {
-      result.setResultCode(contractResult.REVERT);
-      return;
-    }
-    if (exception instanceof IllegalOperationException) {
-      result.setResultCode(contractResult.ILLEGAL_OPERATION);
-      return;
-    }
-    if (exception instanceof OutOfEnergyException) {
-      result.setResultCode(contractResult.OUT_OF_ENERGY);
-      return;
-    }
-    if (exception instanceof BadJumpDestinationException) {
-      result.setResultCode(contractResult.BAD_JUMP_DESTINATION);
-      return;
-    }
-    if (exception instanceof OutOfTimeException) {
-      result.setResultCode(contractResult.OUT_OF_TIME);
-      return;
-    }
-    if (exception instanceof OutOfMemoryException) {
-      result.setResultCode(contractResult.OUT_OF_MEMORY);
-      return;
-    }
-    if (exception instanceof PrecompiledContractException) {
-      result.setResultCode(contractResult.PRECOMPILED_CONTRACT);
-      return;
-    }
-    if (exception instanceof StackTooSmallException) {
-      result.setResultCode(contractResult.STACK_TOO_SMALL);
-      return;
-    }
-    if (exception instanceof StackTooLargeException) {
-      result.setResultCode(contractResult.STACK_TOO_LARGE);
-      return;
-    }
-    if (exception instanceof JVMStackOverFlowException) {
-      result.setResultCode(contractResult.JVM_STACK_OVER_FLOW);
-      return;
-    }
-    if (exception instanceof Program.TransferException) {
-      result.setResultCode(contractResult.TRANSFER_FAILED);
-      return;
-    }
-    result.setResultCode(contractResult.UNKNOWN);
   }
 
 

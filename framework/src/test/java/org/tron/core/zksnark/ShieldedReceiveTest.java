@@ -40,7 +40,7 @@ import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -90,6 +90,11 @@ import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
@@ -98,11 +103,6 @@ import org.tron.protos.contract.ShieldContract.PedersenHash;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
-import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.AccountType;
-import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract.ContractType;
-import org.tron.protos.Protocol.TransactionSign;
 
 @Slf4j
 public class ShieldedReceiveTest {
@@ -295,7 +295,7 @@ public class ShieldedReceiveTest {
     //online
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -638,7 +638,8 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator
+          .getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertTrue(false);
     } catch (Exception e) {
@@ -679,7 +680,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
 
       Assert.assertTrue(false);
@@ -721,7 +722,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertTrue(false);
     } catch (Exception e) {
@@ -763,7 +764,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertTrue(false);
     } catch (Exception e) {
@@ -805,7 +806,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertTrue(false);
     } catch (Exception e) {
@@ -847,7 +848,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertTrue(false);
     } catch (Exception e) {
@@ -1068,7 +1069,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1097,7 +1098,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1126,7 +1127,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1157,7 +1158,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1188,7 +1189,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1217,7 +1218,7 @@ public class ShieldedReceiveTest {
     updateTotalShieldedPoolValue(builder.getValueBalance());
 
     try {
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1361,7 +1362,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1413,7 +1414,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1499,7 +1500,7 @@ public class ShieldedReceiveTest {
 
     try {
       //valdiate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1750,7 +1751,7 @@ public class ShieldedReceiveTest {
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, hashOfTransaction,
         transactionCapsule);
 
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
     Assert.assertTrue(true);
   }
@@ -1790,7 +1791,7 @@ public class ShieldedReceiveTest {
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, hashOfTransaction,
         transactionCapsule);
 
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
     Assert.assertTrue(true);
   }
@@ -1831,7 +1832,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1877,7 +1878,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
       Assert.assertFalse(true);
     } catch (Exception e) {
@@ -1922,7 +1923,7 @@ public class ShieldedReceiveTest {
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, hashOfTransaction,
         transactionCapsule);
 
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
     Assert.assertTrue(true);
   }
@@ -1962,7 +1963,7 @@ public class ShieldedReceiveTest {
     TransactionCapsule transactionCap = generateTransactionCapsule(builder, ctx, hashOfTransaction,
         transactionCapsule);
 
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate(); //there is hash(transaction) in librustzcashSaplingFinalCheck
     Assert.assertTrue(true);
   }
@@ -2069,7 +2070,7 @@ public class ShieldedReceiveTest {
 
     try {
       //validate
-      List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+      List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0)
           .validate(); //there is getSpendAuthoritySignature in librustzcashSaplingCheckSpend
       Assert.assertFalse(true);
@@ -2144,7 +2145,7 @@ public class ShieldedReceiveTest {
 
     TransactionCapsule transactionCap = new TransactionCapsule(transaction);
     //validate
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate();
     //execute
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
