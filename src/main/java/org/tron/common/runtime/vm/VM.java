@@ -1074,7 +1074,7 @@ public class VM {
         case LOG3:
         case LOG4: {
 
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord address = program.getContractAddress();
@@ -1152,7 +1152,7 @@ public class VM {
         }
         break;
         case SSTORE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1283,7 +1283,7 @@ public class VM {
         }
         break;
         case CREATE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1295,7 +1295,7 @@ public class VM {
         }
         break;
         case CREATE2: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
           DataWord value = program.stackPop();
@@ -1330,7 +1330,7 @@ public class VM {
             value = DataWord.ZERO;
           }
 
-          if (program.isStaticCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
+          if (program.isConstantCall() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
             throw new Program.StaticCallModificationException();
           }
 
@@ -1409,7 +1409,7 @@ public class VM {
           break;
         }
         case SUICIDE: {
-          if (program.isStaticCall()) {
+          if (program.isConstantCall()) {
             throw new Program.StaticCallModificationException();
           }
 
