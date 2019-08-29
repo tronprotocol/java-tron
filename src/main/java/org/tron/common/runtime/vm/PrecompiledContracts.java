@@ -225,7 +225,7 @@ public class PrecompiledContracts {
 
     @Setter
     @Getter
-    private boolean isStaticCall;
+    private boolean isConstantCall;
   }
 
   public static class Identity extends PrecompiledContract {
@@ -666,7 +666,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
       if (data == null || data.length != 2 * DataWord.WORD_SIZE) {
@@ -863,7 +863,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -929,7 +929,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1005,7 +1005,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1090,7 +1090,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 

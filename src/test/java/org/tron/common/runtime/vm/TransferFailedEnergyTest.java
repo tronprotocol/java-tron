@@ -218,6 +218,7 @@ contract Caller {
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
+    VMConfig.initAllowTvmSolidity059(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -254,6 +255,7 @@ contract Caller {
       throws ContractExeException, ReceiptCheckErrException, VMIllegalException, ContractValidateException {
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(0);
+    VMConfig.initAllowTvmSolidity059(0);
 
     String contractName = "EnergyOfTransferFailedTest";
     byte[] address = Hex.decode(OWNER_ADDRESS);

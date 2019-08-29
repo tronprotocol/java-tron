@@ -750,7 +750,7 @@ public class Program {
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
-          contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
+          contextBalance, data, deposit, msg.getType().callIsStatic() || isConstantCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config,
@@ -1045,8 +1045,8 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() {
-    return invoke.isStaticCall();
+  public boolean isConstantCall() {
+    return invoke.isConstantCall();
   }
 
   public ProgramResult getResult() {
@@ -1451,7 +1451,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setStaticCall(isStaticCall());
+      contract.setConstantCall(isConstantCall());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
       if (out.getLeft()) { // success
