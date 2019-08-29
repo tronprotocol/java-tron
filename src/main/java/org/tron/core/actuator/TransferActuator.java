@@ -92,6 +92,12 @@ public class TransferActuator extends AbstractActuator {
     byte[] ownerAddress = transferContract.getOwnerAddress().toByteArray();
     long amount = transferContract.getAmount();
 
+    //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
+    if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+        && dbManager.getContractStore().get(toAddress) != null) {
+      throw new ContractValidateException("Cannot transfer trx to smartContract.");
+    }
+
     if (!Wallet.addressValid(ownerAddress)) {
       throw new ContractValidateException("Invalid ownerAddress");
     }
