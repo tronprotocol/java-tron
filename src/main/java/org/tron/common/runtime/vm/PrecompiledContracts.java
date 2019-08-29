@@ -44,6 +44,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -59,6 +60,7 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
@@ -226,6 +228,21 @@ public class PrecompiledContracts {
     @Setter
     @Getter
     private boolean isStaticCall;
+
+    @Getter
+    @Setter
+    private long vmShouldEndInUs;
+
+
+    public long getCPUTimeLeftInUs() {
+      long vmNowInUs = System.nanoTime() / 1000;
+      long left = getVmShouldEndInUs() - vmNowInUs;
+      if (left <= 0) {
+        throw Program.Exception.notEnoughTime("call");
+      } else {
+        return left;
+      }
+    }
   }
 
   public static class Identity extends PrecompiledContract {
@@ -1314,6 +1331,8 @@ public class PrecompiledContracts {
   public static class MultiValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
+    private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
+    private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     static {
       workers = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() / 2);
@@ -1321,21 +1340,29 @@ public class PrecompiledContracts {
 
     @Data
     @AllArgsConstructor
-    private static class ValidateSignTask implements Callable<Boolean> {
+    private static class ValidateSignTask implements Callable<ValidateSignResult> {
 
       private CountDownLatch countDownLatch;
       private byte[] hash;
       private byte[] signature;
       private byte[] address;
+      private int nonce;
 
       @Override
-      public Boolean call() {
+      public ValidateSignResult call() {
         try {
-          return validSign(this.signature, this.hash, this.address);
+          return new ValidateSignResult(validSign(this.signature, this.hash, this.address), nonce);
         } finally {
           countDownLatch.countDown();
         }
       }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ValidateSignResult {
+      private Boolean res;
+      private int nonce;
     }
 
     @Override
@@ -1350,7 +1377,7 @@ public class PrecompiledContracts {
       try {
         return doExecute(data);
       } catch (Throwable t) {
-        return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
+        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
       }
     }
 
@@ -1358,29 +1385,48 @@ public class PrecompiledContracts {
         throws InterruptedException, ExecutionException {
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
-      byte[][] signatures = extractBytesArray(words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
-      byte[][] addresses = extractBytes32Array(words, words[2].intValueSafe() / DataWord.WORD_SIZE);
+      byte[][] signatures = extractBytesArray(
+          words, words[1].intValueSafe() / DataWord.WORD_SIZE, data);
+      byte[][] addresses = extractBytes32Array(
+          words, words[2].intValueSafe() / DataWord.WORD_SIZE);
       int cnt = signatures.length;
       if (cnt == 0 || signatures.length != addresses.length) {
-        return Pair.of(true, new DataWord(Longs.toByteArray(0)).getData());
+        return Pair.of(true, new byte[DataWord.WORD_SIZE]);
       }
-      // add check
-      CountDownLatch countDownLatch = new CountDownLatch(cnt);
-      List<Future<Boolean>> futures = new ArrayList<>(cnt);
-
-      for (int i = 0; i < cnt; i++) {
-        Future<Boolean> future = workers
-            .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i]));
-        futures.add(future);
-      }
-      countDownLatch.await();
-      for (Future<Boolean> future : futures) {
-          if (!future.get()) {
-            return Pair.of(true, DataWord.ZERO().getData());
+      int min = Math.min(cnt, DataWord.WORD_SIZE);
+      byte[] res = new byte[DataWord.WORD_SIZE];
+      if (isStaticCall()) {
+        //for static call not use thread pool to avoid potential effect
+        for (int i = 0; i < min; i++) {
+          if (validSign(signatures[i], hash, addresses[i])) {
+            res[i] = 1;
           }
+        }
+      } else {
+        // add check
+        CountDownLatch countDownLatch = new CountDownLatch(min);
+        List<Future<ValidateSignResult>> futures = new ArrayList<>(min);
+
+        for (int i = 0; i < min; i++) {
+          Future<ValidateSignResult> future = workers
+              .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
+          futures.add(future);
+        }
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+
+        if (!withNoTimeout) {
+          logger.info("MultiValidateSign timeout");
+          throw Program.Exception.notEnoughTime("call MultiValidateSign precompile method");
+        }
+
+        for (Future<ValidateSignResult> future : futures) {
+          ValidateSignResult result = future.get();
+          if (result.getRes()) {
+            res[result.getNonce()] = 1;
+          }
+        }
       }
-      // all signatures have been validated successfully
-      return Pair.of(true, DataWord.ONE().getData());
+      return Pair.of(true, res);
     }
 
     private static boolean validSign(byte[] sign, byte[] hash, byte[] address) {
@@ -1388,6 +1434,10 @@ public class PrecompiledContracts {
       byte[] r;
       byte[] s;
       DataWord out = null;
+      if (sign.length < 65 || Arrays.equals(ZEROADDR, address)
+          || Arrays.equals(EMPTYADDR, address)) {
+        return false;
+      }
       try {
         r = Arrays.copyOfRange(sign, 0, 32);
         s = Arrays.copyOfRange(sign, 32, 64);
@@ -1396,10 +1446,11 @@ public class PrecompiledContracts {
           v += 27;
         }
         ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
-        if (v != 0 && signature.validateComponents()) {
+        if (signature.validateComponents()) {
           out = new DataWord(ECKey.signatureToAddress(hash, signature));
         }
       } catch (Throwable any) {
+        logger.info("ECRecover error", any.getMessage());
       }
       return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
           out.getLast20Bytes());
