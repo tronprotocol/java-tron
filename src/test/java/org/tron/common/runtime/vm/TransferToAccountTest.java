@@ -12,8 +12,10 @@ import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.runtime.config.VMConfig;
+import org.tron.common.runtime.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
@@ -22,6 +24,7 @@ import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -31,6 +34,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import stest.tron.wallet.common.client.utils.AbiUtil;
 
@@ -179,7 +183,7 @@ public class TransferToAccountTest {
     //4.Test Energy
     Assert.assertEquals(energyCostWhenNonExist - energyCostWhenExist,
         EnergyCost.getInstance().getNEW_ACCT_CALL());
-    //5. Test triggerTrx with exsit account
+    //5. Test transfer Trx with exsit account
 
     selectorStr = "transferTo(address,uint256)";
     input = Hex.decode(AbiUtil
@@ -194,7 +198,7 @@ public class TransferToAccountTest {
     Assert.assertEquals(19, dbManager.getAccountStore().get(Hex.decode(TRANSFER_TO)).getBalance());
     energyCostWhenExist = runtime.getResult().getEnergyUsed();
 
-    //6. Test triggerTrx with non-exsit account
+    //6. Test  transfer Trx with non-exsit account
     selectorStr = "transferTo(address,uint256)";
     ecKey = new ECKey(Utils.getRandom());
     input = Hex.decode(AbiUtil
@@ -242,21 +246,27 @@ public class TransferToAccountTest {
 
     Assert.assertEquals("endowment out of long range", runtime.getRuntimeError());
 
-    // 10.Test transferToken bad format address
-    selectorStr = "transferTokenTo(address,trcToken,uint256)";
+    // 10.Test transferToken using static call
+    selectorStr = "transferTo(address,uint256)";
     ecKey = new ECKey(Utils.getRandom());
-    params = "0000000000000000000000000000000000000000000000000000000000000001" +
-        Hex.toHexString(new DataWord(id).getData()) +
-        "0000000000000000000000000000000000000000000000000000000000000001";
-    triggerData = TvmTestUtils.parseAbi(selectorStr, params);
-
+    input = Hex.decode(AbiUtil
+        .parseMethod(selectorStr,
+            "\"" + Wallet.encode58Check(ecKey.getAddress()) + "\"" + ",1"));
     transaction = TvmTestUtils
         .generateTriggerSmartContractAndGetTransaction(Hex.decode(OWNER_ADDRESS), contractAddress,
-            triggerData,
-            triggerCallValue, feeLimit, tokenValue, id);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(transaction, dbManager, null);
+            input,
+            0, feeLimit, 0, 0);
+    deposit = DepositImpl.createRoot(dbManager);
+    RuntimeImpl runtimeImpl = new RuntimeImpl(transaction,
+        new BlockCapsule(Block.newBuilder().build()), deposit,
+        new ProgramInvokeFactoryImpl(),
+        true);
+    runtimeImpl.execute();
+    runtimeImpl.go();
 
-    Assert.assertEquals(runtime.getRuntimeError(), "endowment out of long range");
+    Assert.assertEquals("Attempt to call a state modifying opcode inside STATICCALL",
+        runtimeImpl.getRuntimeError());
+
 
   }
 

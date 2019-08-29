@@ -624,6 +624,10 @@ public class RuntimeImpl implements Runtime {
             runtimeError = "constant cannot set call value or call token value.";
             result.rejectInternalTransactions();
           }
+          if (result.getException() != null) {
+            runtimeError = result.getException().getMessage();
+            result.rejectInternalTransactions();
+          }
           return;
         }
 
