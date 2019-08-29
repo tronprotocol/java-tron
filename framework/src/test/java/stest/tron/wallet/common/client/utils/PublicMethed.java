@@ -1,7 +1,6 @@
 package stest.tron.wallet.common.client.utils;
 
 import static org.tron.common.utils.Hash.sha3;
-import static org.tron.common.utils.Hash.sha3omit12;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -78,39 +77,6 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.keystore.WalletFile;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
-import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
-import org.tron.protos.contract.ShieldContract.OutputPoint;
-import org.tron.protos.contract.ShieldContract.OutputPointInfo;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
-import org.tron.protos.contract.ShieldContract.SpendDescription;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
-import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
-import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
-import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
-import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
-import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
-import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
-import org.tron.protos.contract.AccountContract.AccountCreateContract;
-import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
-import org.tron.protos.contract.AccountContract.SetAccountIdContract;
-import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
-import org.tron.protos.contract.BalanceContract.TransferContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
-import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
-import org.tron.protos.contract.StorageContract.SellStorageContract;
-import org.tron.protos.contract.StorageContract.BuyStorageContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -118,11 +84,45 @@ import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
 import org.tron.protos.Protocol.TransactionInfo;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
+import org.tron.protos.contract.AccountContract.AccountUpdateContract;
+import org.tron.protos.contract.AccountContract.SetAccountIdContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIssueContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
+import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
+import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
+import org.tron.protos.contract.ShieldContract.OutputPoint;
+import org.tron.protos.contract.ShieldContract.OutputPointInfo;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract.Builder;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
+import org.tron.protos.contract.SmartContractOuterClass.UpdateSettingContract;
+import org.tron.protos.contract.StorageContract.BuyStorageContract;
+import org.tron.protos.contract.StorageContract.SellStorageContract;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.WalletClient;
@@ -899,12 +899,12 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    /*CancelDeferredTransactionContract.Builder builder = Contract
+    /*Contract.CancelDeferredTransactionContract.Builder builder = Contract
       .CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    CancelDeferredTransactionContract contract = builder.build();
+    Contract.CancelDeferredTransactionContract contract = builder.build();
     TransactionExtention transactionExtention = blockingStubFull
      .createCancelDeferredTransactionContract(contract);
 
@@ -951,12 +951,12 @@ public class PublicMethed {
       ex.printStackTrace();
     }
     final ECKey ecKey = temKey;
-    /* CancelDeferredTransactionContract.Builder builder = Contract
+    /* Contract.CancelDeferredTransactionContract.Builder builder = Contract
       .CancelDeferredTransactionContract.newBuilder();
     builder.setTransactionId(ByteString.copyFrom(ByteArray.fromHexString(txid)));
     builder.setOwnerAddress(ByteString.copyFrom(owner));
 
-    CancelDeferredTransactionContract contract = builder.build();
+    Contract.CancelDeferredTransactionContract contract = builder.build();
    TransactionExtention transactionExtention = blockingStubFull
      .createCancelDeferredTransactionContract(contract);
 
@@ -2697,7 +2697,7 @@ public class PublicMethed {
           }
           String inputName = inputItem.getAsJsonObject().get("name").getAsString();
           String inputType = inputItem.getAsJsonObject().get("type").getAsString();
-          SmartContract.ABI.Entry.Param.Builder paramBuilder = SmartContract.ABI.Entry.Param
+          ABI.Entry.Param.Builder paramBuilder = SmartContract.ABI.Entry.Param
               .newBuilder();
           JsonElement indexed = inputItem.getAsJsonObject().get("indexed");
 
@@ -2799,7 +2799,7 @@ public class PublicMethed {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return sha3omit12(combined);
+    return Hash.sha3omit12(combined);
 
   }
 
@@ -4831,8 +4831,6 @@ public class PublicMethed {
 
     byte[] owner = ownerAddress;
     byte[] input = Hex.decode(AbiUtil.parseMethod(method, argsStr, isHex));
-    System.out.println("hexstring：" + ByteArray.toHexString(input));
-
     TriggerSmartContract.Builder builder = TriggerSmartContract.newBuilder();
     builder.setOwnerAddress(ByteString.copyFrom(owner));
     builder.setContractAddress(ByteString.copyFrom(contractAddress));
@@ -4912,7 +4910,7 @@ public class PublicMethed {
     byte[] salt = new byte[32];
     System.arraycopy(temp, 0, salt, 24, 8);
 
-    byte[] mergedData = ByteUtil.merge(address, salt, Hash.sha3(code));
+    byte[] mergedData = ByteUtil.merge(address, salt, sha3(code));
     String create2Address = Base58.encode58Check(Hash.sha3omit12(mergedData));
 
     logger.info("create2 Address: " + create2Address);
@@ -5800,9 +5798,46 @@ public class PublicMethed {
   public static void freedResource(byte[] fromAddress, String priKey, byte[] toAddress,
       WalletGrpc.WalletBlockingStub blockingStubFull) {
     long balance = PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance();
-//    System.out.println(balance);
     sendcoin(toAddress, balance - 500000, fromAddress, priKey, blockingStubFull);
-//    System.out
-//        .println(PublicMethed.queryAccount(fromAddress, blockingStubFull).getBalance());
+  }
+
+  public static String parametersString(List<Object> parameters) {
+    String[] inputArr = new String[parameters.size()];
+    int i = 0;
+    for (Object parameter : parameters) {
+      if (parameter instanceof List) {
+        StringBuilder sb = new StringBuilder();
+        for (Object item : (List) parameter) {
+          if (sb.length() != 0) {
+            sb.append(",");
+          }
+          sb.append("\"").append(item).append("\"");
+        }
+        inputArr[i++] = "[" + sb.toString() + "]";
+      } else {
+        inputArr[i++] =
+            (parameter instanceof String) ? ("\"" + parameter + "\"") : ("" + parameter);
+      }
+    }
+    String input = StringUtils.join(inputArr, ',');
+    return input;
+  }
+
+  public static String bytes32ToString(byte[] bytes) {
+    if (bytes == null) {
+      return "null";
+    }
+    int iMax = bytes.length - 1;
+    if (iMax == -1) {
+      return "";
+    }
+
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; ; i++) {
+      b.append(bytes[i]);
+      if (i == iMax) {
+        return b.toString();
+      }
+    }
   }
 }

@@ -183,7 +183,6 @@ public class ContractTrcToken031 {
         0, dev001Address, dev001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
     AccountResourceMessage resourceInfoafter = PublicMethed.getAccountResource(dev001Address,

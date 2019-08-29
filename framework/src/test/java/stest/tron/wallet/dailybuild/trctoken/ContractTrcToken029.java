@@ -90,7 +90,6 @@ public class ContractTrcToken029 {
     logger.info(
         "user001Address:" + Base58.encode58Check(user001Address));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
@@ -98,7 +97,6 @@ public class ContractTrcToken029 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
@@ -188,7 +186,6 @@ public class ContractTrcToken029 {
         param, false, 0, 1000000000L, "0",
         0, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);

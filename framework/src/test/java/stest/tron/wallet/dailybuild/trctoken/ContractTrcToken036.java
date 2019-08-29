@@ -101,7 +101,6 @@ public class ContractTrcToken036 {
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
     long end = System.currentTimeMillis() + 1000000000;
@@ -109,7 +108,6 @@ public class ContractTrcToken036 {
     Assert.assertTrue(PublicMethed.createAssetIssue(dev001Address, tokenName, TotalSupply, 1,
         100, start, end, 1, description, url, 10000L,
         10000L, 1L, 1L, dev001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetAccountId = PublicMethed.queryAccount(dev001Address, blockingStubFull).getAssetIssuedID();
@@ -182,7 +180,6 @@ public class ContractTrcToken036 {
             .toStringUtf8(),
         10, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -288,7 +285,6 @@ public class ContractTrcToken036 {
             .toStringUtf8(),
         10, dev001Address, dev001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter1 = PublicMethed.queryAccount(dev001Address, blockingStubFull);
@@ -437,7 +433,6 @@ public class ContractTrcToken036 {
             0L, 0, originEnergyLimit, "0",
             0, null, dev001Key, dev001Address,
             blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     PublicMethed

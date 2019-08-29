@@ -98,7 +98,6 @@ public class MultiSign26 {
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
@@ -419,7 +418,6 @@ public class MultiSign26 {
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);
     List<Permission> permissionsList = test001AddressAccount.getActivePermissionList();
@@ -651,7 +649,6 @@ public class MultiSign26 {
     Assert.assertTrue(PublicMethed
         .sendcoin(test001Address, amount, fromAddress, testKey002,
             blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account test001AddressAccount = PublicMethed.queryAccount(test001Address, blockingStubFull);

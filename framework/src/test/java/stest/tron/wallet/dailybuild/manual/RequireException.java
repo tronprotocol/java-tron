@@ -436,7 +436,6 @@ public class RequireException {
     final Account info;
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     AccountResourceMessage resourceInfo = PublicMethed.getAccountResource(asset016Address,
         blockingStubFull);
     info = PublicMethed.queryAccount(testKeyForAssetIssue016, blockingStubFull);
