@@ -186,7 +186,6 @@ public class WalletTestZenToken007 {
     Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress3,sendTokenAmount,null,
         null,shieldOutList,null,0,zenTokenOwnerKey3,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo1,blockingStubFull);
     sendNote1 = notes.getNoteTxs(0).getNote();
     notes = PublicMethed.listShieldNote(sendShieldAddressInfo2,blockingStubFull);
@@ -362,7 +361,6 @@ public class WalletTestZenToken007 {
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Same sk and different d can produce different
     // shield address,the notes can scan out by same ivk.
@@ -429,7 +427,6 @@ public class WalletTestZenToken007 {
         null,0,
         zenTokenOwnerKey3,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
@@ -561,6 +558,7 @@ public class WalletTestZenToken007 {
         null,0,
         zenTokenOwnerKey2,blockingStubFull));
 
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     notes = PublicMethed.getShieldNotesByIvk(receiverAddressInfo2,blockingStubFull);
 
     Assert.assertTrue(PublicMethed.getSpendResult(receiverAddressInfo1.get(),

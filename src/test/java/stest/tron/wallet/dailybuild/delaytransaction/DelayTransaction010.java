@@ -152,7 +152,6 @@ public class DelayTransaction010 {
         delayFeeAccountAddress, blockingStubFull).getBalance(),delayFeeAccountAddress,
         delayFeeAccountKey,blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Assert.assertTrue(PublicMethed.getTransactionById(finalTxid,blockingStubFull)
     // .get().getRawData().getContractCount() == 0);
@@ -202,7 +201,6 @@ public class DelayTransaction010 {
     Assert.assertTrue(PublicMethed.sendcoin(delayFeeAccountAddress,10000000L,fromAddress,
         testKey002,blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     //Assert.assertTrue(PublicMethed.getTransactionById(finalTxid,blockingStubFull)

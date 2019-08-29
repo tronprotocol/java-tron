@@ -410,7 +410,6 @@ public class ContractTrcToken043 {
         1000000000L, assetAccountId.toStringUtf8(), 2, user001Address, user001Key,
         blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     infoById = PublicMethed
         .getTransactionInfoById(triggerTxid, blockingStubFull);

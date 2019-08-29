@@ -105,7 +105,6 @@ public class DelayTransaction006 {
     Assert.assertTrue(PublicMethed.getAssetIssueById(ByteArray.toStr(assetId
         .toByteArray()),blockingStubFull).getFreeAssetNetLimit() == oldFreeAssetNetLimit);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Assert.assertTrue(PublicMethed.getAssetIssueById(ByteArray.toStr(assetId
         .toByteArray()),blockingStubFull).getFreeAssetNetLimit() == newFreeAssetNetLimit);
     Long afterNetUsaged = PublicMethed.queryAccount(assetOwnerKey,blockingStubFull)
@@ -146,7 +145,6 @@ public class DelayTransaction006 {
         assetOwnerAddress,assetOwnerKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,assetOwnerAddress,
         assetOwnerKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     logger.info("After cancle net usage: " + PublicMethed.queryAccount(assetOwnerKey,

@@ -1,8 +1,10 @@
 package stest.tron.wallet.onlinestress;
 
+import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -12,16 +14,21 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 import org.tron.api.GrpcAPI;
+import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.ChainParameters;
 import org.tron.protos.Protocol.SmartContract;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.Parameter.CommonConstant;
 import stest.tron.wallet.common.client.utils.PublicMethed;
+import stest.tron.wallet.common.client.utils.Sha256Hash;
 
 @Slf4j
 public class TestStorageAndCpu {
@@ -144,6 +151,152 @@ public class TestStorageAndCpu {
 
       }
     }
+  }
+
+  String contract1Address = "TCgcqd7GvHu7bxw9SxWqQMvL1TK45zkbpZ";
+  String contract1Result = "0101010101010101010101010101010101010101010101010101010101010101";
+  String contract2Address = "TG6r7fNqMPtHmrF6Hdq1UmRQXjth9Vjv5N";
+  String contract2Result = "0100010101010101010101010101010101010101010101010101010101010100";
+  String contract3Address = "TXutmpeSzTYjhuXNhQekQMUgSEvPvX8NmW";
+  String contract3Result = "0101010101010101000100010101010101010101010101010101010001010100";
+  String contract4Address = "TAXNdVtoZ9bhHLe3ZCg4EecBwgBVMVVNei";
+  String contract4Result = "0000000000000000000000000000000000000000000000000000000000000000";
+  int contract1TransactionNum = 0;
+  int contract1SuccessNum = 0;
+  int contract2TransactionNum = 0;
+  int contract2SuccessNum = 0;
+  int contract3TransactionNum = 0;
+  int contract3SuccessNum = 0;
+  int contract4TransactionNum = 0;
+  int contract4SuccessNum = 0;
+  List<String> contract1ExceptionList = new ArrayList<>();
+  List<String> contract2ExceptionList = new ArrayList<>();
+  List<String> contract3ExceptionList = new ArrayList<>();
+  List<String> contract4ExceptionList = new ArrayList<>();
+
+
+  @Test(enabled = true, threadPoolSize = 1, invocationCount = 1)
+  public void storageAndCpu1() {
+    Long startBlockNum = 24110L;
+    Long endBlockNum = 24210L;
+    NumberMessage.Builder builder = NumberMessage.newBuilder();
+    Block nowBlock;
+    while (startBlockNum <= endBlockNum) {
+      builder.setNum(startBlockNum);
+      nowBlock = blockingStubFull.getBlockByNum(builder.build());
+      queryBlockTransactions(nowBlock);
+      startBlockNum++;
+    }
+
+    logger.info(
+        "contract1 success num:" + contract1SuccessNum + " , total num:" + contract1SuccessNum);
+    logger.info(
+        "contract2 success num:" + contract2SuccessNum + " , total num:" + contract2SuccessNum);
+    logger.info(
+        "contract3 success num:" + contract3SuccessNum + " , total num:" + contract3SuccessNum);
+    logger.info(
+        "contract4 success num:" + contract4SuccessNum + " , total num:" + contract4SuccessNum);
+
+    logger.info("-----------List1-------------");
+    printList(contract1ExceptionList);
+    logger.info("-----------List2-----------");
+    printList(contract2ExceptionList);
+    logger.info("------------List3-----------");
+    printList(contract3ExceptionList);
+    logger.info("------------List4----------");
+    printList(contract4ExceptionList);
+
+
+  }
+
+  public void printList(List<String> list) {
+    for (int i = 0; i < list.size(); i++) {
+      logger.info("txid:" + list.get(i));
+    }
+  }
+
+  public void queryResult(String txid) {
+    ByteString bsTxid = ByteString.copyFrom(ByteArray.fromHexString(txid));
+    BytesMessage request = BytesMessage.newBuilder().setValue(bsTxid).build();
+    TransactionInfo transactionInfo = blockingStubFull.getTransactionInfoById(request);
+
+    if (Wallet.encode58Check(transactionInfo.getContractAddress().toByteArray())
+        .equals(contract1Address)) {
+      contract1TransactionNum++;
+      if (ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray())
+          .equals(contract1Result)) {
+        contract1SuccessNum++;
+        return;
+      }
+      if (!ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray()).isEmpty()) {
+        contract1ExceptionList.add(txid);
+        logger.info(txid);
+      }
+      return;
+    }
+
+    if (Wallet.encode58Check(transactionInfo.getContractAddress().toByteArray())
+        .equals(contract2Address)) {
+      contract2TransactionNum++;
+      if (ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray())
+          .equals(contract2Result)) {
+        contract2SuccessNum++;
+        return;
+      }
+      if (!ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray()).isEmpty()) {
+        contract2ExceptionList.add(txid);
+      }
+      return;
+    }
+
+    if (Wallet.encode58Check(transactionInfo.getContractAddress().toByteArray())
+        .equals(contract3Address)) {
+      contract3TransactionNum++;
+      if (ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray())
+          .equals(contract3Result)) {
+        contract3SuccessNum++;
+        return;
+      }
+      if (!ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray()).isEmpty()) {
+        contract3ExceptionList.add(txid);
+      }
+      return;
+    }
+
+    if (Wallet.encode58Check(transactionInfo.getContractAddress().toByteArray())
+        .equals(contract4Address)) {
+      contract4TransactionNum++;
+      if (ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray())
+          .equals(contract4Result)) {
+        contract4SuccessNum++;
+        return;
+      }
+      if (!ByteArray
+          .toHexString(transactionInfo.getContractResult(0).toByteArray()).isEmpty()) {
+        contract4ExceptionList.add(txid);
+      }
+      return;
+    }
+
+  }
+
+
+  public void queryBlockTransactions(Block block) {
+    for (Transaction transaction : block.getTransactionsList()) {
+      queryResult(ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+      //queryResult(ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+      //queryResult(ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+      //queryResult(ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray())));
+
+    }
+
   }
 
   /**

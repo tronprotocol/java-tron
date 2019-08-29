@@ -110,7 +110,6 @@ public class DelayTransaction005 {
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     Assert.assertTrue(smartContract.getOriginEnergyLimit() == oldOriginEnergyLimit);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
     logger.info("newOriginEnergyLimit: " + smartContract.getOriginEnergyLimit());
     Assert.assertTrue(smartContract.getOriginEnergyLimit() == newOriginEnergyLimit);
@@ -141,7 +140,6 @@ public class DelayTransaction005 {
         smartContractOwnerAddress,smartContractOwnerKey,blockingStubFull);
     Assert.assertFalse(PublicMethed.cancelDeferredTransactionById(txid,smartContractOwnerAddress,
         smartContractOwnerKey,blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     smartContract = PublicMethed.getContract(contractAddress, blockingStubFull);
