@@ -276,6 +276,7 @@ public class EnergyCost {
     return EXT_CODE_HASH;
   }
 
+
   private static EnergyCost instance = null;
 
   public static EnergyCost getInstance() {

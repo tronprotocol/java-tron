@@ -102,11 +102,12 @@ public class MultiValidateSignContractTest {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       if (i % 5 == 0) {
+        addresses.add(Wallet.encode58Check(MUtil.convertToTronAddress(new byte[20])));
         signatures.add(Hex.toHexString(DataWord.ONE().getData()));
       } else {
+        addresses.add(Wallet.encode58Check(key.getAddress()));
         signatures.add(Hex.toHexString(sign));
       }
-      addresses.add(Wallet.encode58Check(key.getAddress()));
     }
     Pair<Boolean, byte[]> ret = null;
     ret = validateMultiSign(hash, signatures, addresses);

@@ -50,6 +50,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -60,7 +61,6 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
@@ -227,7 +227,7 @@ public class PrecompiledContracts {
 
     @Setter
     @Getter
-    private boolean isStaticCall;
+    private boolean isConstantCall;
 
     @Getter
     @Setter
@@ -683,7 +683,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
       if (data == null || data.length != 2 * DataWord.WORD_SIZE) {
@@ -880,7 +880,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -946,7 +946,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1022,7 +1022,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1107,7 +1107,7 @@ public class PrecompiledContracts {
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         return Pair.of(true, new DataWord(0).getData());
       }
 
@@ -1331,7 +1331,6 @@ public class PrecompiledContracts {
   public static class MultiValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
-    private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
     private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     static {
@@ -1361,6 +1360,7 @@ public class PrecompiledContracts {
     @Data
     @AllArgsConstructor
     private static class ValidateSignResult {
+
       private Boolean res;
       private int nonce;
     }
@@ -1395,7 +1395,7 @@ public class PrecompiledContracts {
       }
       int min = Math.min(cnt, DataWord.WORD_SIZE);
       byte[] res = new byte[DataWord.WORD_SIZE];
-      if (isStaticCall()) {
+      if (isConstantCall()) {
         //for static call not use thread pool to avoid potential effect
         for (int i = 0; i < min; i++) {
           if (validSign(signatures[i], hash, addresses[i])) {
@@ -1412,7 +1412,8 @@ public class PrecompiledContracts {
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
         }
-        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch
+            .await(getCPUTimeLeftInUs() * 1000, TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
           logger.info("MultiValidateSign timeout");
@@ -1433,9 +1434,9 @@ public class PrecompiledContracts {
       byte v;
       byte[] r;
       byte[] s;
-      DataWord out = null;
-      if (sign.length < 65 || Arrays.equals(ZEROADDR, address)
-          || Arrays.equals(EMPTYADDR, address)) {
+      byte[] out = null;
+      if (ArrayUtils.isEmpty(sign) || sign.length < 65
+          || DataWord.equalAddressByteArray(EMPTYADDR, address)) {
         return false;
       }
       try {
@@ -1447,13 +1448,12 @@ public class PrecompiledContracts {
         }
         ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
         if (signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(hash, signature));
+          out = ECKey.signatureToAddress(hash, signature);
         }
       } catch (Throwable any) {
         logger.info("ECRecover error", any.getMessage());
       }
-      return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
-          out.getLast20Bytes());
+      return DataWord.equalAddressByteArray(address, out);
     }
 
     private static byte[][] extractBytes32Array(DataWord[] words, int offset) {

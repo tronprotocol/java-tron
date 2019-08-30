@@ -701,6 +701,7 @@ public class Program {
           msg.getEndowment().getNoLeadZeroesData());
     } else if (!ArrayUtils.isEmpty(senderAddress) && !ArrayUtils.isEmpty(contextAddress)
         && senderAddress != contextAddress && endowment > 0) {
+      createAccountIfNotExist(deposit, contextAddress);
       if (!isTokenTransfer) {
         try {
           TransferActuator
@@ -749,7 +750,7 @@ public class Program {
           !isTokenTransfer ? callValue : new DataWord(0),
           !isTokenTransfer ? new DataWord(0) : callValue,
           !isTokenTransfer ? new DataWord(0) : msg.getTokenId(),
-          contextBalance, data, deposit, msg.getType().callIsStatic() || isStaticCall(),
+          contextBalance, data, deposit, msg.getType().callIsStatic() || isConstantCall(),
           byTestingSuite(), vmStartInUs, getVmShouldEndInUs(), msg.getEnergy().longValueSafe());
       VM vm = new VM(config);
       Program program = new Program(programCode, programInvoke, internalTx, config,
@@ -1044,8 +1045,8 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() {
-    return invoke.isStaticCall();
+  public boolean isConstantCall() {
+    return invoke.isConstantCall();
   }
 
   public ProgramResult getResult() {
@@ -1450,7 +1451,7 @@ public class Program {
       // this is the depositImpl, not contractState as above
       contract.setDeposit(deposit);
       contract.setResult(this.result);
-      contract.setStaticCall(isStaticCall());
+      contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
       Pair<Boolean, byte[]> out = contract.execute(data);
 
@@ -1778,5 +1779,15 @@ public class Program {
 
   private boolean isContractExist(AccountCapsule existingAddr, Deposit deposit) {
     return deposit.getContract(existingAddr.getAddress().toByteArray()) != null;
+  }
+
+  private void createAccountIfNotExist(Deposit deposit, byte[] contextAddress) {
+    if (VMConfig.allowTvmSolidity059()) {
+      //after solidity059 proposal , allow contract transfer trc10 or trx to non-exist address(would create one)
+      AccountCapsule sender = deposit.getAccount(contextAddress);
+      if (sender == null) {
+        deposit.createNormalAccount(contextAddress);
+      }
+    }
   }
 }
