@@ -166,6 +166,12 @@ public class TransferAssetActuator extends AbstractActuator {
 
     AccountCapsule toAccount = this.dbManager.getAccountStore().get(toAddress);
     if (toAccount != null) {
+      //after TvmSolidity059 proposal, send trx to smartContract by actuator is not allowed.
+      if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1
+              && toAccount.getType() == AccountType.Contract) {
+        throw new ContractValidateException("Cannot transfer trx to smartContract.");
+      }
+
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
       } else {
@@ -196,7 +202,6 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No deposit!");
     }
 
-    long fee = 0;
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
 
     if (!Wallet.addressValid(ownerAddress)) {
@@ -255,7 +260,7 @@ public class TransferAssetActuator extends AbstractActuator {
       }
       if (assetBalance != null) {
         try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+          Math.addExact(assetBalance, amount); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());
