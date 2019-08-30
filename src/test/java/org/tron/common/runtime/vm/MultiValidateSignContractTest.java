@@ -33,7 +33,7 @@ public class MultiValidateSignContractTest {
 
   @Test
   void staticCallTest() {
-    contract.setStaticCall(true);
+    contract.setConstantCall(true);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
@@ -93,7 +93,7 @@ public class MultiValidateSignContractTest {
 
   @Test
   void correctionTest() {
-    contract.setStaticCall(false);
+    contract.setConstantCall(false);
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(longData);
