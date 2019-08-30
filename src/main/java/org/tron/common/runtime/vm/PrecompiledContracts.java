@@ -1320,9 +1320,9 @@ public class PrecompiledContracts {
       }
       name = ByteArray.subArray(name, 0, length);
 
-      long assetBalance = this.getDeposit().
-          getAccount(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes())).
-          getAssetMap().get(ByteArray.toStr(name));
+      long assetBalance = this.getDeposit()
+          .getAccount(convertToTronAddress(new DataWord(targetAddress).getLast20Bytes()))
+          .getAssetMap().get(ByteArray.toStr(name));
 
       return Pair.of(true, new DataWord(Longs.toByteArray(assetBalance)).getData());
     }
