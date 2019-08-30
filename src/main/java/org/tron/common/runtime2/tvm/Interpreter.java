@@ -39,7 +39,7 @@ public class Interpreter {
 
 
   public void play(ContractExecutor env) {
-    if (isNotEmpty(env.getProgram().getOps())) {
+    if (isNotEmpty(env.getContractContext().getOps())) {
       while (!env.isStopped()) {
         this.step(env);
       }
@@ -78,7 +78,7 @@ public class Interpreter {
 
   private void exec(ContractExecutor env, OpCode op, DataWord adjustedCallEnergy) {
     EnergyCost energyCosts = EnergyCost.getInstance();
-    ContractContext program = env.getProgram();
+    ContractContext program = env.getContractContext();
     String hint = "";
     Stack stack = env.getStack();
     // Execute operation
@@ -1246,7 +1246,7 @@ public class Interpreter {
     long energyCost = op.getTier().asInt();
     EnergyCost energyCosts = EnergyCost.getInstance();
     Stack stack = env.getStack();
-    ContractContext program = env.getProgram();
+    ContractContext program = env.getContractContext();
 
     // Calculate fees and spend energy
     switch (op) {

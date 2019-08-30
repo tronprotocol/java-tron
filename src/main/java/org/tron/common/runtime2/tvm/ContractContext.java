@@ -32,6 +32,8 @@ public class ContractContext {
   @Data
   class CallInfo {
     boolean fromVM = false;
+    boolean delegate = false;
+    long endowment = 0;
     byte[] newAddress;//for create and create2 op
     boolean isCreate2;
 

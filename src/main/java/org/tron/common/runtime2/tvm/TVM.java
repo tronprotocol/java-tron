@@ -96,7 +96,7 @@ public class TVM implements IVM {
   }
 
   private void processResult(ContractExecutor env, boolean isStatic) {
-    ContractContext program = env.getProgram();
+    ContractContext program = env.getContractContext();
     result =  program.getProgramResult();
     // for static call don't processResult
     if (isStatic) {
