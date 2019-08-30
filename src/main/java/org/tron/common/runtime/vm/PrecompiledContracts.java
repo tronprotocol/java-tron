@@ -29,6 +29,7 @@ import static org.tron.common.utils.ByteUtil.parseBytes;
 import static org.tron.common.utils.ByteUtil.parseWord;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 
+import ch.qos.logback.core.encoder.ByteArrayUtil;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
@@ -50,7 +51,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongycastle.pqc.math.linearalgebra.ByteUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.zksnark.BN128;
@@ -1331,7 +1334,6 @@ public class PrecompiledContracts {
   public static class MultiValidateSign extends PrecompiledContract {
     private static final ExecutorService workers;
     private static final int ENGERYPERSIGN = 1500;
-    private static final byte[] ZEROADDR = MUtil.allZero32TronAddress();
     private static final byte[] EMPTYADDR = new byte[DataWord.WORD_SIZE];
 
     static {
@@ -1433,9 +1435,9 @@ public class PrecompiledContracts {
       byte v;
       byte[] r;
       byte[] s;
-      DataWord out = null;
-      if (sign.length < 65 || Arrays.equals(ZEROADDR, address)
-          || Arrays.equals(EMPTYADDR, address)) {
+      byte[] out = null;
+      if (ArrayUtils.isEmpty(sign) || sign.length < 65
+          || DataWord.equalAddressByteArray(EMPTYADDR, address)) {
         return false;
       }
       try {
@@ -1447,13 +1449,12 @@ public class PrecompiledContracts {
         }
         ECKey.ECDSASignature signature = ECKey.ECDSASignature.fromComponents(r, s, v);
         if (signature.validateComponents()) {
-          out = new DataWord(ECKey.signatureToAddress(hash, signature));
+          out = ECKey.signatureToAddress(hash, signature);
         }
       } catch (Throwable any) {
         logger.info("ECRecover error", any.getMessage());
       }
-      return out != null && Arrays.equals(new DataWord(address).getLast20Bytes(),
-          out.getLast20Bytes());
+      return DataWord.equalAddressByteArray(address, out);
     }
 
     private static byte[][] extractBytes32Array(DataWord[] words, int offset) {

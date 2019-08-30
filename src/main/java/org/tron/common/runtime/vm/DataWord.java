@@ -521,4 +521,19 @@ public class DataWord implements Comparable<DataWord> {
     }
     return words;
   }
+
+  public static boolean equalAddressByteArray(byte[] arr1, byte[] arr2){
+    if (arr1 == arr2)
+      return true;
+    if (arr1==null || arr2==null || arr1.length < 20 || arr2.length < 20)
+      return false;
+
+    int i = arr1.length - 20;
+    int j = arr2.length - 20;
+
+    for (; i < arr1.length && j < arr2.length; i++, j++)
+      if (arr1[i] != arr2[j])
+        return false;
+    return true;
+  }
 }
