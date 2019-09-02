@@ -109,7 +109,7 @@ public class ReceiptCapsule {
       return;
     }
 
-    if (Objects.isNull(origin) && DBConfig.allowTvmConstantinople()) {
+    if (Objects.isNull(origin) && dynamicPropertiesStore.getAllowTvmConstantinople()) {
       payEnergyBill(dynamicPropertiesStore, accountStore, caller, receipt.getEnergyUsageTotal(),
           energyProcessor, now);
       return;

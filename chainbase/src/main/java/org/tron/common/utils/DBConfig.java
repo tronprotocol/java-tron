@@ -104,9 +104,6 @@ public class DBConfig {
   @Setter
   private static int checkFrozenTime; // for test only
 
-  @Setter
-  public static boolean ALLOW_TVM_CONSTANTINOPLE = false;
-
   //Odyssey3.2 hard fork -- ForkBlockVersionConsts.ENERGY_LIMIT
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
@@ -161,10 +158,6 @@ public class DBConfig {
   private static final int DEFAULT_WRITE_BUFFER_SIZE = 10 * 1024 * 1024;
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024L;
   private static final int DEFAULT_MAX_OPEN_FILES = 100;
-
-  public static boolean allowTvmConstantinople() {
-    return ALLOW_TVM_CONSTANTINOPLE;
-  }
 
   public static boolean getEnergyLimitHardFork() {
     return ENERGY_LIMIT_HARD_FORK;

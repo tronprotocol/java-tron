@@ -14,6 +14,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.contract.SmartContractOuterClass.ClearABIContract;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
@@ -49,7 +50,7 @@ public class ClearABIContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!allowTvmConstantinople()) {
+    if (!VMConfig.allowTvmConstantinople()) {
       throw new ContractValidateException(
           "contract type error,unexpected type [ClearABIContract]");
     }
