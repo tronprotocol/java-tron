@@ -16,8 +16,7 @@ public class MerkleContainer {
 
   private static final byte[] lastTreeKey = "LAST_TREE".getBytes();
   private static final byte[] currentTreeKey = "CURRENT_TREE".getBytes();
-
-  @Autowired
+  
   @Getter
   @Setter
   private IncrementalMerkleTreeStore incrementalMerkleTreeStore;
