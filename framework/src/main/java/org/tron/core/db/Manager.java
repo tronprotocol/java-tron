@@ -254,8 +254,6 @@ public class Manager {
 
   private boolean isRunTriggerCapsuleProcessThread = true;
 
-  private long latestSolidifiedBlockNumber;
-
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
@@ -1741,7 +1739,7 @@ public class Manager {
   private void postBlockTrigger(final BlockCapsule newBlock) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
-      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
       boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost block trigger: {}", newBlock.getBlockId());
@@ -1757,7 +1755,7 @@ public class Manager {
       final BlockCapsule blockCap) {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
       TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
-      trx.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+      trx.setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
       boolean result = triggerCapsuleQueue.offer(trx);
       if (!result) {
         logger.info("too many trigger, lost transaction trigger: {}", trxCap.getTransactionId());
@@ -1791,7 +1789,7 @@ public class Manager {
       for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
         ContractTriggerCapsule contractEventTriggerCapsule = new ContractTriggerCapsule(trigger);
         contractEventTriggerCapsule.getContractTrigger().setRemoved(remove);
-        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+        contractEventTriggerCapsule.setLatestSolidifiedBlockNumber(dynamicPropertiesStore.getLatestSolidifiedBlockNum());
         if (!triggerCapsuleQueue.offer(contractEventTriggerCapsule)) {
           logger
               .info("too many tigger, lost contract log trigger: {}", trigger.getTransactionId());

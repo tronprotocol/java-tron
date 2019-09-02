@@ -19,10 +19,10 @@ public class IncentiveManager {
   private ConsensusDelegate consensusDelegate;
 
   public void applyBlock(Block block) {
-    ByteString witness = block.getBlockHeader().getRawData().getWitnessAddress();
-    AccountCapsule account = consensusDelegate.getAccountStore().getUnchecked(witness.toByteArray());
+    byte[] witness = block.getBlockHeader().getRawData().getWitnessAddress().toByteArray();
+    AccountCapsule account = consensusDelegate.getAccountStore().getUnchecked(witness);
     account.setAllowance(account.getAllowance() + consensusDelegate.getWitnessPayPerBlock());
-    consensusDelegate.getAccountStore().put(account.createDbKey(), account);
+    consensusDelegate.getAccountStore().put(witness, account);
   }
 
   public void reward(List<ByteString> witnesses) {
@@ -38,8 +38,10 @@ public class IncentiveManager {
     }
     long totalPay = consensusDelegate.getWitnessStandbyAllowance();
     for (ByteString witness : witnesses) {
-      long pay = (long) (consensusDelegate.getWitnesseByAddress(witness).getVoteCount() * ((double) totalPay / voteSum));
-      AccountCapsule accountCapsule = consensusDelegate.getAccountStore().get(witness.toByteArray());
+      long pay = (long) (consensusDelegate.getWitnesseByAddress(witness).getVoteCount() * (
+          (double) totalPay / voteSum));
+      AccountCapsule accountCapsule = consensusDelegate.getAccountStore()
+          .get(witness.toByteArray());
       accountCapsule.setAllowance(accountCapsule.getAllowance() + pay);
       consensusDelegate.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
     }
