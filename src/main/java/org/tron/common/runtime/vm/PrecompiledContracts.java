@@ -61,7 +61,6 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.runtime.config.VMConfig;
-import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.storage.Deposit;
@@ -236,7 +235,7 @@ public class PrecompiledContracts {
     private long vmShouldEndInUs;
 
 
-    public long getCPUTimeLeftInUs() {
+    public long getCPUTimeLeftInNanoSecond() {
       long left = getVmShouldEndInUs() * Constant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
@@ -1412,7 +1411,8 @@ public class PrecompiledContracts {
               .submit(new ValidateSignTask(countDownLatch, hash, signatures[i], addresses[i], i));
           futures.add(future);
         }
-        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInUs(), TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch
+            .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
 
         if (!withNoTimeout) {
           logger.info("MultiValidateSign timeout");
