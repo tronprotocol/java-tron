@@ -84,14 +84,16 @@ public class DposService implements ConsensusInterface {
     stateManager.setDposService(this);
     maintenanceManager.setDposService(this);
 
-    List<ByteString> witnesses = new ArrayList<>();
-    consensusDelegate.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
-      if (witnessCapsule.getIsJobs()) {
-        witnesses.add(witnessCapsule.getAddress());
-      }
-    });
-    sortWitness(witnesses);
-    consensusDelegate.saveActiveWitnesses(witnesses);
+    if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
+      List<ByteString> witnesses = new ArrayList<>();
+      consensusDelegate.getWitnessStore().getAllWitnesses().forEach(witnessCapsule -> {
+        if (witnessCapsule.getIsJobs()) {
+          witnesses.add(witnessCapsule.getAddress());
+        }
+      });
+      sortWitness(witnesses);
+      consensusDelegate.saveActiveWitnesses(witnesses);
+    }
 
     dposTask.init();
   }
@@ -102,7 +104,7 @@ public class DposService implements ConsensusInterface {
   }
 
   @Override
-  public void receiveBlock(Block block){
+  public void receiveBlock(Block block) {
     stateManager.receiveBlock(block);
   }
 
@@ -116,15 +118,14 @@ public class DposService implements ConsensusInterface {
     long bSlot = dposSlot.getAbSlot(timeStamp);
     long hSlot = dposSlot.getAbSlot(consensusDelegate.getLatestBlockHeaderTimestamp());
     if (bSlot <= hSlot) {
-      logger.warn("blockAbSlot is equals with headBlockAbSlot[" + bSlot + "]");
+      logger.warn("ValidBlock failed: bSlot: {} <= hSlot: {}", block, hSlot);
       return false;
     }
 
     long slot = dposSlot.getSlot(timeStamp);
     final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
-      logger.warn(
-          "Witness out of order, scheduledWitness[{}],blockWitness[{}],blockTimeStamp[{}],slot[{}]",
+      logger.warn("ValidBlock failed: sWitness: {}, bWitness: {}, bTimeStamp: {}, slot: {}",
           ByteArray.toHexString(scheduledWitness.toByteArray()),
           ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp), slot);
       return false;
@@ -153,7 +154,7 @@ public class DposService implements ConsensusInterface {
     long newSolidNum = numbers.get(position);
     long oldSolidNum = consensusDelegate.getLatestSolidifiedBlockNum();
     if (newSolidNum < oldSolidNum) {
-      logger.warn("Update solid block number failed, new:{} < old:{}", newSolidNum, oldSolidNum);
+      logger.warn("Update solid block number failed, new: {} < old: {}", newSolidNum, oldSolidNum);
       return;
     }
     consensusDelegate.saveLatestSolidifiedBlockNum(newSolidNum);
