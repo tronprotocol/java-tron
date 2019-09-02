@@ -93,7 +93,6 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -172,7 +171,6 @@ public class MultiSign01 {
     long needCoin = updateAccountPermissionFee * 2;
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
@@ -254,7 +252,6 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -332,7 +329,6 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -407,7 +403,6 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1_000000, fromAddress,
         testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -458,7 +453,6 @@ public class MultiSign01 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -533,7 +527,6 @@ public class MultiSign01 {
     long needCoin = updateAccountPermissionFee * 2;
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -612,7 +605,6 @@ public class MultiSign01 {
 
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, needCoin + 1000000, fromAddress,
         testKey002, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
@@ -693,7 +685,6 @@ public class MultiSign01 {
         testKey002, blockingStubFull));
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();
     logger.info("balanceBefore: " + balanceBefore);
@@ -772,7 +763,6 @@ public class MultiSign01 {
     Assert.assertTrue(PublicMethed.sendcoin(ownerAddress, 1000000, fromAddress,
         testKey002, blockingStubFull));
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
         .getBalance();

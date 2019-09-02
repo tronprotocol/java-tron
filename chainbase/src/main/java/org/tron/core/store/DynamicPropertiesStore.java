@@ -13,15 +13,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 
 @Slf4j(topic = "DB")
 @Component
 public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
-
-  private static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
-
-  private static final long MAINTENANCE_SKIP_SLOTS = 2;
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -584,7 +582,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.getNextMaintenanceTime();
     } catch (IllegalArgumentException e) {
       this.saveNextMaintenanceTime(
-          Long.parseLong(DBConfig.getBlocktimestamp()));
+          Long.parseLong(DBConfig.getGenesisBlock().getTimestamp()));
     }
 
     try {
@@ -1366,6 +1364,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
 
+
   public void saveAvailableContractType(byte[] value) {
     this.put(AVAILABLE_CONTRACT_TYPE,
         new BytesCapsule(value));
@@ -1517,7 +1516,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public int getBlockFilledSlotsNumber() {
-    return BLOCK_FILLED_SLOTS_NUMBER;
+    return ChainConstant.BLOCK_FILLED_SLOTS_NUMBER;
   }
 
   public void applyBlock(boolean fillBlock) {
@@ -1649,7 +1648,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceSkipSlots() {
-    return MAINTENANCE_SKIP_SLOTS;
+    return Parameter.ChainConstant.MAINTENANCE_SKIP_SLOTS;
   }
 
   public void saveNextMaintenanceTime(long nextMaintenanceTime) {
@@ -1667,7 +1666,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "Update nextMaintenanceTime: currentTime: {}, blockTime: {}, nextTime: {}",
+        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},nextMaintenanceTime:{}",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );

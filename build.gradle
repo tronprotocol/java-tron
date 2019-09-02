@@ -42,8 +42,8 @@ subprojects {
         compile group: 'org.projectlombok', name: 'lombok', version: '1.18.2'
         compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
         compile "com.google.code.findbugs:jsr305:3.0.0"
-        compile group: 'org.springframework', name: 'spring-context', version: '4.2.0.RELEASE'
-        compile group: 'org.springframework', name: 'spring-tx', version: '4.2.0.RELEASE'
+        compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
+        compile group: 'org.springframework', name: 'spring-tx', version: '4.2.4.RELEASE'
         compile "org.apache.commons:commons-lang3:3.4"
         compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         compile "org.apache.commons:commons-collections4:4.0"

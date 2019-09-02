@@ -102,7 +102,7 @@ import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -430,7 +430,7 @@ public class Wallet {
     TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
-      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
+      List<Actuator> actList = ActuatorCreator.getINSTANCE().createActuator(trx);
       for (Actuator act : actList) {
         act.validate();
       }

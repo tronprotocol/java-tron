@@ -57,6 +57,7 @@ import org.tron.common.overlay.message.Message;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
@@ -76,6 +77,7 @@ import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
+import org.tron.core.consensus.ProposalController;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
@@ -129,7 +131,6 @@ import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
-import org.tron.core.consensus.ProposalController;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -1223,6 +1224,7 @@ public class Manager {
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     VMConfig.initAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
+    DBConfig.setAllowTvmConstantinople(dynamicPropertiesStore.getAllowTvmConstantinople());
 
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
@@ -1838,6 +1840,7 @@ public class Manager {
         .setStorageRowStore(storageRowStore)
         .setBlockStore(blockStore)
         .setKhaosDb(khaosDb)
-        .setBlockIndexStore(blockIndexStore);
+        .setBlockIndexStore(blockIndexStore)
+        .setMerkleContainer(merkleContainer);;
   }
 }

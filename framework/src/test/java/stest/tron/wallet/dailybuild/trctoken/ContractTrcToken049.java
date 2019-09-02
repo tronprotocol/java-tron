@@ -160,7 +160,6 @@ public class ContractTrcToken049 {
             0, null, dev001Key, dev001Address,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = PublicMethed
         .getTransactionInfoById(txid, blockingStubFull);
     logger.info("Deploy energytotal is " + infoById.get().getReceipt().getEnergyUsageTotal());
@@ -205,7 +204,6 @@ public class ContractTrcToken049 {
         param, false, 0, 100000000L, "0",
         0, user001Address, user001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(user001Address, blockingStubFull);

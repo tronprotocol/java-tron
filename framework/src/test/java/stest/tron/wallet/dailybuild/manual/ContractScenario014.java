@@ -97,7 +97,6 @@ public class ContractScenario014 {
     txid = PublicMethed.deployContractAndGetTransactionInfoById(contractName, abi, code, "",
         maxFeeLimit, 0L, 100, null, contract014Key, contract014Address, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
     Assert.assertTrue(infoById.get().getResultValue() == 0);
     contractAddress1 = infoById.get().getContractAddress().toByteArray();

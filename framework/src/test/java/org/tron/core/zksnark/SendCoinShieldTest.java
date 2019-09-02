@@ -39,7 +39,7 @@ import org.tron.common.zksnark.ZksnarkUtils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.ActuatorFactory;
+import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.actuator.ShieldedTransferActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -81,14 +81,14 @@ import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
-import org.tron.protos.contract.ShieldContract.PedersenHash;
-import org.tron.protos.contract.ShieldContract.ReceiveDescription;
-import org.tron.protos.contract.ShieldContract.SpendDescription;
-import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.ShieldContract.PedersenHash;
+import org.tron.protos.contract.ShieldContract.ReceiveDescription;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
+import org.tron.protos.contract.ShieldContract.SpendDescription;
 
 public class SendCoinShieldTest {
 
@@ -1056,14 +1056,14 @@ public class SendCoinShieldTest {
         1000 * 1000000L - wallet.getShieldedTransactionFee(), new byte[512]);
     TransactionCapsule transactionCap = builder.build();
     //execute
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate();
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
     actuator.get(0).execute(resultCapsule);
   }
 
   private void executeTx(TransactionCapsule transactionCap) throws Exception {
-    List<Actuator> actuator = ActuatorFactory.createActuator(transactionCap, dbManager);
+    List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
     actuator.get(0).validate();
     TransactionResultCapsule resultCapsule = new TransactionResultCapsule();
     actuator.get(0).execute(resultCapsule);

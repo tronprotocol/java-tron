@@ -89,7 +89,6 @@ public class ContractTrcToken050 {
         .assertTrue(PublicMethed.sendcoin(user001Address, 4048000000L, fromAddress,
             testKey002, blockingStubFull));
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     // freeze balance
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(dev001Address, 204800000,
@@ -97,7 +96,6 @@ public class ContractTrcToken050 {
 
     Assert.assertTrue(PublicMethed.freezeBalanceGetEnergy(user001Address, 2048000000,
         0, 1, user001Key, blockingStubFull));
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     long start = System.currentTimeMillis() + 2000;
@@ -181,7 +179,6 @@ public class ContractTrcToken050 {
         param, false, 0, 100000000L, "0",
         0, user001Address, user001Key,
         blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     Account infoafter = PublicMethed.queryAccount(user001Address, blockingStubFull);
