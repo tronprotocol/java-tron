@@ -49,23 +49,24 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.Parameter.ChainParameters;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.DynamicPropertiesStore;
 import org.tron.core.db.Manager;
+import org.tron.core.services.ProposalService.ProposalType;
 import org.tron.protos.Contract.AssetIssueContract;
 import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.BlockHeader;
 import org.tron.protos.Protocol.BlockHeader.raw;
-//import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
+
+//import org.tron.protos.Protocol.DeferredTransaction;
 
 @Slf4j
 public class WalletTest {
@@ -169,7 +170,7 @@ public class WalletTest {
         .put(transactionCapsule.getTransactionId().getBytes(), transactionCapsule);
   }
 
-  private static void   addTransactionInfoToStore(Transaction transaction) {
+  private static void addTransactionInfoToStore(Transaction transaction) {
     TransactionInfoCapsule transactionInfo = new TransactionInfoCapsule();
     byte[] trxId = transaction.getRawData().toByteArray();
     transactionInfo.setId(trxId);
@@ -497,7 +498,7 @@ public class WalletTest {
 
     Protocol.ChainParameters.Builder builder = Protocol.ChainParameters.newBuilder();
 
-    Arrays.stream(ChainParameters.values()).forEach(parameters -> {
+    Arrays.stream(ProposalType.values()).forEach(parameters -> {
       String methodName = Wallet.makeUpperCamelMethod(parameters.name());
       try {
         builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()

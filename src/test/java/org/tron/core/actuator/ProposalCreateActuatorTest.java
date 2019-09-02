@@ -242,7 +242,7 @@ public class ProposalCreateActuatorTest {
       fail("Bad chain parameter id");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Bad chain parameter id",
+      Assert.assertEquals("not support code : 31",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
