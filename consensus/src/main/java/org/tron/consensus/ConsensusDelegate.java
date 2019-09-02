@@ -112,22 +112,6 @@ public class ConsensusDelegate {
     dynamicPropertiesStore.saveLatestSolidifiedBlockNum(num);
   }
 
-  public int[] getBlockFilledSlots() {
-    return dynamicPropertiesStore.getBlockFilledSlots();
-  }
-
-  public void saveBlockFilledSlots(int[] slots) {
-    dynamicPropertiesStore.saveBlockFilledSlots(slots);
-  }
-
-  public int getBlockFilledSlotsIndex() {
-    return dynamicPropertiesStore.getBlockFilledSlotsIndex();
-  }
-
-  public void saveBlockFilledSlotsIndex(int index) {
-    dynamicPropertiesStore.saveBlockFilledSlotsIndex(index);
-  }
-
   public Sha256Hash getLatestBlockHeaderHash() {
     return dynamicPropertiesStore.getLatestBlockHeaderHash();
   }
@@ -136,4 +120,7 @@ public class ConsensusDelegate {
     return dynamicPropertiesStore.getAllowMultiSign();
   }
 
+  public void applyBlock(boolean flag) {
+    dynamicPropertiesStore.applyBlock(flag);
+  }
 }

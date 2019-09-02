@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
@@ -71,21 +72,20 @@ public class MaintenanceManager {
         .forEach(witnessCapsule -> newWitnessAddressList.add(witnessCapsule.getAddress()));
 
     countWitness.forEach((address, voteCount) -> {
-      WitnessCapsule witnessCapsule = witnessStore.get(StringUtil.createDbKey(address));
+      byte[] witnessAddress = address.toByteArray();
+      WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
       if (witnessCapsule == null) {
-        logger.warn("Witness capsule is null. address is {}",
-            StringUtil.createReadableString(address));
+        logger.warn("Witness capsule is null. address is {}", Hex.toHexString(witnessAddress));
         return;
       }
-      AccountCapsule account = accountStore.get(StringUtil.createDbKey(address));
+      AccountCapsule account = accountStore.get(witnessAddress);
       if (account == null) {
-        logger.warn("Witness account is null. address is {}",
-            StringUtil.createReadableString(address));
+        logger.warn("Witness account is null. address is {}", Hex.toHexString(witnessAddress));
         return;
       }
       witnessCapsule.setVoteCount(witnessCapsule.getVoteCount() + voteCount);
       witnessStore.put(witnessCapsule.createDbKey(), witnessCapsule);
-      logger.info("address is {}  ,countVote is {}", witnessCapsule.createReadableString(),
+      logger.info("address is {} , countVote is {}", witnessCapsule.createReadableString(),
           witnessCapsule.getVoteCount());
     });
 
