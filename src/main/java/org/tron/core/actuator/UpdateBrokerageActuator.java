@@ -37,7 +37,6 @@ public class UpdateBrokerageActuator extends AbstractActuator {
     byte[] ownerAddress = updateBrokerageContract.getOwnerAddress().toByteArray();
     int brokerage = updateBrokerageContract.getBrokerage();
 
-    dbManager.getDelegationService().withdrawReward(ownerAddress, getDeposit());
     dbManager.getDelegationStore().setBrokerage(ownerAddress, brokerage);
     ret.setStatus(fee, code.SUCESS);
 

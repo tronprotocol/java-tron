@@ -86,7 +86,7 @@ public class DelegationService {
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
       brokerage = delegationStore.getBrokerage(beginCycle, address);
-      logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
+      logger.info("latest cycle reward {},{},{}", beginCycle, account.getVotesList(), brokerage);
       if (account != null) {
         reward = computeReward(beginCycle, account, brokerage);
         adjustAllowance(address, reward);
@@ -102,8 +102,8 @@ public class DelegationService {
       return;
     }
     if (beginCycle < endCycle) {
-      brokerage = delegationStore.getBrokerage(address);
       for (long cycle = beginCycle; cycle < endCycle; cycle++) {
+        brokerage = delegationStore.getBrokerage(cycle, address);
         reward += computeReward(cycle, accountCapsule, brokerage);
       }
       adjustAllowance(address, reward);
@@ -111,7 +111,6 @@ public class DelegationService {
     delegationStore.setBeginCycle(address, endCycle);
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
-    delegationStore.setBrokerage(endCycle, address, brokerage);
     logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
             + "brokerage {}, " + "account vote {},", Hex.toHexString(address), reward, currentCycle,
         beginCycle, endCycle, brokerage, accountCapsule.getVotesList());

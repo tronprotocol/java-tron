@@ -386,8 +386,13 @@ public class WitnessController {
     }
     //update the delegation cycle
     if (manager.getDynamicPropertiesStore().allowChangeDelegation()) {
-      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(
-          manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1);
+      long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
+      manager.getDynamicPropertiesStore().saveCurrentCycleNumber(currentCycle + 1);
+      witnessStore.getAllWitnesses().forEach(witnessCapsule -> {
+        manager.getDelegationStore().setBrokerage(currentCycle + 1,
+            witnessCapsule.getAddress().toByteArray(),
+            manager.getDelegationStore().getBrokerage(witnessCapsule.getAddress().toByteArray()));
+      });
     }
   }
 
