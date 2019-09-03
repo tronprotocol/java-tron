@@ -133,9 +133,15 @@ public class multiValidateSignContract006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -197,9 +203,15 @@ public class multiValidateSignContract006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -261,9 +273,15 @@ public class multiValidateSignContract006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -320,9 +338,15 @@ public class multiValidateSignContract006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -379,9 +403,15 @@ public class multiValidateSignContract006 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();

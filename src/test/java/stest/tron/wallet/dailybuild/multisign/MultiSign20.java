@@ -99,6 +99,10 @@ public class MultiSign20 {
     ownerAddress = new WalletClient(ownerKey).getAddress();
     long needCoin = updateAccountPermissionFee * 2;
 
+    PublicMethed.freezeBalanceForReceiver(fromAddress, 50000000L, 0,
+        1, ByteString.copyFrom(ownerAddress), testKey002, blockingStubFull);
+    PublicMethed.freezeBalanceForReceiver(fromAddress, 50000000L, 0,
+        0, ByteString.copyFrom(ownerAddress), testKey002, blockingStubFull);
     PublicMethed.sendcoin(ownerAddress, needCoin, fromAddress, testKey002, blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Long balanceBefore = PublicMethed.queryAccount(ownerAddress, blockingStubFull)
@@ -531,6 +535,8 @@ public class MultiSign20 {
 
   @AfterMethod
   public void aftertest() {
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 0, ownerAddress, blockingStubFull);
+    PublicMethed.unFreezeBalance(fromAddress, testKey002, 1, ownerAddress, blockingStubFull);
     PublicMethed.freedResource(ownerAddress, ownerKey, fromAddress, blockingStubFull);
   }
   /**
