@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.utils.DBConfig.allowTvmConstantinople;
-
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
