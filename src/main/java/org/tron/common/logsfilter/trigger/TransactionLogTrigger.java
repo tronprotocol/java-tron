@@ -2,6 +2,7 @@ package org.tron.common.logsfilter.trigger;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.tron.common.runtime.vm.LogInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -93,7 +94,11 @@ public class TransactionLogTrigger extends Trigger {
 
   @Getter
   @Setter
-  private List<Map<String, String>> triggerList;
+  private List<Map<String, Object>> triggerList;
+
+  @Getter
+  @Setter
+  private List<LogInfo> logInfoList;
 
   @Getter
   @Setter

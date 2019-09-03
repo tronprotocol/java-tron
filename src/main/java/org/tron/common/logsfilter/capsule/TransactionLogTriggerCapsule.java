@@ -133,17 +133,19 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
       ProgramResult programResult = trxTrace.getRuntime().getResult();
       ByteString contractResult = ByteString.copyFrom(programResult.getHReturn());
       ByteString contractAddress = ByteString.copyFrom(programResult.getContractAddress());
-      List<Map<String, String>> triggerList = new ArrayList<Map<String, String>>();
+      List<Map<String, Object>> triggerList = new ArrayList<Map<String, Object>>();
       for (ContractTrigger trigger : trxTrace.getRuntimeResult().getTriggerList()) {
-        HashMap<String, String> hash1 = new HashMap<String, String>();
-        hash1.put("transactionId", trigger.getTransactionId());
-        hash1.put("callerAddress", trigger.getCallerAddress());
-        hash1.put("originAddress", trigger.getOriginAddress());
-        hash1.put("contractAddress", trigger.getContractAddress());
-        hash1.put("creatorAddress", trigger.getCreatorAddress());
-        triggerList.add(hash1);
+        Map<String, Object> triggerCopy = new HashMap<String, Object>();
+        triggerCopy.put("transactionId", trigger.getTransactionId());
+        triggerCopy.put("callerAddress", trigger.getCallerAddress());
+        triggerCopy.put("originAddress", trigger.getOriginAddress());
+        triggerCopy.put("contractAddress", trigger.getContractAddress());
+        triggerCopy.put("creatorAddress", trigger.getCreatorAddress());
+        triggerCopy.put("rawData", trigger.getRawData());
+        triggerList.add(triggerCopy);
       }
       transactionLogTrigger.setTriggerList(triggerList);
+      transactionLogTrigger.setLogInfoList(programResult.getLogInfoList());
       if (Objects.nonNull(contractResult) && contractResult.size() > 0) {
         transactionLogTrigger.setContractResult(Hex.toHexString(contractResult.toByteArray()));
       }
