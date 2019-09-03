@@ -50,7 +50,7 @@ public class SnapshotManagerTest {
     context.destroy();
     tronDatabase.close();
     FileUtil.deleteDir(new File("output_SnapshotManager_test"));
-    revokingDatabase.getCheckpoint().closeDB();
+    revokingDatabase.getCheckTmpStore().close();
     tronDatabase.close();
   }
 
