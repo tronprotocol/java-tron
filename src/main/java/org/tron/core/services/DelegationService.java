@@ -78,17 +78,15 @@ public class DelegationService {
     long endCycle = delegationStore.getEndCycle(address);
     long currentCycle = dynamicPropertiesStore.getCurrentCycleNumber();
     long reward = 0;
-    int brokerage = 0;
     if (beginCycle == currentCycle) {
       return;
     }
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
-      brokerage = delegationStore.getBrokerage(beginCycle, address);
-      logger.info("latest cycle reward {},{},{}", beginCycle, account.getVotesList(), brokerage);
+      logger.info("latest cycle reward {},{}", beginCycle, account.getVotesList());
       if (account != null) {
-        reward = computeReward(beginCycle, account, brokerage);
+        reward = computeReward(beginCycle, account);
         adjustAllowance(address, reward);
         reward = 0;
       }
@@ -103,8 +101,7 @@ public class DelegationService {
     }
     if (beginCycle < endCycle) {
       for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        brokerage = delegationStore.getBrokerage(cycle, address);
-        reward += computeReward(cycle, accountCapsule, brokerage);
+        reward += computeReward(cycle, accountCapsule);
       }
       adjustAllowance(address, reward);
     }
@@ -112,8 +109,8 @@ public class DelegationService {
     delegationStore.setEndCycle(address, endCycle + 1);
     delegationStore.setAccountVote(endCycle, address, accountCapsule);
     logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
-            + "brokerage {}, " + "account vote {},", Hex.toHexString(address), reward, currentCycle,
-        beginCycle, endCycle, brokerage, accountCapsule.getVotesList());
+            + "account vote {},", Hex.toHexString(address), reward, currentCycle,
+        beginCycle, endCycle, accountCapsule.getVotesList());
   }
 
   public long queryReward(byte[] address) {
@@ -135,9 +132,8 @@ public class DelegationService {
     //withdraw the latest cycle reward
     if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
       AccountCapsule account = delegationStore.getAccountVote(beginCycle, address);
-      brokerage = delegationStore.getBrokerage(beginCycle, address);
       if (account != null) {
-        reward = queryComputeReward(beginCycle, account, brokerage);
+        reward = queryComputeReward(beginCycle, account);
       }
       beginCycle += 1;
     }
@@ -149,24 +145,21 @@ public class DelegationService {
       return reward + accountCapsule.getAllowance();
     }
     if (beginCycle < endCycle) {
-      brokerage = delegationStore.getBrokerage(address);
       for (long cycle = beginCycle; cycle < endCycle; cycle++) {
-        reward += queryComputeReward(cycle, accountCapsule, brokerage);
+        reward += queryComputeReward(cycle, accountCapsule);
       }
     }
     return reward + accountCapsule.getAllowance();
   }
 
-  private long computeReward(long cycle, AccountCapsule accountCapsule, int brokerage) {
+  private long computeReward(long cycle, AccountCapsule accountCapsule) {
     long reward = 0;
     for (Vote vote : accountCapsule.getVotesList()) {
-      long totalReward = manager.getDelegationStore()
-          .getReward(cycle, vote.getVoteAddress().toByteArray());
-      long totalVote = manager.getDelegationStore()
-          .getWitnessVote(cycle, vote.getVoteAddress().toByteArray());
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      long totalReward = manager.getDelegationStore().getReward(cycle, srAddress);
+      long totalVote = manager.getDelegationStore().getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK) {
-        totalVote = manager.getWitnessStore().get(vote.getVoteAddress().toByteArray())
-            .getVoteCount();
+        totalVote = manager.getWitnessStore().get(srAddress).getVoteCount();
       }
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
@@ -174,6 +167,7 @@ public class DelegationService {
       logger.debug("computeReward {} {},{},{},{}",
           Hex.toHexString(vote.getVoteAddress().toByteArray()),
           userVote, totalVote, totalReward, reward);
+      int brokerage = manager.getDelegationStore().getBrokerage(cycle, srAddress);
       if (!Arrays.equals(vote.getVoteAddress().toByteArray(),
           accountCapsule.getAddress().toByteArray()) && brokerage > 0) {
         double brokerageRate = (double) brokerage / 100;
@@ -185,22 +179,20 @@ public class DelegationService {
     return reward;
   }
 
-  private long queryComputeReward(long cycle, AccountCapsule accountCapsule, int brokerage) {
+  private long queryComputeReward(long cycle, AccountCapsule accountCapsule) {
     long reward = 0;
     for (Vote vote : accountCapsule.getVotesList()) {
-      long totalReward = manager.getDelegationStore()
-          .getReward(cycle, vote.getVoteAddress().toByteArray());
-      long totalVote = manager.getDelegationStore()
-          .getWitnessVote(cycle, vote.getVoteAddress().toByteArray());
+      byte[] srAddress = vote.getVoteAddress().toByteArray();
+      long totalReward = manager.getDelegationStore().getReward(cycle, srAddress);
+      long totalVote = manager.getDelegationStore().getWitnessVote(cycle, srAddress);
       if (totalVote == DelegationStore.REMARK) {
-        totalVote = manager.getWitnessStore().get(vote.getVoteAddress().toByteArray())
-            .getVoteCount();
+        totalVote = manager.getWitnessStore().get(srAddress).getVoteCount();
       }
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
-      if (!Arrays.equals(vote.getVoteAddress().toByteArray(),
-          accountCapsule.getAddress().toByteArray()) && brokerage > 0) {
+      int brokerage = manager.getDelegationStore().getBrokerage(cycle, srAddress);
+      if (!Arrays.equals(srAddress, accountCapsule.getAddress().toByteArray()) && brokerage > 0) {
         double brokerageRate = (double) brokerage / 100;
         long brokerageAmount = (long) (brokerageRate * reward);
         reward -= brokerageAmount;

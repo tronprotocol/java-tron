@@ -42,15 +42,22 @@ public class DelegationServiceTest {
     //init
     manager.getDynamicPropertiesStore().saveCurrentCycleNumber(1);
     testPay(1);
+    manager.getDynamicPropertiesStore().saveCurrentCycleNumber(2);
+    testPay(2);
     byte[] sr1 = Wallet.decodeFromBase58Check("THKJYuUmMKKARNf7s2VT51g5uPY6KEqnat");
     AccountCapsule accountCapsule = manager.getAccountStore().get(sr1);
     byte[] sr27 = Wallet.decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     accountCapsule.addVotes(ByteString.copyFrom(sr27), 10000000);
     manager.getAccountStore().put(sr1, accountCapsule);
+    manager.getDelegationStore().setBrokerage(0, sr27, 10);
+    manager.getDelegationStore().setBrokerage(1, sr27, 20);
     //
     long value = delegationService.queryReward(sr1);
-    long reward = (long) ((double) manager.getDelegationStore().getReward(0, sr27) / 100000000
+    long reward1 = (long) ((double) manager.getDelegationStore().getReward(0, sr27) / 100000000
         * 10000000);
+    long reward2 = (long) ((double) manager.getDelegationStore().getReward(1, sr27) / 100000000
+        * 10000000);
+    long reward = reward1 - (long) (reward1 * 0.1) + reward2 - (long) (reward2 * 0.2);
     System.out.println("testWithdraw:" + value + ", reward:" + reward);
     Assert.assertEquals(reward, value);
     delegationService.withdrawReward(sr1, null);
