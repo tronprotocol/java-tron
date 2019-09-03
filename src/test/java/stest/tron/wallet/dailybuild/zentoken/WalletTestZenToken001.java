@@ -153,6 +153,7 @@ public class WalletTestZenToken001 {
   @Test(enabled = true, description = "Shield to public transaction")
   public void test2Shield2PublicTransaction() {
     note = notes.getNoteTxs(0).getNote();
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     SpendResult result = PublicMethed.getSpendResult(shieldAddressInfo.get(),
         notes.getNoteTxs(0), blockingStubFull);
     Assert.assertTrue(!result.getResult());

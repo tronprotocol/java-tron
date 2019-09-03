@@ -257,8 +257,7 @@ public class ContractGrammar003 {
     infoById15 = PublicMethed.getTransactionInfoById(txid15, blockingStubFull);
     Long returnnumber15 = ByteArray.toLong(ByteArray
         .fromHexString(ByteArray.toHexString(infoById15.get().getContractResult(0).toByteArray())));
-
-    Assert.assertTrue(returnnumber15 == 3);
+    Assert.assertEquals(3L, returnnumber15.longValue());
   }
 
 

@@ -83,10 +83,10 @@ public class ExtCodeHashTest007 {
     Assert.assertTrue(PublicMethed.sendcoin(dev001Address, 100_000_000L, fromAddress,
         testKey002, blockingStubFull));
 
-    Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
-        PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
-            blockingStubFull), 0, 1,
-        ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
+    //Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress,
+    //    PublicMethed.getFreezeBalanceCount(dev001Address, dev001Key, 170000L,
+    //        blockingStubFull), 0, 1,
+    //    ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
 
     Assert.assertTrue(PublicMethed.freezeBalanceForReceiver(fromAddress, 10_000_000L,
         0, 0, ByteString.copyFrom(dev001Address), testKey002, blockingStubFull));
