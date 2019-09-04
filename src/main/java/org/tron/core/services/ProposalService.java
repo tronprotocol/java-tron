@@ -45,7 +45,7 @@ public class ProposalService {
     ALLOW_PROTO_FILTER_NUM(24), // 1, 24
     ALLOW_ACCOUNT_STATE_ROOT(25), // 1, 25
     ALLOW_TVM_CONSTANTINOPLE(26), // 1, 26
-    ALLOW_CHANGE_DELEGATION(27); //1, 27
+    ALLOW_CHANGE_DELEGATION(30); //1, 27
 
     ProposalType(long code) {
       this.code = code;
