@@ -149,10 +149,10 @@ public class Util {
     String string = JsonFormat.printToString(transactionExtention, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     if (transactionExtention.getResult().getResult()) {
-      JSONObject transactionOjbect = printTransactionToJSON(
+      JSONObject transactionObject = printTransactionToJSON(
           transactionExtention.getTransaction(), selfType);
       transactionOjbect.put(VISIBLE, selfType);
-      jsonObject.put(TRANSACTION, transactionOjbect);
+      jsonObject.put(TRANSACTION, transactionObject);
     }
     return jsonObject.toJSONString();
   }
@@ -549,11 +549,11 @@ public class Util {
             any = Any.pack(deleteContractBuilder.build());
             break;
           case "SetAccountIdContract":
-            Contract.SetAccountIdContract.Builder setAccountid = Contract.SetAccountIdContract
+            Contract.SetAccountIdContract.Builder setAccountId = Contract.SetAccountIdContract
                 .newBuilder();
             JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(),
-                setAccountid, selfType);
-            any = Any.pack(setAccountid.build());
+                setAccountId, selfType);
+            any = Any.pack(setAccountId.build());
             break;
           case "CreateSmartContract":
             CreateSmartContract.Builder createSmartContractBuilder = CreateSmartContract
@@ -745,15 +745,15 @@ public class Util {
     return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 
-  public static String getMemo(byte[] meno) {
-    int index = meno.length;
+  public static String getMemo(byte[] memo) {
+    int index = memo.length;
     for (; index>0; --index) {
-      if (meno[index-1] != 0)
+      if (memo[index-1] != 0)
         break;
     }
 
     byte[] inputCheck = new byte[index];
-    System.arraycopy(meno, 0, inputCheck, 0, index);
+    System.arraycopy(memo, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
 }

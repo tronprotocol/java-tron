@@ -55,7 +55,7 @@ public class DeployContractServlet extends RateLimiterServlet {
       if (jsonObject.containsKey("abi")) {
         String abi = jsonObject.getString("abi");
         StringBuffer abiSB = new StringBuffer("{");
-        abiSB.append("\"entrys\":");
+        abiSB.append("\"entries\":");
         abiSB.append(abi);
         abiSB.append("}");
         JsonFormat.merge(abiSB.toString(), abiBuilder, visible);
