@@ -17,6 +17,11 @@ import org.tron.core.exception.ContractValidateException;
 @Slf4j
 public class ProposalService {
 
+  private static final long LONG_VALUE = 100_000_000_000_000_000L;
+  private static final String LONG_VALUE_ERROR =
+      "Bad chain parameter value,valid range is [0," + LONG_VALUE + "]";
+  private static final String BAD_PARAM_ID = "Bad chain parameter id";
+
   public enum ProposalType {
     MAINTENANCE_TIME_INTERVAL(0), //ms  ,0
     ACCOUNT_UPGRADE_COST(1), //drop ,1
@@ -100,9 +105,8 @@ public class ProposalService {
       case WITNESS_STANDBY_ALLOWANCE:
       case CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT:
       case CREATE_NEW_ACCOUNT_BANDWIDTH_RATE: {
-        if (value < 0 || value > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
         break;
       }
@@ -157,14 +161,13 @@ public class ProposalService {
       }
       case TOTAL_ENERGY_LIMIT: { // deprecated
         if (!manager.getForkController().pass(ForkBlockVersionConsts.ENERGY_LIMIT)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
-        if (value < 0 || value > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
         break;
       }
@@ -181,11 +184,10 @@ public class ProposalService {
       }
       case TOTAL_CURRENT_ENERGY_LIMIT: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_2_2)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
-        if (value < 0 || value > 100_000_000_000_000_000L) {
-          throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [0,100_000_000_000_000_000L]");
+        if (value < 0 || value > LONG_VALUE) {
+          throw new ContractValidateException(LONG_VALUE_ERROR);
         }
         break;
       }
@@ -232,7 +234,7 @@ public class ProposalService {
       }
       case ALLOW_PROTO_FILTER_NUM: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
@@ -242,7 +244,7 @@ public class ProposalService {
       }
       case ALLOW_ACCOUNT_STATE_ROOT: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
@@ -252,7 +254,7 @@ public class ProposalService {
       }
       case ALLOW_TVM_CONSTANTINOPLE: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1) {
           throw new ContractValidateException(
@@ -267,7 +269,7 @@ public class ProposalService {
       }
       case ALLOW_CHANGE_DELEGATION: {
         if (!manager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
-          throw new ContractValidateException("Bad chain parameter id");
+          throw new ContractValidateException(BAD_PARAM_ID);
         }
         if (value != 1 && value != 0) {
           throw new ContractValidateException(
