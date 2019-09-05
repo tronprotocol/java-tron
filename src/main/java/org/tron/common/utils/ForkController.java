@@ -59,7 +59,7 @@ public class ForkController {
   // version !=5, skip this.
   private boolean checkForEnergyLimit() {
     long blockNum = manager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-    return blockNum >= Args.getInstance().getBlockNumForEneryLimit();
+    return blockNum >= Args.getInstance().getBlockNumForEnergyLimit();
   }
 
   private boolean check(byte[] stats) {

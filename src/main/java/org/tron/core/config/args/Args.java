@@ -445,7 +445,7 @@ public class Args {
 
   @Getter
   @Setter
-  private long blockNumForEneryLimit;
+  private long blockNumForEnergyLimit;
 
   @Getter
   @Setter
@@ -961,7 +961,7 @@ public class Args {
     INSTANCE.minEffectiveConnection = config.hasPath("node.rpc.minEffectiveConnection") ?
         config.getInt("node.rpc.minEffectiveConnection") : 1;
 
-    INSTANCE.blockNumForEneryLimit = config.hasPath("enery.limit.block.num") ?
+    INSTANCE.blockNumForEnergyLimit = config.hasPath("enery.limit.block.num") ?
         config.getInt("enery.limit.block.num") : 4727890L;
 
     INSTANCE.vmTrace =
