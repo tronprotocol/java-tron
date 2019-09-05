@@ -363,7 +363,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("VoteNumber must more than 0", e.getMessage());
+      Assert.assertEquals("VoteNumber must be greater than 0", e.getMessage());
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController
           .getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
@@ -380,7 +380,7 @@ public class VoteWitnessActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("VoteNumber more than maxVoteNumber 30", e.getMessage());
+      Assert.assertEquals("VoteNumber is greater than maxVoteNumber 30", e.getMessage());
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController
           .getWitnesseByAddress(StringUtil.hexString2ByteString(WITNESS_ADDRESS));
@@ -475,7 +475,7 @@ public class VoteWitnessActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS_BALANCENOTSUFFICIENT)).getVotesList().size());
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert
-          .assertEquals("The total number of votes[" + 1000000 + "] is greater than the tronPower["
+          .assertEquals("The total number of votes[" + 1000000 + "] is greater than the TRONPower["
               + balanceNotSufficientCapsule.getTronPower() + "]", e.getMessage());
       witnessController.updateWitness();
       WitnessCapsule witnessCapsule = witnessController

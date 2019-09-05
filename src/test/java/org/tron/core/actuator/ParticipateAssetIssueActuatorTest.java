@@ -1197,7 +1197,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Asset balance is not enough !".equals(e.getMessage()));
+      Assert.assertTrue("Asset balance is not enough!".equals(e.getMessage()));
 
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));
@@ -1238,7 +1238,7 @@ public class ParticipateAssetIssueActuatorTest {
       Assert.assertTrue(false);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue("Asset balance is not enough !".equals(e.getMessage()));
+      Assert.assertTrue("Asset balance is not enough!".equals(e.getMessage()));
 
       AccountCapsule owner =
           dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));

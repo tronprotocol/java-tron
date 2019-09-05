@@ -180,7 +180,7 @@ public class UpdateSettingContractActuatorTest {
       fail("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] not exists", e.getMessage());
+      Assert.assertEquals("Account[" + OWNER_ADDRESS_NOTEXIST + "] does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }
@@ -220,7 +220,7 @@ public class UpdateSettingContractActuatorTest {
       fail("Contract not exists");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Contract not exists", e.getMessage());
+      Assert.assertEquals("Contract does not exist", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     }

@@ -363,7 +363,7 @@ public class SellStorageActuatorTest {
       Assert.fail("cannot run here.");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("quantity must be larger than 1TRX,current quantity[900000]",
+      Assert.assertEquals("quantity must be larger than 1 TRX,current quantity[900000]",
           e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);

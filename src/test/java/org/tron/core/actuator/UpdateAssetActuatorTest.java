@@ -340,7 +340,7 @@ public class UpdateAssetActuatorTest {
       fail("Account has not existed");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("Account has not existed", e.getMessage());
+      Assert.assertEquals("Account is not existed", e.getMessage());
     } catch (ContractExeException e) {
       Assert.assertFalse(e instanceof ContractExeException);
     } finally {
