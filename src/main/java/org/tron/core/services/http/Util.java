@@ -151,7 +151,7 @@ public class Util {
     if (transactionExtention.getResult().getResult()) {
       JSONObject transactionObject = printTransactionToJSON(
           transactionExtention.getTransaction(), selfType);
-      transactionOjbect.put(VISIBLE, selfType);
+      transactionObject.put(VISIBLE, selfType);
       jsonObject.put(TRANSACTION, transactionObject);
     }
     return jsonObject.toJSONString();
