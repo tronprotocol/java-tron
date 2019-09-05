@@ -87,7 +87,7 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
     if (!this.contract.is(UpdateAssetContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateAssetContract],real type[" + contract
+          "contract type error, expected type [UpdateAssetContract],real type[" + contract
               .getClass() + "]");
     }
     final UpdateAssetContract updateAssetContract;
@@ -110,7 +110,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
     AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
     if (account == null) {
-      throw new ContractValidateException("Account has not existed");
+      throw new ContractValidateException("Account is not existed");
     }
 
     if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
@@ -120,7 +120,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       if (dbManager.getAssetIssueStore().get(account.getAssetIssuedName().toByteArray())
           == null) {
-        throw new ContractValidateException("Asset not exists in AssetIssueStore");
+        throw new ContractValidateException("Asset does not exist in AssetIssueStore");
       }
     } else {
       if (account.getAssetIssuedID().isEmpty()) {
@@ -129,7 +129,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
       if (dbManager.getAssetIssueV2Store().get(account.getAssetIssuedID().toByteArray())
           == null) {
-        throw new ContractValidateException("Asset not exists  in AssetIssueV2Store");
+        throw new ContractValidateException("Asset does not exist in AssetIssueV2Store");
       }
     }
 

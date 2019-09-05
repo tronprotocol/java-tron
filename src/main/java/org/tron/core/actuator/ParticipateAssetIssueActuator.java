@@ -179,7 +179,7 @@ public class ParticipateAssetIssueActuator extends AbstractActuator {
 
       if (!toAccount.assetBalanceEnoughV2(assetName, exchangeAmount,
           dbManager)) {
-        throw new ContractValidateException("Asset balance is not enough !");
+        throw new ContractValidateException("Asset balance is not enough!");
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);

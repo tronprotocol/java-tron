@@ -62,7 +62,7 @@ public class VoteWitnessActuator extends AbstractActuator {
     }
     if (!this.contract.is(VoteWitnessContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [VoteWitnessContract],real type[" + contract
+          "contract type error, expected type [VoteWitnessContract],real type[" + contract
               .getClass() + "]");
     }
     final VoteWitnessContract contract;
@@ -83,12 +83,12 @@ public class VoteWitnessActuator extends AbstractActuator {
 
     if (contract.getVotesCount() == 0) {
       throw new ContractValidateException(
-          "VoteNumber must more than 0");
+          "VoteNumber must be greater than 0");
     }
     int maxVoteNumber = ChainConstant.MAX_VOTE_NUMBER;
     if (contract.getVotesCount() > maxVoteNumber) {
       throw new ContractValidateException(
-          "VoteNumber more than maxVoteNumber " + maxVoteNumber);
+          "VoteNumber is greater than maxVoteNumber " + maxVoteNumber);
     }
     try {
       Iterator<Vote> iterator = contract.getVotesList().iterator();
@@ -138,7 +138,7 @@ public class VoteWitnessActuator extends AbstractActuator {
       sum = LongMath.checkedMultiply(sum, 1000000L); //trx -> drop. The vote count is based on TRX
       if (sum > tronPower) {
         throw new ContractValidateException(
-            "The total number of votes[" + sum + "] is greater than the tronPower[" + tronPower
+            "The total number of votes[" + sum + "] is greater than the TRONPower[" + tronPower
                 + "]");
       }
     } catch (ArithmeticException e) {

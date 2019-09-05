@@ -59,7 +59,7 @@ public class UpdateAccountActuator extends AbstractActuator {
     }
     if (!this.contract.is(AccountUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [AccountUpdateContract],real type[" + contract
+          "contract type error, expected type [AccountUpdateContract],real type[" + contract
               .getClass() + "]");
     }
     final AccountUpdateContract accountUpdateContract;
@@ -80,17 +80,17 @@ public class UpdateAccountActuator extends AbstractActuator {
 
     AccountCapsule account = dbManager.getAccountStore().get(ownerAddress);
     if (account == null) {
-      throw new ContractValidateException("Account has not existed");
+      throw new ContractValidateException("Account does not exist");
     }
 
     if (account.getAccountName() != null && !account.getAccountName().isEmpty()
         && dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
-      throw new ContractValidateException("This account name already exist");
+      throw new ContractValidateException("This account name already exists");
     }
 
     if (dbManager.getAccountIndexStore().has(accountName)
         && dbManager.getDynamicPropertiesStore().getAllowUpdateAccountName() == 0) {
-      throw new ContractValidateException("This name has existed");
+      throw new ContractValidateException("This name is existed");
     }
 
     return true;

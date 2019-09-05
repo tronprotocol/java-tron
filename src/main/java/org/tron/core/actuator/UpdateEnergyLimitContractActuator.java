@@ -62,7 +62,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
     }
     if (!this.contract.is(UpdateEnergyLimitContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UpdateEnergyLimitContract],real type["
+          "contract type error, expected type [UpdateEnergyLimitContract],real type["
               + contract
               .getClass() + "]");
     }

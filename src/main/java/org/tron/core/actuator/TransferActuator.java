@@ -100,7 +100,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Cannot transfer trx to yourself.");
+      throw new ContractValidateException("Cannot transfer TRX to yourself.");
     }
 
     AccountCapsule ownerAccount = dbManager.getAccountStore().get(ownerAddress);
@@ -111,7 +111,7 @@ public class TransferActuator extends AbstractActuator {
     long balance = ownerAccount.getBalance();
 
     if (amount <= 0) {
-      throw new ContractValidateException("Amount must greater than 0.");
+      throw new ContractValidateException("Amount must be greater than 0.");
     }
 
     try {
@@ -146,7 +146,7 @@ public class TransferActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(toAddress, ownerAddress)) {
-      throw new ContractValidateException("Cannot transfer trx to yourself.");
+      throw new ContractValidateException("Cannot transfer TRX to yourself.");
     }
 
     AccountCapsule ownerAccount = deposit.getAccount(ownerAddress);
@@ -163,7 +163,7 @@ public class TransferActuator extends AbstractActuator {
     long balance = ownerAccount.getBalance();
 
     if (amount < 0) {
-      throw new ContractValidateException("Amount must greater than or equals 0.");
+      throw new ContractValidateException("Amount must be greater than or equals 0.");
     }
 
     try {

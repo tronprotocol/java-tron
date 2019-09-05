@@ -225,7 +225,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
     }
     if (!this.contract.is(UnfreezeBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [UnfreezeBalanceContract],real type[" + contract
+          "contract type error, expected type [UnfreezeBalanceContract],real type[" + contract
               .getClass() + "]");
     }
     final UnfreezeBalanceContract unfreezeBalanceContract;
@@ -275,7 +275,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
           .get(key);
       if (delegatedResourceCapsule == null) {
         throw new ContractValidateException(
-            "delegated Resource not exists");
+            "delegated Resource does not exist");
       }
 
       switch (unfreezeBalanceContract.getResource()) {

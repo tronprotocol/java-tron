@@ -75,7 +75,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     }
     if (!this.contract.is(WithdrawBalanceContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WithdrawBalanceContract],real type[" + contract
+          "contract type error, expected type [WithdrawBalanceContract],real type[" + contract
               .getClass() + "]");
     }
     final WithdrawBalanceContract withdrawBalanceContract;
@@ -96,7 +96,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
     if (accountCapsule == null) {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
-          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
+          ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] does not exist");
     }
 
     String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
@@ -121,7 +121,7 @@ public class WithdrawBalanceActuator extends AbstractActuator {
 
     if (now - latestWithdrawTime < witnessAllowanceFrozenTime) {
       throw new ContractValidateException("The last withdraw time is "
-          + latestWithdrawTime + ",less than 24 hours");
+          + latestWithdrawTime + ", less than 24 hours");
     }
 
     if (accountCapsule.getAllowance() <= 0) {

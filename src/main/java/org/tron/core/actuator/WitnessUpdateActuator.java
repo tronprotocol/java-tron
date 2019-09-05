@@ -54,7 +54,7 @@ public class WitnessUpdateActuator extends AbstractActuator {
     }
     if (!this.contract.is(WitnessUpdateContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [WitnessUpdateContract],real type[" + contract
+          "contract type error, expected type [WitnessUpdateContract],real type[" + contract
               .getClass() + "]");
     }
     final WitnessUpdateContract contract;

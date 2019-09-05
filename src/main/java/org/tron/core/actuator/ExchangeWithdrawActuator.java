@@ -179,7 +179,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     }
 
     if (firstTokenBalance == 0 || secondTokenBalance == 0) {
-      throw new ContractValidateException("Token balance in exchange is equal with 0,"
+      throw new ContractValidateException("Token balance in exchange is 0,"
           + "the exchange has been closed");
     }
 
@@ -196,14 +196,14 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       }
 
       if (anotherTokenQuant <= 0) {
-        throw new ContractValidateException("withdraw another token quant must greater than zero");
+        throw new ContractValidateException("withdraw quantity of the other token must be greater than 0");
       }
 
       double remainder = bigSecondTokenBalance.multiply(bigTokenQuant)
           .divide(bigFirstTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
           - anotherTokenQuant;
       if (remainder / anotherTokenQuant > 0.0001) {
-        throw new ContractValidateException("Not precise enough");
+        throw new ContractValidateException("Insufficient precision");
       }
 
     } else {
@@ -216,14 +216,14 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       }
 
       if (anotherTokenQuant <= 0) {
-        throw new ContractValidateException("withdraw another token quant must greater than zero");
+        throw new ContractValidateException("withdraw quantity of the another token must be greater than 0");
       }
 
       double remainder = bigFirstTokenBalance.multiply(bigTokenQuant)
           .divide(bigSecondTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
           - anotherTokenQuant;
       if (remainder / anotherTokenQuant > 0.0001) {
-        throw new ContractValidateException("Not precise enough");
+        throw new ContractValidateException("Insufficient precision");
       }
     }
 

@@ -58,7 +58,7 @@ public class SetAccountIdActuator extends AbstractActuator {
     }
     if (!this.contract.is(SetAccountIdContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [SetAccountIdContract],real type[" + contract
+          "contract type error, expected type [SetAccountIdContract], real type[" + contract
               .getClass() + "]");
     }
     final SetAccountIdContract setAccountIdContract;

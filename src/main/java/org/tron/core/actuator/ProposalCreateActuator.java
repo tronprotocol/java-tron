@@ -145,7 +145,7 @@ public class ProposalCreateActuator extends AbstractActuator {
       case (0): {
         if (entry.getValue() < 3 * 27 * 1000 || entry.getValue() > 24 * 3600 * 1000) {
           throw new ContractValidateException(
-              "Bad chain parameter value,valid range is [3 * 27 * 1000,24 * 3600 * 1000]");
+              "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]");
         }
         return;
       }

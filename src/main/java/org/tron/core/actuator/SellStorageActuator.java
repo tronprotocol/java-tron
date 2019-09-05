@@ -99,7 +99,7 @@ public class SellStorageActuator extends AbstractActuator {
     long quantity = storageMarket.trySellStorage(bytes);
     if (quantity <= 1_000_000L) {
       throw new ContractValidateException(
-          "quantity must be larger than 1TRX,current quantity[" + quantity + "]");
+          "quantity must be larger than 1 TRX,current quantity[" + quantity + "]");
     }
 
     return true;

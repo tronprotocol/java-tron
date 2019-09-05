@@ -68,7 +68,7 @@ public class ProposalDeleteActuator extends AbstractActuator {
     }
     if (!this.contract.is(ProposalDeleteContract.class)) {
       throw new ContractValidateException(
-          "contract type error,expected type [ProposalDeleteContract],real type[" + contract
+          "contract type error, expected type [ProposalDeleteContract],real type[" + contract
               .getClass() + "]");
     }
     final ProposalDeleteContract contract;
