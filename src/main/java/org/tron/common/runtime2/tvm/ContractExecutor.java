@@ -1196,6 +1196,11 @@ public class ContractExecutor {
   }
 
 
+  public void setHReturn(byte[] hReturn) {
+    contractContext.getProgramResult().setHReturn(hReturn);
+  }
+
+
   /**
    * check TokenId TokenId  \ isTransferToken -----------------------------------------------------
    * false                                     true -----------------------------------------------
