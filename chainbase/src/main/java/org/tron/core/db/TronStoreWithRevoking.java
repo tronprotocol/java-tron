@@ -6,6 +6,7 @@ import com.google.common.collect.Streams;
 import com.google.common.reflect.TypeToken;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
@@ -55,9 +56,11 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                     DBConfig.getOptionsByDbName(dbName),
                     new WriteOptions().sync(DBConfig.isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
+        String parentPath =  Paths.get(DBConfig.getOutputDirectoryByDbName(dbName), DBConfig.getDbDirectory()).toString();
+
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(
-                new RocksDbDataSourceImpl(DBConfig.getOutputDirectoryByDbName(dbName),
+                new RocksDbDataSourceImpl(parentPath,
                     dbName, DBConfig.getRocksDbSettings()))));
       }
     } else {

@@ -50,14 +50,12 @@ public class RocksDbDataSourceImpl implements DbSourceInter<byte[]>,
 
   public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
     this.dataBaseName = name;
-    this.parentPath = Paths.get(parentPath, DBConfig.getDbDirectory()).toString();
     RocksDbSettings.setSettings(settings);
     initDB();
   }
 
   public RocksDbDataSourceImpl(String parentPath, String name) {
     this.dataBaseName = name;
-    this.parentPath = Paths.get(parentPath, DBConfig.getDbDirectory()).toString();
   }
 
   public Path getDbPath() {
