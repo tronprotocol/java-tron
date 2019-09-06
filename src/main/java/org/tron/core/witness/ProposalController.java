@@ -10,6 +10,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.ProposalCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol.Proposal.State;
 
@@ -194,6 +195,12 @@ public class ProposalController {
         case (21): {
           if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 0) {
             manager.getDynamicPropertiesStore().saveAllowAdaptiveEnergy(entry.getValue());
+            if (manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_4_0)) {
+              //24 * 60 * 2 . one minute,1/2 total limit.
+              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitTargetRatio(2880);
+              manager.getDynamicPropertiesStore().saveTotalEnergyTargetLimit(manager.getDynamicPropertiesStore().getTotalEnergyLimit() / 2880);
+              manager.getDynamicPropertiesStore().saveAdaptiveResourceLimitLimitMultiplier(50);
+            }
           }
           break;
         }

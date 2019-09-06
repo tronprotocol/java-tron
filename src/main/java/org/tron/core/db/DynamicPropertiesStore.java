@@ -81,6 +81,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] TOTAL_ENERGY_WEIGHT = "TOTAL_ENERGY_WEIGHT".getBytes();
     private static final byte[] TOTAL_ENERGY_LIMIT = "TOTAL_ENERGY_LIMIT".getBytes();
     private static final byte[] BLOCK_ENERGY_USAGE = "BLOCK_ENERGY_USAGE".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER = "ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER".getBytes();
+    private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO = "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO".getBytes();
   }
 
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
@@ -577,6 +579,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAdaptiveResourceLimitLimitMultiplier();
+    } catch (IllegalArgumentException e) {
+      this.saveAdaptiveResourceLimitLimitMultiplier(1000);
+    }
+
+    try {
+      this.getAdaptiveResourceLimitTargetRatio();
+    } catch (IllegalArgumentException e) {
+      this.saveAdaptiveResourceLimitTargetRatio(14400);//24 * 60 * 10
+    }
+
+    try {
       this.getTotalEnergyAverageTime();
     } catch (IllegalArgumentException e) {
       this.saveTotalEnergyAverageTime(0);
@@ -905,18 +919,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found TOTAL_NET_LIMIT"));
   }
 
+  @Deprecated
   public void saveTotalEnergyLimit(long totalEnergyLimit) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
-    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    long ratio = getAdaptiveResourceLimitTargetRatio();
+    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);// 24 * 60 * 10,one minute 1/10 total limit
   }
 
   public void saveTotalEnergyLimit2(long totalEnergyLimit) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_LIMIT,
         new BytesCapsule(ByteArray.fromLong(totalEnergyLimit)));
 
-    saveTotalEnergyTargetLimit(totalEnergyLimit / 14400);
+    long ratio = getAdaptiveResourceLimitTargetRatio();
+    saveTotalEnergyTargetLimit(totalEnergyLimit / ratio);
     if (getAllowAdaptiveEnergy() == 0) {
       saveTotalEnergyCurrentLimit(totalEnergyLimit);
     }
@@ -968,6 +985,35 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .orElseThrow(
             () -> new IllegalArgumentException("not found TOTAL_ENERGY_AVERAGE_USAGE"));
   }
+
+  public void saveAdaptiveResourceLimitLimitMultiplier(long adaptiveResourceLimitLimitMultiplier) {
+    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER,
+            new BytesCapsule(ByteArray.fromLong(adaptiveResourceLimitLimitMultiplier)));
+  }
+
+  public long getAdaptiveResourceLimitLimitMultiplier() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_LIMIT_MULTIPLIER"));
+  }
+
+  public void saveAdaptiveResourceLimitTargetRatio(long ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO) {
+    this.put(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO,
+            new BytesCapsule(ByteArray.fromLong(ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO)));
+  }
+
+  public long getAdaptiveResourceLimitTargetRatio() {
+    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(
+                    () -> new IllegalArgumentException("not found ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"));
+  }
+
+
+
 
   public void saveTotalEnergyAverageTime(long totalEnergyAverageTime) {
     this.put(DynamicResourceProperties.TOTAL_ENERGY_AVERAGE_TIME,
