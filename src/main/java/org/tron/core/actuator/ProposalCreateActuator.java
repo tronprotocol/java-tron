@@ -324,7 +324,7 @@ public class ProposalCreateActuator extends AbstractActuator {
         break;
       }
       case (29): {
-        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6)) {
+        if (!dbManager.getForkController().pass(ForkBlockVersionEnum.VERSION_3_6_5)) {
           throw new ContractValidateException("Bad chain parameter id");
         }
         if (entry.getValue() != 1) {

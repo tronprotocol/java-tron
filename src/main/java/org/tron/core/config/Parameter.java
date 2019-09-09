@@ -109,7 +109,7 @@ public class Parameter {
     VERSION_3_2_2(6),
     VERSION_3_5(7),
     VERSION_3_6(8),
-    VERSION_4_0(9);
+    VERSION_3_6_5(9);
 
 
     @Getter
