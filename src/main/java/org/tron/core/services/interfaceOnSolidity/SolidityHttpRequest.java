@@ -18,7 +18,10 @@ public class SolidityHttpRequest extends ServletRequestHttpWrapper {
     public SolidityHttpRequest(HttpServletRequest request) {
         super(request);
         try {
-            multiMap = request.getParameterMap();
+            String method = request.getMethod();
+            if ("GET".equals(method)) {
+                multiMap = request.getParameterMap();
+            } else if ("POST".equals(method))
             this.reader = new SolidityBufferedReader(request.getReader(),
                     request.getReader().lines().collect(Collectors.toList()));
         } catch (IOException e) {
@@ -28,6 +31,10 @@ public class SolidityHttpRequest extends ServletRequestHttpWrapper {
 
     @Override
     public String getParameter(String name) {
+        if (multiMap == null) {
+            return super.getParameter(name);
+        }
+
         String[] vals = multiMap.get(name);
         if (vals == null || vals.length == 0) {
             return null;
@@ -38,16 +45,25 @@ public class SolidityHttpRequest extends ServletRequestHttpWrapper {
 
     @Override
     public Map<String, String[]> getParameterMap() {
+        if (multiMap == null) {
+            return super.getParameterMap();
+        }
         return multiMap;
     }
 
     @Override
     public Enumeration<String> getParameterNames() {
+        if (multiMap == null) {
+            return super.getParameterNames();
+        }
         return Collections.enumeration(multiMap.keySet());
     }
 
     @Override
     public String[] getParameterValues(String name) {
+        if (multiMap == null) {
+            return super.getParameterValues(name);
+        }
         return multiMap.get(name);
     }
 
