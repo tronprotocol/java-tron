@@ -137,6 +137,7 @@ public class HttpTestZenToken002 {
     HttpMethed.printJsonContent(responseContent);
 
     HttpMethed.waitToProduceOneBlock(httpnode);
+    HttpMethed.waitToProduceOneBlock(httpnode);
     Long afterAssetBalance = HttpMethed
         .getAssetIssueValue(httpnode, zenTokenOwnerAddress, assetIssueId);
 

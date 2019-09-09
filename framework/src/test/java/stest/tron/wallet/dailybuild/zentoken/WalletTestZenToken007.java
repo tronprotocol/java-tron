@@ -175,11 +175,13 @@ public class WalletTestZenToken007 {
         "" + (sendTokenAmount - zenTokenFee),memo1);
     Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress1,sendTokenAmount,null,
         null,shieldOutList,null,0,zenTokenOwnerKey1,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     shieldOutList.clear();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress2,
         "" + (sendTokenAmount - zenTokenFee),memo2);
     Assert.assertTrue(PublicMethed.sendShieldCoin(zenTokenOwnerAddress2,sendTokenAmount,null,
         null,shieldOutList,null,0,zenTokenOwnerKey2,blockingStubFull));
+    PublicMethed.waitProduceNextBlock(blockingStubFull);
     shieldOutList.clear();
     shieldOutList = PublicMethed.addShieldOutputList(shieldOutList,sendShieldAddress3,
         "" + (sendTokenAmount - zenTokenFee),memo3);
