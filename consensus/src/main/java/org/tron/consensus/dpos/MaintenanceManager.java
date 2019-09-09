@@ -45,7 +45,7 @@ public class MaintenanceManager {
       if (blockNum != 1) {
         doMaintenance();
       }
-      consensusDelegate.updateNextMaintenanceTimes(blockTime);
+      consensusDelegate.updateNextMaintenanceTime(blockTime);
     }
     consensusDelegate.saveStateFlag(flag ? 1 : 0);
   }

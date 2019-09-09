@@ -101,7 +101,7 @@ public class ConsensusDelegate {
     dynamicPropertiesStore.saveStateFlag(flag);
   }
 
-  public void updateNextMaintenanceTimes(long time) {
+  public void updateNextMaintenanceTime(long time) {
     dynamicPropertiesStore.updateNextMaintenanceTime(time);
   }
 

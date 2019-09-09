@@ -1519,30 +1519,6 @@ public class Manager {
     }
   }
 
-  /**
-   * Determine if the current time is maintenance time.
-   */
-  public boolean needMaintenance(long blockTime) {
-    return this.dynamicPropertiesStore.getNextMaintenanceTime() <= blockTime;
-  }
-
-  public void updateMaintenanceState(boolean needMaint) {
-    if (needMaint) {
-      getDynamicPropertiesStore().saveStateFlag(1);
-    } else {
-      getDynamicPropertiesStore().saveStateFlag(0);
-    }
-  }
-
-  public boolean lastHeadBlockIsMaintenance() {
-    return getDynamicPropertiesStore().getStateFlag() == 1;
-  }
-
-  // To be added
-  public long getSkipSlotInMaintenance() {
-    return getDynamicPropertiesStore().getMaintenanceSkipSlots();
-  }
-
   public AssetIssueStore getAssetIssueStore() {
     return assetIssueStore;
   }
