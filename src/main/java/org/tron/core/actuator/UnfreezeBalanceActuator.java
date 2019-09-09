@@ -294,7 +294,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       + "]");
             }
           } else {
-              if (!(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1)
+              if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
                   && receiverCapsule != null
                   && receiverCapsule.getType() != AccountType.Contract
                   && receiverCapsule.getAcquiredDelegatedFrozenBalanceForBandwidth()
@@ -325,7 +325,7 @@ public class UnfreezeBalanceActuator extends AbstractActuator {
                       "]");
             }
           } else {
-            if (!(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() == 1)
+            if (dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059() != 1
                 && receiverCapsule != null
                 && receiverCapsule.getType() != AccountType.Contract
                 && receiverCapsule.getAcquiredDelegatedFrozenBalanceForEnergy()
