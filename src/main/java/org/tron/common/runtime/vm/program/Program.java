@@ -416,6 +416,7 @@ public class Program {
         transferAllToken(getContractState(), owner, blackHoleAddress);
       }
     } else {
+      createAccountIfNotExist(getContractState(), obtainer);
       try {
         transfer(getContractState(), owner, obtainer, balance);
         if (VMConfig.allowTvmTransferTrc10()) {
