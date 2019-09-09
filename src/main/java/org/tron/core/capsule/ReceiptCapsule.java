@@ -150,11 +150,10 @@ public class ReceiptCapsule {
     } else {
       energyProcessor.useEnergy(account, accountEnergyLeft, now);
 
-      if(manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_3_6_5)) {
-        if (manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
+      if(manager.getForkController().pass(Parameter.ForkBlockVersionEnum.VERSION_3_6_5) &&
+              manager.getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
           long blockEnergyUsage = manager.getDynamicPropertiesStore().getBlockEnergyUsage() + (usage - accountEnergyLeft);
           manager.getDynamicPropertiesStore().saveBlockEnergyUsage(blockEnergyUsage);
-        }
       }
 
       long sunPerEnergy = Constant.SUN_PER_ENERGY;
