@@ -58,6 +58,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_PAY_PER_BLOCK = "WITNESS_PAY_PER_BLOCK".getBytes();
 
+  private static final byte[] WITNESS_127_PAY_PER_BLOCK = "WITNESS_127_PAY_PER_BLOCK".getBytes();
+
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
 
   private static class DynamicResourceProperties {
@@ -778,6 +780,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found WITNESS_PAY_PER_BLOCK"));
+  }
+
+  public void saveWitness127PayPerBlock(long pay) {
+    logger.debug("WITNESS_127_PAY_PER_BLOCK:" + pay);
+    this.put(WITNESS_127_PAY_PER_BLOCK,
+        new BytesCapsule(ByteArray.fromLong(pay)));
+  }
+
+  public long getWitness127PayPerBlock() {
+    return Optional.ofNullable(getUnchecked(WITNESS_127_PAY_PER_BLOCK))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(48000000L);
   }
 
   public void saveWitnessStandbyAllowance(long allowance) {

@@ -101,5 +101,5 @@ public class DelegationServiceTest {
         .println("getBrokerageInfo: " + walletStub.getBrokerageInfo(builder.build()).getNum());
     System.out.println("getRewardInfo: " + walletStub.getRewardInfo(builder.build()).getNum());
   }
-  
+
 }

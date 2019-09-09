@@ -101,12 +101,17 @@ public class ProposalService {
       case CREATE_ACCOUNT_FEE:
       case TRANSACTION_FEE:
       case ASSET_ISSUE_FEE:
-      case WITNESS_PAY_PER_BLOCK:
       case WITNESS_STANDBY_ALLOWANCE:
       case CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT:
       case CREATE_NEW_ACCOUNT_BANDWIDTH_RATE: {
         if (value < 0 || value > LONG_VALUE) {
           throw new ContractValidateException(LONG_VALUE_ERROR);
+        }
+        break;
+      }
+      case WITNESS_PAY_PER_BLOCK: {
+        if (String.valueOf(value).length() != 4) {
+          throw new ContractValidateException("This value[WITNESS_PAY_PER_BLOCK] length must be 4");
         }
         break;
       }
@@ -313,7 +318,12 @@ public class ProposalService {
           break;
         }
         case WITNESS_PAY_PER_BLOCK: {
-          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(entry.getValue());
+          //before 2 is use to pay block and next 2 is use to 127 sr pay
+          long value = entry.getValue();
+          long payBlockValue = Long.valueOf(String.valueOf(value).substring(0, 2));
+          long pay127SrValue = Long.valueOf(String.valueOf(value).substring(2, 4));
+          manager.getDynamicPropertiesStore().saveWitnessPayPerBlock(payBlockValue);
+          manager.getDynamicPropertiesStore().saveWitness127PayPerBlock(pay127SrValue);
           break;
         }
         case WITNESS_STANDBY_ALLOWANCE: {

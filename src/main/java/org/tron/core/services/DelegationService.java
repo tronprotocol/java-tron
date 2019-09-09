@@ -38,7 +38,7 @@ public class DelegationService {
     }
 
     long voteSum = 0;
-    long totalPay = 115_200_000_000L / 7200;
+    long totalPay = manager.getDynamicPropertiesStore().getWitness127PayPerBlock();
     for (ByteString b : witnessAddressList) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }
